@@ -1,3 +1,6 @@
+xfsprogs-4.11.0 (5 May 2017)
+	- xfs_io: man page fixups (Zorro Lang)
+
 xfsprogs-4.11.0-rc2 (2 May 2017)
 	- xfs_db: add btree dumping command (Darrick Wong)
 	- mkfs.xfs: change bare -m rmapbt,reflink to enable (Eric Sandeen)
