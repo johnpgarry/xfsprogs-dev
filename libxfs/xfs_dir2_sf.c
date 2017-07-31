@@ -125,7 +125,7 @@ xfs_dir2_block_sfsize(
 		 * Calculate the new size, see if we should give up yet.
 		 */
 		size = xfs_dir2_sf_hdr_size(i8count) +	/* header */
-		       count * 3 * sizeof(__u8) +	/* namelen + offset */
+		       count * 3 * sizeof(u8) +		/* namelen + offset */
 		       namelen +			/* name */
 		       (i8count ?			/* inumber */
 				count * XFS_INO64_SIZE :
@@ -645,7 +645,7 @@ xfs_dir2_sf_verify(
 	int				offset;
 	int				size;
 	int				error;
-	__uint8_t			filetype;
+	uint8_t				filetype;
 
 	ASSERT(ip->i_d.di_format == XFS_DINODE_FMT_LOCAL);
 	/*
