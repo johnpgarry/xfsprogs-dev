@@ -32,7 +32,9 @@ btdump_help(void)
 "\n"
 " If the cursor points to a btree block, 'btdump' dumps the btree\n"
 " downward from that block.  If the cursor points to an inode,\n"
-" the data fork btree root is selected by default.\n"
+" the data fork btree root is selected by default.  If the cursor\n"
+" points to a directory or extended attribute btree node, the tree\n"
+" will be printed downward from that block.\n"
 "\n"
 " Options:\n"
 "   -a -- Display an inode's extended attribute fork btree.\n"
@@ -227,6 +229,252 @@ err:
 	return ret;
 }
 
+static bool
+dir_has_rightsib(
+	void				*block,
+	int				level)
+{
+	struct xfs_dir3_icleaf_hdr	lhdr;
+	struct xfs_da3_icnode_hdr	nhdr;
+
+	if (level > 0) {
+		M_DIROPS(mp)->node_hdr_from_disk(&nhdr, block);
+		return nhdr.forw != 0;
+	}
+	M_DIROPS(mp)->leaf_hdr_from_disk(&lhdr, block);
+	return lhdr.forw != 0;
+}
+
+static int
+dir_level(
+	void				*block)
+{
+	struct xfs_dir3_icleaf_hdr	lhdr;
+	struct xfs_da3_icnode_hdr	nhdr;
+
+	switch (((struct xfs_da_intnode *)block)->hdr.info.magic) {
+	case cpu_to_be16(XFS_DIR2_LEAF1_MAGIC):
+	case cpu_to_be16(XFS_DIR2_LEAFN_MAGIC):
+		M_DIROPS(mp)->leaf_hdr_from_disk(&lhdr, block);
+		return 0;
+	case cpu_to_be16(XFS_DA_NODE_MAGIC):
+		M_DIROPS(mp)->node_hdr_from_disk(&nhdr, block);
+		return nhdr.level;
+	default:
+		return -1;
+	}
+}
+
+static int
+dir3_level(
+	void				*block)
+{
+	struct xfs_dir3_icleaf_hdr	lhdr;
+	struct xfs_da3_icnode_hdr	nhdr;
+
+	switch (((struct xfs_da_intnode *)block)->hdr.info.magic) {
+	case cpu_to_be16(XFS_DIR3_LEAF1_MAGIC):
+	case cpu_to_be16(XFS_DIR3_LEAFN_MAGIC):
+		M_DIROPS(mp)->leaf_hdr_from_disk(&lhdr, block);
+		return 0;
+	case cpu_to_be16(XFS_DA3_NODE_MAGIC):
+		M_DIROPS(mp)->node_hdr_from_disk(&nhdr, block);
+		return nhdr.level;
+	default:
+		return -1;
+	}
+}
+
+static bool
+attr_has_rightsib(
+	void				*block,
+	int				level)
+{
+        struct xfs_attr_leafblock	lhdr;
+	struct xfs_da3_icnode_hdr	nhdr;
+
+	if (level > 0) {
+		M_DIROPS(mp)->node_hdr_from_disk(&nhdr, block);
+		return nhdr.forw != 0;
+	}
+	xfs_attr3_leaf_hdr_to_disk(mp->m_attr_geo, &lhdr, block);
+	return lhdr.hdr.info.forw != 0;
+}
+
+static int
+attr_level(
+	void				*block)
+{
+	struct xfs_attr_leafblock	lhdr;
+	struct xfs_da3_icnode_hdr	nhdr;
+
+	switch (((struct xfs_da_intnode *)block)->hdr.info.magic) {
+	case cpu_to_be16(XFS_ATTR_LEAF_MAGIC):
+		xfs_attr3_leaf_hdr_to_disk(mp->m_attr_geo, &lhdr, block);
+		return 0;
+	case cpu_to_be16(XFS_DA_NODE_MAGIC):
+		M_DIROPS(mp)->node_hdr_from_disk(&nhdr, block);
+		return nhdr.level;
+	default:
+		return -1;
+	}
+}
+
+static int
+attr3_level(
+	void				*block)
+{
+	struct xfs_attr_leafblock	lhdr;
+	struct xfs_da3_icnode_hdr	nhdr;
+
+	switch (((struct xfs_da_intnode *)block)->hdr.info.magic) {
+	case cpu_to_be16(XFS_ATTR3_LEAF_MAGIC):
+		xfs_attr3_leaf_hdr_to_disk(mp->m_attr_geo, &lhdr, block);
+		return 0;
+	case cpu_to_be16(XFS_DA3_NODE_MAGIC):
+		M_DIROPS(mp)->node_hdr_from_disk(&nhdr, block);
+		return nhdr.level;
+	default:
+		return -1;
+	}
+}
+
+struct dabprinter_ops {
+	const char		*print_node_entries;
+	const char		*print_leaf_entries;
+	const char		*go_node_forward;
+	const char		*go_leaf_forward;
+	const char		*go_down;
+	bool			(*has_rightsib)(void *, int);
+	int			(*level)(void *);
+};
+
+static struct dabprinter_ops attr_print = {
+	.print_node_entries	= "btree",
+	.print_leaf_entries	= "entries nvlist",
+	.go_node_forward	= "hdr.info.forw",
+	.go_leaf_forward	= "hdr.info.forw",
+	.go_down		= "btree[0].before",
+	.has_rightsib		= attr_has_rightsib,
+	.level			= attr_level,
+};
+
+static struct dabprinter_ops attr3_print = {
+	.print_node_entries	= "btree",
+	.print_leaf_entries	= "entries nvlist",
+	.go_node_forward	= "hdr.info.hdr.forw",
+	.go_leaf_forward	= "hdr.info.hdr.forw",
+	.go_down		= "btree[0].before",
+	.has_rightsib		= attr_has_rightsib,
+	.level			= attr3_level,
+};
+
+static struct dabprinter_ops dir_print = {
+	.print_node_entries	= "nbtree",
+	.print_leaf_entries	= "lents",
+	.go_node_forward	= "nhdr.info.hdr.forw",
+	.go_leaf_forward	= "lhdr.info.hdr.forw",
+	.go_down		= "nbtree[0].before",
+	.has_rightsib		= dir_has_rightsib,
+	.level			= dir_level,
+};
+
+static struct dabprinter_ops dir3_print = {
+	.print_node_entries	= "nbtree",
+	.print_leaf_entries	= "lents",
+	.go_node_forward	= "nhdr.info.forw",
+	.go_leaf_forward	= "lhdr.info.forw",
+	.go_down		= "nbtree[0].before",
+	.has_rightsib		= dir_has_rightsib,
+	.level			= dir3_level,
+};
+
+static int
+dump_dablevel(
+	int			level,
+	struct dabprinter_ops	*dbp)
+{
+	xfs_daddr_t		orig_daddr = iocur_top->bb;
+	xfs_daddr_t		last_daddr;
+	unsigned int		nr;
+	int			ret;
+
+	ret = eval("push");
+	if (ret)
+		return ret;
+
+	nr = 1;
+	do {
+		last_daddr = iocur_top->bb;
+		dbprintf(_("%s level %u block %u daddr %llu\n"),
+			 iocur_top->typ->name, level, nr, last_daddr);
+		ret = eval("print %s", level > 0 ? dbp->print_node_entries :
+						   dbp->print_leaf_entries);
+		if (ret)
+			goto err;
+		if (dbp->has_rightsib(iocur_top->data, level)) {
+			ret = eval("addr %s", level > 0 ? dbp->go_node_forward :
+							  dbp->go_leaf_forward);
+			if (ret)
+				goto err;
+		}
+		nr++;
+	} while (iocur_top->bb != orig_daddr && iocur_top->bb != last_daddr);
+
+	ret = eval("pop");
+	return ret;
+err:
+	eval("pop");
+	return ret;
+}
+
+static int
+dump_dabtree(
+	bool				dump_node_blocks,
+	struct dabprinter_ops		*dbp)
+{
+	xfs_daddr_t			orig_daddr = iocur_top->bb;
+	xfs_daddr_t			last_daddr;
+	int				level;
+	int				ret;
+
+	ret = eval("push");
+	if (ret)
+		return ret;
+
+	cur_agno = XFS_FSB_TO_AGNO(mp, XFS_DADDR_TO_FSB(mp, iocur_top->bb));
+	level = dbp->level(iocur_top->data);
+	if (level < 0) {
+		printf(_("Current location is not part of a dir/attr btree.\n"));
+		goto err;
+	}
+
+	do {
+		last_daddr = iocur_top->bb;
+		if (level > 0) {
+			if (dump_node_blocks) {
+				ret = dump_dablevel(level, dbp);
+				if (ret)
+					goto err;
+			}
+			ret = eval("addr %s", dbp->go_down);
+		} else {
+			ret = dump_dablevel(level, dbp);
+		}
+		if (ret)
+			goto err;
+		level--;
+	} while (level >= 0 &&
+		 iocur_top->bb != orig_daddr &&
+		 iocur_top->bb != last_daddr);
+
+	ret = eval("pop");
+	return ret;
+err:
+	eval("pop");
+	return ret;
+}
+
 static int
 btdump_f(
 	int		argc,
@@ -234,6 +482,7 @@ btdump_f(
 {
 	bool		aflag = false;
 	bool		iflag = false;
+	bool		crc = xfs_sb_version_hascrc(&mp->m_sb);
 	int		c;
 
 	if (cur_typ == NULL) {
@@ -276,6 +525,10 @@ btdump_f(
 		return dump_btree_long(iflag);
 	case TYP_INODE:
 		return dump_inode(iflag, aflag);
+	case TYP_ATTR:
+		return dump_dabtree(iflag, crc ? &attr3_print : &attr_print);
+	case TYP_DIR2:
+		return dump_dabtree(iflag, crc ? &dir3_print : &dir_print);
 	default:
 		dbprintf(_("type \"%s\" is not a btree type or inode\n"),
 				cur_typ->name);

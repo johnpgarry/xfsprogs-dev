@@ -335,6 +335,7 @@ area of the inode, if neither option is given then both areas are shown.
 .B btdump [-a] [-i]
 If the cursor points to a btree node, dump the btree from that block downward.
 If instead the cursor points to an inode, dump the data fork block mapping btree if there is one.
+If the cursor points to a directory or extended attribute btree node, dump that.
 By default, only records stored in the btree are dumped.
 .RS 1.0i
 .TP 0.4i
