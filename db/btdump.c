@@ -82,11 +82,9 @@ dump_btlevel(
 	xfs_daddr_t		orig_daddr = iocur_top->bb;
 	xfs_daddr_t		last_daddr;
 	unsigned int		nr;
-	int			ret;
+	int			ret = 0;
 
-	ret = eval("push");
-	if (ret)
-		return ret;
+	push_cur_and_set_type();
 
 	nr = 1;
 	do {
@@ -111,10 +109,8 @@ dump_btlevel(
 		nr++;
 	} while (iocur_top->bb != orig_daddr && iocur_top->bb != last_daddr);
 
-	ret = eval("pop");
-	return ret;
 err:
-	eval("pop");
+	pop_cur();
 	return ret;
 }
 
@@ -126,11 +122,9 @@ dump_btree(
 	xfs_daddr_t	orig_daddr = iocur_top->bb;
 	xfs_daddr_t	last_daddr;
 	int		level;
-	int		ret;
+	int		ret = 0;
 
-	ret = eval("push");
-	if (ret)
-		return ret;
+	push_cur_and_set_type();
 
 	cur_agno = XFS_FSB_TO_AGNO(mp, XFS_DADDR_TO_FSB(mp, iocur_top->bb));
 	level = xfs_btree_get_level(iocur_top->data);
@@ -153,10 +147,8 @@ dump_btree(
 		 iocur_top->bb != orig_daddr &&
 		 iocur_top->bb != last_daddr);
 
-	ret = eval("pop");
-	return ret;
 err:
-	eval("pop");
+	pop_cur();
 	return ret;
 }
 
@@ -177,7 +169,7 @@ dump_inode(
 {
 	char			*prefix;
 	struct xfs_dinode	*dip;
-	int			ret;
+	int			ret = 0;
 
 	if (attrfork)
 		prefix = "a.bmbt";
@@ -201,9 +193,7 @@ dump_inode(
 		}
 	}
 
-	ret = eval("push");
-	if (ret)
-		return ret;
+	push_cur_and_set_type();
 
 	if (dump_node_blocks) {
 		ret = eval("print %s.keys", prefix);
@@ -222,10 +212,8 @@ dump_inode(
 	if (ret)
 		goto err;
 
-	ret = eval("pop");
-	return ret;
 err:
-	eval("pop");
+	pop_cur();
 	return ret;
 }
 
@@ -397,11 +385,9 @@ dump_dablevel(
 	xfs_daddr_t		orig_daddr = iocur_top->bb;
 	xfs_daddr_t		last_daddr;
 	unsigned int		nr;
-	int			ret;
+	int			ret = 0;
 
-	ret = eval("push");
-	if (ret)
-		return ret;
+	push_cur_and_set_type();
 
 	nr = 1;
 	do {
@@ -421,10 +407,8 @@ dump_dablevel(
 		nr++;
 	} while (iocur_top->bb != orig_daddr && iocur_top->bb != last_daddr);
 
-	ret = eval("pop");
-	return ret;
 err:
-	eval("pop");
+	pop_cur();
 	return ret;
 }
 
@@ -436,11 +420,9 @@ dump_dabtree(
 	xfs_daddr_t			orig_daddr = iocur_top->bb;
 	xfs_daddr_t			last_daddr;
 	int				level;
-	int				ret;
+	int				ret = 0;
 
-	ret = eval("push");
-	if (ret)
-		return ret;
+	push_cur_and_set_type();
 
 	cur_agno = XFS_FSB_TO_AGNO(mp, XFS_DADDR_TO_FSB(mp, iocur_top->bb));
 	level = dbp->level(iocur_top->data);
@@ -468,10 +450,8 @@ dump_dabtree(
 		 iocur_top->bb != orig_daddr &&
 		 iocur_top->bb != last_daddr);
 
-	ret = eval("pop");
-	return ret;
 err:
-	eval("pop");
+	pop_cur();
 	return ret;
 }
 

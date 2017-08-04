@@ -57,6 +57,7 @@ extern void	off_cur(int off, int len);
 extern void	pop_cur(void);
 extern void	print_iocur(char *tag, iocur_t *ioc);
 extern void	push_cur(void);
+extern void	push_cur_and_set_type(void);
 extern int	read_buf(int64_t daddr, int count, void *bufp);
 extern void     write_cur(void);
 extern void	set_cur(const struct typ *type, xfs_daddr_t blknum,

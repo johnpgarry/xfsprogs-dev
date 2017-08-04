@@ -221,6 +221,19 @@ push_cur(void)
 	cur_typ = NULL;
 }
 
+void
+push_cur_and_set_type(void)
+{
+	/* save current state */
+	push_cur();
+	if (iocur_top[-1].typ && iocur_top[-1].typ->typnm == TYP_INODE)
+		set_cur_inode(iocur_top[-1].ino);
+	else
+		set_cur(iocur_top[-1].typ, iocur_top[-1].bb,
+			iocur_top[-1].blen, DB_RING_IGN,
+			iocur_top[-1].bbmap);
+}
+
 static int
 push_f(
 	int		argc,
@@ -241,14 +254,7 @@ push_f(
 		}
 	}
 
-	/* save current state */
-	push_cur();
-	if (iocur_top[-1].typ && iocur_top[-1].typ->typnm == TYP_INODE)
-		set_cur_inode(iocur_top[-1].ino);
-	else
-		set_cur(iocur_top[-1].typ, iocur_top[-1].bb,
-			iocur_top[-1].blen, DB_RING_IGN,
-			iocur_top[-1].bbmap);
+	push_cur_and_set_type();
 
 	/* run requested command */
 	if (argc>1)
