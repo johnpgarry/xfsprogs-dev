@@ -41,6 +41,10 @@ static int	attr_leaf_nvlist_offset(void *obj, int startoff, int idx);
 static int	attr_node_btree_count(void *obj, int startoff);
 static int	attr_node_hdr_count(void *obj, int startoff);
 
+static int	attr_remote_data_count(void *obj, int startoff);
+static int	attr3_remote_hdr_count(void *obj, int startoff);
+static int	attr3_remote_data_count(void *obj, int startoff);
+
 const field_t	attr_hfld[] = {
 	{ "", FLDT_ATTR, OI(0), C1, 0, TYP_NONE },
 	{ NULL }
@@ -53,6 +57,8 @@ const field_t	attr_flds[] = {
 	  FLD_COUNT, TYP_NONE },
 	{ "hdr", FLDT_ATTR_NODE_HDR, OI(NOFF(hdr)), attr_node_hdr_count,
 	  FLD_COUNT, TYP_NONE },
+	{ "data", FLDT_CHARNS, OI(0), attr_remote_data_count, FLD_COUNT,
+	  TYP_NONE },
 	{ "entries", FLDT_ATTR_LEAF_ENTRY, OI(LOFF(entries)),
 	  attr_leaf_entries_count, FLD_ARRAY|FLD_COUNT, TYP_NONE },
 	{ "btree", FLDT_ATTR_NODE_ENTRY, OI(NOFF(__btree)), attr_node_btree_count,
@@ -195,6 +201,35 @@ attr3_leaf_hdr_count(
 
 	ASSERT(startoff == 0);
 	return be16_to_cpu(leaf->hdr.info.hdr.magic) == XFS_ATTR3_LEAF_MAGIC;
+}
+
+static int
+attr_remote_data_count(
+	void				*obj,
+	int				startoff)
+{
+	if (attr_leaf_hdr_count(obj, startoff) == 0 &&
+	    attr_node_hdr_count(obj, startoff) == 0)
+		return mp->m_sb.sb_blocksize;
+	return 0;
+}
+
+static int
+attr3_remote_data_count(
+	void				*obj,
+	int				startoff)
+{
+	struct xfs_attr3_rmt_hdr	*hdr = obj;
+	size_t				buf_space;
+
+	ASSERT(startoff == 0);
+
+	if (hdr->rm_magic != cpu_to_be32(XFS_ATTR3_RMT_MAGIC))
+		return 0;
+	buf_space = XFS_ATTR3_RMT_BUF_SPACE(mp, mp->m_sb.sb_blocksize);
+	if (be32_to_cpu(hdr->rm_bytes) > buf_space)
+		return buf_space;
+	return be32_to_cpu(hdr->rm_bytes);
 }
 
 typedef int (*attr_leaf_entry_walk_f)(struct xfs_attr_leafblock *,
@@ -477,6 +512,17 @@ attr3_node_hdr_count(
 	return be16_to_cpu(node->hdr.info.hdr.magic) == XFS_DA3_NODE_MAGIC;
 }
 
+static int
+attr3_remote_hdr_count(
+	void			*obj,
+	int			startoff)
+{
+	struct xfs_attr3_rmt_hdr	*node = obj;
+
+	ASSERT(startoff == 0);
+	return be32_to_cpu(node->rm_magic) == XFS_ATTR3_RMT_MAGIC;
+}
+
 int
 attr_size(
 	void	*obj,
@@ -501,6 +547,10 @@ const field_t	attr3_flds[] = {
 	  FLD_COUNT, TYP_NONE },
 	{ "hdr", FLDT_ATTR3_NODE_HDR, OI(N3OFF(hdr)), attr3_node_hdr_count,
 	  FLD_COUNT, TYP_NONE },
+	{ "hdr", FLDT_ATTR3_REMOTE_HDR, OI(0), attr3_remote_hdr_count,
+	  FLD_COUNT, TYP_NONE },
+	{ "data", FLDT_CHARNS, OI(bitize(sizeof(struct xfs_attr3_rmt_hdr))),
+	  attr3_remote_data_count, FLD_COUNT, TYP_NONE },
 	{ "entries", FLDT_ATTR_LEAF_ENTRY, OI(L3OFF(entries)),
 	  attr3_leaf_entries_count, FLD_ARRAY|FLD_COUNT, TYP_NONE },
 	{ "btree", FLDT_ATTR_NODE_ENTRY, OI(N3OFF(__btree)),
@@ -540,6 +590,19 @@ const field_t	attr3_node_hdr_flds[] = {
 	{ "count", FLDT_UINT16D, OI(H3OFF(__count)), C1, 0, TYP_NONE },
 	{ "level", FLDT_UINT16D, OI(H3OFF(__level)), C1, 0, TYP_NONE },
 	{ "pad", FLDT_UINT32D, OI(H3OFF(__pad32)), C1, 0, TYP_NONE },
+	{ NULL }
+};
+
+#define	RM3OFF(f)	bitize(offsetof(struct xfs_attr3_rmt_hdr, rm_ ## f))
+const struct field	attr3_remote_crc_flds[] = {
+	{ "magic", FLDT_UINT32X, OI(RM3OFF(magic)), C1, 0, TYP_NONE },
+	{ "offset", FLDT_UINT32D, OI(RM3OFF(offset)), C1, 0, TYP_NONE },
+	{ "bytes", FLDT_UINT32D, OI(RM3OFF(bytes)), C1, 0, TYP_NONE },
+	{ "crc", FLDT_CRC, OI(RM3OFF(crc)), C1, 0, TYP_NONE },
+	{ "uuid", FLDT_UUID, OI(RM3OFF(uuid)), C1, 0, TYP_NONE },
+	{ "owner", FLDT_INO, OI(RM3OFF(owner)), C1, 0, TYP_NONE },
+	{ "bno", FLDT_DFSBNO, OI(RM3OFF(blkno)), C1, 0, TYP_BMAPBTD },
+	{ "lsn", FLDT_UINT64X, OI(RM3OFF(lsn)), C1, 0, TYP_NONE },
 	{ NULL }
 };
 

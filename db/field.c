@@ -99,6 +99,9 @@ const ftattr_t	ftattrtab[] = {
 	{ FLDT_ATTR3_NODE_HDR, "attr3_node_hdr", NULL,
 	  (char *)attr3_node_hdr_flds, SI(bitsz(struct xfs_da3_node_hdr)),
 	  0, NULL, attr3_node_hdr_flds },
+	{ FLDT_ATTR3_REMOTE_HDR, "attr3_remote_hdr", NULL,
+	  (char *)attr3_remote_crc_flds, attr_size, FTARG_SIZE, NULL,
+	  attr3_remote_crc_flds },
 
 	{ FLDT_BMAPBTA, "bmapbta", NULL, (char *)bmapbta_flds, btblock_size,
 	  FTARG_SIZE, NULL, bmapbta_flds },

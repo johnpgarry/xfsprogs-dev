@@ -940,8 +940,7 @@ version 1 and version 2 directories, see type
 .B dir
 for a description. Leaf blocks can refer to "local" or "remote" attribute
 values. Local values are stored directly in the leaf block.
-Remote values are stored in an independent block in the attribute fork
-(with no structure). Leaf blocks contain the following fields:
+Leaf blocks contain the following fields:
 .RS 1.4i
 .PD 0
 .TP 1.2i
@@ -987,6 +986,41 @@ Fields present for local values:
 (value string). Fields present for remote values:
 .B valueblk
 (fork block number of containing the value).
+.PD
+.RE
+.IP
+Remote values are stored in an independent block in the attribute fork.
+Prior to v5, value blocks had no structure, but in v5 they acquired a header
+structure with the following fields:
+.RS 1.4i
+.PD 0
+.TP 1.2i
+.B magic
+attr3 remote block magic number, 0x5841524d ('XARM').
+.TP
+.B offset
+Byte offset of this data block within the overall attribute value.
+.TP
+.B bytes
+Number of bytes stored in this block.
+.TP
+.B crc
+Checksum of the attribute block contents.
+.TP
+.B uuid
+Filesystem UUID.
+.TP
+.B owner
+Inode that owns this attribute value.
+.TP
+.B bno
+Block offset of this block within the inode's attribute fork.
+.TP
+.B lsn
+Log serial number of the last time this block was logged.
+.TP
+.B data
+The attribute value data.
 .PD
 .RE
 .TP
