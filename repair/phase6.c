@@ -82,7 +82,7 @@ typedef struct dir_hash_ent {
 	struct dir_hash_ent	*nextbyhash;	/* next in name bucket */
 	struct dir_hash_ent	*nextbyorder;	/* next in order added */
 	xfs_dahash_t		hashval;	/* hash value of name */
-	__uint32_t		address;	/* offset of data entry */
+	uint32_t		address;	/* offset of data entry */
 	xfs_ino_t 		inum;		/* inode num of entry */
 	short			junkit;		/* name starts with / */
 	short			seen;		/* have seen leaf entry */
@@ -170,11 +170,11 @@ static int
 dir_hash_add(
 	xfs_mount_t		*mp,
 	dir_hash_tab_t		*hashtab,
-	__uint32_t		addr,
+	uint32_t		addr,
 	xfs_ino_t		inum,
 	int			namelen,
 	unsigned char		*name,
-	__uint8_t		ftype)
+	uint8_t			ftype)
 {
 	xfs_dahash_t		hash = 0;
 	int			byaddr;
@@ -357,7 +357,7 @@ static void
 dir_hash_update_ftype(
 	dir_hash_tab_t		*hashtab,
 	xfs_dir2_dataptr_t	addr,
-	__uint8_t		ftype)
+	uint8_t			ftype)
 {
 	int			i;
 	dir_hash_ent_t		*p;
@@ -1791,8 +1791,8 @@ longform_dir2_entry_check_data(
 
 		/* validate ftype field if supported */
 		if (xfs_sb_version_hasftype(&mp->m_sb)) {
-			__uint8_t dir_ftype;
-			__uint8_t ino_ftype;
+			uint8_t dir_ftype;
+			uint8_t ino_ftype;
 
 			dir_ftype = M_DIROPS(mp)->data_get_ftype(dep);
 			ino_ftype = get_inode_ftype(irec, ino_offset);
@@ -2703,8 +2703,8 @@ _("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name"),
 
 		/* validate ftype field if supported */
 		if (xfs_sb_version_hasftype(&mp->m_sb)) {
-			__uint8_t dir_ftype;
-			__uint8_t ino_ftype;
+			uint8_t dir_ftype;
+			uint8_t ino_ftype;
 
 			dir_ftype = M_DIROPS(mp)->sf_get_ftype(sfep);
 			ino_ftype = get_inode_ftype(irec, ino_offset);

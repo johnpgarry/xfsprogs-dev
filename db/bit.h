@@ -25,5 +25,5 @@
 #define	BVUNSIGNED	0
 #define	BVSIGNED	1
 
-extern __int64_t	getbitval(void *obj, int bitoff, int nbits, int flags);
+extern int64_t		getbitval(void *obj, int bitoff, int nbits, int flags);
 extern void             setbitval(void *obuf, int bitoff, int nbits, void *ibuf);

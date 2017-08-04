@@ -24,8 +24,8 @@
 typedef struct xfs_metablock {
 	__be32		mb_magic;
 	__be16		mb_count;
-	__uint8_t	mb_blocklog;
-	__uint8_t	mb_info;
+	uint8_t		mb_blocklog;
+	uint8_t		mb_info;
 	/* followed by an array of xfs_daddr_t */
 } xfs_metablock_t;
 

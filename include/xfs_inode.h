@@ -123,8 +123,8 @@ xfs_get_projid(struct xfs_icdinode *id)
 static inline void
 xfs_set_projid(struct xfs_icdinode *id, prid_t projid)
 {
-	id->di_projid_hi = (__uint16_t) (projid >> 16);
-	id->di_projid_lo = (__uint16_t) (projid & 0xffff);
+	id->di_projid_hi = (uint16_t) (projid >> 16);
+	id->di_projid_lo = (uint16_t) (projid & 0xffff);
 }
 
 static inline bool xfs_is_reflink_inode(struct xfs_inode *ip)

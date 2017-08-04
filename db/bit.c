@@ -60,7 +60,7 @@ setbit(
 	}
 }
 
-__int64_t
+int64_t
 getbitval(
 	void		*obj,
 	int		bitoff,
@@ -70,7 +70,7 @@ getbitval(
 	int		bit;
 	int		i;
 	char		*p;
-	__int64_t	rval;
+	int64_t		rval;
 	int		signext;
 	int		z1, z2, z3, z4;
 

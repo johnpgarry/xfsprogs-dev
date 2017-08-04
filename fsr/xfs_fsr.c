@@ -54,7 +54,7 @@ struct getbmap  *outmap = NULL;
 int             outmap_size = 0;
 int		RealUid;
 int		tmp_agi;
-static __int64_t	minimumfree = 2048;
+static int64_t		minimumfree = 2048;
 
 #define MNTTYPE_XFS             "xfs"
 

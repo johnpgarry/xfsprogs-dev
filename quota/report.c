@@ -333,9 +333,9 @@ report_header(
 static int
 report_mount(
 	FILE		*fp,
-	__uint32_t	id,
+	uint32_t	id,
 	char		*name,
-	__uint32_t	*oid,
+	uint32_t	*oid,
 	uint		form,
 	uint		type,
 	fs_path_t	*mount,

@@ -132,7 +132,7 @@ static __inline__ void platform_uuid_copy(uuid_t *dst, uuid_t *src)
 static __inline__ int
 platform_discard_blocks(int fd, uint64_t start, uint64_t len)
 {
-	__uint64_t range[2] = { start, len };
+	uint64_t range[2] = { start, len };
 
 	if (ioctl(fd, BLKDISCARD, &range) < 0)
 		return errno;
@@ -144,9 +144,9 @@ platform_discard_blocks(int fd, uint64_t start, uint64_t len)
 #define EFSBADCRC	EBADMSG	/* Bad CRC detected */
 
 typedef off_t		xfs_off_t;
-typedef __uint64_t	xfs_ino_t;
-typedef __uint32_t	xfs_dev_t;
-typedef __int64_t	xfs_daddr_t;
+typedef uint64_t	xfs_ino_t;
+typedef uint32_t	xfs_dev_t;
+typedef int64_t		xfs_daddr_t;
 typedef __u32		xfs_nlink_t;
 
 /**

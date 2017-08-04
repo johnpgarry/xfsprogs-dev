@@ -545,7 +545,7 @@ set_cur(
 	struct xfs_buf	*bp;
 	xfs_ino_t	dirino;
 	xfs_ino_t	ino;
-	__uint16_t	mode;
+	uint16_t	mode;
 	const struct xfs_buf_ops *ops = type ? type->bops : NULL;
 
 	if (iocur_sp < 0) {

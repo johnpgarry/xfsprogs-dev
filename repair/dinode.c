@@ -746,7 +746,7 @@ _("%s fork in ino %" PRIu64 " claims dup extent, "
 			case XR_E_FREE1:
 				do_warn(
 _("%s fork in ino %" PRIu64 " claims free block %" PRIu64 "\n"),
-					forkname, ino, (__uint64_t) b);
+					forkname, ino, (uint64_t) b);
 				/* fall through ... */
 			case XR_E_INUSE1:	/* seen by rmap */
 			case XR_E_UNKNOWN:
@@ -923,7 +923,7 @@ process_btinode(
 	int			type,
 	int			*dirty,
 	xfs_rfsblock_t		*tot,
-	__uint64_t		*nex,
+	uint64_t		*nex,
 	blkmap_t		**blkmapp,
 	int			whichfork,
 	int			check_dups)
@@ -939,7 +939,7 @@ process_btinode(
 	int			level;
 	int			numrecs;
 	bmap_cursor_t		cursor;
-	__uint64_t		magic;
+	uint64_t		magic;
 
 	dib = (xfs_bmdr_block_t *)XFS_DFORK_PTR(dip, whichfork);
 	lino = XFS_AGINO_TO_INO(mp, agno, ino);
@@ -1098,7 +1098,7 @@ process_exinode(
 	int			type,
 	int			*dirty,
 	xfs_rfsblock_t		*tot,
-	__uint64_t		*nex,
+	uint64_t		*nex,
 	blkmap_t		**blkmapp,
 	int			whichfork,
 	int			check_dups)
@@ -1200,14 +1200,14 @@ process_symlink_extlist(xfs_mount_t *mp, xfs_ino_t lino, xfs_dinode_t *dino)
 		do_warn(
 _("mismatch between format (%d) and size (%" PRId64 ") in symlink ino %" PRIu64 "\n"),
 			dino->di_format,
-			(__int64_t)be64_to_cpu(dino->di_size), lino);
+			(int64_t)be64_to_cpu(dino->di_size), lino);
 		return 1;
 	}
 	if (dino->di_format == XFS_DINODE_FMT_LOCAL) {
 		do_warn(
 _("mismatch between format (%d) and size (%" PRId64 ") in symlink inode %" PRIu64 "\n"),
 			dino->di_format,
-			(__int64_t)be64_to_cpu(dino->di_size), lino);
+			(int64_t)be64_to_cpu(dino->di_size), lino);
 		return 1;
 	}
 
@@ -1454,22 +1454,22 @@ _("inode %" PRIu64 " has bad inode type (IFMNT)\n"), lino);
 		case XR_INO_CHRDEV:
 			do_warn(
 _("size of character device inode %" PRIu64 " != 0 (%" PRId64 " bytes)\n"), lino,
-				(__int64_t)be64_to_cpu(dino->di_size));
+				(int64_t)be64_to_cpu(dino->di_size));
 			break;
 		case XR_INO_BLKDEV:
 			do_warn(
 _("size of block device inode %" PRIu64 " != 0 (%" PRId64 " bytes)\n"), lino,
-				(__int64_t)be64_to_cpu(dino->di_size));
+				(int64_t)be64_to_cpu(dino->di_size));
 			break;
 		case XR_INO_SOCK:
 			do_warn(
 _("size of socket inode %" PRIu64 " != 0 (%" PRId64 " bytes)\n"), lino,
-				(__int64_t)be64_to_cpu(dino->di_size));
+				(int64_t)be64_to_cpu(dino->di_size));
 			break;
 		case XR_INO_FIFO:
 			do_warn(
 _("size of fifo inode %" PRIu64 " != 0 (%" PRId64 " bytes)\n"), lino,
-				(__int64_t)be64_to_cpu(dino->di_size));
+				(int64_t)be64_to_cpu(dino->di_size));
 			break;
 		default:
 			do_warn(_("Internal error - process_misc_ino_types, "
@@ -1743,12 +1743,12 @@ _("found inode %" PRIu64 " claiming to be a real-time file\n"), lino);
 		break;
 
 	case XR_INO_RTBITMAP:
-		if (size != (__int64_t)mp->m_sb.sb_rbmblocks *
+		if (size != (int64_t)mp->m_sb.sb_rbmblocks *
 					mp->m_sb.sb_blocksize) {
 			do_warn(
 _("realtime bitmap inode %" PRIu64 " has bad size %" PRId64 " (should be %" PRIu64 ")\n"),
 				lino, size,
-				(__int64_t) mp->m_sb.sb_rbmblocks *
+				(int64_t) mp->m_sb.sb_rbmblocks *
 					mp->m_sb.sb_blocksize);
 			return 1;
 		}
@@ -1817,8 +1817,8 @@ static int
 process_inode_blocks_and_extents(
 	xfs_dinode_t	*dino,
 	xfs_rfsblock_t	nblocks,
-	__uint64_t	nextents,
-	__uint64_t	anextents,
+	uint64_t	nextents,
+	uint64_t	anextents,
 	xfs_ino_t	lino,
 	int		*dirty)
 {
@@ -1908,7 +1908,7 @@ process_inode_data_fork(
 	int		type,
 	int		*dirty,
 	xfs_rfsblock_t	*totblocks,
-	__uint64_t	*nextents,
+	uint64_t	*nextents,
 	blkmap_t	**dblkmap,
 	int		check_dups)
 {
@@ -2017,7 +2017,7 @@ process_inode_attr_fork(
 	int		type,
 	int		*dirty,
 	xfs_rfsblock_t	*atotblocks,
-	__uint64_t	*anextents,
+	uint64_t	*anextents,
 	int		check_dups,
 	int		extra_attr_check,
 	int		*retval)
@@ -2228,8 +2228,8 @@ process_dinode_int(xfs_mount_t *mp,
 	int			di_mode;
 	int			type;
 	int			retval = 0;
-	__uint64_t		nextents;
-	__uint64_t		anextents;
+	uint64_t		nextents;
+	uint64_t		anextents;
 	xfs_ino_t		lino;
 	const int		is_free = 0;
 	const int		is_used = 1;
@@ -2346,7 +2346,7 @@ _("inode identifier %llu mismatch on inode %" PRIu64 "\n"),
 		if (!uncertain)
 			do_warn(
 _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
-				(__int64_t)be64_to_cpu(dino->di_size),
+				(int64_t)be64_to_cpu(dino->di_size),
 				lino);
 		if (verify_mode)
 			return 1;

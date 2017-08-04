@@ -109,7 +109,7 @@ void
 platform_findsizes(char *path, int fd, long long *sz, int *bsz)
 {
 	struct stat	st;
-	__int64_t	size;
+	int64_t		size;
 	u_int		ssize;
 
 	if (fstat(fd, &st) < 0) {

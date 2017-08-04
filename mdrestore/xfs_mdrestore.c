@@ -66,7 +66,7 @@ perform_restore(
 	int			mb_count;
 	xfs_metablock_t		tmb;
 	xfs_sb_t		sb;
-	__int64_t		bytes_read;
+	int64_t			bytes_read;
 
 	/*
 	 * read in first blocks (superblock 0), set "inprogress" flag for it,

@@ -160,7 +160,7 @@ process_sf_dir2(
 	int			bad_sfnamelen;
 	int			i;
 	int			i8;
-	__int64_t		ino_dir_size;
+	int64_t			ino_dir_size;
 	int			ino_off;
 	ino_tree_node_t		*irec_p;
 	int			junkit;

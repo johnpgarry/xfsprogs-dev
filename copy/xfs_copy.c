@@ -43,7 +43,7 @@ unsigned int	source_sectorsize;	/* source disk sectorsize */
 
 xfs_agblock_t	first_agbno;
 
-__uint64_t	barcount[11];
+uint64_t	barcount[11];
 
 unsigned int	num_targets;
 target_control	*target;
@@ -313,7 +313,7 @@ usage(void)
 }
 
 void
-init_bar(__uint64_t source_blocks)
+init_bar(uint64_t source_blocks)
 {
 	int	i;
 
@@ -322,7 +322,7 @@ init_bar(__uint64_t source_blocks)
 }
 
 int
-bump_bar(int tenths, __uint64_t numblocks)
+bump_bar(int tenths, uint64_t numblocks)
 {
 	static char *bar[11] = {
 		" 0% ",
@@ -534,8 +534,8 @@ main(int argc, char **argv)
 	xfs_off_t	pos;
 	size_t		length;
 	int		c;
-	__uint64_t	size, sizeb;
-	__uint64_t	numblocks = 0;
+	uint64_t	size, sizeb;
+	uint64_t	numblocks = 0;
 	int		wblocks = 0;
 	int		num_threads = 0;
 	struct dioattr	d;
@@ -951,8 +951,8 @@ main(int argc, char **argv)
 	num_ags = mp->m_sb.sb_agcount;
 
 	init_bar(mp->m_sb.sb_blocksize / BBSIZE
-			* ((__uint64_t)mp->m_sb.sb_dblocks
-			    - (__uint64_t)mp->m_sb.sb_fdblocks + 10 * num_ags));
+			* ((uint64_t)mp->m_sb.sb_dblocks
+			    - (uint64_t)mp->m_sb.sb_fdblocks + 10 * num_ags));
 
 	kids = num_targets;
 

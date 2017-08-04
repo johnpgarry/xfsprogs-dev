@@ -170,8 +170,8 @@ libxfs_trans_ichgtime(
 	if (flags & XFS_ICHGTIME_CHG)
 		VFS_I(ip)->i_ctime = tv;
 	if (flags & XFS_ICHGTIME_CREATE) {
-		ip->i_d.di_crtime.t_sec = (__int32_t)tv.tv_sec;
-		ip->i_d.di_crtime.t_nsec = (__int32_t)tv.tv_nsec;
+		ip->i_d.di_crtime.t_sec = (int32_t)tv.tv_sec;
+		ip->i_d.di_crtime.t_nsec = (int32_t)tv.tv_nsec;
 	}
 }
 
@@ -261,8 +261,8 @@ libxfs_ialloc(
 		ASSERT(uuid_equal(&ip->i_d.di_uuid, &mp->m_sb.sb_meta_uuid));
 		VFS_I(ip)->i_version = 1;
 		ip->i_d.di_flags2 = 0;
-		ip->i_d.di_crtime.t_sec = (__int32_t)VFS_I(ip)->i_mtime.tv_sec;
-		ip->i_d.di_crtime.t_nsec = (__int32_t)VFS_I(ip)->i_mtime.tv_nsec;
+		ip->i_d.di_crtime.t_sec = (int32_t)VFS_I(ip)->i_mtime.tv_sec;
+		ip->i_d.di_crtime.t_nsec = (int32_t)VFS_I(ip)->i_mtime.tv_nsec;
 	}
 
 	flags = XFS_ILOG_CORE;

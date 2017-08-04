@@ -175,7 +175,7 @@ write_index(void)
 static int
 write_buf_segment(
 	char		*data,
-	__int64_t	off,
+	int64_t		off,
 	int		len)
 {
 	int		i;
@@ -1256,7 +1256,7 @@ process_sf_dir(
 {
 	struct xfs_dir2_sf_hdr	*sfp;
 	xfs_dir2_sf_entry_t	*sfep;
-	__uint64_t		ino_dir_size;
+	uint64_t		ino_dir_size;
 	int			i;
 
 	sfp = (struct xfs_dir2_sf_hdr *)XFS_DFORK_DPTR(dip);
@@ -1322,7 +1322,7 @@ process_sf_dir(
 static void
 obfuscate_path_components(
 	char			*buf,
-	__uint64_t		len)
+	uint64_t		len)
 {
 	unsigned char		*comp = (unsigned char *)buf;
 	unsigned char		*end = comp + len;
@@ -1359,7 +1359,7 @@ static void
 process_sf_symlink(
 	xfs_dinode_t		*dip)
 {
-	__uint64_t		len;
+	uint64_t		len;
 	char			*buf;
 
 	len = be64_to_cpu(dip->di_size);
@@ -1631,7 +1631,7 @@ process_attr_block(
 	xfs_attr_leaf_entry_t 		*entry;
 	xfs_attr_leaf_name_local_t 	*local;
 	xfs_attr_leaf_name_remote_t 	*remote;
-	__uint32_t			bs = mp->m_sb.sb_blocksize;
+	uint32_t			bs = mp->m_sb.sb_blocksize;
 	char				*first_name;
 
 
@@ -2270,7 +2270,7 @@ done:
 	return success;
 }
 
-static __uint32_t	inodes_copied = 0;
+static uint32_t	inodes_copied;
 
 static int
 copy_inode_chunk(

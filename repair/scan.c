@@ -42,13 +42,13 @@ struct aghdr_cnts {
 	xfs_agnumber_t	agno;
 	xfs_extlen_t	agffreeblks;
 	xfs_extlen_t	agflongest;
-	__uint64_t	agfbtreeblks;
-	__uint32_t	agicount;
-	__uint32_t	agifreecount;
-	__uint64_t	fdblocks;
-	__uint64_t	usedblocks;
-	__uint64_t	ifreecount;
-	__uint32_t	fibtfreecount;
+	uint64_t	agfbtreeblks;
+	uint32_t	agicount;
+	uint32_t	agifreecount;
+	uint64_t	fdblocks;
+	uint64_t	usedblocks;
+	uint64_t	ifreecount;
+	uint32_t	fibtfreecount;
 };
 
 void
@@ -70,10 +70,10 @@ scan_sbtree(
 				xfs_agnumber_t		agno,
 				int			suspect,
 				int			isroot,
-				__uint32_t		magic,
+				uint32_t		magic,
 				void			*priv),
 	int		isroot,
-	__uint32_t	magic,
+	uint32_t	magic,
 	void		*priv,
 	const struct xfs_buf_ops *ops)
 {
@@ -110,23 +110,23 @@ scan_lbtree(
 				xfs_fsblock_t		bno,
 				xfs_ino_t		ino,
 				xfs_rfsblock_t		*tot,
-				__uint64_t		*nex,
+				uint64_t		*nex,
 				blkmap_t		**blkmapp,
 				bmap_cursor_t		*bm_cursor,
 				int			isroot,
 				int			check_dups,
 				int			*dirty,
-				__uint64_t		magic),
+				uint64_t		magic),
 	int		type,
 	int		whichfork,
 	xfs_ino_t	ino,
 	xfs_rfsblock_t	*tot,
-	__uint64_t	*nex,
+	uint64_t	*nex,
 	blkmap_t	**blkmapp,
 	bmap_cursor_t	*bm_cursor,
 	int		isroot,
 	int		check_dups,
-	__uint64_t	magic,
+	uint64_t	magic,
 	const struct xfs_buf_ops *ops)
 {
 	xfs_buf_t	*bp;
@@ -179,13 +179,13 @@ scan_bmapbt(
 	xfs_fsblock_t		bno,
 	xfs_ino_t		ino,
 	xfs_rfsblock_t		*tot,
-	__uint64_t		*nex,
+	uint64_t		*nex,
 	blkmap_t		**blkmapp,
 	bmap_cursor_t		*bm_cursor,
 	int			isroot,
 	int			check_dups,
 	int			*dirty,
-	__uint64_t		magic)
+	uint64_t		magic)
 {
 	int			i;
 	int			err;
@@ -548,7 +548,7 @@ scan_allocbt(
 	xfs_agnumber_t		agno,
 	int			suspect,
 	int			isroot,
-	__uint32_t		magic,
+	uint32_t		magic,
 	void			*priv)
 {
 	struct aghdr_cnts	*agcnts = priv;
@@ -930,7 +930,7 @@ scan_rmapbt(
 	xfs_agnumber_t		agno,
 	int			suspect,
 	int			isroot,
-	__uint32_t		magic,
+	uint32_t		magic,
 	void			*priv)
 {
 	const char		*name = "rmap";
@@ -1233,7 +1233,7 @@ scan_refcbt(
 	xfs_agnumber_t		agno,
 	int			suspect,
 	int			isroot,
-	__uint32_t		magic,
+	uint32_t		magic,
 	void			*priv)
 {
 	const char		*name = "refcount";
@@ -1939,7 +1939,7 @@ scan_inobt(
 	xfs_agnumber_t		agno,
 	int			suspect,
 	int			isroot,
-	__uint32_t		magic,
+	uint32_t		magic,
 	void			*priv)
 {
 	struct aghdr_cnts	*agcnts = priv;
@@ -2176,7 +2176,7 @@ validate_agf(
 	struct aghdr_cnts	*agcnts)
 {
 	xfs_agblock_t		bno;
-	__uint32_t		magic;
+	uint32_t		magic;
 
 	bno = be32_to_cpu(agf->agf_roots[XFS_BTNUM_BNO]);
 	if (bno != 0 && verify_agbno(mp, agno, bno)) {
@@ -2274,7 +2274,7 @@ validate_agi(
 {
 	xfs_agblock_t		bno;
 	int			i;
-	__uint32_t		magic;
+	uint32_t		magic;
 
 	bno = be32_to_cpu(agi->agi_root);
 	if (bno != 0 && verify_agbno(mp, agno, bno)) {
@@ -2499,10 +2499,10 @@ scan_ags(
 	int			scan_threads)
 {
 	struct aghdr_cnts *agcnts;
-	__uint64_t	fdblocks = 0;
-	__uint64_t	icount = 0;
-	__uint64_t	ifreecount = 0;
-	__uint64_t	usedblocks = 0;
+	uint64_t	fdblocks = 0;
+	uint64_t	icount = 0;
+	uint64_t	ifreecount = 0;
+	uint64_t	usedblocks = 0;
 	xfs_agnumber_t	i;
 	work_queue_t	wq;
 

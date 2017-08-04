@@ -546,7 +546,7 @@ libxfs_initialize_perag(
 		 * the max inode percentage.
 		 */
 		if (mp->m_maxicount) {
-			__uint64_t	icount;
+			uint64_t	icount;
 
 			icount = sbp->sb_dblocks * sbp->sb_imax_pct;
 			do_div(icount, 100);

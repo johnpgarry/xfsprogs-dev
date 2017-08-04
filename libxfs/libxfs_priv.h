@@ -296,8 +296,8 @@ roundup_pow_of_two(uint v)
 	return 0;
 }
 
-static inline __uint64_t
-roundup_64(__uint64_t x, __uint32_t y)
+static inline uint64_t
+roundup_64(uint64_t x, uint32_t y)
 {
 	x += y - 1;
 	do_div(x, y);

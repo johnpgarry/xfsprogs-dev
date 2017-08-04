@@ -125,15 +125,15 @@ typedef signed int		__s32;
 typedef unsigned long long int	__u64;
 typedef signed long long int	__s64;
 
-#define __int8_t	int8_t
-#define __int16_t	int16_t
-#define __int32_t	int32_t
-#define __int32_t	int32_t
-#define __int64_t	int64_t
-#define __uint8_t	u_int8_t
-#define __uint16_t	u_int16_t
-#define __uint32_t	u_int32_t
-#define __uint64_t	u_int64_t
+#define int8_t		int8_t
+#define int16_t		int16_t
+#define int32_t		int32_t
+#define int32_t		int32_t
+#define int64_t		int64_t
+#define uint8_t		u_int8_t
+#define uint16_t	u_int16_t
+#define uint32_t	u_int32_t
+#define uint64_t	u_int64_t
 
 typedef off_t		xfs_off_t;
 typedef u_int64_t	xfs_ino_t;

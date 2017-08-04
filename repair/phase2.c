@@ -179,7 +179,7 @@ phase2(
 
 	bad_ino_btree = 0;
 
-	set_progress_msg(PROG_FMT_SCAN_AG, (__uint64_t) glob_agcount);
+	set_progress_msg(PROG_FMT_SCAN_AG, (uint64_t) glob_agcount);
 
 	scan_ags(mp, scan_threads);
 

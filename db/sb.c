@@ -606,7 +606,7 @@ version_help(void)
 }
 
 static int
-do_version(xfs_agnumber_t agno, __uint16_t version, __uint32_t features)
+do_version(xfs_agnumber_t agno, uint16_t version, uint32_t features)
 {
 	xfs_sb_t	tsb;
 
@@ -710,8 +710,8 @@ version_f(
 	int		argc,
 	char		**argv)
 {
-	__uint16_t	version = 0;
-	__uint32_t	features = 0;
+	uint16_t	version = 0;
+	uint32_t	features = 0;
 	xfs_agnumber_t	ag;
 
 	if (argc == 2) {	/* WRITE VERSION */

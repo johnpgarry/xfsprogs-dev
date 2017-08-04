@@ -86,9 +86,9 @@ struct agi_stat {
 	xfs_agino_t		freecount;
 };
 
-static __uint64_t	*sb_icount_ag;		/* allocated inodes per ag */
-static __uint64_t	*sb_ifree_ag;		/* free inodes per ag */
-static __uint64_t	*sb_fdblocks_ag;	/* free data blocks per ag */
+static uint64_t	*sb_icount_ag;		/* allocated inodes per ag */
+static uint64_t	*sb_ifree_ag;		/* free inodes per ag */
+static uint64_t	*sb_fdblocks_ag;	/* free data blocks per ag */
 
 static int
 mk_incore_fstree(xfs_mount_t *mp, xfs_agnumber_t agno)
@@ -886,10 +886,10 @@ build_freespace_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
  */
 static void
 init_ino_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
-		__uint64_t *num_inos, __uint64_t *num_free_inos, int finobt)
+		uint64_t *num_inos, uint64_t *num_free_inos, int finobt)
 {
-	__uint64_t		ninos;
-	__uint64_t		nfinos;
+	uint64_t		ninos;
+	uint64_t		nfinos;
 	int			rec_nfinos;
 	int			rec_ninos;
 	ino_tree_node_t		*ino_rec;
@@ -2193,10 +2193,10 @@ phase5_func(
 	xfs_agnumber_t	agno,
 	struct xfs_slab	*lost_fsb)
 {
-	__uint64_t	num_inos;
-	__uint64_t	num_free_inos;
-	__uint64_t	finobt_num_inos;
-	__uint64_t	finobt_num_free_inos;
+	uint64_t	num_inos;
+	uint64_t	num_free_inos;
+	uint64_t	finobt_num_inos;
+	uint64_t	finobt_num_free_inos;
 	bt_status_t	bno_btree_curs;
 	bt_status_t	bcnt_btree_curs;
 	bt_status_t	ino_btree_curs;
@@ -2471,7 +2471,7 @@ phase5(xfs_mount_t *mp)
 	int			error;
 
 	do_log(_("Phase 5 - rebuild AG headers and trees...\n"));
-	set_progress_msg(PROG_FMT_REBUILD_AG, (__uint64_t )glob_agcount);
+	set_progress_msg(PROG_FMT_REBUILD_AG, (uint64_t)glob_agcount);
 
 #ifdef XR_BLD_FREE_TRACE
 	fprintf(stderr, "inobt level 1, maxrec = %d, minrec = %d\n",
@@ -2497,15 +2497,15 @@ phase5(xfs_mount_t *mp)
 	keep_fsinos(mp);
 
 	/* allocate per ag counters */
-	sb_icount_ag = calloc(mp->m_sb.sb_agcount, sizeof(__uint64_t));
+	sb_icount_ag = calloc(mp->m_sb.sb_agcount, sizeof(uint64_t));
 	if (sb_icount_ag == NULL)
 		do_error(_("cannot alloc sb_icount_ag buffers\n"));
 
-	sb_ifree_ag = calloc(mp->m_sb.sb_agcount, sizeof(__uint64_t));
+	sb_ifree_ag = calloc(mp->m_sb.sb_agcount, sizeof(uint64_t));
 	if (sb_ifree_ag == NULL)
 		do_error(_("cannot alloc sb_ifree_ag buffers\n"));
 
-	sb_fdblocks_ag = calloc(mp->m_sb.sb_agcount, sizeof(__uint64_t));
+	sb_fdblocks_ag = calloc(mp->m_sb.sb_agcount, sizeof(uint64_t));
 	if (sb_fdblocks_ag == NULL)
 		do_error(_("cannot alloc sb_fdblocks_ag buffers\n"));
 

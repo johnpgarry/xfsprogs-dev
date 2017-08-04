@@ -166,12 +166,12 @@ xlog_print_trans_header(char **ptr, int len)
 {
     xfs_trans_header_t  *h;
     char		*cptr = *ptr;
-    __uint32_t          magic;
+    uint32_t          magic;
     char                *magic_c = (char *)&magic;
 
     *ptr += len;
 
-    magic=*(__uint32_t*)cptr; /* XXX be32_to_cpu soon */
+    magic = *(uint32_t *)cptr; /* XXX be32_to_cpu soon */
 
     if (len >= 4) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -201,7 +201,7 @@ xlog_print_trans_buffer(char **ptr, int len, int *i, int num_ops)
     int			 num, skip;
     int			 super_block = 0;
     int			 bucket, col, buckets;
-    __int64_t		 blkno;
+    int64_t			 blkno;
     xfs_buf_log_format_t lbuf;
     int			 size, blen, map_size, struct_size;
     __be64		 x, y;

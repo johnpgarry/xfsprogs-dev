@@ -343,7 +343,7 @@ err:
 
 static int
 find_first_zero_bit(
-	__uint64_t	mask)
+	uint64_t	mask)
 {
 	int		n;
 	int		b = 0;
@@ -356,7 +356,7 @@ find_first_zero_bit(
 
 static int
 popcnt(
-	__uint64_t	mask)
+	uint64_t	mask)
 {
 	int		n;
 	int		b = 0;
@@ -1064,14 +1064,14 @@ err:
  * Compare the key fields of two rmap records -- positive if key1 > key2,
  * negative if key1 < key2, and zero if equal.
  */
-__int64_t
+int64_t
 rmap_diffkeys(
 	struct xfs_rmap_irec	*kp1,
 	struct xfs_rmap_irec	*kp2)
 {
 	__u64			oa;
 	__u64			ob;
-	__int64_t		d;
+	int64_t			d;
 	struct xfs_rmap_irec	tmp;
 
 	tmp = *kp1;
@@ -1081,7 +1081,7 @@ rmap_diffkeys(
 	tmp.rm_flags &= ~XFS_RMAP_REC_FLAGS;
 	ob = libxfs_rmap_irec_offset_pack(&tmp);
 
-	d = (__int64_t)kp1->rm_startblock - kp2->rm_startblock;
+	d = (int64_t)kp1->rm_startblock - kp2->rm_startblock;
 	if (d)
 		return d;
 
@@ -1192,10 +1192,10 @@ fix_inode_reflink_flags(
 {
 	struct ino_tree_node	*irec;
 	int			bit;
-	__uint64_t		was;
-	__uint64_t		is;
-	__uint64_t		diff;
-	__uint64_t		mask;
+	uint64_t		was;
+	uint64_t		is;
+	uint64_t		diff;
+	uint64_t		mask;
 	int			error = 0;
 	xfs_agino_t		agino;
 
