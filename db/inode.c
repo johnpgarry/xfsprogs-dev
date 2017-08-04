@@ -711,3 +711,14 @@ _("Metadata CRC error detected for ino %lld\n"),
 	/* track updated info in ring */
 	ring_add();
 }
+
+void
+xfs_inode_set_crc(
+	struct xfs_buf *bp)
+{
+	ASSERT(iocur_top->ino_buf);
+	ASSERT(iocur_top->bp == bp);
+
+	libxfs_dinode_calc_crc(mp, iocur_top->data);
+	iocur_top->ino_crc_ok = 1;
+}

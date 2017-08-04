@@ -64,8 +64,6 @@ extern void	set_cur(const struct typ *type, xfs_daddr_t blknum,
 extern void     ring_add(void);
 extern void	set_iocur_type(const struct typ *type);
 extern void	xfs_dummy_verify(struct xfs_buf *bp);
-extern void	xfs_verify_recalc_inode_crc(struct xfs_buf *bp);
-extern void	xfs_verify_recalc_dquot_crc(struct xfs_buf *bp);
 extern void	xfs_verify_recalc_crc(struct xfs_buf *bp);
 
 /*

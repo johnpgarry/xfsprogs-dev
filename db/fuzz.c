@@ -125,8 +125,7 @@ fuzz_f(
 		return 0;
 	}
 
-	if (invalid_data && iocur_top->typ->crc_off == TYP_F_NO_CRC_OFF &&
-			!iocur_top->ino_buf && !iocur_top->dquot_buf) {
+	if (invalid_data && iocur_top->typ->crc_off == TYP_F_NO_CRC_OFF) {
 		dbprintf(_("Cannot recalculate CRCs on this type of object\n"));
 		return 0;
 	}
@@ -153,12 +152,6 @@ fuzz_f(
 	if (corrupt) {
 		local_ops.verify_write = xfs_dummy_verify;
 		dbprintf(_("Allowing fuzz of corrupted data and bad CRC\n"));
-	} else if (iocur_top->ino_buf) {
-		local_ops.verify_write = xfs_verify_recalc_inode_crc;
-		dbprintf(_("Allowing fuzz of corrupted inode with good CRC\n"));
-	} else if (iocur_top->dquot_buf) {
-		local_ops.verify_write = xfs_verify_recalc_dquot_crc;
-		dbprintf(_("Allowing fuzz of corrupted dquot with good CRC\n"));
 	} else if (iocur_top->typ->crc_off == TYP_F_CRC_FUNC) {
 		local_ops.verify_write = iocur_top->typ->set_crc;
 		dbprintf(_("Allowing fuzz of corrupted data with good CRC\n"));

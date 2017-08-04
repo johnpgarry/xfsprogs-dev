@@ -22,6 +22,7 @@
 #include "faddr.h"
 #include "fprint.h"
 #include "field.h"
+#include "dquot.h"
 #include "inode.h"
 #include "io.h"
 #include "output.h"
@@ -466,28 +467,6 @@ xfs_dummy_verify(
 }
 
 void
-xfs_verify_recalc_inode_crc(
-	struct xfs_buf *bp)
-{
-	ASSERT(iocur_top->ino_buf);
-	ASSERT(iocur_top->bp == bp);
-
-	libxfs_dinode_calc_crc(mp, iocur_top->data);
-	iocur_top->ino_crc_ok = 1;
-}
-
-void
-xfs_verify_recalc_dquot_crc(
-	struct xfs_buf *bp)
-{
-	ASSERT((iocur_top->dquot_buf));
-	ASSERT(iocur_top->bp == bp);
-
-	xfs_update_cksum(iocur_top->data, sizeof(struct xfs_dqblk),
-			 XFS_DQUOT_CRC_OFF);
-}
-
-void
 xfs_verify_recalc_crc(
 	struct xfs_buf *bp)
 {
@@ -510,14 +489,10 @@ write_cur(void)
 		skip_crc = true;
 
 	if (!skip_crc) {
-		if (iocur_top->ino_buf) {
-			libxfs_dinode_calc_crc(mp, iocur_top->data);
-			iocur_top->ino_crc_ok = 1;
-		} else if (iocur_top->dquot_buf) {
-			xfs_update_cksum(iocur_top->data,
-					 sizeof(struct xfs_dqblk),
-					 XFS_DQUOT_CRC_OFF);
-		}
+		if (iocur_top->ino_buf)
+			xfs_inode_set_crc(iocur_top->bp);
+		else if (iocur_top->dquot_buf)
+			xfs_dquot_set_crc(iocur_top->bp);
 	}
 	if (iocur_top->bbmap)
 		write_cur_bbs();
