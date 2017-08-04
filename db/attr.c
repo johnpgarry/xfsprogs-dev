@@ -606,6 +606,38 @@ const struct field	attr3_remote_crc_flds[] = {
 	{ NULL }
 };
 
+/* Set the CRC. */
+void
+xfs_attr3_set_crc(
+	struct xfs_buf		*bp)
+{
+	__be32			magic32;
+	__be16			magic16;
+
+	magic32 = *(__be32 *)bp->b_addr;
+	magic16 = ((struct xfs_da_blkinfo *)bp->b_addr)->magic;
+
+	switch (magic16) {
+	case cpu_to_be16(XFS_ATTR3_LEAF_MAGIC):
+		xfs_buf_update_cksum(bp, XFS_ATTR3_LEAF_CRC_OFF);
+		return;
+	case cpu_to_be16(XFS_DA3_NODE_MAGIC):
+		xfs_buf_update_cksum(bp, XFS_DA3_NODE_CRC_OFF);
+		return;
+	default:
+		break;
+	}
+
+	switch (magic32) {
+	case cpu_to_be32(XFS_ATTR3_RMT_MAGIC):
+		xfs_buf_update_cksum(bp, XFS_ATTR3_RMT_CRC_OFF);
+		return;
+	default:
+		dbprintf(_("Unknown attribute buffer type!\n"));
+		break;
+	}
+}
+
 /*
  * Special read verifier for attribute buffers. Detect the magic number
  * appropriately and set the correct verifier and call it.

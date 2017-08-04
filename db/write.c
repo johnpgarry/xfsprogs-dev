@@ -173,6 +173,9 @@ write_f(
 	} else if (iocur_top->dquot_buf) {
 		local_ops.verify_write = xfs_verify_recalc_dquot_crc;
 		dbprintf(_("Allowing write of corrupted dquot with good CRC\n"));
+	} else if (iocur_top->typ->crc_off == TYP_F_CRC_FUNC) {
+		local_ops.verify_write = iocur_top->typ->set_crc;
+		dbprintf(_("Allowing write of corrupted data with good CRC\n"));
 	} else { /* invalid data */
 		local_ops.verify_write = xfs_verify_recalc_crc;
 		dbprintf(_("Allowing write of corrupted data with good CRC\n"));
