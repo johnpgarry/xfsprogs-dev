@@ -1609,7 +1609,7 @@ add_remote_vals(
 		attr_data.remote_vals[attr_data.remote_val_count] = blockidx;
 		attr_data.remote_val_count++;
 		blockidx++;
-		length -= mp->m_sb.sb_blocksize;
+		length -= XFS_ATTR3_RMT_BUF_SPACE(mp, mp->m_sb.sb_blocksize);
 	}
 
 	if (attr_data.remote_val_count >= MAX_REMOTE_VALS) {
