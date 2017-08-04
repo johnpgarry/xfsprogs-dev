@@ -1259,7 +1259,7 @@ null_check(char *name, int length)
 {
 	int i;
 
-	ASSERT(length < MAXPATHLEN);
+	ASSERT(length < XFS_SYMLINK_MAXLEN);
 
 	for (i = 0; i < length; i++, name++)  {
 		if (*name == '\0')
@@ -1371,7 +1371,7 @@ process_symlink(
 	blkmap_t 	*blkmap)
 {
 	char			*symlink;
-	char			data[MAXPATHLEN];
+	char			data[XFS_SYMLINK_MAXLEN];
 
 	/*
 	 * check size against kernel symlink limits.  we know
@@ -1379,7 +1379,7 @@ process_symlink(
 	 * the inode is structurally ok so we don't have to check
 	 * for that
 	 */
-	if (be64_to_cpu(dino->di_size) >= MAXPATHLEN)  {
+	if (be64_to_cpu(dino->di_size) >= XFS_SYMLINK_MAXLEN)  {
 	       do_warn(_("symlink in inode %" PRIu64 " too long (%llu chars)\n"),
 		       lino, (unsigned long long) be64_to_cpu(dino->di_size));
 		return(1);
