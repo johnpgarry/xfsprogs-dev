@@ -812,7 +812,7 @@ open_init(void)
 	lsproj_cmd.args = _("[-D | -R]");
 	lsproj_cmd.argmin = 0;
 	lsproj_cmd.argmax = -1;
-	lsproj_cmd.flags = CMD_NOMAP_OK;
+	lsproj_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
 	lsproj_cmd.oneline =
 		_("list project identifier set on the currently open file");
 	lsproj_cmd.help = lsproj_help;
