@@ -591,6 +591,13 @@ __initbuf(xfs_buf_t *bp, struct xfs_buftarg *btp, xfs_daddr_t bno,
 	bp->b_holder = 0;
 	bp->b_recur = 0;
 	bp->b_ops = NULL;
+
+	if (!bp->b_maps) {
+		bp->b_nmaps = 1;
+		bp->b_maps = &bp->__b_map;
+		bp->b_maps[0].bm_bn = bp->b_bn;
+		bp->b_maps[0].bm_len = bp->b_length;
+	}
 }
 
 static void
@@ -654,7 +661,8 @@ __libxfs_getbufr(int blen)
 			list_del_init(&bp->b_node.cn_mru);
 			free(bp->b_addr);
 			bp->b_addr = NULL;
-			free(bp->b_maps);
+			if (bp->b_maps != &bp->__b_map)
+				free(bp->b_maps);
 			bp->b_maps = NULL;
 		}
 	} else
