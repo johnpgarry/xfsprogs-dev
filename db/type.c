@@ -39,6 +39,7 @@
 #include "dir2.h"
 #include "text.h"
 #include "symlink.h"
+#include "fuzz.h"
 
 static const typ_t	*findtyp(char *name);
 static int		type_f(int argc, char **argv);
@@ -254,10 +255,17 @@ handle_struct(
 	int           argc,
 	char          **argv)
 {
-	if (action == DB_WRITE)
+	switch (action) {
+	case DB_FUZZ:
+		fuzz_struct(fields, argc, argv);
+		break;
+	case DB_WRITE:
 		write_struct(fields, argc, argv);
-	else
+		break;
+	case DB_READ:
 		print_struct(fields, argc, argv);
+		break;
+	}
 }
 
 void
@@ -267,10 +275,17 @@ handle_string(
 	int           argc,
 	char          **argv)
 {
-	if (action == DB_WRITE)
+	switch (action) {
+	case DB_WRITE:
 		write_string(fields, argc, argv);
-	else
+		break;
+	case DB_READ:
 		print_string(fields, argc, argv);
+		break;
+	case DB_FUZZ:
+		dbprintf(_("string fuzzing not supported.\n"));
+		break;
+	}
 }
 
 void
@@ -280,10 +295,17 @@ handle_block(
 	int           argc,
 	char          **argv)
 {
-	if (action == DB_WRITE)
+	switch (action) {
+	case DB_WRITE:
 		write_block(fields, argc, argv);
-	else
+		break;
+	case DB_READ:
 		print_block(fields, argc, argv);
+		break;
+	case DB_FUZZ:
+		dbprintf(_("use 'blocktrash' or 'write' to fuzz a block.\n"));
+		break;
+	}
 }
 
 void
@@ -293,6 +315,14 @@ handle_text(
 	int           argc,
 	char          **argv)
 {
-	if (action != DB_WRITE)
+	switch (action) {
+	case DB_FUZZ:
+		/* fall through */
+	case DB_WRITE:
+		dbprintf(_("text writing/fuzzing not supported.\n"));
+		break;
+	case DB_READ:
 		print_text(fields, argc, argv);
+		break;
+	}
 }

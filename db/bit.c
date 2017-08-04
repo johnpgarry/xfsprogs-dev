@@ -19,13 +19,8 @@
 #include "libxfs.h"
 #include "bit.h"
 
-#undef setbit	/* defined in param.h on Linux */
-
-static int	getbit(char *ptr, int bit);
-static void	setbit(char *ptr, int bit, int val);
-
-static int
-getbit(
+int
+getbit_l(
 	char	*ptr,
 	int	bit)
 {
@@ -39,8 +34,8 @@ getbit(
 	return (*ptr & mask) >> shift;
 }
 
-static void
-setbit(
+void
+setbit_l(
 	char *ptr,
 	int  bit,
 	int  val)
@@ -106,7 +101,7 @@ getbitval(
 
 
 	for (i = 0, rval = 0LL; i < nbits; i++) {
-		if (getbit(p, bit + i)) {
+		if (getbit_l(p, bit + i)) {
 			/* If the last bit is on and we care about sign
 			 * bits and we don't have a full 64 bit
 			 * container, turn all bits on between the
@@ -162,7 +157,7 @@ setbitval(
 
 	if (bitoff % NBBY || nbits % NBBY) {
 		for (bit = 0; bit < nbits; bit++)
-			setbit(out, bit + bitoff, getbit(in, bit));
+			setbit_l(out, bit + bitoff, getbit_l(in, bit));
 	} else
 		memcpy(out + byteize(bitoff), in, byteize(nbits));
 }

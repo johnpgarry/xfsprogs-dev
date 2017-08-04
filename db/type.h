@@ -30,6 +30,7 @@ typedef enum typnm
 	TYP_TEXT, TYP_FINOBT, TYP_NONE
 } typnm_t;
 
+#define DB_FUZZ  2
 #define DB_WRITE 1
 #define DB_READ  0
 

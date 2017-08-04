@@ -613,6 +613,55 @@ in units of 512-byte blocks, no matter what the filesystem's block size is.
 .BI "The optional " start " and " end " arguments can be used to constrain
 the output to a particular range of disk blocks.
 .TP
+.BI "fuzz [\-c] [\-d] " "field action"
+Write garbage into a specific structure field on disk.
+Expert mode must be enabled to use this command.
+The operation happens immediately; there is no buffering.
+.IP
+The fuzz command can take the following
+.IR action "s"
+against a field:
+.RS 1.0i
+.TP 0.4i
+.B zeroes
+Clears all bits in the field.
+.TP 0.4i
+.B ones
+Sets all bits in the field.
+.TP 0.4i
+.B firstbit
+Flips the first bit in the field.
+For a scalar value, this is the highest bit.
+.TP 0.4i
+.B middlebit
+Flips the middle bit in the field.
+.TP 0.4i
+.B lastbit
+Flips the last bit in the field.
+For a scalar value, this is the lowest bit.
+.TP 0.4i
+.B add
+Adds a small value to a scalar field.
+.TP 0.4i
+.B sub
+Subtracts a small value from a scalar field.
+.TP 0.4i
+.B random
+Randomizes the contents of the field.
+.RE
+.IP
+The following switches affect the write behavior:
+.RS 1.0i
+.TP 0.4i
+.B \-c
+Skip write verifiers and CRC recalculation; allows invalid data to be written
+to disk.
+.TP 0.4i
+.B \-d
+Skip write verifiers but perform CRC recalculation; allows invalid data to be
+written to disk to test detection of invalid data.
+.RE
+.TP
 .BI hash " string
 Prints the hash value of
 .I string

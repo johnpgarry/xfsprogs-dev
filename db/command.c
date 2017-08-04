@@ -51,6 +51,7 @@
 #include "dquot.h"
 #include "fsmap.h"
 #include "crc.h"
+#include "fuzz.h"
 
 cmdinfo_t	*cmdtab;
 int		ncmds;
@@ -147,4 +148,5 @@ init_commands(void)
 	type_init();
 	write_init();
 	dquot_init();
+	fuzz_init();
 }
