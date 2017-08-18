@@ -2934,6 +2934,7 @@ metadump_f(
 		ret = dup2(outfd, STDOUT_FILENO);
 		if (ret < 0)
 			perror("un-redirecting stdout");
+		stdout_metadump = false;
 	}
 	fclose(outf);
 
