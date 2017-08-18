@@ -138,7 +138,8 @@ write_f(
 	}
 
 	if (invalid_data &&
-	    iocur_top->typ->crc_off == TYP_F_NO_CRC_OFF) {
+	    iocur_top->typ->crc_off == TYP_F_NO_CRC_OFF &&
+	    xfs_sb_version_hascrc(&mp->m_sb)) {
 		dbprintf(_("Cannot recalculate CRCs on this type of object\n"));
 		return 0;
 	}
@@ -162,7 +163,9 @@ write_f(
 	local_ops.verify_read = stashed_ops->verify_read;
 	iocur_top->bp->b_ops = &local_ops;
 
-	if (corrupt) {
+	if (!xfs_sb_version_hascrc(&mp->m_sb)) {
+		local_ops.verify_write = xfs_dummy_verify;
+	} else if (corrupt) {
 		local_ops.verify_write = xfs_dummy_verify;
 		dbprintf(_("Allowing write of corrupted data and bad CRC\n"));
 	} else if (iocur_top->typ->crc_off == TYP_F_CRC_FUNC) {
