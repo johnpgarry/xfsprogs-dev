@@ -1281,7 +1281,7 @@ check_opt(
 
 	if (sp->index != index) {
 		fprintf(stderr,
-	("Developer screwed up option parsing (%d/%d)! Please report!\n"),
+	_("Developer screwed up option parsing (%d/%d)! Please report!\n"),
 			sp->index, index);
 		reqval(opts->name, (char **)opts->subopts, index);
 	}
