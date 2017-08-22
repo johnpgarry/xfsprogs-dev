@@ -600,12 +600,7 @@ fsrallfs(char *mtab, int howlong, char *leftofffile)
 	/* reorg for 'howlong' -- checked in 'fsrfs' */
 	while (endtime > time(0)) {
 		pid_t pid;
-		if (fs == fsend)
-			fs = fsbase;
-		if (fs->npass == npasses) {
-			fsrprintf(_("Completed all %d passes\n"), npasses);
-			break;
-		}
+
 		if (npasses > 1 && !fs->npass)
 			Mflag = 1;
 		else
@@ -631,6 +626,12 @@ fsrallfs(char *mtab, int howlong, char *leftofffile)
 		startino = 0;  /* reset after the first time through */
 		fs->npass++;
 		fs++;
+		if (fs == fsend)
+			fs = fsbase;
+		if (fs->npass == npasses) {
+			fsrprintf(_("Completed all %d passes\n"), npasses);
+			break;
+		}
 	}
 	fsrall_cleanup(endtime <= time(0));
 }
