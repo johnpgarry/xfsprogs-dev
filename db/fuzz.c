@@ -226,7 +226,7 @@ fuzz_lastbit(
 	int		nbits)
 {
 	setbit_l((char *)buf, bitoff + nbits - 1,
-			!getbit_l((char *)buf, bitoff));
+			!getbit_l((char *)buf, bitoff + nbits - 1));
 	return true;
 }
 
@@ -238,7 +238,7 @@ fuzz_middlebit(
 	int		nbits)
 {
 	setbit_l((char *)buf, bitoff + nbits / 2,
-			!getbit_l((char *)buf, bitoff));
+			!getbit_l((char *)buf, bitoff + nbits / 2));
 	return true;
 }
 
