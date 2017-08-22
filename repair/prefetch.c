@@ -703,6 +703,7 @@ pf_queuing_worker(
 		if (err != 0) {
 			do_warn(_("failed to create prefetch thread: %s\n"),
 				strerror(err));
+			args->io_threads[i] = 0;
 			if (i == 0) {
 				pf_start_processing(args);
 				return NULL;
@@ -816,6 +817,7 @@ pf_create_prefetch_thread(
 	if (err != 0) {
 		do_warn(_("failed to create prefetch thread: %s\n"),
 			strerror(err));
+		args->queuing_thread = 0;
 		cleanup_inode_prefetch(args);
 	}
 
