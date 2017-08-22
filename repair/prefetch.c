@@ -703,6 +703,8 @@ pf_queuing_worker(
 		if (err != 0) {
 			do_warn(_("failed to create prefetch thread: %s\n"),
 				strerror(err));
+			pftrace("failed to create prefetch thread for AG %d: %s",
+				args->agno, strerror(err));
 			args->io_threads[i] = 0;
 			if (i == 0) {
 				pf_start_processing(args);
@@ -817,6 +819,8 @@ pf_create_prefetch_thread(
 	if (err != 0) {
 		do_warn(_("failed to create prefetch thread: %s\n"),
 			strerror(err));
+		pftrace("failed to create prefetch thread for AG %d: %s",
+			args->agno, strerror(err));
 		args->queuing_thread = 0;
 		cleanup_inode_prefetch(args);
 	}
@@ -882,8 +886,11 @@ start_inode_prefetch(
 		if (prev_args->prefetch_done) {
 			if (!pf_create_prefetch_thread(args))
 				args = NULL;
-		} else
+		} else {
 			prev_args->next_args = args;
+			pftrace("queued AG %d after AG %d",
+				args->agno, prev_args->agno);
+		}
 		pthread_mutex_unlock(&prev_args->lock);
 	}
 
