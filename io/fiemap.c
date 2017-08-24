@@ -52,6 +52,36 @@ fiemap_help(void)
 "\n"));
 }
 
+static void
+print_hole(
+	   int		foff_w,
+	   int		boff_w,
+	   int		tot_w,
+	   int		cur_extent,
+	   int		lflag,
+	   bool		plain,
+	   __u64	llast,
+	   __u64	lstart)
+{
+	   char		lbuf[48];
+
+	   if (plain) {
+		printf("\t%d: [%llu..%llu]: hole", cur_extent,
+		       llast, lstart - 1ULL);
+		if (lflag)
+			printf(_(" %llu blocks\n"), lstart - llast);
+		else
+			printf("\n");
+	   } else {
+		snprintf(lbuf, sizeof(lbuf), "[%llu..%llu]:", llast,
+			 lstart - 1ULL);
+		printf("%4d: %-*s %-*s %*llu\n", cur_extent, foff_w, lbuf,
+		       boff_w, _("hole"), tot_w, lstart - llast);
+	   }
+
+
+}
+
 static int
 print_verbose(
 	struct fiemap_extent	*extent,
@@ -87,11 +117,8 @@ print_verbose(
 	}
 
 	if (lstart != llast) {
-		snprintf(lbuf, sizeof(lbuf), "[%llu..%llu]:", llast,
-			 lstart - 1ULL);
-		printf("%4d: %-*s %-*s %*llu\n", cur_extent, foff_w, lbuf,
-		       boff_w, _("hole"), tot_w, lstart - llast);
-		memset(lbuf, 0, sizeof(lbuf));
+		print_hole(foff_w, boff_w, tot_w, cur_extent, 0, false, llast,
+			   lstart);
 		cur_extent++;
 	}
 
@@ -126,12 +153,7 @@ print_plain(
 	block = BTOBBT(extent->fe_physical);
 
 	if (lstart != llast) {
-		printf("\t%d: [%llu..%llu]: hole", cur_extent,
-		       llast, lstart - 1ULL);
-		if (lflag)
-			printf(_(" %llu blocks\n"), lstart - llast);
-		else
-			printf("\n");
+		print_hole(0, 0, 0, cur_extent, lflag, true, llast, lstart);
 		cur_extent++;
 	}
 
@@ -309,25 +331,9 @@ fiemap_f(
 		return 0;
 	}
 
-	if (cur_extent && last_logical < st.st_size) {
-		char	lbuf[32];
-
-		snprintf(lbuf, sizeof(lbuf), "[%llu..%llu]:",
-			 BTOBBT(last_logical), BTOBBT(st.st_size) - 1);
-		if (vflag) {
-			printf("%4d: %-*s %-*s %*llu\n", cur_extent,
-			       foff_w, lbuf, boff_w, _("hole"), tot_w,
-			       BTOBBT(st.st_size - last_logical));
-		} else {
-			printf("\t%d: %s %s", cur_extent, lbuf,
-			       _("hole"));
-			if (lflag)
-				printf(_(" %llu blocks\n"),
-				       BTOBBT(st.st_size - last_logical));
-			else
-				printf("\n");
-		}
-	}
+	if (cur_extent && last_logical < st.st_size)
+		print_hole(foff_w, boff_w, tot_w, cur_extent, lflag, !vflag,
+			   BTOBBT(last_logical), BTOBBT(st.st_size));
 
 out:
 	free(fiemap);
