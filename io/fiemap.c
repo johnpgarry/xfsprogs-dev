@@ -24,6 +24,7 @@
 #include "io.h"
 
 static cmdinfo_t fiemap_cmd;
+static int max_extents = 0;
 
 static void
 fiemap_help(void)
@@ -56,7 +57,6 @@ print_verbose(
 	int			boff_w,
 	int			tot_w,
 	int			flg_w,
-	int			max_extents,
 	int			*cur_extent,
 	__u64			*last_logical)
 {
@@ -111,7 +111,6 @@ static void
 print_plain(
 	struct fiemap_extent	*extent,
 	int			lflag,
-	int			max_extents,
 	int			*cur_extent,
 	__u64			*last_logical)
 {
@@ -196,7 +195,6 @@ fiemap_f(
 	char		**argv)
 {
 	struct fiemap	*fiemap;
-	int		max_extents = 0;
 	int		num_extents = 32;
 	int		last = 0;
 	int		lflag = 0;
@@ -283,11 +281,11 @@ fiemap_f(
 				}
 
 				print_verbose(extent, foff_w, boff_w, tot_w,
-					      flg_w, max_extents, &cur_extent,
+					      flg_w, &cur_extent,
 					      &last_logical);
 			} else
-				print_plain(extent, lflag, max_extents,
-					    &cur_extent, &last_logical);
+				print_plain(extent, lflag, &cur_extent,
+					    &last_logical);
 
 			if (extent->fe_flags & FIEMAP_EXTENT_LAST) {
 				last = 1;
