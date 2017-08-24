@@ -48,6 +48,8 @@ fsmap_help(void)
 " -n -- query n extents at a time.\n"
 " -m -- output machine-readable format.\n"
 " -v -- Verbose information, show AG and offsets.  Show flags legend on 2nd -v\n"
+"\n"
+"The optional start and end arguments require one of -d, -l, or -r to be set.\n"
 "\n"));
 }
 

@@ -323,6 +323,9 @@ and
 .I end
 arguments can be used to constrain the output to a particular range of
 disk blocks.
+If these two options are specified, exactly one of
+.BR "-d" ", " "-l" ", or " "-r"
+must also be set.
 .RE
 .RS 1.0i
 .PD 0
@@ -372,12 +375,12 @@ for other filesystem metadata.
 .TP
 .BI \-n " num_extents"
 If this option is given,
-.B xfs_fsmap
+.B fsmap
 obtains the extent list of the file in groups of
 .I num_extents
 extents.
 In the absence of
-.BR \-n ", " xfs_fsmap
+.BR "-n" ", " "fsmap"
 queries the system for extents in groups of 131,072 records.
 .TP
 .B \-v
