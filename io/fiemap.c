@@ -23,6 +23,8 @@
 #include "init.h"
 #include "io.h"
 
+#define EXTENT_BATCH 32
+
 static cmdinfo_t fiemap_cmd;
 static int max_extents = 0;
 
@@ -195,7 +197,6 @@ fiemap_f(
 	char		**argv)
 {
 	struct fiemap	*fiemap;
-	int		num_extents = 32;
 	int		last = 0;
 	int		lflag = 0;
 	int		vflag = 0;
@@ -231,10 +232,8 @@ fiemap_f(
 		}
 	}
 
-	if (max_extents)
-		num_extents = min(num_extents, max_extents);
 	map_size = sizeof(struct fiemap) +
-		(num_extents * sizeof(struct fiemap_extent));
+		(EXTENT_BATCH * sizeof(struct fiemap_extent));
 	fiemap = malloc(map_size);
 	if (!fiemap) {
 		fprintf(stderr, _("%s: malloc of %d bytes failed.\n"),
@@ -246,15 +245,12 @@ fiemap_f(
 	printf("%s:\n", file->name);
 
 	while (!last && ((cur_extent + 1) != max_extents)) {
-		if (max_extents)
-			num_extents = min(num_extents,
-					  max_extents - (cur_extent + 1));
 
 		memset(fiemap, 0, map_size);
 		fiemap->fm_flags = fiemap_flags;
 		fiemap->fm_start = last_logical;
 		fiemap->fm_length = -1LL;
-		fiemap->fm_extent_count = num_extents;
+		fiemap->fm_extent_count = EXTENT_BATCH;
 
 		ret = ioctl(file->fd, FS_IOC_FIEMAP, (unsigned long)fiemap);
 		if (ret < 0) {
