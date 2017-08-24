@@ -26,7 +26,7 @@
 #define EXTENT_BATCH 32
 
 static cmdinfo_t fiemap_cmd;
-static int max_extents = 0;
+static int max_extents = -1;
 
 static void
 fiemap_help(void)
@@ -122,7 +122,7 @@ print_verbose(
 		cur_extent++;
 	}
 
-	if ((cur_extent + 1) == max_extents)
+	if (cur_extent == max_extents)
 		return 1;
 
 	snprintf(lbuf, sizeof(lbuf), "[%llu..%llu]:", lstart,
@@ -157,7 +157,7 @@ print_plain(
 		cur_extent++;
 	}
 
-	if ((cur_extent + 1) == max_extents)
+	if (cur_extent == max_extents)
 		return 1;
 
 	printf("\t%d: [%llu..%llu]: %llu..%llu", cur_extent,
@@ -264,7 +264,7 @@ fiemap_f(
 
 	printf("%s:\n", file->name);
 
-	while (!last && ((cur_extent + 1) != max_extents)) {
+	while (!last && (cur_extent != max_extents)) {
 
 		memset(fiemap, 0, map_size);
 		fiemap->fm_flags = fiemap_flags;
@@ -314,12 +314,12 @@ fiemap_f(
 				break;
 			}
 
-			if ((cur_extent + 1) == max_extents)
+			if (cur_extent == max_extents)
 				break;
 		}
 	}
 
-	if ((cur_extent + 1) == max_extents)
+	if (cur_extent  == max_extents)
 		goto out;
 
 	memset(&st, 0, sizeof(st));
