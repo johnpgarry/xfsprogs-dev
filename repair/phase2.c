@@ -86,7 +86,7 @@ zero_log(
 			exit(2);
 	} else {
 		if (verbose) {
-			do_warn(
+			do_log(
 	_("zero_log: head block %" PRId64 " tail block %" PRId64 "\n"),
 				head_blk, tail_blk);
 		}
