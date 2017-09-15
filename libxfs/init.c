@@ -239,13 +239,11 @@ int
 libxfs_init(libxfs_init_t *a)
 {
 	char		*blockfile;
-	char		curdir[MAXPATHLEN];
 	char		*dname;
 	char		dpath[25];
 	int		fd;
 	char		*logname;
 	char		logpath[25];
-	int		needcd;
 	char		*rawfile;
 	char		*rtname;
 	char		rtpath[25];
@@ -261,8 +259,6 @@ libxfs_init(libxfs_init_t *a)
 	a->dsize = a->lbsize = a->rtbsize = 0;
 	a->dbsize = a->logBBsize = a->logBBstart = a->rtsize = 0;
 
-	(void)getcwd(curdir,MAXPATHLEN);
-	needcd = 0;
 	fd = -1;
 	flags = (a->isreadonly | a->isdirect);
 
@@ -276,14 +272,11 @@ libxfs_init(libxfs_init_t *a)
 	if (a->volname) {
 		if(!check_open(a->volname,flags,&rawfile,&blockfile))
 			goto done;
-		needcd = 1;
 		fd = open(rawfile, O_RDONLY);
 		dname = a->dname = a->volname;
 		a->volname = NULL;
 	}
 	if (dname) {
-		if (dname[0] != '/' && needcd)
-			chdir(curdir);
 		if (a->disfile) {
 			a->ddev= libxfs_device_open(dname, a->dcreat, flags,
 						    a->setblksize);
@@ -299,12 +292,9 @@ libxfs_init(libxfs_init_t *a)
 			platform_findsizes(rawfile, a->dfd,
 					   &a->dsize, &a->dbsize);
 		}
-		needcd = 1;
 	} else
 		a->dsize = 0;
 	if (logname) {
-		if (logname[0] != '/' && needcd)
-			chdir(curdir);
 		if (a->lisfile) {
 			a->logdev = libxfs_device_open(logname,
 					a->lcreat, flags, a->setblksize);
@@ -320,12 +310,9 @@ libxfs_init(libxfs_init_t *a)
 			platform_findsizes(rawfile, a->logfd,
 					   &a->logBBsize, &a->lbsize);
 		}
-		needcd = 1;
 	} else
 		a->logBBsize = 0;
 	if (rtname) {
-		if (rtname[0] != '/' && needcd)
-			chdir(curdir);
 		if (a->risfile) {
 			a->rtdev = libxfs_device_open(rtname,
 					a->rcreat, flags, a->setblksize);
@@ -341,7 +328,6 @@ libxfs_init(libxfs_init_t *a)
 			platform_findsizes(rawfile, a->rtfd,
 					   &a->rtsize, &a->rtbsize);
 		}
-		needcd = 1;
 	} else
 		a->rtsize = 0;
 	if (a->dsize < 0) {
@@ -359,8 +345,6 @@ libxfs_init(libxfs_init_t *a)
 			progname);
 		goto done;
 	}
-	if (needcd)
-		chdir(curdir);
 	if (!libxfs_bhash_size)
 		libxfs_bhash_size = LIBXFS_BHASHSIZE(sbp);
 	libxfs_bcache = cache_init(a->bcache_flags, libxfs_bhash_size,
