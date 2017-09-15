@@ -383,7 +383,10 @@ _("bad state %d, inode %" PRIu64 " bmap block 0x%" PRIx64 "\n"),
 
 	/* Record BMBT blocks in the reverse-mapping data. */
 	if (check_dups && collect_rmaps) {
+		agno = XFS_FSB_TO_AGNO(mp, bno);
+		pthread_mutex_lock(&ag_locks[agno].lock);
 		error = rmap_add_bmbt_rec(mp, ino, whichfork, bno);
+		pthread_mutex_unlock(&ag_locks[agno].lock);
 		if (error)
 			do_error(
 _("couldn't add inode %"PRIu64" bmbt block %"PRIu64" reverse-mapping data."),
