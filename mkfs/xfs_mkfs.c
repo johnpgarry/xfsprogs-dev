@@ -2534,7 +2534,9 @@ reported by the device (%u).\n"),
 				}
 			}
 		}
-		if (dswidth && ((agsize % dswidth) == 0) && (agcount > 1)) {
+		if (dswidth && ((agsize % dswidth) == 0)
+			    && (dswidth != dsunit)
+			    && (agcount > 1)) {
 			/* This is a non-optimal configuration because all AGs
 			 * start on the same disk in the stripe.  Changing
 			 * the AG size by one sunit will guarantee that this
