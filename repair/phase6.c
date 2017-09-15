@@ -3025,8 +3025,6 @@ mark_standalone_inodes(xfs_mount_t *mp)
 	irec = find_inode_rec(mp, XFS_INO_TO_AGNO(mp, mp->m_sb.sb_rbmino),
 			XFS_INO_TO_AGINO(mp, mp->m_sb.sb_rbmino));
 
-	ASSERT(irec != NULL);
-
 	offset = XFS_INO_TO_AGINO(mp, mp->m_sb.sb_rbmino) -
 			irec->ino_startnum;
 
@@ -3037,8 +3035,6 @@ mark_standalone_inodes(xfs_mount_t *mp)
 
 	offset = XFS_INO_TO_AGINO(mp, mp->m_sb.sb_rsumino) -
 			irec->ino_startnum;
-
-	ASSERT(irec != NULL);
 
 	add_inode_reached(irec, offset);
 

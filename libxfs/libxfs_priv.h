@@ -496,8 +496,8 @@ int libxfs_zero_extent(struct xfs_inode *ip, xfs_fsblock_t start_fsb,
 bool xfs_log_check_lsn(struct xfs_mount *, xfs_lsn_t);
 
 /* xfs_icache.c */
-#define xfs_inode_set_cowblocks_tag(ip)
-#define xfs_inode_set_eofblocks_tag(ip)
+#define xfs_inode_set_cowblocks_tag(ip)	do { } while (0)
+#define xfs_inode_set_eofblocks_tag(ip)	do { } while (0)
 
 /* xfs_stats.h */
 #define XFS_STATS_CALC_INDEX(member)	0
