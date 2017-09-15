@@ -367,6 +367,25 @@ values.
 This option disables automatic geometry detection and creates the filesystem
 without stripe geometry alignment even if the underlying storage device provides
 this information.
+.TP
+.BI rtinherit= value
+If set, all inodes created by
+.B mkfs.xfs
+will be created with the realtime flag set.
+Directories will pass on this flag to newly created children.
+.TP
+.BI projinherit= value
+All inodes created by
+.B mkfs.xfs
+will be assigned this project quota id.
+Directories will pass on the project id to newly created children.
+.TP
+.BI extszinherit= value
+All inodes created by
+.B mkfs.xfs
+will have this extent size hint applied.
+The value must be provided in units of filesystem blocks.
+Directories will pass on this hint to newly created children.
 .RE
 .TP
 .B \-f
@@ -507,6 +526,9 @@ log section of the filesystem. The valid
 .I log_section_options
 are:
 .RS 1.2i
+.TP
+.BI agnum= value
+If the log is internal, allocate it in this AG.
 .TP
 .BI internal[= value ]
 This is used to specify that the log section is a piece of the data
