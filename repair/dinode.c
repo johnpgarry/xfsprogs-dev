@@ -764,6 +764,7 @@ _("%s fork in ino %" PRIu64 " claims free block %" PRIu64 "\n"),
 			case XR_E_FS_MAP:
 			case XR_E_INO:
 			case XR_E_INUSE_FS:
+			case XR_E_REFC:
 				do_warn(
 _("%s fork in inode %" PRIu64 " claims metadata block %" PRIu64 "\n"),
 					forkname, ino, b);
@@ -777,6 +778,12 @@ _("%s fork in inode %" PRIu64 " claims metadata block %" PRIu64 "\n"),
 					break;
 				do_warn(
 _("%s fork in %s inode %" PRIu64 " claims used block %" PRIu64 "\n"),
+					forkname, ftype, ino, b);
+				goto done;
+
+			case XR_E_COW:
+				do_warn(
+_("%s fork in %s inode %" PRIu64 " claims CoW block %" PRIu64 "\n"),
 					forkname, ftype, ino, b);
 				goto done;
 
