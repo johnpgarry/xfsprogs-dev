@@ -187,6 +187,8 @@ struct opt_params dopts = {
 		"projinherit",
 #define D_EXTSZINHERIT	14
 		"extszinherit",
+#define D_COWEXTSIZE	15
+		"cowextsize",
 		NULL
 	},
 	.subopt_params = {
@@ -298,6 +300,12 @@ struct opt_params dopts = {
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = D_EXTSZINHERIT,
+		  .conflicts = { LAST_CONFLICT },
+		  .minval = 0,
+		  .maxval = UINT_MAX,
+		  .defaultval = SUBOPT_NEEDS_VAL,
+		},
+		{ .index = D_COWEXTSIZE,
 		  .conflicts = { LAST_CONFLICT },
 		  .minval = 0,
 		  .maxval = UINT_MAX,
@@ -1638,6 +1646,13 @@ main(
 					fsx.fsx_xflags |=
 						XFS_DIFLAG_EXTSZINHERIT;
 					break;
+				case D_COWEXTSIZE:
+					fsx.fsx_cowextsize = getnum(value,
+							&dopts,
+							D_COWEXTSIZE);
+					fsx.fsx_xflags |=
+						FS_XFLAG_COWEXTSIZE;
+					break;
 				default:
 					unknown('d', value);
 				}
@@ -2142,6 +2157,11 @@ _("reflink not supported without CRC support\n"));
 		sb_feat.reflink = false;
 	}
 
+	if ((fsx.fsx_xflags & FS_XFLAG_COWEXTSIZE) && !sb_feat.reflink) {
+		fprintf(stderr,
+_("cowextsize not supported without reflink support\n"));
+		usage();
+	}
 
 	if (sb_feat.rmapbt && xi.rtname) {
 		fprintf(stderr,
