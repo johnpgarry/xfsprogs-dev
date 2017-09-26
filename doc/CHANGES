@@ -1,3 +1,6 @@
+xfsprogs-4.13.0 (26 Sep 2017)
+	- no changes from v4.13.0-rc2
+
 xfsprogs-4.13.0-rc2 (21 Sep 2017)
 	- mkfs.xfs: pass custom cowextsize to created filesystem (Darrick Wong)
 	- xfs_repair: handle missing extent states (Darrick Wong)
