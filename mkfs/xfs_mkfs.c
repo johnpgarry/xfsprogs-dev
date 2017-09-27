@@ -39,7 +39,7 @@ static int  ispow2(unsigned int i);
 unsigned int		blocksize;
 unsigned int		sectorsize;
 
-#define MAX_SUBOPTS	16
+#define MAX_SUBOPTS	17
 #define SUBOPT_NEEDS_VAL	(-1LL)
 #define MAX_CONFLICTS	8
 #define LAST_CONFLICT	(-1)
