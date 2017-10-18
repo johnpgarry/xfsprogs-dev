@@ -607,8 +607,10 @@ libxfs_alloc_file_space(
 		if (error)
 			goto error0;
 
-		/* complete the transaction */
-		error = xfs_defer_finish(&tp, &free_list, ip);
+		/*
+		 * Complete the transaction
+		 */
+		error = xfs_defer_finish(&tp, &free_list);
 		if (error)
 			goto error0;
 
