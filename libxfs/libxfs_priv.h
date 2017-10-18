@@ -342,7 +342,6 @@ roundup_64(uint64_t x, uint32_t y)
 
 
 #define xfs_trans_set_sync(tp)		((void) 0)
-#define xfs_trans_ordered_buf(tp, bp)	((void) 0)
 #define	xfs_trans_agblocks_delta(tp, d)
 #define	xfs_trans_agflist_delta(tp, d)
 #define	xfs_trans_agbtree_delta(tp, d)

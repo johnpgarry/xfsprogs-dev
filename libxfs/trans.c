@@ -388,6 +388,26 @@ libxfs_trans_log_buf(
 	xfs_buf_item_log(bip, first, last);
 }
 
+/*
+ * For userspace, ordered buffers just need to be marked dirty so
+ * the transaction commit will write them and mark them up-to-date.
+ * In essence, they are just like any other logged buffer in userspace.
+ *
+ * If the buffer is already dirty, trigger the "already logged" return condition.
+ */
+bool
+libxfs_trans_ordered_buf(
+	struct xfs_trans	*tp,
+	struct xfs_buf		*bp)
+{
+	struct xfs_buf_log_item	*bip = bp->b_fspriv;
+	bool			ret;
+
+	ret = (bip->bli_item.li_desc->lid_flags & XFS_LID_DIRTY);
+	libxfs_trans_log_buf(tp, bp, 0, bp->b_bcount);
+	return ret;
+}
+
 void
 libxfs_trans_brelse(
 	xfs_trans_t		*tp,
