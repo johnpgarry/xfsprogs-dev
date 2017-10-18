@@ -65,9 +65,22 @@ typedef struct xfs_inode {
 	struct inode		i_vnode;
 } xfs_inode_t;
 
+/* Convert from vfs inode to xfs inode */
+static inline struct xfs_inode *XFS_I(struct inode *inode)
+{
+	return container_of(inode, struct xfs_inode, i_vnode);
+}
+
+/* convert from xfs inode to vfs inode */
 static inline struct inode *VFS_I(struct xfs_inode *ip)
 {
 	return &ip->i_vnode;
+}
+
+/* We only have i_size in the xfs inode in userspace */
+static inline loff_t i_size_read(struct inode *inode)
+{
+	return XFS_I(inode)->i_size;
 }
 
 /*
