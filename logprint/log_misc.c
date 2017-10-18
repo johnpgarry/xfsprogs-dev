@@ -510,21 +510,21 @@ xlog_print_dir2_sf(
 
 int
 xlog_print_trans_inode(
-	struct xlog	*log,
-	char		**ptr,
-	int		len,
-	int		*i,
-	int		num_ops,
-	int		continued)
+	struct xlog		*log,
+	char			**ptr,
+	int			len,
+	int			*i,
+	int			num_ops,
+	int			continued)
 {
-    struct xfs_log_dinode dino;
-    xlog_op_header_t	   *op_head;
-    xfs_inode_log_format_t dst_lbuf;
-    xfs_inode_log_format_64_t src_lbuf; /* buffer of biggest one */
-    xfs_inode_log_format_t *f;
-    int			   mode;
-    int			   size;
-    int			   skip_count;
+    struct xfs_log_dinode	dino;
+    struct xlog_op_header	*op_head;
+    struct xfs_inode_log_format	dst_lbuf;
+    struct xfs_inode_log_format	src_lbuf;
+    struct xfs_inode_log_format *f;
+    int				mode;
+    int				size;
+    int				skip_count;
 
     /*
      * print inode type header region
@@ -532,15 +532,15 @@ xlog_print_trans_inode(
      * memmove to ensure 8-byte alignment for the long longs in
      * xfs_inode_log_format_t structure
      *
-     * len can be smaller than xfs_inode_log_format_32|64_t
+     * len can be smaller than xfs_inode_log_format_t
      * if format data is split over operations
      */
-    memmove(&src_lbuf, *ptr, MIN(sizeof(xfs_inode_log_format_64_t), len));
+    memmove(&src_lbuf, *ptr, MIN(sizeof(src_lbuf), len));
     (*i)++;					/* bump index */
     *ptr += len;
     if (!continued &&
-	(len == sizeof(xfs_inode_log_format_32_t) ||
-	 len == sizeof(xfs_inode_log_format_64_t))) {
+	(len == sizeof(struct xfs_inode_log_format_32) ||
+	 len == sizeof(struct xfs_inode_log_format))) {
 	f = xfs_inode_item_format_convert((char*)&src_lbuf, len, &dst_lbuf);
 	printf(_("INODE: "));
 	printf(_("#regs: %d   ino: 0x%llx  flags: 0x%x   dsize: %d\n"),
@@ -1477,48 +1477,31 @@ end:
 }
 
 /*
- * if necessary, convert an xfs_inode_log_format struct from 32bit or 64 bit versions
- * (which can have different field alignments) to the native version
+ * if necessary, convert an xfs_inode_log_format struct from the old 32bit version
+ * (which can have different field alignments) to the native 64 bit version
  */
 xfs_inode_log_format_t *
 xfs_inode_item_format_convert(char *src_buf, uint len, xfs_inode_log_format_t *in_f)
 {
+	struct xfs_inode_log_format_32	*in_f32;
+
 	/* if we have native format then just return buf without copying data */
 	if (len == sizeof(xfs_inode_log_format_t)) {
 		return (xfs_inode_log_format_t *)src_buf;
 	}
 
-	if (len == sizeof(xfs_inode_log_format_32_t)) {
-		xfs_inode_log_format_32_t *in_f32;
+	in_f32 = (struct xfs_inode_log_format_32 *)src_buf;
+	in_f->ilf_type = in_f32->ilf_type;
+	in_f->ilf_size = in_f32->ilf_size;
+	in_f->ilf_fields = in_f32->ilf_fields;
+	in_f->ilf_asize = in_f32->ilf_asize;
+	in_f->ilf_dsize = in_f32->ilf_dsize;
+	in_f->ilf_ino = in_f32->ilf_ino;
+	/* copy biggest field of ilf_u */
+	memcpy(&in_f->ilf_u.ilfu_uuid, &in_f32->ilf_u.ilfu_uuid, sizeof(uuid_t));
+	in_f->ilf_blkno = in_f32->ilf_blkno;
+	in_f->ilf_len = in_f32->ilf_len;
+	in_f->ilf_boffset = in_f32->ilf_boffset;
 
-		in_f32 = (xfs_inode_log_format_32_t *)src_buf;
-		in_f->ilf_type = in_f32->ilf_type;
-		in_f->ilf_size = in_f32->ilf_size;
-		in_f->ilf_fields = in_f32->ilf_fields;
-		in_f->ilf_asize = in_f32->ilf_asize;
-		in_f->ilf_dsize = in_f32->ilf_dsize;
-		in_f->ilf_ino = in_f32->ilf_ino;
-		/* copy biggest */
-		memcpy(&in_f->ilf_u.ilfu_uuid, &in_f32->ilf_u.ilfu_uuid, sizeof(uuid_t));
-		in_f->ilf_blkno = in_f32->ilf_blkno;
-		in_f->ilf_len = in_f32->ilf_len;
-		in_f->ilf_boffset = in_f32->ilf_boffset;
-	} else {
-		xfs_inode_log_format_64_t *in_f64;
-
-		ASSERT(len == sizeof(xfs_inode_log_format_64_t));
-		in_f64 = (xfs_inode_log_format_64_t *)src_buf;
-		in_f->ilf_type = in_f64->ilf_type;
-		in_f->ilf_size = in_f64->ilf_size;
-		in_f->ilf_fields = in_f64->ilf_fields;
-		in_f->ilf_asize = in_f64->ilf_asize;
-		in_f->ilf_dsize = in_f64->ilf_dsize;
-		in_f->ilf_ino = in_f64->ilf_ino;
-		/* copy biggest */
-		memcpy(&in_f->ilf_u.ilfu_uuid, &in_f64->ilf_u.ilfu_uuid, sizeof(uuid_t));
-		in_f->ilf_blkno = in_f64->ilf_blkno;
-		in_f->ilf_len = in_f64->ilf_len;
-		in_f->ilf_boffset = in_f64->ilf_boffset;
-	}
 	return in_f;
 }

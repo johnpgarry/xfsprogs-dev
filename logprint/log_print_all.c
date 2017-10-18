@@ -288,8 +288,8 @@ xlog_recover_print_inode(
 	int			hasdata;
 	int			hasattr;
 
-	ASSERT(item->ri_buf[0].i_len == sizeof(xfs_inode_log_format_32_t) ||
-	       item->ri_buf[0].i_len == sizeof(xfs_inode_log_format_64_t));
+	ASSERT(item->ri_buf[0].i_len == sizeof(struct xfs_inode_log_format_32) ||
+	       item->ri_buf[0].i_len == sizeof(struct xfs_inode_log_format));
 	f = xfs_inode_item_format_convert(item->ri_buf[0].i_addr, item->ri_buf[0].i_len, &f_buf);
 
 	printf(_("	INODE: #regs:%d   ino:0x%llx  flags:0x%x   dsize:%d\n"),
