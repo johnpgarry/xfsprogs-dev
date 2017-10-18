@@ -51,6 +51,7 @@
 #define xfs_trans_inode_alloc_buf	libxfs_trans_inode_alloc_buf
 #define xfs_trans_log_buf		libxfs_trans_log_buf
 #define xfs_trans_log_inode		libxfs_trans_log_inode
+#define xfs_trans_roll_inode		libxfs_trans_roll_inode
 #define xfs_trans_mod_sb		libxfs_trans_mod_sb
 #define xfs_trans_read_buf		libxfs_trans_read_buf
 #define xfs_trans_read_buf_map		libxfs_trans_read_buf_map

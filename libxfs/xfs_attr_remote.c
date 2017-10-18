@@ -479,7 +479,7 @@ xfs_attr_rmtval_set(
 		/*
 		 * Start the next trans in the chain.
 		 */
-		error = xfs_trans_roll(&args->trans, dp);
+		error = xfs_trans_roll_inode(&args->trans, dp);
 		if (error)
 			return error;
 	}
@@ -616,7 +616,7 @@ xfs_attr_rmtval_remove(
 		/*
 		 * Close out trans and start the next one in the chain.
 		 */
-		error = xfs_trans_roll(&args->trans, args->dp);
+		error = xfs_trans_roll_inode(&args->trans, args->dp);
 		if (error)
 			return error;
 	}

@@ -100,21 +100,13 @@ libxfs_trans_del_item(
  */
 int
 libxfs_trans_roll(
-	struct xfs_trans	**tpp,
-	struct xfs_inode	*dp)
+	struct xfs_trans	**tpp)
 {
 	struct xfs_mount	*mp;
-	struct xfs_trans	*trans;
+	struct xfs_trans	*trans = *tpp;
 	struct xfs_trans_res	tres;
 	unsigned int		old_blk_res;
 	int			error;
-
-	/*
-	 * Ensure that the inode is always logged.
-	 */
-	trans = *tpp;
-	if (dp)
-		xfs_trans_log_inode(trans, dp, XFS_ILOG_CORE);
 
 	/*
 	 * Copy the critical parameters from one trans to the next.
@@ -135,9 +127,8 @@ libxfs_trans_roll(
 	if (error)
 		return error;
 
-
 	/*
-	 * Reserve space in the log for th next transaction.
+	 * Reserve space in the log for the next transaction.
 	 * This also pushes items in the "AIL", the list of logged items,
 	 * out to disk if they are taking up space at the tail of the log
 	 * that we want to use.  This requires that either nothing be locked
@@ -149,14 +140,6 @@ libxfs_trans_roll(
 	trans = *tpp;
 	trans->t_blk_res = old_blk_res;
 
-	/*
-	 *  Ensure that the inode is in the new transaction and locked.
-	 */
-	if (error)
-		return error;
-
-	if (dp)
-		xfs_trans_ijoin(trans, dp, 0);
 	return 0;
 }
 
@@ -357,6 +340,21 @@ xfs_trans_log_inode(
 	flags |= ip->i_itemp->ili_last_fields;
 	ip->i_itemp->ili_fields |= flags;
 }
+
+int
+libxfs_trans_roll_inode(
+	struct xfs_trans	**tpp,
+	struct xfs_inode	*ip)
+{
+	int			error;
+
+	xfs_trans_log_inode(*tpp, ip, XFS_ILOG_CORE);
+	error = xfs_trans_roll(tpp);
+	if (!error)
+		xfs_trans_ijoin(*tpp, ip, 0);
+	return error;
+}
+
 
 /*
  * This is called to mark bytes first through last inclusive of the given

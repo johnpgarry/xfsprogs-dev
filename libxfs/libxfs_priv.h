@@ -445,7 +445,7 @@ void xfs_mount_common(struct xfs_mount *, struct xfs_sb *);
  * logitem.c and trans.c prototypes
  */
 void xfs_trans_init(struct xfs_mount *);
-int xfs_trans_roll(struct xfs_trans **, struct xfs_inode *);
+int xfs_trans_roll(struct xfs_trans **);
 
 /* xfs_trans_item.c */
 void xfs_trans_add_item(struct xfs_trans *, struct xfs_log_item *);
@@ -472,8 +472,6 @@ int  libxfs_mod_incore_sb(struct xfs_mount *, int, int64_t, int);
 #define xfs_reinit_percpu_counters(mp)
 
 void xfs_trans_mod_sb(struct xfs_trans *, uint, long);
-void xfs_trans_init(struct xfs_mount *);
-int  xfs_trans_roll(struct xfs_trans **, struct xfs_inode *);
 void xfs_verifier_error(struct xfs_buf *bp);
 
 /* XXX: this is clearly a bug - a shared header needs to export this */

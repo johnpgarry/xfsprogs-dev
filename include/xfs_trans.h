@@ -85,7 +85,7 @@ typedef struct xfs_trans {
 } xfs_trans_t;
 
 void	xfs_trans_init(struct xfs_mount *);
-int	xfs_trans_roll(struct xfs_trans **, struct xfs_inode *);
+int	xfs_trans_roll(struct xfs_trans **);
 
 int	libxfs_trans_alloc(struct xfs_mount *mp, struct xfs_trans_res *resp,
 			   uint blocks, uint rtextents, uint flags,
@@ -101,6 +101,7 @@ void	libxfs_trans_ijoin(struct xfs_trans *, struct xfs_inode *, uint);
 void	libxfs_trans_ijoin_ref(struct xfs_trans *, struct xfs_inode *, int);
 void	libxfs_trans_log_inode (struct xfs_trans *, struct xfs_inode *,
 				uint);
+int	libxfs_trans_roll_inode (struct xfs_trans **, struct xfs_inode *);
 
 void	libxfs_trans_brelse(struct xfs_trans *, struct xfs_buf *);
 void	libxfs_trans_binval(struct xfs_trans *, struct xfs_buf *);

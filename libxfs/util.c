@@ -681,7 +681,7 @@ libxfs_inode_alloc(
 
 		xfs_trans_bhold(*tp, ialloc_context);
 
-		error = xfs_trans_roll(tp, NULL);
+		error = xfs_trans_roll(tp);
 		if (error) {
 			fprintf(stderr, _("%s: cannot duplicate transaction: %s\n"),
 				progname, strerror(error));
