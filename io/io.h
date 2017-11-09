@@ -25,6 +25,7 @@
 #define IO_RANDOM	( 0)
 #define IO_FORWARD	( 1)
 #define IO_BACKWARD	(-1)
+#define IO_ONCE		( 2)
 
 /*
  * File descriptor options

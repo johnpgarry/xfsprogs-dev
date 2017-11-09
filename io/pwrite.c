@@ -47,6 +47,7 @@ pwrite_help(void)
 " -W   -- call fsync(2) at the end (included in timing results)\n"
 " -B   -- write backwards through the range from offset (backwards N bytes)\n"
 " -F   -- write forwards through the range of bytes from offset (default)\n"
+" -O   -- perform pwrite call once and return (maybe partial) bytes written\n"
 " -R   -- write at random offsets in the specified range of bytes\n"
 " -Z N -- zeed the random number generator (used when writing randomly)\n"
 "         (heh, zorry, the -s/-S arguments were already in use in pwrite)\n"
@@ -262,6 +263,22 @@ write_buffer(
 }
 
 static int
+write_once(
+	off64_t		offset,
+	long long	count,
+	long long	*total,
+	int		pwritev2_flags)
+{
+	size_t bytes;
+	bytes = do_pwrite(file->fd, offset, count, count, pwritev2_flags);
+	if (bytes < 0)
+		return -1;
+	*total = bytes;
+	return 1;
+}
+
+
+static int
 pwrite_f(
 	int		argc,
 	char		**argv)
@@ -282,7 +299,7 @@ pwrite_f(
 	init_cvtnum(&fsblocksize, &fssectsize);
 	bsize = fsblocksize;
 
-	while ((c = getopt(argc, argv, "b:BCdf:Fi:NqRs:S:uV:wWZ:")) != EOF) {
+	while ((c = getopt(argc, argv, "b:BCdf:Fi:NqRs:OS:uV:wWZ:")) != EOF) {
 		switch (c) {
 		case 'b':
 			tmp = cvtnum(fsblocksize, fssectsize, optarg);
@@ -303,6 +320,9 @@ pwrite_f(
 			break;
 		case 'R':
 			direction = IO_RANDOM;
+			break;
+		case 'O':
+			direction = IO_ONCE;
 			break;
 		case 'd':
 			dflag = 1;
@@ -405,6 +425,9 @@ pwrite_f(
 	case IO_BACKWARD:
 		c = write_backward(offset, &count, &total, pwritev2_flags);
 		break;
+	case IO_ONCE:
+		c = write_once(offset, count, &total, pwritev2_flags);
+		break;
 	default:
 		total = 0;
 		ASSERT(0);
@@ -446,7 +469,7 @@ pwrite_init(void)
 	pwrite_cmd.argmax = -1;
 	pwrite_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
 	pwrite_cmd.args =
-_("[-i infile [-dwNW] [-s skip]] [-b bs] [-S seed] [-FBR [-Z N]] [-V N] off len");
+_("[-i infile [-dwNOW] [-s skip]] [-b bs] [-S seed] [-FBR [-Z N]] [-V N] off len");
 	pwrite_cmd.oneline =
 		_("writes a number of bytes at a specified offset");
 	pwrite_cmd.help = pwrite_help;
