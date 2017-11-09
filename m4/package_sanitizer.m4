@@ -17,3 +17,23 @@ AC_DEFUN([AC_PACKAGE_CHECK_UBSAN],
     AC_SUBST(ubsan_cflags)
     AC_SUBST(ubsan_ldflags)
   ])
+
+AC_DEFUN([AC_PACKAGE_CHECK_ADDRSAN],
+  [ AC_MSG_CHECKING([if C compiler supports ADDRSAN])
+    OLD_CFLAGS="$CFLAGS"
+    OLD_LDFLAGS="$LDFLAGS"
+    ADDRSAN_FLAGS="-fsanitize=address"
+    CFLAGS="$CFLAGS $ADDRSAN_FLAGS"
+    LDFLAGS="$LDFLAGS $ADDRSAN_FLAGS"
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([])],
+        [AC_MSG_RESULT([yes])]
+        [addrsan_cflags=$ADDRSAN_FLAGS]
+        [addrsan_ldflags=$ADDRSAN_FLAGS]
+        [have_addrsan=yes],
+        [AC_MSG_RESULT([no])])
+    CFLAGS="${OLD_CFLAGS}"
+    LDFLAGS="${OLD_LDFLAGS}"
+    AC_SUBST(have_addrsan)
+    AC_SUBST(addrsan_cflags)
+    AC_SUBST(addrsan_ldflags)
+  ])

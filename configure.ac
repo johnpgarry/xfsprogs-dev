@@ -78,6 +78,12 @@ AC_ARG_ENABLE(ubsan,
 	enable_ubsan=no)
 AC_SUBST(enable_ubsan)
 
+# Enable ADDRSAN; set enable_addrsan=probe below to enable autoprobe.
+AC_ARG_ENABLE(addrsan,
+[ --enable-addrsan=[yes/no] Enable Address Sanitizer (ADDRSAN) [default=no]],,
+	enable_addrsan=no)
+AC_SUBST(enable_addrsan)
+
 #
 # If the user specified a libdir ending in lib64 do not append another
 # 64 to the library names.
@@ -159,6 +165,13 @@ if test "$enable_ubsan" = "yes" || test "$enable_ubsan" = "probe"; then
 fi
 if test "$enable_ubsan" = "yes" && test "$have_ubsan" != "yes"; then
         AC_MSG_ERROR([UBSAN not supported by compiler.])
+fi
+
+if test "$enable_addrsan" = "yes" || test "$enable_addrsan" = "probe"; then
+        AC_PACKAGE_CHECK_ADDRSAN
+fi
+if test "$enable_addrsan" = "yes" && test "$have_addrsan" != "yes"; then
+        AC_MSG_ERROR([ADDRSAN not supported by compiler.])
 fi
 
 AC_CHECK_SIZEOF([long])

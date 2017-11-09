@@ -155,8 +155,8 @@ ifeq ($(HAVE_GETFSMAP),yes)
 PCFLAGS+= -DHAVE_GETFSMAP
 endif
 
-SANITIZER_CFLAGS += @ubsan_cflags@
-SANITIZER_LDFLAGS += @ubsan_ldflags@
+SANITIZER_CFLAGS += @addrsan_cflags@ @ubsan_cflags@
+SANITIZER_LDFLAGS += @addrsan_ldflags@ @ubsan_ldflags@
 
 GCFLAGS = $(DEBUG) \
 	  -DVERSION=\"$(PKG_VERSION)\" -DLOCALEDIR=\"$(PKG_LOCALE_DIR)\"  \
