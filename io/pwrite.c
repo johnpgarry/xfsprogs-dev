@@ -379,10 +379,18 @@ pwrite_f(
 	}
 	if (c < 0)
 		goto done;
-	if (Wflag)
-		fsync(file->fd);
-	if (wflag)
-		fdatasync(file->fd);
+	if (Wflag) {
+		if (fsync(file->fd) < 0) {
+			perror("fsync");
+			goto done;
+		}
+	}
+	if (wflag) {
+		if (fdatasync(file->fd) < 0) {
+			perror("fdatasync");
+			goto done;
+		}
+	}
 	if (qflag)
 		goto done;
 	gettimeofday(&t2, NULL);
