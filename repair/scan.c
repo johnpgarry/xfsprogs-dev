@@ -227,7 +227,9 @@ _("expected level %d got %d in inode %" PRIu64 ", (%s fork) bmbt block %" PRIu64
 		if (be64_to_cpu(block->bb_u.l.bb_owner) != ino) {
 			do_warn(
 _("expected owner inode %" PRIu64 ", got %llu, bmbt block %" PRIu64 "\n"),
-				ino, be64_to_cpu(block->bb_u.l.bb_owner), bno);
+				ino,
+				(unsigned long long)be64_to_cpu(block->bb_u.l.bb_owner),
+				bno);
 			return 1;
 		}
 		/* verify block number */
@@ -236,7 +238,8 @@ _("expected owner inode %" PRIu64 ", got %llu, bmbt block %" PRIu64 "\n"),
 			do_warn(
 _("expected block %" PRIu64 ", got %llu, bmbt block %" PRIu64 "\n"),
 				XFS_FSB_TO_DADDR(mp, bno),
-				be64_to_cpu(block->bb_u.l.bb_blkno), bno);
+				(unsigned long long)be64_to_cpu(block->bb_u.l.bb_blkno),
+				bno);
 			return 1;
 		}
 		/* verify uuid */
@@ -1587,7 +1590,7 @@ import_single_ino_chunk(
 _("ir_holemask/ir_free mismatch, %s chunk %d/%u, holemask 0x%x free 0x%llx\n"),
 					inobt_name, agno, ino,
 					be16_to_cpu(rp->ir_u.sp.ir_holemask),
-					be64_to_cpu(rp->ir_free));
+					(unsigned long long)be64_to_cpu(rp->ir_free));
 				suspect++;
 			}
 			if (!suspect && ino_rec)

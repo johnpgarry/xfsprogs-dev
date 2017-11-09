@@ -69,14 +69,14 @@ filetype(mode_t mode)
 static int
 dump_raw_stat(struct stat *st)
 {
-	printf("stat.blksize = %lu\n", st->st_blksize);
-	printf("stat.nlink = %lu\n", st->st_nlink);
+	printf("stat.blksize = %lu\n", (unsigned long)st->st_blksize);
+	printf("stat.nlink = %lu\n", (unsigned long)st->st_nlink);
 	printf("stat.uid = %u\n", st->st_uid);
 	printf("stat.gid = %u\n", st->st_gid);
 	printf("stat.mode: 0%o\n", st->st_mode);
-	printf("stat.ino = %lu\n", st->st_ino);
-	printf("stat.size = %lu\n", st->st_size);
-	printf("stat.blocks = %lu\n", st->st_blocks);
+	printf("stat.ino = %llu\n", (unsigned long long)st->st_ino);
+	printf("stat.size = %lld\n", (long long)st->st_size);
+	printf("stat.blocks = %lld\n", (long long)st->st_blocks);
 	printf("stat.atime.tv_sec = %ld\n", st->st_atim.tv_sec);
 	printf("stat.atime.tv_nsec = %ld\n", st->st_atim.tv_nsec);
 	printf("stat.ctime.tv_sec = %ld\n", st->st_ctim.tv_sec);
@@ -273,21 +273,21 @@ dump_raw_statx(struct statx *stx)
 {
 	printf("stat.mask = 0x%x\n", stx->stx_mask);
 	printf("stat.blksize = %u\n", stx->stx_blksize);
-	printf("stat.attributes = 0x%llx\n", stx->stx_attributes);
+	printf("stat.attributes = 0x%llx\n", (unsigned long long)stx->stx_attributes);
 	printf("stat.nlink = %u\n", stx->stx_nlink);
 	printf("stat.uid = %u\n", stx->stx_uid);
 	printf("stat.gid = %u\n", stx->stx_gid);
 	printf("stat.mode: 0%o\n", stx->stx_mode);
-	printf("stat.ino = %llu\n", stx->stx_ino);
-	printf("stat.size = %llu\n", stx->stx_size);
-	printf("stat.blocks = %llu\n", stx->stx_blocks);
-	printf("stat.atime.tv_sec = %lld\n", stx->stx_atime.tv_sec);
+	printf("stat.ino = %llu\n", (unsigned long long)stx->stx_ino);
+	printf("stat.size = %llu\n", (unsigned long long)stx->stx_size);
+	printf("stat.blocks = %llu\n", (unsigned long long)stx->stx_blocks);
+	printf("stat.atime.tv_sec = %lld\n", (long long)stx->stx_atime.tv_sec);
 	printf("stat.atime.tv_nsec = %d\n", stx->stx_atime.tv_nsec);
-	printf("stat.btime.tv_sec = %lld\n", stx->stx_btime.tv_sec);
+	printf("stat.btime.tv_sec = %lld\n", (long long)stx->stx_btime.tv_sec);
 	printf("stat.btime.tv_nsec = %d\n", stx->stx_btime.tv_nsec);
-	printf("stat.ctime.tv_sec = %lld\n", stx->stx_ctime.tv_sec);
+	printf("stat.ctime.tv_sec = %lld\n", (long long)stx->stx_ctime.tv_sec);
 	printf("stat.ctime.tv_nsec = %d\n", stx->stx_ctime.tv_nsec);
-	printf("stat.mtime.tv_sec = %lld\n", stx->stx_mtime.tv_sec);
+	printf("stat.mtime.tv_sec = %lld\n", (long long)stx->stx_mtime.tv_sec);
 	printf("stat.mtime.tv_nsec = %d\n", stx->stx_mtime.tv_nsec);
 	printf("stat.rdev_major = %u\n", stx->stx_rdev_major);
 	printf("stat.rdev_minor = %u\n", stx->stx_rdev_minor);

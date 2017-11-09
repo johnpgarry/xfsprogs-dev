@@ -762,14 +762,14 @@ inode_f(
 
 	if (verbose && result_ino) {
 		/* Requested verbose and we have an answer */
-		printf("%llu:%d\n", result_ino,
+		printf("%llu:%d\n", (unsigned long long)result_ino,
 			result_ino > XFS_MAXINUMBER_32 ? 64 : 32);
 	} else if (userino == NULLFSINO) {
 		/* Just checking 32 or 64 bit presence, non-verbose */
 		printf("%d\n", result_ino > XFS_MAXINUMBER_32 ? 1 : 0);
 	} else {
 		/* We asked about a specific inode, non-verbose */
-		printf("%llu\n", result_ino);
+		printf("%llu\n", (unsigned long long)result_ino);
 	}
 
 	return 0;

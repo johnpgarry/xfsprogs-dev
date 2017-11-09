@@ -2330,7 +2330,8 @@ process_dinode_int(xfs_mount_t *mp,
 			if (!uncertain)
 				do_warn(
 _("inode identifier %llu mismatch on inode %" PRIu64 "\n"),
-					be64_to_cpu(dino->di_ino), lino);
+					(unsigned long long)be64_to_cpu(dino->di_ino),
+					lino);
 			if (verify_mode)
 				return 1;
 			goto clear_bad_out;

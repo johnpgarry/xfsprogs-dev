@@ -67,16 +67,18 @@ print_hole(
 
 	   if (plain) {
 		printf("\t%d: [%llu..%llu]: hole", cur_extent,
-		       llast, lstart - 1ULL);
+		       (unsigned long long)llast, lstart - 1ULL);
 		if (lflag)
-			printf(_(" %llu blocks\n"), lstart - llast);
+			printf(_(" %llu blocks\n"),
+			       (unsigned long long)lstart - llast);
 		else
 			printf("\n");
 	   } else {
-		snprintf(lbuf, sizeof(lbuf), "[%llu..%llu]:", llast,
-			 lstart - 1ULL);
+		snprintf(lbuf, sizeof(lbuf), "[%llu..%llu]:",
+			 (unsigned long long)llast, lstart - 1ULL);
 		printf("%4d: %-*s %-*s %*llu\n", cur_extent, foff_w, lbuf,
-		       boff_w, _("hole"), tot_w, lstart - llast);
+		       boff_w, _("hole"), tot_w,
+		       (unsigned long long)lstart - llast);
 	   }
 
 
@@ -125,12 +127,13 @@ print_verbose(
 	if (cur_extent == max_extents)
 		return 1;
 
-	snprintf(lbuf, sizeof(lbuf), "[%llu..%llu]:", lstart,
-		 lstart + len - 1ULL);
-	snprintf(bbuf, sizeof(bbuf), "%llu..%llu", block, block + len - 1ULL);
+	snprintf(lbuf, sizeof(lbuf), "[%llu..%llu]:",
+		 (unsigned long long)lstart, lstart + len - 1ULL);
+	snprintf(bbuf, sizeof(bbuf), "%llu..%llu",
+		 (unsigned long long)block, block + len - 1ULL);
 	snprintf(flgbuf, sizeof(flgbuf), "0x%x", extent->fe_flags);
 	printf("%4d: %-*s %-*s %*llu %*s\n", cur_extent, foff_w, lbuf,
-	       boff_w, bbuf, tot_w, len, flg_w, flgbuf);
+	       boff_w, bbuf, tot_w, (unsigned long long)len, flg_w, flgbuf);
 
 	return 2;
 }
@@ -161,11 +164,11 @@ print_plain(
 		return 1;
 
 	printf("\t%d: [%llu..%llu]: %llu..%llu", cur_extent,
-	       lstart, lstart + len - 1ULL, block,
-	       block + len - 1ULL);
+	       (unsigned long long)lstart, lstart + len - 1ULL,
+	       (unsigned long long)block, block + len - 1ULL);
 
 	if (lflag)
-		printf(_(" %llu blocks\n"), len);
+		printf(_(" %llu blocks\n"), (unsigned long long)len);
 	else
 		printf("\n");
 	return 2;
@@ -198,10 +201,12 @@ calc_print_format(
 		len = BTOBBT(extent->fe_length);
 		block = BTOBBT(extent->fe_physical);
 
-		snprintf(lbuf, sizeof(lbuf), "[%llu..%llu]", logical,
-			 logical + len - 1);
-		snprintf(bbuf, sizeof(bbuf), "%llu..%llu", block,
-			 block + len - 1);
+		snprintf(lbuf, sizeof(lbuf), "[%llu..%llu]",
+			 (unsigned long long)logical,
+			 (unsigned long long)logical + len - 1);
+		snprintf(bbuf, sizeof(bbuf), "%llu..%llu",
+			 (unsigned long long)block,
+			 (unsigned long long)block + len - 1);
 		*foff_w = max(*foff_w, strlen(lbuf));
 		*boff_w = max(*boff_w, strlen(bbuf));
 		*tot_w = max(*tot_w, numlen(len, 10));

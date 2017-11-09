@@ -1917,14 +1917,14 @@ __check_dir3_header(
 	if (be64_to_cpu(owner) != ino) {
 		do_warn(
 _("expected owner inode %" PRIu64 ", got %llu, directory block %" PRIu64 "\n"),
-			ino, be64_to_cpu(owner), bp->b_bn);
+			ino, (unsigned long long)be64_to_cpu(owner), bp->b_bn);
 		return 1;
 	}
 	/* verify block number */
 	if (be64_to_cpu(blkno) != bp->b_bn) {
 		do_warn(
 _("expected block %" PRIu64 ", got %llu, directory inode %" PRIu64 "\n"),
-			bp->b_bn, be64_to_cpu(blkno), ino);
+			bp->b_bn, (unsigned long long)be64_to_cpu(blkno), ino);
 		return 1;
 	}
 	/* verify uuid */
