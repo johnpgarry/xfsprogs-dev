@@ -1442,6 +1442,37 @@ process_sf_attr(
 }
 
 static void
+process_dir_leaf_block(
+	char				*block)
+{
+	struct xfs_dir2_leaf		*leaf;
+	struct xfs_dir3_icleaf_hdr 	leafhdr;
+
+	if (!zero_stale_data)
+		return;
+
+	/* Yes, this works for dir2 & dir3.  Difference is padding. */
+	leaf = (struct xfs_dir2_leaf *)block;
+	M_DIROPS(mp)->leaf_hdr_from_disk(&leafhdr, leaf);
+
+	/* Zero out space from end of ents[] to bests */
+	if (leafhdr.magic == XFS_DIR2_LEAF1_MAGIC ||
+	    leafhdr.magic == XFS_DIR3_LEAF1_MAGIC) {
+		struct xfs_dir2_leaf_tail	*ltp;
+		__be16				*lbp;
+		struct xfs_dir2_leaf_entry	*ents;
+		char				*free; /* end of ents */
+
+		ents = M_DIROPS(mp)->leaf_ents_p(leaf);
+		free = (char *)&ents[leafhdr.count];
+		ltp = xfs_dir2_leaf_tail_p(mp->m_dir_geo, leaf);
+		lbp = xfs_dir2_leaf_bests_p(ltp);
+		memset(free, 0, (char *)lbp - free);
+		iocur_top->need_crc = 1;
+	}
+}
+
+static void
 process_dir_data_block(
 	char		*block,
 	xfs_fileoff_t	offset,
@@ -1801,11 +1832,15 @@ process_single_fsb_objects(
 		dp = iocur_top->data;
 		switch (btype) {
 		case TYP_DIR2:
-			if (o >= mp->m_dir_geo->leafblk)
+			if (o >= mp->m_dir_geo->freeblk) {
+				/* TODO, zap any stale data */
 				break;
-
-			process_dir_data_block(dp, o,
+			} else if (o >= mp->m_dir_geo->leafblk) {
+				process_dir_leaf_block(dp);
+			} else {
+				process_dir_data_block(dp, o,
 					 last == mp->m_dir_geo->fsbcount);
+			}
 			iocur_top->need_crc = 1;
 			break;
 		case TYP_SYMLINK:
