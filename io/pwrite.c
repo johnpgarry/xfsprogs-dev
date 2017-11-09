@@ -53,6 +53,9 @@ pwrite_help(void)
 #ifdef HAVE_PWRITEV
 " -V N -- use vectored IO with N iovecs of blocksize each (pwritev)\n"
 #endif
+#ifdef HAVE_PWRITEV2
+" -N   -- Perform the pwritev2() with RWF_NOWAIT\n"
+#endif
 "\n"));
 }
 
@@ -279,7 +282,7 @@ pwrite_f(
 	init_cvtnum(&fsblocksize, &fssectsize);
 	bsize = fsblocksize;
 
-	while ((c = getopt(argc, argv, "b:BCdf:Fi:qRs:S:uV:wWZ:")) != EOF) {
+	while ((c = getopt(argc, argv, "b:BCdf:Fi:NqRs:S:uV:wWZ:")) != EOF) {
 		switch (c) {
 		case 'b':
 			tmp = cvtnum(fsblocksize, fssectsize, optarg);
@@ -308,6 +311,11 @@ pwrite_f(
 		case 'i':
 			infile = optarg;
 			break;
+#ifdef HAVE_PWRITEV2
+		case 'N':
+			pwritev2_flags |= RWF_NOWAIT;
+			break;
+#endif
 		case 's':
 			skip = cvtnum(fsblocksize, fssectsize, optarg);
 			if (skip < 0) {
@@ -438,7 +446,7 @@ pwrite_init(void)
 	pwrite_cmd.argmax = -1;
 	pwrite_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
 	pwrite_cmd.args =
-_("[-i infile [-d] [-s skip]] [-b bs] [-S seed] [-wW] [-FBR [-Z N]] [-V N] off len");
+_("[-i infile [-dwNW] [-s skip]] [-b bs] [-S seed] [-FBR [-Z N]] [-V N] off len");
 	pwrite_cmd.oneline =
 		_("writes a number of bytes at a specified offset");
 	pwrite_cmd.help = pwrite_help;
