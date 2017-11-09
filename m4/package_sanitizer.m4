@@ -37,3 +37,23 @@ AC_DEFUN([AC_PACKAGE_CHECK_ADDRSAN],
     AC_SUBST(addrsan_cflags)
     AC_SUBST(addrsan_ldflags)
   ])
+
+AC_DEFUN([AC_PACKAGE_CHECK_THREADSAN],
+  [ AC_MSG_CHECKING([if C compiler supports THREADSAN])
+    OLD_CFLAGS="$CFLAGS"
+    OLD_LDFLAGS="$LDFLAGS"
+    THREADSAN_FLAGS="-fsanitize=thread"
+    CFLAGS="$CFLAGS $THREADSAN_FLAGS"
+    LDFLAGS="$LDFLAGS $ADRSAN_FLAGS"
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([])],
+        [AC_MSG_RESULT([yes])]
+        [threadsan_cflags=$THREADSAN_FLAGS]
+        [threadsan_ldflags=$THREADSAN_FLAGS]
+        [have_threadsan=yes],
+        [AC_MSG_RESULT([no])])
+    CFLAGS="${OLD_CFLAGS}"
+    LDFLAGS="${OLD_LDFLAGS}"
+    AC_SUBST(have_threadsan)
+    AC_SUBST(threadsan_cflags)
+    AC_SUBST(threadsan_ldflags)
+  ])

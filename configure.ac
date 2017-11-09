@@ -84,6 +84,12 @@ AC_ARG_ENABLE(addrsan,
 	enable_addrsan=no)
 AC_SUBST(enable_addrsan)
 
+# Enable THREADSAN; set enable_threadsan=probe to enable autoprobe.
+AC_ARG_ENABLE(threadsan,
+[ --enable-threadsan=[yes/no] Enable Thread Sanitizer (THREADSAN) [default=no]],,
+	enable_threadsan=no)
+AC_SUBST(enable_threadsan)
+
 #
 # If the user specified a libdir ending in lib64 do not append another
 # 64 to the library names.
@@ -172,6 +178,17 @@ if test "$enable_addrsan" = "yes" || test "$enable_addrsan" = "probe"; then
 fi
 if test "$enable_addrsan" = "yes" && test "$have_addrsan" != "yes"; then
         AC_MSG_ERROR([ADDRSAN not supported by compiler.])
+fi
+
+if test "$enable_threadsan" = "yes" || test "$enable_threadsan" = "probe"; then
+        AC_PACKAGE_CHECK_THREADSAN
+fi
+if test "$enable_threadsan" = "yes" && test "$have_threadsan" != "yes"; then
+        AC_MSG_ERROR([THREADSAN not supported by compiler.])
+fi
+
+if test "$have_threadsan" = "yes" && test "$have_addrsan" = "yes"; then
+        AC_MSG_WARN([ADDRSAN and THREADSAN are not known to work together.])
 fi
 
 AC_CHECK_SIZEOF([long])
