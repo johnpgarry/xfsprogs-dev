@@ -2694,10 +2694,29 @@ _("Cannot have non-zero CoW extent size %u on non-cowextsize inode %" PRIu64 ", 
 					be32_to_cpu(dino->di_cowextsize), lino);
 			if (!no_modify)  {
 				do_warn(_("resetting to zero\n"));
+				dino->di_flags2 &= ~cpu_to_be64(XFS_DIFLAG2_COWEXTSIZE);
 				dino->di_cowextsize = 0;
 				*dirty = 1;
 			} else
 				do_warn(_("would reset to zero\n"));
+		}
+	}
+
+	/*
+	 * Can't have the COWEXTSIZE flag set with no hint.
+	 */
+	if (dino->di_version >= 3 &&
+	    be32_to_cpu(dino->di_cowextsize) == 0 &&
+	    (be64_to_cpu(dino->di_flags2) & XFS_DIFLAG2_COWEXTSIZE)) {
+		do_warn(
+_("Cannot have CoW extent size of zero on cowextsize inode %" PRIu64 ", "),
+				lino);
+		if (!no_modify)  {
+			do_warn(_("clearing cowextsize flag\n"));
+			dino->di_flags2 &= ~cpu_to_be64(XFS_DIFLAG2_COWEXTSIZE);
+			*dirty = 1;
+		} else {
+			do_warn(_("would clear cowextsize flag\n"));
 		}
 	}
 
