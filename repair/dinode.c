@@ -2510,6 +2510,18 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 			flags2 &= XFS_DIFLAG2_ANY;
 		}
 
+		if (flags2 & XFS_DIFLAG2_DAX) {
+			/* must be a file or dir */
+			if (di_mode && !(S_ISREG(di_mode) || S_ISDIR(di_mode))) {
+				if (!uncertain) {
+					do_warn(
+	_("DAX flag set on special inode %" PRIu64 "\n"),
+						lino);
+				}
+				flags2 &= ~XFS_DIFLAG2_DAX;
+			}
+		}
+
 		if ((flags2 & XFS_DIFLAG2_REFLINK) &&
 		    !xfs_sb_version_hasreflink(&mp->m_sb)) {
 			if (!uncertain) {
