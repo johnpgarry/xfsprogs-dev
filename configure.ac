@@ -72,6 +72,12 @@ AC_ARG_ENABLE(librt,
 	enable_librt=yes)
 AC_SUBST(enable_librt)
 
+# Enable UBSAN; set enable_ubsan=probe below to enable autoprobe.
+AC_ARG_ENABLE(ubsan,
+[ --enable-ubsan=[yes/no] Enable Undefined Behavior Sanitizer (UBSAN) [default=no]],,
+	enable_ubsan=no)
+AC_SUBST(enable_ubsan)
+
 #
 # If the user specified a libdir ending in lib64 do not append another
 # 64 to the library names.
@@ -146,6 +152,13 @@ AC_HAVE_GETFSMAP
 
 if test "$enable_blkid" = yes; then
 AC_HAVE_BLKID_TOPO
+fi
+
+if test "$enable_ubsan" = "yes" || test "$enable_ubsan" = "probe"; then
+        AC_PACKAGE_CHECK_UBSAN
+fi
+if test "$enable_ubsan" = "yes" && test "$have_ubsan" != "yes"; then
+        AC_MSG_ERROR([UBSAN not supported by compiler.])
 fi
 
 AC_CHECK_SIZEOF([long])

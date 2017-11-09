@@ -155,6 +155,8 @@ ifeq ($(HAVE_GETFSMAP),yes)
 PCFLAGS+= -DHAVE_GETFSMAP
 endif
 
+SANITIZER_CFLAGS += @ubsan_cflags@
+SANITIZER_LDFLAGS += @ubsan_ldflags@
 
 GCFLAGS = $(DEBUG) \
 	  -DVERSION=\"$(PKG_VERSION)\" -DLOCALEDIR=\"$(PKG_LOCALE_DIR)\"  \
@@ -165,8 +167,8 @@ GCFLAGS += -DENABLE_GETTEXT
 endif
 
 BUILD_CFLAGS += $(GCFLAGS) $(PCFLAGS)
-# First, Global, Platform, Local CFLAGS
-CFLAGS += $(FCFLAGS) $(OPTIMIZER) $(GCFLAGS) $(PCFLAGS) $(LCFLAGS)
+# First, Sanitizer, Global, Platform, Local CFLAGS
+CFLAGS += $(FCFLAGS) $(SANITIZER_CFLAGS) $(OPTIMIZER) $(GCFLAGS) $(PCFLAGS) $(LCFLAGS)
 
 include $(TOPDIR)/include/buildmacros
 
