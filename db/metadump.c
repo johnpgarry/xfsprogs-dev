@@ -32,7 +32,7 @@
 #include "field.h"
 #include "dir2.h"
 
-#define DEFAULT_MAX_EXT_SIZE	1000
+#define DEFAULT_MAX_EXT_SIZE	MAXEXTLEN
 
 /*
  * It's possible that multiple files in a directory (or attributes
