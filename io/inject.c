@@ -86,7 +86,13 @@ error_tag(char *name)
 		{ XFS_ERRTAG_BMAP_FINISH_ONE,		"bmap_finish_one" },
 #define XFS_ERRTAG_AG_RESV_CRITICAL			27
 		{ XFS_ERRTAG_AG_RESV_CRITICAL,		"ag_resv_critical" },
-#define XFS_ERRTAG_MAX                                  28
+#define XFS_ERRTAG_DROP_WRITES				28
+		{ XFS_ERRTAG_DROP_WRITES,		"drop_writes" },
+#define XFS_ERRTAG_LOG_BAD_CRC				29
+		{ XFS_ERRTAG_LOG_BAD_CRC,		"log_bad_crc" },
+#define XFS_ERRTAG_LOG_ITEM_PIN				30
+		{ XFS_ERRTAG_LOG_ITEM_PIN,		"log_item_pin" },
+#define XFS_ERRTAG_MAX                                  31
 		{ XFS_ERRTAG_MAX,			NULL }
 	};
 	int	count;
