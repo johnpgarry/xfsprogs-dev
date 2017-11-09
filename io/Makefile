@@ -90,6 +90,10 @@ ifeq ($(HAVE_PREADV),yes)
 LCFLAGS += -DHAVE_PREADV -DHAVE_PWRITEV
 endif
 
+ifeq ($(HAVE_PWRITEV2),yes)
+LCFLAGS += -DHAVE_PWRITEV2
+endif
+
 ifeq ($(HAVE_READDIR),yes)
 CFILES += readdir.c
 LCFLAGS += -DHAVE_READDIR

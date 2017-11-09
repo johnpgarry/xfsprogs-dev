@@ -148,6 +148,22 @@ AC_DEFUN([AC_HAVE_PREADV],
   ])
 
 #
+# Check if we have a pwritev2 libc call (Linux)
+#
+AC_DEFUN([AC_HAVE_PWRITEV2],
+  [ AC_MSG_CHECKING([for pwritev2])
+    AC_TRY_LINK([
+#define _BSD_SOURCE
+#include <sys/uio.h>
+    ], [
+         pwritev2(0, 0, 0, 0, 0);
+    ], have_pwritev2=yes
+       AC_MSG_RESULT(yes),
+       AC_MSG_RESULT(no))
+    AC_SUBST(have_pwritev2)
+  ])
+
+#
 # Check if we have a copy_file_range system call (Linux)
 #
 AC_DEFUN([AC_HAVE_COPY_FILE_RANGE],
