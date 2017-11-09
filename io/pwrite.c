@@ -312,6 +312,7 @@ pwrite_f(
 		case 'u':
 			uflag = 1;
 			break;
+#ifdef HAVE_PWRITEV
 		case 'V':
 			vectors = strtoul(optarg, &sp, 0);
 			if (!sp || sp == optarg) {
@@ -320,6 +321,7 @@ pwrite_f(
 				return 0;
 			}
 			break;
+#endif
 		case 'w':
 			wflag = 1;
 			break;
@@ -334,7 +336,12 @@ pwrite_f(
 			}
 			break;
 		default:
-			return command_usage(&pwrite_cmd);
+			/* Handle ifdef'd-out options above */
+			if (c != '?')
+				printf(_("%s: command -%c not supported\n"), argv[0], c);
+			else
+				command_usage(&pwrite_cmd);
+			return 0;
 		}
 	}
 	if (((skip || dflag) && !infile) || (optind != argc - 2))
