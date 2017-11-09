@@ -253,7 +253,7 @@ static inline uint16_t get_unaligned_be16(void *p)
 static inline uint32_t get_unaligned_be32(void *p)
 {
 	uint8_t *__p = p;
-        return __p[0] << 24 | __p[1] << 16 | __p[2] << 8 | __p[3];
+        return (uint32_t)__p[0] << 24 | __p[1] << 16 | __p[2] << 8 | __p[3];
 }
 
 static inline uint64_t get_unaligned_be64(void *p)

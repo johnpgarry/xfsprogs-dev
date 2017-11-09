@@ -25,9 +25,9 @@
  * not iterate the command args function callout and so can be used
  * for functions like "help" that should only ever be run once.
  */
-#define CMD_FLAG_ONESHOT	(1<<31)
-#define CMD_FLAG_FOREIGN_OK	(1<<30)	/* command not restricted to XFS */
-#define CMD_FLAG_LIBRARY	(1<<29)	/* command provided by libxcmd */
+#define CMD_FLAG_ONESHOT	(1u << 31)
+#define CMD_FLAG_FOREIGN_OK	(1u << 30) /* command not restricted to XFS */
+#define CMD_FLAG_LIBRARY	(1u << 29) /* command provided by libxcmd */
 
 typedef int (*cfunc_t)(int argc, char **argv);
 typedef void (*helpfunc_t)(void);
