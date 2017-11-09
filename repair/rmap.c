@@ -1359,7 +1359,8 @@ next_loop:
 
 err:
 	if (bt_cur)
-		libxfs_btree_del_cursor(bt_cur, XFS_BTREE_NOERROR);
+		libxfs_btree_del_cursor(bt_cur, error ? XFS_BTREE_ERROR :
+							XFS_BTREE_NOERROR);
 	if (agbp)
 		libxfs_putbuf(agbp);
 	free_slab_cursor(&rl_cur);
