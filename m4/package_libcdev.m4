@@ -137,6 +137,7 @@ AC_DEFUN([AC_HAVE_PREADV],
   [ AC_MSG_CHECKING([for preadv])
     AC_TRY_LINK([
 #define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 #include <sys/uio.h>
     ], [
          preadv(0, 0, 0, 0);

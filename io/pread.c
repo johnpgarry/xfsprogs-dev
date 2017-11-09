@@ -16,6 +16,8 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 #include <sys/uio.h>
 #include "command.h"
 #include "input.h"
