@@ -41,7 +41,6 @@ typedef struct xfs_inode_log_item {
 	unsigned short		ili_flags;		/* misc flags */
 	unsigned int		ili_fields;		/* fields to be logged */
 	unsigned int		ili_last_fields;	/* fields when flushed*/
-	xfs_inode_log_format_t	ili_format;		/* logged structure */
 } xfs_inode_log_item_t;
 
 typedef struct xfs_buf_log_item {
