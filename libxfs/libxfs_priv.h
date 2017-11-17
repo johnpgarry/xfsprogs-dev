@@ -155,6 +155,22 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 
 #ifdef __GNUC__
 #define __return_address	__builtin_return_address(0)
+
+/*
+ * Return the address of a label.  Use barrier() so that the optimizer
+ * won't reorder code to refactor the error jumpouts into a single
+ * return, which throws off the reported address.
+ */
+#define __this_address  ({ __label__ __here; __here: barrier(); &&__here; })
+/* Optimization barrier */
+
+/* The "volatile" is due to gcc bugs */
+#define barrier() __asm__ __volatile__("": : :"memory")
+#endif
+
+/* Optimization barrier */
+#ifndef barrier
+# define barrier() __memory_barrier()
 #endif
 
 #define XFS_DQUOT_CLUSTER_SIZE_FSB (xfs_filblks_t)1
