@@ -87,6 +87,15 @@ extern char    *progname;
 #undef ASSERT
 #define ASSERT(ex) assert(ex)
 
+#define MKDEV(major, minor)	IRIX_MKDEV(major, minor)
+#define sysv_major(dev)		IRIX_DEV_MAJOR(dev)
+#define sysv_minor(dev)		IRIX_DEV_MINOR(dev)
+
+static inline uint32_t sysv_encode_dev(dev_t dev)
+{
+        return IRIX_DEV_MINOR(dev) | (IRIX_DEV_MAJOR(dev) << 18);
+}
+
 #ifndef EWRONGFS
 #define EWRONGFS	EINVAL
 #endif

@@ -335,8 +335,8 @@ libxfs_ialloc(
 	case S_IFCHR:
 	case S_IFBLK:
 		ip->i_d.di_format = XFS_DINODE_FMT_DEV;
-		ip->i_df.if_u2.if_rdev = rdev;
 		flags |= XFS_ILOG_DEV;
+		VFS_I(ip)->i_rdev = rdev;
 		break;
 	case S_IFREG:
 	case S_IFDIR:

@@ -36,6 +36,7 @@ struct xfs_dir_ops;
 struct inode {
 	mode_t		i_mode;
 	uint32_t	i_nlink;
+	dev_t		i_rdev;
 	uint32_t	i_generation;
 	uint64_t	i_version;
 	struct timespec	i_atime;
