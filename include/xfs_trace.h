@@ -63,7 +63,7 @@
 #define trace_xfs_irec_merge_pre(a,b,c,d,e,f)	((void) 0)
 #define trace_xfs_irec_merge_post(a,b,c,d)	((void) 0)
 
-#define trace_xfs_iext_insert(a,b,c,d,e)	((void) 0)
+#define trace_xfs_iext_insert(a,b,c,d)		((void) 0)
 #define trace_xfs_iext_remove(a,b,c,d)		((void) 0)
 
 #define trace_xfs_dir2_grow_inode(a,b)		((void) 0)

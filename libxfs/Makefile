@@ -85,6 +85,7 @@ CFILES = cache.c \
 	xfs_dir2_sf.c \
 	xfs_dquot_buf.c \
 	xfs_ialloc.c \
+	xfs_iext_tree.c \
 	xfs_inode_buf.c \
 	xfs_inode_fork.c \
 	xfs_ialloc_btree.c \

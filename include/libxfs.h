@@ -209,14 +209,19 @@ xfs_inobt_is_sparse_disk(
 
 static inline void
 libxfs_bmbt_disk_get_all(
-	struct xfs_bmbt_rec	*rp,
+	struct xfs_bmbt_rec	*rec,
 	struct xfs_bmbt_irec	*irec)
 {
-	struct xfs_bmbt_rec_host hrec;
+	uint64_t		l0 = get_unaligned_be64(&rec->l0);
+	uint64_t		l1 = get_unaligned_be64(&rec->l1);
 
-	hrec.l0 = get_unaligned_be64(&rp->l0);
-	hrec.l1 = get_unaligned_be64(&rp->l1);
-	libxfs_bmbt_get_all(&hrec, irec);
+	irec->br_startoff = (l0 & xfs_mask64lo(64 - BMBT_EXNTFLAG_BITLEN)) >> 9;
+	irec->br_startblock = ((l0 & xfs_mask64lo(9)) << 43) | (l1 >> 21);
+	irec->br_blockcount = l1 & xfs_mask64lo(21);
+	if (l0 >> (64 - BMBT_EXNTFLAG_BITLEN))
+		irec->br_state = XFS_EXT_UNWRITTEN;
+	else
+		irec->br_state = XFS_EXT_NORM;
 }
 
 /* XXX: this is clearly a bug - a shared header needs to export this */
