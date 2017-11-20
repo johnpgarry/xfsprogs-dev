@@ -1,3 +1,5 @@
+xfsprogs-4.14.0-rc1 (9 Nov 2017)
+
 xfsprogs-4.13.1 (26 Sep 2017)
 	- fix global array overrun in mkfs (Darrick Wong)
 
