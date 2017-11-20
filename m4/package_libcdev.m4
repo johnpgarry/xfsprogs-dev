@@ -314,3 +314,17 @@ AC_DEFUN([AC_HAVE_GETFSMAP],
        AC_MSG_RESULT(no))
     AC_SUBST(have_getfsmap)
   ])
+
+AC_DEFUN([AC_HAVE_STATFS_FLAGS],
+  [
+    AC_CHECK_TYPE(struct statfs,
+      [
+        AC_CHECK_MEMBER(struct statfs.f_flags,
+          have_statfs_flags=yes,,
+          [#include <sys/vfs.h>]
+        )
+      ],,
+      [#include <sys/vfs.h>]
+    )
+    AC_SUBST(have_statfs_flags)
+  ])

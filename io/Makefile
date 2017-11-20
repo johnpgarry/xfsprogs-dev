@@ -110,6 +110,10 @@ ifeq ($(PKG_PLATFORM),linux)
 CFILES += fsmap.c
 endif
 
+ifeq ($(HAVE_STATFS_FLAGS),yes)
+LCFLAGS += -DHAVE_STATFS_FLAGS
+endif
+
 default: depend $(LTCOMMAND)
 
 include $(BUILDRULES)
