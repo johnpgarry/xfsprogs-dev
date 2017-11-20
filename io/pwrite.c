@@ -102,7 +102,7 @@ do_pwritev(
 	return bytes;
 }
 #else
-#define do_pwritev(fd, offset, count, buffer_size) (0)
+#define do_pwritev(fd, offset, count, buffer_size, pwritev2_flags) (0)
 #endif
 
 static ssize_t
