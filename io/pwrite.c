@@ -61,12 +61,12 @@ pwrite_help(void)
 }
 
 #ifdef HAVE_PWRITEV
-static int
+static ssize_t
 do_pwritev(
 	int		fd,
 	off64_t		offset,
-	ssize_t		count,
-	ssize_t		buffer_size,
+	size_t		count,
+	size_t		buffer_size,
 	int 		pwritev2_flags)
 {
 	int vecs = 0;
@@ -105,12 +105,12 @@ do_pwritev(
 #define do_pwritev(fd, offset, count, buffer_size) (0)
 #endif
 
-static int
+static ssize_t
 do_pwrite(
 	int		fd,
 	off64_t		offset,
-	ssize_t		count,
-	ssize_t		buffer_size,
+	size_t		count,
+	size_t		buffer_size,
 	int		pwritev2_flags)
 {
 	if (!vectors)
@@ -269,7 +269,7 @@ write_once(
 	long long	*total,
 	int		pwritev2_flags)
 {
-	size_t bytes;
+	ssize_t bytes;
 	bytes = do_pwrite(file->fd, offset, count, count, pwritev2_flags);
 	if (bytes < 0)
 		return -1;
