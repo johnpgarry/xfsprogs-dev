@@ -476,6 +476,7 @@ void
 write_wbuf(void)
 {
 	int		i;
+	int		badness = 0;
 
 	/* verify target threads */
 	for (i = 0; i < num_targets; i++)
@@ -486,6 +487,17 @@ write_wbuf(void)
 	for (i = 0; i < num_targets; i++)
 		if (target[i].state != INACTIVE)
 			pthread_mutex_unlock(&targ[i].wait);	/* wake up */
+		else
+			badness++;
+
+	/*
+	 * If all the targets are inactive then there won't be any io
+	 * threads left to release mainwait.  We're screwed, so bail out.
+	 */
+	if (badness == num_targets) {
+		check_errors();
+		exit(1);
+	}
 
 	signal_maskfunc(SIGCHLD, SIG_UNBLOCK);
 	pthread_mutex_lock(&mainwait);
