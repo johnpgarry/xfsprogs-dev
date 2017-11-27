@@ -335,8 +335,8 @@ libxfs_ialloc(
 	case S_IFCHR:
 	case S_IFBLK:
 		ip->i_d.di_format = XFS_DINODE_FMT_DEV;
-		ip->i_df.if_u2.if_rdev = rdev;
 		flags |= XFS_ILOG_DEV;
+		VFS_I(ip)->i_rdev = rdev;
 		break;
 	case S_IFREG:
 	case S_IFDIR:
@@ -368,7 +368,7 @@ libxfs_ialloc(
 		ip->i_d.di_format = XFS_DINODE_FMT_EXTENTS;
 		ip->i_df.if_flags = XFS_IFEXTENTS;
 		ip->i_df.if_bytes = ip->i_df.if_real_bytes = 0;
-		ip->i_df.if_u1.if_extents = NULL;
+		ip->i_df.if_u1.if_root = NULL;
 		break;
 	default:
 		ASSERT(0);
@@ -398,9 +398,10 @@ libxfs_iprint(
 	xfs_inode_t		*ip)
 {
 	struct xfs_icdinode	*dip;
-	xfs_bmbt_rec_host_t	*ep;
-	xfs_extnum_t		i;
-	xfs_extnum_t		nextents;
+	xfs_extnum_t		i = 0;
+	xfs_ifork_t		*ifp;		/* inode fork pointer */
+	struct xfs_iext_cursor	icur;
+	xfs_bmbt_irec_t		rec;
 
 	printf("Inode %lx\n", (unsigned long)ip);
 	printf("    i_ino %llx\n", (unsigned long long)ip->i_ino);
@@ -409,21 +410,18 @@ libxfs_iprint(
 		printf("EXTENTS ");
 	printf("\n");
 	printf("    i_df.if_bytes %d\n", ip->i_df.if_bytes);
-	printf("    i_df.if_u1.if_extents/if_data %lx\n",
-		(unsigned long)ip->i_df.if_u1.if_extents);
+	printf("    i_df.if_u1.if_root/if_data %lx\n",
+		(unsigned long)ip->i_df.if_u1.if_root);
 	if (ip->i_df.if_flags & XFS_IFEXTENTS) {
-		nextents = ip->i_df.if_bytes / (uint)sizeof(*ep);
-		for (ep = ip->i_df.if_u1.if_extents, i = 0; i < nextents;
-								i++, ep++) {
-			xfs_bmbt_irec_t rec;
-
-			xfs_bmbt_get_all(ep, &rec);
+		ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
+		for_each_xfs_iext(ifp, &icur, &rec) {
 			printf("\t%d: startoff %llu, startblock 0x%llx,"
 				" blockcount %llu, state %d\n",
 				i, (unsigned long long)rec.br_startoff,
 				(unsigned long long)rec.br_startblock,
 				(unsigned long long)rec.br_blockcount,
 				(int)rec.br_state);
+			i++;
 		}
 	}
 	printf("    i_df.if_broot %lx\n", (unsigned long)ip->i_df.if_broot);

@@ -530,9 +530,9 @@ xlog_print_trans_inode(
      * print inode type header region
      *
      * memmove to ensure 8-byte alignment for the long longs in
-     * xfs_inode_log_format_t structure
+     * struct xfs_inode_log_format structure
      *
-     * len can be smaller than xfs_inode_log_format_t
+     * len can be smaller than struct xfs_inode_log_format
      * if format data is split over operations
      */
     memmove(&src_lbuf, *ptr, MIN(sizeof(src_lbuf), len));
@@ -550,7 +550,7 @@ xlog_print_trans_inode(
 	       (long long)f->ilf_blkno, f->ilf_len, f->ilf_boffset);
     } else {
 	ASSERT(len >= 4);	/* must have at least 4 bytes if != 0 */
-	f = (xfs_inode_log_format_t *)&src_lbuf;
+	f = (struct xfs_inode_log_format *)&src_lbuf;
 	printf(_("INODE: #regs: %d   Not printing rest of data\n"),
 	       f->ilf_size);
 	return f->ilf_size;
@@ -1480,14 +1480,14 @@ end:
  * if necessary, convert an xfs_inode_log_format struct from the old 32bit version
  * (which can have different field alignments) to the native 64 bit version
  */
-xfs_inode_log_format_t *
-xfs_inode_item_format_convert(char *src_buf, uint len, xfs_inode_log_format_t *in_f)
+struct xfs_inode_log_format *
+xfs_inode_item_format_convert(char *src_buf, uint len, struct xfs_inode_log_format *in_f)
 {
 	struct xfs_inode_log_format_32	*in_f32;
 
 	/* if we have native format then just return buf without copying data */
-	if (len == sizeof(xfs_inode_log_format_t)) {
-		return (xfs_inode_log_format_t *)src_buf;
+	if (len == sizeof(struct xfs_inode_log_format)) {
+		return (struct xfs_inode_log_format *)src_buf;
 	}
 
 	in_f32 = (struct xfs_inode_log_format_32 *)src_buf;
@@ -1498,7 +1498,8 @@ xfs_inode_item_format_convert(char *src_buf, uint len, xfs_inode_log_format_t *i
 	in_f->ilf_dsize = in_f32->ilf_dsize;
 	in_f->ilf_ino = in_f32->ilf_ino;
 	/* copy biggest field of ilf_u */
-	memcpy(&in_f->ilf_u.ilfu_uuid, &in_f32->ilf_u.ilfu_uuid, sizeof(uuid_t));
+	memcpy(&in_f->ilf_u.__pad, &in_f32->ilf_u.__pad,
+					sizeof(in_f->ilf_u.__pad));
 	in_f->ilf_blkno = in_f32->ilf_blkno;
 	in_f->ilf_len = in_f32->ilf_len;
 	in_f->ilf_boffset = in_f32->ilf_boffset;

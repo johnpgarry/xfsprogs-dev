@@ -31,6 +31,7 @@ HFILES = \
 	xfs_cksum.h \
 	xfs_da_btree.h \
 	xfs_dir2.h \
+	xfs_errortag.h \
 	xfs_ialloc.h \
 	xfs_ialloc_btree.h \
 	xfs_inode_buf.h \
@@ -84,6 +85,7 @@ CFILES = cache.c \
 	xfs_dir2_sf.c \
 	xfs_dquot_buf.c \
 	xfs_ialloc.c \
+	xfs_iext_tree.c \
 	xfs_inode_buf.c \
 	xfs_inode_fork.c \
 	xfs_ialloc_btree.c \

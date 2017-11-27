@@ -437,7 +437,7 @@ bmap_next_offset(
 	int		error;			/* error return value */
 	xfs_bmbt_irec_t got;			/* current extent value */
 	xfs_ifork_t	*ifp;			/* inode fork pointer */
-	xfs_extnum_t	idx;			/* last extent used */
+	struct xfs_iext_cursor	icur;
 
 	if (XFS_IFORK_FORMAT(ip, whichfork) != XFS_DINODE_FMT_BTREE &&
 	    XFS_IFORK_FORMAT(ip, whichfork) != XFS_DINODE_FMT_EXTENTS &&
@@ -452,7 +452,7 @@ bmap_next_offset(
 	    (error = -libxfs_iread_extents(tp, ip, whichfork)))
 		return error;
 	bno = *bnop + 1;
-	if (!libxfs_iext_lookup_extent(ip, ifp, bno, &idx, &got))
+	if (!libxfs_iext_lookup_extent(ip, ifp, bno, &icur, &got))
 		*bnop = NULLFILEOFF;
 	else
 		*bnop = got.br_startoff < bno ? bno : got.br_startoff;
@@ -524,7 +524,7 @@ mk_rbmino(xfs_mount_t *mp)
 	 */
 	ip->i_df.if_flags = XFS_IFEXTENTS;
 	ip->i_df.if_bytes = ip->i_df.if_real_bytes = 0;
-	ip->i_df.if_u1.if_extents = NULL;
+	ip->i_df.if_u1.if_root = NULL;
 
 	ip->i_d.di_size = mp->m_sb.sb_rbmblocks * mp->m_sb.sb_blocksize;
 
@@ -772,7 +772,7 @@ mk_rsumino(xfs_mount_t *mp)
 	 */
 	ip->i_df.if_flags = XFS_IFEXTENTS;
 	ip->i_df.if_bytes = ip->i_df.if_real_bytes = 0;
-	ip->i_df.if_u1.if_extents = NULL;
+	ip->i_df.if_u1.if_root = NULL;
 
 	ip->i_d.di_size = mp->m_rsumsize;
 
@@ -882,7 +882,7 @@ mk_root_dir(xfs_mount_t *mp)
 	 */
 	ip->i_df.if_flags = XFS_IFEXTENTS;
 	ip->i_df.if_bytes = ip->i_df.if_real_bytes = 0;
-	ip->i_df.if_u1.if_extents = NULL;
+	ip->i_df.if_u1.if_root = NULL;
 
 
 

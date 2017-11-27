@@ -282,8 +282,8 @@ STATIC void
 xlog_recover_print_inode(
 	xlog_recover_item_t	*item)
 {
-	xfs_inode_log_format_t	f_buf;
-	xfs_inode_log_format_t	*f;
+	struct xfs_inode_log_format	f_buf;
+	struct xfs_inode_log_format	*f;
 	int			attr_index;
 	int			hasdata;
 	int			hasattr;
