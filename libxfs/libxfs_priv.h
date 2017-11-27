@@ -87,14 +87,12 @@ extern char    *progname;
 #undef ASSERT
 #define ASSERT(ex) assert(ex)
 
-#define MKDEV(major, minor)	IRIX_MKDEV(major, minor)
-#define sysv_major(dev)		IRIX_DEV_MAJOR(dev)
-#define sysv_minor(dev)		IRIX_DEV_MINOR(dev)
-
-static inline uint32_t sysv_encode_dev(dev_t dev)
-{
-        return IRIX_DEV_MINOR(dev) | (IRIX_DEV_MAJOR(dev) << 18);
-}
+/*
+ * We have no need for the "linux" dev_t in userspace, so these
+ * are no-ops, and an xfs_dev_t is stored in VFS_I(ip)->i_rdev
+ */
+#define xfs_to_linux_dev_t(dev)	dev
+#define linux_to_xfs_dev_t(dev) dev
 
 #ifndef EWRONGFS
 #define EWRONGFS	EINVAL
