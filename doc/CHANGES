@@ -1,3 +1,6 @@
+xfsprogs-4.14.0 (27 Nov 2017)
+	- no changes from v4.14.0-rc2
+
 xfsprogs-4.14.0-rc2 (20 Nov 2017)
 	- xfs_repair: fix deadlock on failed refcountbt checks (Darrick Wong)
 	- xfs_repair: fix cowextsize field checking and repairing (Darrick Wong)
