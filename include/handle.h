@@ -50,6 +50,8 @@ extern int  parentpaths_by_handle(void *__hanp, size_t __hlen,
 extern int  fssetdm_by_handle (void *__hanp, size_t __hlen,
 			       struct fsdmidata *__fsdmi);
 
+void fshandle_destroy(void);
+
 #ifdef __cplusplus
 }
 #endif

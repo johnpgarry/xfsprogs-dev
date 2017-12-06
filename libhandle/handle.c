@@ -62,6 +62,19 @@ struct fdhash {
 
 static struct fdhash *fdhash_head = NULL;
 
+void
+fshandle_destroy(void)
+{
+	struct fdhash	*nexth;
+	struct fdhash	*h = fdhash_head;
+
+	while (h) {
+		nexth = h->fnxt;
+		free(h);
+		h = nexth;
+	}
+}
+
 int
 path_to_fshandle(
 	char		*path,		/* input,  path to convert */
