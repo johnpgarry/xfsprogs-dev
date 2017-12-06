@@ -33,8 +33,8 @@ static void unknown(char opt, char *s);
 static int  ispow2(unsigned int i);
 
 /*
- * The configured block and sector sizes are defined as global variables so
- * that they don't need to be passed to functions that require them.
+ * XXX: The configured block and sector sizes are defined as global variables so
+ * that they don't need to be passed to getnum/cvtnum().
  */
 unsigned int		blocksize;
 unsigned int		sectorsize;
@@ -3675,52 +3675,34 @@ main(
 	int			argc,
 	char			**argv)
 {
-	uint64_t		agcount;
 	xfs_agnumber_t		agno;
-	uint64_t		agsize;
-	int			blocklog;
 	xfs_buf_t		*buf;
 	int			c;
-	xfs_rfsblock_t		dblocks;
-	char			*dfile;
-	int			dirblocklog;
-	int			dirblocksize;
-	int			dsunit;
-	int			dswidth;
-	int			force_overwrite;
-	struct fsxattr		fsx;
-	int			imaxpct;
-	int			inodelog;
-	int			inopblock;
-	int			isize;
-	char			*label = NULL;
-	xfs_agnumber_t		logagno;
-	xfs_rfsblock_t		logblocks;
-	char			*logfile;
-	int			loginternal;
-	xfs_fsblock_t		logstart;
-	int			lsectorlog;
-	int			lsectorsize;
-	int			lsunit;
-	xfs_extlen_t		nbmblocks;
+	char			*dfile = NULL;
+	char			*logfile = NULL;
+	char			*rtfile = NULL;
 	int			dry_run = 0;
 	int			discard = 1;
-	char			*protofile;
-	char			*protostring;
+	int			force_overwrite = 0;
 	int			quiet = 0;
-	xfs_rfsblock_t		rtblocks;
-	xfs_extlen_t		rtextblocks;
-	xfs_rtblock_t		rtextents;
-	char			*rtfile;
-	int			sectorlog;
-	uuid_t			uuid;
-	int			worst_freelist;
-	libxfs_init_t		xi;
+	char			*protofile = NULL;
+	char			*protostring = NULL;
+	int			worst_freelist = 0;
+
+	struct libxfs_xinit	xi = {
+		.isdirect = LIBXFS_DIRECT,
+		.isreadonly = LIBXFS_EXCLUSIVELY,
+	};
 	struct xfs_mount	mbuf = {};
 	struct xfs_mount	*mp = &mbuf;
 	struct xfs_sb		*sbp = &mp->m_sb;
-	struct fs_topology	ft;
-	struct sb_feat_args	sb_feat;
+	struct fs_topology	ft = {};
+	struct cli_params	cli = {
+		.xi = &xi,
+		.loginternal = 1,
+	};
+	struct mkfs_params	cfg = {};
+
 	/* build time defaults */
 	struct mkfs_default_params	dft = {
 		.source = "package build definitions",
@@ -3745,10 +3727,6 @@ main(
 			.nortalign = false,
 		},
 	};
-	struct cli_params	cli = {
-		.xi = &xi,
-	};
-	struct mkfs_params	cfg = {};
 
 	platform_uuid_generate(&cli.uuid);
 	progname = basename(argv[0]);
@@ -3772,28 +3750,6 @@ main(
 	memcpy(&cli.sb_feat, &dft.sb_feat, sizeof(cli.sb_feat));
 	memcpy(&cli.fsx, &dft.fsx, sizeof(cli.fsx));
 
-	/*
-	 * Initialise cli parameters that can be set to zero to an appropriate
-	 * value so we can tell if they have been set or or changed from the
-	 * default value.
-	 */
-	cli.loginternal = 1;	/* internal by default */
-
-	agsize = dblocks = 0;
-	loginternal = 1;
-	logagno = logblocks = rtblocks = rtextblocks = 0;
-	imaxpct = inodelog = inopblock = isize = 0;
-	dfile = logfile = rtfile = NULL;
-	protofile = NULL;
-	dsunit = dswidth = lsunit = 0;
-	force_overwrite = 0;
-	worst_freelist = 0;
-	memset(&fsx, 0, sizeof(fsx));
-
-	memset(&xi, 0, sizeof(xi));
-	xi.isdirect = LIBXFS_DIRECT;
-	xi.isreadonly = LIBXFS_EXCLUSIVELY;
-
 	while ((c = getopt(argc, argv, "b:d:i:l:L:m:n:KNp:qr:s:CfV")) != EOF) {
 		switch (c) {
 		case 'C':
@@ -3801,33 +3757,19 @@ main(
 			force_overwrite = 1;
 			break;
 		case 'b':
+		case 'd':
 		case 'i':
 		case 'l':
+		case 'm':
 		case 'n':
 		case 'r':
 		case 's':
 			parse_subopts(c, optarg, &cli);
 			break;
-		case 'd':
-			parse_subopts(c, optarg, &cli);
-
-			/* temp don't break code */
-			fsx.fsx_xflags |= cli.fsx.fsx_xflags;
-			fsx.fsx_projid = cli.fsx.fsx_projid;
-			fsx.fsx_extsize = cli.fsx.fsx_extsize;
-			/* end temp don't break code */
-			break;
 		case 'L':
 			if (strlen(optarg) > sizeof(sbp->sb_fname))
 				illegal(optarg, "L");
-			label = optarg;
-			break;
-		case 'm':
-			parse_subopts(c, optarg, &cli);
-
-			/* temp don't break code */
-			platform_uuid_copy(&uuid, &cli.uuid);
-			/* end temp don't break code */
+			cfg.label = optarg;
 			break;
 		case 'N':
 			dry_run = 1;
@@ -3858,9 +3800,7 @@ main(
 	} else
 		dfile = xi.dname;
 
-	/* temp don't break code */
-	sb_feat = cli.sb_feat;
-	/* end temp don't break code */
+	protostring = setup_proto(protofile);
 
 	/*
 	 * Extract as much of the valid config as we can from the CLI input
@@ -3869,6 +3809,14 @@ main(
 	validate_blocksize(&cfg, &cli, &dft);
 	validate_sectorsize(&cfg, &cli, &dft, &ft, dfile, dry_run,
 			    force_overwrite);
+
+	/*
+	 * XXX: we still need to set block size and sector size global variables
+	 * so that getnum/cvtnum works correctly
+	 */
+	blocksize = cfg.blocksize;
+	sectorsize = cfg.sectorsize;
+
 	validate_log_sectorsize(&cfg, &cli, &dft);
 	validate_sb_features(&cfg, &cli);
 
@@ -3926,69 +3874,6 @@ main(
 
 	protostring = setup_proto(protofile);
 
-	/* temp don't break code */
-	sectorsize = cfg.sectorsize;
-	sectorlog = cfg.sectorlog;
-	blocksize = cfg.blocksize;
-	blocklog = cfg.blocklog;
-	lsectorsize = cfg.lsectorsize;
-	lsectorlog = cfg.lsectorlog;
-	platform_uuid_copy(&uuid, &cfg.uuid);
-	sb_feat = cfg.sb_feat;
-	dirblocksize = cfg.dirblocksize;
-	dirblocklog = cfg.dirblocklog;
-	isize = cfg.inodesize;
-	inodelog = cfg.inodelog;
-	inopblock = cfg.inopblock;
-	dblocks = cfg.dblocks;
-	logblocks = cfg.logblocks;
-	rtblocks = cfg.rtblocks;
-	rtextblocks = cfg.rtextblocks;
-	nbmblocks = cfg.rtbmblocks;
-	rtextents = cfg.rtextents;
-	dsunit = cfg.dsunit;
-	dswidth = cfg.dswidth;
-	lsunit = cfg.lsunit;
-	agsize = cfg.agsize;
-	agcount = cfg.agcount;
-	imaxpct = cfg.imaxpct;
-	logagno = cfg.logagno;
-	logstart = cfg.logstart;
-	/* end temp don't break code */
-
-	/* Temp support code  to set up mkfs cfg parameters */
-	cfg.blocksize = blocksize;
-	cfg.blocklog = blocklog;
-	cfg.sectorsize = sectorsize;
-	cfg.sectorlog = sectorlog;
-	cfg.lsectorsize = lsectorsize;
-	cfg.lsectorlog = lsectorlog;
-	cfg.dirblocksize = dirblocksize;
-	cfg.dirblocklog = dirblocklog;
-	cfg.inodesize = isize;
-	cfg.inodelog = inodelog;
-	cfg.inopblock = inopblock;
-
-	cfg.dblocks = dblocks;
-	cfg.logblocks = logblocks;
-	cfg.rtblocks = rtblocks;
-	cfg.rtextblocks = rtextblocks;
-	cfg.rtextents = rtextents;
-	cfg.rtbmblocks = nbmblocks;
-	cfg.dsunit = dsunit;
-	cfg.dswidth = dswidth;
-	cfg.lsunit = lsunit;
-	cfg.agsize = agsize;
-	cfg.agcount = agcount;
-	cfg.imaxpct = imaxpct;
-	cfg.loginternal = loginternal;
-	cfg.logstart = logstart;
-	cfg.logagno = logagno;
-	cfg.label = label;
-	platform_uuid_copy(&cfg.uuid, &uuid);
-	memcpy(&cfg.sb_feat, &sb_feat, sizeof(sb_feat));
-	/* end temp support code */
-
 	if (!quiet || dry_run) {
 		print_mkfs_cfg(&cfg, dfile, logfile, rtfile);
 		if (dry_run)
@@ -4033,7 +3918,7 @@ main(
 	/*
 	 * Allocate the root inode and anything else in the proto file.
 	 */
-	parse_proto(mp, &fsx, &protostring);
+	parse_proto(mp, &cli.fsx, &protostring);
 
 	/*
 	 * Protect ourselves against possible stupidity
