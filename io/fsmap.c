@@ -184,8 +184,8 @@ dump_map_verbose(
 	off64_t			agoff, bperag;
 	int			foff_w, boff_w, aoff_w, tot_w, agno_w, own_w;
 	int			nr_w, dev_w;
-	char			rbuf[32], bbuf[32], abuf[32], obuf[32];
-	char			nbuf[32], dbuf[32], gbuf[32];
+	char			rbuf[40], bbuf[40], abuf[40], obuf[40];
+	char			nbuf[40], dbuf[40], gbuf[40];
 	char			owner[OWNER_BUF_SZ];
 	int			sunit, swidth;
 	int			flg = 0;
