@@ -940,6 +940,7 @@ const field_t	dir3_data_hdr_flds[] = {
 	{ "hdr", FLDT_DIR3_BLKHDR, OI(DH3OFF(hdr)), C1, 0, TYP_NONE },
 	{ "bestfree", FLDT_DIR2_DATA_FREE, OI(DH3OFF(best_free)),
 	  CI(XFS_DIR2_DATA_FD_COUNT), FLD_ARRAY, TYP_NONE },
+	{ "pad", FLDT_UINT32X, OI(DH3OFF(pad)), C1, FLD_SKIPALL, TYP_NONE },
 	{ NULL }
 };
 
@@ -948,6 +949,7 @@ const field_t	dir3_leaf_hdr_flds[] = {
 	{ "info", FLDT_DA3_BLKINFO, OI(LH3OFF(info)), C1, 0, TYP_NONE },
 	{ "count", FLDT_UINT16D, OI(LH3OFF(count)), C1, 0, TYP_NONE },
 	{ "stale", FLDT_UINT16D, OI(LH3OFF(stale)), C1, 0, TYP_NONE },
+	{ "pad", FLDT_UINT32X, OI(LH3OFF(pad)), C1, FLD_SKIPALL, TYP_NONE },
 	{ NULL }
 };
 
@@ -957,6 +959,7 @@ const field_t	dir3_free_hdr_flds[] = {
 	{ "firstdb", FLDT_INT32D, OI(FH3OFF(firstdb)), C1, 0, TYP_NONE },
 	{ "nvalid", FLDT_INT32D, OI(FH3OFF(nvalid)), C1, 0, TYP_NONE },
 	{ "nused", FLDT_INT32D, OI(FH3OFF(nused)), C1, 0, TYP_NONE },
+	{ "pad", FLDT_UINT32X, OI(FH3OFF(pad)), C1, FLD_SKIPALL, TYP_NONE },
 	{ NULL }
 };
 
