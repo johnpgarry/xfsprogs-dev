@@ -1740,6 +1740,26 @@ rtdev_opts_parser(
 	char			*value,
 	struct cli_params	*cli)
 {
+	switch (subopt) {
+	case R_EXTSIZE:
+		cli->rtextsize = getstr(value, &ropts, R_EXTSIZE);
+		break;
+	case R_FILE:
+		cli->xi->risfile = getnum(value, &ropts, R_FILE);
+		break;
+	case R_NAME:
+	case R_DEV:
+		cli->xi->rtname = getstr(value, &ropts, R_NAME);
+		break;
+	case R_SIZE:
+		cli->rtsize = getstr(value, &ropts, R_SIZE);
+		break;
+	case R_NOALIGN:
+		cli->sb_feat.nortalign = getnum(value, &ropts, R_NOALIGN);
+		break;
+	default:
+		return -EINVAL;
+	}
 	return 0;
 }
 
@@ -2077,36 +2097,13 @@ main(
 			qflag = 1;
 			break;
 		case 'r':
-			p = optarg;
-			while (*p != '\0') {
-				char	**subopts = (char **)ropts.subopts;
-				char	*value;
+			parse_subopts(c, optarg, &cli);
 
-				switch (getsubopt(&p, subopts, &value)) {
-				case R_EXTSIZE:
-					rtextsize = getstr(value, &ropts,
-							   R_EXTSIZE);
-					break;
-				case R_FILE:
-					xi.risfile = getnum(value, &ropts,
-							    R_FILE);
-					break;
-				case R_NAME:
-				case R_DEV:
-					xi.rtname = getstr(value, &ropts,
-							   R_NAME);
-					break;
-				case R_SIZE:
-					rtsize = getstr(value, &ropts, R_SIZE);
-					break;
-				case R_NOALIGN:
-					norsflag = getnum(value, &ropts,
-								R_NOALIGN);
-					break;
-				default:
-					unknown('r', value);
-				}
-			}
+			/* temp don't break code */
+			rtextsize = cli.rtextsize;
+			rtsize = cli.rtsize;
+			norsflag = cli.sb_feat.nortalign;
+			/* end temp don't break code */
 			break;
 		case 's':
 			p = optarg;
