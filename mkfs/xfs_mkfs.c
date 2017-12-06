@@ -2238,6 +2238,36 @@ _("rmapbt not supported with realtime devices\n"));
 }
 
 static void
+validate_dirblocksize(
+	struct mkfs_params	*cfg,
+	struct cli_params	*cli)
+{
+
+	if (cli->dirblocksize)
+		cfg->dirblocksize = getnum(cli->dirblocksize, &nopts, N_SIZE);
+	if (cli->dirblocklog)
+		cfg->dirblocksize = 1 << cli->dirblocklog;
+
+	if (cfg->dirblocksize) {
+		if (cfg->dirblocksize < cfg->blocksize ||
+		    cfg->dirblocksize > XFS_MAX_BLOCKSIZE) {
+			fprintf(stderr, _("illegal directory block size %d\n"),
+				cfg->dirblocksize);
+			usage();
+		}
+		cfg->dirblocklog = libxfs_highbit32(cfg->dirblocksize);
+		return;
+	}
+
+	/* use default size based on current block size */
+	if (cfg->blocksize < (1 << XFS_MIN_REC_DIRSIZE))
+		cfg->dirblocklog = XFS_MIN_REC_DIRSIZE;
+	else
+		cfg->dirblocklog = cfg->blocklog;
+	cfg->dirblocksize = 1 << cfg->dirblocklog;
+}
+
+static void
 print_mkfs_cfg(
 	struct mkfs_params	*cfg,
 	char			*dfile,
@@ -2919,16 +2949,13 @@ main(
 	xfs_mount_t		*mp;
 	xfs_mount_t		mbuf;
 	xfs_extlen_t		nbmblocks;
-	int			nlflag;
 	int			nodsflag;
 	int			norsflag;
-	int			nsflag;
-	int			nvflag;
-	int			dry_run;
+	int			dry_run = 0;
 	int			discard = 1;
 	char			*protofile;
 	char			*protostring;
-	int			quiet;
+	int			quiet = 0;
 	xfs_rfsblock_t		rtblocks;
 	xfs_extlen_t		rtextblocks;
 	xfs_rtblock_t		rtextents;
@@ -3007,9 +3034,6 @@ main(
 	liflag = laflag = lsflag = lsuflag = lsunitflag = ldflag = lvflag = 0;
 	loginternal = 1;
 	logagno = logblocks = rtblocks = rtextblocks = 0;
-	dry_run = nlflag = nsflag = nvflag = 0;
-	dirblocklog = dirblocksize = 0;
-	quiet = 0;
 	imaxpct = inodelog = inopblock = isize = 0;
 	dfile = logfile = rtfile = NULL;
 	dsize = logsize = rtsize = rtextsize = protofile = NULL;
@@ -3030,6 +3054,7 @@ main(
 			force_overwrite = 1;
 			break;
 		case 'b':
+		case 'n':
 		case 's':
 			parse_subopts(c, optarg, &cli);
 			break;
@@ -3111,17 +3136,6 @@ main(
 			platform_uuid_copy(&uuid, &cli.uuid);
 			/* end temp don't break code */
 			break;
-		case 'n':
-			parse_subopts(c, optarg, &cli);
-
-			/* temp don't break code */
-			if ((nsflag = cli_opt_set(&nopts, N_SIZE)))
-				dirblocksize = getnum(cli.dirblocksize, &nopts, N_SIZE);
-			dirblocklog = cli.dirblocklog;
-
-			nlflag = cli_opt_set(&nopts, N_LOG);
-			/* end temp don't break code */
-			break;
 		case 'N':
 			dry_run = 1;
 			break;
@@ -3175,6 +3189,13 @@ main(
 	validate_log_sectorsize(&cfg, &cli, &dft);
 	validate_sb_features(&cfg, &cli);
 
+	/*
+	 * we've now completed basic validation of the features, sector and
+	 * block sizes, so from this point onwards we use the values found in
+	 * the cfg structure for them, not the command line structure.
+	 */
+	validate_dirblocksize(&cfg, &cli);
+
 	/* temp don't break code */
 	sectorsize = cfg.sectorsize;
 	sectorlog = cfg.sectorlog;
@@ -3184,23 +3205,9 @@ main(
 	lsectorlog = cfg.lsectorlog;
 	platform_uuid_copy(&uuid, &cfg.uuid);
 	sb_feat = cfg.sb_feat;
+	dirblocksize = cfg.dirblocksize;
+	dirblocklog = cfg.dirblocklog;
 	/* end temp don't break code */
-
-	if (nsflag || nlflag) {
-		if (dirblocksize < blocksize ||
-					dirblocksize > XFS_MAX_BLOCKSIZE) {
-			fprintf(stderr, _("illegal directory block size %d\n"),
-				dirblocksize);
-			usage();
-		}
-	} else {
-		if (blocksize < (1 << XFS_MIN_REC_DIRSIZE))
-			dirblocklog = XFS_MIN_REC_DIRSIZE;
-		else
-			dirblocklog = blocklog;
-		dirblocksize = 1 << dirblocklog;
-	}
-
 
 	if (dsize) {
 		uint64_t dbytes;
