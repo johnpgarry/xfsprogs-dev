@@ -890,7 +890,7 @@ struct mkfs_default_params {
 /*
  * Use this macro before we have superblock and mount structure
  */
-#define	DTOBT(d)	((xfs_rfsblock_t)((d) >> (blocklog - BBSHIFT)))
+#define	DTOBT(d, bl)	((xfs_rfsblock_t)((d) >> ((bl) - BBSHIFT)))
 
 /*
  * Use this for block reservations needed for mkfs's conditions
@@ -3324,7 +3324,7 @@ main(
 
 		/* check that rswidth is a multiple of fs blocksize */
 		if (!norsflag && rswidth && !(BBTOB(rswidth) % blocksize)) {
-			rswidth = DTOBT(rswidth);
+			rswidth = DTOBT(rswidth, blocklog);
 			rtextbytes = rswidth << blocklog;
 			if (XFS_MIN_RTEXTSIZE <= rtextbytes &&
 			    (rtextbytes <= XFS_MAX_RTEXTSIZE)) {
@@ -3403,14 +3403,14 @@ main(
 		rtfile = _("volume rt");
 	else if (!xi.rtdev)
 		rtfile = _("none");
-	if (dsize && xi.dsize > 0 && dblocks > DTOBT(xi.dsize)) {
+	if (dsize && xi.dsize > 0 && dblocks > DTOBT(xi.dsize, blocklog)) {
 		fprintf(stderr,
 			_("size %s specified for data subvolume is too large, "
 			"maximum is %lld blocks\n"),
-			dsize, (long long)DTOBT(xi.dsize));
+			dsize, (long long)DTOBT(xi.dsize, blocklog));
 		usage();
 	} else if (!dsize && xi.dsize > 0)
-		dblocks = DTOBT(xi.dsize);
+		dblocks = DTOBT(xi.dsize, blocklog);
 	else if (!dsize) {
 		fprintf(stderr, _("can't get size of data subvolume\n"));
 		usage();
@@ -3451,14 +3451,14 @@ reported by the device (%u).\n"),
 			sectorsize, xi.rtbsize);
 	}
 
-	if (rtsize && xi.rtsize > 0 && rtblocks > DTOBT(xi.rtsize)) {
+	if (rtsize && xi.rtsize > 0 && rtblocks > DTOBT(xi.rtsize, blocklog)) {
 		fprintf(stderr,
 			_("size %s specified for rt subvolume is too large, "
 			"maximum is %lld blocks\n"),
-			rtsize, (long long)DTOBT(xi.rtsize));
+			rtsize, (long long)DTOBT(xi.rtsize, blocklog));
 		usage();
 	} else if (!rtsize && xi.rtsize > 0)
-		rtblocks = DTOBT(xi.rtsize);
+		rtblocks = DTOBT(xi.rtsize, blocklog);
 	else if (rtsize && !xi.rtdev) {
 		fprintf(stderr,
 			_("size specified for non-existent rt subvolume\n"));
@@ -3523,8 +3523,8 @@ reported by the device (%u).\n"),
 	    dswidth && !(BBTOB(dswidth) % blocksize)) {
 
 		/* convert from 512 byte blocks to fs blocksize */
-		dsunit = DTOBT(dsunit);
-		dswidth = DTOBT(dswidth);
+		dsunit = DTOBT(dsunit, blocklog);
+		dswidth = DTOBT(dswidth, blocklog);
 
 		/*
 		 * agsize is not a multiple of dsunit
@@ -3641,7 +3641,7 @@ an AG size that is one stripe unit smaller, for example %llu.\n"),
 
 	if (lsunit) {
 		/* convert from 512 byte blocks to fs blocks */
-		lsunit = DTOBT(lsunit);
+		lsunit = DTOBT(lsunit, blocklog);
 	} else if (sb_feat.log_version == 2 && loginternal && dsunit) {
 		/* lsunit and dsunit now in fs blocks */
 		lsunit = dsunit;
@@ -3669,13 +3669,13 @@ an AG size that is one stripe unit smaller, for example %llu.\n"),
 	min_logblocks = MAX(XFS_MIN_LOG_BLOCKS, min_logblocks);
 	if (!logsize && dblocks >= (1024*1024*1024) >> blocklog)
 		min_logblocks = MAX(min_logblocks, XFS_MIN_LOG_BYTES>>blocklog);
-	if (logsize && xi.logBBsize > 0 && logblocks > DTOBT(xi.logBBsize)) {
+	if (logsize && xi.logBBsize > 0 && logblocks > DTOBT(xi.logBBsize, blocklog)) {
 		fprintf(stderr,
 _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
-			logsize, (long long)DTOBT(xi.logBBsize));
+			logsize, (long long)DTOBT(xi.logBBsize, blocklog));
 		usage();
 	} else if (!logsize && xi.logBBsize > 0) {
-		logblocks = DTOBT(xi.logBBsize);
+		logblocks = DTOBT(xi.logBBsize, blocklog);
 	} else if (logsize && !xi.logdev && !loginternal) {
 		fprintf(stderr,
 			_("size specified for non-existent log subvolume\n"));
