@@ -206,6 +206,26 @@ out_nodev:
 	return error;
 }
 
+/* Remove all the cached entries in the fs table. */
+void
+fs_table_destroy(void)
+{
+	int		i;
+	struct fs_path	*fsp;
+
+	for (i = 0, fsp = fs_table; i < fs_count; i++, fsp++) {
+		free(fsp->fs_name);
+		free(fsp->fs_dir);
+		free(fsp->fs_log);
+		free(fsp->fs_rt);
+	}
+
+	fs_count = 0;
+	xfs_fs_count = 0;
+	free(fs_table);
+	fs_table = NULL;
+}
+
 /*
  * Table iteration (cursor-based) interfaces
  */
