@@ -304,11 +304,23 @@ Prints the block mapping for the current open file. Refer to the
 .BR xfs_bmap (8)
 manual page for complete documentation.
 .TP
-.BI "fiemap [ \-alv ] [ \-n " nx " ]"
+.BI "fiemap [ \-alv ] [ \-n " nx " ] [ " offset " [ " len " ]]"
 Prints the block mapping for the current open file using the fiemap
 ioctl.  Options behave as described in the
 .BR xfs_bmap (8)
 manual page.
+.PP
+.RS
+Optionally, this command also supports passing the start offset
+from where to begin the mapping and the length of that region.
+The kernel will return any full extents which intersect with the requested
+range, and the
+.B fiemap
+command will print them in their entirety.  If the requested range starts
+or ends in a hole,
+.B fiemap
+will print the hole, truncated to the requested range.
+.RE
 .TP
 .BI "fsmap [ \-d | \-l | \-r ] [ \-m | \-v ] [ \-n " nx " ] [ " start " ] [ " end " ]
 Prints the mapping of disk blocks used by the filesystem hosting the current
