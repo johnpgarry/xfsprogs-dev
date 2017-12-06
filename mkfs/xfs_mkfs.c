@@ -1508,6 +1508,69 @@ data_opts_parser(
 	char			*value,
 	struct cli_params	*cli)
 {
+	int			sectorlog;
+
+	switch (subopt) {
+	case D_AGCOUNT:
+		cli->agcount = getnum(value, opts, D_AGCOUNT);
+		break;
+	case D_AGSIZE:
+		cli->agsize = getstr(value, opts, D_AGSIZE);
+		break;
+	case D_FILE:
+		cli->xi->disfile = getnum(value, opts, D_FILE);
+		break;
+	case D_NAME:
+		cli->xi->dname = getstr(value, opts, D_NAME);
+		break;
+	case D_SIZE:
+		cli->dsize = getstr(value, opts, D_SIZE);
+		break;
+	case D_SUNIT:
+		cli->dsunit = getnum(value, opts, D_SUNIT);
+		break;
+	case D_SWIDTH:
+		cli->dswidth = getnum(value, opts, D_SWIDTH);
+		break;
+	case D_SU:
+		cli->dsu = getstr(value, opts, D_SU);
+		break;
+	case D_SW:
+		cli->dsw = getnum(value, opts, D_SW);
+		break;
+	case D_NOALIGN:
+		cli->sb_feat.nodalign = getnum(value, opts, D_NOALIGN);
+		break;
+	case D_SECTLOG:
+		if (cli->sectorsize)
+			conflict('d', opts->subopts, D_SECTSIZE, D_SECTLOG);
+		sectorlog = getnum(value, opts, D_SECTLOG);
+		cli->sectorsize = 1 << sectorlog;
+		break;
+	case D_SECTSIZE:
+		if (cli->sectorsize)
+			conflict('d', opts->subopts, D_SECTSIZE, D_SECTLOG);
+		cli->sectorsize = getnum(value, opts, D_SECTSIZE);
+		break;
+	case D_RTINHERIT:
+		if (getnum(value, opts, D_RTINHERIT))
+			cli->fsx.fsx_xflags |= XFS_DIFLAG_RTINHERIT;
+		break;
+	case D_PROJINHERIT:
+		cli->fsx.fsx_projid = getnum(value, opts, D_PROJINHERIT);
+		cli->fsx.fsx_xflags |= XFS_DIFLAG_PROJINHERIT;
+		break;
+	case D_EXTSZINHERIT:
+		cli->fsx.fsx_extsize = getnum(value, opts, D_EXTSZINHERIT);
+		cli->fsx.fsx_xflags |= XFS_DIFLAG_EXTSZINHERIT;
+		break;
+	case D_COWEXTSIZE:
+		cli->fsx.fsx_cowextsize = getnum(value, opts, D_COWEXTSIZE);
+		cli->fsx.fsx_xflags |= FS_XFLAG_COWEXTSIZE;
+		break;
+	default:
+		return -EINVAL;
+	}
 	return 0;
 }
 
@@ -1730,7 +1793,9 @@ main(
 		.rmapbt = false,
 		.reflink = false,
 	};
-	struct cli_params	cli = {};
+	struct cli_params	cli = {
+		.xi = &xi,
+	};
 
 	platform_uuid_generate(&uuid);
 	progname = basename(argv[0]);
@@ -1780,94 +1845,37 @@ main(
 			/* end temp don't break code */
 			break;
 		case 'd':
-			p = optarg;
-			while (*p != '\0') {
-				char	**subopts = (char **)dopts.subopts;
-				char	*value;
+			parse_subopts(c, optarg, &cli);
 
-				switch (getsubopt(&p, subopts, &value)) {
-				case D_AGCOUNT:
-					agcount = getnum(value, &dopts,
-							 D_AGCOUNT);
-					daflag = 1;
-					break;
-				case D_AGSIZE:
-					agsize = getnum(value, &dopts, D_AGSIZE);
-					dasize = 1;
-					break;
-				case D_FILE:
-					xi.disfile = getnum(value, &dopts,
-							    D_FILE);
-					break;
-				case D_NAME:
-					xi.dname = getstr(value, &dopts, D_NAME);
-					break;
-				case D_SIZE:
-					dsize = getstr(value, &dopts, D_SIZE);
-					break;
-				case D_SUNIT:
-					dsunit = getnum(value, &dopts, D_SUNIT);
-					dsflag = 1;
-					break;
-				case D_SWIDTH:
-					dswidth = getnum(value, &dopts,
-							 D_SWIDTH);
-					dsflag = 1;
-					break;
-				case D_SU:
-					dsu = getnum(value, &dopts, D_SU);
-					dsflag = 1;
-					break;
-				case D_SW:
-					dsw = getnum(value, &dopts, D_SW);
-					dsflag = 1;
-					break;
-				case D_NOALIGN:
-					nodsflag = getnum(value, &dopts,
-								D_NOALIGN);
-					break;
-				case D_SECTLOG:
-					sectorlog = getnum(value, &dopts,
-							   D_SECTLOG);
-					sectorsize = 1 << sectorlog;
-					slflag = 1;
-					break;
-				case D_SECTSIZE:
-					sectorsize = getnum(value, &dopts,
-							    D_SECTSIZE);
-					sectorlog =
-						libxfs_highbit32(sectorsize);
-					ssflag = 1;
-					break;
-				case D_RTINHERIT:
-					c = getnum(value, &dopts, D_RTINHERIT);
-					if (c)
-						fsx.fsx_xflags |=
-							XFS_DIFLAG_RTINHERIT;
-					break;
-				case D_PROJINHERIT:
-					fsx.fsx_projid = getnum(value, &dopts,
-								D_PROJINHERIT);
-					fsx.fsx_xflags |=
-						XFS_DIFLAG_PROJINHERIT;
-					break;
-				case D_EXTSZINHERIT:
-					fsx.fsx_extsize = getnum(value, &dopts,
-								 D_EXTSZINHERIT);
-					fsx.fsx_xflags |=
-						XFS_DIFLAG_EXTSZINHERIT;
-					break;
-				case D_COWEXTSIZE:
-					fsx.fsx_cowextsize = getnum(value,
-							&dopts,
-							D_COWEXTSIZE);
-					fsx.fsx_xflags |=
-						FS_XFLAG_COWEXTSIZE;
-					break;
-				default:
-					unknown('d', value);
-				}
+			/* temp don't break code */
+			agcount = cli.agcount;
+			if (cli_opt_set(&dopts, D_AGSIZE)) {
+				agsize = getnum(cli.agsize, &dopts, D_AGSIZE);
+				dasize = 1;
 			}
+			daflag = cli_opt_set(&dopts, D_AGCOUNT);
+
+			dsunit = cli.dsunit;
+			dswidth = cli.dswidth;
+			dsw = cli.dsw;
+			if (cli_opt_set(&dopts, D_SU)) {
+				dsu = getnum(cli.dsu, &dopts, D_SU);
+				dsflag = 1;
+			}
+			dsflag |= cli_opt_set(&dopts, D_SW) ||
+				  cli_opt_set(&dopts, D_SUNIT) ||
+				  cli_opt_set(&dopts, D_SWIDTH);
+			nodsflag = cli_opt_set(&dopts, D_NOALIGN);
+
+			sectorsize = cli.sectorsize;
+			sectorlog = libxfs_highbit32(sectorsize);
+			slflag = cli_opt_set(&dopts, D_SECTLOG);
+			ssflag = cli_opt_set(&dopts, D_SECTSIZE);
+
+			fsx.fsx_xflags |= cli.fsx.fsx_xflags;
+			fsx.fsx_projid = cli.fsx.fsx_projid;
+			fsx.fsx_extsize = cli.fsx.fsx_extsize;
+			/* end temp don't break code */
 			break;
 		case 'i':
 			p = optarg;
