@@ -3125,7 +3125,7 @@ check_for_orphaned_inodes(
 
 static void
 traverse_function(
-	work_queue_t		*wq,
+	struct workqueue	*wq,
 	xfs_agnumber_t 		agno,
 	void			*arg)
 {
@@ -3154,7 +3154,7 @@ traverse_function(
 
 		for (i = 0; i < XFS_INODES_PER_CHUNK; i++)  {
 			if (inode_isadir(irec, i))
-				process_dir_inode(wq->mp, agno, irec, i);
+				process_dir_inode(wq->wq_ctx, agno, irec, i);
 		}
 	}
 	cleanup_inode_prefetch(pf_args);

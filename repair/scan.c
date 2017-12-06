@@ -2342,7 +2342,7 @@ validate_agi(
  */
 static void
 scan_ag(
-	work_queue_t	*wq,
+	struct workqueue*wq,
 	xfs_agnumber_t	agno,
 	void		*arg)
 {
@@ -2504,13 +2504,13 @@ scan_ags(
 	struct xfs_mount	*mp,
 	int			scan_threads)
 {
-	struct aghdr_cnts *agcnts;
-	uint64_t	fdblocks = 0;
-	uint64_t	icount = 0;
-	uint64_t	ifreecount = 0;
-	uint64_t	usedblocks = 0;
-	xfs_agnumber_t	i;
-	work_queue_t	wq;
+	struct aghdr_cnts	*agcnts;
+	uint64_t		fdblocks = 0;
+	uint64_t		icount = 0;
+	uint64_t		ifreecount = 0;
+	uint64_t		usedblocks = 0;
+	xfs_agnumber_t		i;
+	struct workqueue	wq;
 
 	agcnts = malloc(mp->m_sb.sb_agcount * sizeof(*agcnts));
 	if (!agcnts) {

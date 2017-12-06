@@ -134,13 +134,13 @@ quota_sb_check(xfs_mount_t *mp)
 
 static void
 process_ag_func(
-	work_queue_t		*wq,
+	struct workqueue	*wq,
 	xfs_agnumber_t 		agno,
 	void			*arg)
 {
 	wait_for_inode_prefetch(arg);
 	do_log(_("        - agno = %d\n"), agno);
-	process_aginodes(wq->mp, arg, agno, 0, 1, 0);
+	process_aginodes(wq->wq_ctx, arg, agno, 0, 1, 0);
 	blkmap_free_final();
 	cleanup_inode_prefetch(arg);
 
@@ -169,23 +169,23 @@ _("unable to finish adding attr/data fork reverse-mapping data for AG %u.\n"),
 
 static void
 check_rmap_btrees(
-	work_queue_t	*wq,
+	struct workqueue*wq,
 	xfs_agnumber_t	agno,
 	void		*arg)
 {
 	int		error;
 
-	error = rmap_add_fixed_ag_rec(wq->mp, agno);
+	error = rmap_add_fixed_ag_rec(wq->wq_ctx, agno);
 	if (error)
 		do_error(
 _("unable to add AG %u metadata reverse-mapping data.\n"), agno);
 
-	error = rmap_fold_raw_recs(wq->mp, agno);
+	error = rmap_fold_raw_recs(wq->wq_ctx, agno);
 	if (error)
 		do_error(
 _("unable to merge AG %u metadata reverse-mapping data.\n"), agno);
 
-	error = rmaps_verify_btree(wq->mp, agno);
+	error = rmaps_verify_btree(wq->wq_ctx, agno);
 	if (error)
 		do_error(
 _("%s while checking reverse-mappings"),
@@ -194,13 +194,13 @@ _("%s while checking reverse-mappings"),
 
 static void
 compute_ag_refcounts(
-	work_queue_t	*wq,
+	struct workqueue*wq,
 	xfs_agnumber_t	agno,
 	void		*arg)
 {
 	int		error;
 
-	error = compute_refcounts(wq->mp, agno);
+	error = compute_refcounts(wq->wq_ctx, agno);
 	if (error)
 		do_error(
 _("%s while computing reference count records.\n"),
@@ -209,13 +209,13 @@ _("%s while computing reference count records.\n"),
 
 static void
 process_inode_reflink_flags(
-	struct work_queue	*wq,
+	struct workqueue	*wq,
 	xfs_agnumber_t		agno,
 	void			*arg)
 {
 	int			error;
 
-	error = fix_inode_reflink_flags(wq->mp, agno);
+	error = fix_inode_reflink_flags(wq->wq_ctx, agno);
 	if (error)
 		do_error(
 _("%s while fixing inode reflink flags.\n"),
@@ -224,13 +224,13 @@ _("%s while fixing inode reflink flags.\n"),
 
 static void
 check_refcount_btrees(
-	work_queue_t	*wq,
+	struct workqueue*wq,
 	xfs_agnumber_t	agno,
 	void		*arg)
 {
 	int		error;
 
-	error = check_refcounts(wq->mp, agno);
+	error = check_refcounts(wq->wq_ctx, agno);
 	if (error)
 		do_error(
 _("%s while checking reference counts"),
@@ -241,7 +241,7 @@ static void
 process_rmap_data(
 	struct xfs_mount	*mp)
 {
-	struct work_queue	wq;
+	struct workqueue	wq;
 	xfs_agnumber_t		i;
 
 	if (!rmap_needs_work(mp))

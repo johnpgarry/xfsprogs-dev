@@ -211,7 +211,7 @@ struct qsort_slab {
 
 static void
 qsort_slab_helper(
-	struct work_queue	*wq,
+	struct workqueue	*wq,
 	xfs_agnumber_t		agno,
 	void			*arg)
 {
@@ -231,7 +231,7 @@ qsort_slab(
 	struct xfs_slab		*slab,
 	int (*compare_fn)(const void *, const void *))
 {
-	struct work_queue	wq;
+	struct workqueue	wq;
 	struct xfs_slab_hdr	*hdr;
 	struct qsort_slab	*qs;
 

@@ -66,7 +66,7 @@ process_agi_unlinked(
 
 static void
 process_ag_func(
-	work_queue_t		*wq,
+	struct workqueue	*wq,
 	xfs_agnumber_t 		agno,
 	void			*arg)
 {
@@ -76,7 +76,7 @@ process_ag_func(
 	 */
 	wait_for_inode_prefetch(arg);
 	do_log(_("        - agno = %d\n"), agno);
-	process_aginodes(wq->mp, arg, agno, 1, 0, 1);
+	process_aginodes(wq->wq_ctx, arg, agno, 1, 0, 1);
 	blkmap_free_final();
 	cleanup_inode_prefetch(arg);
 }
@@ -90,13 +90,13 @@ process_ags(
 
 static void
 do_uncertain_aginodes(
-	work_queue_t	*wq,
-	xfs_agnumber_t	agno,
-	void		*arg)
+	struct workqueue	*wq,
+	xfs_agnumber_t		agno,
+	void			*arg)
 {
-	int		*count = arg;
+	int			*count = arg;
 
-	*count = process_uncertain_aginodes(wq->mp, agno);
+	*count = process_uncertain_aginodes(wq->wq_ctx, agno);
 
 #ifdef XR_INODE_TRACE
 	fprintf(stderr,
@@ -114,7 +114,7 @@ phase3(
 {
 	int			i, j;
 	int			*counts;
-	work_queue_t		wq;
+	struct workqueue	wq;
 
 	do_log(_("Phase 3 - for each AG...\n"));
 	if (!no_modify)

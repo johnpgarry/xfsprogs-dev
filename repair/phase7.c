@@ -98,10 +98,11 @@ update_inode_nlinks(
  */
 static void
 do_link_updates(
-	struct work_queue	*wq,
+	struct workqueue	*wq,
 	xfs_agnumber_t		agno,
 	void			*arg)
 {
+	struct xfs_mount	*mp = wq->wq_ctx;
 	ino_tree_node_t		*irec;
 	int			j;
 	uint32_t		nrefs;
@@ -120,8 +121,8 @@ do_link_updates(
 			ASSERT(no_modify || nrefs > 0);
 
 			if (get_inode_disk_nlinks(irec, j) != nrefs)
-				update_inode_nlinks(wq->mp,
-					XFS_AGINO_TO_INO(wq->mp, agno,
+				update_inode_nlinks(wq->wq_ctx,
+					XFS_AGINO_TO_INO(mp, agno,
 						irec->ino_startnum + j),
 					nrefs);
 		}
@@ -135,7 +136,7 @@ phase7(
 	struct xfs_mount	*mp,
 	int			scan_threads)
 {
-	struct work_queue	wq;
+	struct workqueue	wq;
 	int			agno;
 
 	if (!no_modify)

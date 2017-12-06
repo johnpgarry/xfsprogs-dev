@@ -943,11 +943,11 @@ start_inode_prefetch(
  */
 static void
 prefetch_ag_range(
-	struct work_queue	*work,
+	struct workqueue	*work,
 	xfs_agnumber_t		start_ag,
 	xfs_agnumber_t		end_ag,
 	bool			dirs_only,
-	void			(*func)(struct work_queue *,
+	void			(*func)(struct workqueue *,
 					xfs_agnumber_t, void *))
 {
 	int			i;
@@ -967,12 +967,12 @@ struct pf_work_args {
 	xfs_agnumber_t	start_ag;
 	xfs_agnumber_t	end_ag;
 	bool		dirs_only;
-	void		(*func)(struct work_queue *, xfs_agnumber_t, void *);
+	void		(*func)(struct workqueue *, xfs_agnumber_t, void *);
 };
 
 static void
 prefetch_ag_range_work(
-	struct work_queue	*work,
+	struct workqueue	*work,
 	xfs_agnumber_t		unused,
 	void			*args)
 {
@@ -991,14 +991,14 @@ void
 do_inode_prefetch(
 	struct xfs_mount	*mp,
 	int			stride,
-	void			(*func)(struct work_queue *,
+	void			(*func)(struct workqueue *,
 					xfs_agnumber_t, void *),
 	bool			check_cache,
 	bool			dirs_only)
 {
 	int			i;
-	struct work_queue	queue;
-	struct work_queue	*queues;
+	struct workqueue	queue;
+	struct workqueue	*queues;
 	int			queues_started = 0;
 
 	/*
@@ -1008,7 +1008,7 @@ do_inode_prefetch(
 	 * CPU to maximise parallelism of the queue to be processed.
 	 */
 	if (check_cache && !libxfs_bcache_overflowed()) {
-		queue.mp = mp;
+		queue.wq_ctx = mp;
 		create_work_queue(&queue, mp, libxfs_nproc());
 		for (i = 0; i < mp->m_sb.sb_agcount; i++)
 			queue_work(&queue, func, i, NULL);
@@ -1021,7 +1021,7 @@ do_inode_prefetch(
 	 * directly after each AG is queued.
 	 */
 	if (!stride) {
-		queue.mp = mp;
+		queue.wq_ctx = mp;
 		prefetch_ag_range(&queue, 0, mp->m_sb.sb_agcount,
 				  dirs_only, func);
 		return;
@@ -1030,7 +1030,7 @@ do_inode_prefetch(
 	/*
 	 * create one worker thread for each segment of the volume
 	 */
-	queues = malloc(thread_count * sizeof(work_queue_t));
+	queues = malloc(thread_count * sizeof(struct workqueue));
 	for (i = 0; i < thread_count; i++) {
 		struct pf_work_args *wargs;
 
