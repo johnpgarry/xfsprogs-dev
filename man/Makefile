@@ -5,7 +5,7 @@
 TOPDIR = ..
 include $(TOPDIR)/include/builddefs
 
-SUBDIRS = man3 man5 man8
+SUBDIRS = man2 man3 man5 man8
 
 default : $(SUBDIRS)
 
