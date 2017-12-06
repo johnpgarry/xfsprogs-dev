@@ -61,6 +61,7 @@ extern uint32_t crc32c_le(uint32_t crc, unsigned char const *p, size_t len);
 #include "xfs_sb.h"
 #include "xfs_mount.h"
 #include "xfs_defer.h"
+#include "xfs_errortag.h"
 #include "xfs_da_format.h"
 #include "xfs_da_btree.h"
 #include "xfs_dir2.h"
