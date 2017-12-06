@@ -185,3 +185,5 @@ extern void		fsmap_init(void);
 #else
 # define fsmap_init()	do { } while (0)
 #endif
+
+extern void		scrub_init(void);

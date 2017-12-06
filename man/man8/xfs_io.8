@@ -1131,6 +1131,14 @@ version of policy structure (numeric)
 .BR get_encpolicy
 On filesystems that support encryption, display the encryption policy of the
 current file.
+.TP
+.BI "scrub " type " [ " agnumber " | " "ino" " " "gen" " ]"
+Scrub internal XFS filesystem metadata.  The
+.BI type
+parameter specifies which type of metadata to scrub.
+For AG metadata, one AG number must be specified.
+For file metadata, the scrub is applied to the open file unless the
+inode number and generation number are specified.
 
 .SH SEE ALSO
 .BR mkfs.xfs (8),
