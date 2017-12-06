@@ -631,18 +631,6 @@ error0:	/* Cancel bmap, cancel trans */
 	return error;
 }
 
-unsigned int
-libxfs_log2_roundup(unsigned int i)
-{
-	unsigned int	rval;
-
-	for (rval = 0; rval < NBBY * sizeof(i); rval++) {
-		if ((1 << rval) >= i)
-			break;
-	}
-	return rval;
-}
-
 /*
  * Wrapper around call to libxfs_ialloc. Takes care of committing and
  * allocating a new transaction as needed.

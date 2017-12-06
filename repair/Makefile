@@ -20,9 +20,9 @@ CFILES = agheader.c attr_repair.c avl.c avl64.c bmap.c btree.c \
 	progress.c prefetch.c rmap.c rt.c sb.c scan.c slab.c threads.c \
 	versions.c xfs_repair.c
 
-LLDLIBS = $(LIBXFS) $(LIBXLOG) $(LIBXCMD) $(LIBUUID) \
-	$(LIBRT) $(LIBPTHREAD) $(LIBBLKID)
-LTDEPENDENCIES = $(LIBXFS) $(LIBXLOG) $(LIBXCMD)
+LLDLIBS = $(LIBXFS) $(LIBXLOG) $(LIBXCMD) $(LIBFROG) $(LIBUUID) $(LIBRT) \
+	$(LIBPTHREAD) $(LIBBLKID)
+LTDEPENDENCIES = $(LIBXFS) $(LIBXLOG) $(LIBXCMD) $(LIBFROG)
 LLDFLAGS = -static-libtool-libs
 
 default: depend $(LTCOMMAND)

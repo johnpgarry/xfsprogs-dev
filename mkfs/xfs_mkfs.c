@@ -15,7 +15,7 @@
  * along with this program; if not, write the Free Software Foundation,
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-
+#include "libfrog.h"
 #include "libxfs.h"
 #include <ctype.h>
 #include "xfs_multidisk.h"
@@ -2720,7 +2720,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 	memset(mp, 0, sizeof(xfs_mount_t));
 	sbp->sb_blocklog = (uint8_t)blocklog;
 	sbp->sb_sectlog = (uint8_t)sectorlog;
-	sbp->sb_agblklog = (uint8_t)libxfs_log2_roundup((unsigned int)agsize);
+	sbp->sb_agblklog = (uint8_t)log2_roundup((unsigned int)agsize);
 	sbp->sb_agblocks = (xfs_agblock_t)agsize;
 	mp->m_blkbb_log = sbp->sb_blocklog - BBSHIFT;
 	mp->m_sectbb_log = sbp->sb_sectlog - BBSHIFT;

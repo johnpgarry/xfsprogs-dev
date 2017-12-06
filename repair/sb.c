@@ -15,7 +15,7 @@
  * along with this program; if not, write the Free Software Foundation,
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-
+#include "libfrog.h"
 #include "libxfs.h"
 #include "libxcmd.h"
 #include "libxlog.h"
@@ -399,7 +399,7 @@ verify_sb(char *sb_buf, xfs_sb_t *sb, int is_primary_sb)
 		sb->sb_dblocks < XFS_MIN_DBLOCKS(sb))
 		return(XR_BAD_FS_SIZE_DATA);
 
-	if (sb->sb_agblklog != (uint8_t)libxfs_log2_roundup(sb->sb_agblocks))
+	if (sb->sb_agblklog != (uint8_t)log2_roundup(sb->sb_agblocks))
 		return(XR_BAD_FS_SIZE_DATA);
 
 	if (sb->sb_inodesize < XFS_DINODE_MIN_SIZE                     ||

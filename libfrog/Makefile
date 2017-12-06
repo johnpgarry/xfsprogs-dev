@@ -10,7 +10,8 @@ LT_CURRENT = 0
 LT_REVISION = 0
 LT_AGE = 0
 
-CFILES =
+CFILES = \
+util.c
 
 default: ltdepend $(LTLIBRARY)
 

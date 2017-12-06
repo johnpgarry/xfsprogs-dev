@@ -23,7 +23,7 @@
  * of sector size, block size, inode size, directory version, and
  * directory block size.
  */
-
+#include "libfrog.h"
 #include "libxfs.h"
 #include "xfs_multidisk.h"
 
@@ -55,7 +55,7 @@ max_trans_res(
 	sbp->sb_blocklog = blocklog;
 	sbp->sb_blocksize = 1 << blocklog;
 	sbp->sb_agblocks = agsize;
-	sbp->sb_agblklog = (uint8_t)libxfs_log2_roundup((unsigned int)agsize);
+	sbp->sb_agblklog = (uint8_t)log2_roundup((unsigned int)agsize);
 	sbp->sb_inodelog = inodelog;
 	sbp->sb_inopblog = blocklog - inodelog;
 	sbp->sb_inodesize = 1 << inodelog;
