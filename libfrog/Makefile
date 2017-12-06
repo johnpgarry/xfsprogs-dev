@@ -14,7 +14,8 @@ CFILES = \
 avl64.c \
 list_sort.c \
 radix-tree.c \
-util.c
+util.c \
+workqueue.c
 
 default: ltdepend $(LTLIBRARY)
 
