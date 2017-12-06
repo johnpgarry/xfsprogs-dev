@@ -2505,6 +2505,52 @@ _("log stripe unit (%d bytes) is too large (maximum is 256KiB)\n"
 }
 
 static void
+open_devices(
+	struct mkfs_params	*cfg,
+	struct libxfs_xinit	*xi,
+	bool			discard)
+{
+	uint64_t		sector_mask;
+
+	/*
+	 * Initialize.  This will open the log and rt devices as well.
+	 */
+	xi->setblksize = cfg->sectorsize;
+	if (!libxfs_init(xi))
+		usage();
+	if (!xi->ddev) {
+		fprintf(stderr, _("no device name given in argument list\n"));
+		usage();
+	}
+
+	/*
+	 * Ok, Linux only has a 1024-byte resolution on device _size_,
+	 * and the sizes below are in basic 512-byte blocks,
+	 * so if we have (size % 2), on any partition, we can't get
+	 * to the last 512 bytes.  The same issue exists for larger
+	 * sector sizes - we cannot write past the last sector.
+	 *
+	 * So, we reduce the size (in basic blocks) to a perfect
+	 * multiple of the sector size, or 1024, whichever is larger.
+	 */
+	sector_mask = (uint64_t)-1 << (MAX(cfg->sectorlog, 10) - BBSHIFT);
+	xi->dsize &= sector_mask;
+	xi->rtsize &= sector_mask;
+	xi->logBBsize &= (uint64_t)-1 << (MAX(cfg->lsectorlog, 10) - BBSHIFT);
+
+
+	if (!discard)
+		return;
+
+	if (!xi->disfile)
+		discard_blocks(xi->ddev, xi->dsize);
+	if (xi->rtdev && !xi->risfile)
+		discard_blocks(xi->rtdev, xi->rtsize);
+	if (xi->logdev && xi->logdev != xi->ddev && !xi->lisfile)
+		discard_blocks(xi->logdev, xi->logBBsize);
+}
+
+static void
 print_mkfs_cfg(
 	struct mkfs_params	*cfg,
 	char			*dfile,
@@ -3190,7 +3236,6 @@ main(
 	char			*rtsize;
 	xfs_sb_t		*sbp;
 	int			sectorlog;
-	uint64_t		sector_mask;
 	uint64_t		tmp_agsize;
 	uuid_t			uuid;
 	int			worst_freelist;
@@ -3407,6 +3452,11 @@ main(
 	validate_rtextsize(&cfg, &cli, &ft);
 	calc_stripe_factors(&cfg, &cli, &ft);
 
+	/*
+	 * Open and validate the device configurations
+	 */
+	open_devices(&cfg, &xi, (discard && !dry_run));
+
 	/* temp don't break code */
 	sectorsize = cfg.sectorsize;
 	sectorlog = cfg.sectorlog;
@@ -3430,46 +3480,6 @@ main(
 	lsunit = cfg.lsunit;
 	nodsflag = cfg.sb_feat.nodalign;
 	/* end temp don't break code */
-
-
-	xi.setblksize = sectorsize;
-
-	/*
-	 * Initialize.  This will open the log and rt devices as well.
-	 */
-	if (!libxfs_init(&xi))
-		usage();
-	if (!xi.ddev) {
-		fprintf(stderr, _("no device name given in argument list\n"));
-		usage();
-	}
-
-	/*
-	 * Ok, Linux only has a 1024-byte resolution on device _size_,
-	 * and the sizes below are in basic 512-byte blocks,
-	 * so if we have (size % 2), on any partition, we can't get
-	 * to the last 512 bytes.  The same issue exists for larger
-	 * sector sizes - we cannot write past the last sector.
-	 *
-	 * So, we reduce the size (in basic blocks) to a perfect
-	 * multiple of the sector size, or 1024, whichever is larger.
-	 */
-
-	sector_mask = (uint64_t)-1 << (MAX(sectorlog, 10) - BBSHIFT);
-	xi.dsize &= sector_mask;
-	xi.rtsize &= sector_mask;
-	xi.logBBsize &= (uint64_t)-1 << (MAX(lsectorlog, 10) - BBSHIFT);
-
-
-	/* don't do discards on print-only runs or on files */
-	if (discard && !dry_run) {
-		if (!xi.disfile)
-			discard_blocks(xi.ddev, xi.dsize);
-		if (xi.rtdev && !xi.risfile)
-			discard_blocks(xi.rtdev, xi.rtsize);
-		if (xi.logdev && xi.logdev != xi.ddev && !xi.lisfile)
-			discard_blocks(xi.logdev, xi.logBBsize);
-	}
 
 	if (!liflag && !ldflag)
 		loginternal = xi.logdev == 0;
