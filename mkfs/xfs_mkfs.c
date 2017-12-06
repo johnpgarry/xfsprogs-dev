@@ -2489,6 +2489,39 @@ initialise_ag_freespace(
 	libxfs_trans_commit(tp);
 }
 
+/*
+ * rewrite several secondary superblocks with the root inode number filled out.
+ * This can help repair recovery from a trashed primary superblock without
+ * losing the root inode.
+ */
+static void
+rewrite_secondary_superblocks(
+	struct xfs_mount	*mp)
+{
+	struct xfs_buf		*buf;
+
+	/* rewrite the last superblock */
+	buf = libxfs_readbuf(mp->m_dev,
+			XFS_AGB_TO_DADDR(mp, mp->m_sb.sb_agcount - 1,
+				XFS_SB_DADDR),
+			XFS_FSS_TO_BB(mp, 1),
+			LIBXFS_EXIT_ON_FAILURE, &xfs_sb_buf_ops);
+	XFS_BUF_TO_SBP(buf)->sb_rootino = cpu_to_be64(mp->m_sb.sb_rootino);
+	libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
+
+	/* and one in the middle for luck if there's enough AGs for that */
+	if (mp->m_sb.sb_agcount <= 2)
+		return;
+
+	buf = libxfs_readbuf(mp->m_dev,
+			XFS_AGB_TO_DADDR(mp, (mp->m_sb.sb_agcount - 1) / 2,
+				XFS_SB_DADDR),
+			XFS_FSS_TO_BB(mp, 1),
+			LIBXFS_EXIT_ON_FAILURE, &xfs_sb_buf_ops);
+	XFS_BUF_TO_SBP(buf)->sb_rootino = cpu_to_be64(mp->m_sb.sb_rootino);
+	libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
+}
+
 int
 main(
 	int			argc,
@@ -3716,34 +3749,10 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 	}
 
 	/*
-	 * Write out multiple secondary superblocks with rootinode field set
+	 * Re-write multiple secondary superblocks with rootinode field set
 	 */
-	if (mp->m_sb.sb_agcount > 1) {
-		/*
-		 * the last superblock
-		 */
-		buf = libxfs_readbuf(mp->m_dev,
-				XFS_AGB_TO_DADDR(mp, mp->m_sb.sb_agcount-1,
-					XFS_SB_DADDR),
-				XFS_FSS_TO_BB(mp, 1),
-				LIBXFS_EXIT_ON_FAILURE, &xfs_sb_buf_ops);
-		XFS_BUF_TO_SBP(buf)->sb_rootino = cpu_to_be64(
-							mp->m_sb.sb_rootino);
-		libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
-		/*
-		 * and one in the middle for luck
-		 */
-		if (mp->m_sb.sb_agcount > 2) {
-			buf = libxfs_readbuf(mp->m_dev,
-				XFS_AGB_TO_DADDR(mp, (mp->m_sb.sb_agcount-1)/2,
-					XFS_SB_DADDR),
-				XFS_FSS_TO_BB(mp, 1),
-				LIBXFS_EXIT_ON_FAILURE, &xfs_sb_buf_ops);
-			XFS_BUF_TO_SBP(buf)->sb_rootino = cpu_to_be64(
-							mp->m_sb.sb_rootino);
-			libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
-		}
-	}
+	if (mp->m_sb.sb_agcount > 1)
+		rewrite_secondary_superblocks(mp);
 
 	/*
 	 * Dump all inodes and buffers before marking us all done.
