@@ -58,9 +58,7 @@ CFILES = cache.c \
 	defer_item.c \
 	init.c \
 	kmem.c \
-	list_sort.c \
 	logitem.c \
-	radix-tree.c \
 	rdwr.c \
 	trans.c \
 	util.c \

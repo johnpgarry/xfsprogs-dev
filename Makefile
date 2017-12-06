@@ -44,7 +44,8 @@ endif
 # header install rules to populate include/xfs correctly
 HDR_SUBDIRS = include libxfs
 
-DLIB_SUBDIRS = libfrog libxlog libxcmd libhandle
+LIBFROG_SUBDIR = libfrog
+DLIB_SUBDIRS = libxlog libxcmd libhandle
 LIB_SUBDIRS = libxfs $(DLIB_SUBDIRS)
 TOOL_SUBDIRS = copy db estimate fsck growfs io logprint mkfs quota \
 		mdrestore repair rtcp m4 man doc debian spaceman
@@ -66,7 +67,7 @@ LIBTOOLIZE_BIN=glibtoolize
 endif
 
 # include is listed last so it is processed last in clean rules.
-SUBDIRS = $(LIB_SUBDIRS) $(TOOL_SUBDIRS) include
+SUBDIRS = $(LIBFROG_SUBDIR) $(LIB_SUBDIRS) $(TOOL_SUBDIRS) include
 
 default: include/builddefs include/platform_defs.h
 ifeq ($(HAVE_BUILDDEFS), no)
@@ -78,7 +79,8 @@ endif
 
 # tool/lib dependencies
 # note: include/xfs is set up by libxfs, too, so everything is dependent on it.
-$(LIB_SUBDIRS) $(TOOL_SUBDIRS): include
+$(LIBFROG_SUBDIR): include
+$(LIB_SUBDIRS) $(TOOL_SUBDIRS): include libfrog
 $(DLIB_SUBDIRS) $(TOOL_SUBDIRS): libxfs
 db logprint: libxlog
 fsr: libhandle

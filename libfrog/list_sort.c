@@ -1,10 +1,9 @@
 /* List sorting code from Linux::lib/list_sort.c. */
-
-#include "libxfs_priv.h"
-#include "libxfs_io.h"
-#include "init.h"
+#include <stdlib.h>
+#include <string.h>
 #include "list.h"
 
+#define unlikely(x)	(x)
 #define MAX_LIST_LENGTH_BITS 20
 
 /*

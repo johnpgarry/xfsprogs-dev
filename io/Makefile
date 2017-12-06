@@ -14,8 +14,8 @@ CFILES = init.c \
 	pwrite.c reflink.c scrub.c seek.c shutdown.c stat.c sync.c truncate.c \
 	utimes.c
 
-LLDLIBS = $(LIBXCMD) $(LIBHANDLE) $(LIBPTHREAD)
-LTDEPENDENCIES = $(LIBXCMD) $(LIBHANDLE)
+LLDLIBS = $(LIBXCMD) $(LIBHANDLE) $(LIBFROG) $(LIBPTHREAD)
+LTDEPENDENCIES = $(LIBXCMD) $(LIBHANDLE) $(LIBFROG)
 LLDFLAGS = -static-libtool-libs
 
 ifeq ($(HAVE_FADVISE),yes)

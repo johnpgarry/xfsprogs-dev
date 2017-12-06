@@ -11,6 +11,8 @@ LT_REVISION = 0
 LT_AGE = 0
 
 CFILES = \
+list_sort.c \
+radix-tree.c \
 util.c
 
 default: ltdepend $(LTLIBRARY)
