@@ -862,6 +862,27 @@ struct mkfs_params {
 	struct sb_feat_args	sb_feat;
 };
 
+/*
+ * Default filesystem features and configuration values
+ *
+ * This structure contains the default mkfs values that are to be used when
+ * a user does not specify the option on the command line. We do not use these
+ * values directly - they are inputs to the mkfs geometry validation and
+ * calculations.
+ */
+struct mkfs_default_params {
+	char	*source;	/* where the defaults came from */
+
+	int	sectorsize;
+	int	blocksize;
+
+	/* feature flags that are set */
+	struct sb_feat_args	sb_feat;
+
+	/* root inode characteristics */
+	struct fsxattr		fsx;
+};
+
 #define TERABYTES(count, blog)	((uint64_t)(count) << (40 - (blog)))
 #define GIGABYTES(count, blog)	((uint64_t)(count) << (30 - (blog)))
 #define MEGABYTES(count, blog)	((uint64_t)(count) << (20 - (blog)))
@@ -2608,25 +2629,33 @@ main(
 	int			worst_freelist;
 	libxfs_init_t		xi;
 	struct fs_topology	ft;
-	struct sb_feat_args	sb_feat = {
-		.finobt = 1,
-		.spinodes = 0,
-		.log_version = 2,
-		.attr_version = 2,
-		.dir_version = XFS_DFL_DIR_VERSION,
-		.inode_align = XFS_IFLAG_ALIGN,
-		.nci = false,
-		.lazy_sb_counters = true,
-		.projid16bit = false,
-		.crcs_enabled = true,
-		.dirftype = true,
-		.parent_pointers = false,
-		.rmapbt = false,
-		.reflink = false,
+	struct sb_feat_args	sb_feat;
+	/* build time defaults */
+	struct mkfs_default_params	dft = {
+		.source = "package build definitions",
+		.sectorsize = XFS_MIN_SECTORSIZE,
+		.blocksize = 1 << XFS_DFL_BLOCKSIZE_LOG,
+		.sb_feat = {
+			.log_version = 2,
+			.attr_version = 2,
+			.dir_version = XFS_DFL_DIR_VERSION,
+			.inode_align = XFS_IFLAG_ALIGN,
+			.nci = false,
+			.lazy_sb_counters = true,
+			.projid16bit = false,
+			.crcs_enabled = true,
+			.dirftype = true,
+			.finobt = true,
+			.spinodes = false,
+			.rmapbt = false,
+			.reflink = false,
+			.parent_pointers = false,
+			.nodalign = false,
+			.nortalign = false,
+		},
 	};
 	struct cli_params	cli = {
 		.xi = &xi,
-		.sb_feat = sb_feat,
 	};
 	struct mkfs_params	cfg = {};
 
@@ -2635,6 +2664,22 @@ main(
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
+
+	/*
+	 * TODO: Sourcing defaults from a config file
+	 *
+	 * Before anything else, see if there's a config file with different
+	 * defaults. If a file exists in <package location>, read in the new
+	 * default values and overwrite them in the &dft structure. This way the
+	 * new defaults will apply before we parse the CLI, and the CLI will
+	 * still be able to override them. Emit a message to indicate where the
+	 * defaults being used came from.
+	 */
+	printf(_("Default configuration sourced from %s\n"), dft.source);
+
+	/* copy new defaults into CLI parsing structure */
+	memcpy(&cli.sb_feat, &dft.sb_feat, sizeof(cli.sb_feat));
+	memcpy(&cli.fsx, &dft.fsx, sizeof(cli.fsx));
 
 	blflag = bsflag = slflag = ssflag = lslflag = lssflag = 0;
 	blocklog = blocksize = 0;
