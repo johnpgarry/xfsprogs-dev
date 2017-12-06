@@ -24,11 +24,11 @@
 /*
  * Prototypes for internal functions.
  */
-static void conflict(char opt, char *tab[], int oldidx, int newidx);
+static void conflict(char opt, const char *tab[], int oldidx, int newidx);
 static void illegal(const char *value, const char *opt);
 static __attribute__((noreturn)) void usage (void);
-static __attribute__((noreturn)) void reqval(char opt, char *tab[], int idx);
-static void respec(char opt, char *tab[], int idx);
+static __attribute__((noreturn)) void reqval(char opt, const char *tab[], int idx);
+static void respec(char opt, const char *tab[], int idx);
 static void unknown(char opt, char *s);
 static int  ispow2(unsigned int i);
 
@@ -1295,7 +1295,7 @@ check_opt(
 		fprintf(stderr,
 	_("Developer screwed up option parsing (%d/%d)! Please report!\n"),
 			sp->index, index);
-		reqval(opts->name, (char **)opts->subopts, index);
+		reqval(opts->name, opts->subopts, index);
 	}
 
 	/*
@@ -1308,11 +1308,11 @@ check_opt(
 	 */
 	if (!str_seen) {
 		if (sp->seen)
-			respec(opts->name, (char **)opts->subopts, index);
+			respec(opts->name, opts->subopts, index);
 		sp->seen = true;
 	} else {
 		if (sp->str_seen)
-			respec(opts->name, (char **)opts->subopts, index);
+			respec(opts->name, opts->subopts, index);
 		sp->str_seen = true;
 	}
 
@@ -1324,7 +1324,7 @@ check_opt(
 			break;
 		if (opts->subopt_params[conflict_opt].seen ||
 		    opts->subopt_params[conflict_opt].str_seen)
-			conflict(opts->name, (char **)opts->subopts,
+			conflict(opts->name, opts->subopts,
 				 conflict_opt, index);
 	}
 }
@@ -1342,7 +1342,7 @@ getnum(
 	/* empty strings might just return a default value */
 	if (!str || *str == '\0') {
 		if (sp->defaultval == SUBOPT_NEEDS_VAL)
-			reqval(opts->name, (char **)opts->subopts, index);
+			reqval(opts->name, opts->subopts, index);
 		return sp->defaultval;
 	}
 
@@ -1398,7 +1398,7 @@ getstr(
 
 	/* empty strings for string options are not valid */
 	if (!str || *str == '\0')
-		reqval(opts->name, (char **)opts->subopts, index);
+		reqval(opts->name, opts->subopts, index);
 	return str;
 }
 
@@ -1801,7 +1801,7 @@ main(
 					break;
 				case M_UUID:
 					if (!value || *value == '\0')
-						reqval('m', subopts, M_UUID);
+						reqval('m', (const char **)subopts, M_UUID);
 					if (platform_uuid_parse(value, &uuid))
 						illegal(optarg, "m uuid");
 					break;
@@ -1915,7 +1915,7 @@ main(
 				case S_LOG:
 				case S_SECTLOG:
 					if (lssflag)
-						conflict('s', subopts,
+						conflict('s', (const char **)subopts,
 							 S_SECTSIZE, S_SECTLOG);
 					sectorlog = getnum(value, &sopts,
 							   S_SECTLOG);
@@ -1927,7 +1927,7 @@ main(
 				case S_SIZE:
 				case S_SECTSIZE:
 					if (lslflag)
-						conflict('s', subopts, S_SECTLOG,
+						conflict('s', (const char **)subopts, S_SECTLOG,
 							 S_SECTSIZE);
 					sectorsize = getnum(value, &sopts,
 							    S_SECTSIZE);
@@ -3390,7 +3390,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 static void
 conflict(
 	char		opt,
-	char		*tab[],
+	const char	*tab[],
 	int		oldidx,
 	int		newidx)
 {
@@ -3419,7 +3419,7 @@ ispow2(
 static void __attribute__((noreturn))
 reqval(
 	char		opt,
-	char		*tab[],
+	const char	*tab[],
 	int		idx)
 {
 	fprintf(stderr, _("-%c %s option requires a value\n"), opt, tab[idx]);
@@ -3429,7 +3429,7 @@ reqval(
 static void
 respec(
 	char		opt,
-	char		*tab[],
+	const char	*tab[],
 	int		idx)
 {
 	fprintf(stderr, "-%c ", opt);
