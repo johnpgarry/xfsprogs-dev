@@ -2551,6 +2551,53 @@ open_devices(
 }
 
 static void
+validate_datadev(
+	struct mkfs_params	*cfg,
+	struct cli_params	*cli)
+{
+	struct libxfs_xinit	*xi = cli->xi;
+
+	if (!xi->dsize) {
+		/*
+		 * if the device is a file, we can't validate the size here.
+		 * Instead, the file will be truncated to the correct length
+		 * later on. if it's not a file, we've got a dud device.
+		 */
+		if (!xi->disfile) {
+			fprintf(stderr, _("can't get size of data subvolume\n"));
+			usage();
+		}
+		ASSERT(cfg->dblocks);
+	} else if (cfg->dblocks) {
+		/* check the size fits into the underlying device */
+		if (cfg->dblocks > DTOBT(xi->dsize, cfg->blocklog)) {
+			fprintf(stderr,
+_("size %s specified for data subvolume is too large, maximum is %lld blocks\n"),
+				cli->dsize,
+				(long long)DTOBT(xi->dsize, cfg->blocklog));
+			usage();
+		}
+	} else {
+		/* no user size, so use the full block device */
+		cfg->dblocks = DTOBT(xi->dsize, cfg->blocklog);
+	}
+
+	if (cfg->dblocks < XFS_MIN_DATA_BLOCKS) {
+		fprintf(stderr,
+_("size %lld of data subvolume is too small, minimum %d blocks\n"),
+			(long long)cfg->dblocks, XFS_MIN_DATA_BLOCKS);
+		usage();
+	}
+
+	if (xi->dbsize > cfg->sectorsize) {
+		fprintf(stderr, _(
+"Warning: the data subvolume sector size %u is less than the sector size \n\
+reported by the device (%u).\n"),
+			cfg->sectorsize, xi->dbsize);
+	}
+}
+
+static void
 print_mkfs_cfg(
 	struct mkfs_params	*cfg,
 	char			*dfile,
@@ -3193,7 +3240,6 @@ main(
 	char			*dfile;
 	int			dirblocklog;
 	int			dirblocksize;
-	char			*dsize;
 	int			dsunit;
 	int			dswidth;
 	int			force_overwrite;
@@ -3307,7 +3353,7 @@ main(
 	logagno = logblocks = rtblocks = rtextblocks = 0;
 	imaxpct = inodelog = inopblock = isize = 0;
 	dfile = logfile = rtfile = NULL;
-	dsize = logsize = rtsize = protofile = NULL;
+	logsize = rtsize = protofile = NULL;
 	dsunit = dswidth = lalign = lsunit = 0;
 	nodsflag = 0;
 	force_overwrite = 0;
@@ -3456,6 +3502,7 @@ main(
 	 * Open and validate the device configurations
 	 */
 	open_devices(&cfg, &xi, (discard && !dry_run));
+	validate_datadev(&cfg, &cli);
 
 	/* temp don't break code */
 	sectorsize = cfg.sectorsize;
@@ -3500,24 +3547,6 @@ main(
 		rtfile = _("volume rt");
 	else if (!xi.rtdev)
 		rtfile = _("none");
-	if (dsize && xi.dsize > 0 && dblocks > DTOBT(xi.dsize, blocklog)) {
-		fprintf(stderr,
-			_("size %s specified for data subvolume is too large, "
-			"maximum is %lld blocks\n"),
-			dsize, (long long)DTOBT(xi.dsize, blocklog));
-		usage();
-	} else if (!dsize && xi.dsize > 0)
-		dblocks = DTOBT(xi.dsize, blocklog);
-	else if (!dsize) {
-		fprintf(stderr, _("can't get size of data subvolume\n"));
-		usage();
-	}
-	if (dblocks < XFS_MIN_DATA_BLOCKS) {
-		fprintf(stderr,
-	_("size %lld of data subvolume is too small, minimum %d blocks\n"),
-			(long long)dblocks, XFS_MIN_DATA_BLOCKS);
-		usage();
-	}
 
 	if (loginternal && xi.logdev) {
 		fprintf(stderr,
@@ -3529,12 +3558,6 @@ main(
 		usage();
 	}
 
-	if (xi.dbsize > sectorsize) {
-		fprintf(stderr, _(
-"Warning: the data subvolume sector size %u is less than the sector size \n\
-reported by the device (%u).\n"),
-			sectorsize, xi.dbsize);
-	}
 	if (!loginternal && xi.lbsize > lsectorsize) {
 		fprintf(stderr, _(
 "Warning: the log subvolume sector size %u is less than the sector size\n\
