@@ -10,15 +10,7 @@ LT_CURRENT = 0
 LT_REVISION = 0
 LT_AGE = 0
 
-CFILES = command.c input.c paths.c projects.c help.c quit.c
-
-ifeq ($(HAVE_GETMNTENT),yes)
-LCFLAGS += -DHAVE_GETMNTENT
-endif
-
-ifeq ($(HAVE_GETMNTINFO),yes)
-LCFLAGS += -DHAVE_GETMNTINFO
-endif
+CFILES = command.c input.c help.c quit.c
 
 ifeq ($(ENABLE_READLINE),yes)
 LCFLAGS += -DENABLE_READLINE
