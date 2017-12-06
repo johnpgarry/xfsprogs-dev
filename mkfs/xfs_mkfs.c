@@ -2773,6 +2773,123 @@ _("agsize (%s) not a multiple of fs blk size (%d)\n"),
 	}
 }
 
+/*
+ * Align the AG size to stripe geometry. If this fails and we are using
+ * discovered stripe geometry, tell the caller to clear the stripe geometry.
+ * Otherwise, set the aligned geometry (valid or invalid!) so that the
+ * validation call will fail and exit.
+ */
+static void
+align_ag_geometry(
+	struct mkfs_params	*cfg)
+{
+	uint64_t	tmp_agsize;
+	int		dsunit = cfg->dsunit;
+
+	if (!dsunit)
+		goto validate;
+
+	/*
+	 * agsize is not a multiple of dsunit
+	 */
+	if ((cfg->agsize % dsunit) != 0) {
+		/*
+		 * Round up to stripe unit boundary. Also make sure
+		 * that agsize is still larger than
+		 * XFS_AG_MIN_BLOCKS(blocklog)
+		 */
+		tmp_agsize = ((cfg->agsize + dsunit - 1) / dsunit) * dsunit;
+		/*
+		 * Round down to stripe unit boundary if rounding up
+		 * created an AG size that is larger than the AG max.
+		 */
+		if (tmp_agsize > XFS_AG_MAX_BLOCKS(cfg->blocklog))
+			tmp_agsize = (cfg->agsize / dsunit) * dsunit;
+
+		if (tmp_agsize < XFS_AG_MIN_BLOCKS(cfg->blocklog) &&
+		    tmp_agsize > XFS_AG_MAX_BLOCKS(cfg->blocklog)) {
+
+			/*
+			 * If the AG size is invalid and we are using device
+			 * probed stripe alignment, just clear the alignment
+			 * and continue on.
+			 */
+			if (!cli_opt_set(&dopts, D_SUNIT) &&
+			    !cli_opt_set(&dopts, D_SU)) {
+				cfg->dsunit = 0;
+				cfg->dswidth = 0;
+				goto validate;
+			}
+			/*
+			 * set the agsize to the invalid value so the following
+			 * validation of the ag will fail and print a nice error
+			 * and exit.
+			 */
+			cfg->agsize = tmp_agsize;
+			goto validate;
+		}
+
+		/* update geometry to be stripe unit aligned */
+		cfg->agsize = tmp_agsize;
+		if (!cli_opt_set(&dopts, D_AGCOUNT))
+			cfg->agcount = cfg->dblocks / cfg->agsize +
+					(cfg->dblocks % cfg->agsize != 0);
+		if (cli_opt_set(&dopts, D_AGSIZE))
+			fprintf(stderr,
+_("agsize rounded to %lld, sunit = %d\n"),
+				(long long)cfg->agsize, dsunit);
+	}
+
+	if ((cfg->agsize % cfg->dswidth) == 0 &&
+	    cfg->dswidth != cfg->dsunit &&
+	    cfg->agcount > 1) {
+
+		if (cli_opt_set(&dopts, D_AGCOUNT) ||
+		    cli_opt_set(&dopts, D_AGSIZE)) {
+			fprintf(stderr, _(
+"Warning: AG size is a multiple of stripe width.  This can cause performance\n\
+problems by aligning all AGs on the same disk.  To avoid this, run mkfs with\n\
+an AG size that is one stripe unit smaller or larger, for example %llu.\n"),
+				(unsigned long long)cfg->agsize - dsunit);
+			goto validate;
+		}
+
+		/*
+		 * This is a non-optimal configuration because all AGs start on
+		 * the same disk in the stripe.  Changing the AG size by one
+		 * sunit will guarantee that this does not happen.
+		 */
+		tmp_agsize = cfg->agsize - dsunit;
+		if (tmp_agsize < XFS_AG_MIN_BLOCKS(cfg->blocklog)) {
+			tmp_agsize = cfg->agsize + dsunit;
+			if (cfg->dblocks < cfg->agsize) {
+				/* oh well, nothing to do */
+				tmp_agsize = cfg->agsize;
+			}
+		}
+
+		cfg->agsize = tmp_agsize;
+		cfg->agcount = cfg->dblocks / cfg->agsize +
+				(cfg->dblocks % cfg->agsize != 0);
+	}
+
+validate:
+	/*
+	 * If the last AG is too small, reduce the filesystem size
+	 * and drop the blocks.
+	 */
+	if (cfg->dblocks % cfg->agsize != 0 &&
+	     (cfg->dblocks % cfg->agsize < XFS_AG_MIN_BLOCKS(cfg->blocklog))) {
+		ASSERT(!cli_opt_set(&dopts, D_AGCOUNT));
+		cfg->dblocks = (xfs_rfsblock_t)((cfg->agcount - 1) * cfg->agsize);
+		cfg->agcount--;
+		ASSERT(cfg->agcount != 0);
+	}
+
+	validate_ag_geometry(cfg->blocklog, cfg->dblocks,
+			     cfg->agsize, cfg->agcount);
+}
+
 static void
 print_mkfs_cfg(
 	struct mkfs_params	*cfg,
@@ -3410,8 +3527,6 @@ main(
 	int			blocklog;
 	xfs_buf_t		*buf;
 	int			c;
-	int			daflag;
-	int			dasize;
 	xfs_rfsblock_t		dblocks;
 	char			*dfile;
 	int			dirblocklog;
@@ -3442,7 +3557,6 @@ main(
 	xfs_mount_t		*mp;
 	xfs_mount_t		mbuf;
 	xfs_extlen_t		nbmblocks;
-	int			nodsflag;
 	int			dry_run = 0;
 	int			discard = 1;
 	char			*protofile;
@@ -3454,7 +3568,6 @@ main(
 	char			*rtfile;
 	xfs_sb_t		*sbp;
 	int			sectorlog;
-	uint64_t		tmp_agsize;
 	uuid_t			uuid;
 	int			worst_freelist;
 	libxfs_init_t		xi;
@@ -3518,7 +3631,7 @@ main(
 	 */
 	cli.loginternal = 1;	/* internal by default */
 
-	agsize = daflag = dasize = dblocks = 0;
+	agsize = dblocks = 0;
 	imflag = 0;
 	laflag = lsflag = 0;
 	loginternal = 1;
@@ -3527,7 +3640,6 @@ main(
 	dfile = logfile = rtfile = NULL;
 	logsize = protofile = NULL;
 	dsunit = dswidth = lalign = lsunit = 0;
-	nodsflag = 0;
 	force_overwrite = 0;
 	worst_freelist = 0;
 	memset(&fsx, 0, sizeof(fsx));
@@ -3552,13 +3664,6 @@ main(
 			parse_subopts(c, optarg, &cli);
 
 			/* temp don't break code */
-			agcount = cli.agcount;
-			if (cli_opt_set(&dopts, D_AGSIZE)) {
-				agsize = getnum(cli.agsize, &dopts, D_AGSIZE);
-				dasize = 1;
-			}
-			daflag = cli_opt_set(&dopts, D_AGCOUNT);
-
 			fsx.fsx_xflags |= cli.fsx.fsx_xflags;
 			fsx.fsx_projid = cli.fsx.fsx_projid;
 			fsx.fsx_extsize = cli.fsx.fsx_extsize;
@@ -3670,6 +3775,7 @@ main(
 	 * aligns to device geometry correctly.
 	 */
 	calculate_initial_ag_geometry(&cfg, &cli);
+	align_ag_geometry(&cfg);
 
 	/* temp don't break code */
 	sectorsize = cfg.sectorsize;
@@ -3694,128 +3800,10 @@ main(
 	dsunit = cfg.dsunit;
 	dswidth = cfg.dswidth;
 	lsunit = cfg.lsunit;
-	nodsflag = cfg.sb_feat.nodalign;
 	agsize = cfg.agsize;
 	agcount = cfg.agcount;
 	/* end temp don't break code */
 
-
-	/*
-	 * If dsunit is a multiple of fs blocksize, then check that is a
-	 * multiple of the agsize too
-	 */
-	if (dsunit && !(BBTOB(dsunit) % blocksize) &&
-	    dswidth && !(BBTOB(dswidth) % blocksize)) {
-
-		/* convert from 512 byte blocks to fs blocksize */
-		dsunit = DTOBT(dsunit, blocklog);
-		dswidth = DTOBT(dswidth, blocklog);
-
-		/*
-		 * agsize is not a multiple of dsunit
-		 */
-		if ((agsize % dsunit) != 0) {
-			/*
-			 * Round up to stripe unit boundary. Also make sure
-			 * that agsize is still larger than
-			 * XFS_AG_MIN_BLOCKS(blocklog)
-		 	 */
-			tmp_agsize = ((agsize + (dsunit - 1))/ dsunit) * dsunit;
-			/*
-			 * Round down to stripe unit boundary if rounding up
-			 * created an AG size that is larger than the AG max.
-			 */
-			if (tmp_agsize > XFS_AG_MAX_BLOCKS(blocklog))
-				tmp_agsize = ((agsize) / dsunit) * dsunit;
-
-			if ((tmp_agsize >= XFS_AG_MIN_BLOCKS(blocklog)) &&
-			    (tmp_agsize <= XFS_AG_MAX_BLOCKS(blocklog))) {
-				agsize = tmp_agsize;
-				if (!daflag)
-					agcount = dblocks/agsize +
-						(dblocks % agsize != 0);
-				if (dasize)
-					fprintf(stderr,
-				_("agsize rounded to %lld, swidth = %d\n"),
-						(long long)agsize, dswidth);
-			} else {
-				if (nodsflag) {
-					dsunit = dswidth = 0;
-				} else {
-					/*
-					 * agsize is out of bounds, this will
-					 * print nice details & exit.
-					 */
-					validate_ag_geometry(blocklog, dblocks,
-							    agsize, agcount);
-					exit(1);
-				}
-			}
-		}
-		if (dswidth && ((agsize % dswidth) == 0)
-			    && (dswidth != dsunit)
-			    && (agcount > 1)) {
-			/* This is a non-optimal configuration because all AGs
-			 * start on the same disk in the stripe.  Changing
-			 * the AG size by one sunit will guarantee that this
-			 * does not happen.
-			 */
-			tmp_agsize = agsize - dsunit;
-			if (tmp_agsize < XFS_AG_MIN_BLOCKS(blocklog)) {
-				tmp_agsize = agsize + dsunit;
-				if (dblocks < agsize) {
-					/* oh well, nothing to do */
-					tmp_agsize = agsize;
-				}
-			}
-			if (daflag || dasize) {
-				fprintf(stderr, _(
-"Warning: AG size is a multiple of stripe width.  This can cause performance\n\
-problems by aligning all AGs on the same disk.  To avoid this, run mkfs with\n\
-an AG size that is one stripe unit smaller, for example %llu.\n"),
-					(unsigned long long)tmp_agsize);
-			} else {
-				agsize = tmp_agsize;
-				agcount = dblocks/agsize + (dblocks % agsize != 0);
-				/*
-				 * If the last AG is too small, reduce the
-				 * filesystem size and drop the blocks.
-				 */
-				if ( dblocks % agsize != 0 &&
-				    (dblocks % agsize <
-				    XFS_AG_MIN_BLOCKS(blocklog))) {
-					dblocks = (xfs_rfsblock_t)((agcount - 1) * agsize);
-					agcount--;
-					ASSERT(agcount != 0);
-				}
-			}
-		}
-	} else {
-		if (nodsflag)
-			dsunit = dswidth = 0;
-		else {
-			fprintf(stderr,
-				_("%s: Stripe unit(%d) or stripe width(%d) is "
-				"not a multiple of the block size(%d)\n"),
-				progname, BBTOB(dsunit), BBTOB(dswidth),
-				blocksize);
-			exit(1);
-		}
-	}
-
-	/*
-	 * If the last AG is too small, reduce the filesystem size
-	 * and drop the blocks.
-	 */
-	if ( dblocks % agsize != 0 &&
-	     (dblocks % agsize < XFS_AG_MIN_BLOCKS(blocklog))) {
-		ASSERT(!daflag);
-		dblocks = (xfs_rfsblock_t)((agcount - 1) * agsize);
-		agcount--;
-		ASSERT(agcount != 0);
-	}
-
-	validate_ag_geometry(blocklog, dblocks, agsize, agcount);
 
 	if (!imflag)
 		imaxpct = calc_default_imaxpct(blocklog, dblocks);
