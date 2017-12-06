@@ -2347,6 +2347,60 @@ _("warning: %s length %lld not a multiple of %d, truncated to %lld\n"),
 }
 
 static void
+validate_rtextsize(
+	struct mkfs_params	*cfg,
+	struct cli_params	*cli,
+	struct fs_topology	*ft)
+{
+	uint64_t		rtextbytes;
+
+	/*
+	 * If specified, check rt extent size against its constraints.
+	 */
+	if (cli->rtextsize) {
+
+		rtextbytes = getnum(cli->rtextsize, &ropts, R_EXTSIZE);
+		if (rtextbytes % cfg->blocksize) {
+			fprintf(stderr,
+		_("illegal rt extent size %lld, not a multiple of %d\n"),
+				(long long)rtextbytes, cfg->blocksize);
+			usage();
+		}
+		cfg->rtextblocks = (xfs_extlen_t)(rtextbytes >> cfg->blocklog);
+	} else {
+		/*
+		 * If realtime extsize has not been specified by the user,
+		 * and the underlying volume is striped, then set rtextblocks
+		 * to the stripe width.
+		 */
+		uint64_t	rswidth;
+
+		if (!cfg->sb_feat.nortalign && !cli->xi->risfile &&
+		    !(!cli->rtsize && cli->xi->disfile))
+			rswidth = ft->rtswidth;
+		else
+			rswidth = 0;
+
+		/* check that rswidth is a multiple of fs blocksize */
+		if (!cfg->sb_feat.nortalign && rswidth &&
+		    !(BBTOB(rswidth) % cfg->blocksize)) {
+			rswidth = DTOBT(rswidth, cfg->blocklog);
+			rtextbytes = rswidth << cfg->blocklog;
+			if (rtextbytes > XFS_MIN_RTEXTSIZE &&
+			    rtextbytes <= XFS_MAX_RTEXTSIZE) {
+				cfg->rtextblocks = rswidth;
+			}
+		}
+		if (!cfg->rtextblocks) {
+			cfg->rtextblocks = (cfg->blocksize < XFS_MIN_RTEXTSIZE)
+					? XFS_MIN_RTEXTSIZE >> cfg->blocklog
+					: 1;
+		}
+	}
+	ASSERT(cfg->rtextblocks);
+}
+
+static void
 print_mkfs_cfg(
 	struct mkfs_params	*cfg,
 	char			*dfile,
@@ -3026,7 +3080,6 @@ main(
 	xfs_mount_t		mbuf;
 	xfs_extlen_t		nbmblocks;
 	int			nodsflag;
-	int			norsflag;
 	int			dry_run = 0;
 	int			discard = 1;
 	char			*protofile;
@@ -3035,7 +3088,6 @@ main(
 	xfs_rfsblock_t		rtblocks;
 	xfs_extlen_t		rtextblocks;
 	xfs_rtblock_t		rtextents;
-	char			*rtextsize;
 	char			*rtfile;
 	char			*rtsize;
 	xfs_sb_t		*sbp;
@@ -3112,9 +3164,9 @@ main(
 	logagno = logblocks = rtblocks = rtextblocks = 0;
 	imaxpct = inodelog = inopblock = isize = 0;
 	dfile = logfile = rtfile = NULL;
-	dsize = logsize = rtsize = rtextsize = protofile = NULL;
+	dsize = logsize = rtsize = protofile = NULL;
 	dsu = dsw = dsunit = dswidth = lalign = lsu = lsunit = 0;
-	dsflag = nodsflag = norsflag = 0;
+	dsflag = nodsflag = 0;
 	force_overwrite = 0;
 	worst_freelist = 0;
 	memset(&fsx, 0, sizeof(fsx));
@@ -3223,9 +3275,7 @@ main(
 			parse_subopts(c, optarg, &cli);
 
 			/* temp don't break code */
-			rtextsize = cli.rtextsize;
 			rtsize = cli.rtsize;
-			norsflag = cli.sb_feat.nortalign;
 			/* end temp don't break code */
 			break;
 			break;
@@ -3275,6 +3325,8 @@ main(
 	cfg.logblocks = calc_dev_size(cli.logsize, &cfg, &lopts, L_SIZE, "log");
 	cfg.rtblocks = calc_dev_size(cli.rtsize, &cfg, &ropts, R_SIZE, "rt");
 
+	validate_rtextsize(&cfg, &cli, &ft);
+
 	/* temp don't break code */
 	sectorsize = cfg.sectorsize;
 	sectorlog = cfg.sectorlog;
@@ -3292,51 +3344,9 @@ main(
 	dblocks = cfg.dblocks;
 	logblocks = cfg.logblocks;
 	rtblocks = cfg.rtblocks;
+	rtextblocks = cfg.rtextblocks;
 	/* end temp don't break code */
 
-	/*
-	 * If specified, check rt extent size against its constraints.
-	 */
-	if (rtextsize) {
-		uint64_t rtextbytes;
-
-		rtextbytes = getnum(rtextsize, &ropts, R_EXTSIZE);
-		if (rtextbytes % blocksize) {
-			fprintf(stderr,
-		_("illegal rt extent size %lld, not a multiple of %d\n"),
-				(long long)rtextbytes, blocksize);
-			usage();
-		}
-		rtextblocks = (xfs_extlen_t)(rtextbytes >> blocklog);
-	} else {
-		/*
-		 * If realtime extsize has not been specified by the user,
-		 * and the underlying volume is striped, then set rtextblocks
-		 * to the stripe width.
-		 */
-		uint64_t	rswidth;
-		uint64_t	rtextbytes;
-
-		if (!norsflag && !xi.risfile && !(!rtsize && xi.disfile))
-			rswidth = ft.rtswidth;
-		else
-			rswidth = 0;
-
-		/* check that rswidth is a multiple of fs blocksize */
-		if (!norsflag && rswidth && !(BBTOB(rswidth) % blocksize)) {
-			rswidth = DTOBT(rswidth, blocklog);
-			rtextbytes = rswidth << blocklog;
-			if (XFS_MIN_RTEXTSIZE <= rtextbytes &&
-			    (rtextbytes <= XFS_MAX_RTEXTSIZE)) {
-				rtextblocks = rswidth;
-			}
-		}
-		if (!rtextblocks) {
-			rtextblocks = (blocksize < XFS_MIN_RTEXTSIZE) ?
-					XFS_MIN_RTEXTSIZE >> blocklog : 1;
-		}
-	}
-	ASSERT(rtextblocks);
 
 	calc_stripe_factors(dsu, dsw, sectorsize, lsu, lsectorsize,
 				&dsunit, &dswidth, &lsunit);
