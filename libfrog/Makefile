@@ -12,6 +12,7 @@ LT_AGE = 0
 
 CFILES = \
 avl64.c \
+convert.c \
 list_sort.c \
 radix-tree.c \
 topology.c \

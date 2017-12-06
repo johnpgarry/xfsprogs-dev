@@ -9,8 +9,8 @@ LTCOMMAND = xfs_spaceman
 HFILES = init.h space.h
 CFILES = init.c file.c prealloc.c trim.c
 
-LLDLIBS = $(LIBXCMD)
-LTDEPENDENCIES = $(LIBXCMD)
+LLDLIBS = $(LIBXCMD) $(LIBFROG)
+LTDEPENDENCIES = $(LIBXCMD) $(LIBFROG)
 LLDFLAGS = -static
 
 ifeq ($(ENABLE_READLINE),yes)

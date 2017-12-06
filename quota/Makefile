@@ -14,8 +14,8 @@ CFILES += $(PKG_PLATFORM).c
 PCFILES = darwin.c freebsd.c irix.c linux.c
 LSRCFILES = $(shell echo $(PCFILES) | sed -e "s/$(PKG_PLATFORM).c//g")
 
-LLDLIBS = $(LIBXCMD)
-LTDEPENDENCIES = $(LIBXCMD)
+LLDLIBS = $(LIBXCMD) $(LIBFROG)
+LTDEPENDENCIES = $(LIBXCMD) $(LIBFROG)
 LLDFLAGS = -static
 
 ifeq ($(ENABLE_READLINE),yes)
