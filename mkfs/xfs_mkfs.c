@@ -1708,6 +1708,28 @@ naming_opts_parser(
 	char			*value,
 	struct cli_params	*cli)
 {
+	switch (subopt) {
+	case N_LOG:
+		cli->dirblocklog = getnum(value, opts, N_LOG);
+		break;
+	case N_SIZE:
+		cli->dirblocksize = getstr(value, opts, N_SIZE);
+		break;
+	case N_VERSION:
+		value = getstr(value, &nopts, N_VERSION);
+		if (!strcasecmp(value, "ci")) {
+			/* ASCII CI mode */
+			cli->sb_feat.nci = true;
+		} else {
+			cli->sb_feat.dir_version = getnum(value, opts, N_VERSION);
+		}
+		break;
+	case N_FTYPE:
+		cli->sb_feat.dirftype = getnum(value, opts, N_FTYPE);
+		break;
+	default:
+		return -EINVAL;
+	}
 	return 0;
 }
 
@@ -2030,45 +2052,15 @@ main(
 			/* end temp don't break code */
 			break;
 		case 'n':
-			p = optarg;
-			while (*p != '\0') {
-				char	**subopts = (char **)nopts.subopts;
-				char	*value;
+			parse_subopts(c, optarg, &cli);
 
-				switch (getsubopt(&p, subopts, &value)) {
-				case N_LOG:
-					dirblocklog = getnum(value, &nopts,
-							     N_LOG);
-					dirblocksize = 1 << dirblocklog;
-					nlflag = 1;
-					break;
-				case N_SIZE:
-					dirblocksize = getnum(value, &nopts,
-							      N_SIZE);
-					dirblocklog =
-						libxfs_highbit32(dirblocksize);
-					nsflag = 1;
-					break;
-				case N_VERSION:
-					value = getstr(value, &nopts, N_VERSION);
-					if (!strcasecmp(value, "ci")) {
-						/* ASCII CI mode */
-						sb_feat.nci = true;
-					} else {
-						sb_feat.dir_version =
-							getnum(value, &nopts,
-							       N_VERSION);
-					}
-					nvflag = 1;
-					break;
-				case N_FTYPE:
-					sb_feat.dirftype = getnum(value, &nopts,
-								  N_FTYPE);
-					break;
-				default:
-					unknown('n', value);
-				}
-			}
+			/* temp don't break code */
+			if ((nsflag = cli_opt_set(&nopts, N_SIZE)))
+				dirblocksize = getnum(cli.dirblocksize, &nopts, N_SIZE);
+			dirblocklog = cli.dirblocklog;
+
+			nlflag = cli_opt_set(&nopts, N_LOG);
+			/* end temp don't break code */
 			break;
 		case 'N':
 			Nflag = 1;
