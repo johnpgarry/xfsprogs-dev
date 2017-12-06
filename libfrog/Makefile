@@ -11,6 +11,7 @@ LT_REVISION = 0
 LT_AGE = 0
 
 CFILES = \
+avl64.c \
 list_sort.c \
 radix-tree.c \
 util.c
