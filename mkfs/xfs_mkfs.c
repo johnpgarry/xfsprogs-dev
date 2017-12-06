@@ -1674,6 +1674,30 @@ meta_opts_parser(
 	char			*value,
 	struct cli_params	*cli)
 {
+	switch (subopt) {
+	case M_CRC:
+		cli->sb_feat.crcs_enabled = getnum(value, &mopts, M_CRC);
+		if (cli->sb_feat.crcs_enabled)
+			cli->sb_feat.dirftype = true;
+		break;
+	case M_FINOBT:
+		cli->sb_feat.finobt = getnum(value, &mopts, M_FINOBT);
+		break;
+	case M_UUID:
+		if (!value || *value == '\0')
+			reqval('m', opts->subopts, M_UUID);
+		if (platform_uuid_parse(value, &cli->uuid))
+			illegal(value, "m uuid");
+		break;
+	case M_RMAPBT:
+		cli->sb_feat.rmapbt = getnum(value, &mopts, M_RMAPBT);
+		break;
+	case M_REFLINK:
+		cli->sb_feat.reflink = getnum(value, &mopts, M_REFLINK);
+		break;
+	default:
+		return -EINVAL;
+	}
 	return 0;
 }
 
@@ -1999,40 +2023,11 @@ main(
 			label = optarg;
 			break;
 		case 'm':
-			p = optarg;
-			while (*p != '\0') {
-				char	**subopts = (char **)mopts.subopts;
-				char	*value;
+			parse_subopts(c, optarg, &cli);
 
-				switch (getsubopt(&p, subopts, &value)) {
-				case M_CRC:
-					sb_feat.crcs_enabled =
-						getnum(value, &mopts, M_CRC);
-					if (sb_feat.crcs_enabled)
-						sb_feat.dirftype = true;
-					break;
-				case M_FINOBT:
-					sb_feat.finobt = getnum(
-						value, &mopts, M_FINOBT);
-					break;
-				case M_UUID:
-					if (!value || *value == '\0')
-						reqval('m', (const char **)subopts, M_UUID);
-					if (platform_uuid_parse(value, &uuid))
-						illegal(optarg, "m uuid");
-					break;
-				case M_RMAPBT:
-					sb_feat.rmapbt = getnum(
-						value, &mopts, M_RMAPBT);
-					break;
-				case M_REFLINK:
-					sb_feat.reflink = getnum(
-						value, &mopts, M_REFLINK);
-					break;
-				default:
-					unknown('m', value);
-				}
-			}
+			/* temp don't break code */
+			platform_uuid_copy(&uuid, &cli.uuid);
+			/* end temp don't break code */
 			break;
 		case 'n':
 			p = optarg;
