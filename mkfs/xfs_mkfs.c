@@ -1581,6 +1581,37 @@ inode_opts_parser(
 	char			*value,
 	struct cli_params	*cli)
 {
+	int			inodelog;
+
+	switch (subopt) {
+	case I_ALIGN:
+		cli->sb_feat.inode_align = getnum(value, &iopts, I_ALIGN);
+		break;
+	case I_LOG:
+		inodelog = getnum(value, &iopts, I_LOG);
+		cli->inodesize = 1 << inodelog;
+		break;
+	case I_MAXPCT:
+		cli->imaxpct = getnum(value, &iopts, I_MAXPCT);
+		break;
+	case I_PERBLOCK:
+		cli->inopblock = getnum(value, &iopts, I_PERBLOCK);
+		break;
+	case I_SIZE:
+		cli->inodesize = getnum(value, &iopts, I_SIZE);
+		break;
+	case I_ATTR:
+		cli->sb_feat.attr_version = getnum(value, &iopts, I_ATTR);
+		break;
+	case I_PROJID32BIT:
+		cli->sb_feat.projid16bit = !getnum(value, &iopts, I_PROJID32BIT);
+		break;
+	case I_SPINODES:
+		cli->sb_feat.spinodes = getnum(value, &iopts, I_SPINODES);
+		break;
+	default:
+		return -EINVAL;
+	}
 	return 0;
 }
 
@@ -1795,6 +1826,7 @@ main(
 	};
 	struct cli_params	cli = {
 		.xi = &xi,
+		.sb_feat = sb_feat,
 	};
 
 	platform_uuid_generate(&uuid);
@@ -1878,53 +1910,19 @@ main(
 			/* end temp don't break code */
 			break;
 		case 'i':
-			p = optarg;
-			while (*p != '\0') {
-				char	**subopts = (char **)iopts.subopts;
-				char	*value;
+			parse_subopts(c, optarg, &cli);
 
-				switch (getsubopt(&p, subopts, &value)) {
-				case I_ALIGN:
-					sb_feat.inode_align = getnum(value,
-								&iopts, I_ALIGN);
-					break;
-				case I_LOG:
-					inodelog = getnum(value, &iopts, I_LOG);
-					isize = 1 << inodelog;
-					ilflag = 1;
-					break;
-				case I_MAXPCT:
-					imaxpct = getnum(value, &iopts,
-							 I_MAXPCT);
-					imflag = 1;
-					break;
-				case I_PERBLOCK:
-					inopblock = getnum(value, &iopts,
-							   I_PERBLOCK);
-					ipflag = 1;
-					break;
-				case I_SIZE:
-					isize = getnum(value, &iopts, I_SIZE);
-					inodelog = libxfs_highbit32(isize);
-					isflag = 1;
-					break;
-				case I_ATTR:
-					sb_feat.attr_version =
-						getnum(value, &iopts, I_ATTR);
-					break;
-				case I_PROJID32BIT:
-					sb_feat.projid16bit =
-						!getnum(value, &iopts,
-							I_PROJID32BIT);
-					break;
-				case I_SPINODES:
-					sb_feat.spinodes = getnum(value,
-							&iopts, I_SPINODES);
-					break;
-				default:
-					unknown('i', value);
-				}
-			}
+			/* temp don't break code */
+			isize = cli.inodesize;
+			inodelog = libxfs_highbit32(isize);
+			inopblock = cli.inopblock;
+			ilflag = cli_opt_set(&iopts, I_LOG);
+			isflag = cli_opt_set(&iopts, I_SIZE);
+			ipflag = cli_opt_set(&iopts, I_PERBLOCK);
+
+			imaxpct = cli.imaxpct;
+			imflag = cli_opt_set(&iopts, I_MAXPCT);
+			/* end temp don't break code */
 			break;
 		case 'l':
 			p = optarg;
@@ -2171,6 +2169,10 @@ main(
 		dfile = xi.volname = getstr(argv[optind], &dopts, D_NAME);
 	} else
 		dfile = xi.dname;
+
+	/* temp don't break code */
+	sb_feat = cli.sb_feat;
+	/* end temp don't break code */
 
 	/*
 	 * Blocksize and sectorsize first, other things depend on them
