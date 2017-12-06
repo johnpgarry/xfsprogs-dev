@@ -1770,6 +1770,27 @@ sector_opts_parser(
 	char			*value,
 	struct cli_params	*cli)
 {
+	int			sectorlog;
+
+	switch (subopt) {
+	case S_LOG:
+	case S_SECTLOG:
+		if (cli->sectorsize)
+			conflict('s', opts->subopts, S_SECTSIZE, S_SECTLOG);
+		sectorlog = getnum(value, &sopts, S_SECTLOG);
+		cli->sectorsize = 1 << sectorlog;
+		cli->lsectorsize = cli->sectorsize;
+		break;
+	case S_SIZE:
+	case S_SECTSIZE:
+		if (cli->sectorsize)
+			conflict('s', opts->subopts, S_SECTLOG, S_SECTSIZE);
+		cli->sectorsize = getnum(value, &sopts, S_SECTSIZE);
+		cli->lsectorsize = cli->sectorsize;
+		break;
+	default:
+		return -EINVAL;
+	}
 	return 0;
 }
 
@@ -1896,7 +1917,6 @@ main(
 	int			nvflag;
 	int			Nflag;
 	int			discard = 1;
-	char			*p;
 	char			*protofile;
 	char			*protostring;
 	int			qflag;
@@ -2106,41 +2126,18 @@ main(
 			/* end temp don't break code */
 			break;
 		case 's':
-			p = optarg;
-			while (*p != '\0') {
-				char	**subopts = (char **)sopts.subopts;
-				char	*value;
+			parse_subopts(c, optarg, &cli);
 
-				switch (getsubopt(&p, subopts, &value)) {
-				case S_LOG:
-				case S_SECTLOG:
-					if (lssflag)
-						conflict('s', (const char **)subopts,
-							 S_SECTSIZE, S_SECTLOG);
-					sectorlog = getnum(value, &sopts,
-							   S_SECTLOG);
-					lsectorlog = sectorlog;
-					sectorsize = 1 << sectorlog;
-					lsectorsize = sectorsize;
-					lslflag = slflag = 1;
-					break;
-				case S_SIZE:
-				case S_SECTSIZE:
-					if (lslflag)
-						conflict('s', (const char **)subopts, S_SECTLOG,
-							 S_SECTSIZE);
-					sectorsize = getnum(value, &sopts,
-							    S_SECTSIZE);
-					lsectorsize = sectorsize;
-					sectorlog =
-						libxfs_highbit32(sectorsize);
-					lsectorlog = sectorlog;
-					lssflag = ssflag = 1;
-					break;
-				default:
-					unknown('s', value);
-				}
-			}
+			/* temp don't break code */
+			sectorsize = cli.sectorsize;
+			lsectorlog = libxfs_highbit32(sectorsize);
+			lsectorsize = cli.lsectorsize;
+			lsectorlog = libxfs_highbit32(lsectorsize);
+			lslflag = slflag = cli_opt_set(&sopts, S_LOG) ||
+					   cli_opt_set(&sopts, S_SECTLOG);
+
+			lssflag = ssflag = cli_opt_set(&sopts, S_SIZE) ||
+					   cli_opt_set(&sopts, S_SECTSIZE);
 			break;
 		case 'V':
 			printf(_("%s version %s\n"), progname, VERSION);
