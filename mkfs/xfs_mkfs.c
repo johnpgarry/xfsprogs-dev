@@ -2019,6 +2019,40 @@ _("block size %d cannot be smaller than sector size %d\n"),
 }
 
 static void
+validate_blocksize(
+	struct mkfs_params	*cfg,
+	struct cli_params	*cli,
+	struct mkfs_default_params *dft)
+{
+	/*
+	 * Blocksize and sectorsize first, other things depend on them
+	 * For RAID4/5/6 we want to align sector size and block size,
+	 * so we need to start with the device geometry extraction too.
+	 */
+	if (!cli->blocksize)
+		cfg->blocksize = dft->blocksize;
+	else
+		cfg->blocksize = cli->blocksize;
+	cfg->blocklog = libxfs_highbit32(cfg->blocksize);
+
+	/* validate block sizes are in range */
+	if (cfg->blocksize < XFS_MIN_BLOCKSIZE ||
+	    cfg->blocksize > XFS_MAX_BLOCKSIZE) {
+		fprintf(stderr, _("illegal block size %d\n"), cfg->blocksize);
+		usage();
+	}
+
+	if (cli->sb_feat.crcs_enabled &&
+	    cfg->blocksize < XFS_MIN_CRC_BLOCKSIZE) {
+		fprintf(stderr,
+_("Minimum block size for CRC enabled filesystems is %d bytes.\n"),
+			XFS_MIN_CRC_BLOCKSIZE);
+		usage();
+	}
+
+}
+
+static void
 print_mkfs_cfg(
 	struct mkfs_params	*cfg,
 	char			*dfile,
@@ -2652,9 +2686,7 @@ main(
 	uint64_t		agcount;
 	xfs_agnumber_t		agno;
 	uint64_t		agsize;
-	int			blflag;
 	int			blocklog;
-	int			bsflag;
 	xfs_buf_t		*buf;
 	int			c;
 	int			daflag;
@@ -2780,8 +2812,7 @@ main(
 	memcpy(&cli.sb_feat, &dft.sb_feat, sizeof(cli.sb_feat));
 	memcpy(&cli.fsx, &dft.fsx, sizeof(cli.fsx));
 
-	blflag = bsflag = lslflag = lssflag = 0;
-	blocklog = blocksize = 0;
+	lslflag = lssflag = 0;
 	lsectorlog = 0;
 	lsectorsize = 0;
 	agsize = daflag = dasize = dblocks = 0;
@@ -2813,13 +2844,6 @@ main(
 			break;
 		case 'b':
 			parse_subopts(c, optarg, &cli);
-
-			/* temp don't break code */
-			blocksize = cli.blocksize;
-			blocklog = libxfs_highbit32(blocksize);
-			blflag = cli_opt_set(&bopts, B_LOG);
-			bsflag = cli_opt_set(&bopts, B_SIZE);
-			/* end temp don't break code */
 			break;
 		case 'd':
 			parse_subopts(c, optarg, &cli);
@@ -2968,25 +2992,6 @@ main(
 	sb_feat = cli.sb_feat;
 	/* end temp don't break code */
 
-	/*
-	 * Blocksize and sectorsize first, other things depend on them
-	 * For RAID4/5/6 we want to align sector size and block size,
-	 * so we need to start with the device geometry extraction too.
-	 */
-	if (!blflag && !bsflag) {
-		blocklog = XFS_DFL_BLOCKSIZE_LOG;
-		blocksize = 1 << XFS_DFL_BLOCKSIZE_LOG;
-	}
-	if (blocksize < XFS_MIN_BLOCKSIZE || blocksize > XFS_MAX_BLOCKSIZE) {
-		fprintf(stderr, _("illegal block size %d\n"), blocksize);
-		usage();
-	}
-	if (sb_feat.crcs_enabled && blocksize < XFS_MIN_CRC_BLOCKSIZE) {
-		fprintf(stderr,
-_("Minimum block size for CRC enabled filesystems is %d bytes.\n"),
-			XFS_MIN_CRC_BLOCKSIZE);
-		usage();
-	}
 	if (sb_feat.crcs_enabled && !sb_feat.dirftype) {
 		fprintf(stderr, _("cannot disable ftype with crcs enabled\n"));
 		usage();
@@ -2996,12 +3001,15 @@ _("Minimum block size for CRC enabled filesystems is %d bytes.\n"),
 	 * Extract as much of the valid config as we can from the CLI input
 	 * before opening the libxfs devices.
 	 */
+	validate_blocksize(&cfg, &cli, &dft);
 	validate_sectorsize(&cfg, &cli, &dft, &ft, dfile, dry_run,
 			    force_overwrite);
 
 	/* temp don't break code */
 	sectorsize = cfg.sectorsize;
 	sectorlog = cfg.sectorlog;
+	blocksize = cfg.blocksize;
+	blocklog = cfg.blocklog;
 	/* end temp don't break code */
 
 	if (lsectorsize < XFS_MIN_SECTORSIZE ||
