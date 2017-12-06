@@ -717,6 +717,99 @@ struct opt_params mopts = {
 	},
 };
 
+/* quick way of checking if a parameter was set on the CLI */
+static bool
+cli_opt_set(
+	struct opt_params	*opts,
+	int			subopt)
+{
+	return opts->subopt_params[subopt].seen ||
+	       opts->subopt_params[subopt].str_seen;
+}
+
+/*
+ * Options configured on the command line.
+ *
+ * This stores all the specific config parameters the user sets on the command
+ * line. We do not use these values directly - they are inputs to the mkfs
+ * geometry validation and override any default configuration value we have.
+ *
+ * We don't keep flags to indicate what parameters are set - if we need to check
+ * if an option was set on teh command line, we check the relevant entry in the
+ * option table which records whether it was specified in the .seen and
+ * .str_seen variables in the table.
+ *
+ * Some parameters are stored as strings for post-parsing after their dependent
+ * options have been resolved (e.g. block size and sector size have been parsed
+ * and validated).
+ *
+ * This allows us to check that values have been set without needing separate
+ * flags for each value, and hence avoids needing to record and check for each
+ * specific option that can set the value later on in the code. In the cases
+ * where we don't have a cli_params structure around, the above cli_opt_set()
+ * function can be used.
+ */
+struct sb_feat_args {
+	int	log_version;
+	int	attr_version;
+	int	dir_version;
+	bool	inode_align;
+	bool	nci;
+	bool	lazy_sb_counters;
+	bool	projid16bit;
+	bool	crcs_enabled;
+	bool	dirftype;
+	bool	finobt;
+	bool	spinodes;
+	bool	rmapbt;
+	bool	reflink;
+	bool	parent_pointers;
+	bool	nodalign;
+	bool	nortalign;
+	uuid_t	m_uuid;
+};
+
+struct cli_params {
+	int	sectorsize;
+	int	blocksize;
+
+	/* parameters that depend on sector/block size being validated. */
+	char	*dsize;
+	char	*agsize;
+	char	*dsu;
+	char	*dirblocksize;
+	char	*logsize;
+	char	*lsu;
+	char	*rtextsize;
+	char	*rtsize;
+
+	/* parameters where 0 is a valid CLI value */
+	int	dsunit;
+	int	dswidth;
+	int	dsw;
+	int64_t	logagno;
+	int	loginternal;
+	int	lsunit;
+
+	/* parameters where 0 is not a valid value */
+	int64_t	agcount;
+	int	dirblocklog;
+	int	inodesize;
+	int	inopblock;
+	int	imaxpct;
+	int	lsectorsize;
+	uuid_t	uuid;
+
+	/* feature flags that are set */
+	struct sb_feat_args	sb_feat;
+
+	/* root inode characteristics */
+	struct fsxattr		fsx;
+
+	/* libxfs device setup */
+	struct libxfs_xinit	*xi;
+};
+
 #define TERABYTES(count, blog)	((uint64_t)(count) << (40 - (blog)))
 #define GIGABYTES(count, blog)	((uint64_t)(count) << (30 - (blog)))
 #define MEGABYTES(count, blog)	((uint64_t)(count) << (20 - (blog)))
@@ -1157,23 +1250,6 @@ discard_blocks(dev_t dev, uint64_t nsectors)
 	if (fd > 0)
 		platform_discard_blocks(fd, 0, nsectors << 9);
 }
-
-struct sb_feat_args {
-	int	log_version;
-	int	attr_version;
-	int	dir_version;
-	int	spinodes;
-	int	finobt;
-	bool	inode_align;
-	bool	nci;
-	bool	lazy_sb_counters;
-	bool	projid16bit;
-	bool	crcs_enabled;
-	bool	dirftype;
-	bool	parent_pointers;
-	bool	rmapbt;
-	bool	reflink;
-};
 
 static void
 sb_set_features(

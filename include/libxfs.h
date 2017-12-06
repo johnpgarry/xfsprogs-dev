@@ -96,7 +96,7 @@ extern uint32_t crc32c_le(uint32_t crc, unsigned char const *p, size_t len);
 /*
  * Argument structure for libxfs_init().
  */
-typedef struct {
+typedef struct libxfs_xinit {
 				/* input parameters */
 	char            *volname;       /* pathname of volume */
 	char            *dname;         /* pathname of data "subvolume" */
