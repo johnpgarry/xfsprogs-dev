@@ -2597,6 +2597,92 @@ reported by the device (%u).\n"),
 	}
 }
 
+/*
+ * This is more complex than it needs to be because we still support volume
+ * based external logs. They are only discovered *after* the devices have been
+ * opened, hence the crazy "is this really an internal log" checks here.
+ */
+static void
+validate_logdev(
+	struct mkfs_params	*cfg,
+	struct cli_params	*cli,
+	char			**devname)
+{
+	struct libxfs_xinit	*xi = cli->xi;
+
+	*devname = NULL;
+
+	/* check for volume log first */
+	if (cli->loginternal && xi->volname && xi->logdev) {
+		*devname = _("volume log");
+		cfg->loginternal = false;
+	} else
+		cfg->loginternal = cli->loginternal;
+
+	/* now run device checks */
+	if (cfg->loginternal) {
+		if (xi->logdev) {
+			fprintf(stderr,
+_("can't have both external and internal logs\n"));
+			usage();
+		}
+
+		/*
+		 * if no sector size has been specified on the command line,
+		 * use what has been configured and validated for the data
+		 * device.
+		 */
+		if (!cli->lsectorsize) {
+			cfg->lsectorsize = cfg->sectorsize;
+			cfg->lsectorlog = cfg->sectorlog;
+		}
+
+		if (cfg->sectorsize != cfg->lsectorsize) {
+			fprintf(stderr,
+_("data and log sector sizes must be equal for internal logs\n"));
+			usage();
+		}
+		if (cli->logsize && cfg->logblocks >= cfg->dblocks) {
+			fprintf(stderr,
+_("log size %lld too large for internal log\n"),
+				(long long)cfg->logblocks);
+			usage();
+		}
+		*devname = _("internal log");
+		return;
+	}
+
+	/* External/log subvolume checks */
+	if (xi->logname)
+		*devname = xi->logname;
+	if (!*devname || !xi->logdev) {
+		fprintf(stderr, _("no log subvolume or external log.\n"));
+		usage();
+	}
+
+	if (!cfg->logblocks) {
+		if (xi->logBBsize == 0) {
+			fprintf(stderr,
+_("unable to get size of the log subvolume.\n"));
+			usage();
+		}
+		cfg->logblocks = DTOBT(xi->logBBsize, cfg->blocklog);
+	} else if (cfg->logblocks > DTOBT(xi->logBBsize, cfg->blocklog)) {
+		fprintf(stderr,
+_("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
+			cli->logsize,
+			(long long)DTOBT(xi->logBBsize, cfg->blocklog));
+		usage();
+	}
+
+	if (xi->lbsize > cfg->lsectorsize) {
+		fprintf(stderr, _(
+"Warning: the log subvolume sector size %u is less than the sector size\n\
+reported by the device (%u).\n"),
+			cfg->lsectorsize, xi->lbsize);
+	}
+}
+
 static void
 print_mkfs_cfg(
 	struct mkfs_params	*cfg,
@@ -3252,15 +3338,12 @@ main(
 	char			*label = NULL;
 	int			laflag;
 	int			lalign;
-	int			ldflag;
-	int			liflag;
 	xfs_agnumber_t		logagno;
 	xfs_rfsblock_t		logblocks;
 	char			*logfile;
 	int			loginternal;
 	char			*logsize;
 	xfs_fsblock_t		logstart;
-	int			lvflag;
 	int			lsflag;
 	int			lsectorlog;
 	int			lsectorsize;
@@ -3348,7 +3431,7 @@ main(
 
 	agsize = daflag = dasize = dblocks = 0;
 	imflag = 0;
-	liflag = laflag = lsflag = ldflag = lvflag = 0;
+	laflag = lsflag = 0;
 	loginternal = 1;
 	logagno = logblocks = rtblocks = rtextblocks = 0;
 	imaxpct = inodelog = inopblock = isize = 0;
@@ -3404,15 +3487,7 @@ main(
 
 			/* temp don't break code */
 			logagno = cli.logagno;
-			loginternal = cli.loginternal;
-			logfile = xi.logname;
-			logsize = cli.logsize;
-
 			laflag = cli_opt_set(&lopts, L_AGNUM);
-			liflag = cli_opt_set(&lopts, L_INTERNAL);
-			ldflag = cli_opt_set(&lopts, L_NAME) ||
-				 cli_opt_set(&lopts, L_DEV);
-			lvflag = cli_opt_set(&lopts, L_VERSION);
 			/* end temp don't break code */
 			break;
 		case 'L':
@@ -3503,6 +3578,7 @@ main(
 	 */
 	open_devices(&cfg, &xi, (discard && !dry_run));
 	validate_datadev(&cfg, &cli);
+	validate_logdev(&cfg, &cli, &logfile);
 
 	/* temp don't break code */
 	sectorsize = cfg.sectorsize;
@@ -3528,18 +3604,6 @@ main(
 	nodsflag = cfg.sb_feat.nodalign;
 	/* end temp don't break code */
 
-	if (!liflag && !ldflag)
-		loginternal = xi.logdev == 0;
-	if (xi.logname)
-		logfile = xi.logname;
-	else if (loginternal)
-		logfile = _("internal log");
-	else if (xi.volname && xi.logdev)
-		logfile = _("volume log");
-	else if (!ldflag) {
-		fprintf(stderr, _("no log subvolume or internal log\n"));
-		usage();
-	}
 	if (xi.rtname)
 		rtfile = xi.rtname;
 	else
@@ -3548,22 +3612,6 @@ main(
 	else if (!xi.rtdev)
 		rtfile = _("none");
 
-	if (loginternal && xi.logdev) {
-		fprintf(stderr,
-			_("can't have both external and internal logs\n"));
-		usage();
-	} else if (loginternal && sectorsize != lsectorsize) {
-		fprintf(stderr,
-	_("data and log sector sizes must be equal for internal logs\n"));
-		usage();
-	}
-
-	if (!loginternal && xi.lbsize > lsectorsize) {
-		fprintf(stderr, _(
-"Warning: the log subvolume sector size %u is less than the sector size\n\
-reported by the device (%u).\n"),
-			lsectorsize, xi.lbsize);
-	}
 	if (rtsize && xi.rtsize > 0 && xi.rtbsize > sectorsize) {
 		fprintf(stderr, _(
 "Warning: the realtime subvolume sector size %u is less than the sector size\n\
@@ -3742,24 +3790,7 @@ an AG size that is one stripe unit smaller, for example %llu.\n"),
 	min_logblocks = MAX(XFS_MIN_LOG_BLOCKS, min_logblocks);
 	if (!logsize && dblocks >= (1024*1024*1024) >> blocklog)
 		min_logblocks = MAX(min_logblocks, XFS_MIN_LOG_BYTES>>blocklog);
-	if (logsize && xi.logBBsize > 0 && logblocks > DTOBT(xi.logBBsize, blocklog)) {
-		fprintf(stderr,
-_("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
-			logsize, (long long)DTOBT(xi.logBBsize, blocklog));
-		usage();
-	} else if (!logsize && xi.logBBsize > 0) {
-		logblocks = DTOBT(xi.logBBsize, blocklog);
-	} else if (logsize && !xi.logdev && !loginternal) {
-		fprintf(stderr,
-			_("size specified for non-existent log subvolume\n"));
-		usage();
-	} else if (loginternal && logsize && logblocks >= dblocks) {
-		fprintf(stderr, _("size %lld too large for internal log\n"),
-			(long long)logblocks);
-		usage();
-	} else if (!loginternal && !xi.logdev) {
-		logblocks = 0;
-	} else if (loginternal && !logsize) {
+	if (loginternal && !logsize) {
 
 		if (dblocks < GIGABYTES(1, blocklog)) {
 			/* tiny filesystems get minimum sized logs. */
