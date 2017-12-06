@@ -30,7 +30,7 @@ error_tag(char *name)
 	static struct {
 		int	tag;
 		char	*name;
-	} *e, eflags[XFS_ERRTAG_MAX + 1] = {
+	} *e, eflags[] = {
 		{ XFS_ERRTAG_NOERROR,			"noerror" },
 		{ XFS_ERRTAG_IFLUSH_1,			"iflush1" },
 		{ XFS_ERRTAG_IFLUSH_2,			"iflush2" },
@@ -62,9 +62,13 @@ error_tag(char *name)
 		{ XFS_ERRTAG_DROP_WRITES,		"drop_writes" },
 		{ XFS_ERRTAG_LOG_BAD_CRC,		"log_bad_crc" },
 		{ XFS_ERRTAG_LOG_ITEM_PIN,		"log_item_pin" },
+		{ XFS_ERRTAG_BUF_LRU_REF,		"buf_lru_ref" },
 		{ XFS_ERRTAG_MAX,			NULL }
 	};
 	int	count;
+
+	/* If this fails make sure every tag is defined in the array above */
+	BUILD_BUG_ON(sizeof(eflags) != (XFS_ERRTAG_MAX + 1) * sizeof(*e));
 
 	/* Search for a name */
 	if (name) {

@@ -64,6 +64,10 @@ extern int xfs_assert_largefile[sizeof(off_t)-8];
 #define __packed __attribute__((packed))
 #endif
 
+#ifndef BUILD_BUG_ON
+#define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
+#endif
+
 #include <xfs/xfs_types.h>
 #include <xfs/xfs_fs.h>
 
