@@ -22,6 +22,23 @@
 #include "libxcmd.h"
 
 
+
+#define TERABYTES(count, blog)	((uint64_t)(count) << (40 - (blog)))
+#define GIGABYTES(count, blog)	((uint64_t)(count) << (30 - (blog)))
+#define MEGABYTES(count, blog)	((uint64_t)(count) << (20 - (blog)))
+
+/*
+ * Use this macro before we have superblock and mount structure to
+ * convert from basic blocks to filesystem blocks.
+ */
+#define	DTOBT(d, bl)	((xfs_rfsblock_t)((d) >> ((bl) - BBSHIFT)))
+
+/*
+ * amount (in bytes) we zero at the beginning and end of the device to
+ * remove traces of other filesystems, raid superblocks, etc.
+ */
+#define WHACK_SIZE (128 * 1024)
+
 /*
  * XXX: The configured block and sector sizes are defined as global variables so
  * that they don't need to be passed to getnum/cvtnum().
@@ -872,30 +889,6 @@ struct mkfs_default_params {
 	/* root inode characteristics */
 	struct fsxattr		fsx;
 };
-
-#define TERABYTES(count, blog)	((uint64_t)(count) << (40 - (blog)))
-#define GIGABYTES(count, blog)	((uint64_t)(count) << (30 - (blog)))
-#define MEGABYTES(count, blog)	((uint64_t)(count) << (20 - (blog)))
-
-/*
- * Use this macro before we have superblock and mount structure
- */
-#define	DTOBT(d, bl)	((xfs_rfsblock_t)((d) >> ((bl) - BBSHIFT)))
-
-/*
- * Use this for block reservations needed for mkfs's conditions
- * (basically no fragmentation).
- */
-#define	MKFS_BLOCKRES_INODE	\
-	((uint)(mp->m_ialloc_blks + (mp->m_in_maxlevels - 1)))
-#define	MKFS_BLOCKRES(rb)	\
-	((uint)(MKFS_BLOCKRES_INODE + XFS_DA_NODE_MAXDEPTH + \
-	(XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK) - 1) + (rb)))
-
-/* amount (in bytes) we zero at the beginning and end of the device to
- * remove traces of other filesystems, raid superblocks, etc.
- */
-#define WHACK_SIZE (128 * 1024)
 
 static void __attribute__((noreturn))
 usage( void )
