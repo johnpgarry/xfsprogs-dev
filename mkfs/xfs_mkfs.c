@@ -735,7 +735,7 @@ cli_opt_set(
  * geometry validation and override any default configuration value we have.
  *
  * We don't keep flags to indicate what parameters are set - if we need to check
- * if an option was set on teh command line, we check the relevant entry in the
+ * if an option was set on the command line, we check the relevant entry in the
  * option table which records whether it was specified in the .seen and
  * .str_seen variables in the table.
  *
@@ -808,6 +808,58 @@ struct cli_params {
 
 	/* libxfs device setup */
 	struct libxfs_xinit	*xi;
+};
+
+/*
+ * Calculated filesystem feature and geometry information.
+ *
+ * This structure contains the information we will use to create the on-disk
+ * filesystem from. The validation and calculation code uses it to store all the
+ * temporary and final config state for the filesystem.
+ *
+ * The information in this structure will contain a mix of validated CLI input
+ * variables, default feature state and calculated values that are needed to
+ * construct the superblock and other on disk features. These are all in one
+ * place so that we don't have to pass handfuls of seemingly arbitrary variables
+ * around to different functions to do the work we need to do.
+ */
+struct mkfs_params {
+	int		blocksize;
+	int		blocklog;
+	int		sectorsize;
+	int		sectorlog;
+	int		lsectorsize;
+	int		lsectorlog;
+	int		dirblocksize;
+	int		dirblocklog;
+	int		inodesize;
+	int		inodelog;
+	int		inopblock;
+
+	uint64_t	dblocks;
+	uint64_t	logblocks;
+	uint64_t	rtblocks;
+	uint64_t	rtextblocks;
+	uint64_t	rtextents;
+	uint64_t	rtbmblocks;	/* rt bitmap blocks */
+
+	int		dsunit;		/* in FSBs */
+	int		dswidth;	/* in FSBs */
+	int		lsunit;		/* in FSBs */
+
+	uint64_t	agsize;
+	uint64_t	agcount;
+
+	int		imaxpct;
+
+	bool		loginternal;
+	uint64_t	logstart;
+	uint64_t	logagno;
+
+	uuid_t		uuid;
+	char		*label;
+
+	struct sb_feat_args	sb_feat;
 };
 
 #define TERABYTES(count, blog)	((uint64_t)(count) << (40 - (blog)))
@@ -1956,6 +2008,7 @@ main(
 		.xi = &xi,
 		.sb_feat = sb_feat,
 	};
+	struct mkfs_params	cfg = {};
 
 	platform_uuid_generate(&uuid);
 	progname = basename(argv[0]);
@@ -2987,6 +3040,39 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 	}
 	validate_log_size(logblocks, blocklog, min_logblocks);
 
+	/* Temp support code  to set up mkfs cfg parameters */
+	cfg.blocksize = blocksize;
+	cfg.blocklog = blocklog;
+	cfg.sectorsize = sectorsize;
+	cfg.sectorlog = sectorlog;
+	cfg.lsectorsize = lsectorsize;
+	cfg.lsectorlog = lsectorlog;
+	cfg.dirblocksize = dirblocksize;
+	cfg.dirblocklog = dirblocklog;
+	cfg.inodesize = isize;
+	cfg.inodelog = inodelog;
+	cfg.inopblock = inopblock;
+
+	cfg.dblocks = dblocks;
+	cfg.logblocks = logblocks;
+	cfg.rtblocks = rtblocks;
+	cfg.rtextblocks = rtextblocks;
+	cfg.rtextents = rtextents;
+	cfg.rtbmblocks = nbmblocks;
+	cfg.dsunit = dsunit;
+	cfg.dswidth = dswidth;
+	cfg.lsunit = lsunit;
+	cfg.agsize = agsize;
+	cfg.agcount = agcount;
+	cfg.imaxpct = imaxpct;
+	cfg.loginternal = loginternal;
+	cfg.logstart = logstart;
+	cfg.logagno = logagno;
+	cfg.label = label;
+	platform_uuid_copy(&cfg.uuid, &uuid);
+	memcpy(&cfg.sb_feat, &sb_feat, sizeof(sb_feat));
+	/* end temp support code */
+
 	if (!qflag || Nflag) {
 		printf(_(
 		   "meta-data=%-22s isize=%-6d agcount=%lld, agsize=%lld blks\n"
@@ -3015,6 +3101,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		if (Nflag)
 			exit(0);
 	}
+
 
 	if (label)
 		strncpy(sbp->sb_fname, label, sizeof(sbp->sb_fname));
