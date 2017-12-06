@@ -2608,11 +2608,11 @@ main(
 	int			norsflag;
 	int			nsflag;
 	int			nvflag;
-	int			Nflag;
+	int			dry_run;
 	int			discard = 1;
 	char			*protofile;
 	char			*protostring;
-	int			qflag;
+	int			quiet;
 	xfs_rfsblock_t		rtblocks;
 	xfs_extlen_t		rtextblocks;
 	xfs_rtblock_t		rtextents;
@@ -2690,9 +2690,9 @@ main(
 	liflag = laflag = lsflag = lsuflag = lsunitflag = ldflag = lvflag = 0;
 	loginternal = 1;
 	logagno = logblocks = rtblocks = rtextblocks = 0;
-	Nflag = nlflag = nsflag = nvflag = 0;
+	dry_run = nlflag = nsflag = nvflag = 0;
 	dirblocklog = dirblocksize = 0;
-	qflag = 0;
+	quiet = 0;
 	imaxpct = inodelog = inopblock = isize = 0;
 	dfile = logfile = rtfile = NULL;
 	dsize = logsize = rtsize = rtextsize = protofile = NULL;
@@ -2821,7 +2821,7 @@ main(
 			/* end temp don't break code */
 			break;
 		case 'N':
-			Nflag = 1;
+			dry_run = 1;
 			break;
 		case 'K':
 			discard = 0;
@@ -2832,7 +2832,7 @@ main(
 			protofile = optarg;
 			break;
 		case 'q':
-			qflag = 1;
+			quiet = 1;
 			break;
 		case 'r':
 			parse_subopts(c, optarg, &cli);
@@ -2917,14 +2917,14 @@ _("Minimum block size for CRC enabled filesystems is %d bytes.\n"),
 	 * host filesystem.
 	 */
 	check_device_type(dfile, &xi.disfile, !dsize, !dfile,
-			  Nflag ? NULL : &xi.dcreat, force_overwrite, "d");
+			  dry_run ? NULL : &xi.dcreat, force_overwrite, "d");
 	if (!loginternal)
 		check_device_type(xi.logname, &xi.lisfile, !logsize, !xi.logname,
-				  Nflag ? NULL : &xi.lcreat,
+				  dry_run ? NULL : &xi.lcreat,
 				  force_overwrite, "l");
 	if (xi.rtname)
 		check_device_type(xi.rtname, &xi.risfile, !rtsize, !xi.rtname,
-				  Nflag ? NULL : &xi.rcreat,
+				  dry_run ? NULL : &xi.rcreat,
 				  force_overwrite, "r");
 	if (xi.disfile || xi.lisfile || xi.risfile)
 		xi.isdirect = 0;
@@ -3285,7 +3285,7 @@ _("rmapbt not supported with realtime devices\n"));
 
 
 	/* don't do discards on print-only runs or on files */
-	if (discard && !Nflag) {
+	if (discard && !dry_run) {
 		if (!xi.disfile)
 			discard_blocks(xi.ddev, xi.dsize);
 		if (xi.rtdev && !xi.risfile)
@@ -3737,9 +3737,9 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 	memcpy(&cfg.sb_feat, &sb_feat, sizeof(sb_feat));
 	/* end temp support code */
 
-	if (!qflag || Nflag) {
+	if (!quiet || dry_run) {
 		print_mkfs_cfg(&cfg, dfile, logfile, rtfile);
-		if (Nflag)
+		if (dry_run)
 			exit(0);
 	}
 
