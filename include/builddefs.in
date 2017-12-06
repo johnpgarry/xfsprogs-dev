@@ -36,6 +36,7 @@ LIBEDITLINE = @libeditline@
 LIBREADLINE = @libreadline@
 LIBBLKID = @libblkid@
 LIBXFS = $(TOPDIR)/libxfs/libxfs.la
+LIBFROG = $(TOPDIR)/libfrog/libfrog.la
 LIBXCMD = $(TOPDIR)/libxcmd/libxcmd.la
 LIBXLOG = $(TOPDIR)/libxlog/libxlog.la
 LIBHANDLE = $(TOPDIR)/libhandle/libhandle.la

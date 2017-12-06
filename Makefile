@@ -44,7 +44,7 @@ endif
 # header install rules to populate include/xfs correctly
 HDR_SUBDIRS = include libxfs
 
-DLIB_SUBDIRS = libxlog libxcmd libhandle
+DLIB_SUBDIRS = libfrog libxlog libxcmd libhandle
 LIB_SUBDIRS = libxfs $(DLIB_SUBDIRS)
 TOOL_SUBDIRS = copy db estimate fsck growfs io logprint mkfs quota \
 		mdrestore repair rtcp m4 man doc debian spaceman
