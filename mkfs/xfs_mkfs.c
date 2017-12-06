@@ -1896,6 +1896,40 @@ parse_subopts(
 	}
 }
 
+static void
+print_mkfs_cfg(
+	struct mkfs_params	*cfg,
+	char			*dfile,
+	char			*logfile,
+	char			*rtfile)
+{
+	struct sb_feat_args	*fp = &cfg->sb_feat;
+
+	printf(_(
+"meta-data=%-22s isize=%-6d agcount=%lld, agsize=%lld blks\n"
+"         =%-22s sectsz=%-5u attr=%u, projid32bit=%u\n"
+"         =%-22s crc=%-8u finobt=%u, sparse=%u, rmapbt=%u, reflink=%u\n"
+"data     =%-22s bsize=%-6u blocks=%llu, imaxpct=%u\n"
+"         =%-22s sunit=%-6u swidth=%u blks\n"
+"naming   =version %-14u bsize=%-6u ascii-ci=%d ftype=%d\n"
+"log      =%-22s bsize=%-6d blocks=%lld, version=%d\n"
+"         =%-22s sectsz=%-5u sunit=%d blks, lazy-count=%d\n"
+"realtime =%-22s extsz=%-6d blocks=%lld, rtextents=%lld\n"),
+		dfile, cfg->inodesize, (long long)cfg->agcount,
+			(long long)cfg->agsize,
+		"", cfg->sectorsize, fp->attr_version, !fp->projid16bit,
+		"", fp->crcs_enabled, fp->finobt, fp->spinodes, fp->rmapbt,
+			fp->reflink,
+		"", cfg->blocksize, (long long)cfg->dblocks, cfg->imaxpct,
+		"", cfg->dsunit, cfg->dswidth,
+		fp->dir_version, cfg->dirblocksize, fp->nci, fp->dirftype,
+		logfile, cfg->blocksize, (long long)cfg->logblocks,
+			fp->log_version,
+		"", cfg->lsectorsize, cfg->lsunit, fp->lazy_sb_counters,
+		rtfile, (int)cfg->rtextblocks << cfg->blocklog,
+			(long long)cfg->rtblocks, (long long)cfg->rtextents);
+}
+
 int
 main(
 	int			argc,
@@ -3074,34 +3108,10 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 	/* end temp support code */
 
 	if (!qflag || Nflag) {
-		printf(_(
-		   "meta-data=%-22s isize=%-6d agcount=%lld, agsize=%lld blks\n"
-		   "         =%-22s sectsz=%-5u attr=%u, projid32bit=%u\n"
-		   "         =%-22s crc=%-8u finobt=%u, sparse=%u, rmapbt=%u, reflink=%u\n"
-		   "data     =%-22s bsize=%-6u blocks=%llu, imaxpct=%u\n"
-		   "         =%-22s sunit=%-6u swidth=%u blks\n"
-		   "naming   =version %-14u bsize=%-6u ascii-ci=%d ftype=%d\n"
-		   "log      =%-22s bsize=%-6d blocks=%lld, version=%d\n"
-		   "         =%-22s sectsz=%-5u sunit=%d blks, lazy-count=%d\n"
-		   "realtime =%-22s extsz=%-6d blocks=%lld, rtextents=%lld\n"),
-			dfile, isize, (long long)agcount, (long long)agsize,
-			"", sectorsize, sb_feat.attr_version,
-				    !sb_feat.projid16bit,
-			"", sb_feat.crcs_enabled, sb_feat.finobt, sb_feat.spinodes,
-			sb_feat.rmapbt, sb_feat.reflink,
-			"", blocksize, (long long)dblocks, imaxpct,
-			"", dsunit, dswidth,
-			sb_feat.dir_version, dirblocksize, sb_feat.nci,
-				sb_feat.dirftype,
-			logfile, 1 << blocklog, (long long)logblocks,
-			sb_feat.log_version, "", lsectorsize, lsunit,
-				sb_feat.lazy_sb_counters,
-			rtfile, rtextblocks << blocklog,
-			(long long)rtblocks, (long long)rtextents);
+		print_mkfs_cfg(&cfg, dfile, logfile, rtfile);
 		if (Nflag)
 			exit(0);
 	}
-
 
 	if (label)
 		strncpy(sbp->sb_fname, label, sizeof(sbp->sb_fname));
