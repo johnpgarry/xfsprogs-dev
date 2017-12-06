@@ -2742,6 +2742,38 @@ reported by the device (%u).\n"),
 }
 
 static void
+calculate_initial_ag_geometry(
+	struct mkfs_params	*cfg,
+	struct cli_params	*cli)
+{
+	if (cli->agsize) {		/* User-specified AG size */
+		cfg->agsize = getnum(cli->agsize, &dopts, D_AGSIZE);
+
+		/*
+		 * Check specified agsize is a multiple of blocksize.
+		 */
+		if (cfg->agsize % cfg->blocksize) {
+			fprintf(stderr,
+_("agsize (%s) not a multiple of fs blk size (%d)\n"),
+				cli->agsize, cfg->blocksize);
+			usage();
+		}
+		cfg->agsize /= cfg->blocksize;
+		cfg->agcount = cfg->dblocks / cfg->agsize +
+				(cfg->dblocks % cfg->agsize != 0);
+
+	} else if (cli->agcount) {	/* User-specified AG count */
+		cfg->agcount = cli->agcount;
+		cfg->agsize = cfg->dblocks / cfg->agcount +
+				(cfg->dblocks % cfg->agcount != 0);
+	} else {
+		calc_default_ag_geometry(cfg->blocklog, cfg->dblocks,
+					 cfg->dsunit, &cfg->agsize,
+					 &cfg->agcount);
+	}
+}
+
+static void
 print_mkfs_cfg(
 	struct mkfs_params	*cfg,
 	char			*dfile,
@@ -3631,6 +3663,14 @@ main(
 	validate_logdev(&cfg, &cli, &logfile);
 	validate_rtdev(&cfg, &cli, &rtfile);
 
+	/*
+	 * At this point when know exactly what size all the devices are,
+	 * so we can start validating and calculating layout options that are
+	 * dependent on device sizes. Once calculated, make sure everything
+	 * aligns to device geometry correctly.
+	 */
+	calculate_initial_ag_geometry(&cfg, &cli);
+
 	/* temp don't break code */
 	sectorsize = cfg.sectorsize;
 	sectorlog = cfg.sectorlog;
@@ -3655,27 +3695,10 @@ main(
 	dswidth = cfg.dswidth;
 	lsunit = cfg.lsunit;
 	nodsflag = cfg.sb_feat.nodalign;
+	agsize = cfg.agsize;
+	agcount = cfg.agcount;
 	/* end temp don't break code */
 
-	if (dasize) {		/* User-specified AG size */
-		/*
-		 * Check specified agsize is a multiple of blocksize.
-		 */
-		if (agsize % blocksize) {
-			fprintf(stderr,
-		_("agsize (%lld) not a multiple of fs blk size (%d)\n"),
-				(long long)agsize, blocksize);
-			usage();
-		}
-		agsize /= blocksize;
-		agcount = dblocks / agsize + (dblocks % agsize != 0);
-
-	} else if (daflag) {	/* User-specified AG count */
-		agsize = dblocks / agcount + (dblocks % agcount != 0);
-	} else {
-		calc_default_ag_geometry(blocklog, dblocks,
-				dsunit | dswidth, &agsize, &agcount);
-	}
 
 	/*
 	 * If dsunit is a multiple of fs blocksize, then check that is a
