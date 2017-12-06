@@ -1066,28 +1066,6 @@ validate_log_size(uint64_t logblocks, int blocklog, int min_logblocks)
 	}
 }
 
-static int
-calc_default_imaxpct(
-	int		blocklog,
-	uint64_t	dblocks)
-{
-	/*
-	 * This returns the % of the disk space that is used for
-	 * inodes, it changes relatively to the FS size:
-	 *  - over  50 TB, use 1%,
-	 *  - 1TB - 50 TB, use 5%,
-	 *  - under  1 TB, use XFS_DFL_IMAXIMUM_PCT (25%).
-	 */
-
-	if (dblocks < TERABYTES(1, blocklog)) {
-		return XFS_DFL_IMAXIMUM_PCT;
-	} else if (dblocks < TERABYTES(50, blocklog)) {
-		return 5;
-	}
-
-	return 1;
-}
-
 static void
 validate_ag_geometry(
 	int		blocklog,
@@ -2891,6 +2869,31 @@ validate:
 }
 
 static void
+calculate_imaxpct(
+	struct mkfs_params	*cfg,
+	struct cli_params	*cli)
+{
+	cfg->imaxpct = cli->imaxpct;
+	if (cfg->imaxpct)
+		return;
+
+	/*
+	 * This returns the % of the disk space that is used for
+	 * inodes, it changes relatively to the FS size:
+	 *  - over  50 TB, use 1%,
+	 *  - 1TB - 50 TB, use 5%,
+	 *  - under  1 TB, use XFS_DFL_IMAXIMUM_PCT (25%).
+	 */
+
+	if (cfg->dblocks < TERABYTES(1, cfg->blocklog))
+		cfg->imaxpct = XFS_DFL_IMAXIMUM_PCT;
+	else if (cfg->dblocks < TERABYTES(50, cfg->blocklog))
+		cfg->imaxpct = 5;
+	else
+		cfg->imaxpct = 1;
+}
+
+static void
 print_mkfs_cfg(
 	struct mkfs_params	*cfg,
 	char			*dfile,
@@ -3536,7 +3539,6 @@ main(
 	int			force_overwrite;
 	struct fsxattr		fsx;
 	int			imaxpct;
-	int			imflag;
 	int			inodelog;
 	int			inopblock;
 	int			isize;
@@ -3632,7 +3634,6 @@ main(
 	cli.loginternal = 1;	/* internal by default */
 
 	agsize = dblocks = 0;
-	imflag = 0;
 	laflag = lsflag = 0;
 	loginternal = 1;
 	logagno = logblocks = rtblocks = rtextblocks = 0;
@@ -3655,6 +3656,7 @@ main(
 			force_overwrite = 1;
 			break;
 		case 'b':
+		case 'i':
 		case 'n':
 		case 'r':
 		case 's':
@@ -3667,14 +3669,6 @@ main(
 			fsx.fsx_xflags |= cli.fsx.fsx_xflags;
 			fsx.fsx_projid = cli.fsx.fsx_projid;
 			fsx.fsx_extsize = cli.fsx.fsx_extsize;
-			/* end temp don't break code */
-			break;
-		case 'i':
-			parse_subopts(c, optarg, &cli);
-
-			/* temp don't break code */
-			imaxpct = cli.imaxpct;
-			imflag = cli_opt_set(&iopts, I_MAXPCT);
 			/* end temp don't break code */
 			break;
 		case 'l':
@@ -3777,6 +3771,8 @@ main(
 	calculate_initial_ag_geometry(&cfg, &cli);
 	align_ag_geometry(&cfg);
 
+	calculate_imaxpct(&cfg, &cli);
+
 	/* temp don't break code */
 	sectorsize = cfg.sectorsize;
 	sectorlog = cfg.sectorlog;
@@ -3802,11 +3798,8 @@ main(
 	lsunit = cfg.lsunit;
 	agsize = cfg.agsize;
 	agcount = cfg.agcount;
+	imaxpct = cfg.imaxpct;
 	/* end temp don't break code */
-
-
-	if (!imflag)
-		imaxpct = calc_default_imaxpct(blocklog, dblocks);
 
 	min_logblocks = max_trans_res(agsize,
 				   sb_feat.crcs_enabled, sb_feat.dir_version,
