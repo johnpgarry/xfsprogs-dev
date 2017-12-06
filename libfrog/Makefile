@@ -14,6 +14,7 @@ CFILES = \
 avl64.c \
 list_sort.c \
 radix-tree.c \
+topology.c \
 util.c \
 workqueue.c
 
