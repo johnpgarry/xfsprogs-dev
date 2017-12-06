@@ -1485,6 +1485,19 @@ block_opts_parser(
 	char			*value,
 	struct cli_params	*cli)
 {
+	int			blocklog;
+
+	switch (subopt) {
+	case B_LOG:
+		blocklog = getnum(value, opts, B_LOG);
+		cli->blocksize = 1 << blocklog;
+		break;
+	case B_SIZE:
+		cli->blocksize = getnum(value, opts, B_SIZE);
+		break;
+	default:
+		return -EINVAL;
+	}
 	return 0;
 }
 
@@ -1717,6 +1730,7 @@ main(
 		.rmapbt = false,
 		.reflink = false,
 	};
+	struct cli_params	cli = {};
 
 	platform_uuid_generate(&uuid);
 	progname = basename(argv[0]);
@@ -1756,27 +1770,14 @@ main(
 			force_overwrite = 1;
 			break;
 		case 'b':
-			p = optarg;
-			while (*p != '\0') {
-				char	**subopts = (char **)bopts.subopts;
-				char	*value;
+			parse_subopts(c, optarg, &cli);
 
-				switch (getsubopt(&p, subopts, &value)) {
-				case B_LOG:
-					blocklog = getnum(value, &bopts, B_LOG);
-					blocksize = 1 << blocklog;
-					blflag = 1;
-					break;
-				case B_SIZE:
-					blocksize = getnum(value, &bopts,
-							   B_SIZE);
-					blocklog = libxfs_highbit32(blocksize);
-					bsflag = 1;
-					break;
-				default:
-					unknown('b', value);
-				}
-			}
+			/* temp don't break code */
+			blocksize = cli.blocksize;
+			blocklog = libxfs_highbit32(blocksize);
+			blflag = cli_opt_set(&bopts, B_LOG);
+			bsflag = cli_opt_set(&bopts, B_SIZE);
+			/* end temp don't break code */
 			break;
 		case 'd':
 			p = optarg;
