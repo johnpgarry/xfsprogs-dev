@@ -1478,6 +1478,136 @@ getstr(
 	return str;
 }
 
+static int
+block_opts_parser(
+	struct opt_params	*opts,
+	int			subopt,
+	char			*value,
+	struct cli_params	*cli)
+{
+	return 0;
+}
+
+static int
+data_opts_parser(
+	struct opt_params	*opts,
+	int			subopt,
+	char			*value,
+	struct cli_params	*cli)
+{
+	return 0;
+}
+
+static int
+inode_opts_parser(
+	struct opt_params	*opts,
+	int			subopt,
+	char			*value,
+	struct cli_params	*cli)
+{
+	return 0;
+}
+
+static int
+log_opts_parser(
+	struct opt_params	*opts,
+	int			subopt,
+	char			*value,
+	struct cli_params	*cli)
+{
+	return 0;
+}
+
+static int
+meta_opts_parser(
+	struct opt_params	*opts,
+	int			subopt,
+	char			*value,
+	struct cli_params	*cli)
+{
+	return 0;
+}
+
+static int
+naming_opts_parser(
+	struct opt_params	*opts,
+	int			subopt,
+	char			*value,
+	struct cli_params	*cli)
+{
+	return 0;
+}
+
+static int
+rtdev_opts_parser(
+	struct opt_params	*opts,
+	int			subopt,
+	char			*value,
+	struct cli_params	*cli)
+{
+	return 0;
+}
+
+static int
+sector_opts_parser(
+	struct opt_params	*opts,
+	int			subopt,
+	char			*value,
+	struct cli_params	*cli)
+{
+	return 0;
+}
+
+struct subopts {
+	char		opt;
+	struct opt_params *opts;
+	int		(*parser)();
+} subopt_tab[] = {
+	{ 'b', &bopts, block_opts_parser },
+	{ 'd', &dopts, data_opts_parser },
+	{ 'i', &iopts, inode_opts_parser },
+	{ 'l', &lopts, log_opts_parser },
+	{ 'm', &mopts, meta_opts_parser },
+	{ 'n', &nopts, naming_opts_parser },
+	{ 'r', &ropts, rtdev_opts_parser },
+	{ 's', &sopts, sector_opts_parser },
+	{ '\0', NULL, NULL },
+};
+
+static void
+parse_subopts(
+	char		opt,
+	char		*arg,
+	struct cli_params *cli)
+{
+	struct subopts	*sop = &subopt_tab[0];
+	char		*p;
+	int		ret = 0;
+
+	while (sop->opts) {
+		if (sop->opt == opt)
+			break;
+		sop++;
+	}
+
+	/* should never happen */
+	if (!sop->opts)
+		return;
+
+	p = arg;
+	while (*p != '\0') {
+		char	**subopts = (char **)sop->opts->subopts;
+		char	*value;
+		int	subopt;
+
+		subopt = getsubopt(&p, subopts, &value);
+
+		ret = (sop->parser)(sop->opts, subopt, value, cli);
+		if (ret)
+			unknown(opt, value);
+	}
+}
+
 int
 main(
 	int			argc,
