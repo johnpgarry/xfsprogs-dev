@@ -910,7 +910,12 @@ libxfs_report(FILE *fp)
 int
 libxfs_nproc(void)
 {
-	return platform_nproc();
+	int	nr;
+
+	nr = platform_nproc();
+	if (nr < 1)
+		nr = 1;
+	return nr;
 }
 
 unsigned long
