@@ -4025,8 +4025,6 @@ main(
 	 */
 	calculate_log_size(&cfg, &cli, mp);
 
-	protostring = setup_proto(protofile);
-
 	if (!quiet || dry_run) {
 		print_mkfs_cfg(&cfg, dfile, logfile, rtfile);
 		if (dry_run)
