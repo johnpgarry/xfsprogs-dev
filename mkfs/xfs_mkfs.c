@@ -3850,8 +3850,8 @@ main(
 		.sb_feat = {
 			.log_version = 2,
 			.attr_version = 2,
-			.dir_version = XFS_DFL_DIR_VERSION,
-			.inode_align = XFS_IFLAG_ALIGN,
+			.dir_version = 2,
+			.inode_align = true,
 			.nci = false,
 			.lazy_sb_counters = true,
 			.projid32bit = true,
