@@ -251,7 +251,6 @@ libxfs_ialloc(
 	xfs_dev_t	rdev,
 	struct cred	*cr,
 	struct fsxattr	*fsx,
-	int		okalloc,
 	xfs_buf_t	**ialloc_context,
 	xfs_inode_t	**ipp)
 {
@@ -264,7 +263,7 @@ libxfs_ialloc(
 	 * Call the space management code to pick
 	 * the on-disk inode to be allocated.
 	 */
-	error = xfs_dialloc(tp, pip ? pip->i_ino : 0, mode, okalloc,
+	error = xfs_dialloc(tp, pip ? pip->i_ino : 0, mode,
 			    ialloc_context, &ino);
 	if (error != 0)
 		return error;
@@ -655,7 +654,7 @@ libxfs_inode_alloc(
 
 	ialloc_context = (xfs_buf_t *)0;
 	error = libxfs_ialloc(*tp, pip, mode, nlink, rdev, cr, fsx,
-			   1, &ialloc_context, &ip);
+			   &ialloc_context, &ip);
 	if (error) {
 		*ipp = NULL;
 		return error;
@@ -677,7 +676,7 @@ libxfs_inode_alloc(
 		}
 		xfs_trans_bjoin(*tp, ialloc_context);
 		error = libxfs_ialloc(*tp, pip, mode, nlink, rdev, cr,
-				   fsx, 1, &ialloc_context, &ip);
+				   fsx, &ialloc_context, &ip);
 		if (!ip)
 			error = -ENOSPC;
 		if (error)
