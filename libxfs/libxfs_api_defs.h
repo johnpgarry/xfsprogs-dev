@@ -49,6 +49,7 @@
 #define xfs_trans_ijoin_ref		libxfs_trans_ijoin_ref
 #define xfs_trans_init			libxfs_trans_init
 #define xfs_trans_inode_alloc_buf	libxfs_trans_inode_alloc_buf
+#define xfs_trans_dirty_buf		libxfs_trans_dirty_buf
 #define xfs_trans_log_buf		libxfs_trans_log_buf
 #define xfs_trans_ordered_buf		libxfs_trans_ordered_buf
 #define xfs_trans_log_inode		libxfs_trans_log_inode

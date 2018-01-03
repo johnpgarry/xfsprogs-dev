@@ -357,6 +357,27 @@ libxfs_trans_roll_inode(
 
 
 /*
+ * Mark a buffer dirty in the transaction.
+ */
+void
+libxfs_trans_dirty_buf(
+	struct xfs_trans	*tp,
+	struct xfs_buf		*bp)
+{
+	struct xfs_buf_log_item	*bip;
+
+	ASSERT(XFS_BUF_FSPRIVATE2(bp, xfs_trans_t *) == tp);
+	ASSERT(XFS_BUF_FSPRIVATE(bp, void *) != NULL);
+
+	bip = XFS_BUF_FSPRIVATE(bp, xfs_buf_log_item_t *);
+#ifdef XACT_DEBUG
+	fprintf(stderr, "dirtied buffer %p, transaction %p\n", bp, tp);
+#endif
+	tp->t_flags |= XFS_TRANS_DIRTY;
+	bip->bli_item.li_desc->lid_flags |= XFS_LID_DIRTY;
+}
+
+/*
  * This is called to mark bytes first through last inclusive of the given
  * buffer as needing to be logged when the transaction is committed.
  * The buffer must already be associated with the given transaction.
@@ -367,24 +388,18 @@ libxfs_trans_roll_inode(
  */
 void
 libxfs_trans_log_buf(
-	xfs_trans_t		*tp,
-	xfs_buf_t		*bp,
+	struct xfs_trans	*tp,
+	struct xfs_buf		*bp,
 	uint			first,
 	uint			last)
 {
-	xfs_buf_log_item_t	*bip;
+	struct xfs_buf_log_item	*bip;
 
-	ASSERT(XFS_BUF_FSPRIVATE2(bp, xfs_trans_t *) == tp);
-	ASSERT(XFS_BUF_FSPRIVATE(bp, void *) != NULL);
 	ASSERT((first <= last) && (last < XFS_BUF_COUNT(bp)));
-#ifdef XACT_DEBUG
-	fprintf(stderr, "dirtied buffer %p, transaction %p\n", bp, tp);
-#endif
 
 	bip = XFS_BUF_FSPRIVATE(bp, xfs_buf_log_item_t *);
 
-	tp->t_flags |= XFS_TRANS_DIRTY;
-	bip->bli_item.li_desc->lid_flags |= XFS_LID_DIRTY;
+	xfs_trans_dirty_buf(tp, bp);
 	xfs_buf_item_log(bip, first, last);
 }
 

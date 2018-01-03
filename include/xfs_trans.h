@@ -106,6 +106,7 @@ void	libxfs_trans_brelse(struct xfs_trans *, struct xfs_buf *);
 void	libxfs_trans_binval(struct xfs_trans *, struct xfs_buf *);
 void	libxfs_trans_bjoin(struct xfs_trans *, struct xfs_buf *);
 void	libxfs_trans_bhold(struct xfs_trans *, struct xfs_buf *);
+void	libxfs_trans_dirty_buf(struct xfs_trans *, struct xfs_buf *);
 void	libxfs_trans_log_buf(struct xfs_trans *, struct xfs_buf *,
 				uint, uint);
 bool	libxfs_trans_ordered_buf(xfs_trans_t *, struct xfs_buf *);
