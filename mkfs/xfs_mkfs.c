@@ -3845,7 +3845,7 @@ main(
 
 	/* build time defaults */
 	struct mkfs_default_params	dft = {
-		.source = "package build definitions",
+		.source = _("package build definitions"),
 		.sectorsize = XFS_MIN_SECTORSIZE,
 		.blocksize = 1 << XFS_DFL_BLOCKSIZE_LOG,
 		.sb_feat = {
@@ -3881,10 +3881,12 @@ main(
 	 * defaults. If a file exists in <package location>, read in the new
 	 * default values and overwrite them in the &dft structure. This way the
 	 * new defaults will apply before we parse the CLI, and the CLI will
-	 * still be able to override them. Emit a message to indicate where the
-	 * defaults being used came from.
+	 * still be able to override them. When more than one source is
+	 * implemented, emit a message to indicate where the defaults being
+	 * used came from.
+	 *
+	 * printf(_("Default configuration sourced from %s\n"), dft.source);
 	 */
-	printf(_("Default configuration sourced from %s\n"), dft.source);
 
 	/* copy new defaults into CLI parsing structure */
 	memcpy(&cli.sb_feat, &dft.sb_feat, sizeof(cli.sb_feat));
