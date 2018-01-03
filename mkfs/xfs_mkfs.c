@@ -763,7 +763,7 @@ struct sb_feat_args {
 	bool	inode_align;
 	bool	nci;
 	bool	lazy_sb_counters;
-	bool	projid16bit;
+	bool	projid32bit;
 	bool	crcs_enabled;
 	bool	dirftype;
 	bool	finobt;
@@ -1551,7 +1551,7 @@ inode_opts_parser(
 		cli->sb_feat.attr_version = getnum(value, &iopts, I_ATTR);
 		break;
 	case I_PROJID32BIT:
-		cli->sb_feat.projid16bit = !getnum(value, &iopts, I_PROJID32BIT);
+		cli->sb_feat.projid32bit = getnum(value, &iopts, I_PROJID32BIT);
 		break;
 	case I_SPINODES:
 		cli->sb_feat.spinodes = getnum(value, &iopts, I_SPINODES);
@@ -2037,7 +2037,7 @@ _("V2 attribute format always enabled on CRC enabled filesytems\n"));
 
 		/* 32 bit project quota always on */
 		/* attr2 always on */
-		if (cli->sb_feat.projid16bit) {
+		if (!cli->sb_feat.projid32bit) {
 			fprintf(stderr,
 _("32 bit Project IDs always enabled on CRC enabled filesytems\n"));
 			usage();
@@ -2905,7 +2905,7 @@ sb_set_features(
 	sbp->sb_features2 = 0;
 	if (fp->lazy_sb_counters)
 		sbp->sb_features2 |= XFS_SB_VERSION2_LAZYSBCOUNTBIT;
-	if (!fp->projid16bit)
+	if (fp->projid32bit)
 		sbp->sb_features2 |= XFS_SB_VERSION2_PROJID32BIT;
 	if (fp->parent_pointers)
 		sbp->sb_features2 |= XFS_SB_VERSION2_PARENTBIT;
@@ -3219,7 +3219,7 @@ print_mkfs_cfg(
 "realtime =%-22s extsz=%-6d blocks=%lld, rtextents=%lld\n"),
 		dfile, cfg->inodesize, (long long)cfg->agcount,
 			(long long)cfg->agsize,
-		"", cfg->sectorsize, fp->attr_version, !fp->projid16bit,
+		"", cfg->sectorsize, fp->attr_version, fp->projid32bit,
 		"", fp->crcs_enabled, fp->finobt, fp->spinodes, fp->rmapbt,
 			fp->reflink,
 		"", cfg->blocksize, (long long)cfg->dblocks, cfg->imaxpct,
@@ -3854,7 +3854,7 @@ main(
 			.inode_align = XFS_IFLAG_ALIGN,
 			.nci = false,
 			.lazy_sb_counters = true,
-			.projid16bit = false,
+			.projid32bit = true,
 			.crcs_enabled = true,
 			.dirftype = true,
 			.finobt = true,
