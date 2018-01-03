@@ -3050,16 +3050,16 @@ calculate_log_size(
 	struct cli_params	*cli,
 	struct xfs_mount	*mp)
 {
-	struct sb_feat_args	*fp = &cfg->sb_feat;
 	struct xfs_sb		*sbp = &mp->m_sb;
 	int			min_logblocks;
+	struct xfs_mount	mount;
 
-	min_logblocks = max_trans_res(sbp->sb_agblocks, fp->crcs_enabled,
-				      fp->dir_version, cfg->sectorlog,
-				      cfg->blocklog, cfg->inodelog,
-				      cfg->dirblocklog, fp->log_version,
-				      cfg->lsunit, fp->finobt, fp->rmapbt,
-				      fp->reflink, fp->inode_align);
+	/* we need a temporary mount to calculate the minimum log size. */
+	memset(&mount, 0, sizeof(mount));
+	mount.m_sb = *sbp;
+	libxfs_mount(&mount, &mp->m_sb, 0, 0, 0, 0);
+	min_logblocks = libxfs_log_calc_minimum_size(&mount);
+	libxfs_umount(&mount);
 
 	ASSERT(min_logblocks);
 	min_logblocks = MAX(XFS_MIN_LOG_BLOCKS, min_logblocks);
@@ -3174,28 +3174,60 @@ _("log ag number %lld too large, must be less than %lld\n"),
 }
 
 /*
- * Set up mount and superblock with the minimum parameters required for
+ * Set up superblock with the minimum parameters required for
  * the libxfs macros needed by the log sizing code to run successfully.
+ * This includes a minimum log size calculation, so we need everything
+ * that goes into that calculation to be setup here including feature
+ * flags.
  */
+static void
+start_superblock_setup(
+	struct mkfs_params	*cfg,
+	struct xfs_mount	*mp,
+	struct xfs_sb		*sbp)
+{
+	sbp->sb_magicnum = XFS_SB_MAGIC;
+	sbp->sb_sectsize = (uint16_t)cfg->sectorsize;
+	sbp->sb_sectlog = (uint8_t)cfg->sectorlog;
+	sbp->sb_blocksize = cfg->blocksize;
+	sbp->sb_blocklog = (uint8_t)cfg->blocklog;
+
+	sbp->sb_agblocks = (xfs_agblock_t)cfg->agsize;
+	sbp->sb_agblklog = (uint8_t)log2_roundup(cfg->agsize);
+	sbp->sb_agcount = (xfs_agnumber_t)cfg->agcount;
+
+	sbp->sb_inodesize = (uint16_t)cfg->inodesize;
+	sbp->sb_inodelog = (uint8_t)cfg->inodelog;
+	sbp->sb_inopblock = (uint16_t)(cfg->blocksize / cfg->inodesize);
+	sbp->sb_inopblog = (uint8_t)(cfg->blocklog - cfg->inodelog);
+
+	sbp->sb_dirblklog = cfg->dirblocklog - cfg->blocklog;
+
+	sb_set_features(cfg, sbp);
+
+	/*
+	 * log stripe unit is stored in bytes on disk and cannot be zero
+	 * for v2 logs.
+	 */
+	if (cfg->sb_feat.log_version == 2) {
+		if (cfg->lsunit)
+			sbp->sb_logsunit = XFS_FSB_TO_B(mp, cfg->lsunit);
+		else
+			sbp->sb_logsunit = 1;
+	} else
+		sbp->sb_logsunit = 0;
+
+}
+
 static void
 initialise_mount(
 	struct mkfs_params	*cfg,
 	struct xfs_mount	*mp,
 	struct xfs_sb		*sbp)
 {
-	sbp->sb_blocklog = (uint8_t)cfg->blocklog;
-	sbp->sb_sectlog = (uint8_t)cfg->sectorlog;
-	sbp->sb_agblklog = (uint8_t)log2_roundup(cfg->agsize);
-	sbp->sb_agblocks = (xfs_agblock_t)cfg->agsize;
-	sbp->sb_agcount = (xfs_agnumber_t)cfg->agcount;
+	/* Minimum needed for libxfs_prealloc_blocks() */
 	mp->m_blkbb_log = sbp->sb_blocklog - BBSHIFT;
 	mp->m_sectbb_log = sbp->sb_sectlog - BBSHIFT;
-
-	/*
-	 * sb_versionnum, finobt and rmapbt flags must be set before we use
-	 * libxfs_prealloc_blocks().
-	 */
-	sb_set_features(cfg, sbp);
 }
 
 static void
@@ -3238,7 +3270,7 @@ print_mkfs_cfg(
  * copy, so no need to care about endian swapping here.
  */
 static void
-setup_superblock(
+finish_superblock_setup(
 	struct mkfs_params	*cfg,
 	struct xfs_mount	*mp,
 	struct xfs_sb		*sbp)
@@ -3246,8 +3278,6 @@ setup_superblock(
 	if (cfg->label)
 		strncpy(sbp->sb_fname, cfg->label, sizeof(sbp->sb_fname));
 
-	sbp->sb_magicnum = XFS_SB_MAGIC;
-	sbp->sb_blocksize = cfg->blocksize;
 	sbp->sb_dblocks = cfg->dblocks;
 	sbp->sb_rblocks = cfg->rtblocks;
 	sbp->sb_rextents = cfg->rtextents;
@@ -3260,12 +3290,6 @@ setup_superblock(
 	sbp->sb_agcount = (xfs_agnumber_t)cfg->agcount;
 	sbp->sb_rbmblocks = cfg->rtbmblocks;
 	sbp->sb_logblocks = (xfs_extlen_t)cfg->logblocks;
-	sbp->sb_sectsize = (uint16_t)cfg->sectorsize;
-	sbp->sb_inodesize = (uint16_t)cfg->inodesize;
-	sbp->sb_inopblock = (uint16_t)(cfg->blocksize / cfg->inodesize);
-	sbp->sb_sectlog = (uint8_t)cfg->sectorlog;
-	sbp->sb_inodelog = (uint8_t)cfg->inodelog;
-	sbp->sb_inopblog = (uint8_t)(cfg->blocklog - cfg->inodelog);
 	sbp->sb_rextslog = (uint8_t)(cfg->rtextents ?
 			libxfs_highbit32((unsigned int)cfg->rtextents) : 0);
 	sbp->sb_inprogress = 1;	/* mkfs is in progress */
@@ -3280,19 +3304,6 @@ setup_superblock(
 	sbp->sb_qflags = 0;
 	sbp->sb_unit = cfg->dsunit;
 	sbp->sb_width = cfg->dswidth;
-	sbp->sb_dirblklog = cfg->dirblocklog - cfg->blocklog;
-
-	/*
-	 * log stripe unit is stored in bytes on disk and cannot be zero
-	 * for v2 logs.
-	 */
-	if (cfg->sb_feat.log_version == 2) {
-		if (cfg->lsunit)
-			sbp->sb_logsunit = XFS_FSB_TO_B(mp, cfg->lsunit);
-		else
-			sbp->sb_logsunit = 1;
-	} else
-		sbp->sb_logsunit = 0;
 
 }
 
@@ -4005,6 +4016,7 @@ main(
 	 * the geometry information we've already validated in libxfs
 	 * provided functions to determine on-disk format information.
 	 */
+	start_superblock_setup(&cfg, mp, sbp);
 	initialise_mount(&cfg, mp, sbp);
 
 	/*
@@ -4020,11 +4032,7 @@ main(
 		if (dry_run)
 			exit(0);
 	}
-
-	/*
-	 * Finish setting up the superblock state ready for formatting.
-	 */
-	setup_superblock(&cfg, mp, sbp);
+	finish_superblock_setup(&cfg, mp, sbp);
 
 	/*
 	 * we need the libxfs buffer cache from here on in.

@@ -62,10 +62,4 @@ extern char *setup_proto (char *fname);
 extern void parse_proto (xfs_mount_t *mp, struct fsxattr *fsx, char **pp);
 extern void res_failed (int err);
 
-/* maxtrres.c */
-extern int max_trans_res(unsigned long agsize, int crcs_enabled, int dirversion,
-		int sectorlog, int blocklog, int inodelog, int dirblocklog,
-		int logversion, int log_sunit, int finobt, int rmapbt,
-		int reflink, int inode_align);
-
 #endif	/* __XFS_MULTIDISK_H__ */
