@@ -760,17 +760,17 @@ struct sb_feat_args {
 	int	log_version;
 	int	attr_version;
 	int	dir_version;
-	bool	inode_align;
-	bool	nci;
-	bool	lazy_sb_counters;
-	bool	projid32bit;
-	bool	crcs_enabled;
-	bool	dirftype;
-	bool	finobt;
-	bool	spinodes;
-	bool	rmapbt;
-	bool	reflink;
-	bool	parent_pointers;
+	bool	inode_align;		/* XFS_SB_VERSION_ALIGNBIT */
+	bool	nci;			/* XFS_SB_VERSION_BORGBIT */
+	bool	lazy_sb_counters;	/* XFS_SB_VERSION2_LAZYSBCOUNTBIT */
+	bool	parent_pointers;	/* XFS_SB_VERSION2_PARENTBIT */
+	bool	projid32bit;		/* XFS_SB_VERSION2_PROJID32BIT */
+	bool	crcs_enabled;		/* XFS_SB_VERSION2_CRCBIT */
+	bool	dirftype;		/* XFS_SB_VERSION2_FTYPE */
+	bool	finobt;			/* XFS_SB_FEAT_RO_COMPAT_FINOBT */
+	bool	spinodes;		/* XFS_SB_FEAT_INCOMPAT_SPINODES */
+	bool	rmapbt;			/* XFS_SB_FEAT_RO_COMPAT_RMAPBT */
+	bool	reflink;		/* XFS_SB_FEAT_RO_COMPAT_REFLINK */
 	bool	nodalign;
 	bool	nortalign;
 };
