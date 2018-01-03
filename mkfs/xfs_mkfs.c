@@ -230,6 +230,13 @@ struct opt_params {
 	}		subopt_params[MAX_SUBOPTS];
 };
 
+/*
+ * The two dimensional conflict array requires some initialisations to know
+ * about tables that haven't yet been defined. Work around this ordering
+ * issue with extern definitions here.
+ */
+extern struct opt_params sopts;
+
 struct opt_params bopts = {
 	.name = 'b',
 	.subopts = {
@@ -348,6 +355,10 @@ struct opt_params dopts = {
 		},
 		{ .index = D_SECTLOG,
 		  .conflicts = { { &dopts, D_SECTSIZE },
+				 { &sopts, S_SIZE },
+				 { &sopts, S_SECTSIZE },
+				 { &sopts, S_LOG },
+				 { &sopts, S_SECTLOG },
 				 { NULL, LAST_CONFLICT } },
 		  .minval = XFS_MIN_SECTORSIZE_LOG,
 		  .maxval = XFS_MAX_SECTORSIZE_LOG,
@@ -355,6 +366,10 @@ struct opt_params dopts = {
 		},
 		{ .index = D_SECTSIZE,
 		  .conflicts = { { &dopts, D_SECTLOG },
+				 { &sopts, S_SIZE },
+				 { &sopts, S_SECTSIZE },
+				 { &sopts, S_LOG },
+				 { &sopts, S_SECTLOG },
 				 { NULL, LAST_CONFLICT } },
 		  .convert = true,
 		  .is_power_2 = true,
@@ -680,6 +695,9 @@ struct opt_params sopts = {
 		{ .index = S_LOG,
 		  .conflicts = { { &sopts, S_SIZE },
 				 { &sopts, S_SECTSIZE },
+				 { &sopts, S_SECTLOG },
+				 { &dopts, D_SECTSIZE },
+				 { &dopts, D_SECTLOG },
 				 { NULL, LAST_CONFLICT } },
 		  .minval = XFS_MIN_SECTORSIZE_LOG,
 		  .maxval = XFS_MAX_SECTORSIZE_LOG,
@@ -688,6 +706,9 @@ struct opt_params sopts = {
 		{ .index = S_SECTLOG,
 		  .conflicts = { { &sopts, S_SIZE },
 				 { &sopts, S_SECTSIZE },
+				 { &sopts, S_LOG },
+				 { &dopts, D_SECTSIZE },
+				 { &dopts, D_SECTLOG },
 				 { NULL, LAST_CONFLICT } },
 		  .minval = XFS_MIN_SECTORSIZE_LOG,
 		  .maxval = XFS_MAX_SECTORSIZE_LOG,
@@ -696,6 +717,9 @@ struct opt_params sopts = {
 		{ .index = S_SIZE,
 		  .conflicts = { { &sopts, S_LOG },
 				 { &sopts, S_SECTLOG },
+				 { &sopts, S_SECTSIZE },
+				 { &dopts, D_SECTSIZE },
+				 { &dopts, D_SECTLOG },
 				 { NULL, LAST_CONFLICT } },
 		  .convert = true,
 		  .is_power_2 = true,
@@ -706,6 +730,9 @@ struct opt_params sopts = {
 		{ .index = S_SECTSIZE,
 		  .conflicts = { { &sopts, S_LOG },
 				 { &sopts, S_SECTLOG },
+				 { &sopts, S_SIZE },
+				 { &dopts, D_SECTSIZE },
+				 { &dopts, D_SECTLOG },
 				 { NULL, LAST_CONFLICT } },
 		  .convert = true,
 		  .is_power_2 = true,
@@ -963,8 +990,8 @@ conflict(
 	int			conflict)
 {
 	fprintf(stderr, _("Cannot specify both -%c %s and -%c %s\n"),
-			opts->name, opts->subopts[option],
-			con_opts->name, con_opts->subopts[conflict]);
+			con_opts->name, con_opts->subopts[conflict],
+			opts->name, opts->subopts[option]);
 	usage();
 }
 
@@ -1522,14 +1549,10 @@ data_opts_parser(
 		cli->sb_feat.nodalign = getnum(value, opts, D_NOALIGN);
 		break;
 	case D_SECTLOG:
-		if (cli->sectorsize)
-			conflict(opts, D_SECTSIZE, opts, D_SECTLOG);
 		sectorlog = getnum(value, opts, D_SECTLOG);
 		cli->sectorsize = 1 << sectorlog;
 		break;
 	case D_SECTSIZE:
-		if (cli->sectorsize)
-			conflict(opts, D_SECTSIZE, opts, D_SECTLOG);
 		cli->sectorsize = getnum(value, opts, D_SECTSIZE);
 		break;
 	case D_RTINHERIT:
@@ -1755,17 +1778,13 @@ sector_opts_parser(
 	switch (subopt) {
 	case S_LOG:
 	case S_SECTLOG:
-		if (cli->sectorsize)
-			conflict(opts, S_SECTSIZE, opts, S_SECTLOG);
-		sectorlog = getnum(value, opts, S_SECTLOG);
+		sectorlog = getnum(value, opts, subopt);
 		cli->sectorsize = 1 << sectorlog;
 		cli->lsectorsize = cli->sectorsize;
 		break;
 	case S_SIZE:
 	case S_SECTSIZE:
-		if (cli->sectorsize)
-			conflict(opts, S_SECTSIZE, opts, S_SECTLOG);
-		cli->sectorsize = getnum(value, opts, S_SECTSIZE);
+		cli->sectorsize = getnum(value, opts, subopt);
 		cli->lsectorsize = cli->sectorsize;
 		break;
 	default:
