@@ -773,7 +773,6 @@ struct sb_feat_args {
 	bool	parent_pointers;
 	bool	nodalign;
 	bool	nortalign;
-	uuid_t	m_uuid;
 };
 
 struct cli_params {
