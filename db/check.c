@@ -4730,13 +4730,24 @@ scanfunc_refcnt(
 		lastblock = 0;
 		for (i = 0; i < be16_to_cpu(block->bb_numrecs); i++) {
 			if (be32_to_cpu(rp[i].rc_refcount) == 1) {
-				dbprintf(_(
-		"leftover CoW extent (%u/%u) len %u\n"),
+				xfs_agblock_t	agbno;
+				char		*msg;
+
+				agbno = be32_to_cpu(rp[i].rc_startblock);
+				if (agbno >= XFS_REFC_COW_START) {
+					agbno -= XFS_REFC_COW_START;
+					msg = _(
+		"leftover CoW extent (%u/%u) len %u\n");
+				} else {
+					msg = _(
+		"leftover CoW extent at unexpected address (%u/%u) len %u\n");
+				}
+				dbprintf(msg,
 					seqno,
-					be32_to_cpu(rp[i].rc_startblock),
+					agbno,
 					be32_to_cpu(rp[i].rc_blockcount));
 				set_dbmap(seqno,
-					be32_to_cpu(rp[i].rc_startblock),
+					agbno,
 					be32_to_cpu(rp[i].rc_blockcount),
 					DBM_COWDATA, seqno, bno);
 			} else {
