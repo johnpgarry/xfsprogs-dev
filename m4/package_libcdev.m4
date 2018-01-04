@@ -328,3 +328,19 @@ AC_DEFUN([AC_HAVE_STATFS_FLAGS],
     )
     AC_SUBST(have_statfs_flags)
   ])
+
+#
+# Check if we have MAP_SYNC defines (Linux)
+#
+AC_DEFUN([AC_HAVE_MAP_SYNC],
+  [ AC_MSG_CHECKING([for MAP_SYNC])
+    AC_TRY_COMPILE([
+#include <asm-generic/mman.h>
+#include <asm-generic/mman-common.h>
+    ], [
+        int flags = MAP_SYNC | MAP_SHARED_VALIDATE;
+    ], have_map_sync=yes
+	AC_MSG_RESULT(yes),
+	AC_MSG_RESULT(no))
+    AC_SUBST(have_map_sync)
+  ])

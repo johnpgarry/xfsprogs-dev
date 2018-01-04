@@ -327,4 +327,12 @@ fsmap_advance(
 #define HAVE_GETFSMAP
 #endif /* HAVE_GETFSMAP */
 
+#ifndef HAVE_MAP_SYNC
+#define MAP_SYNC 0
+#define MAP_SHARED_VALIDATE 0
+#else
+#include <asm-generic/mman.h>
+#include <asm-generic/mman-common.h>
+#endif /* HAVE_MAP_SYNC */
+
 #endif	/* __XFS_LINUX_H__ */

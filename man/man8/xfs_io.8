@@ -776,7 +776,7 @@ Each (sec, nsec) pair constitutes a single timestamp value.
 
 .SH MEMORY MAPPED I/O COMMANDS
 .TP
-.BI "mmap [ " N " | [[ \-rwx ] [\-s " size " ] " "offset length " ]]
+.BI "mmap [ " N " | [[ \-rwxS ] [\-s " size " ] " "offset length " ]]
 With no arguments,
 .B mmap
 shows the current mappings. Specifying a single numeric argument
@@ -792,6 +792,10 @@ PROT_WRITE
 .RB ( \-w ),
 and PROT_EXEC
 .RB ( \-x ).
+The mapping will be created with the MAP_SHARED flag by default, or with the
+Linux specific (MAP_SYNC | MAP_SHARED_VALIDATE) flags if
+.B -S
+is given.
 .BI \-s " size"
 is used to do a mmap(size) && munmap(size) operation at first, try to reserve some
 extendible free memory space, if

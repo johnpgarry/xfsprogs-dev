@@ -42,7 +42,7 @@ print_mapping(
 	int		index,
 	int		braces)
 {
-	unsigned char	buffer[8] = { 0 };
+	char		buffer[8] = { 0 };
 	int		i;
 
 	static struct {
@@ -57,6 +57,10 @@ print_mapping(
 
 	for (i = 0, p = pflags; p->prot != PROT_NONE; i++, p++)
 		buffer[i] = (map->prot & p->prot) ? p->mode : '-';
+
+	if (map->map_sync)
+		sprintf(&buffer[i], " S");
+
 	printf("%c%03d%c 0x%lx - 0x%lx %s  %14s (%lld : %ld)\n",
 		braces? '[' : ' ', index, braces? ']' : ' ',
 		(unsigned long)map->addr,
@@ -146,6 +150,7 @@ mmap_help(void)
 " -r -- map with PROT_READ protection\n"
 " -w -- map with PROT_WRITE protection\n"
 " -x -- map with PROT_EXEC protection\n"
+" -S -- map with MAP_SYNC and MAP_SHARED_VALIDATE flags\n"
 " -s <size> -- first do mmap(size)/munmap(size), try to reserve some free space\n"
 " If no protection mode is specified, all are used by default.\n"
 "\n"));
@@ -161,7 +166,7 @@ mmap_f(
 	void		*address = NULL;
 	char		*filename;
 	size_t		blocksize, sectsize;
-	int		c, prot = 0;
+	int		c, prot = 0, flags = MAP_SHARED;
 
 	if (argc == 1) {
 		if (mapping)
@@ -184,7 +189,7 @@ mmap_f(
 
 	init_cvtnum(&blocksize, &sectsize);
 
-	while ((c = getopt(argc, argv, "rwxs:")) != EOF) {
+	while ((c = getopt(argc, argv, "rwxSs:")) != EOF) {
 		switch (c) {
 		case 'r':
 			prot |= PROT_READ;
@@ -194,6 +199,19 @@ mmap_f(
 			break;
 		case 'x':
 			prot |= PROT_EXEC;
+			break;
+		case 'S':
+			flags = MAP_SYNC | MAP_SHARED_VALIDATE;
+
+			/*
+			 * If MAP_SYNC and MAP_SHARED_VALIDATE aren't defined
+			 * in the system headers we will have defined them
+			 * both as 0.
+			 */
+			if (!flags) {
+				printf("MAP_SYNC not supported\n");
+				return 0;
+			}
 			break;
 		case 's':
 			length2 = cvtnum(blocksize, sectsize, optarg);
@@ -238,7 +256,7 @@ mmap_f(
 		               MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 		munmap(address, length2);
 	}
-	address = mmap(address, length, prot, MAP_SHARED, file->fd, offset);
+	address = mmap(address, length, prot, flags, file->fd, offset);
 	if (address == MAP_FAILED) {
 		perror("mmap");
 		free(filename);
@@ -263,6 +281,7 @@ mmap_f(
 	mapping->offset = offset;
 	mapping->name = filename;
 	mapping->prot = prot;
+	mapping->map_sync = (flags == (MAP_SYNC | MAP_SHARED_VALIDATE));
 	return 0;
 }
 
@@ -676,7 +695,7 @@ mmap_init(void)
 	mmap_cmd.argmax = -1;
 	mmap_cmd.flags = CMD_NOMAP_OK | CMD_NOFILE_OK |
 			 CMD_FOREIGN_OK | CMD_FLAG_ONESHOT;
-	mmap_cmd.args = _("[N] | [-rwx] [-s size] [off len]");
+	mmap_cmd.args = _("[N] | [-rwxS] [-s size] [off len]");
 	mmap_cmd.oneline =
 		_("mmap a range in the current file, show mappings");
 	mmap_cmd.help = mmap_help;
