@@ -845,7 +845,7 @@ next_readbuf:
 			 * phase 6.
 			 */
 			set_inode_ftype(ino_rec, irec_offset,
-				xfs_mode_to_ftype(be16_to_cpu(dino->di_mode)));
+				libxfs_mode_to_ftype(be16_to_cpu(dino->di_mode)));
 
 			/*
 			 * store on-disk nlink count for comparing in phase 7

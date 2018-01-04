@@ -116,7 +116,7 @@
 #define xfs_rmap_irec_offset_unpack	libxfs_rmap_irec_offset_unpack
 #define xfs_rmapbt_init_cursor		libxfs_rmapbt_init_cursor
 #define xfs_btree_del_cursor		libxfs_btree_del_cursor
-
+#define xfs_mode_to_ftype		libxfs_mode_to_ftype
 
 #define xfs_log_sb			libxfs_log_sb
 #define xfs_sb_from_disk		libxfs_sb_from_disk
