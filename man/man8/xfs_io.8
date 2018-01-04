@@ -1143,7 +1143,27 @@ parameter specifies which type of metadata to scrub.
 For AG metadata, one AG number must be specified.
 For file metadata, the scrub is applied to the open file unless the
 inode number and generation number are specified.
+.RE
+.PD
+.TP
+.BI "log_writes \-d " device " \-m "  mark
+Create a mark named
+.I mark
+in the dm-log-writes log specified by
+.I device.
+This is intended to be equivalent to the shell command:
 
+.B dmsetup message
+.I device
+.B 0 mark
+.I mark
+.PD
+.RE
+.TP
+.B lw
+See the
+.B log_writes
+command.
 .SH SEE ALSO
 .BR mkfs.xfs (8),
 .BR xfsctl (3),
@@ -1161,4 +1181,5 @@ inode number and generation number are specified.
 .BR open (2),
 .BR pread (2),
 .BR pwrite (2),
-.BR readdir (3).
+.BR readdir (3),
+.BR dmsetup (8).

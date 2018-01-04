@@ -187,4 +187,10 @@ extern void		fsmap_init(void);
 # define fsmap_init()	do { } while (0)
 #endif
 
+#ifdef HAVE_DEVMAPPER
+extern void		log_writes_init(void);
+#else
+#define log_writes_init()      do { } while (0)
+#endif
+
 extern void		scrub_init(void);

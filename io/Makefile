@@ -108,6 +108,12 @@ ifeq ($(HAVE_MAP_SYNC),yes)
 LCFLAGS += -DHAVE_MAP_SYNC
 endif
 
+ifeq ($(HAVE_DEVMAPPER),yes)
+CFILES += log_writes.c
+LLDLIBS += $(LIBDEVMAPPER)
+LCFLAGS += -DHAVE_DEVMAPPER
+endif
+
 # On linux we get fsmap from the system or define it ourselves
 # so include this based on platform type.  If this reverts to only
 # the autoconf check w/o local definition, change to testing HAVE_GETFSMAP
