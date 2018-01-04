@@ -10,7 +10,7 @@ tool_dirs="copy db estimate fsck fsr growfs io logprint mdrestore mkfs quota rep
 
 # Calls to xfs_* functions in libxfs/*.c without the libxfs_ prefix
 find_possible_api_calls() {
-	grep -rn '[[:space:],-(]xfs_[a-z_]*(' $tool_dirs | sed -e 's/^.*\(xfs_[a-z_]*\)(.*$/\1/g' | sort | uniq
+	grep -rn '[-[:space:],(]xfs_[a-z_]*(' $tool_dirs | sed -e 's/^.*\(xfs_[a-z_]*\)(.*$/\1/g' | sort | uniq
 }
 
 check_if_api_calls() {
