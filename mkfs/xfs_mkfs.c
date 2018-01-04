@@ -1400,7 +1400,7 @@ block_opts_parser(
 {
 	switch (subopt) {
 	case B_SIZE:
-		cli->blocksize = getnum(value, opts, B_SIZE);
+		cli->blocksize = getnum(value, opts, subopt);
 		break;
 	default:
 		return -EINVAL;
@@ -1417,52 +1417,52 @@ data_opts_parser(
 {
 	switch (subopt) {
 	case D_AGCOUNT:
-		cli->agcount = getnum(value, opts, D_AGCOUNT);
+		cli->agcount = getnum(value, opts, subopt);
 		break;
 	case D_AGSIZE:
-		cli->agsize = getstr(value, opts, D_AGSIZE);
+		cli->agsize = getstr(value, opts, subopt);
 		break;
 	case D_FILE:
-		cli->xi->disfile = getnum(value, opts, D_FILE);
+		cli->xi->disfile = getnum(value, opts, subopt);
 		break;
 	case D_NAME:
-		cli->xi->dname = getstr(value, opts, D_NAME);
+		cli->xi->dname = getstr(value, opts, subopt);
 		break;
 	case D_SIZE:
-		cli->dsize = getstr(value, opts, D_SIZE);
+		cli->dsize = getstr(value, opts, subopt);
 		break;
 	case D_SUNIT:
-		cli->dsunit = getnum(value, opts, D_SUNIT);
+		cli->dsunit = getnum(value, opts, subopt);
 		break;
 	case D_SWIDTH:
-		cli->dswidth = getnum(value, opts, D_SWIDTH);
+		cli->dswidth = getnum(value, opts, subopt);
 		break;
 	case D_SU:
-		cli->dsu = getstr(value, opts, D_SU);
+		cli->dsu = getstr(value, opts, subopt);
 		break;
 	case D_SW:
-		cli->dsw = getnum(value, opts, D_SW);
+		cli->dsw = getnum(value, opts, subopt);
 		break;
 	case D_NOALIGN:
-		cli->sb_feat.nodalign = getnum(value, opts, D_NOALIGN);
+		cli->sb_feat.nodalign = getnum(value, opts, subopt);
 		break;
 	case D_SECTSIZE:
-		cli->sectorsize = getnum(value, opts, D_SECTSIZE);
+		cli->sectorsize = getnum(value, opts, subopt);
 		break;
 	case D_RTINHERIT:
-		if (getnum(value, opts, D_RTINHERIT))
+		if (getnum(value, opts, subopt))
 			cli->fsx.fsx_xflags |= XFS_DIFLAG_RTINHERIT;
 		break;
 	case D_PROJINHERIT:
-		cli->fsx.fsx_projid = getnum(value, opts, D_PROJINHERIT);
+		cli->fsx.fsx_projid = getnum(value, opts, subopt);
 		cli->fsx.fsx_xflags |= XFS_DIFLAG_PROJINHERIT;
 		break;
 	case D_EXTSZINHERIT:
-		cli->fsx.fsx_extsize = getnum(value, opts, D_EXTSZINHERIT);
+		cli->fsx.fsx_extsize = getnum(value, opts, subopt);
 		cli->fsx.fsx_xflags |= XFS_DIFLAG_EXTSZINHERIT;
 		break;
 	case D_COWEXTSIZE:
-		cli->fsx.fsx_cowextsize = getnum(value, opts, D_COWEXTSIZE);
+		cli->fsx.fsx_cowextsize = getnum(value, opts, subopt);
 		cli->fsx.fsx_xflags |= FS_XFLAG_COWEXTSIZE;
 		break;
 	default:
@@ -1480,25 +1480,25 @@ inode_opts_parser(
 {
 	switch (subopt) {
 	case I_ALIGN:
-		cli->sb_feat.inode_align = getnum(value, opts, I_ALIGN);
+		cli->sb_feat.inode_align = getnum(value, opts, subopt);
 		break;
 	case I_MAXPCT:
-		cli->imaxpct = getnum(value, opts, I_MAXPCT);
+		cli->imaxpct = getnum(value, opts, subopt);
 		break;
 	case I_PERBLOCK:
-		cli->inopblock = getnum(value, opts, I_PERBLOCK);
+		cli->inopblock = getnum(value, opts, subopt);
 		break;
 	case I_SIZE:
-		cli->inodesize = getnum(value, opts, I_SIZE);
+		cli->inodesize = getnum(value, opts, subopt);
 		break;
 	case I_ATTR:
-		cli->sb_feat.attr_version = getnum(value, opts, I_ATTR);
+		cli->sb_feat.attr_version = getnum(value, opts, subopt);
 		break;
 	case I_PROJID32BIT:
-		cli->sb_feat.projid32bit = getnum(value, opts, I_PROJID32BIT);
+		cli->sb_feat.projid32bit = getnum(value, opts, subopt);
 		break;
 	case I_SPINODES:
-		cli->sb_feat.spinodes = getnum(value, opts, I_SPINODES);
+		cli->sb_feat.spinodes = getnum(value, opts, subopt);
 		break;
 	default:
 		return -EINVAL;
@@ -1515,36 +1515,36 @@ log_opts_parser(
 {
 	switch (subopt) {
 	case L_AGNUM:
-		cli->logagno = getnum(value, opts, L_AGNUM);
+		cli->logagno = getnum(value, opts, subopt);
 		break;
 	case L_FILE:
-		cli->xi->lisfile = getnum(value, opts, L_FILE);
+		cli->xi->lisfile = getnum(value, opts, subopt);
 		break;
 	case L_INTERNAL:
-		cli->loginternal = getnum(value, opts, L_INTERNAL);
+		cli->loginternal = getnum(value, opts, subopt);
 		break;
 	case L_SU:
-		cli->lsu = getstr(value, opts, L_SU);
+		cli->lsu = getstr(value, opts, subopt);
 		break;
 	case L_SUNIT:
-		cli->lsunit = getnum(value, opts, L_SUNIT);
+		cli->lsunit = getnum(value, opts, subopt);
 		break;
 	case L_NAME:
 	case L_DEV:
-		cli->xi->logname = getstr(value, opts, L_NAME);
+		cli->xi->logname = getstr(value, opts, subopt);
 		cli->loginternal = 0;
 		break;
 	case L_VERSION:
-		cli->sb_feat.log_version = getnum(value, opts, L_VERSION);
+		cli->sb_feat.log_version = getnum(value, opts, subopt);
 		break;
 	case L_SIZE:
-		cli->logsize = getstr(value, opts, L_SIZE);
+		cli->logsize = getstr(value, opts, subopt);
 		break;
 	case L_SECTSIZE:
-		cli->lsectorsize = getnum(value, opts, L_SECTSIZE);
+		cli->lsectorsize = getnum(value, opts, subopt);
 		break;
 	case L_LAZYSBCNTR:
-		cli->sb_feat.lazy_sb_counters = getnum(value, opts, L_LAZYSBCNTR);
+		cli->sb_feat.lazy_sb_counters = getnum(value, opts, subopt);
 		break;
 	default:
 		return -EINVAL;
@@ -1561,24 +1561,24 @@ meta_opts_parser(
 {
 	switch (subopt) {
 	case M_CRC:
-		cli->sb_feat.crcs_enabled = getnum(value, opts, M_CRC);
+		cli->sb_feat.crcs_enabled = getnum(value, opts, subopt);
 		if (cli->sb_feat.crcs_enabled)
 			cli->sb_feat.dirftype = true;
 		break;
 	case M_FINOBT:
-		cli->sb_feat.finobt = getnum(value, opts, M_FINOBT);
+		cli->sb_feat.finobt = getnum(value, opts, subopt);
 		break;
 	case M_UUID:
 		if (!value || *value == '\0')
-			reqval('m', opts->subopts, M_UUID);
+			reqval('m', opts->subopts, subopt);
 		if (platform_uuid_parse(value, &cli->uuid))
 			illegal(value, "m uuid");
 		break;
 	case M_RMAPBT:
-		cli->sb_feat.rmapbt = getnum(value, opts, M_RMAPBT);
+		cli->sb_feat.rmapbt = getnum(value, opts, subopt);
 		break;
 	case M_REFLINK:
-		cli->sb_feat.reflink = getnum(value, opts, M_REFLINK);
+		cli->sb_feat.reflink = getnum(value, opts, subopt);
 		break;
 	default:
 		return -EINVAL;
@@ -1595,19 +1595,19 @@ naming_opts_parser(
 {
 	switch (subopt) {
 	case N_SIZE:
-		cli->dirblocksize = getstr(value, opts, N_SIZE);
+		cli->dirblocksize = getstr(value, opts, subopt);
 		break;
 	case N_VERSION:
-		value = getstr(value, &nopts, N_VERSION);
+		value = getstr(value, &nopts, subopt);
 		if (!strcasecmp(value, "ci")) {
 			/* ASCII CI mode */
 			cli->sb_feat.nci = true;
 		} else {
-			cli->sb_feat.dir_version = getnum(value, opts, N_VERSION);
+			cli->sb_feat.dir_version = getnum(value, opts, subopt);
 		}
 		break;
 	case N_FTYPE:
-		cli->sb_feat.dirftype = getnum(value, opts, N_FTYPE);
+		cli->sb_feat.dirftype = getnum(value, opts, subopt);
 		break;
 	default:
 		return -EINVAL;
@@ -1624,20 +1624,20 @@ rtdev_opts_parser(
 {
 	switch (subopt) {
 	case R_EXTSIZE:
-		cli->rtextsize = getstr(value, opts, R_EXTSIZE);
+		cli->rtextsize = getstr(value, opts, subopt);
 		break;
 	case R_FILE:
-		cli->xi->risfile = getnum(value, opts, R_FILE);
+		cli->xi->risfile = getnum(value, opts, subopt);
 		break;
 	case R_NAME:
 	case R_DEV:
-		cli->xi->rtname = getstr(value, opts, R_NAME);
+		cli->xi->rtname = getstr(value, opts, subopt);
 		break;
 	case R_SIZE:
-		cli->rtsize = getstr(value, opts, R_SIZE);
+		cli->rtsize = getstr(value, opts, subopt);
 		break;
 	case R_NOALIGN:
-		cli->sb_feat.nortalign = getnum(value, opts, R_NOALIGN);
+		cli->sb_feat.nortalign = getnum(value, opts, subopt);
 		break;
 	default:
 		return -EINVAL;
