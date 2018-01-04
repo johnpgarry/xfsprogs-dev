@@ -400,6 +400,7 @@ flist_split(
 		strncpy(a, s, l);
 		a[l] = '\0';
 		v = xrealloc(v, (nv + 2) * sizeof(*v));
+		v[nv + 1].tok = NULL;
 		v[nv].tok = a;
 		v[nv].tokty = t;
 		nv++;
