@@ -73,6 +73,7 @@ fshandle_destroy(void)
 		free(h);
 		h = nexth;
 	}
+	fdhash_head = NULL;
 }
 
 int
