@@ -65,19 +65,21 @@ libxfs_trans_add_item(
 	ASSERT(lip->li_mountp == tp->t_mountp);
 	ASSERT(lip->li_ailp == tp->t_mountp->m_ail);
 
-	lidp = calloc(sizeof(struct xfs_log_item_desc), 1);
-	if (!lidp) {
-		fprintf(stderr, _("%s: lidp calloc failed (%d bytes): %s\n"),
-			progname, (int)sizeof(struct xfs_log_item_desc),
-			strerror(errno));
-		exit(1);
-	}
+	lidp = kmem_zone_zalloc(xfs_log_item_desc_zone, KM_SLEEP | KM_NOFS);
 
 	lidp->lid_item = lip;
 	lidp->lid_flags = 0;
 	list_add_tail(&lidp->lid_trans, &tp->t_items);
 
 	lip->li_desc = lidp;
+}
+
+static void
+libxfs_trans_free_item_desc(
+        struct xfs_log_item_desc *lidp)
+{
+	list_del_init(&lidp->lid_trans);
+	kmem_zone_free(xfs_log_item_desc_zone, lidp);
 }
 
 /*
@@ -87,8 +89,7 @@ void
 libxfs_trans_del_item(
 	struct xfs_log_item	*lip)
 {
-	list_del_init(&lip->li_desc->lid_trans);
-	free(lip->li_desc);
+	libxfs_trans_free_item_desc(lip->li_desc);
 	lip->li_desc = NULL;
 }
 
