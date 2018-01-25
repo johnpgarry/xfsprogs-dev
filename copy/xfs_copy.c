@@ -1140,7 +1140,8 @@ main(int argc, char **argv)
 				 ((char *) btree_buf.data +
 				  pos - btree_buf.position);
 
-			ASSERT(be32_to_cpu(block->bb_magic) == XFS_ABTB_MAGIC);
+			ASSERT(be32_to_cpu(block->bb_magic) == XFS_ABTB_MAGIC ||
+			       be32_to_cpu(block->bb_magic) == XFS_ABTB_CRC_MAGIC);
 		}
 
 		/*
