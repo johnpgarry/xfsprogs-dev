@@ -69,7 +69,7 @@ typedef struct xfs_buf {
 	pthread_t		b_holder;
 	unsigned int		b_recur;
 	void			*b_fspriv;
-	void			*b_fsprivate2;
+	void			*b_transp;
 	void			*b_fsprivate3;
 	void			*b_addr;
 	int			b_error;
@@ -111,8 +111,6 @@ enum xfs_buf_flags_t {	/* b_flags bits */
 #define XFS_BUF_SET_ADDR(bp,blk)	((bp)->b_bn = (blk))
 #define XFS_BUF_SET_COUNT(bp,cnt)	((bp)->b_bcount = (cnt))
 
-#define XFS_BUF_FSPRIVATE2(bp,type)	((type)(bp)->b_fsprivate2)
-#define XFS_BUF_SET_FSPRIVATE2(bp,val)	(bp)->b_fsprivate2 = (void *)(val)
 #define XFS_BUF_FSPRIVATE3(bp,type)	((type)(bp)->b_fsprivate3)
 #define XFS_BUF_SET_FSPRIVATE3(bp,val)	(bp)->b_fsprivate3 = (void *)(val)
 

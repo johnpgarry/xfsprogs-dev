@@ -299,7 +299,7 @@ libxfs_trans_inode_alloc_buf(
 {
 	xfs_buf_log_item_t	*bip = bp->b_fspriv;;
 
-	ASSERT(XFS_BUF_FSPRIVATE2(bp, xfs_trans_t *) == tp);
+	ASSERT(bp->bp_transp == tp);
 	ASSERT(bip != NULL);
 	bip->bli_flags |= XFS_BLI_INODE_ALLOC_BUF;
 	xfs_trans_buf_set_type(tp, bp, XFS_BLFT_DINO_BUF);
@@ -365,7 +365,7 @@ libxfs_trans_dirty_buf(
 {
 	struct xfs_buf_log_item	*bip = bp->b_fspriv;
 
-	ASSERT(XFS_BUF_FSPRIVATE2(bp, xfs_trans_t *) == tp);
+	ASSERT(bp->bp_transp == tp);
 	ASSERT(bip != NULL);
 
 #ifdef XACT_DEBUG
@@ -430,11 +430,11 @@ libxfs_trans_brelse(
 #endif
 
 	if (tp == NULL) {
-		ASSERT(XFS_BUF_FSPRIVATE2(bp, void *) == NULL);
+		ASSERT(bp->bp_transp == NULL);
 		libxfs_putbuf(bp);
 		return;
 	}
-	ASSERT(XFS_BUF_FSPRIVATE2(bp, xfs_trans_t *) == tp);
+	ASSERT(bp->bp_transp == tp);
 	bip = bp->b_fspriv;
 	ASSERT(bip->bli_item.li_type == XFS_LI_BUF);
 	if (bip->bli_recur > 0) {
@@ -449,7 +449,7 @@ libxfs_trans_brelse(
 	xfs_trans_del_item(&bip->bli_item);
 	if (bip->bli_flags & XFS_BLI_HOLD)
 		bip->bli_flags &= ~XFS_BLI_HOLD;
-	XFS_BUF_SET_FSPRIVATE2(bp, NULL);
+	bp->b_transp = NULL;
 	libxfs_putbuf(bp);
 }
 
@@ -463,7 +463,7 @@ libxfs_trans_binval(
 	fprintf(stderr, "binval'd buffer %p, transaction %p\n", bp, tp);
 #endif
 
-	ASSERT(XFS_BUF_FSPRIVATE2(bp, xfs_trans_t *) == tp);
+	ASSERT(bp->bp_transp == tp);
 	ASSERT(bip != NULL);
 
 	if (bip->bli_flags & XFS_BLI_STALE)
@@ -485,7 +485,7 @@ libxfs_trans_bjoin(
 {
 	xfs_buf_log_item_t	*bip;
 
-	ASSERT(XFS_BUF_FSPRIVATE2(bp, void *) == NULL);
+	ASSERT(bp->bp_transp == NULL);
 #ifdef XACT_DEBUG
 	fprintf(stderr, "bjoin'd buffer %p, transaction %p\n", bp, tp);
 #endif
@@ -493,7 +493,7 @@ libxfs_trans_bjoin(
 	xfs_buf_item_init(bp, tp->t_mountp);
 	bip = bp->b_fspriv;
 	xfs_trans_add_item(tp, (xfs_log_item_t *)bip);
-	XFS_BUF_SET_FSPRIVATE2(bp, tp);
+	bp->b_transp = tp;
 }
 
 void
@@ -503,7 +503,7 @@ libxfs_trans_bhold(
 {
 	xfs_buf_log_item_t	*bip =bp->b_fspriv;
 
-	ASSERT(XFS_BUF_FSPRIVATE2(bp, xfs_trans_t *) == tp);
+	ASSERT(bp->bp_transp == tp);
 	ASSERT(bp->b_fspriv != NULL);
 #ifdef XACT_DEBUG
 	fprintf(stderr, "bhold'd buffer %p, transaction %p\n", bp, tp);
@@ -528,7 +528,7 @@ libxfs_trans_get_buf_map(
 
 	bp = xfs_trans_buf_item_match(tp, btp, map, nmaps);
 	if (bp != NULL) {
-		ASSERT(XFS_BUF_FSPRIVATE2(bp, xfs_trans_t *) == tp);
+		ASSERT(bp->bp_transp == tp);
 		bip = bp->b_fspriv;
 		ASSERT(bip != NULL);
 		bip->bli_recur++;
@@ -547,8 +547,8 @@ libxfs_trans_get_buf_map(
 	bip->bli_recur = 0;
 	xfs_trans_add_item(tp, (xfs_log_item_t *)bip);
 
-	/* initialize b_fsprivate2 so we can find it incore */
-	XFS_BUF_SET_FSPRIVATE2(bp, tp);
+	/* initialize b_transp so we can find it incore */
+	bp->b_transp = tp;
 	return bp;
 }
 
@@ -568,7 +568,7 @@ libxfs_trans_getsb(
 
 	bp = xfs_trans_buf_item_match(tp, mp->m_dev, &map, 1);
 	if (bp != NULL) {
-		ASSERT(XFS_BUF_FSPRIVATE2(bp, xfs_trans_t *) == tp);
+		ASSERT(bp->bp_transp == tp);
 		bip = bp->b_fspriv;
 		ASSERT(bip != NULL);
 		bip->bli_recur++;
@@ -585,8 +585,8 @@ libxfs_trans_getsb(
 	bip->bli_recur = 0;
 	xfs_trans_add_item(tp, (xfs_log_item_t *)bip);
 
-	/* initialize b_fsprivate2 so we can find it incore */
-	XFS_BUF_SET_FSPRIVATE2(bp, tp);
+	/* initialize b_transp so we can find it incore */
+	bp->b_transp = tp;
 	return bp;
 }
 
@@ -619,7 +619,7 @@ libxfs_trans_read_buf_map(
 
 	bp = xfs_trans_buf_item_match(tp, btp, map, nmaps);
 	if (bp != NULL) {
-		ASSERT(XFS_BUF_FSPRIVATE2(bp, xfs_trans_t *) == tp);
+		ASSERT(bp->bp_transp == tp);
 		ASSERT(bp->b_fspriv != NULL);
 		bip = bp->b_fspriv;
 		bip->bli_recur++;
@@ -642,8 +642,8 @@ libxfs_trans_read_buf_map(
 	bip->bli_recur = 0;
 	xfs_trans_add_item(tp, (xfs_log_item_t *)bip);
 
-	/* initialise b_fsprivate2 so we can find it incore */
-	XFS_BUF_SET_FSPRIVATE2(bp, tp);
+	/* initialise b_transp so we can find it incore */
+	bp->b_transp = tp;
 done:
 	*bpp = bp;
 	return 0;
@@ -735,8 +735,8 @@ inode_item_done(
 	}
 
 	ip->i_transp = NULL;	/* disassociate from transaction */
-	bp->b_fspriv = NULL;			/* remove log item */
-	XFS_BUF_SET_FSPRIVATE2(bp, NULL);	/* remove xact ptr */
+	bp->b_fspriv = NULL;	/* remove log item */
+	bp->b_transp = NULL;	/* remove xact ptr */
 	libxfs_writebuf(bp, 0);
 #ifdef XACT_DEBUG
 	fprintf(stderr, "flushing dirty inode %llu, buffer %p\n",
@@ -755,7 +755,7 @@ buf_item_done(
 	bp = bip->bli_buf;
 	ASSERT(bp != NULL);
 	bp->b_fspriv = NULL;			/* remove log item */
-	XFS_BUF_SET_FSPRIVATE2(bp, NULL);	/* remove xact ptr */
+	bp->b_transp = NULL;			/* remove xact ptr */
 
 	hold = (bip->bli_flags & XFS_BLI_HOLD);
 	if (bip->bli_flags & XFS_BLI_DIRTY) {
@@ -804,7 +804,7 @@ buf_item_unlock(
 	uint			hold;
 
 	/* Clear the buffer's association with this transaction. */
-	XFS_BUF_SET_FSPRIVATE2(bip->bli_buf, NULL);
+	bip->bli_buf->b_transp = NULL;
 
 	hold = bip->bli_flags & XFS_BLI_HOLD;
 	bip->bli_flags &= ~XFS_BLI_HOLD;
