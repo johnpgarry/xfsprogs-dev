@@ -111,8 +111,6 @@ enum xfs_buf_flags_t {	/* b_flags bits */
 #define XFS_BUF_SET_ADDR(bp,blk)	((bp)->b_bn = (blk))
 #define XFS_BUF_SET_COUNT(bp,cnt)	((bp)->b_bcount = (cnt))
 
-#define XFS_BUF_FSPRIVATE(bp,type)	((type)(bp)->b_fspriv)
-#define XFS_BUF_SET_FSPRIVATE(bp,val)	(bp)->b_fspriv = (void *)(val)
 #define XFS_BUF_FSPRIVATE2(bp,type)	((type)(bp)->b_fsprivate2)
 #define XFS_BUF_SET_FSPRIVATE2(bp,val)	(bp)->b_fsprivate2 = (void *)(val)
 #define XFS_BUF_FSPRIVATE3(bp,type)	((type)(bp)->b_fsprivate3)

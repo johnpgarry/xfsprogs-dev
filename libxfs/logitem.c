@@ -99,8 +99,8 @@ xfs_buf_item_init(
 	if (XFS_BUF_FSPRIVATE3(bp, xfs_mount_t *) != mp)
 		XFS_BUF_SET_FSPRIVATE3(bp, mp);
 	XFS_BUF_SET_BDSTRAT_FUNC(bp, xfs_bdstrat_cb);
-	if (XFS_BUF_FSPRIVATE(bp, void *) != NULL) {
-		lip = XFS_BUF_FSPRIVATE(bp, xfs_log_item_t *);
+	if (bp->b_fspriv != NULL) {
+		lip = bp->b_fspriv;
 		if (lip->li_type == XFS_LI_BUF) {
 #ifdef LI_DEBUG
 			fprintf(stderr,
@@ -123,7 +123,7 @@ xfs_buf_item_init(
 	bip->bli_format.blf_type = XFS_LI_BUF;
 	bip->bli_format.blf_blkno = (int64_t)XFS_BUF_ADDR(bp);
 	bip->bli_format.blf_len = (unsigned short)BTOBB(XFS_BUF_COUNT(bp));
-	XFS_BUF_SET_FSPRIVATE(bp, bip);
+	bp->b_fspriv = bip;
 }
 
 
