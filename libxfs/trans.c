@@ -36,6 +36,7 @@ static void xfs_trans_free_items(struct xfs_trans *tp);
  * Simple transaction interface
  */
 
+kmem_zone_t	*xfs_trans_zone;
 kmem_zone_t	*xfs_log_item_desc_zone;
 
 /*
@@ -143,6 +144,17 @@ libxfs_trans_roll(
 	return 0;
 }
 
+/*
+ * Free the transaction structure.  If there is more clean up
+ * to do when the structure is freed, add it here.
+ */
+static void
+xfs_trans_free(
+	struct xfs_trans	*tp)
+{
+	kmem_zone_free(xfs_trans_zone, tp);
+}
+
 int
 libxfs_trans_alloc(
 	struct xfs_mount	*mp,
@@ -166,11 +178,8 @@ libxfs_trans_alloc(
 			return -ENOSPC;
 	}
 
-	if ((ptr = calloc(sizeof(xfs_trans_t), 1)) == NULL) {
-		fprintf(stderr, _("%s: xact calloc failed (%d bytes): %s\n"),
-			progname, (int)sizeof(xfs_trans_t), strerror(errno));
-		exit(1);
-	}
+	ptr = kmem_zone_zalloc(xfs_trans_zone,
+		(flags & XFS_TRANS_NOFS) ? KM_NOFS : KM_SLEEP);
 	ptr->t_mountp = mp;
 	ptr->t_blk_res = blocks;
 	INIT_LIST_HEAD(&ptr->t_items);
@@ -212,8 +221,7 @@ libxfs_trans_cancel(
 #endif
 	if (tp != NULL) {
 		xfs_trans_free_items(tp);
-		free(tp);
-		tp = NULL;
+		xfs_trans_free(tp);
 	}
 #ifdef XACT_DEBUG
 	fprintf(stderr, "## cancelled transaction %p\n", otp);
@@ -867,8 +875,7 @@ libxfs_trans_commit(
 		fprintf(stderr, "committed clean transaction %p\n", tp);
 #endif
 		xfs_trans_free_items(tp);
-		free(tp);
-		tp = NULL;
+		xfs_trans_free(tp);
 		return 0;
 	}
 
@@ -891,7 +898,6 @@ libxfs_trans_commit(
 	trans_committed(tp);
 
 	/* That's it for the transaction structure.  Free it. */
-	free(tp);
-	tp = NULL;
+	xfs_trans_free(tp);
 	return 0;
 }
