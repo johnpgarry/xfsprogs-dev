@@ -96,8 +96,6 @@ xfs_buf_item_init(
 	 * the first.  If we do already have one, there is
 	 * nothing to do here so return.
 	 */
-	if (XFS_BUF_FSPRIVATE3(bp, xfs_mount_t *) != mp)
-		XFS_BUF_SET_FSPRIVATE3(bp, mp);
 	XFS_BUF_SET_BDSTRAT_FUNC(bp, xfs_bdstrat_cb);
 	if (bp->b_fspriv != NULL) {
 		lip = bp->b_fspriv;
