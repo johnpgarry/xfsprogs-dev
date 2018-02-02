@@ -43,6 +43,7 @@ phase2.c \
 phase3.c \
 phase5.c \
 phase6.c \
+phase7.c \
 read_verify.c \
 scrub.c \
 spacemap.c \

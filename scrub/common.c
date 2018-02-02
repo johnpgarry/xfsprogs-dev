@@ -339,3 +339,31 @@ _("More than %u naming warnings, shutting up."),
 
 	return debug || verbose || res;
 }
+
+/* Decide if a value is within +/- (n/d) of a desired value. */
+bool
+within_range(
+	struct scrub_ctx	*ctx,
+	unsigned long long	value,
+	unsigned long long	desired,
+	unsigned long long	abs_threshold,
+	unsigned int		n,
+	unsigned int		d,
+	const char		*descr)
+{
+	assert(n < d);
+
+	/* Don't complain if difference does not exceed an absolute value. */
+	if (value < desired && desired - value < abs_threshold)
+		return true;
+	if (value > desired && value - desired < abs_threshold)
+		return true;
+
+	/* Complain if the difference exceeds a certain percentage. */
+	if (value < desired * (d - n) / d)
+		return false;
+	if (value > desired * (d + n) / d)
+		return false;
+
+	return true;
+}

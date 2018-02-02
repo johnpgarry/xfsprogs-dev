@@ -79,4 +79,8 @@ char *string_escape(const char *in);
 #define TOO_MANY_NAME_WARNINGS	10000
 bool should_warn_about_name(struct scrub_ctx *ctx);
 
+bool within_range(struct scrub_ctx *ctx, unsigned long long value,
+		unsigned long long desired, unsigned long long abs_threshold,
+		unsigned int n, unsigned int d, const char *descr);
+
 #endif /* XFS_SCRUB_COMMON_H_ */

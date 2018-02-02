@@ -389,6 +389,8 @@ run_scrub_phases(
 		},
 		{
 			.descr = _("Check summary counters."),
+			.fn = xfs_scan_summary,
+			.must_run = true,
 		},
 		{
 			NULL
@@ -458,7 +460,6 @@ main(
 	int			ret = SCRUB_RET_SUCCESS;
 
 	fprintf(stdout, "EXPERIMENTAL xfs_scrub program in use! Use at your own risk!\n");
-	return SCRUB_RET_OPERROR;
 
 	progname = basename(argv[0]);
 	setlocale(LC_ALL, "");
