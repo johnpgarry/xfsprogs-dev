@@ -31,6 +31,7 @@
 #include "workqueue.h"
 #include "xfs_scrub.h"
 #include "common.h"
+#include "progress.h"
 #include "scrub.h"
 #include "vfs.h"
 
@@ -44,8 +45,10 @@ xfs_process_action_items(
 	bool				moveon = true;
 
 	pthread_mutex_lock(&ctx->lock);
-	if (moveon && ctx->errors_found == 0 && want_fstrim)
+	if (moveon && ctx->errors_found == 0 && want_fstrim) {
 		fstrim(ctx);
+		progress_add(1);
+	}
 	pthread_mutex_unlock(&ctx->lock);
 
 	return moveon;
@@ -76,4 +79,18 @@ _("Errors found, please re-run with -y."));
 	}
 
 	return xfs_process_action_items(ctx);
+}
+
+/* Estimate how much work we're going to do. */
+bool
+xfs_estimate_repair_work(
+	struct scrub_ctx	*ctx,
+	uint64_t		*items,
+	unsigned int		*nr_threads,
+	int			*rshift)
+{
+	*items = 1;
+	*nr_threads = 1;
+	*rshift = 0;
+	return true;
 }

@@ -33,6 +33,7 @@
 #include "bitmap.h"
 #include "disk.h"
 #include "filemap.h"
+#include "fscounters.h"
 #include "inodes.h"
 #include "read_verify.h"
 #include "spacemap.h"
@@ -512,5 +513,32 @@ out_dbad:
 	bitmap_free(&ve.d_bad);
 out_ve:
 	ptvar_free(ve.rvstate);
+	return moveon;
+}
+
+/* Estimate how much work we're going to do. */
+bool
+xfs_estimate_verify_work(
+	struct scrub_ctx	*ctx,
+	uint64_t		*items,
+	unsigned int		*nr_threads,
+	int			*rshift)
+{
+	unsigned long long	d_blocks;
+	unsigned long long	d_bfree;
+	unsigned long long	r_blocks;
+	unsigned long long	r_bfree;
+	unsigned long long	f_files;
+	unsigned long long	f_free;
+	bool			moveon;
+
+	moveon = xfs_scan_estimate_blocks(ctx, &d_blocks, &d_bfree,
+				&r_blocks, &r_bfree, &f_files, &f_free);
+	if (!moveon)
+		return moveon;
+
+	*items = ((d_blocks - d_bfree) + (r_blocks - r_bfree)) << ctx->blocklog;
+	*nr_threads = disk_heads(ctx->datadev);
+	*rshift = 20;
 	return moveon;
 }

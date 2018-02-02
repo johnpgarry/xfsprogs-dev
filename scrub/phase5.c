@@ -34,6 +34,7 @@
 #include "xfs_scrub.h"
 #include "common.h"
 #include "inodes.h"
+#include "progress.h"
 #include "scrub.h"
 #include "unicrash.h"
 
@@ -280,6 +281,7 @@ xfs_scrub_connections(
 	}
 
 out:
+	progress_add(1);
 	if (fd >= 0)
 		close(fd);
 	if (!moveon)

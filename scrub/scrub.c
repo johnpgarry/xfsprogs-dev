@@ -31,6 +31,7 @@
 #include "path.h"
 #include "xfs_scrub.h"
 #include "common.h"
+#include "progress.h"
 #include "scrub.h"
 #include "xfs_errortag.h"
 
@@ -343,6 +344,7 @@ xfs_scrub_metadata(
 
 		/* Check the item. */
 		fix = xfs_check_metadata(ctx, ctx->mnt_fd, &meta, false);
+		progress_add(1);
 		switch (fix) {
 		case CHECK_ABORT:
 			return false;
@@ -414,6 +416,32 @@ xfs_scrub_fs_metadata(
 	struct scrub_ctx		*ctx)
 {
 	return xfs_scrub_metadata(ctx, ST_FS, 0);
+}
+
+/* How many items do we have to check? */
+unsigned int
+xfs_scrub_estimate_ag_work(
+	struct scrub_ctx		*ctx)
+{
+	const struct scrub_descr	*sc;
+	int				type;
+	unsigned int			estimate = 0;
+
+	sc = scrubbers;
+	for (type = 0; type < XFS_SCRUB_TYPE_NR; type++, sc++) {
+		switch (sc->type) {
+		case ST_AGHEADER:
+		case ST_PERAG:
+			estimate += ctx->geo.agcount;
+			break;
+		case ST_FS:
+			estimate++;
+			break;
+		default:
+			break;
+		}
+	}
+	return estimate;
 }
 
 /* Scrub inode metadata. */

@@ -27,6 +27,7 @@
 #include "path.h"
 #include "xfs_scrub.h"
 #include "common.h"
+#include "progress.h"
 
 /*
  * Reporting Status to the Console
@@ -61,6 +62,14 @@ static const char *err_str[] = {
 	[S_INFO]	= "Info",
 };
 
+/* If stream is a tty, clear to end of line to clean up progress bar. */
+static inline const char *stream_start(FILE *stream)
+{
+	if (stream == stderr)
+		return stderr_isatty ? CLEAR_EOL : "";
+	return stdout_isatty ? CLEAR_EOL : "";
+}
+
 /* Print a warning string and some warning text. */
 void
 __str_out(
@@ -84,7 +93,8 @@ __str_out(
 		stream = stdout;
 
 	pthread_mutex_lock(&ctx->lock);
-	fprintf(stream, "%s: %s: ", _(err_str[level]), descr);
+	fprintf(stream, "%s%s: %s: ", stream_start(stream), _(err_str[level]),
+			descr);
 	if (error) {
 		fprintf(stream, _("%s."), strerror_r(error, buf, DESCR_BUFSZ));
 	} else {

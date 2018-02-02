@@ -4,7 +4,7 @@ xfs_scrub \- scrub the contents of an XFS filesystem
 .SH SYNOPSIS
 .B xfs_scrub
 [
-.B \-abemnTvxy
+.B \-abCemnTvxy
 ]
 .RI "[" mount-point " | " block-device "]"
 .br
@@ -52,6 +52,15 @@ If the option is specified once, only run a single scrubbing thread at a
 time.
 If given more than once, an artificial delay of 100us is added to each
 scrub call to reduce CPU overhead even further.
+.TP
+.BI \-C " fd"
+This option causes xfs_scrub to write progress information to the
+specified file description so that the progress of the filesystem check
+can be monitored.
+If the file description is a tty, a fancy progress bar is rendered.
+Otherwise, a simple numeric status dump compatible with the
+.B fsck -C
+format is output.
 .TP
 .B \-e
 Specifies what happens when errors are detected.

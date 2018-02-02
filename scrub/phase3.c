@@ -30,6 +30,7 @@
 #include "common.h"
 #include "counter.h"
 #include "inodes.h"
+#include "progress.h"
 #include "scrub.h"
 
 /* Phase 3: Scan all inodes. */
@@ -116,6 +117,7 @@ xfs_scrub_inode(
 
 out:
 	ptcounter_add(icount, 1);
+	progress_add(1);
 	if (fd >= 0)
 		close(fd);
 	if (!moveon)
@@ -149,4 +151,18 @@ xfs_scan_inodes(
 free:
 	ptcounter_free(ictx.icount);
 	return ictx.moveon;
+}
+
+/* Estimate how much work we're going to do. */
+bool
+xfs_estimate_inodes_work(
+	struct scrub_ctx	*ctx,
+	uint64_t		*items,
+	unsigned int		*nr_threads,
+	int			*rshift)
+{
+	*items = ctx->mnt_sv.f_files - ctx->mnt_sv.f_ffree;
+	*nr_threads = scrub_nproc(ctx);
+	*rshift = 0;
+	return true;
 }

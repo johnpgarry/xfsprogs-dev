@@ -32,6 +32,7 @@
 #include "xfs_scrub.h"
 #include "common.h"
 #include "unicrash.h"
+#include "progress.h"
 
 /*
  * XFS Online Metadata Scrub (and Repair)
@@ -149,6 +150,10 @@ long				page_size;
 /* Should we FSTRIM after a successful run? */
 bool				want_fstrim = true;
 
+/* If stdout/stderr are ttys, we can use richer terminal control. */
+bool				stderr_isatty;
+bool				stdout_isatty;
+
 #define SCRUB_RET_SUCCESS	(0)	/* no problems left behind */
 #define SCRUB_RET_CORRUPT	(1)	/* corruption remains on fs */
 #define SCRUB_RET_UNOPTIMIZED	(2)	/* fs could be optimized */
@@ -163,6 +168,7 @@ usage(void)
 	fprintf(stderr, _("Options:\n"));
 	fprintf(stderr, _("  -a count     Stop after this many errors are found.\n"));
 	fprintf(stderr, _("  -b           Background mode.\n"));
+	fprintf(stderr, _("  -C fd        Print progress information to this fd.\n"));
 	fprintf(stderr, _("  -e behavior  What to do if errors are found.\n"));
 	fprintf(stderr, _("  -k           Do not FITRIM the free space.\n"));
 	fprintf(stderr, _("  -m path      Path to /etc/mtab.\n"));
@@ -238,6 +244,8 @@ struct phase_rusage {
 struct phase_ops {
 	char		*descr;
 	bool		(*fn)(struct scrub_ctx *);
+	bool		(*estimate_work)(struct scrub_ctx *, uint64_t *,
+					 unsigned int *, int *);
 	bool		must_run;
 };
 
@@ -362,7 +370,8 @@ _("%sI/O rate: %.1f%s/s in, %.1f%s/s out, %.1f%s/s tot\n"),
 /* Run all the phases of the scrubber. */
 static bool
 run_scrub_phases(
-	struct scrub_ctx	*ctx)
+	struct scrub_ctx	*ctx,
+	FILE			*progress_fp)
 {
 	struct phase_ops phases[] =
 	{
@@ -374,22 +383,27 @@ run_scrub_phases(
 		{
 			.descr = _("Check internal metadata."),
 			.fn = xfs_scan_metadata,
+			.estimate_work = xfs_estimate_metadata_work,
 		},
 		{
 			.descr = _("Scan all inodes."),
 			.fn = xfs_scan_inodes,
+			.estimate_work = xfs_estimate_inodes_work,
 		},
 		{
 			.descr = _("Defer filesystem repairs."),
 			.fn = REPAIR_DUMMY_FN,
+			.estimate_work = xfs_estimate_repair_work,
 		},
 		{
 			.descr = _("Check directory tree."),
 			.fn = xfs_scan_connections,
+			.estimate_work = xfs_estimate_inodes_work,
 		},
 		{
 			.descr = _("Verify data file integrity."),
 			.fn = DATASCAN_DUMMY_FN,
+			.estimate_work = xfs_estimate_verify_work,
 		},
 		{
 			.descr = _("Check summary counters."),
@@ -402,9 +416,12 @@ run_scrub_phases(
 	};
 	struct phase_rusage	pi;
 	struct phase_ops	*sp;
+	uint64_t		max_work;
 	bool			moveon = true;
 	unsigned int		debug_phase = 0;
 	unsigned int		phase;
+	unsigned int		nr_threads;
+	int			rshift;
 
 	if (debug && debug_tweak_on("XFS_SCRUB_PHASE"))
 		debug_phase = atoi(getenv("XFS_SCRUB_PHASE"));
@@ -439,6 +456,18 @@ run_scrub_phases(
 		moveon = phase_start(&pi, phase, sp->descr);
 		if (!moveon)
 			break;
+		if (sp->estimate_work) {
+			moveon = sp->estimate_work(ctx, &max_work, &nr_threads,
+					&rshift);
+			if (!moveon)
+				break;
+			moveon = progress_init_phase(ctx, progress_fp, phase,
+					max_work, rshift, nr_threads);
+		} else {
+			moveon = progress_init_phase(ctx, NULL, phase, 0, 0, 0);
+		}
+		if (!moveon)
+			break;
 		moveon = sp->fn(ctx);
 		if (!moveon) {
 			str_info(ctx, ctx->mntpoint,
@@ -446,6 +475,7 @@ _("Scrub aborted after phase %d."),
 					phase);
 			break;
 		}
+		progress_end_phase();
 		moveon = phase_end(&pi, phase);
 		if (!moveon)
 			break;
@@ -468,10 +498,12 @@ main(
 	struct phase_rusage	all_pi;
 	char			*mtab = NULL;
 	char			*repairstr = "";
+	FILE			*progress_fp = NULL;
 	unsigned long long	total_errors;
 	bool			moveon = true;
 	bool			ismnt;
 	int			c;
+	int			fd;
 	int			ret = SCRUB_RET_SUCCESS;
 
 	fprintf(stdout, "EXPERIMENTAL xfs_scrub program in use! Use at your own risk!\n");
@@ -484,7 +516,7 @@ main(
 	pthread_mutex_init(&ctx.lock, NULL);
 	ctx.mode = SCRUB_MODE_DEFAULT;
 	ctx.error_action = ERRORS_CONTINUE;
-	while ((c = getopt(argc, argv, "a:bde:km:nTvxVy")) != EOF) {
+	while ((c = getopt(argc, argv, "a:bC:de:km:nTvxVy")) != EOF) {
 		switch (c) {
 		case 'a':
 			ctx.max_errors = cvt_u64(optarg, 10);
@@ -496,6 +528,19 @@ main(
 		case 'b':
 			nr_threads = 1;
 			bg_mode++;
+			break;
+		case 'C':
+			errno = 0;
+			fd = cvt_u32(optarg, 10);
+			if (errno) {
+				perror(optarg);
+				usage();
+			}
+			progress_fp = fdopen(fd, "w");
+			if (!progress_fp) {
+				perror(optarg);
+				usage();
+			}
 			break;
 		case 'd':
 			debug++;
@@ -572,6 +617,13 @@ _("Only one of the options -n or -y may be specified.\n"));
 
 	ctx.mntpoint = strdup(argv[optind]);
 
+	stdout_isatty = isatty(STDOUT_FILENO);
+	stderr_isatty = isatty(STDERR_FILENO);
+
+	/* If interactive, start the progress bar. */
+	if (stdout_isatty && !progress_fp)
+		progress_fp = fdopen(1, "w+");
+
 	/* Find the mount record for the passed-in argument. */
 	if (stat(argv[optind], &ctx.mnt_sb) < 0) {
 		fprintf(stderr,
@@ -625,7 +677,7 @@ _("%s: Not a XFS mount point or block device.\n"),
 		ctx.mode = SCRUB_MODE_REPAIR;
 
 	/* Scrub a filesystem. */
-	moveon = run_scrub_phases(&ctx);
+	moveon = run_scrub_phases(&ctx, progress_fp);
 	if (!moveon && ctx.runtime_errors == 0)
 		ctx.runtime_errors++;
 
@@ -672,6 +724,8 @@ _("%s: %llu warnings found.\n"),
 	if (ctx.runtime_errors)
 		ret |= SCRUB_RET_OPERROR;
 	phase_end(&all_pi, 0);
+	if (progress_fp)
+		fclose(progress_fp);
 	free(ctx.blkdev);
 	free(ctx.mntpoint);
 

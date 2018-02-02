@@ -23,6 +23,7 @@ disk.h \
 filemap.h \
 fscounters.h \
 inodes.h \
+progress.h \
 read_verify.h \
 scrub.h \
 spacemap.h \
@@ -45,14 +46,15 @@ phase4.c \
 phase5.c \
 phase6.c \
 phase7.c \
+progress.c \
 read_verify.c \
 scrub.c \
 spacemap.c \
 vfs.c \
 xfs_scrub.c
 
-LLDLIBS += $(LIBHANDLE) $(LIBFROG) $(LIBPTHREAD) $(LIBUNISTRING)
-LTDEPENDENCIES += $(LIBHANDLE) $(LIBFROG) $(LIBUNISTRING)
+LLDLIBS += $(LIBHANDLE) $(LIBFROG) $(LIBPTHREAD) $(LIBUNISTRING) $(LIBRT)
+LTDEPENDENCIES += $(LIBHANDLE) $(LIBFROG) $(LIBUNISTRING) $(LIBRT)
 LLDFLAGS = -static
 
 ifeq ($(HAVE_MALLINFO),yes)

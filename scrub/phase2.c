@@ -131,3 +131,17 @@ out:
 	workqueue_destroy(&wq);
 	return moveon;
 }
+
+/* Estimate how much work we're going to do. */
+bool
+xfs_estimate_metadata_work(
+	struct scrub_ctx	*ctx,
+	uint64_t		*items,
+	unsigned int		*nr_threads,
+	int			*rshift)
+{
+	*items = xfs_scrub_estimate_ag_work(ctx);
+	*nr_threads = scrub_nproc(ctx);
+	*rshift = 0;
+	return true;
+}

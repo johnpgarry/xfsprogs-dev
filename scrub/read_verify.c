@@ -31,6 +31,7 @@
 #include "counter.h"
 #include "disk.h"
 #include "read_verify.h"
+#include "progress.h"
 
 /*
  * Read Verify Pool
@@ -154,6 +155,7 @@ read_verify(
 					errno, rv->io_end_arg);
 		}
 
+		progress_add(len);
 		verified += len;
 		rv->io_start += len;
 		rv->io_length -= len;
