@@ -1,0 +1,135 @@
+.TH xfs_scrub 8
+.SH NAME
+xfs_scrub \- scrub the contents of an XFS filesystem
+.SH SYNOPSIS
+.B xfs_scrub
+[
+.B \-abemnTvxy
+]
+.RI "[" mount-point " | " block-device "]"
+.br
+.B xfs_scrub \-V
+.SH DESCRIPTION
+.B xfs_scrub
+attempts to check and repair all metadata in a mounted XFS filesystem.
+.PP
+.B xfs_scrub
+asks the kernel to scrub all metadata objects in the filesystem.
+Metadata records are scanned for obviously bad values and then
+cross-referenced against other metadata.
+The goal is to establish a reasonable confidence about the consistency
+of the overall filesystem by examining the consistency of individual
+metadata records against the other metadata in the filesystem.
+Damaged metadata can be rebuilt from other metadata if there exists
+redundant data structures which are intact.
+.PP
+Filesystem corruption and optimization opportunities will be logged to
+the standard error stream.
+Enabling verbose mode will increase the amount of status information
+sent to the output.
+.PP
+This utility does not know how to correct all errors.
+If the tool cannot fix the detected errors, you must unmount the
+filesystem and run
+.BR xfs_repair (8)
+to fix the problems.
+If this tool is not run with either of the
+.B \-n
+or
+.B \-y
+options, then it will optimize the filesystem when possible,
+but it will not try to fix errors.
+See the optimizations section below for a list of optimizations
+supported by this program.
+.SH OPTIONS
+.TP
+.BI \-a " errors"
+Abort if more than this many errors are found on the filesystem.
+.TP
+.B \-b
+Run in background mode.
+If the option is specified once, only run a single scrubbing thread at a
+time.
+If given more than once, an artificial delay of 100us is added to each
+scrub call to reduce CPU overhead even further.
+.TP
+.B \-e
+Specifies what happens when errors are detected.
+If
+.IR shutdown
+is given, the filesystem will be taken offline if errors are found.
+If
+.IR continue
+is given, no action is taken if errors are found; this is the default
+behavior.
+.TP
+.BI \-m " file"
+Search this file for mounted filesystems instead of /etc/mtab.
+.TP
+.B \-n
+Dry run, do not modify anything in the filesystem.
+This disables all optimization and repair behaviors.
+.TP
+.BI \-T
+Print timing and memory usage information for each phase.
+.TP
+.B \-v
+Enable verbose mode, which prints periodic status updates.
+.TP
+.B \-V
+Prints the version number and exits.
+.TP
+.B \-x
+Read all file data extents to look for disk errors.
+.B xfs_scrub
+will issue O_DIRECT reads to the block device directly.
+If the block device is a SCSI disk, it will instead issue READ VERIFY commands
+directly to the disk.
+These actions will confirm that all file data blocks can be read from storage.
+.TP
+.B \-y
+Try to repair all filesystem errors.
+If the errors cannot be fixed online, then the filesystem must be taken
+offline for repair.
+.SH OPTIMIZATIONS
+Optimizations supported by this program include:
+.IP \[bu] 2
+Updating secondary superblocks to match the primary superblock.
+.IP \[bu]
+Turning off shared block write checks for files that no longer share blocks.
+.IP \[bu]
+Instructing the underlying storage to discard unused extents via the
+.B FITRIM
+ioctl.
+.SH REPAIRS
+This program currently does not support making any repairs.
+Corruptions can only be fixed by unmounting the filesystem and running
+.BR xfs_repair (8).
+.SH EXIT CODE
+The exit code returned by
+.B xfs_scrub
+is the sum of the following conditions:
+.br
+\	0\	\-\ No errors
+.br
+\	1\	\-\ File system errors left uncorrected
+.br
+\	2\	\-\ File system optimizations possible
+.br
+\	4\	\-\ Operational error
+.br
+\	8\	\-\ Usage or syntax error
+.br
+.SH CAVEATS
+.B xfs_scrub
+is an immature utility!
+Do not run this program unless you have backups of your data!
+This program takes advantage of in-kernel scrubbing to verify a given
+data structure with locks held and can keep the filesystem busy for a
+long time.
+The kernel must be new enough to support the SCRUB_METADATA ioctl.
+.PP
+If errors are found and cannot be repaired, the filesystem must be
+unmounted and repaired.
+.SH SEE ALSO
+.BR xfs_repair (8).

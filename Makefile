@@ -48,7 +48,7 @@ LIBFROG_SUBDIR = libfrog
 DLIB_SUBDIRS = libxlog libxcmd libhandle
 LIB_SUBDIRS = libxfs $(DLIB_SUBDIRS)
 TOOL_SUBDIRS = copy db estimate fsck growfs io logprint mkfs quota \
-		mdrestore repair rtcp m4 man doc debian spaceman
+		mdrestore repair rtcp m4 man doc debian spaceman scrub
 
 ifneq ("$(PKG_PLATFORM)","darwin")
 TOOL_SUBDIRS += fsr
@@ -91,6 +91,7 @@ repair: libxlog libxcmd
 copy: libxlog
 mkfs: libxcmd
 spaceman: libxcmd
+scrub: libhandle libxcmd
 
 ifeq ($(HAVE_BUILDDEFS), yes)
 include $(BUILDRULES)
