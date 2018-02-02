@@ -2233,7 +2233,7 @@ calc_stripe_factors(
 		dsw = cli->dsw;
 
 	/* data sunit/swidth options */
-	if ((dsunit && !dswidth) || (!dsunit && dswidth)) {
+	if (cli_opt_set(&dopts, D_SUNIT) != cli_opt_set(&dopts, D_SWIDTH)) {
 		fprintf(stderr,
 _("both data sunit and data swidth options must be specified\n"));
 		usage();
@@ -2241,7 +2241,7 @@ _("both data sunit and data swidth options must be specified\n"));
 
 	/* convert dsu/dsw to dsunit/dswidth and use them from now on */
 	if (dsu || dsw) {
-		if ((dsu && !dsw) || (!dsu && dsw)) {
+		if (cli_opt_set(&dopts, D_SU) != cli_opt_set(&dopts, D_SW)) {
 			fprintf(stderr,
 _("both data su and data sw options must be specified\n"));
 			usage();
@@ -2264,7 +2264,7 @@ _("data stripe width (%lld) is too large of a multiple of the data stripe unit (
 		dswidth = big_dswidth;
 	}
 
-	if (dsunit && (dswidth % dsunit != 0)) {
+	if (dsunit && (!dswidth || (dswidth % dsunit != 0))) {
 		fprintf(stderr,
 _("data stripe width (%d) must be a multiple of the data stripe unit (%d)\n"),
 			dswidth, dsunit);
