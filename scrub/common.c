@@ -168,3 +168,29 @@ no_prefix:
 	*units = "";
 	return number;
 }
+
+/* How many threads to kick off? */
+unsigned int
+scrub_nproc(
+	struct scrub_ctx	*ctx)
+{
+	if (nr_threads)
+		return nr_threads;
+	return ctx->nr_io_threads;
+}
+
+/*
+ * How many threads to kick off for a workqueue?  If we only want one
+ * thread, save ourselves the overhead and just run it in the main thread.
+ */
+unsigned int
+scrub_nproc_workqueue(
+	struct scrub_ctx	*ctx)
+{
+	unsigned int		x;
+
+	x = scrub_nproc(ctx);
+	if (x == 1)
+		x = 0;
+	return x;
+}
