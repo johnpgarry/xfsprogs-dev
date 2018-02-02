@@ -20,6 +20,7 @@
 #ifndef XFS_SCRUB_DISK_H_
 #define XFS_SCRUB_DISK_H_
 
+#define DISK_FLAG_SCSI_VERIFY	0x1
 struct disk {
 	struct stat	d_sb;
 	int		d_fd;

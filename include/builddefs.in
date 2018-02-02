@@ -125,6 +125,8 @@ HAVE_LIBATTR = @have_libattr@
 HAVE_U8NORMALIZE = @have_u8normalize@
 HAVE_OPENAT = @have_openat@
 HAVE_FSTATAT = @have_fstatat@
+HAVE_SG_IO = @have_sg_io@
+HAVE_HDIO_GETGEO = @have_hdio_getgeo@
 
 GCCFLAGS = -funsigned-char -fno-strict-aliasing -Wall
 #	   -Wbitwise -Wno-transparent-union -Wno-old-initializer -Wno-decl

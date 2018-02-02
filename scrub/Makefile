@@ -70,6 +70,14 @@ CFILES += unicrash.c
 LCFLAGS += -DHAVE_U8NORMALIZE
 endif
 
+ifeq ($(HAVE_SG_IO),yes)
+LCFLAGS += -DHAVE_SG_IO
+endif
+
+ifeq ($(HAVE_HDIO_GETGEO),yes)
+LCFLAGS += -DHAVE_HDIO_GETGEO
+endif
+
 default: depend $(LTCOMMAND)
 
 phase5.o unicrash.o xfs.o: $(TOPDIR)/include/builddefs
