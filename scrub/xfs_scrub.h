@@ -80,6 +80,9 @@ struct scrub_ctx {
 	void			*fshandle;
 	size_t			fshandle_len;
 
+	/* Data block read verification buffer */
+	void			*readbuf;
+
 	/* Mutable scrub state; use lock. */
 	pthread_mutex_t		lock;
 	unsigned long long	max_errors;
