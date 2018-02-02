@@ -53,7 +53,13 @@ ifeq ($(HAVE_SYNCFS),yes)
 LCFLAGS += -DHAVE_SYNCFS
 endif
 
+ifeq ($(HAVE_LIBATTR),yes)
+LCFLAGS += -DHAVE_LIBATTR
+endif
+
 default: depend $(LTCOMMAND)
+
+phase5.o: $(TOPDIR)/include/builddefs
 
 include $(BUILDRULES)
 

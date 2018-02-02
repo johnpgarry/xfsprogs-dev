@@ -285,3 +285,57 @@ background_sleep(void)
 	tv.tv_nsec = time % 1000000;
 	nanosleep(&tv, NULL);
 }
+
+/*
+ * Return the input string with non-printing bytes escaped.
+ * Caller must free the buffer.
+ */
+char *
+string_escape(
+	const char		*in)
+{
+	char			*str;
+	const char		*p;
+	char			*q;
+	int			x;
+
+	str = malloc(strlen(in) * 4);
+	if (!str)
+		return NULL;
+	for (p = in, q = str; *p != '\0'; p++) {
+		if (isprint(*p)) {
+			*q = *p;
+			q++;
+		} else {
+			x = sprintf(q, "\\x%02x", *p);
+			q += x;
+		}
+	}
+	*q = '\0';
+	return str;
+}
+
+/*
+ * Record another naming warning, and decide if it's worth
+ * complaining about.
+ */
+bool
+should_warn_about_name(
+	struct scrub_ctx	*ctx)
+{
+	bool			whine;
+	bool			res;
+
+	pthread_mutex_lock(&ctx->lock);
+	ctx->naming_warnings++;
+	whine = ctx->naming_warnings == TOO_MANY_NAME_WARNINGS;
+	res = ctx->naming_warnings < TOO_MANY_NAME_WARNINGS;
+	pthread_mutex_unlock(&ctx->lock);
+
+	if (whine && !(debug || verbose))
+		str_info(ctx, ctx->mntpoint,
+_("More than %u naming warnings, shutting up."),
+				TOO_MANY_NAME_WARNINGS);
+
+	return debug || verbose || res;
+}

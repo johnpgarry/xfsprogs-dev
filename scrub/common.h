@@ -74,5 +74,9 @@ static inline int syncfs(int fd)
 
 bool find_mountpoint(char *mtab, struct scrub_ctx *ctx);
 void background_sleep(void);
+char *string_escape(const char *in);
+
+#define TOO_MANY_NAME_WARNINGS	10000
+bool should_warn_about_name(struct scrub_ctx *ctx);
 
 #endif /* XFS_SCRUB_COMMON_H_ */
