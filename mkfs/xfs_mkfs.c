@@ -911,7 +911,7 @@ illegal(
 	const char	*value,
 	const char	*opt)
 {
-	fprintf(stderr, _("Illegal value %s for -%s option\n"), value, opt);
+	fprintf(stderr, _("Invalid value %s for -%s option\n"), value, opt);
 	usage();
 }
 
@@ -1267,7 +1267,7 @@ illegal_option(
 	const char		*reason)
 {
 	fprintf(stderr,
-		_("Illegal value %s for -%c %s option. %s\n"),
+		_("Invalid value %s for -%c %s option. %s\n"),
 		value, opts->name, opts->subopts[index],
 		reason ? reason : "");
 	usage();
