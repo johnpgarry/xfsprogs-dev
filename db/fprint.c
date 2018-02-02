@@ -147,7 +147,8 @@ fp_time(
 	     i++, bitpos += size) {
 		if (array)
 			dbprintf("%d:", i + base);
-		t=(time_t)getbitval((char *)obj + byteize(bitpos), 0, sizeof(int32_t)*8, 0);
+		t = (time_t)getbitval((char *)obj + byteize(bitpos), 0,
+				sizeof(int32_t) * 8, BVSIGNED);
 		c = ctime(&t);
 		dbprintf("%24.24s", c);
 		if (i < count - 1)
