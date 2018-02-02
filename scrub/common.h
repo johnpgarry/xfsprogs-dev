@@ -64,4 +64,14 @@ double auto_units(unsigned long long number, char **units);
 unsigned int scrub_nproc(struct scrub_ctx *ctx);
 unsigned int scrub_nproc_workqueue(struct scrub_ctx *ctx);
 
+#ifndef HAVE_SYNCFS
+static inline int syncfs(int fd)
+{
+	sync();
+	return 0;
+}
+#endif
+
+bool find_mountpoint(char *mtab, struct scrub_ctx *ctx);
+
 #endif /* XFS_SCRUB_COMMON_H_ */

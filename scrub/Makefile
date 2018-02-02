@@ -23,6 +23,7 @@ xfs_scrub.h
 CFILES = \
 common.c \
 disk.c \
+phase1.c \
 xfs_scrub.c
 
 LLDLIBS += $(LIBHANDLE) $(LIBFROG) $(LIBPTHREAD)
@@ -31,6 +32,10 @@ LLDFLAGS = -static
 
 ifeq ($(HAVE_MALLINFO),yes)
 LCFLAGS += -DHAVE_MALLINFO
+endif
+
+ifeq ($(HAVE_SYNCFS),yes)
+LCFLAGS += -DHAVE_SYNCFS
 endif
 
 default: depend $(LTCOMMAND)

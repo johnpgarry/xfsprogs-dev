@@ -31,6 +31,9 @@
 #include <linux/fs.h>
 #include "platform_defs.h"
 #include "libfrog.h"
+#include "xfs.h"
+#include "path.h"
+#include "xfs_fs.h"
 #include "xfs_scrub.h"
 #include "disk.h"
 

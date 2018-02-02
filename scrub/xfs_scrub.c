@@ -23,9 +23,12 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/statvfs.h>
 #include "platform_defs.h"
 #include "xfs.h"
+#include "xfs_fs.h"
 #include "input.h"
+#include "path.h"
 #include "xfs_scrub.h"
 #include "common.h"
 
@@ -360,6 +363,8 @@ run_scrub_phases(
 	{
 		{
 			.descr = _("Find filesystem geometry."),
+			.fn = xfs_setup_fs,
+			.must_run = true,
 		},
 		{
 			.descr = _("Check internal metadata."),
@@ -440,6 +445,7 @@ main(
 	char			*repairstr = "";
 	unsigned long long	total_errors;
 	bool			moveon = true;
+	bool			ismnt;
 	int			c;
 	int			ret = SCRUB_RET_SUCCESS;
 
@@ -539,6 +545,15 @@ _("Only one of the options -n or -y may be specified.\n"));
 
 	ctx.mntpoint = strdup(argv[optind]);
 
+	/* Find the mount record for the passed-in argument. */
+	if (stat(argv[optind], &ctx.mnt_sb) < 0) {
+		fprintf(stderr,
+			_("%s: could not stat: %s: %s\n"),
+			progname, argv[optind], strerror(errno));
+		ctx.runtime_errors++;
+		goto out;
+	}
+
 	/*
 	 * If the user did not specify an explicit mount table, try to use
 	 * /proc/mounts if it is available, else /etc/mtab.  We prefer
@@ -557,6 +572,15 @@ _("Only one of the options -n or -y may be specified.\n"));
 	moveon = phase_start(&all_pi, 0, NULL);
 	if (!moveon)
 		goto out;
+
+	ismnt = find_mountpoint(mtab, &ctx);
+	if (!ismnt) {
+		fprintf(stderr,
+_("%s: Not a XFS mount point or block device.\n"),
+			ctx.mntpoint);
+		ret |= SCRUB_RET_SYNTAX;
+		goto out;
+	}
 
 	/* How many CPUs? */
 	nproc = sysconf(_SC_NPROCESSORS_ONLN);
@@ -589,6 +613,11 @@ _("Only one of the options -n or -y may be specified.\n"));
 	if (debug_tweak_on("XFS_SCRUB_FORCE_ERROR"))
 		str_error(&ctx, ctx.mntpoint, _("Injecting error."));
 
+	/* Clean up scan data. */
+	moveon = xfs_cleanup_fs(&ctx);
+	if (!moveon && ctx.runtime_errors == 0)
+		ctx.runtime_errors++;
+
 out:
 	total_errors = ctx.errors_found + ctx.runtime_errors;
 	if (ctx.need_repair)
@@ -606,13 +635,17 @@ _("%s: %llu errors found.%s\n"),
 		fprintf(stderr,
 _("%s: %llu warnings found.\n"),
 			ctx.mntpoint, ctx.warnings_found);
-	if (ctx.errors_found)
+	if (ctx.errors_found) {
+		if (ctx.error_action == ERRORS_SHUTDOWN)
+			xfs_shutdown_fs(&ctx);
 		ret |= SCRUB_RET_CORRUPT;
+	}
 	if (ctx.warnings_found)
 		ret |= SCRUB_RET_UNOPTIMIZED;
 	if (ctx.runtime_errors)
 		ret |= SCRUB_RET_OPERROR;
 	phase_end(&all_pi, 0);
+	free(ctx.blkdev);
 	free(ctx.mntpoint);
 
 	return ret;

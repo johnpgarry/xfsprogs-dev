@@ -48,14 +48,37 @@ struct scrub_ctx {
 	char			*mntpoint;
 	char			*blkdev;
 
+	/* Mountpoint info */
+	struct stat		mnt_sb;
+	struct statvfs		mnt_sv;
+	struct statfs		mnt_sf;
+
+	/* Open block devices */
+	struct disk		*datadev;
+	struct disk		*logdev;
+	struct disk		*rtdev;
+
 	/* What does the user want us to do? */
 	enum scrub_mode		mode;
 
 	/* How does the user want us to react to errors? */
 	enum error_action	error_action;
 
+	/* fd to filesystem mount point */
+	int			mnt_fd;
+
 	/* Number of threads for metadata scrubbing */
 	unsigned int		nr_io_threads;
+
+	/* XFS specific geometry */
+	struct xfs_fsop_geom	geo;
+	struct fs_path		fsinfo;
+	unsigned int		agblklog;
+	unsigned int		blocklog;
+	unsigned int		inodelog;
+	unsigned int		inopblog;
+	void			*fshandle;
+	size_t			fshandle_len;
 
 	/* Mutable scrub state; use lock. */
 	pthread_mutex_t		lock;
@@ -64,6 +87,12 @@ struct scrub_ctx {
 	unsigned long long	errors_found;
 	unsigned long long	warnings_found;
 	bool			need_repair;
+	bool			preen_triggers[XFS_SCRUB_TYPE_NR];
 };
+
+/* Phase helper functions */
+void xfs_shutdown_fs(struct scrub_ctx *ctx);
+bool xfs_cleanup_fs(struct scrub_ctx *ctx);
+bool xfs_setup_fs(struct scrub_ctx *ctx);
 
 #endif /* XFS_SCRUB_XFS_SCRUB_H_ */
