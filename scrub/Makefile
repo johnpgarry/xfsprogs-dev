@@ -19,6 +19,7 @@ HFILES = \
 common.h \
 disk.h \
 filemap.h \
+fscounters.h \
 inodes.h \
 spacemap.h \
 xfs_scrub.h
@@ -27,6 +28,7 @@ CFILES = \
 common.c \
 disk.c \
 filemap.c \
+fscounters.c \
 inodes.c \
 phase1.c \
 spacemap.c \
