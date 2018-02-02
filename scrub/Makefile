@@ -17,6 +17,7 @@ endif	# scrub_prereqs
 
 HFILES = \
 common.h \
+counter.h \
 disk.h \
 filemap.h \
 fscounters.h \
@@ -27,6 +28,7 @@ xfs_scrub.h
 
 CFILES = \
 common.c \
+counter.c \
 disk.c \
 filemap.c \
 fscounters.c \
