@@ -112,11 +112,11 @@ getbitval(
 #if __BYTE_ORDER == LITTLE_ENDIAN
 			if (i == 0 && signext && nbits < 64)
 				rval = -1LL << nbits;
-			rval |= 1LL << (nbits - i - 1);
+			rval |= 1ULL << (nbits - i - 1);
 #else
 			if ((i == (nbits - 1)) && signext && nbits < 64)
 				rval |= (-1LL << nbits);
-			rval |= 1LL << (nbits - i - 1);
+			rval |= 1ULL << (nbits - i - 1);
 #endif
 		}
 	}

@@ -89,10 +89,10 @@ verify_sb_blocksize(xfs_sb_t *sb)
 	/* check to make sure blocksize is legal 2^N, 9 <= N <= 16 */
 	if (sb->sb_blocksize == 0)
 		return XR_BAD_BLOCKSIZE;
-	if (sb->sb_blocksize != (1 << sb->sb_blocklog))
-		return XR_BAD_BLOCKLOG;
 	if (sb->sb_blocklog < XFS_MIN_BLOCKSIZE_LOG ||
 	    sb->sb_blocklog > XFS_MAX_BLOCKSIZE_LOG)
+		return XR_BAD_BLOCKLOG;
+	if (sb->sb_blocksize != (1 << sb->sb_blocklog))
 		return XR_BAD_BLOCKLOG;
 
 	return 0;
