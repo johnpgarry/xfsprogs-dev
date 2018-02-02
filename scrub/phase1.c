@@ -175,7 +175,7 @@ _("Does not appear to be an XFS filesystem!"));
 	    !xfs_can_scrub_attr(ctx) || !xfs_can_scrub_symlink(ctx) ||
 	    !xfs_can_scrub_parent(ctx)) {
 		str_error(ctx, ctx->mntpoint,
-_("Kernel metadata scrubbing facility is required."));
+_("Kernel metadata scrubbing facility is not available."));
 		return false;
 	}
 
@@ -183,10 +183,10 @@ _("Kernel metadata scrubbing facility is required."));
 	if (ctx->mode != SCRUB_MODE_DRY_RUN && !xfs_can_repair(ctx)) {
 		if (ctx->mode == SCRUB_MODE_PREEN)
 			str_error(ctx, ctx->mntpoint,
-_("Kernel metadata optimization facility is required."));
+_("Kernel metadata optimization facility is not available.  Use -n to scrub."));
 		else
 			str_error(ctx, ctx->mntpoint,
-_("Kernel metadata repair facility is required."));
+_("Kernel metadata repair facility is not available.  Use -n to scrub."));
 		return false;
 	}
 
