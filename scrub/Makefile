@@ -18,6 +18,7 @@ endif	# scrub_prereqs
 HFILES = \
 common.h \
 disk.h \
+filemap.h \
 inodes.h \
 spacemap.h \
 xfs_scrub.h
@@ -25,6 +26,7 @@ xfs_scrub.h
 CFILES = \
 common.c \
 disk.c \
+filemap.c \
 inodes.c \
 phase1.c \
 spacemap.c \
