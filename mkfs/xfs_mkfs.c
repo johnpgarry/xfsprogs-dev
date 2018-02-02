@@ -2211,6 +2211,7 @@ calc_stripe_factors(
 	struct cli_params	*cli,
 	struct fs_topology	*ft)
 {
+	long long int	big_dswidth;
 	int		dsunit = 0;
 	int		dswidth = 0;
 	int		lsunit = 0;
@@ -2251,7 +2252,14 @@ _("data su must be a multiple of the sector size (%d)\n"), cfg->sectorsize);
 		}
 
 		dsunit  = (int)BTOBBT(dsu);
-		dswidth = dsunit * dsw;
+		big_dswidth = (long long int)dsunit * dsw;
+		if (big_dswidth > INT_MAX) {
+			fprintf(stderr,
+_("data stripe width (%lld) is too large of a multiple of the data stripe unit (%d)\n"),
+				big_dswidth, dsunit);
+			usage();
+		}
+		dswidth = big_dswidth;
 	}
 
 	if (dsunit && (dswidth % dsunit != 0)) {
