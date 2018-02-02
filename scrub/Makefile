@@ -24,6 +24,7 @@ fscounters.h \
 inodes.h \
 scrub.h \
 spacemap.h \
+unicrash.h \
 xfs_scrub.h
 
 CFILES = \
@@ -41,8 +42,8 @@ scrub.c \
 spacemap.c \
 xfs_scrub.c
 
-LLDLIBS += $(LIBHANDLE) $(LIBFROG) $(LIBPTHREAD)
-LTDEPENDENCIES += $(LIBHANDLE) $(LIBFROG)
+LLDLIBS += $(LIBHANDLE) $(LIBFROG) $(LIBPTHREAD) $(LIBUNISTRING)
+LTDEPENDENCIES += $(LIBHANDLE) $(LIBFROG) $(LIBUNISTRING)
 LLDFLAGS = -static
 
 ifeq ($(HAVE_MALLINFO),yes)
@@ -57,9 +58,14 @@ ifeq ($(HAVE_LIBATTR),yes)
 LCFLAGS += -DHAVE_LIBATTR
 endif
 
+ifeq ($(HAVE_U8NORMALIZE),yes)
+CFILES += unicrash.c
+LCFLAGS += -DHAVE_U8NORMALIZE
+endif
+
 default: depend $(LTCOMMAND)
 
-phase5.o: $(TOPDIR)/include/builddefs
+phase5.o unicrash.o xfs.o: $(TOPDIR)/include/builddefs
 
 include $(BUILDRULES)
 

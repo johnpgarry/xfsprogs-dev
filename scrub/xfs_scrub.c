@@ -31,6 +31,7 @@
 #include "path.h"
 #include "xfs_scrub.h"
 #include "common.h"
+#include "unicrash.h"
 
 /*
  * XFS Online Metadata Scrub (and Repair)

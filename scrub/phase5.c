@@ -35,6 +35,7 @@
 #include "common.h"
 #include "inodes.h"
 #include "scrub.h"
+#include "unicrash.h"
 
 /* Phase 5: Check directory connectivity. */
 
@@ -92,8 +93,10 @@ static bool
 xfs_scrub_scan_dirents(
 	struct scrub_ctx	*ctx,
 	const char		*descr,
-	int			*fd)
+	int			*fd,
+	struct xfs_bstat	*bstat)
 {
+	struct unicrash		*uc = NULL;
 	DIR			*dir;
 	struct dirent		*dentry;
 	bool			moveon = true;
@@ -105,15 +108,24 @@ xfs_scrub_scan_dirents(
 	}
 	*fd = -1; /* closedir will close *fd for us */
 
+	moveon = unicrash_dir_init(&uc, ctx, bstat);
+	if (!moveon)
+		goto out_unicrash;
+
 	dentry = readdir(dir);
 	while (dentry) {
 		moveon = xfs_scrub_check_name(ctx, descr, _("directory"),
 				dentry->d_name);
 		if (!moveon)
 			break;
+		moveon = unicrash_check_dir_name(uc, descr, dentry);
+		if (!moveon)
+			break;
 		dentry = readdir(dir);
 	}
+	unicrash_free(uc);
 
+out_unicrash:
 	closedir(dir);
 out:
 	return moveon;
@@ -142,6 +154,7 @@ xfs_scrub_scan_fhandle_namespace_xattrs(
 	struct scrub_ctx		*ctx,
 	const char			*descr,
 	struct xfs_handle		*handle,
+	struct xfs_bstat		*bstat,
 	const struct xfs_attr_ns	*attr_ns)
 {
 	struct attrlist_cursor		cur;
@@ -149,9 +162,14 @@ xfs_scrub_scan_fhandle_namespace_xattrs(
 	char				keybuf[NAME_MAX + 1];
 	struct attrlist			*attrlist = (struct attrlist *)attrbuf;
 	struct attrlist_ent		*ent;
+	struct unicrash			*uc;
 	bool				moveon = true;
 	int				i;
 	int				error;
+
+	moveon = unicrash_xattr_init(&uc, ctx, bstat);
+	if (!moveon)
+		return false;
 
 	memset(attrbuf, 0, XFS_XATTR_LIST_MAX);
 	memset(&cur, 0, sizeof(cur));
@@ -168,6 +186,9 @@ xfs_scrub_scan_fhandle_namespace_xattrs(
 					_("extended attribute"), keybuf);
 			if (!moveon)
 				goto out;
+			moveon = unicrash_check_xattr_name(uc, descr, keybuf);
+			if (!moveon)
+				goto out;
 		}
 
 		if (!attrlist->al_more)
@@ -178,6 +199,7 @@ xfs_scrub_scan_fhandle_namespace_xattrs(
 	if (error && errno != ESTALE)
 		str_errno(ctx, descr);
 out:
+	unicrash_free(uc);
 	return moveon;
 }
 
@@ -189,34 +211,30 @@ static bool
 xfs_scrub_scan_fhandle_xattrs(
 	struct scrub_ctx		*ctx,
 	const char			*descr,
-	struct xfs_handle		*handle)
+	struct xfs_handle		*handle,
+	struct xfs_bstat		*bstat)
 {
 	const struct xfs_attr_ns	*ns;
 	bool				moveon = true;
 
 	for (ns = attr_ns; ns->name; ns++) {
 		moveon = xfs_scrub_scan_fhandle_namespace_xattrs(ctx, descr,
-				handle, ns);
+				handle, bstat, ns);
 		if (!moveon)
 			break;
 	}
 	return moveon;
 }
 #else
-static inline bool
-xfs_scrub_scan_fhandle_xattrs(
-	struct scrub_ctx	*ctx,
-	const char		*descr,
-	struct xfs_handle	*handle)
-{
-	return true;
-}
+# define xfs_scrub_scan_fhandle_xattrs(c, d, h, b)	(true)
 #endif /* HAVE_LIBATTR */
 
 /*
  * Verify the connectivity of the directory tree.
  * We know that the kernel's open-by-handle function will try to reconnect
  * parents of an opened directory, so we'll accept that as sufficient.
+ *
+ * Check for potential Unicode collisions in names.
  */
 static int
 xfs_scrub_connections(
@@ -227,7 +245,7 @@ xfs_scrub_connections(
 {
 	bool			*pmoveon = arg;
 	char			descr[DESCR_BUFSZ];
-	bool			moveon = true;
+	bool			moveon;
 	xfs_agnumber_t		agno;
 	xfs_agino_t		agino;
 	int			fd = -1;
@@ -238,10 +256,10 @@ xfs_scrub_connections(
 			(uint64_t)bstat->bs_ino, agno, agino);
 	background_sleep();
 
-        /* Warn about naming problems in xattrs. */
-        moveon = xfs_scrub_scan_fhandle_xattrs(ctx, descr, handle);
-        if (!moveon)
-                goto out;
+	/* Warn about naming problems in xattrs. */
+	moveon = xfs_scrub_scan_fhandle_xattrs(ctx, descr, handle, bstat);
+	if (!moveon)
+		goto out;
 
 	/* Open the dir, let the kernel try to reconnect it to the root. */
 	if (S_ISDIR(bstat->bs_mode)) {
@@ -254,12 +272,12 @@ xfs_scrub_connections(
 		}
 	}
 
-        /* Warn about naming problems in the directory entries. */
-        if (fd >= 0 && S_ISDIR(bstat->bs_mode)) {
-                moveon = xfs_scrub_scan_dirents(ctx, descr, &fd);
-                if (!moveon)
-                        goto out;
-        }
+	/* Warn about naming problems in the directory entries. */
+	if (fd >= 0 && S_ISDIR(bstat->bs_mode)) {
+		moveon = xfs_scrub_scan_dirents(ctx, descr, &fd, bstat);
+		if (!moveon)
+			goto out;
+	}
 
 out:
 	if (fd >= 0)

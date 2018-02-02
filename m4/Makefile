@@ -22,6 +22,7 @@ LSRCFILES = \
 	package_pthread.m4 \
 	package_sanitizer.m4 \
 	package_types.m4 \
+	package_unistring.m4 \
 	package_utilies.m4 \
 	package_uuiddev.m4 \
 	multilib.m4 \
