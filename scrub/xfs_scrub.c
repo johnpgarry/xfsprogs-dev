@@ -405,6 +405,10 @@ run_scrub_phases(
 
 	/* Run all phases of the scrub tool. */
 	for (phase = 1, sp = phases; sp->fn; sp++, phase++) {
+		/* Turn on certain phases if user said to. */
+		if (sp->fn == DATASCAN_DUMMY_FN && scrub_data)
+			sp->fn = xfs_scan_blocks;
+
 		/* Skip certain phases unless they're turned on. */
 		if (sp->fn == REPAIR_DUMMY_FN ||
 		    sp->fn == DATASCAN_DUMMY_FN)

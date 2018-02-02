@@ -8,9 +8,9 @@ include $(TOPDIR)/include/builddefs
 # On linux we get fsmap from the system or define it ourselves
 # so include this based on platform type.  If this reverts to only
 # the autoconf check w/o local definition, change to testing HAVE_GETFSMAP
-SCRUB_PREREQS=$(PKG_PLATFORM)
+SCRUB_PREREQS=$(PKG_PLATFORM)$(HAVE_OPENAT)$(HAVE_FSTATAT)
 
-ifeq ($(SCRUB_PREREQS),linux)
+ifeq ($(SCRUB_PREREQS),linuxyesyes)
 LTCOMMAND = xfs_scrub
 INSTALL_SCRUB = install-scrub
 endif	# scrub_prereqs
@@ -27,6 +27,7 @@ read_verify.h \
 scrub.h \
 spacemap.h \
 unicrash.h \
+vfs.h \
 xfs_scrub.h
 
 CFILES = \
@@ -41,9 +42,11 @@ phase1.c \
 phase2.c \
 phase3.c \
 phase5.c \
+phase6.c \
 read_verify.c \
 scrub.c \
 spacemap.c \
+vfs.c \
 xfs_scrub.c
 
 LLDLIBS += $(LIBHANDLE) $(LIBFROG) $(LIBPTHREAD) $(LIBUNISTRING)

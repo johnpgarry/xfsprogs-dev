@@ -123,6 +123,8 @@ HAVE_DEVMAPPER = @have_devmapper@
 HAVE_MALLINFO = @have_mallinfo@
 HAVE_LIBATTR = @have_libattr@
 HAVE_U8NORMALIZE = @have_u8normalize@
+HAVE_OPENAT = @have_openat@
+HAVE_FSTATAT = @have_fstatat@
 
 GCCFLAGS = -funsigned-char -fno-strict-aliasing -Wall
 #	   -Wbitwise -Wno-transparent-union -Wno-old-initializer -Wno-decl
