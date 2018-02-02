@@ -58,4 +58,8 @@ debug_tweak_on(
 	return debug && getenv(name) != NULL;
 }
 
+double timeval_subtract(struct timeval *tv1, struct timeval *tv2);
+double auto_space_units(unsigned long long kilobytes, char **units);
+double auto_units(unsigned long long number, char **units);
+
 #endif /* XFS_SCRUB_COMMON_H_ */
