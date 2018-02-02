@@ -32,6 +32,7 @@ filemap.c \
 fscounters.c \
 inodes.c \
 phase1.c \
+phase2.c \
 scrub.c \
 spacemap.c \
 xfs_scrub.c
