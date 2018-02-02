@@ -380,6 +380,7 @@ run_scrub_phases(
 		},
 		{
 			.descr = _("Check directory tree."),
+			.fn = xfs_scan_connections,
 		},
 		{
 			.descr = _("Verify data file integrity."),
