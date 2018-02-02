@@ -1269,7 +1269,7 @@ illegal_option(
 	fprintf(stderr,
 		_("Invalid value %s for -%c %s option. %s\n"),
 		value, opts->name, opts->subopts[index],
-		reason ? reason : "");
+		reason);
 	usage();
 }
 
@@ -1360,18 +1360,20 @@ getnum(
 
 		c = strtoll(str, &str_end, 0);
 		if (c == 0 && str_end == str)
-			illegal_option(str, opts, index, NULL);
+			illegal_option(str, opts, index,
+					_("Value not recognized as number."));
 		if (*str_end != '\0')
-			illegal_option(str, opts, index, NULL);
+			illegal_option(str, opts, index,
+					_("Unit suffixes are not allowed."));
 	}
 
 	/* Validity check the result. */
 	if (c < sp->minval)
-		illegal_option(str, opts, index, _("value is too small"));
+		illegal_option(str, opts, index, _("Value is too small."));
 	else if (c > sp->maxval)
-		illegal_option(str, opts, index, _("value is too large"));
+		illegal_option(str, opts, index, _("Value is too large."));
 	if (sp->is_power_2 && !ispow2(c))
-		illegal_option(str, opts, index, _("value must be a power of 2"));
+		illegal_option(str, opts, index, _("Value must be a power of 2."));
 	return c;
 }
 
