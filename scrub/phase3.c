@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include "xfs.h"
+#include "list.h"
 #include "path.h"
 #include "workqueue.h"
 #include "xfs_scrub.h"

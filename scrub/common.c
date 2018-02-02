@@ -59,7 +59,9 @@ xfs_scrub_excessive_errors(
 static const char *err_str[] = {
 	[S_ERROR]	= "Error",
 	[S_WARN]	= "Warning",
+	[S_REPAIR]	= "Repaired",
 	[S_INFO]	= "Info",
+	[S_PREEN]	= "Optimized",
 };
 
 /* If stream is a tty, clear to end of line to clean up progress bar. */
@@ -93,6 +95,11 @@ __str_out(
 		stream = stdout;
 
 	pthread_mutex_lock(&ctx->lock);
+
+	/* We only want to hear about optimizing when in debug/verbose mode. */
+	if (level == S_PREEN && !debug && !verbose)
+		goto out_record;
+
 	fprintf(stream, "%s%s: %s: ", stream_start(stream), _(err_str[level]),
 			descr);
 	if (error) {
@@ -109,12 +116,17 @@ __str_out(
 	if (stream == stdout)
 		fflush(stream);
 
+out_record:
 	if (error)      /* A syscall failed */
 		ctx->runtime_errors++;
 	else if (level == S_ERROR)
 		ctx->errors_found++;
 	else if (level == S_WARN)
 		ctx->warnings_found++;
+	else if (level == S_REPAIR)
+		ctx->repairs++;
+	else if (level == S_PREEN)
+		ctx->preens++;
 
 	pthread_mutex_unlock(&ctx->lock);
 }

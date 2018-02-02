@@ -179,6 +179,17 @@ _("Kernel metadata scrubbing facility is required."));
 		return false;
 	}
 
+	/* Do we need kernel-assisted metadata repair? */
+	if (ctx->mode != SCRUB_MODE_DRY_RUN && !xfs_can_repair(ctx)) {
+		if (ctx->mode == SCRUB_MODE_PREEN)
+			str_error(ctx, ctx->mntpoint,
+_("Kernel metadata optimization facility is required."));
+		else
+			str_error(ctx, ctx->mntpoint,
+_("Kernel metadata repair facility is required."));
+		return false;
+	}
+
 	/* Go find the XFS devices if we have a usable fsmap. */
 	fs_table_initialise(0, NULL, 0, NULL);
 	errno = 0;

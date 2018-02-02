@@ -32,7 +32,9 @@ bool xfs_scrub_excessive_errors(struct scrub_ctx *ctx);
 enum error_level {
 	S_ERROR	= 0,
 	S_WARN,
+	S_REPAIR,
 	S_INFO,
+	S_PREEN,
 };
 
 void __str_out(struct scrub_ctx *ctx, const char *descr, enum error_level level,
@@ -46,6 +48,10 @@ void __str_out(struct scrub_ctx *ctx, const char *descr, enum error_level level,
 	__str_out(ctx, str, S_WARN,	0,	__FILE__, __LINE__, __VA_ARGS__)
 #define str_info(ctx, str, ...) \
 	__str_out(ctx, str, S_INFO,	0,	__FILE__, __LINE__, __VA_ARGS__)
+#define record_repair(ctx, str, ...) \
+	__str_out(ctx, str, S_REPAIR,	0,	__FILE__, __LINE__, __VA_ARGS__)
+#define record_preen(ctx, str, ...) \
+	__str_out(ctx, str, S_PREEN,	0,	__FILE__, __LINE__, __VA_ARGS__)
 
 #define dbg_printf(fmt, ...) \
 	do {if (debug > 1) {printf(fmt, __VA_ARGS__);}} while (0)

@@ -95,6 +95,8 @@ struct scrub_ctx {
 	unsigned long long	inodes_checked;
 	unsigned long long	bytes_checked;
 	unsigned long long	naming_warnings;
+	unsigned long long	repairs;
+	unsigned long long	preens;
 	bool			need_repair;
 	bool			preen_triggers[XFS_SCRUB_TYPE_NR];
 };

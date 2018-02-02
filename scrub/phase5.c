@@ -29,6 +29,7 @@
 #endif
 #include "xfs.h"
 #include "handle.h"
+#include "list.h"
 #include "path.h"
 #include "workqueue.h"
 #include "xfs_scrub.h"

@@ -28,6 +28,7 @@
 #include <sys/statvfs.h>
 #include "xfs.h"
 #include "xfs_fs.h"
+#include "list.h"
 #include "path.h"
 #include "xfs_scrub.h"
 #include "common.h"
@@ -561,10 +562,15 @@ __xfs_scrub_test(
 	bool				repair)
 {
 	struct xfs_scrub_metadata	meta = {0};
+	static bool			injected;
 	int				error;
 
 	if (debug_tweak_on("XFS_SCRUB_NO_KERNEL"))
 		return false;
+	if (debug_tweak_on("XFS_SCRUB_FORCE_REPAIR") && !injected) {
+		str_error(ctx, "XFS_SCRUB_FORCE_REPAIR", "Not supported.");
+		return false;
+	}
 
 	meta.sm_type = type;
 	if (repair)
@@ -646,4 +652,132 @@ xfs_can_scrub_parent(
 	struct scrub_ctx	*ctx)
 {
 	return __xfs_scrub_test(ctx, XFS_SCRUB_TYPE_PARENT, false);
+}
+
+bool
+xfs_can_repair(
+	struct scrub_ctx	*ctx)
+{
+	return __xfs_scrub_test(ctx, XFS_SCRUB_TYPE_PROBE, true);
+}
+
+/* General repair routines. */
+
+/* Repair some metadata. */
+enum check_outcome
+xfs_repair_metadata(
+	struct scrub_ctx		*ctx,
+	int				fd,
+	struct repair_item		*ri,
+	unsigned int			repair_flags)
+{
+	char				buf[DESCR_BUFSZ];
+	struct xfs_scrub_metadata	meta = { 0 };
+	struct xfs_scrub_metadata	oldm;
+	int				error;
+
+	assert(ri->type < XFS_SCRUB_TYPE_NR);
+	assert(!debug_tweak_on("XFS_SCRUB_NO_KERNEL"));
+	meta.sm_type = ri->type;
+	meta.sm_flags = ri->flags | XFS_SCRUB_IFLAG_REPAIR;
+	switch (scrubbers[ri->type].type) {
+	case ST_AGHEADER:
+	case ST_PERAG:
+		meta.sm_agno = ri->agno;
+		break;
+	case ST_INODE:
+		meta.sm_ino = ri->ino;
+		meta.sm_gen = ri->gen;
+		break;
+	default:
+		break;
+	}
+
+	/*
+	 * If this is a preen operation but we're only repairing
+	 * critical items, defer the preening until later.
+	 */
+	if (!needs_repair(&meta) && (repair_flags & XRM_REPAIR_ONLY))
+		return CHECK_RETRY;
+
+	memcpy(&oldm, &meta, sizeof(oldm));
+	format_scrub_descr(buf, DESCR_BUFSZ, &meta, &scrubbers[meta.sm_type]);
+
+	if (needs_repair(&meta))
+		str_info(ctx, buf, _("Attempting repair."));
+	else if (debug || verbose)
+		str_info(ctx, buf, _("Attempting optimization."));
+
+	error = ioctl(fd, XFS_IOC_SCRUB_METADATA, &meta);
+	/*
+	 * If the caller doesn't want us to complain, tell the caller to
+	 * requeue the repair for later and don't say a thing.
+	 */
+	if (!(repair_flags & XRM_NOFIX_COMPLAIN) &&
+	    (error || needs_repair(&meta)))
+		return CHECK_RETRY;
+	if (error) {
+		switch (errno) {
+		case EDEADLOCK:
+		case EBUSY:
+			/* Filesystem is busy, try again later. */
+			if (debug || verbose)
+				str_info(ctx, buf,
+_("Filesystem is busy, deferring repair."));
+			return CHECK_RETRY;
+		case ESHUTDOWN:
+			/* Filesystem is already shut down, abort. */
+			str_error(ctx, buf,
+_("Filesystem is shut down, aborting."));
+			return CHECK_ABORT;
+		case ENOTTY:
+		case EOPNOTSUPP:
+			/*
+			 * If we forced repairs, don't complain if kernel
+			 * doesn't know how to fix.
+			 */
+			if (debug_tweak_on("XFS_SCRUB_FORCE_REPAIR"))
+				return CHECK_DONE;
+			/* fall through */
+		case EINVAL:
+			/* Kernel doesn't know how to repair this? */
+			str_error(ctx, buf,
+_("Don't know how to fix; offline repair required."));
+			return CHECK_DONE;
+		case EROFS:
+			/* Read-only filesystem, can't fix. */
+			if (verbose || debug || needs_repair(&oldm))
+				str_info(ctx, buf,
+_("Read-only filesystem; cannot make changes."));
+			return CHECK_DONE;
+		case ENOENT:
+			/* Metadata not present, just skip it. */
+			return CHECK_DONE;
+		case ENOMEM:
+		case ENOSPC:
+			/* Don't care if preen fails due to low resources. */
+			if (is_unoptimized(&oldm) && !needs_repair(&oldm))
+				return CHECK_DONE;
+			/* fall through */
+		default:
+			/* Operational error. */
+			str_errno(ctx, buf);
+			return CHECK_DONE;
+		}
+	}
+	if (repair_flags & XRM_NOFIX_COMPLAIN)
+		xfs_scrub_warn_incomplete_scrub(ctx, buf, &meta);
+	if (needs_repair(&meta)) {
+		/* Still broken, try again or fix offline. */
+		if (repair_flags & XRM_NOFIX_COMPLAIN)
+			str_error(ctx, buf,
+_("Repair unsuccessful; offline repair required."));
+	} else {
+		/* Clean operation, no corruption detected. */
+		if (needs_repair(&oldm))
+			record_repair(ctx, buf, _("Repairs successful."));
+		else
+			record_preen(ctx, buf, _("Optimization successful."));
+	}
+	return CHECK_DONE;
 }

@@ -41,6 +41,7 @@ bool xfs_can_scrub_dir(struct scrub_ctx *ctx);
 bool xfs_can_scrub_attr(struct scrub_ctx *ctx);
 bool xfs_can_scrub_symlink(struct scrub_ctx *ctx);
 bool xfs_can_scrub_parent(struct scrub_ctx *ctx);
+bool xfs_can_repair(struct scrub_ctx *ctx);
 
 bool xfs_scrub_inode_fields(struct scrub_ctx *ctx, uint64_t ino, uint32_t gen,
 		int fd);
@@ -58,5 +59,24 @@ bool xfs_scrub_symlink(struct scrub_ctx *ctx, uint64_t ino, uint32_t gen,
 		int fd);
 bool xfs_scrub_parent(struct scrub_ctx *ctx, uint64_t ino, uint32_t gen,
 		int fd);
+
+/* Repair parameters are the scrub inputs and retry count. */
+struct repair_item {
+	struct list_head	list;
+	__u64			ino;
+	__u32			type;
+	__u32			flags;
+	__u32			gen;
+	__u32			agno;
+};
+
+/* Only perform repairs; leave optimization-only actions for later. */
+#define XRM_REPAIR_ONLY		(1U << 0)
+
+/* Complain if still broken even after fix. */
+#define XRM_NOFIX_COMPLAIN	(1U << 1)
+
+enum check_outcome xfs_repair_metadata(struct scrub_ctx *ctx, int fd,
+		struct repair_item *ri, unsigned int repair_flags);
 
 #endif /* XFS_SCRUB_SCRUB_H_ */
