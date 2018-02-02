@@ -18,11 +18,13 @@ endif	# scrub_prereqs
 HFILES = \
 common.h \
 disk.h \
+inodes.h \
 xfs_scrub.h
 
 CFILES = \
 common.c \
 disk.c \
+inodes.c \
 phase1.c \
 xfs_scrub.c
 
