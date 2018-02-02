@@ -16,6 +16,7 @@ INSTALL_SCRUB = install-scrub
 endif	# scrub_prereqs
 
 HFILES = \
+bitmap.h \
 common.h \
 counter.h \
 disk.h \
@@ -28,6 +29,7 @@ unicrash.h \
 xfs_scrub.h
 
 CFILES = \
+bitmap.c \
 common.c \
 counter.c \
 disk.c \
