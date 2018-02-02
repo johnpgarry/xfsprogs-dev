@@ -17,10 +17,12 @@ endif	# scrub_prereqs
 
 HFILES = \
 common.h \
+disk.h \
 xfs_scrub.h
 
 CFILES = \
 common.c \
+disk.c \
 xfs_scrub.c
 
 LLDLIBS += $(LIBHANDLE) $(LIBFROG) $(LIBPTHREAD)
