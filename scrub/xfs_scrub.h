@@ -28,6 +28,7 @@ extern unsigned int		debug;
 extern int			nproc;
 extern bool			verbose;
 extern long			page_size;
+extern bool			want_fstrim;
 
 enum scrub_mode {
 	SCRUB_MODE_DRY_RUN,
@@ -105,5 +106,7 @@ bool xfs_scan_inodes(struct scrub_ctx *ctx);
 bool xfs_scan_connections(struct scrub_ctx *ctx);
 bool xfs_scan_blocks(struct scrub_ctx *ctx);
 bool xfs_scan_summary(struct scrub_ctx *ctx);
+bool xfs_repair_fs(struct scrub_ctx *ctx);
+bool xfs_optimize_fs(struct scrub_ctx *ctx);
 
 #endif /* XFS_SCRUB_XFS_SCRUB_H_ */

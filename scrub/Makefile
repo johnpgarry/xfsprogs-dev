@@ -41,6 +41,7 @@ inodes.c \
 phase1.c \
 phase2.c \
 phase3.c \
+phase4.c \
 phase5.c \
 phase6.c \
 phase7.c \

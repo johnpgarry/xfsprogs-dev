@@ -146,6 +146,9 @@ static bool			scrub_data;
 /* Size of a memory page. */
 long				page_size;
 
+/* Should we FSTRIM after a successful run? */
+bool				want_fstrim = true;
+
 #define SCRUB_RET_SUCCESS	(0)	/* no problems left behind */
 #define SCRUB_RET_CORRUPT	(1)	/* corruption remains on fs */
 #define SCRUB_RET_UNOPTIMIZED	(2)	/* fs could be optimized */
@@ -161,6 +164,7 @@ usage(void)
 	fprintf(stderr, _("  -a count     Stop after this many errors are found.\n"));
 	fprintf(stderr, _("  -b           Background mode.\n"));
 	fprintf(stderr, _("  -e behavior  What to do if errors are found.\n"));
+	fprintf(stderr, _("  -k           Do not FITRIM the free space.\n"));
 	fprintf(stderr, _("  -m path      Path to /etc/mtab.\n"));
 	fprintf(stderr, _("  -n           Dry run.  Do not modify anything.\n"));
 	fprintf(stderr, _("  -T           Display timing/usage information.\n"));
@@ -408,8 +412,19 @@ run_scrub_phases(
 	/* Run all phases of the scrub tool. */
 	for (phase = 1, sp = phases; sp->fn; sp++, phase++) {
 		/* Turn on certain phases if user said to. */
-		if (sp->fn == DATASCAN_DUMMY_FN && scrub_data)
+		if (sp->fn == DATASCAN_DUMMY_FN && scrub_data) {
 			sp->fn = xfs_scan_blocks;
+		} else if (sp->fn == REPAIR_DUMMY_FN) {
+			if (ctx->mode == SCRUB_MODE_PREEN) {
+				sp->descr = _("Optimize filesystem.");
+				sp->fn = xfs_optimize_fs;
+				sp->must_run = true;
+			} else if (ctx->mode == SCRUB_MODE_REPAIR) {
+				sp->descr = _("Repair filesystem.");
+				sp->fn = xfs_repair_fs;
+				sp->must_run = true;
+			}
+		}
 
 		/* Skip certain phases unless they're turned on. */
 		if (sp->fn == REPAIR_DUMMY_FN ||
@@ -469,7 +484,7 @@ main(
 	pthread_mutex_init(&ctx.lock, NULL);
 	ctx.mode = SCRUB_MODE_DEFAULT;
 	ctx.error_action = ERRORS_CONTINUE;
-	while ((c = getopt(argc, argv, "a:bde:m:nTvxVy")) != EOF) {
+	while ((c = getopt(argc, argv, "a:bde:km:nTvxVy")) != EOF) {
 		switch (c) {
 		case 'a':
 			ctx.max_errors = cvt_u64(optarg, 10);
@@ -496,6 +511,9 @@ main(
 						optarg);
 				usage();
 			}
+			break;
+		case 'k':
+			want_fstrim = false;
 			break;
 		case 'm':
 			mtab = optarg;
