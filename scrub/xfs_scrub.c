@@ -372,6 +372,7 @@ run_scrub_phases(
 		},
 		{
 			.descr = _("Scan all inodes."),
+			.fn = xfs_scan_inodes,
 		},
 		{
 			.descr = _("Defer filesystem repairs."),
