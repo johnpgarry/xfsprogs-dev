@@ -13,6 +13,8 @@ SCRUB_PREREQS=$(PKG_PLATFORM)$(HAVE_OPENAT)$(HAVE_FSTATAT)
 ifeq ($(SCRUB_PREREQS),linuxyesyes)
 LTCOMMAND = xfs_scrub
 INSTALL_SCRUB = install-scrub
+XFS_SCRUB_ALL_PROG = xfs_scrub_all
+XFS_SCRUB_ARGS = -b -n
 endif	# scrub_prereqs
 
 HFILES = \
@@ -82,17 +84,24 @@ ifeq ($(HAVE_HDIO_GETGEO),yes)
 LCFLAGS += -DHAVE_HDIO_GETGEO
 endif
 
-default: depend $(LTCOMMAND)
+default: depend $(LTCOMMAND) $(XFS_SCRUB_ALL_PROG)
+
+xfs_scrub_all: xfs_scrub_all.in
+	@echo "    [SED]    $@"
+	$(Q)$(SED) -e "s|@sbindir@|$(PKG_ROOT_SBIN_DIR)|g" \
+		   -e "s|@scrub_args@|$(XFS_SCRUB_ARGS)|g" < $< > $@
+	$(Q)chmod a+x $@
 
 phase5.o unicrash.o xfs.o: $(TOPDIR)/include/builddefs
 
 include $(BUILDRULES)
 
-install: default $(INSTALL_SCRUB)
+install: $(INSTALL_SCRUB)
 
-install-scrub:
+install-scrub: default
 	$(INSTALL) -m 755 -d $(PKG_ROOT_SBIN_DIR)
 	$(LTINSTALL) -m 755 $(LTCOMMAND) $(PKG_ROOT_SBIN_DIR)
+	$(INSTALL) -m 755 $(XFS_SCRUB_ALL_PROG) $(PKG_ROOT_SBIN_DIR)
 
 install-dev:
 
