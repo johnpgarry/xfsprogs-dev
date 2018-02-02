@@ -21,6 +21,7 @@ disk.h \
 filemap.h \
 fscounters.h \
 inodes.h \
+scrub.h \
 spacemap.h \
 xfs_scrub.h
 
@@ -31,6 +32,7 @@ filemap.c \
 fscounters.c \
 inodes.c \
 phase1.c \
+scrub.c \
 spacemap.c \
 xfs_scrub.c
 

@@ -46,6 +46,7 @@
 #include "xfs_scrub.h"
 #include "common.h"
 #include "disk.h"
+#include "scrub.h"
 
 /* Phase 1: Find filesystem geometry (and clean up after) */
 
@@ -165,6 +166,16 @@ _("Does not appear to be an XFS filesystem!"));
 			&ctx->fshandle_len);
 	if (error) {
 		str_errno(ctx, _("getting fshandle"));
+		return false;
+	}
+
+	/* Do we have kernel-assisted metadata scrubbing? */
+	if (!xfs_can_scrub_fs_metadata(ctx) || !xfs_can_scrub_inode(ctx) ||
+	    !xfs_can_scrub_bmap(ctx) || !xfs_can_scrub_dir(ctx) ||
+	    !xfs_can_scrub_attr(ctx) || !xfs_can_scrub_symlink(ctx) ||
+	    !xfs_can_scrub_parent(ctx)) {
+		str_error(ctx, ctx->mntpoint,
+_("Kernel metadata scrubbing facility is required."));
 		return false;
 	}
 

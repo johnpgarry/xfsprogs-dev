@@ -73,5 +73,6 @@ static inline int syncfs(int fd)
 #endif
 
 bool find_mountpoint(char *mtab, struct scrub_ctx *ctx);
+void background_sleep(void);
 
 #endif /* XFS_SCRUB_COMMON_H_ */

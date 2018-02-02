@@ -266,3 +266,22 @@ find_mountpoint(
 	platform_mntent_close(&cursor);
 	return found;
 }
+
+/*
+ * Sleep for 100ms * however many -b we got past the initial one.
+ * This is an (albeit clumsy) way to throttle scrub activity.
+ */
+void
+background_sleep(void)
+{
+	unsigned long long	time;
+	struct timespec		tv;
+
+	if (bg_mode < 2)
+		return;
+
+	time = 100000ULL * (bg_mode - 1);
+	tv.tv_sec = time / 1000000;
+	tv.tv_nsec = time % 1000000;
+	nanosleep(&tv, NULL);
+}
