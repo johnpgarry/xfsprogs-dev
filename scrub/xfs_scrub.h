@@ -20,15 +20,47 @@
 #ifndef XFS_SCRUB_XFS_SCRUB_H_
 #define XFS_SCRUB_XFS_SCRUB_H_
 
+#define _PATH_PROC_MOUNTS	"/proc/mounts"
+
+extern unsigned int		nr_threads;
+extern unsigned int		bg_mode;
 extern unsigned int		debug;
+extern int			nproc;
+extern bool			verbose;
+extern long			page_size;
+
+enum scrub_mode {
+	SCRUB_MODE_DRY_RUN,
+	SCRUB_MODE_PREEN,
+	SCRUB_MODE_REPAIR,
+};
+#define SCRUB_MODE_DEFAULT			SCRUB_MODE_PREEN
+
+enum error_action {
+	ERRORS_CONTINUE,
+	ERRORS_SHUTDOWN,
+};
 
 struct scrub_ctx {
+	/* Immutable scrub state. */
+
+	/* Strings we need for presentation */
+	char			*mntpoint;
+	char			*blkdev;
+
+	/* What does the user want us to do? */
+	enum scrub_mode		mode;
+
+	/* How does the user want us to react to errors? */
+	enum error_action	error_action;
+
 	/* Mutable scrub state; use lock. */
 	pthread_mutex_t		lock;
 	unsigned long long	max_errors;
 	unsigned long long	runtime_errors;
 	unsigned long long	errors_found;
 	unsigned long long	warnings_found;
+	bool			need_repair;
 };
 
 #endif /* XFS_SCRUB_XFS_SCRUB_H_ */

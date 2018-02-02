@@ -50,4 +50,12 @@ void __str_out(struct scrub_ctx *ctx, const char *descr, enum error_level level,
 #define dbg_printf(fmt, ...) \
 	do {if (debug > 1) {printf(fmt, __VA_ARGS__);}} while (0)
 
+/* Is this debug tweak enabled? */
+static inline bool
+debug_tweak_on(
+	const char		*name)
+{
+	return debug && getenv(name) != NULL;
+}
+
 #endif /* XFS_SCRUB_COMMON_H_ */
