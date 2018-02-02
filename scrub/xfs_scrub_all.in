@@ -25,9 +25,18 @@ import json
 import threading
 import time
 import sys
+import os
 
 retcode = 0
 terminate = False
+
+def DEVNULL():
+	'''Return /dev/null in subprocess writable format.'''
+	try:
+		from subprocess import DEVNULL
+		return DEVNULL
+	except ImportError:
+		return open(os.devnull, 'wb')
 
 def find_mounts():
 	'''Map mountpoints to physical disks.'''
@@ -55,6 +64,13 @@ def find_mounts():
 				fs[mnt] = set([lastdisk])
 	return fs
 
+def kill_systemd(unit, proc):
+	'''Kill systemd unit.'''
+	proc.terminate()
+	cmd=['systemctl', 'stop', unit]
+	x = subprocess.Popen(cmd)
+	x.wait()
+
 def run_killable(cmd, stdout, killfuncs, kill_fn):
 	'''Run a killable program.  Returns program retcode or -1 if we can't start it.'''
 	try:
@@ -78,6 +94,19 @@ def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 	sys.stdout.flush()
 
 	try:
+		if terminate:
+			return
+
+		# Try it the systemd way
+		cmd=['systemctl', 'start', 'xfs_scrub@%s' % mnt]
+		ret = run_killable(cmd, DEVNULL(), killfuncs, \
+				lambda proc: kill_systemd('xfs_scrub@%s' % mnt, proc))
+		if ret == 0 or ret == 1:
+			print("Scrubbing %s done, (err=%d)" % (mnt, ret))
+			sys.stdout.flush()
+			retcode |= ret
+			return
+
 		if terminate:
 			return
 
@@ -111,6 +140,17 @@ def main():
 	global retcode, terminate
 
 	fs = find_mounts()
+
+	# Tail the journal if we ourselves aren't a service...
+	journalthread = None
+	if 'SERVICE_MODE' not in os.environ:
+		try:
+			cmd=['journalctl', '--no-pager', '-q', '-S', 'now', \
+					'-f', '-u', 'xfs_scrub@*', '-o', \
+					'cat']
+			journalthread = subprocess.Popen(cmd)
+		except:
+			pass
 
 	# Schedule scrub jobs...
 	running_devs = set()
@@ -147,6 +187,15 @@ def main():
 				fn()
 			fs = []
 		cond.release()
+
+	if journalthread is not None:
+		journalthread.terminate()
+
+	# See the service mode comments in xfs_scrub.c for why we do this.
+	if 'SERVICE_MODE' in os.environ:
+		time.sleep(2)
+		if retcode != 0:
+			retcode = 1
 
 	sys.exit(retcode)
 

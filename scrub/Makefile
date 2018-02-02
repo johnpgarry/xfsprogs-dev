@@ -15,6 +15,19 @@ LTCOMMAND = xfs_scrub
 INSTALL_SCRUB = install-scrub
 XFS_SCRUB_ALL_PROG = xfs_scrub_all
 XFS_SCRUB_ARGS = -b -n
+ifeq ($(HAVE_SYSTEMD),yes)
+INSTALL_SCRUB += install-systemd
+SYSTEMD_SERVICES = xfs_scrub@.service xfs_scrub_all.service xfs_scrub_all.timer xfs_scrub_fail@.service
+OPTIONAL_TARGETS += $(SYSTEMD_SERVICES)
+endif
+ifeq ($(HAVE_CROND),yes)
+INSTALL_SCRUB += install-crond
+CRONTABS = xfs_scrub_all.cron
+OPTIONAL_TARGETS += $(CRONTABS)
+# Don't enable the crontab by default for now
+CROND_DIR = $(PKG_LIB_DIR)/$(PKG_NAME)
+endif
+
 endif	# scrub_prereqs
 
 HFILES = \
@@ -84,7 +97,7 @@ ifeq ($(HAVE_HDIO_GETGEO),yes)
 LCFLAGS += -DHAVE_HDIO_GETGEO
 endif
 
-default: depend $(LTCOMMAND) $(XFS_SCRUB_ALL_PROG)
+default: depend $(LTCOMMAND) $(XFS_SCRUB_ALL_PROG) $(OPTIONAL_TARGETS)
 
 xfs_scrub_all: xfs_scrub_all.in
 	@echo "    [SED]    $@"
@@ -97,6 +110,27 @@ phase5.o unicrash.o xfs.o: $(TOPDIR)/include/builddefs
 include $(BUILDRULES)
 
 install: $(INSTALL_SCRUB)
+
+%.service: %.service.in
+	@echo "    [SED]    $@"
+	$(Q)$(SED) -e "s|@sbindir@|$(PKG_ROOT_SBIN_DIR)|g" \
+		   -e "s|@scrub_args@|$(XFS_SCRUB_ARGS)|g" \
+		   -e "s|@pkg_lib_dir@|$(PKG_LIB_DIR)|g" \
+		   -e "s|@pkg_name@|$(PKG_NAME)|g" < $< > $@
+
+%.cron: %.cron.in
+	@echo "    [SED]    $@"
+	$(Q)$(SED) -e "s|@sbindir@|$(PKG_ROOT_SBIN_DIR)|g" < $< > $@
+
+install-systemd: default $(SYSTEMD_SERVICES)
+	$(INSTALL) -m 755 -d $(SYSTEMD_SYSTEM_UNIT_DIR)
+	$(INSTALL) -m 644 $(SYSTEMD_SERVICES) $(SYSTEMD_SYSTEM_UNIT_DIR)
+	$(INSTALL) -m 755 -d $(PKG_LIB_DIR)/$(PKG_NAME)
+	$(INSTALL) -m 755 xfs_scrub_fail $(PKG_LIB_DIR)/$(PKG_NAME)
+
+install-crond: default $(CRONTABS)
+	$(INSTALL) -m 755 -d $(CROND_DIR)
+	$(INSTALL) -m 644 $(CRONTABS) $(CROND_DIR)
 
 install-scrub: default
 	$(INSTALL) -m 755 -d $(PKG_ROOT_SBIN_DIR)

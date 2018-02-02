@@ -118,6 +118,10 @@
  * XFS_SCRUB_NO_SCSI_VERIFY	-- disable SCSI VERIFY (if present)
  * XFS_SCRUB_PHASE		-- run only this scrub phase
  * XFS_SCRUB_THREADS		-- start exactly this number of threads
+ *
+ * Available even in non-debug mode:
+ * SERVICE_MODE			-- compress all error codes to 1 for LSB
+ *				   service action compliance
  */
 
 /* Program name; needed for libfrog error reports. */
@@ -153,6 +157,12 @@ bool				want_fstrim = true;
 /* If stdout/stderr are ttys, we can use richer terminal control. */
 bool				stderr_isatty;
 bool				stdout_isatty;
+
+/*
+ * If we are running as a service, we need to be careful about what
+ * error codes we return to the calling process.
+ */
+static bool			is_service;
 
 #define SCRUB_RET_SUCCESS	(0)	/* no problems left behind */
 #define SCRUB_RET_CORRUPT	(1)	/* corruption remains on fs */
@@ -624,6 +634,9 @@ _("Only one of the options -n or -y may be specified.\n"));
 	if (stdout_isatty && !progress_fp)
 		progress_fp = fdopen(1, "w+");
 
+	if (getenv("SERVICE_MODE"))
+		is_service = true;
+
 	/* Find the mount record for the passed-in argument. */
 	if (stat(argv[optind], &ctx.mnt_sb) < 0) {
 		fprintf(stderr,
@@ -728,6 +741,25 @@ _("%s: %llu warnings found.\n"),
 		fclose(progress_fp);
 	free(ctx.blkdev);
 	free(ctx.mntpoint);
+
+	/*
+	 * If we're being run as a service, the return code must fit the LSB
+	 * init script action error guidelines, which is to say that we
+	 * compress all errors to 1 ("generic or unspecified error", LSB 5.0
+	 * section 22.2) and hope the admin will scan the log for what
+	 * actually happened.
+	 *
+	 * We have to sleep 2 seconds here because journald uses the pid to
+	 * connect our log messages to the systemd service.  This is critical
+	 * for capturing all the log messages if the scrub fails, because the
+	 * fail service uses the service name to gather log messages for the
+	 * error report.
+	 */
+	if (is_service) {
+		sleep(2);
+		if (ret != SCRUB_RET_SUCCESS)
+			return 1;
+	}
 
 	return ret;
 }

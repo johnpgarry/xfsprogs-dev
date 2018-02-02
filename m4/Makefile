@@ -21,6 +21,7 @@ LSRCFILES = \
 	package_libcdev.m4 \
 	package_pthread.m4 \
 	package_sanitizer.m4 \
+	package_services.m4 \
 	package_types.m4 \
 	package_unistring.m4 \
 	package_utilies.m4 \
