@@ -17,4 +17,91 @@
  * along with this program; if not, write the Free Software Foundation,
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+#include <stdio.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include "platform_defs.h"
+#include "xfs.h"
+#include "xfs_scrub.h"
 #include "common.h"
+
+/*
+ * Reporting Status to the Console
+ *
+ * We aim for a roughly standard reporting format -- the severity of the
+ * status being reported, a textual description of the object being
+ * reported, and whatever the status happens to be.
+ *
+ * Errors are the most severe and reflect filesystem corruption.
+ * Warnings indicate that something is amiss and needs the attention of
+ * the administrator, but does not constitute a corruption.  Information
+ * is merely advisory.
+ */
+
+/* Too many errors? Bail out. */
+bool
+xfs_scrub_excessive_errors(
+	struct scrub_ctx	*ctx)
+{
+	bool			ret;
+
+	pthread_mutex_lock(&ctx->lock);
+	ret = ctx->max_errors > 0 && ctx->errors_found >= ctx->max_errors;
+	pthread_mutex_unlock(&ctx->lock);
+
+	return ret;
+}
+
+static const char *err_str[] = {
+	[S_ERROR]	= "Error",
+	[S_WARN]	= "Warning",
+	[S_INFO]	= "Info",
+};
+
+/* Print a warning string and some warning text. */
+void
+__str_out(
+	struct scrub_ctx	*ctx,
+	const char		*descr,
+	enum error_level	level,
+	int			error,
+	const char		*file,
+	int			line,
+	const char		*format,
+	...)
+{
+	FILE			*stream = stderr;
+	va_list			args;
+	char			buf[DESCR_BUFSZ];
+
+	/* print strerror or format of choice but not both */
+	assert(!(error && format));
+
+	if (level >= S_INFO)
+		stream = stdout;
+
+	pthread_mutex_lock(&ctx->lock);
+	fprintf(stream, "%s: %s: ", _(err_str[level]), descr);
+	if (error) {
+		fprintf(stream, _("%s."), strerror_r(error, buf, DESCR_BUFSZ));
+	} else {
+		va_start(args, format);
+		vfprintf(stream, format, args);
+		va_end(args);
+	}
+
+	if (debug)
+		fprintf(stream, _(" (%s line %d)"), file, line);
+	fprintf(stream, "\n");
+	if (stream == stdout)
+		fflush(stream);
+
+	if (error)      /* A syscall failed */
+		ctx->runtime_errors++;
+	else if (level == S_ERROR)
+		ctx->errors_found++;
+	else if (level == S_WARN)
+		ctx->warnings_found++;
+
+	pthread_mutex_unlock(&ctx->lock);
+}

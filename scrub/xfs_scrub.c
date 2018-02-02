@@ -18,6 +18,8 @@
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #include <stdio.h>
+#include <pthread.h>
+#include <stdbool.h>
 #include "xfs_scrub.h"
 
 /*
@@ -98,6 +100,9 @@
 
 /* Program name; needed for libfrog error reports. */
 char				*progname = "xfs_scrub";
+
+/* Debug level; higher values mean more verbosity. */
+unsigned int			debug;
 
 int
 main(

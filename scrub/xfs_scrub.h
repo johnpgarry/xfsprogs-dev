@@ -20,4 +20,15 @@
 #ifndef XFS_SCRUB_XFS_SCRUB_H_
 #define XFS_SCRUB_XFS_SCRUB_H_
 
+extern unsigned int		debug;
+
+struct scrub_ctx {
+	/* Mutable scrub state; use lock. */
+	pthread_mutex_t		lock;
+	unsigned long long	max_errors;
+	unsigned long long	runtime_errors;
+	unsigned long long	errors_found;
+	unsigned long long	warnings_found;
+};
+
 #endif /* XFS_SCRUB_XFS_SCRUB_H_ */
