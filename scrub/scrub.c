@@ -602,7 +602,6 @@ _("Kernel %s %s facility not detected."),
 		str_info(ctx, ctx->mntpoint, "%s", strerror(errno));
 		return true;
 	}
-	return error == 0 || (error && errno != EOPNOTSUPP && errno != ENOTTY);
 }
 
 bool
