@@ -88,6 +88,7 @@ scan_fs_dir(
 	/* Caller-specific directory checks. */
 	if (!sft->dir_fn(ctx, sftd->path, dir_fd, sft->arg)) {
 		sft->moveon = false;
+		close(dir_fd);
 		goto out;
 	}
 
@@ -95,6 +96,7 @@ scan_fs_dir(
 	dir = fdopendir(dir_fd);
 	if (!dir) {
 		str_errno(ctx, sftd->path);
+		close(dir_fd);
 		goto out;
 	}
 	rewinddir(dir);
