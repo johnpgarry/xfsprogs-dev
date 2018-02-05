@@ -42,13 +42,18 @@ copy_range_help(void)
 "));
 }
 
+/*
+ * Issue a raw copy_file_range syscall; for our test program we don't want the
+ * glibc buffered copy fallback.
+ */
 static loff_t
-copy_file_range(int fd, loff_t *src, loff_t *dst, size_t len)
+copy_file_range_cmd(int fd, loff_t *src, loff_t *dst, size_t len)
 {
 	loff_t ret;
 
 	do {
-		ret = syscall(__NR_copy_file_range, fd, src, file->fd, dst, len, 0);
+		ret = syscall(__NR_copy_file_range, fd, src, file->fd, dst,
+				len, 0);
 		if (ret == -1) {
 			perror("copy_range");
 			return errno;
@@ -130,7 +135,7 @@ copy_range_f(int argc, char **argv)
 		copy_dst_truncate();
 	}
 
-	ret = copy_file_range(fd, &src, &dst, len);
+	ret = copy_file_range_cmd(fd, &src, &dst, len);
 	close(fd);
 	return ret;
 }
