@@ -2025,6 +2025,13 @@ _("cowextsize not supported without reflink support\n"));
 		usage();
 	}
 
+	if (cli->sb_feat.reflink && cli->xi->rtname) {
+		fprintf(stderr,
+_("reflink not supported with realtime devices\n"));
+		usage();
+		cli->sb_feat.reflink = false;
+	}
+
 	if (cli->sb_feat.rmapbt && cli->xi->rtname) {
 		fprintf(stderr,
 _("rmapbt not supported with realtime devices\n"));
