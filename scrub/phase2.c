@@ -94,7 +94,7 @@ xfs_scan_metadata(
 	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
-		str_error(ctx, ctx->mntpoint, _("Could not create workqueue."));
+		str_info(ctx, ctx->mntpoint, _("Could not create workqueue."));
 		return false;
 	}
 
@@ -111,7 +111,7 @@ xfs_scan_metadata(
 		ret = workqueue_add(&wq, xfs_scan_ag_metadata, agno, &moveon);
 		if (ret) {
 			moveon = false;
-			str_error(ctx, ctx->mntpoint,
+			str_info(ctx, ctx->mntpoint,
 _("Could not queue AG %u scrub work."), agno);
 			goto out;
 		}
@@ -123,7 +123,7 @@ _("Could not queue AG %u scrub work."), agno);
 	ret = workqueue_add(&wq, xfs_scan_fs_metadata, 0, &moveon);
 	if (ret) {
 		moveon = false;
-		str_error(ctx, ctx->mntpoint,
+		str_info(ctx, ctx->mntpoint,
 _("Could not queue filesystem scrub work."));
 		goto out;
 	}

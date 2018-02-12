@@ -145,7 +145,7 @@ scan_fs_dir(
 			pthread_mutex_unlock(&sft->lock);
 			error = workqueue_add(wq, scan_fs_dir, 0, new_sftd);
 			if (error) {
-				str_error(ctx, ctx->mntpoint,
+				str_info(ctx, ctx->mntpoint,
 _("Could not queue subdirectory scan work."));
 				sft->moveon = false;
 				break;
@@ -203,12 +203,12 @@ scan_fs_tree(
 	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
-		str_error(ctx, ctx->mntpoint, _("Could not create workqueue."));
+		str_info(ctx, ctx->mntpoint, _("Could not create workqueue."));
 		goto out_free;
 	}
 	ret = workqueue_add(&wq, scan_fs_dir, 0, sftd);
 	if (ret) {
-		str_error(ctx, ctx->mntpoint,
+		str_info(ctx, ctx->mntpoint,
 _("Could not queue directory scan work."));
 		goto out_free;
 	}

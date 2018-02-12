@@ -219,7 +219,7 @@ retry:
 			return CHECK_DONE;
 		case ESHUTDOWN:
 			/* FS already crashed, give up. */
-			str_error(ctx, buf,
+			str_info(ctx, buf,
 _("Filesystem is shut down, aborting."));
 			return CHECK_ABORT;
 		case EIO:
@@ -235,7 +235,7 @@ _("Filesystem is shut down, aborting."));
 			 * The first two should never escape the kernel,
 			 * and the other two should be reported via sm_flags.
 			 */
-			str_error(ctx, buf,
+			str_info(ctx, buf,
 _("Kernel bug!  errno=%d"), code);
 			/* fall through */
 		default:
@@ -568,7 +568,7 @@ __xfs_scrub_test(
 	if (debug_tweak_on("XFS_SCRUB_NO_KERNEL"))
 		return false;
 	if (debug_tweak_on("XFS_SCRUB_FORCE_REPAIR") && !injected) {
-		str_error(ctx, "XFS_SCRUB_FORCE_REPAIR", "Not supported.");
+		str_info(ctx, "XFS_SCRUB_FORCE_REPAIR", "Not supported.");
 		return false;
 	}
 
@@ -726,7 +726,7 @@ _("Filesystem is busy, deferring repair."));
 			return CHECK_RETRY;
 		case ESHUTDOWN:
 			/* Filesystem is already shut down, abort. */
-			str_error(ctx, buf,
+			str_info(ctx, buf,
 _("Filesystem is shut down, aborting."));
 			return CHECK_ABORT;
 		case ENOTTY:

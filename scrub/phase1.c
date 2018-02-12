@@ -134,7 +134,7 @@ _("Must be root to run scrub."));
 	}
 
 	if (!platform_test_xfs_fd(ctx->mnt_fd)) {
-		str_error(ctx, ctx->mntpoint,
+		str_info(ctx, ctx->mntpoint,
 _("Does not appear to be an XFS filesystem!"));
 		return false;
 	}
@@ -191,7 +191,7 @@ _("Kernel metadata repair facility is not available.  Use -n to scrub."));
 	errno = 0;
 	fsp = fs_table_lookup(ctx->mntpoint, FS_MOUNT_POINT);
 	if (!fsp) {
-		str_error(ctx, ctx->mntpoint,
+		str_info(ctx, ctx->mntpoint,
 _("Unable to find XFS information."));
 		return false;
 	}
@@ -199,12 +199,12 @@ _("Unable to find XFS information."));
 
 	/* Did we find the log and rt devices, if they're present? */
 	if (ctx->geo.logstart == 0 && ctx->fsinfo.fs_log == NULL) {
-		str_error(ctx, ctx->mntpoint,
+		str_info(ctx, ctx->mntpoint,
 _("Unable to find log device path."));
 		return false;
 	}
 	if (ctx->geo.rtblocks && ctx->fsinfo.fs_rt == NULL) {
-		str_error(ctx, ctx->mntpoint,
+		str_info(ctx, ctx->mntpoint,
 _("Unable to find realtime device path."));
 		return false;
 	}

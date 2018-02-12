@@ -137,7 +137,7 @@ xfs_scan_inodes(
 	ictx.moveon = true;
 	ictx.icount = ptcounter_init(scrub_nproc(ctx));
 	if (!ictx.icount) {
-		str_error(ctx, ctx->mntpoint, _("Could not create counter."));
+		str_info(ctx, ctx->mntpoint, _("Could not create counter."));
 		return false;
 	}
 

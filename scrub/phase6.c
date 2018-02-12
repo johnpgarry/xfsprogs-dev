@@ -485,7 +485,7 @@ xfs_scan_blocks(
 			xfs_check_rmap_ioerr, disk_heads(ctx->datadev));
 	if (!ve.readverify) {
 		moveon = false;
-		str_error(ctx, ctx->mntpoint,
+		str_info(ctx, ctx->mntpoint,
 _("Could not create media verifier."));
 		goto out_rbad;
 	}

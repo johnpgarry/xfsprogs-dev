@@ -187,7 +187,7 @@ read_verify_queue(
 
 	ret = workqueue_add(&rvp->wq, read_verify, 0, tmp);
 	if (ret) {
-		str_error(rvp->ctx, rvp->ctx->mntpoint,
+		str_info(rvp->ctx, rvp->ctx->mntpoint,
 _("Could not queue read-verify work."));
 		free(tmp);
 		return false;
