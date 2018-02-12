@@ -174,14 +174,14 @@ _("Does not appear to be an XFS filesystem!"));
 	    !xfs_can_scrub_bmap(ctx) || !xfs_can_scrub_dir(ctx) ||
 	    !xfs_can_scrub_attr(ctx) || !xfs_can_scrub_symlink(ctx) ||
 	    !xfs_can_scrub_parent(ctx)) {
-		str_error(ctx, ctx->mntpoint,
+		str_info(ctx, ctx->mntpoint,
 _("Kernel metadata scrubbing facility is not available."));
 		return false;
 	}
 
 	/* Do we need kernel-assisted metadata repair? */
 	if (ctx->mode != SCRUB_MODE_DRY_RUN && !xfs_can_repair(ctx)) {
-		str_error(ctx, ctx->mntpoint,
+		str_info(ctx, ctx->mntpoint,
 _("Kernel metadata repair facility is not available.  Use -n to scrub."));
 		return false;
 	}
