@@ -618,6 +618,11 @@ main(
 	if (getenv("SERVICE_MODE"))
 		is_service = true;
 
+	/* Initialize overall phase stats. */
+	moveon = phase_start(&all_pi, 0, NULL);
+	if (!moveon)
+		return SCRUB_RET_OPERROR;
+
 	/* Find the mount record for the passed-in argument. */
 	if (stat(argv[optind], &ctx.mnt_sb) < 0) {
 		fprintf(stderr,
@@ -640,11 +645,6 @@ main(
 		else
 			mtab = _PATH_MOUNTED;
 	}
-
-	/* Initialize overall phase stats. */
-	moveon = phase_start(&all_pi, 0, NULL);
-	if (!moveon)
-		goto out;
 
 	ismnt = find_mountpoint(mtab, &ctx);
 	if (!ismnt) {
