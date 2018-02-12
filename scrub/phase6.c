@@ -188,7 +188,6 @@ xfs_report_verify_inode(
 	void				*arg)
 {
 	char				descr[DESCR_BUFSZ];
-	char				buf[DESCR_BUFSZ];
 	bool				moveon;
 	int				fd;
 	int				error;
@@ -209,7 +208,8 @@ xfs_report_verify_inode(
 		if (error == ESTALE)
 			return error;
 
-		str_warn(ctx, descr, "%s", strerror_r(error, buf, DESCR_BUFSZ));
+		str_info(ctx, descr,
+_("Disappeared during read error reporting."));
 		return error;
 	}
 

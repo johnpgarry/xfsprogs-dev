@@ -157,7 +157,7 @@ xfs_iterate_inodes_range(
 		bulkreq.icount = inogrp.xi_alloccount;
 		error = ioctl(ctx->mnt_fd, XFS_IOC_FSBULKSTAT, &bulkreq);
 		if (error)
-			str_warn(ctx, descr, "%s", strerror_r(errno,
+			str_info(ctx, descr, "%s", strerror_r(errno,
 						buf, DESCR_BUFSZ));
 
 		xfs_iterate_inodes_range_check(ctx, &inogrp, bstat);
@@ -181,8 +181,8 @@ xfs_iterate_inodes_range(
 				}
 				snprintf(idescr, DESCR_BUFSZ, "inode %"PRIu64,
 						(uint64_t)bs->bs_ino);
-				str_warn(ctx, idescr, "%s", strerror_r(error,
-						buf, DESCR_BUFSZ));
+				str_info(ctx, idescr,
+_("Changed too many times during scan; giving up."));
 				break;
 			case XFS_ITERATE_INODES_ABORT:
 				error = 0;
