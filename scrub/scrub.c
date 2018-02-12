@@ -279,7 +279,7 @@ _("Repairs are required."));
 	 * otherwise complain.
 	 */
 	if (is_unoptimized(meta)) {
-		if (ctx->mode < SCRUB_MODE_PREEN) {
+		if (ctx->mode != SCRUB_MODE_REPAIR) {
 			if (!is_inode) {
 				/* AG or FS metadata, always warn. */
 				str_info(ctx, buf,

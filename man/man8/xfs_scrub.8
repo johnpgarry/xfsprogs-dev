@@ -1,10 +1,10 @@
 .TH xfs_scrub 8
 .SH NAME
-xfs_scrub \- scrub the contents of an XFS filesystem
+xfs_scrub \- check the contents of a mounted XFS filesystem
 .SH SYNOPSIS
 .B xfs_scrub
 [
-.B \-abCemnTvxy
+.B \-abCemnTvx
 ]
 .RI "[" mount-point " | " block-device "]"
 .br
@@ -12,6 +12,12 @@ xfs_scrub \- scrub the contents of an XFS filesystem
 .SH DESCRIPTION
 .B xfs_scrub
 attempts to check and repair all metadata in a mounted XFS filesystem.
+.PP
+.B WARNING!
+This program is
+.BR EXPERIMENTAL ","
+which means that its behavior and interface
+could change at any time!
 .PP
 .B xfs_scrub
 asks the kernel to scrub all metadata objects in the filesystem.
@@ -28,19 +34,17 @@ the standard error stream.
 Enabling verbose mode will increase the amount of status information
 sent to the output.
 .PP
-This utility does not know how to correct all errors.
-If the tool cannot fix the detected errors, you must unmount the
-filesystem and run
+If the kernel scrub reports that metadata needs repairs or optimizations and
+the user does not pass
+.B -n
+on the command line, this program will ask the kernel to make the repairs and
+to perform the optimizations.
+See the sections about optimizations and repairs for a list of optimizations
+and repairs known to this program.
+The kernel may not support repairing or optimizing the filesystem.
+If this is the case, the filesystem must be unmounted and
 .BR xfs_repair (8)
-to fix the problems.
-If this tool is not run with either of the
-.B \-n
-or
-.B \-y
-options, then it will optimize the filesystem when possible,
-but it will not try to fix errors.
-See the optimizations section below for a list of optimizations
-supported by this program.
+run on the filesystem to fix the problems.
 .SH OPTIONS
 .TP
 .BI \-a " errors"
@@ -73,14 +77,14 @@ is given, no action is taken if errors are found; this is the default
 behavior.
 .TP
 .B \-k
-Do not call FITRIM on the free space.
+Do not call TRIM on the free space.
 .TP
 .BI \-m " file"
 Search this file for mounted filesystems instead of /etc/mtab.
 .TP
 .B \-n
-Dry run, do not modify anything in the filesystem.
-This disables all optimization and repair behaviors.
+Only check filesystem metadata.
+Do not repair or optimize anything.
 .TP
 .BI \-T
 Print timing and memory usage information for each phase.
@@ -98,20 +102,11 @@ will issue O_DIRECT reads to the block device directly.
 If the block device is a SCSI disk, it will instead issue READ VERIFY commands
 directly to the disk.
 These actions will confirm that all file data blocks can be read from storage.
-.TP
-.B \-y
-Try to repair all filesystem errors.
-If the errors cannot be fixed online, then the filesystem must be taken
-offline for repair.
 .SH OPTIMIZATIONS
-Optimizations supported by this program include:
+Optimizations supported by this program include, but are not limited to:
 .IP \[bu] 2
-Updating secondary superblocks to match the primary superblock.
-.IP \[bu]
-Turning off shared block write checks for files that no longer share blocks.
-.IP \[bu]
 Instructing the underlying storage to discard unused extents via the
-.B FITRIM
+.B TRIM
 ioctl.
 .SH REPAIRS
 This program currently does not support making any repairs.

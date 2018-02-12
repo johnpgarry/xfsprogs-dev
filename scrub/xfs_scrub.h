@@ -34,10 +34,8 @@ extern bool			stdout_isatty;
 
 enum scrub_mode {
 	SCRUB_MODE_DRY_RUN,
-	SCRUB_MODE_PREEN,
 	SCRUB_MODE_REPAIR,
 };
-#define SCRUB_MODE_DEFAULT			SCRUB_MODE_PREEN
 
 enum error_action {
 	ERRORS_CONTINUE,
@@ -111,7 +109,6 @@ bool xfs_scan_connections(struct scrub_ctx *ctx);
 bool xfs_scan_blocks(struct scrub_ctx *ctx);
 bool xfs_scan_summary(struct scrub_ctx *ctx);
 bool xfs_repair_fs(struct scrub_ctx *ctx);
-bool xfs_optimize_fs(struct scrub_ctx *ctx);
 
 /* Progress estimator functions */
 uint64_t xfs_estimate_inodes(struct scrub_ctx *ctx);

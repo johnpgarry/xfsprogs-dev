@@ -62,25 +62,6 @@ xfs_repair_fs(
 	return xfs_process_action_items(ctx);
 }
 
-/* Run the optimize-only phase if there are no errors. */
-bool
-xfs_optimize_fs(
-	struct scrub_ctx	*ctx)
-{
-	/*
-	 * In preen mode, corruptions are immediately recorded as errors,
-	 * so if there are any corruptions on the filesystem errors_found
-	 * will be non-zero and we won't do anything.
-	 */
-	if (ctx->errors_found) {
-		str_info(ctx, ctx->mntpoint,
-_("Errors found, please re-run with -y."));
-		return true;
-	}
-
-	return xfs_process_action_items(ctx);
-}
-
 /* Estimate how much work we're going to do. */
 bool
 xfs_estimate_repair_work(

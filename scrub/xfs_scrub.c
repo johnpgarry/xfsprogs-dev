@@ -187,7 +187,6 @@ usage(void)
 	fprintf(stderr, _("  -v           Verbose output.\n"));
 	fprintf(stderr, _("  -V           Print version.\n"));
 	fprintf(stderr, _("  -x           Scrub file data too.\n"));
-	fprintf(stderr, _("  -y           Repair all errors.\n"));
 
 	exit(SCRUB_RET_SYNTAX);
 }
@@ -441,16 +440,11 @@ run_scrub_phases(
 		/* Turn on certain phases if user said to. */
 		if (sp->fn == DATASCAN_DUMMY_FN && scrub_data) {
 			sp->fn = xfs_scan_blocks;
-		} else if (sp->fn == REPAIR_DUMMY_FN) {
-			if (ctx->mode == SCRUB_MODE_PREEN) {
-				sp->descr = _("Optimize filesystem.");
-				sp->fn = xfs_optimize_fs;
-				sp->must_run = true;
-			} else if (ctx->mode == SCRUB_MODE_REPAIR) {
-				sp->descr = _("Repair filesystem.");
-				sp->fn = xfs_repair_fs;
-				sp->must_run = true;
-			}
+		} else if (sp->fn == REPAIR_DUMMY_FN &&
+			   ctx->mode == SCRUB_MODE_REPAIR) {
+			sp->descr = _("Repair filesystem.");
+			sp->fn = xfs_repair_fs;
+			sp->must_run = true;
 		}
 
 		/* Skip certain phases unless they're turned on. */
@@ -524,9 +518,9 @@ main(
 	textdomain(PACKAGE);
 
 	pthread_mutex_init(&ctx.lock, NULL);
-	ctx.mode = SCRUB_MODE_DEFAULT;
+	ctx.mode = SCRUB_MODE_REPAIR;
 	ctx.error_action = ERRORS_CONTINUE;
-	while ((c = getopt(argc, argv, "a:bC:de:km:nTvxVy")) != EOF) {
+	while ((c = getopt(argc, argv, "a:bC:de:km:nTvxV")) != EOF) {
 		switch (c) {
 		case 'a':
 			ctx.max_errors = cvt_u64(optarg, 10);
@@ -574,11 +568,6 @@ main(
 			mtab = optarg;
 			break;
 		case 'n':
-			if (ctx.mode != SCRUB_MODE_DEFAULT) {
-				fprintf(stderr,
-_("Only one of the options -n or -y may be specified.\n"));
-				usage();
-			}
 			ctx.mode = SCRUB_MODE_DRY_RUN;
 			break;
 		case 'T':
@@ -594,14 +583,6 @@ _("Only one of the options -n or -y may be specified.\n"));
 			return SCRUB_RET_SUCCESS;
 		case 'x':
 			scrub_data = true;
-			break;
-		case 'y':
-			if (ctx.mode != SCRUB_MODE_DEFAULT) {
-				fprintf(stderr,
-_("Only one of the options -n or -y may be specified.\n"));
-				usage();
-			}
-			ctx.mode = SCRUB_MODE_REPAIR;
 			break;
 		case '?':
 			/* fall through */
