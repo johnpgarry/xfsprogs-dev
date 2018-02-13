@@ -493,6 +493,32 @@ _("Scrub aborted after phase %d."),
 	return moveon;
 }
 
+static void
+report_outcome(
+	struct scrub_ctx	*ctx)
+{
+	unsigned long long	total_errors;
+
+	total_errors = ctx->errors_found + ctx->runtime_errors;
+
+	if (total_errors == 0 && ctx->warnings_found == 0)
+		return;
+
+	if (total_errors == 0)
+		fprintf(stderr, _("%s: warnings found: %llu\n"), ctx->mntpoint,
+				ctx->warnings_found);
+	else if (ctx->warnings_found == 0)
+		fprintf(stderr, _("%s: errors found: %llu\n"), ctx->mntpoint,
+				total_errors);
+	else
+		fprintf(stderr, _("%s: errors found: %llu; warnings found: %llu\n"),
+				ctx->mntpoint, total_errors,
+				ctx->warnings_found);
+	if (ctx->need_repair)
+		fprintf(stderr, _("%s: Unmount and run xfs_repair.\n"),
+				ctx->mntpoint);
+}
+
 int
 main(
 	int			argc,
@@ -501,9 +527,7 @@ main(
 	struct scrub_ctx	ctx = {0};
 	struct phase_rusage	all_pi;
 	char			*mtab = NULL;
-	char			*repairstr = "";
 	FILE			*progress_fp = NULL;
-	unsigned long long	total_errors;
 	bool			moveon = true;
 	bool			ismnt;
 	int			c;
@@ -692,22 +716,8 @@ _("%s: Not a XFS mount point or block device.\n"),
 		ctx.runtime_errors++;
 
 out:
-	total_errors = ctx.errors_found + ctx.runtime_errors;
-	if (ctx.need_repair)
-		repairstr = _("  Unmount and run xfs_repair.");
-	if (total_errors && ctx.warnings_found)
-		fprintf(stderr,
-_("%s: %llu errors and %llu warnings found.%s\n"),
-			ctx.mntpoint, total_errors, ctx.warnings_found,
-			repairstr);
-	else if (total_errors && ctx.warnings_found == 0)
-		fprintf(stderr,
-_("%s: %llu errors found.%s\n"),
-			ctx.mntpoint, total_errors, repairstr);
-	else if (total_errors == 0 && ctx.warnings_found)
-		fprintf(stderr,
-_("%s: %llu warnings found.\n"),
-			ctx.mntpoint, ctx.warnings_found);
+	report_outcome(&ctx);
+
 	if (ctx.errors_found) {
 		if (ctx.error_action == ERRORS_SHUTDOWN)
 			xfs_shutdown_fs(&ctx);
