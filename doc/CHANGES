@@ -1,3 +1,14 @@
+xfsprogs-4.15.0-rc1 (13 Feb 2018)
+	- xfs_scrub: experimental new tool added (Darrick Wong)
+	- xfs_metadump: fix issues with -i flag (Marco Benatto)
+	- mkfs.xfs: don't allow creation of realtime+reflink (Darrick Wong)
+	- mkfs.xfs: don't crash on dswidth overflow (Darrick Wong)
+	- mkfs.xfs: much refactoring (Dave Chinner)
+	- xfs_copy: fix copy of v5 filesystems (Eric Sandeen)
+	- xfs_io: add a new 'log_writes' command (Ross Zwisler)
+	- xfs_io: add MAP_SYNC support to mmap() (Ross Zwisler)
+	- libxfs: memory zone handling cleanups (Eric Sandeen)
+
 xfsprogs-4.14.0 (27 Nov 2017)
 	- no changes from v4.14.0-rc2
 
