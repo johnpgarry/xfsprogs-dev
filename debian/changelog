@@ -1,3 +1,13 @@
+xfsprogs (4.15.0-rc1-1) unstable; urgency=low
+
+  * Use source-only uploads using quilt format (closes: #144876)
+  * Includes copy_file_range patch for xfs_io (closes: #890716)
+  * Drop libreadline5-dev package dependency (closes: #695875)
+  * Includes old metadump CVE-2012-2150 fix (closes: #793495)
+  * New upstream release (closes: #874209)
+
+ -- Nathan Scott <nathans@debian.org>  Wed, 21 Feb 2018 10:52:38 -0600
+
 xfsprogs (4.14.0) unstable; urgency=low
 
   * New upstream release

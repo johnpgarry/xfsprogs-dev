@@ -158,7 +158,9 @@ else
 	# need to build translations before the source tarball
 	$(Q)$(MAKE) $(MAKEOPTS) -C po
 	$(Q)$(MAKE) $(MAKEOPTS) $(SRCDIR)
-	$(Q)cd $(SRCDIR) && dpkg-buildpackage
+	$(Q)rm -f $(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
+	$(Q)$(LN_S) $(SRCTAR) $(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
+	$(Q)cd $(SRCDIR) && dpkg-buildpackage $$LOCAL_DPKG_OPTIONS # -sa -S
 endif
 
 $(SRCDIR) : $(_FORCE) $(SRCTAR)
