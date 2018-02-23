@@ -71,6 +71,7 @@ cscope.*
 /scrub/xfs_scrub
 /scrub/xfs_scrub@.service
 /scrub/xfs_scrub_all
+/scrub/xfs_scrub_all.cron
 /scrub/xfs_scrub_all.service
 /scrub/xfs_scrub_fail@.service
 
