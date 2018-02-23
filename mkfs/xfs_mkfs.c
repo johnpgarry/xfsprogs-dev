@@ -1946,7 +1946,7 @@ _("Inodes always aligned for CRC enabled filesystems\n"));
 		/* lazy sb counters always on */
 		if (!cli->sb_feat.lazy_sb_counters) {
 			fprintf(stderr,
-_("Lazy superblock counted always enabled for CRC enabled filesystems\n"));
+_("Lazy superblock counters always enabled for CRC enabled filesystems\n"));
 			usage();
 		}
 
