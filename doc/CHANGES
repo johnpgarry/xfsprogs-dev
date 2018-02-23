@@ -1,3 +1,6 @@
+xfsprogs-4.15.0 (23 Feb 2018)
+	- various debian-related packaging fixes (Nathan Scott)
+
 xfsprogs-4.15.0-rc1 (13 Feb 2018)
 	- xfs_scrub: experimental new tool added (Darrick Wong)
 	- xfs_metadump: fix issues with -i flag (Marco Benatto)

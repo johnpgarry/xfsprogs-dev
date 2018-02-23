@@ -1,5 +1,10 @@
-xfsprogs (4.15.0-rc1-1) unstable; urgency=low
+xfsprogs (4.15.0-1) unstable; urgency=low
 
+  * New upstream release
+
+ -- Nathan Scott <nathans@debian.org>  Fri, 23 Feb 2018 13:06:35 -0600
+
+xfsprogs (4.15.0-rc1-1) unstable; urgency=low
   * Use source-only uploads using quilt format (closes: #144876)
   * Includes copy_file_range patch for xfs_io (closes: #890716)
   * Drop libreadline5-dev package dependency (closes: #695875)
