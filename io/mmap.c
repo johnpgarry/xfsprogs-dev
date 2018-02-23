@@ -623,7 +623,7 @@ mremap_help(void)
 " Examples:\n"
 " 'mremap 8192' - resizes the current mapping to 8192 bytes.\n"
 "\n"
-" Resizes the mappping, growing or shrinking from the current size.\n"
+" Resizes the mapping, growing or shrinking from the current size.\n"
 " The default stored value is 'X', repeated to fill the range specified.\n"
 " -f <new_address> -- use MREMAP_FIXED flag to mremap on new_address\n"
 " -m -- use the MREMAP_MAYMOVE flag\n"

@@ -1939,28 +1939,28 @@ _("Minimum inode size for CRCs is %d bytes\n"),
 		/* inodes always aligned */
 		if (!cli->sb_feat.inode_align) {
 			fprintf(stderr,
-_("Inodes always aligned for CRC enabled filesytems\n"));
+_("Inodes always aligned for CRC enabled filesystems\n"));
 			usage();
 		}
 
 		/* lazy sb counters always on */
 		if (!cli->sb_feat.lazy_sb_counters) {
 			fprintf(stderr,
-_("Lazy superblock counted always enabled for CRC enabled filesytems\n"));
+_("Lazy superblock counted always enabled for CRC enabled filesystems\n"));
 			usage();
 		}
 
 		/* version 2 logs always on */
 		if (cli->sb_feat.log_version != 2) {
 			fprintf(stderr,
-_("V2 logs always enabled for CRC enabled filesytems\n"));
+_("V2 logs always enabled for CRC enabled filesystems\n"));
 			usage();
 		}
 
 		/* attr2 always on */
 		if (cli->sb_feat.attr_version != 2) {
 			fprintf(stderr,
-_("V2 attribute format always enabled on CRC enabled filesytems\n"));
+_("V2 attribute format always enabled on CRC enabled filesystems\n"));
 			usage();
 		}
 
@@ -1968,14 +1968,14 @@ _("V2 attribute format always enabled on CRC enabled filesytems\n"));
 		/* attr2 always on */
 		if (!cli->sb_feat.projid32bit) {
 			fprintf(stderr,
-_("32 bit Project IDs always enabled on CRC enabled filesytems\n"));
+_("32 bit Project IDs always enabled on CRC enabled filesystems\n"));
 			usage();
 		}
 
 		/* ftype always on */
 		if (!cli->sb_feat.dirftype) {
 			fprintf(stderr,
-_("Directory ftype field always enabled on CRC enabled filesytems\n"));
+_("Directory ftype field always enabled on CRC enabled filesystems\n"));
 			usage();
 		}
 

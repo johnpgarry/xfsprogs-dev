@@ -407,7 +407,7 @@ prealloc_init(void)
 	fpunch_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
 	fpunch_cmd.args = _("off len");
 	fpunch_cmd.oneline =
-	_("de-allocates space assocated with part of a file via fallocate");
+	_("de-allocates space associated with part of a file via fallocate");
 	add_command(&fpunch_cmd);
 
 	fcollapse_cmd.name = "fcollapse";
