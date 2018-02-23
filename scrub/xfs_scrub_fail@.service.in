@@ -1,5 +1,6 @@
 [Unit]
 Description=Online XFS Metadata Check Failure Reporting for %I
+Documentation=man:xfs_scrub(8)
 
 [Service]
 Type=oneshot
