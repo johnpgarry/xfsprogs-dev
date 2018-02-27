@@ -527,7 +527,11 @@ int  libxfs_mod_incore_sb(struct xfs_mount *, int, int64_t, int);
 #define xfs_reinit_percpu_counters(mp)
 
 void xfs_trans_mod_sb(struct xfs_trans *, uint, long);
-void xfs_verifier_error(struct xfs_buf *bp, int error, xfs_failaddr_t failaddr);
+void xfs_verifier_error(struct xfs_buf *bp, int error,
+			xfs_failaddr_t failaddr);
+void xfs_inode_verifier_error(struct xfs_inode *ip, int error,
+			const char *name, void *buf, size_t bufsz,
+			xfs_failaddr_t failaddr);
 
 /* XXX: this is clearly a bug - a shared header needs to export this */
 /* xfs_rtalloc.c */

@@ -744,6 +744,25 @@ xfs_verifier_error(
 }
 
 /*
+ * Warnings for inode corruption problems.  Don't bother with the stack
+ * trace unless the error level is turned up high.
+ */
+void
+xfs_inode_verifier_error(
+	struct xfs_inode	*ip,
+	int			error,
+	const char		*name,
+	void			*buf,
+	size_t			bufsz,
+	xfs_failaddr_t		failaddr)
+{
+	xfs_alert(NULL, "Metadata %s detected at %p, inode 0x%llx %s",
+		  error == -EFSBADCRC ? "CRC error" : "corruption",
+		  failaddr ? failaddr : __return_address,
+		  ip->i_ino, name);
+}
+
+/*
  * This is called from I/O verifiers on v5 superblock filesystems. In the
  * kernel, it validates the metadata LSN parameter against the current LSN of
  * the active log. We don't have an active log in userspace so this kind of
