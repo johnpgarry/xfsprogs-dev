@@ -1,3 +1,8 @@
+xfsprogs-4.15.1 (26 Feb 2018)
+	- debian: add build-depends on pkg-config (Darrick Wong)
+	- debian: don't fail postinst when upgrading chroot (Darrick Wong)
+	- update Polish translation (Jakub Bogusz)
+
 xfsprogs-4.15.0 (23 Feb 2018)
 	- various debian-related packaging fixes (Nathan Scott)
 
