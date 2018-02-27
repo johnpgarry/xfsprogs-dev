@@ -525,5 +525,6 @@ bool xfs_log_check_lsn(struct xfs_mount *, xfs_lsn_t);
 #define XFS_STATS_ADD_OFF(mp, off, val)
 
 typedef unsigned char u8;
+unsigned int hweight8(unsigned int w);
 
 #endif	/* __LIBXFS_INTERNAL_XFS_H__ */
