@@ -733,8 +733,11 @@ cmn_err(int level, char *fmt, ...)
  */
 void
 xfs_verifier_error(
-	struct xfs_buf		*bp)
+	struct xfs_buf		*bp,
+	int			error)
 {
+	xfs_buf_ioerror(bp, error);
+
 	xfs_alert(NULL, "Metadata %s detected at %s block 0x%llx/0x%x",
 		  bp->b_error == -EFSBADCRC ? "CRC error" : "corruption",
 		  bp->b_ops->name, bp->b_bn, BBTOB(bp->b_length));
