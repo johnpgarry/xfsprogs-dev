@@ -516,7 +516,7 @@ xfs_alloc_fixup_trees(
 	return 0;
 }
 
-static bool
+static xfs_failaddr_t
 xfs_agfl_verify(
 	struct xfs_buf	*bp)
 {
@@ -525,9 +525,9 @@ xfs_agfl_verify(
 	int		i;
 
 	if (!uuid_equal(&agfl->agfl_uuid, &mp->m_sb.sb_meta_uuid))
-		return false;
+		return __this_address;
 	if (be32_to_cpu(agfl->agfl_magicnum) != XFS_AGFL_MAGIC)
-		return false;
+		return __this_address;
 	/*
 	 * during growfs operations, the perag is not fully initialised,
 	 * so we can't use it for any useful checking. growfs ensures we can't
@@ -535,16 +535,17 @@ xfs_agfl_verify(
 	 * so we can detect and avoid this problem.
 	 */
 	if (bp->b_pag && be32_to_cpu(agfl->agfl_seqno) != bp->b_pag->pag_agno)
-		return false;
+		return __this_address;
 
 	for (i = 0; i < XFS_AGFL_SIZE(mp); i++) {
 		if (be32_to_cpu(agfl->agfl_bno[i]) != NULLAGBLOCK &&
 		    be32_to_cpu(agfl->agfl_bno[i]) >= mp->m_sb.sb_agblocks)
-			return false;
+			return __this_address;
 	}
 
-	return xfs_log_check_lsn(mp,
-				 be64_to_cpu(XFS_BUF_TO_AGFL(bp)->agfl_lsn));
+	if (!xfs_log_check_lsn(mp, be64_to_cpu(XFS_BUF_TO_AGFL(bp)->agfl_lsn)))
+		return __this_address;
+	return NULL;
 }
 
 static void
@@ -564,7 +565,7 @@ xfs_agfl_read_verify(
 
 	if (!xfs_buf_verify_cksum(bp, XFS_AGFL_CRC_OFF))
 		xfs_verifier_error(bp, -EFSBADCRC);
-	else if (!xfs_agfl_verify(bp))
+	else if (xfs_agfl_verify(bp))
 		xfs_verifier_error(bp, -EFSCORRUPTED);
 }
 
@@ -579,7 +580,7 @@ xfs_agfl_write_verify(
 	if (!xfs_sb_version_hascrc(&mp->m_sb))
 		return;
 
-	if (!xfs_agfl_verify(bp)) {
+	if (xfs_agfl_verify(bp)) {
 		xfs_verifier_error(bp, -EFSCORRUPTED);
 		return;
 	}
@@ -2389,7 +2390,7 @@ xfs_alloc_put_freelist(
 	return 0;
 }
 
-static bool
+static xfs_failaddr_t
 xfs_agf_verify(
 	struct xfs_mount *mp,
 	struct xfs_buf	*bp)
@@ -2398,10 +2399,10 @@ xfs_agf_verify(
 
 	if (xfs_sb_version_hascrc(&mp->m_sb)) {
 		if (!uuid_equal(&agf->agf_uuid, &mp->m_sb.sb_meta_uuid))
-			return false;
+			return __this_address;
 		if (!xfs_log_check_lsn(mp,
 				be64_to_cpu(XFS_BUF_TO_AGF(bp)->agf_lsn)))
-			return false;
+			return __this_address;
 	}
 
 	if (!(agf->agf_magicnum == cpu_to_be32(XFS_AGF_MAGIC) &&
@@ -2410,18 +2411,18 @@ xfs_agf_verify(
 	      be32_to_cpu(agf->agf_flfirst) < XFS_AGFL_SIZE(mp) &&
 	      be32_to_cpu(agf->agf_fllast) < XFS_AGFL_SIZE(mp) &&
 	      be32_to_cpu(agf->agf_flcount) <= XFS_AGFL_SIZE(mp)))
-		return false;
+		return __this_address;
 
 	if (be32_to_cpu(agf->agf_levels[XFS_BTNUM_BNO]) < 1 ||
 	    be32_to_cpu(agf->agf_levels[XFS_BTNUM_CNT]) < 1 ||
 	    be32_to_cpu(agf->agf_levels[XFS_BTNUM_BNO]) > XFS_BTREE_MAXLEVELS ||
 	    be32_to_cpu(agf->agf_levels[XFS_BTNUM_CNT]) > XFS_BTREE_MAXLEVELS)
-		return false;
+		return __this_address;
 
 	if (xfs_sb_version_hasrmapbt(&mp->m_sb) &&
 	    (be32_to_cpu(agf->agf_levels[XFS_BTNUM_RMAP]) < 1 ||
 	     be32_to_cpu(agf->agf_levels[XFS_BTNUM_RMAP]) > XFS_BTREE_MAXLEVELS))
-		return false;
+		return __this_address;
 
 	/*
 	 * during growfs operations, the perag is not fully initialised,
@@ -2430,18 +2431,18 @@ xfs_agf_verify(
 	 * so we can detect and avoid this problem.
 	 */
 	if (bp->b_pag && be32_to_cpu(agf->agf_seqno) != bp->b_pag->pag_agno)
-		return false;
+		return __this_address;
 
 	if (xfs_sb_version_haslazysbcount(&mp->m_sb) &&
 	    be32_to_cpu(agf->agf_btreeblks) > be32_to_cpu(agf->agf_length))
-		return false;
+		return __this_address;
 
 	if (xfs_sb_version_hasreflink(&mp->m_sb) &&
 	    (be32_to_cpu(agf->agf_refcount_level) < 1 ||
 	     be32_to_cpu(agf->agf_refcount_level) > XFS_BTREE_MAXLEVELS))
-		return false;
+		return __this_address;
 
-	return true;;
+	return NULL;
 
 }
 
@@ -2454,7 +2455,7 @@ xfs_agf_read_verify(
 	if (xfs_sb_version_hascrc(&mp->m_sb) &&
 	    !xfs_buf_verify_cksum(bp, XFS_AGF_CRC_OFF))
 		xfs_verifier_error(bp, -EFSBADCRC);
-	else if (XFS_TEST_ERROR(!xfs_agf_verify(mp, bp), mp,
+	else if (XFS_TEST_ERROR(xfs_agf_verify(mp, bp), mp,
 				XFS_ERRTAG_ALLOC_READ_AGF))
 		xfs_verifier_error(bp, -EFSCORRUPTED);
 }
@@ -2466,7 +2467,7 @@ xfs_agf_write_verify(
 	struct xfs_mount *mp = bp->b_target->bt_mount;
 	struct xfs_buf_log_item	*bip = bp->b_fspriv;
 
-	if (!xfs_agf_verify(mp, bp)) {
+	if (xfs_agf_verify(mp, bp)) {
 		xfs_verifier_error(bp, -EFSCORRUPTED);
 		return;
 	}
