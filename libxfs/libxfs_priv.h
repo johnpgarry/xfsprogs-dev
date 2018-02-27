@@ -102,6 +102,16 @@ extern char    *progname;
 
 #define STATIC				static
 
+/*
+ * Starting in Linux 4.15, the %p (raw pointer value) printk modifier
+ * prints a hashed version of the pointer to avoid leaking kernel
+ * pointers into dmesg.  If we're trying to debug the kernel we want the
+ * raw values, so override this behavior as best we can.
+ *
+ * In userspace we don't have this problem.
+ */
+#define PTR_FMT "%p"
+
 /* XXX: need to push these out to make LIBXFS_ATTR defines */
 #define ATTR_ROOT			0x0002
 #define ATTR_SECURE			0x0008
