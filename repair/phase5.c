@@ -1984,7 +1984,7 @@ build_agf_agfl(
 	memset(agf, 0, mp->m_sb.sb_sectsize);
 
 #ifdef XR_BLD_FREE_TRACE
-	fprintf(stderr, "agf = 0x%p, agf_buf->b_addr = 0x%p\n",
+	fprintf(stderr, "agf = %p, agf_buf->b_addr = %p\n",
 		agf, agf_buf->b_addr);
 #endif
 
