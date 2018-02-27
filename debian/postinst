@@ -9,7 +9,7 @@ case "${1}" in
 			update-initramfs -u
 		fi
 		if [ -x /bin/systemctl ]; then
-			/bin/systemctl daemon-reload
+			/bin/systemctl daemon-reload 2>&1 || true
 		fi
 		;;
 
