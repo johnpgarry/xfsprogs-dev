@@ -466,7 +466,7 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 	xfs_dinode_t		*dip;
 	xfs_mount_t		*mp;
 
-	ASSERT(bp-b_fspriv != NULL);
+	ASSERT(bp-b_log_item != NULL);
 	ASSERT(ip->i_d.di_format != XFS_DINODE_FMT_BTREE ||
 		ip->i_d.di_nextents > ip->i_df.if_ext_max);
 	ASSERT(ip->i_d.di_version > 1);

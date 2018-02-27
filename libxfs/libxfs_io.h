@@ -69,7 +69,7 @@ typedef struct xfs_buf {
 	pthread_mutex_t		b_lock;
 	pthread_t		b_holder;
 	unsigned int		b_recur;
-	void			*b_fspriv;
+	void			*b_log_item;
 	void			*b_transp;
 	void			*b_addr;
 	int			b_error;

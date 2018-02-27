@@ -73,7 +73,7 @@ xfs_trans_buf_item_match(
 
 /*
  * Allocate a new buf log item to go with the given buffer.
- * Set the buffer's b_fsprivate field to point to the new
+ * Set the buffer's b_log_item field to point to the new
  * buf log item.  If there are other item's attached to the
  * buffer (see xfs_buf_attach_iodone() below), then put the
  * buf log item at the front.
@@ -97,8 +97,8 @@ xfs_buf_item_init(
 	 * nothing to do here so return.
 	 */
 	XFS_BUF_SET_BDSTRAT_FUNC(bp, xfs_bdstrat_cb);
-	if (bp->b_fspriv != NULL) {
-		lip = bp->b_fspriv;
+	if (bp->b_log_item != NULL) {
+		lip = bp->b_log_item;
 		if (lip->li_type == XFS_LI_BUF) {
 #ifdef LI_DEBUG
 			fprintf(stderr,
@@ -121,7 +121,7 @@ xfs_buf_item_init(
 	bip->bli_format.blf_type = XFS_LI_BUF;
 	bip->bli_format.blf_blkno = (int64_t)XFS_BUF_ADDR(bp);
 	bip->bli_format.blf_len = (unsigned short)BTOBB(XFS_BUF_COUNT(bp));
-	bp->b_fspriv = bip;
+	bp->b_log_item = bip;
 }
 
 
