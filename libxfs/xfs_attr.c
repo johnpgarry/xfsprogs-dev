@@ -712,7 +712,6 @@ xfs_attr_leaf_addname(xfs_da_args_t *args)
 	return error;
 out_defer_cancel:
 	xfs_defer_cancel(args->dfops);
-	args->trans = NULL;
 	return error;
 }
 
@@ -765,7 +764,6 @@ xfs_attr_leaf_removename(xfs_da_args_t *args)
 	return 0;
 out_defer_cancel:
 	xfs_defer_cancel(args->dfops);
-	args->trans = NULL;
 	return error;
 }
 
@@ -1040,7 +1038,6 @@ out:
 	return retval;
 out_defer_cancel:
 	xfs_defer_cancel(args->dfops);
-	args->trans = NULL;
 	goto out;
 }
 
@@ -1181,7 +1178,6 @@ out:
 	return error;
 out_defer_cancel:
 	xfs_defer_cancel(args->dfops);
-	args->trans = NULL;
 	goto out;
 }
 
