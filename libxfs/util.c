@@ -493,10 +493,8 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 	if (ip->i_d.di_version == 3)
 		VFS_I(ip)->i_version++;
 
-	/* Check the inline directory data. */
-	if (S_ISDIR(VFS_I(ip)->i_mode) &&
-	    ip->i_d.di_format == XFS_DINODE_FMT_LOCAL &&
-	    xfs_dir2_sf_verify(ip))
+	/* Check the inline fork data before we write out. */
+	if (!libxfs_inode_verify_forks(ip))
 		return -EFSCORRUPTED;
 
 	/*

@@ -162,6 +162,7 @@ extern void	libxfs_trans_ichgtime(struct xfs_trans *,
 extern int	libxfs_iflush_int (struct xfs_inode *, struct xfs_buf *);
 
 /* Inode Cache Interfaces */
+extern bool	libxfs_inode_verify_forks(struct xfs_inode *ip);
 extern int	libxfs_iget(struct xfs_mount *, struct xfs_trans *, xfs_ino_t,
 				uint, struct xfs_inode **);
 extern void	libxfs_iput(struct xfs_inode *);

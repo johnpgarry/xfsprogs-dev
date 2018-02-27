@@ -1336,6 +1336,34 @@ struct cache_operations libxfs_bcache_operations = {
 extern kmem_zone_t	*xfs_ili_zone;
 extern kmem_zone_t	*xfs_inode_zone;
 
+/*
+ * If there are inline format data / attr forks attached to this inode,
+ * make sure they're not corrupt.
+ */
+bool
+libxfs_inode_verify_forks(
+	struct xfs_inode	*ip)
+{
+	xfs_failaddr_t		fa;
+
+	fa = xfs_ifork_verify_data(ip, &xfs_default_ifork_ops);
+	if (fa) {
+		xfs_alert(ip->i_mount,
+				"%s: bad inode %Lu inline data fork at %pF",
+				__func__, ip->i_ino, fa);
+		return false;
+	}
+
+	fa = xfs_ifork_verify_attr(ip, &xfs_default_ifork_ops);
+	if (fa) {
+		xfs_alert(ip->i_mount,
+				"%s: bad inode %Lu inline attr fork at %pF",
+				__func__, ip->i_ino, fa);
+		return false;
+	}
+	return true;
+}
+
 int
 libxfs_iget(xfs_mount_t *mp, xfs_trans_t *tp, xfs_ino_t ino, uint lock_flags,
 		xfs_inode_t **ipp)
@@ -1354,6 +1382,11 @@ libxfs_iget(xfs_mount_t *mp, xfs_trans_t *tp, xfs_ino_t ino, uint lock_flags,
 		kmem_zone_free(xfs_inode_zone, ip);
 		*ipp = NULL;
 		return error;
+	}
+
+	if (!libxfs_inode_verify_forks(ip)) {
+		libxfs_iput(ip);
+		return -EFSCORRUPTED;
 	}
 
 	/*
