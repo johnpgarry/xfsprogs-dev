@@ -219,6 +219,11 @@ static inline bool WARN_ON_ONCE(bool expr) {
 
 #define PAGE_SIZE		getpagesize()
 
+#define inode_peek_iversion(inode)	(inode)->i_version
+#define inode_set_iversion_queried(inode, version) do { \
+	(inode)->i_version = (version);	\
+} while (0)
+
 static inline int __do_div(unsigned long long *n, unsigned base)
 {
 	int __res;
