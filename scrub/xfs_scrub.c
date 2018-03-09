@@ -162,7 +162,7 @@ bool				stdout_isatty;
  * If we are running as a service, we need to be careful about what
  * error codes we return to the calling process.
  */
-static bool			is_service;
+bool				is_service;
 
 #define SCRUB_RET_SUCCESS	(0)	/* no problems left behind */
 #define SCRUB_RET_CORRUPT	(1)	/* corruption remains on fs */
@@ -501,19 +501,27 @@ report_outcome(
 
 	total_errors = ctx->errors_found + ctx->runtime_errors;
 
-	if (total_errors == 0 && ctx->warnings_found == 0)
+	if (total_errors == 0 && ctx->warnings_found == 0) {
+		log_info(ctx, _("No errors found."));
 		return;
+	}
 
-	if (total_errors == 0)
+	if (total_errors == 0) {
 		fprintf(stderr, _("%s: warnings found: %llu\n"), ctx->mntpoint,
 				ctx->warnings_found);
-	else if (ctx->warnings_found == 0)
+		log_warn(ctx, _("warnings found: %llu"), ctx->warnings_found);
+	} else if (ctx->warnings_found == 0) {
 		fprintf(stderr, _("%s: errors found: %llu\n"), ctx->mntpoint,
 				total_errors);
-	else
+		log_err(ctx, _("errors found: %llu"), total_errors);
+	} else {
 		fprintf(stderr, _("%s: errors found: %llu; warnings found: %llu\n"),
 				ctx->mntpoint, total_errors,
 				ctx->warnings_found);
+		log_err(ctx, _("errors found: %llu; warnings found: %llu"),
+				total_errors, ctx->warnings_found);
+	}
+
 	if (ctx->need_repair)
 		fprintf(stderr, _("%s: Unmount and run xfs_repair.\n"),
 				ctx->mntpoint);

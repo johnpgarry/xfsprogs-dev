@@ -21,6 +21,7 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <sys/statvfs.h>
+#include <syslog.h>
 #include "platform_defs.h"
 #include "xfs.h"
 #include "xfs_fs.h"
@@ -28,6 +29,8 @@
 #include "xfs_scrub.h"
 #include "common.h"
 #include "progress.h"
+
+extern char		*progname;
 
 /*
  * Reporting Status to the Console
@@ -62,6 +65,12 @@ static const char *err_str[] = {
 	[S_REPAIR]	= "Repaired",
 	[S_INFO]	= "Info",
 	[S_PREEN]	= "Optimized",
+};
+
+static int log_level[] = {
+	[S_ERROR]	= LOG_ERR,
+	[S_WARN]	= LOG_WARNING,
+	[S_INFO]	= LOG_INFO,
 };
 
 /* If stream is a tty, clear to end of line to clean up progress bar. */
@@ -129,6 +138,46 @@ out_record:
 		ctx->preens++;
 
 	pthread_mutex_unlock(&ctx->lock);
+}
+
+/* Log a message to syslog. */
+#define LOG_BUFSZ	4096
+#define LOGNAME_BUFSZ	256
+void
+__str_log(
+	struct scrub_ctx	*ctx,
+	enum error_level	level,
+	const char		*format,
+	...)
+{
+	va_list			args;
+	char			logname[LOGNAME_BUFSZ];
+	char			buf[LOG_BUFSZ];
+	int			sz;
+
+	/* We only want to hear about optimizing when in debug/verbose mode. */
+	if (level == S_PREEN && !debug && !verbose)
+		return;
+
+	/*
+	 * Skip logging if we're being run as a service (presumably the
+	 * service will log stdout/stderr); if we're being run in a non
+	 * interactive manner (assume we're a service); or if we're in
+	 * debug mode.
+	 */
+	if (is_service || !isatty(fileno(stdin)) || debug)
+		return;
+
+	snprintf(logname, LOGNAME_BUFSZ, "%s@%s", progname, ctx->mntpoint);
+	openlog(logname, LOG_PID, LOG_DAEMON);
+
+	sz = snprintf(buf, LOG_BUFSZ, "%s: ", _(err_str[level]));
+	va_start(args, format);
+	vsnprintf(buf + sz, LOG_BUFSZ - sz, format, args);
+	va_end(args);
+	syslog(log_level[level], "%s", buf);
+
+	closelog();
 }
 
 double

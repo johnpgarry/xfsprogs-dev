@@ -56,6 +56,16 @@ void __str_out(struct scrub_ctx *ctx, const char *descr, enum error_level level,
 #define dbg_printf(fmt, ...) \
 	do {if (debug > 1) {printf(fmt, __VA_ARGS__);}} while (0)
 
+void __str_log(struct scrub_ctx *ctx, enum error_level level,
+		const char *format, ...);
+
+#define log_info(ctx, ...) \
+	__str_log(ctx, S_INFO,	__VA_ARGS__)
+#define log_warn(ctx, ...) \
+	__str_log(ctx, S_WARN,	__VA_ARGS__)
+#define log_err(ctx, ...) \
+	__str_log(ctx, S_ERROR,	__VA_ARGS__)
+
 /* Is this debug tweak enabled? */
 static inline bool
 debug_tweak_on(

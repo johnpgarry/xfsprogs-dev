@@ -236,6 +236,7 @@ _("Unable to find realtime device path."));
 	 * this point are most probably corruption errors (as opposed to
 	 * purely setup errors).
 	 */
+	log_info(ctx, _("Invoking online scrub."), ctx);
 	ctx->need_repair = true;
 	return true;
 }
