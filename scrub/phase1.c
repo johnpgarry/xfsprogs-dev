@@ -237,6 +237,6 @@ _("Unable to find realtime device path."));
 	 * purely setup errors).
 	 */
 	log_info(ctx, _("Invoking online scrub."), ctx);
-	ctx->need_repair = true;
+	ctx->scrub_setup_succeeded = true;
 	return true;
 }

@@ -96,7 +96,7 @@ struct scrub_ctx {
 	unsigned long long	naming_warnings;
 	unsigned long long	repairs;
 	unsigned long long	preens;
-	bool			need_repair;
+	bool			scrub_setup_succeeded;
 	bool			preen_triggers[XFS_SCRUB_TYPE_NR];
 };
 

@@ -522,7 +522,12 @@ report_outcome(
 				total_errors, ctx->warnings_found);
 	}
 
-	if (ctx->need_repair)
+	/*
+	 * Don't advise the user to run repair unless we were successful in
+	 * setting up the scrub and we actually saw corruptions.  Warnings
+	 * are not corruptions.
+	 */
+	if (ctx->scrub_setup_succeeded && total_errors > 0)
 		fprintf(stderr, _("%s: Unmount and run xfs_repair.\n"),
 				ctx->mntpoint);
 }
