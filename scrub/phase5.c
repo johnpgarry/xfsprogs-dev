@@ -256,9 +256,12 @@ xfs_scrub_connections(
 	background_sleep();
 
 	/* Warn about naming problems in xattrs. */
-	moveon = xfs_scrub_scan_fhandle_xattrs(ctx, descr, handle, bstat);
-	if (!moveon)
-		goto out;
+	if (bstat->bs_xflags & FS_XFLAG_HASATTR) {
+		moveon = xfs_scrub_scan_fhandle_xattrs(ctx, descr, handle,
+				bstat);
+		if (!moveon)
+			goto out;
+	}
 
 	/* Open the dir, let the kernel try to reconnect it to the root. */
 	if (S_ISDIR(bstat->bs_mode)) {
