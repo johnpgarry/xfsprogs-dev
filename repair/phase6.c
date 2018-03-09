@@ -927,7 +927,9 @@ mk_orphanage(xfs_mount_t *mp)
 	 * would have been cleared in phase3 and phase4.
 	 */
 
-	if ((i = -libxfs_iget(mp, NULL, mp->m_sb.sb_rootino, 0, &pip)))
+	i = -libxfs_iget(mp, NULL, mp->m_sb.sb_rootino, 0, &pip,
+			&xfs_default_ifork_ops);
+	if (i)
 		do_error(_("%d - couldn't iget root inode to obtain %s\n"),
 			i, ORPHANAGE);
 
@@ -951,7 +953,9 @@ mk_orphanage(xfs_mount_t *mp)
 	 * use iget/ijoin instead of trans_iget because the ialloc
 	 * wrapper can commit the transaction and start a new one
 	 */
-/*	if ((i = -libxfs_iget(mp, NULL, mp->m_sb.sb_rootino, 0, &pip)))
+/*	i = -libxfs_iget(mp, NULL, mp->m_sb.sb_rootino, 0, &pip,
+			&xfs_default_ifork_ops);
+	if (i)
 		do_error(_("%d - couldn't iget root inode to make %s\n"),
 			i, ORPHANAGE);*/
 
@@ -1066,7 +1070,8 @@ mv_orphanage(
 	xname.len = snprintf((char *)fname, sizeof(fname), "%llu",
 				(unsigned long long)ino);
 
-	err = -libxfs_iget(mp, NULL, orphanage_ino, 0, &orphanage_ip);
+	err = -libxfs_iget(mp, NULL, orphanage_ino, 0, &orphanage_ip,
+			&xfs_default_ifork_ops);
 	if (err)
 		do_error(_("%d - couldn't iget orphanage inode\n"), err);
 	/*
@@ -1078,7 +1083,8 @@ mv_orphanage(
 		xname.len = snprintf((char *)fname, sizeof(fname), "%llu.%d",
 					(unsigned long long)ino, ++incr);
 
-	if ((err = -libxfs_iget(mp, NULL, ino, 0, &ino_p)))
+	err = -libxfs_iget(mp, NULL, ino, 0, &ino_p, &xfs_default_ifork_ops);
+	if (err)
 		do_error(_("%d - couldn't iget disconnected inode\n"), err);
 
 	xname.type = libxfs_mode_to_ftype(VFS_I(ino_p)->i_mode);
@@ -2827,7 +2833,7 @@ process_dir_inode(
 
 	ASSERT(!is_inode_refchecked(irec, ino_offset) || dotdot_update);
 
-	error = -libxfs_iget(mp, NULL, ino, 0, &ip);
+	error = -libxfs_iget(mp, NULL, ino, 0, &ip, NULL);
 	if (error) {
 		if (!no_modify)
 			do_error(

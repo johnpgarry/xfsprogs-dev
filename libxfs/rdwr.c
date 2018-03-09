@@ -1360,12 +1360,16 @@ extern kmem_zone_t	*xfs_ili_zone;
  */
 bool
 libxfs_inode_verify_forks(
-	struct xfs_inode	*ip)
+	struct xfs_inode	*ip,
+	struct xfs_ifork_ops	*ops)
 {
 	struct xfs_ifork	*ifp;
 	xfs_failaddr_t		fa;
 
-	fa = xfs_ifork_verify_data(ip, &xfs_default_ifork_ops);
+	if (!ops)
+		return true;
+
+	fa = xfs_ifork_verify_data(ip, ops);
 	if (fa) {
 		ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
 		xfs_inode_verifier_error(ip, -EFSCORRUPTED, "data fork",
@@ -1373,7 +1377,7 @@ libxfs_inode_verify_forks(
 		return false;
 	}
 
-	fa = xfs_ifork_verify_attr(ip, &xfs_default_ifork_ops);
+	fa = xfs_ifork_verify_attr(ip, ops);
 	if (fa) {
 		ifp = XFS_IFORK_PTR(ip, XFS_ATTR_FORK);
 		xfs_inode_verifier_error(ip, -EFSCORRUPTED, "attr fork",
@@ -1385,11 +1389,16 @@ libxfs_inode_verify_forks(
 }
 
 int
-libxfs_iget(xfs_mount_t *mp, xfs_trans_t *tp, xfs_ino_t ino, uint lock_flags,
-		xfs_inode_t **ipp)
+libxfs_iget(
+	struct xfs_mount	*mp,
+	struct xfs_trans	*tp,
+	xfs_ino_t		ino,
+	uint			lock_flags,
+	struct xfs_inode	**ipp,
+	struct xfs_ifork_ops	*ifork_ops)
 {
-	xfs_inode_t	*ip;
-	int		error = 0;
+	struct xfs_inode	*ip;
+	int			error = 0;
 
 	ip = kmem_zone_zalloc(xfs_inode_zone, 0);
 	if (!ip)
@@ -1404,7 +1413,7 @@ libxfs_iget(xfs_mount_t *mp, xfs_trans_t *tp, xfs_ino_t ino, uint lock_flags,
 		return error;
 	}
 
-	if (!libxfs_inode_verify_forks(ip)) {
+	if (!libxfs_inode_verify_forks(ip, ifork_ops)) {
 		libxfs_iput(ip);
 		return -EFSCORRUPTED;
 	}
