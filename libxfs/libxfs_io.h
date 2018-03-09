@@ -103,10 +103,6 @@ enum xfs_buf_flags_t {	/* b_flags bits */
 #define XFS_BUF_SIZE(bp)		((bp)->b_bcount)
 #define XFS_BUF_COUNT(bp)		((bp)->b_bcount)
 #define XFS_BUF_TARGET(bp)		((bp)->b_dev)
-#define XFS_BUF_SET_PTR(bp,p,cnt)	({	\
-	(bp)->b_addr = (char *)(p);		\
-	XFS_BUF_SET_COUNT(bp,cnt);		\
-})
 
 #define XFS_BUF_SET_ADDR(bp,blk)	((bp)->b_bn = (blk))
 #define XFS_BUF_SET_COUNT(bp,cnt)	((bp)->b_bcount = (cnt))
@@ -228,6 +224,14 @@ xfs_buf_update_cksum(struct xfs_buf *bp, unsigned long cksum_offset)
 {
 	xfs_update_cksum(bp->b_addr, BBTOB(bp->b_length),
 			 cksum_offset);
+}
+
+static inline int
+xfs_buf_associate_memory(struct xfs_buf *bp, void *mem, size_t len)
+{
+	bp->b_addr = mem;
+	bp->b_bcount = len;
+	return 0;
 }
 
 #endif	/* __LIBXFS_IO_H__ */
