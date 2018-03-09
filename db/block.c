@@ -84,6 +84,11 @@ ablock_f(
 	}
 	push_cur();
 	set_cur_inode(iocur_top->ino);
+	if (!iocur_top->data) {
+		pop_cur();
+		dbprintf(_("no current inode\n"));
+		return 0;
+	}
 	haveattr = XFS_DFORK_Q((xfs_dinode_t *)iocur_top->data);
 	pop_cur();
 	if (!haveattr) {
