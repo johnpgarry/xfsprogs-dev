@@ -43,7 +43,7 @@ int libxfs_bhash_size;		/* #buckets in bcache */
 
 int	use_xfs_buf_lock;	/* global flag: use xfs_buf_t locks for MT */
 
-static void manage_zones(int);	/* setup global zones */
+static int manage_zones(int);	/* setup/teardown global zones */
 
 /*
  * dev_map - map open devices to fd.
@@ -372,7 +372,7 @@ done:
 /*
  * Initialize/destroy all of the zone allocators we use.
  */
-static void
+static int
 manage_zones(int release)
 {
 	extern kmem_zone_t	*xfs_buf_zone;
@@ -388,16 +388,20 @@ manage_zones(int release)
 	extern void		xfs_dir_startup();
 
 	if (release) {	/* free zone allocation */
-		kmem_free(xfs_buf_zone);
-		kmem_free(xfs_inode_zone);
-		kmem_free(xfs_ifork_zone);
-		kmem_free(xfs_buf_item_zone);
-		kmem_free(xfs_da_state_zone);
-		kmem_free(xfs_btree_cur_zone);
-		kmem_free(xfs_bmap_free_item_zone);
-		kmem_free(xfs_trans_zone);
-		kmem_free(xfs_log_item_desc_zone);
-		return;
+		int	leaked = 0;
+
+		leaked += kmem_zone_destroy(xfs_buf_zone);
+		leaked += kmem_zone_destroy(xfs_ili_zone);
+		leaked += kmem_zone_destroy(xfs_inode_zone);
+		leaked += kmem_zone_destroy(xfs_ifork_zone);
+		leaked += kmem_zone_destroy(xfs_buf_item_zone);
+		leaked += kmem_zone_destroy(xfs_da_state_zone);
+		leaked += kmem_zone_destroy(xfs_btree_cur_zone);
+		leaked += kmem_zone_destroy(xfs_bmap_free_item_zone);
+		leaked += kmem_zone_destroy(xfs_trans_zone);
+		leaked += kmem_zone_destroy(xfs_log_item_desc_zone);
+
+		return leaked;
 	}
 	/* otherwise initialise zone allocation */
 	xfs_buf_zone = kmem_zone_init(sizeof(xfs_buf_t), "xfs_buffer");
@@ -419,6 +423,8 @@ manage_zones(int release)
 	xfs_log_item_desc_zone = kmem_zone_init(
 			sizeof(struct xfs_log_item_desc), "xfs_log_item_desc");
 	xfs_dir_startup();
+
+	return 0;
 }
 
 /*
@@ -887,11 +893,15 @@ libxfs_umount(xfs_mount_t *mp)
 void
 libxfs_destroy(void)
 {
+	int	leaked;
+
 	/* Free everything from the buffer cache before freeing buffer zone */
 	libxfs_bcache_purge();
 	libxfs_bcache_free();
 	cache_destroy(libxfs_bcache);
-	manage_zones(1);
+	leaked = manage_zones(1);
+	if (getenv("LIBXFS_LEAK_CHECK") && leaked)
+		exit(1);
 }
 
 int

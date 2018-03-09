@@ -33,6 +33,7 @@ typedef struct kmem_zone {
 extern kmem_zone_t *kmem_zone_init(int, char *);
 extern void	*kmem_zone_alloc(kmem_zone_t *, int);
 extern void	*kmem_zone_zalloc(kmem_zone_t *, int);
+extern int	kmem_zone_destroy(kmem_zone_t *);
 
 static inline void
 kmem_zone_free(kmem_zone_t *zone, void *ptr)
