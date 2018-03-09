@@ -1275,6 +1275,24 @@ libxfs_bulkrelse(
 }
 
 /*
+ * Free everything from the xfs_buf_freelist MRU, used at final teardown
+ */
+void
+libxfs_bcache_free(void)
+{
+	struct list_head	*cm_list;
+	xfs_buf_t		*bp, *next;
+
+	cm_list = &xfs_buf_freelist.cm_list;
+	list_for_each_entry_safe(bp, next, cm_list, b_node.cn_mru) {
+		free(bp->b_addr);
+		if (bp->b_maps != &bp->__b_map)
+			free(bp->b_maps);
+		kmem_zone_free(xfs_buf_zone, bp);
+	}
+}
+
+/*
  * When a buffer is marked dirty, the error is cleared. Hence if we are trying
  * to flush a buffer prior to cache reclaim that has an error on it it means
  * we've already tried to flush it and it failed. Prevent repeated corruption

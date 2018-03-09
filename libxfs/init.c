@@ -888,8 +888,11 @@ libxfs_umount(xfs_mount_t *mp)
 void
 libxfs_destroy(void)
 {
-	manage_zones(1);
+	/* Free everything from the buffer cache before freeing buffer zone */
+	libxfs_bcache_purge();
+	libxfs_bcache_free();
 	cache_destroy(libxfs_bcache);
+	manage_zones(1);
 }
 
 int
