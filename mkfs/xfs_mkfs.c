@@ -4045,6 +4045,7 @@ main(
 	if (xi.logdev && xi.logdev != xi.ddev)
 		libxfs_device_close(xi.logdev);
 	libxfs_device_close(xi.ddev);
+	libxfs_destroy();
 
 	return 0;
 }

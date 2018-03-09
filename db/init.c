@@ -236,5 +236,7 @@ close_devices:
 		libxfs_device_close(x.logdev);
 	if (x.rtdev)
 		libxfs_device_close(x.rtdev);
+	libxfs_destroy();
+
 	return exitcode;
 }
