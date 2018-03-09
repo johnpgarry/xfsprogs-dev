@@ -421,6 +421,32 @@ AC_DEFUN([AC_HAVE_HDIO_GETGEO],
     AC_SUBST(have_hdio_getgeo)
   ])
 
+AC_DEFUN([AC_PACKAGE_CHECK_LTO],
+  [ AC_MSG_CHECKING([if C compiler supports LTO])
+    OLD_CFLAGS="$CFLAGS"
+    OLD_LDFLAGS="$LDFLAGS"
+    LTO_FLAGS="-flto -ffat-lto-objects"
+    CFLAGS="$CFLAGS $LTO_FLAGS"
+    LDFLAGS="$LDFLAGS $LTO_FLAGS"
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([])],
+        [AC_MSG_RESULT([yes])]
+        [lto_cflags=$LTO_FLAGS]
+        [lto_ldflags=$LTO_FLAGS]
+        [AC_PATH_PROG(gcc_ar, gcc-ar,,)]
+        [AC_PATH_PROG(gcc_ranlib, gcc-ranlib,,)],
+        [AC_MSG_RESULT([no])])
+    if test -x "$gcc_ar" && test -x "$gcc_ranlib"; then
+        have_lto=yes
+    fi
+    CFLAGS="${OLD_CFLAGS}"
+    LDFLAGS="${OLD_LDFLAGS}"
+    AC_SUBST(gcc_ar)
+    AC_SUBST(gcc_ranlib)
+    AC_SUBST(have_lto)
+    AC_SUBST(lto_cflags)
+    AC_SUBST(lto_ldflags)
+  ])
+
 AC_DEFUN([AC_PACKAGE_CHECK_RETPOLINE],
   [ AC_MSG_CHECKING([if C compiler supports retpoline])
     OLD_CFLAGS="$CFLAGS"

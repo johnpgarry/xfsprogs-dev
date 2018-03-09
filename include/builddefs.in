@@ -183,6 +183,15 @@ OPTIMIZER += @retpoline_cflags@
 LOADERFLAGS += @retpoline_ldflags@
 endif
 
+# Use special ar/ranlib wrappers if we have lto
+HAVE_LTO = @have_lto@
+ifeq ($(HAVE_LTO),yes)
+OPTIMIZER += @lto_cflags@
+LOADERFLAGS += @lto_ldflags@
+AR = @gcc_ar@
+RANLIB = @gcc_ranlib@
+endif
+
 GCFLAGS = $(DEBUG) \
 	  -DVERSION=\"$(PKG_VERSION)\" -DLOCALEDIR=\"$(PKG_LOCALE_DIR)\"  \
 	  -DPACKAGE=\"$(PKG_NAME)\" -I$(TOPDIR)/include -I$(TOPDIR)/libxfs

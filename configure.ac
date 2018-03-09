@@ -90,6 +90,11 @@ AC_ARG_ENABLE(threadsan,
 	enable_threadsan=no)
 AC_SUBST(enable_threadsan)
 
+AC_ARG_ENABLE(lto,
+[ --enable-lto=[yes/no]      Enable link time optimization (LTO) [default=probe]],,
+	enable_lto=probe)
+AC_SUBST(enable_lto)
+
 #
 # If the user specified a libdir ending in lib64 do not append another
 # 64 to the library names.
@@ -204,6 +209,13 @@ fi
 
 if test "$have_threadsan" = "yes" && test "$have_addrsan" = "yes"; then
         AC_MSG_WARN([ADDRSAN and THREADSAN are not known to work together.])
+fi
+
+if test "$enable_lto" = "yes" || test "$enable_lto" = "probe"; then
+	AC_PACKAGE_CHECK_LTO
+fi
+if test "$enable_lto" = "yes" && test "$have_lto" != "yes"; then
+	AC_MSG_ERROR([LTO not supported by compiler.])
 fi
 
 AC_PACKAGE_CHECK_RETPOLINE
