@@ -773,6 +773,11 @@ sec uses UNIX timestamp notation and is the seconds elapsed since
 nsec is the nanoseconds since the sec. This value needs to be in
 the range 0-999999999 with UTIME_NOW and UTIME_OMIT being exceptions.
 Each (sec, nsec) pair constitutes a single timestamp value.
+.TP
+.BI swapext " donor_file "
+Swaps extent forks between files. The current open file is the target. The donor
+file is specified by path. Note that file data is not copied (file content moves
+with the fork(s)).
 
 .SH MEMORY MAPPED I/O COMMANDS
 .TP

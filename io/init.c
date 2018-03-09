@@ -90,6 +90,7 @@ init_commands(void)
 	sendfile_init();
 	shutdown_init();
 	stat_init();
+	swapext_init();
 	sync_init();
 	sync_range_init();
 	truncate_init();
