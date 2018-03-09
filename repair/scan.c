@@ -705,6 +705,7 @@ _("%s freespace btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 							     XR_E_FREE);
 						break;
 					}
+					/* fall through */
 				default:
 					do_warn(
 	_("block (%d,%d-%d) multiply claimed by %s space tree, state - %d\n"),

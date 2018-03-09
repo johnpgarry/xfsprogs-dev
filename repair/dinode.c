@@ -525,6 +525,7 @@ _("data fork in rt inode %" PRIu64 " found metadata block %" PRIu64 " in rt bmap
 		case XR_E_INUSE:
 			if (pwe)
 				break;
+			/* fall through */
 		case XR_E_MULT:
 			set_rtbmap(ext, XR_E_MULT);
 			do_warn(
