@@ -176,6 +176,13 @@ endif
 SANITIZER_CFLAGS += @addrsan_cflags@ @threadsan_cflags@ @ubsan_cflags@
 SANITIZER_LDFLAGS += @addrsan_ldflags@ @threadsan_ldflags@ @ubsan_ldflags@
 
+# Enable retpolines if available
+HAVE_RETPOLINE = @have_retpoline@
+ifeq ($(HAVE_RETPOLINE),yes)
+OPTIMIZER += @retpoline_cflags@
+LOADERFLAGS += @retpoline_ldflags@
+endif
+
 GCFLAGS = $(DEBUG) \
 	  -DVERSION=\"$(PKG_VERSION)\" -DLOCALEDIR=\"$(PKG_LOCALE_DIR)\"  \
 	  -DPACKAGE=\"$(PKG_NAME)\" -I$(TOPDIR)/include -I$(TOPDIR)/libxfs

@@ -206,6 +206,7 @@ if test "$have_threadsan" = "yes" && test "$have_addrsan" = "yes"; then
         AC_MSG_WARN([ADDRSAN and THREADSAN are not known to work together.])
 fi
 
+AC_PACKAGE_CHECK_RETPOLINE
 AC_CHECK_SIZEOF([long])
 AC_CHECK_SIZEOF([char *])
 AC_TYPE_UMODE_T
