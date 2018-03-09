@@ -17,3 +17,4 @@
  */
 
 void logformat_init(void);
+void logres_init(void);

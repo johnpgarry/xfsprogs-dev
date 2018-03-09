@@ -147,3 +147,62 @@ logformat_init(void)
 
 	add_command(&logformat_cmd);
 }
+
+static void
+print_logres(
+	int			i,
+	struct xfs_trans_res	*res)
+{
+	dbprintf(_("type %d logres %u logcount %d flags 0x%x\n"),
+		i, res->tr_logres, res->tr_logcount, res->tr_logflags);
+}
+
+int
+logres_f(
+	int			argc,
+	char			**argv)
+{
+	struct xfs_trans_res	resv;
+	struct xfs_trans_res	*res;
+	struct xfs_trans_res	*end_res;
+	int			i;
+
+	res = (struct xfs_trans_res *)M_RES(mp);
+	end_res = (struct xfs_trans_res *)(M_RES(mp) + 1);
+	for (i = 0; res < end_res; i++, res++)
+		print_logres(i, res);
+	libxfs_log_get_max_trans_res(mp, &resv);
+	print_logres(-1, &resv);
+
+	return 0;
+}
+
+static void
+logres_help(void)
+{
+	dbprintf(_(
+"\n"
+" The 'logres' command prints information about all log reservation types.\n"
+" This includes the reservation space, the intended transaction roll count,\n"
+" and the reservation flags, if any.\n"
+"\n"
+	));
+}
+
+static const struct cmdinfo logres_cmd = {
+	.name =		"logres",
+	.altname =	NULL,
+	.cfunc =	logres_f,
+	.argmin =	0,
+	.argmax =	0,
+	.canpush =	0,
+	.args =		NULL,
+	.oneline =	N_("dump log reservations"),
+	.help =		logres_help,
+};
+
+void
+logres_init(void)
+{
+	add_command(&logres_cmd);
+}

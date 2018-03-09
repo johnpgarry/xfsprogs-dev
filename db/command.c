@@ -138,6 +138,7 @@ init_commands(void)
 	hash_init();
 	inode_init();
 	input_init();
+	logres_init();
 	logformat_init();
 	io_init();
 	metadump_init();

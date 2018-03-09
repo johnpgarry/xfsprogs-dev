@@ -60,7 +60,7 @@
 #define xfs_trans_roll			libxfs_trans_roll
 #define xfs_trans_get_buf_map		libxfs_trans_get_buf_map
 #define xfs_trans_resv_calc		libxfs_trans_resv_calc
-
+#define xfs_log_get_max_trans_res	libxfs_log_get_max_trans_res
 #define xfs_attr_get			libxfs_attr_get
 #define xfs_attr_set			libxfs_attr_set
 #define xfs_attr_remove			libxfs_attr_remove

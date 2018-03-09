@@ -690,6 +690,12 @@ Start logging output to
 .IR filename ,
 stop logging, or print the current logging status.
 .TP
+.B logres
+Print transaction reservation size information for each transaction type.
+This makes it easier to find discrepancies in the reservation calculations
+between xfsprogs and the kernel, which will help when diagnosing minimum
+log size calculation errors.
+.TP
 .BI "metadump [\-egow] " filename
 Dumps metadata to a file. See
 .BR xfs_metadump (8)
