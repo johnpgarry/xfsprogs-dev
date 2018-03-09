@@ -17,17 +17,14 @@
  * along with this program; if not, write the Free Software Foundation,
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#include <stdio.h>
+#include "xfs.h"
 #include <stdint.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <dirent.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <unistr.h>
 #include <uninorm.h>
-#include "xfs.h"
 #include "path.h"
 #include "xfs_scrub.h"
 #include "common.h"

@@ -17,13 +17,10 @@
  * along with this program; if not, write the Free Software Foundation,
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#include <stdio.h>
+#include "xfs.h"
 #include <stdint.h>
-#include <stdbool.h>
 #include <dirent.h>
 #include <sys/statvfs.h>
-#include "xfs.h"
-#include "xfs_fs.h"
 #include "handle.h"
 #include "path.h"
 #include "ptvar.h"

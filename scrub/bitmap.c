@@ -17,13 +17,10 @@
  * along with this program; if not, write the Free Software Foundation,
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#include <stdio.h>
-#include <stdbool.h>
+#include "xfs.h"
 #include <stdint.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <assert.h>
-#include <inttypes.h>
 #include <pthread.h>
 #include "platform_defs.h"
 #include "avl64.h"

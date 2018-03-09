@@ -17,30 +17,22 @@
  * along with this program; if not, write the Free Software Foundation,
  * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#include <stdio.h>
-#include <mntent.h>
+#include "xfs.h"
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/statvfs.h>
-#include <sys/vfs.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include <pthread.h>
-#include <errno.h>
-#include <linux/fs.h>
 #include "libfrog.h"
 #include "workqueue.h"
 #include "input.h"
 #include "path.h"
 #include "handle.h"
 #include "bitops.h"
-#include "xfs_arch.h"
-#include "xfs_format.h"
 #include "avl64.h"
 #include "list.h"
 #include "xfs_scrub.h"
