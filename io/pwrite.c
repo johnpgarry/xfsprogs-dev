@@ -271,8 +271,10 @@ write_once(
 {
 	ssize_t bytes;
 	bytes = do_pwrite(file->fd, offset, count, count, pwritev2_flags);
-	if (bytes < 0)
+	if (bytes < 0) {
+		perror("pwrite");
 		return -1;
+	}
 	*total = bytes;
 	return 1;
 }
