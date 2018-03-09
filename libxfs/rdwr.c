@@ -1351,8 +1351,8 @@ struct cache_operations libxfs_bcache_operations = {
  * Inode cache stubs.
  */
 
+kmem_zone_t		*xfs_inode_zone;
 extern kmem_zone_t	*xfs_ili_zone;
-extern kmem_zone_t	*xfs_inode_zone;
 
 /*
  * If there are inline format data / attr forks attached to this inode,

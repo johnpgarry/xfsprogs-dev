@@ -45,8 +45,6 @@ int	use_xfs_buf_lock;	/* global flag: use xfs_buf_t locks for MT */
 
 static void manage_zones(int);	/* setup global zones */
 
-kmem_zone_t	*xfs_inode_zone;
-
 /*
  * dev_map - map open devices to fd.
  */
@@ -379,6 +377,7 @@ manage_zones(int release)
 {
 	extern kmem_zone_t	*xfs_buf_zone;
 	extern kmem_zone_t	*xfs_ili_zone;
+	extern kmem_zone_t	*xfs_inode_zone;
 	extern kmem_zone_t	*xfs_ifork_zone;
 	extern kmem_zone_t	*xfs_buf_item_zone;
 	extern kmem_zone_t	*xfs_da_state_zone;
