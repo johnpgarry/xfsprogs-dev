@@ -222,7 +222,7 @@ See the
 .B pread
 command.
 .TP
-.BI "pwrite [ \-i " file " ] [ \-dwNOW ] [ \-s " skip " ] [ \-b " size " ] [ \-S " seed " ] [ \-FBR [ \-Z " zeed " ] ] [ \-V " vectors " ] " "offset length"
+.BI "pwrite [ \-i " file " ] [ \-dDwNOW ] [ \-s " skip " ] [ \-b " size " ] [ \-S " seed " ] [ \-FBR [ \-Z " zeed " ] ] [ \-V " vectors " ] " "offset length"
 Writes a range of bytes in a specified blocksize from the given
 .IR offset .
 The bytes written can be either a set pattern or read in from another
@@ -248,7 +248,13 @@ once all writes are complete (included in timing results)
 Perform the
 .BR pwritev2 (2)
 call with
-.I RWF_NOWAIT.
+.IR RWF_NOWAIT .
+.TP
+.B \-D
+Perform the
+.BR pwritev2 (2)
+call with
+.IR RWF_DSYNC .
 .TP
 .B \-O
 perform pwrite once and return the (maybe partial) bytes written.
