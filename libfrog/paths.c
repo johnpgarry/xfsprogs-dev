@@ -98,6 +98,9 @@ __fs_table_lookup_mount(
 	char		rpath[PATH_MAX];
 	char		dpath[PATH_MAX];
 
+	if (!dir && !blkdev)
+		return NULL;
+
 	if (dir && !realpath(dir, dpath))
 		return NULL;
 	if (blkdev && !realpath(blkdev, dpath))
