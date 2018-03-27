@@ -56,18 +56,15 @@ xfs_scrub_excessive_errors(
 	return ret;
 }
 
-static const char *err_str[] = {
-	[S_ERROR]	= "Error",
-	[S_WARN]	= "Warning",
-	[S_REPAIR]	= "Repaired",
-	[S_INFO]	= "Info",
-	[S_PREEN]	= "Optimized",
-};
-
-static int log_level[] = {
-	[S_ERROR]	= LOG_ERR,
-	[S_WARN]	= LOG_WARNING,
-	[S_INFO]	= LOG_INFO,
+static struct {
+	const char *string;
+	int loglevel;
+} err_levels[] = {
+	[S_ERROR]  = { .string = "Error",	.loglevel = LOG_ERR },
+	[S_WARN]   = { .string = "Warning",	.loglevel = LOG_WARNING },
+	[S_REPAIR] = { .string = "Repaired",	.loglevel = LOG_WARNING },
+	[S_INFO]   = { .string = "Info",	.loglevel = LOG_INFO },
+	[S_PREEN]  = { .string = "Optimized",	.loglevel = LOG_INFO }
 };
 
 /* If stream is a tty, clear to end of line to clean up progress bar. */
@@ -106,8 +103,8 @@ __str_out(
 	if (level == S_PREEN && !debug && !verbose)
 		goto out_record;
 
-	fprintf(stream, "%s%s: %s: ", stream_start(stream), _(err_str[level]),
-			descr);
+	fprintf(stream, "%s%s: %s: ", stream_start(stream),
+			_(err_levels[level].string), descr);
 	if (error) {
 		fprintf(stream, _("%s."), strerror_r(error, buf, DESCR_BUFSZ));
 	} else {
@@ -168,11 +165,11 @@ __str_log(
 	snprintf(logname, LOGNAME_BUFSZ, "%s@%s", progname, ctx->mntpoint);
 	openlog(logname, LOG_PID, LOG_DAEMON);
 
-	sz = snprintf(buf, LOG_BUFSZ, "%s: ", _(err_str[level]));
+	sz = snprintf(buf, LOG_BUFSZ, "%s: ", _(err_levels[level].string));
 	va_start(args, format);
 	vsnprintf(buf + sz, LOG_BUFSZ - sz, format, args);
 	va_end(args);
-	syslog(log_level[level], "%s", buf);
+	syslog(err_levels[level].loglevel, "%s", buf);
 
 	closelog();
 }
