@@ -154,9 +154,10 @@ tdiv(double value, struct timeval tv)
 	return value / ((double)tv.tv_sec + ((double)tv.tv_usec / 1000000.0));
 }
 
-#define HOURS(sec)	((sec) / (60 * 60))
-#define MINUTES(sec)	(((sec) % (60 * 60)) / 60)
-#define SECONDS(sec)	((sec) % 60)
+#define HOURS(sec)		((sec) / (60 * 60))
+#define MINUTES(sec)		(((sec) % (60 * 60)) / 60)
+#define SECONDS(sec)		((sec) % 60)
+#define USEC_TO_100THS(usec)	((usec) / 1000 / 10)
 
 void
 timestr(
@@ -165,14 +166,12 @@ timestr(
 	size_t		size,
 	int		format)
 {
-	double		usec = (double)tv->tv_usec / 1000000.0;
-
 	if (format & TERSE_FIXED_TIME) {
 		if (!HOURS(tv->tv_sec)) {
 			snprintf(ts, size, "%u:%02u.%02u",
 				(unsigned int) MINUTES(tv->tv_sec),
 				(unsigned int) SECONDS(tv->tv_sec),
-				(unsigned int) usec * 100);
+				(unsigned int) USEC_TO_100THS(tv->tv_usec));
 			return;
 		}
 		format |= VERBOSE_FIXED_TIME;	/* fallback if hours needed */
@@ -183,9 +182,10 @@ timestr(
 			(unsigned int) HOURS(tv->tv_sec),
 			(unsigned int) MINUTES(tv->tv_sec),
 			(unsigned int) SECONDS(tv->tv_sec),
-			(unsigned int) usec * 100);
+			(unsigned int) USEC_TO_100THS(tv->tv_usec));
 	} else {
-		snprintf(ts, size, "0.%04u sec", (unsigned int) usec * 10000);
+		snprintf(ts, size, "0.%04u sec",
+			(unsigned int) tv->tv_usec / 100);
 	}
 }
 
