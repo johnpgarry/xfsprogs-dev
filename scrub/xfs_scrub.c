@@ -20,6 +20,7 @@
 #include "xfs.h"
 #include <pthread.h>
 #include <stdlib.h>
+#include <paths.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/statvfs.h>
