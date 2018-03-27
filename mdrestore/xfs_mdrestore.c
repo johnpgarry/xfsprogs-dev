@@ -93,15 +93,14 @@ perform_restore(
 	block_buffer = (char *)metablock + block_size;
 
 	if (fread(block_index, block_size - sizeof(struct xfs_metablock), 1, src_f) != 1)
-		fatal("error reading from file: %s\n", strerror(errno));
+		fatal("error reading from metadump file\n");
 
 	if (block_index[0] != 0)
 		fatal("first block is not the primary superblock\n");
 
 
-	if (fread(block_buffer, mb_count << mbp->mb_blocklog,
-			1, src_f) != 1)
-		fatal("error reading from file: %s\n", strerror(errno));
+	if (fread(block_buffer, mb_count << mbp->mb_blocklog, 1, src_f) != 1)
+		fatal("error reading from metadump file\n");
 
 	libxfs_sb_from_disk(&sb, (xfs_dsb_t *)block_buffer);
 
@@ -157,7 +156,7 @@ perform_restore(
 			break;
 
 		if (fread(metablock, block_size, 1, src_f) != 1)
-			fatal("error reading from file: %s\n", strerror(errno));
+			fatal("error reading from metadump file\n");
 
 		mb_count = be16_to_cpu(metablock->mb_count);
 		if (mb_count == 0)
@@ -167,7 +166,7 @@ perform_restore(
 
 		if (fread(block_buffer, mb_count << mbp->mb_blocklog,
 								1, src_f) != 1)
-			fatal("error reading from file: %s\n", strerror(errno));
+			fatal("error reading from metadump file\n");
 
 		bytes_read += block_size + (mb_count << mbp->mb_blocklog);
 	}
@@ -253,7 +252,7 @@ main(
 	}
 
 	if (fread(&mb, sizeof(mb), 1, src_f) != 1)
-		fatal("error reading from file: %s\n", strerror(errno));
+		fatal("error reading from metadump file\n");
 	if (mb.mb_magic != cpu_to_be32(XFS_MD_MAGIC))
 		fatal("specified file is not a metadata dump\n");
 

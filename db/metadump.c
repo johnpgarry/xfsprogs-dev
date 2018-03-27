@@ -161,8 +161,8 @@ write_index(void)
 	 */
 	metablock->mb_count = cpu_to_be16(cur_index);
 	if (fwrite(metablock, (cur_index + 1) << BBSHIFT, 1, outf) != 1) {
-		print_warning("error writing to file: %s", strerror(errno));
-		return -errno;
+		print_warning("error writing to target file");
+		return -1;
 	}
 
 	memset(block_index, 0, num_indices * sizeof(__be64));
