@@ -22,6 +22,8 @@
 #ifndef	_WORKQUEUE_H_
 #define	_WORKQUEUE_H_
 
+#include <pthread.h>
+
 struct workqueue;
 
 typedef void workqueue_func_t(struct workqueue *wq, uint32_t index, void *arg);
