@@ -244,7 +244,7 @@ xfs_scrub_connections(
 {
 	bool			*pmoveon = arg;
 	char			descr[DESCR_BUFSZ];
-	bool			moveon;
+	bool			moveon = true;
 	xfs_agnumber_t		agno;
 	xfs_agino_t		agino;
 	int			fd = -1;
