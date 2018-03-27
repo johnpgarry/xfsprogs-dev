@@ -77,6 +77,7 @@ static char *c_opts[] = {
 static int	bhash_option_used;
 static long	max_mem_specified;	/* in megabytes */
 static int	phase2_threads = 32;
+static bool	report_corrected;
 
 static void
 usage(void)
@@ -90,6 +91,7 @@ usage(void)
 "  -l logdev    Specifies the device where the external log resides.\n"
 "  -m maxmem    Maximum amount of memory to be used in megabytes.\n"
 "  -n           No modify mode, just checks the filesystem for damage.\n"
+"               (Cannot be used together with -e.)\n"
 "  -P           Disables prefetching.\n"
 "  -r rtdev     Specifies the device where the realtime section resides.\n"
 "  -v           Verbose output.\n"
@@ -97,6 +99,8 @@ usage(void)
 "  -o subopts   Override default behaviour, refer to man page.\n"
 "  -t interval  Reporting interval in seconds.\n"
 "  -d           Repair dangerously.\n"
+"  -e           Exit with a non-zero code if any errors were repaired.\n"
+"               (Cannot be used together with -n.)\n"
 "  -V           Reports version and exits.\n"), progname);
 	exit(1);
 }
@@ -214,12 +218,13 @@ process_args(int argc, char **argv)
 	ag_stride = 0;
 	thread_count = 1;
 	report_interval = PROG_RPT_DEFAULT;
+	report_corrected = false;
 
 	/*
 	 * XXX have to add suboption processing here
 	 * attributes, quotas, nlinks, aligned_inos, sb_fbits
 	 */
-	while ((c = getopt(argc, argv, "c:o:fl:m:r:LnDvVdPt:")) != EOF)  {
+	while ((c = getopt(argc, argv, "c:o:fl:m:r:LnDvVdPet:")) != EOF)  {
 		switch (c) {
 		case 'D':
 			dumpcore = 1;
@@ -329,6 +334,9 @@ process_args(int argc, char **argv)
 		case 't':
 			report_interval = (int)strtol(optarg, NULL, 0);
 			break;
+		case 'e':
+			report_corrected = true;
+			break;
 		case '?':
 			usage();
 		}
@@ -338,6 +346,9 @@ process_args(int argc, char **argv)
 		usage();
 
 	if ((fs_name = argv[optind]) == NULL)
+		usage();
+
+	if (report_corrected && no_modify)
 		usage();
 }
 
@@ -1096,5 +1107,7 @@ _("Repair of readonly mount complete.  Immediate reboot encouraged.\n"));
 
 	free(msgbuf);
 
+	if (fs_is_dirty && report_corrected)
+		return (4);
 	return (0);
 }
