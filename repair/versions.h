@@ -24,20 +24,6 @@
 #endif /* EXTERN */
 
 /*
- * possible XFS filesystem features
- *
- * inode version 2 (32-bit link counts)		(6.2)
- */
-
-/*
- * filesystem feature global vars, set to 1 if the feature
- * is *allowed*, 0 otherwise.  These can be set via command-line
- * options
- */
-
-EXTERN int		fs_shared_allowed;
-
-/*
  * filesystem feature global vars, set to 1 if the feature
  * is on, 0 otherwise
  */
@@ -49,7 +35,6 @@ EXTERN int		fs_quotas;
 EXTERN int		fs_aligned_inodes;
 EXTERN int		fs_sb_feature_bits;
 EXTERN int		fs_has_extflgbit;
-EXTERN int		fs_shared;
 
 /*
  * inode chunk alignment, fsblocks

@@ -208,7 +208,6 @@ process_args(int argc, char **argv)
 	sb_unit = 0;
 	sb_width = 0;
 	pre_65_beta = 0;
-	fs_shared_allowed = 1;
 	ag_stride = 0;
 	thread_count = 1;
 	report_interval = PROG_RPT_DEFAULT;
