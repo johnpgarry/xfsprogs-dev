@@ -31,10 +31,8 @@ update_sb_version(xfs_mount_t *mp)
 
 	sb = &mp->m_sb;
 
-	if (fs_attributes && !xfs_sb_version_hasattr(sb))  {
-		ASSERT(fs_attributes_allowed);
+	if (fs_attributes && !xfs_sb_version_hasattr(sb))
 		xfs_sb_version_addattr(sb);
-	}
 
 	if (fs_attributes2 && !xfs_sb_version_hasattr2(sb))  {
 		ASSERT(fs_attributes2_allowed);
@@ -187,23 +185,8 @@ _("Superblock has unknown compat/rocompat/incompat features (0x%x/0x%x/0x%x).\n"
 		return 1;
 	}
 
-	if (xfs_sb_version_hasattr(sb))  {
-		if (!fs_attributes_allowed)  {
-			if (!no_modify)  {
-				do_warn(
-_("WARNING:  you have disallowed attributes but this filesystem\n"
-  "\thas attributes.  The filesystem will be downgraded and\n"
-  "\tall attributes will be removed.\n"));
-			} else  {
-				do_warn(
-_("WARNING:  you have disallowed attributes but this filesystem\n"
-  "\thas attributes.  The filesystem would be downgraded and\n"
-  "\tall attributes would be removed.\n"));
-			}
-		} else   {
-			fs_attributes = 1;
-		}
-	}
+	if (xfs_sb_version_hasattr(sb))
+		fs_attributes = 1;
 
 	if (xfs_sb_version_hasattr2(sb))  {
 		if (!fs_attributes2_allowed)  {

@@ -26,7 +26,6 @@
 /*
  * possible XFS filesystem features
  *
- * attributes					(6.2)
  * inode version 2 (32-bit link counts)		(6.2)
  * quotas					(6.2+)
  * aligned inodes				(6.2+)
@@ -40,7 +39,6 @@
  * options
  */
 
-EXTERN int		fs_attributes_allowed;
 EXTERN int		fs_attributes2_allowed;
 EXTERN int		fs_quotas_allowed;
 EXTERN int		fs_aligned_inodes_allowed;
