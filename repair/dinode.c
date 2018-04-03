@@ -2093,14 +2093,9 @@ process_inode_attr_fork(
 		do_warn(_("bad attribute fork in inode %" PRIu64), lino);
 
 		if (!no_modify)  {
-			if (delete_attr_ok)  {
-				do_warn(_(", clearing attr fork\n"));
-				*dirty += clear_dinode_attr(mp, dino, lino);
-				dino->di_aformat = XFS_DINODE_FMT_LOCAL;
-			} else  {
-				do_warn("\n");
-				*dirty += clear_dinode(mp, dino, lino);
-			}
+			do_warn(_(", clearing attr fork\n"));
+			*dirty += clear_dinode_attr(mp, dino, lino);
+			dino->di_aformat = XFS_DINODE_FMT_LOCAL;
 			ASSERT(*dirty > 0);
 		} else  {
 			do_warn(_(", would clear attr fork\n"));
@@ -2111,7 +2106,7 @@ process_inode_attr_fork(
 		blkmap_free(ablkmap);
 		*retval = 1;
 
-		return delete_attr_ok ? 0 : 1;
+		return 0;
 	}
 
 	if (check_dups)  {

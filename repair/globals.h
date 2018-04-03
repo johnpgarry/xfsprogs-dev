@@ -94,7 +94,6 @@ EXTERN int	dangerously;		/* live dangerously ... fix ro mount */
 EXTERN int	isa_file;
 EXTERN int	zap_log;
 EXTERN int	dumpcore;		/* abort, not exit on fatal errs */
-EXTERN int	delete_attr_ok;		/* can clear attrs w/o clearing files */
 EXTERN int	force_geo;		/* can set geo on low confidence info */
 EXTERN int	assume_xfs;		/* assume we have an xfs fs */
 EXTERN char	*log_name;		/* Name of log device */

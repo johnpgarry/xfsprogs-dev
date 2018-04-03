@@ -198,7 +198,6 @@ process_args(int argc, char **argv)
 	zap_log = 0;
 	dumpcore = 0;
 	full_ino_ex_data = 0;
-	delete_attr_ok = 1;
 	force_geo = 0;
 	assume_xfs = 0;
 	copied_sunit = 0;
