@@ -207,7 +207,6 @@ process_args(int argc, char **argv)
 	sb_inoalignmt = 0;
 	sb_unit = 0;
 	sb_width = 0;
-	fs_quotas_allowed = 1;
 	fs_aligned_inodes_allowed = 1;
 	fs_sb_feature_bits_allowed = 1;
 	fs_has_extflgbit_allowed = 1;

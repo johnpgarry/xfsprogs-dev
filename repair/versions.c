@@ -47,10 +47,8 @@ update_sb_version(xfs_mount_t *mp)
 	 * have quotas.
 	 */
 	if (fs_quotas)  {
-		if (!xfs_sb_version_hasquota(sb))  {
-			ASSERT(fs_quotas_allowed);
+		if (!xfs_sb_version_hasquota(sb))
 			xfs_sb_version_addquota(sb);
-		}
 
 		/*
 		 * protect against stray bits in the quota flag field
@@ -204,33 +202,16 @@ _("WARNING: you have a V1 inode filesystem. It would be converted to a\n"
 	}
 
 	if (xfs_sb_version_hasquota(sb))  {
-		if (!fs_quotas_allowed)  {
-			if (!no_modify)  {
-				do_warn(
-_("WARNING:  you have disallowed quotas but this filesystem\n"
-  "\thas quotas.  The filesystem will be downgraded and\n"
-  "\tall quota information will be removed.\n"));
-			} else  {
-				do_warn(
-_("WARNING:  you have disallowed quotas but this filesystem\n"
-  "\thas quotas.  The filesystem would be downgraded and\n"
-  "\tall quota information would be removed.\n"));
-			}
-		} else   {
-			fs_quotas = 1;
+		fs_quotas = 1;
 
-			if (sb->sb_uquotino != 0 &&
-					sb->sb_uquotino != NULLFSINO)
-				have_uquotino = 1;
+		if (sb->sb_uquotino != 0 && sb->sb_uquotino != NULLFSINO)
+			have_uquotino = 1;
 
-			if (sb->sb_gquotino != 0 &&
-					sb->sb_gquotino != NULLFSINO)
-				have_gquotino = 1;
+		if (sb->sb_gquotino != 0 && sb->sb_gquotino != NULLFSINO)
+			have_gquotino = 1;
 
-			if (sb->sb_pquotino != 0 &&
-					sb->sb_pquotino != NULLFSINO)
-				have_pquotino = 1;
-		}
+		if (sb->sb_pquotino != 0 && sb->sb_pquotino != NULLFSINO)
+			have_pquotino = 1;
 	}
 
 	if (xfs_sb_version_hasalign(sb))  {
