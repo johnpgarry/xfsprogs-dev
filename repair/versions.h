@@ -35,7 +35,6 @@
  * options
  */
 
-EXTERN int		fs_has_extflgbit_allowed;
 EXTERN int		fs_shared_allowed;
 
 /*

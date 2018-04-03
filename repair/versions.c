@@ -90,8 +90,6 @@ update_sb_version(xfs_mount_t *mp)
 int
 parse_sb_version(xfs_sb_t *sb)
 {
-	int issue_warning;
-
 	fs_attributes = 0;
 	fs_attributes2 = 0;
 	fs_inode_nlink = 1;
@@ -103,7 +101,6 @@ parse_sb_version(xfs_sb_t *sb)
 	have_uquotino = 0;
 	have_gquotino = 0;
 	have_pquotino = 0;
-	issue_warning = 0;
 
 	if (sb->sb_versionnum & XFS_SB_VERSION_SHAREDBIT) {
 		do_warn(_("Shared Version bit set. Not supported. Ever.\n"));
@@ -124,21 +121,8 @@ parse_sb_version(xfs_sb_t *sb)
 	 * ok, check to make sure that the sb isn't newer
 	 * than we are
 	 */
-	if (xfs_sb_version_hasextflgbit(sb))  {
+	if (xfs_sb_version_hasextflgbit(sb))
 		fs_has_extflgbit = 1;
-		if (!fs_has_extflgbit_allowed)  {
-			issue_warning = 1;
-			do_warn(
-			_("This filesystem has uninitialized extent flags.\n"));
-		}
-	}
-
-	if (issue_warning)  {
-		do_warn(
-_("This filesystem uses feature(s) not yet supported in this release.\n"
-  "Please run a more recent version of xfs_repair.\n"));
-		return(1);
-	}
 
 	if (!xfs_sb_good_version(sb))  {
 		do_warn(_("WARNING:  unknown superblock version %d\n"),
