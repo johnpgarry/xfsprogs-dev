@@ -148,24 +148,8 @@ _("This filesystem contains features not understood by this program.\n"));
 		return(1);
 	}
 
-	if (XFS_SB_VERSION_NUM(sb) >= XFS_SB_VERSION_4)  {
-		if (!fs_sb_feature_bits_allowed)  {
-			if (!no_modify)  {
-				do_warn(
-_("WARNING:  you have disallowed superblock-feature-bits-allowed\n"
-  "\tbut this superblock has feature bits.  The superblock\n"
-  "\twill be downgraded.  This may cause loss of filesystem meta-data\n"));
-			} else   {
-				do_warn(
-_("WARNING:  you have disallowed superblock-feature-bits-allowed\n"
-  "\tbut this superblock has feature bits.  The superblock\n"
-  "\twould be downgraded.  This might cause loss of filesystem\n"
-  "\tmeta-data.\n"));
-			}
-		} else   {
-			fs_sb_feature_bits = 1;
-		}
-	}
+	if (XFS_SB_VERSION_NUM(sb) >= XFS_SB_VERSION_4)
+		fs_sb_feature_bits = 1;
 
 	/* Look for V5 feature flags we don't know about */
 	if (XFS_SB_VERSION_NUM(sb) >= XFS_SB_VERSION_5 &&
