@@ -49,8 +49,6 @@
 static char *o_opts[] = {
 #define ASSUME_XFS	0
 	"assume_xfs",
-#define PRE_65_BETA	1
-	"fs_is_pre_65_beta",
 #define	IHASH_SIZE	2
 	"ihash",
 #define	BHASH_SIZE	3
@@ -207,7 +205,6 @@ process_args(int argc, char **argv)
 	sb_inoalignmt = 0;
 	sb_unit = 0;
 	sb_width = 0;
-	pre_65_beta = 0;
 	ag_stride = 0;
 	thread_count = 1;
 	report_interval = PROG_RPT_DEFAULT;
@@ -234,14 +231,6 @@ process_args(int argc, char **argv)
 					if (assume_xfs)
 						respec('o', o_opts, ASSUME_XFS);
 					assume_xfs = 1;
-					break;
-				case PRE_65_BETA:
-					if (val)
-						noval('o', o_opts, PRE_65_BETA);
-					if (pre_65_beta)
-						respec('o', o_opts,
-							PRE_65_BETA);
-					pre_65_beta = 1;
 					break;
 				case IHASH_SIZE:
 					do_warn(
