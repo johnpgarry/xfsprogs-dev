@@ -34,10 +34,8 @@ update_sb_version(xfs_mount_t *mp)
 	if (fs_attributes && !xfs_sb_version_hasattr(sb))
 		xfs_sb_version_addattr(sb);
 
-	if (fs_attributes2 && !xfs_sb_version_hasattr2(sb))  {
-		ASSERT(fs_attributes2_allowed);
+	if (fs_attributes2 && !xfs_sb_version_hasattr2(sb))
 		xfs_sb_version_addattr2(sb);
-	}
 
 	/* V2 inode conversion is now always going to happen */
 	if (!(sb->sb_versionnum & XFS_SB_VERSION_NLINKBIT))
@@ -188,23 +186,8 @@ _("Superblock has unknown compat/rocompat/incompat features (0x%x/0x%x/0x%x).\n"
 	if (xfs_sb_version_hasattr(sb))
 		fs_attributes = 1;
 
-	if (xfs_sb_version_hasattr2(sb))  {
-		if (!fs_attributes2_allowed)  {
-			if (!no_modify)  {
-				do_warn(
-_("WARNING:  you have disallowed attr2 attributes but this filesystem\n"
-  "\thas attributes.  The filesystem will be downgraded and\n"
-  "\tall attr2 attributes will be removed.\n"));
-			} else  {
-				do_warn(
-_("WARNING:  you have disallowed attr2 attributes but this filesystem\n"
-  "\thas attributes.  The filesystem would be downgraded and\n"
-  "\tall attr2 attributes would be removed.\n"));
-			}
-		} else   {
-			fs_attributes2 = 1;
-		}
-	}
+	if (xfs_sb_version_hasattr2(sb))
+		fs_attributes2 = 1;
 
 	if (!(sb->sb_versionnum & XFS_SB_VERSION_NLINKBIT)) {
 		if (!no_modify) {

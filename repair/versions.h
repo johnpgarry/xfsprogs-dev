@@ -39,7 +39,6 @@
  * options
  */
 
-EXTERN int		fs_attributes2_allowed;
 EXTERN int		fs_quotas_allowed;
 EXTERN int		fs_aligned_inodes_allowed;
 EXTERN int		fs_sb_feature_bits_allowed;
