@@ -215,22 +215,8 @@ _("WARNING: you have a V1 inode filesystem. It would be converted to a\n"
 	}
 
 	if (xfs_sb_version_hasalign(sb))  {
-		if (fs_aligned_inodes_allowed)  {
-			fs_aligned_inodes = 1;
-			fs_ino_alignment = sb->sb_inoalignmt;
-		} else   {
-			if (!no_modify)  {
-				do_warn(
-_("WARNING:  you have disallowed aligned inodes but this filesystem\n"
-  "\thas aligned inodes.  The filesystem will be downgraded.\n"
-  "\tThis will permanently degrade the performance of this filesystem.\n"));
-			} else  {
-				do_warn(
-_("WARNING:  you have disallowed aligned inodes but this filesystem\n"
-  "\thas aligned inodes.  The filesystem would be downgraded.\n"
-  "\tThis would permanently degrade the performance of this filesystem.\n"));
-			}
-		}
+		fs_aligned_inodes = 1;
+		fs_ino_alignment = sb->sb_inoalignmt;
 	}
 
 	/*

@@ -27,7 +27,6 @@
  * possible XFS filesystem features
  *
  * inode version 2 (32-bit link counts)		(6.2)
- * aligned inodes				(6.2+)
  *
  * bitmask fields happend after 6.2.
  */
@@ -38,7 +37,6 @@
  * options
  */
 
-EXTERN int		fs_aligned_inodes_allowed;
 EXTERN int		fs_sb_feature_bits_allowed;
 EXTERN int		fs_has_extflgbit_allowed;
 EXTERN int		fs_shared_allowed;
