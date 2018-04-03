@@ -26,6 +26,10 @@
 int platform_has_uuid = 1;
 extern char *progname;
 
+#warning "Darwin support is deprecated and planned for removal in July 2018"
+#warning "Contact linux-xfs@vger.kernel.org if you'd like to maintain this port"
+#error   "Remove this line if you'd like to continue the build"
+
 int
 platform_check_ismounted(char *name, char *block, struct stat *s, int verbose)
 {
