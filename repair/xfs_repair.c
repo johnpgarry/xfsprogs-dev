@@ -46,29 +46,37 @@
 /*
  * -o: user-supplied override options
  */
+enum o_opt_nums {
+	ASSUME_XFS = 0,
+	IHASH_SIZE,
+	BHASH_SIZE,
+	AG_STRIDE,
+	FORCE_GEO,
+	PHASE2_THREADS,
+	O_MAX_OPTS,
+};
+
 static char *o_opts[] = {
-#define ASSUME_XFS	0
-	"assume_xfs",
-#define	IHASH_SIZE	2
-	"ihash",
-#define	BHASH_SIZE	3
-	"bhash",
-#define	AG_STRIDE	4
-	"ag_stride",
-#define FORCE_GEO	5
-	"force_geometry",
-#define PHASE2_THREADS	6
-	"phase2_threads",
-	NULL
+	[ASSUME_XFS]		= "assume_xfs",
+	[IHASH_SIZE]		= "ihash",
+	[BHASH_SIZE]		= "bhash",
+	[AG_STRIDE]		= "ag_stride",
+	[FORCE_GEO]		= "force_geometry",
+	[PHASE2_THREADS]	= "phase2_threads",
+	[O_MAX_OPTS]		= NULL,
 };
 
 /*
  * -c: conversion options
  */
+enum c_opt_nums {
+	CONVERT_LAZY_COUNT = 0,
+	C_MAX_OPTS,
+};
+
 static char *c_opts[] = {
-#define CONVERT_LAZY_COUNT	0
-	"lazycount",
-	NULL
+	[CONVERT_LAZY_COUNT]	= "lazycount",
+	[C_MAX_OPTS]		= NULL,
 };
 
 
