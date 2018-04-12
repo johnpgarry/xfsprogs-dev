@@ -1,3 +1,20 @@
+xfsprogs-4.16.0-rc1 (12 Apr 2018)
+	- platforms: warn of impending deprecation of irix, freebsd, darwin
+	- mkfs.xfs : enable sparse inodes by default (Darrick Wong)
+	- fsck.xfs: allow forced boot-time repairs using xfs_repair (Jan Tulak)
+	- xfs_repair: new -e flag alters exit code for fixed errors (Jan Tulak)
+	- xfs_repair: fix to allow zeroing of corrupt log (Xiao Yang)
+	- xfs_repair: remove old dead code (Eric Sandeen)
+	- xfs_io: fix operation time reporting (Dave Chinner)
+	- xfs_io: add RWF_DSYNC support to pwrite (Dave Chinner)
+	- xfs_io: support a basic extent swap command (Brian Foster)
+	- xfs_scrub: Many updates, still experimental (Darrick Wong)
+	- xfs_db: print transaction reservation type information
+	- libxfs: framework to detect memory leaks (Eric Sandeen)
+	- misc: Fix up new warnings from gcc 7.3 (Darrick Wong)
+	- misc: enable link time optimization, if requested (Darrick Wong)
+	- misc: enable retpolines across all xfsprogs utilities (Darrick Wong)
+
 xfsprogs-4.15.1 (26 Feb 2018)
 	- debian: add build-depends on pkg-config (Darrick Wong)
 	- debian: don't fail postinst when upgrading chroot (Darrick Wong)
