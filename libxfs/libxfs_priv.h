@@ -543,6 +543,7 @@ void xfs_inode_verifier_error(struct xfs_inode *ip, int error,
 /* XXX: this is clearly a bug - a shared header needs to export this */
 /* xfs_rtalloc.c */
 int libxfs_rtfree_extent(struct xfs_trans *, xfs_rtblock_t, xfs_extlen_t);
+bool libxfs_verify_rtbno(struct xfs_mount *mp, xfs_rtblock_t rtbno);
 
 struct xfs_rtalloc_rec {
 	xfs_rtblock_t		ar_startblock;
