@@ -120,7 +120,7 @@ typedef struct xfs_mount {
 enum xfs_ag_resv_type {
 	XFS_AG_RESV_NONE = 0,
 	XFS_AG_RESV_METADATA,
-	XFS_AG_RESV_AGFL,
+	XFS_AG_RESV_RMAPBT,
 };
 
 struct xfs_ag_resv {
@@ -166,7 +166,7 @@ typedef struct xfs_perag {
 	/* Blocks reserved for all kinds of metadata. */
 	struct xfs_ag_resv	pag_meta_resv;
 	/* Blocks reserved for just AGFL-based metadata. */
-	struct xfs_ag_resv	pag_agfl_resv;
+	struct xfs_ag_resv	pag_rmapbt_resv;
 
 	/* reference count */
 	uint8_t		pagf_refcount_level;
@@ -180,8 +180,8 @@ xfs_perag_resv(
 	switch (type) {
 	case XFS_AG_RESV_METADATA:
 		return &pag->pag_meta_resv;
-	case XFS_AG_RESV_AGFL:
-		return &pag->pag_agfl_resv;
+	case XFS_AG_RESV_RMAPBT:
+		return &pag->pag_rmapbt_resv;
 	default:
 		return NULL;
 	}
