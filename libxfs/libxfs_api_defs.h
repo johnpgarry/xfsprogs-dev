@@ -148,6 +148,7 @@
 #define xfs_refcount_lookup_le		libxfs_refcount_lookup_le
 #define xfs_refcount_get_rec		libxfs_refcount_get_rec
 #define xfs_rmap_lookup_le_range	libxfs_rmap_lookup_le_range
+#define xfs_agfl_size			libxfs_agfl_size
 #define xfs_refc_block			libxfs_refc_block
 #define xfs_rmap_compare		libxfs_rmap_compare
 #define xfs_dir_get_ops			libxfs_dir_get_ops
