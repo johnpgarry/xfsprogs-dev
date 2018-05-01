@@ -1,3 +1,6 @@
+xfsprogs-4.16.1 (30 Apr 2018)
+	- fsck.xfs: remove bashism which may interfere with boot (Eric Sandeen)
+
 xfsprogs-4.16.0 (25 Apr 2018)
 	- No further changes
 

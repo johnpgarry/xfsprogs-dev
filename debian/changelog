@@ -1,3 +1,10 @@
+xfsprogs (4.16.1-1) unstable; urgency=low
+
+  * New upstream release
+  * Remove bashism in fsck.xfs
+
+ -- Nathan Scott <nathans@debian.org>  Mon, 30 Apr 2018 21:27:59 -0500
+
 xfsprogs (4.16.0-1) unstable; urgency=low
 
   * New upstream release
