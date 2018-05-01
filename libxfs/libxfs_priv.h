@@ -133,6 +133,12 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 #define xfs_force_shutdown(d,n)		((void) 0)
 
 /* stop unused var warnings by assigning mp to itself */
+
+#define xfs_corruption_error(fu,e,l,mp,fi,ln,fa)	do { \
+	(mp) = (mp); \
+	cmn_err(CE_ALERT, "%s: XFS_CORRUPTION_ERROR", (e));  \
+} while (0)
+
 #define XFS_CORRUPTION_ERROR(e,l,mp,m)	do { \
 	(mp) = (mp); \
 	cmn_err(CE_ALERT, "%s: XFS_CORRUPTION_ERROR", (e));  \
@@ -527,15 +533,20 @@ int  libxfs_mod_incore_sb(struct xfs_mount *, int, int64_t, int);
 #define xfs_reinit_percpu_counters(mp)
 
 void xfs_trans_mod_sb(struct xfs_trans *, uint, long);
+
 void xfs_verifier_error(struct xfs_buf *bp, int error,
 			xfs_failaddr_t failaddr);
 void xfs_inode_verifier_error(struct xfs_inode *ip, int error,
 			const char *name, void *buf, size_t bufsz,
 			xfs_failaddr_t failaddr);
 
+#define xfs_buf_verifier_error(bp,e,n,bu,bus,fa) \
+	xfs_verifier_error(bp, e, fa)
+
 /* XXX: this is clearly a bug - a shared header needs to export this */
 /* xfs_rtalloc.c */
 int libxfs_rtfree_extent(struct xfs_trans *, xfs_rtblock_t, xfs_extlen_t);
+bool libxfs_verify_rtbno(struct xfs_mount *mp, xfs_rtblock_t rtbno);
 
 struct xfs_rtalloc_rec {
 	xfs_rtblock_t		ar_startblock;

@@ -227,6 +227,7 @@ libxfs_bmbt_disk_get_all(
 /* XXX: this is clearly a bug - a shared header needs to export this */
 /* xfs_rtalloc.c */
 int libxfs_rtfree_extent(struct xfs_trans *, xfs_rtblock_t, xfs_extlen_t);
+bool libxfs_verify_rtbno(struct xfs_mount *mp, xfs_rtblock_t rtbno);
 
 /* XXX: need parts of xfs_attr.h in userspace */
 #define LIBXFS_ATTR_ROOT	0x0002	/* use attrs in root namespace */
