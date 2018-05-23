@@ -299,6 +299,30 @@ sb_validate_ino_align(struct xfs_sb *sb)
 }
 
 /*
+ * Validate the given log space.  Derived from xfs_log_mount, though we
+ * can't validate the minimum log size until later.  We only do this
+ * validation on V5 filesystems because the kernel doesn't reject malformed
+ * log geometry on older revision filesystems.
+ *
+ * Returns false if the log is garbage.
+ */
+static bool
+verify_sb_loginfo(
+	struct xfs_sb	*sb)
+{
+	if (xfs_sb_version_hascrc(sb) &&
+	    (sb->sb_logblocks == 0 ||
+	     sb->sb_logblocks > XFS_MAX_LOG_BLOCKS ||
+	     (sb->sb_logblocks << sb->sb_blocklog) > XFS_MAX_LOG_BYTES))
+		return false;
+
+	if (sb->sb_logsunit > 1 && sb->sb_logsunit % sb->sb_blocksize)
+		return false;
+
+	return true;
+}
+
+/*
  * verify a superblock -- does not verify root inode #
  *	can only check that geometry info is internally
  *	consistent.  because of growfs, that's no guarantee
@@ -411,6 +435,9 @@ verify_sb(char *sb_buf, xfs_sb_t *sb, int is_primary_sb)
 	    sb->sb_inopblock != howmany(sb->sb_blocksize, sb->sb_inodesize) ||
 	    (sb->sb_blocklog - sb->sb_inodelog != sb->sb_inopblog))
 		return XR_BAD_INO_SIZE_DATA;
+
+	if (!verify_sb_loginfo(sb))
+		return XR_BAD_LOG_GEOMETRY;
 
 	if (xfs_sb_version_hassector(sb))  {
 

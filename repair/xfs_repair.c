@@ -155,6 +155,8 @@ err_string(int err_code)
 			_("bad CRC in superblock");
 		err_message[XR_BAD_DIR_SIZE_DATA] =
 			_("inconsistent directory geometry information");
+		err_message[XR_BAD_LOG_GEOMETRY] =
+			_("inconsistent log geometry information");
 		done = 1;
 	}
 

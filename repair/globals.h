@@ -51,7 +51,8 @@
 #define XR_BAD_SVN		19	/* bad shared version number */
 #define XR_BAD_CRC		20	/* Bad CRC */
 #define XR_BAD_DIR_SIZE_DATA	21	/* Bad directory geometry */
-#define XR_BAD_ERR_CODE		22	/* Bad error code */
+#define XR_BAD_LOG_GEOMETRY	22	/* Bad log geometry */
+#define XR_BAD_ERR_CODE		23	/* Bad error code */
 
 /* XFS filesystem (il)legal values */
 
