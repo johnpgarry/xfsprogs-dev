@@ -101,6 +101,7 @@
 #define xfs_dir2_data_make_free		libxfs_dir2_data_make_free
 #define xfs_dir2_data_use_free		libxfs_dir2_data_use_free
 #define xfs_dir2_shrink_inode		libxfs_dir2_shrink_inode
+#define xfs_da_get_buf			libxfs_da_get_buf
 
 #define xfs_inode_from_disk		libxfs_inode_from_disk
 #define xfs_inode_to_disk		libxfs_inode_to_disk

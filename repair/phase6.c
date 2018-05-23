@@ -1311,6 +1311,48 @@ entry_junked(
 	return !no_modify;
 }
 
+/* Find and invalidate all the directory's buffers. */
+static int
+dir_binval(
+	struct xfs_trans	*tp,
+	struct xfs_inode	*ip,
+	int			whichfork)
+{
+	struct xfs_iext_cursor	icur;
+	struct xfs_bmbt_irec	rec;
+	struct xfs_ifork	*ifp;
+	struct xfs_da_geometry	*geo;
+	struct xfs_buf		*bp;
+	xfs_dablk_t		dabno, end_dabno;
+	int			error = 0;
+
+	if (ip->i_d.di_format != XFS_DINODE_FMT_EXTENTS &&
+	    ip->i_d.di_format != XFS_DINODE_FMT_BTREE)
+		return 0;
+
+	geo = tp->t_mountp->m_dir_geo;
+	ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
+	for_each_xfs_iext(ifp, &icur, &rec) {
+		dabno = xfs_dir2_db_to_da(geo, rec.br_startoff +
+				geo->fsbcount - 1);
+		end_dabno = xfs_dir2_db_to_da(geo, rec.br_startoff +
+				rec.br_blockcount);
+		for (; dabno <= end_dabno; dabno += geo->fsbcount) {
+			bp = NULL;
+			error = -libxfs_da_get_buf(tp, ip, dabno, -2, &bp,
+					whichfork);
+			if (error)
+				return error;
+			if (!bp)
+				continue;
+			libxfs_trans_binval(tp, bp);
+			libxfs_trans_brelse(tp, bp);
+		}
+	}
+
+	return error;
+}
+
 /*
  * Unexpected failure during the rebuild will leave the entries in
  * lost+found on the next run
@@ -1360,6 +1402,10 @@ longform_dir2_rebuild(
 	if (error)
 		res_failed(error);
 	libxfs_trans_ijoin(tp, ip, 0);
+
+	error = dir_binval(tp, ip, XFS_DATA_FORK);
+	if (error)
+		res_failed(error);
 
 	if ((error = -libxfs_bmap_last_offset(ip, &lastblock, XFS_DATA_FORK)))
 		do_error(_("xfs_bmap_last_offset failed -- error - %d\n"),
