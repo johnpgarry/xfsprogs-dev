@@ -537,9 +537,6 @@ process_leaf_attr_remote(
 		return -1;
 	}
 
-	if (!(entry->flags & XFS_ATTR_ROOT))
-		goto out;
-
 	value = malloc(be32_to_cpu(remotep->valuelen));
 	if (value == NULL) {
 		do_warn(
@@ -555,7 +552,8 @@ process_leaf_attr_remote(
 			i, ino);
 		goto bad_free_out;
 	}
-	if (valuecheck(mp, (char *)&remotep->name[0], value, remotep->namelen,
+	if ((entry->flags & XFS_ATTR_ROOT) &&
+	    valuecheck(mp, (char *)&remotep->name[0], value, remotep->namelen,
 				be32_to_cpu(remotep->valuelen))) {
 		do_warn(
 	_("remote attribute value check failed for entry %d, inode %" PRIu64 "\n"),
