@@ -526,6 +526,10 @@ verify_da_path(
 	else
 		geo = mp->m_attr_geo;
 
+	/* No buffer at this level, tree is corrupt. */
+	if (cursor->level[this_level].bp == NULL)
+		return 1;
+
 	/*
 	 * index is currently set to point to the entry that
 	 * should be processed now in this level.
@@ -534,6 +538,10 @@ verify_da_path(
 	node = cursor->level[this_level].bp->b_addr;
 	btree = M_DIROPS(mp)->node_tree_p(node);
 	M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
+
+	/* No entries in this node?  Tree is corrupt. */
+	if (nodehdr.count == 0)
+		return 1;
 
 	/*
 	 * if this block is out of entries, validate this
