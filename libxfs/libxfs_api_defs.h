@@ -78,6 +78,7 @@
 #define xfs_bmbt_get_all		libxfs_bmbt_get_all
 #define xfs_rtfree_extent		libxfs_rtfree_extent
 #define xfs_verify_rtbno		libxfs_verify_rtbno
+#define xfs_verify_ino			libxfs_verify_ino
 #define xfs_zero_extent			libxfs_zero_extent
 
 #define xfs_defer_init			libxfs_defer_init

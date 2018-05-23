@@ -847,6 +847,23 @@ _("bad .. entry in root directory inode %" PRIu64 ", was %" PRIu64 ": "),
 					}
 					*parent = ino;
 				}
+				/*
+				 * Make sure our parent directory doesn't point
+				 * off into space.
+				 */
+				if (!junkit &&
+				    *parent != NULLFSINO &&
+				    !libxfs_verify_ino(mp, *parent)) {
+					do_warn(
+_("bad .. entry in directory inode %" PRIu64 ", was %" PRIu64 ": "),
+						ino, *parent);
+					if (!no_modify) {
+						do_warn(_("correcting\n"));
+					} else {
+						do_warn(_("would correct\n"));
+					}
+					*parent = NULLFSINO;
+				}
 			}
 			/*
 			 * Can't fix the directory unless we know which ..
