@@ -751,7 +751,6 @@ _("%s fork in ino %" PRIu64 " claims free block %" PRIu64 "\n"),
 				/* fall through ... */
 			case XR_E_INUSE1:	/* seen by rmap */
 			case XR_E_UNKNOWN:
-				set_bmap_ext(agno, agbno, blen, XR_E_INUSE);
 				break;
 
 			case XR_E_BAD_STATE:
@@ -773,7 +772,6 @@ _("%s fork in inode %" PRIu64 " claims metadata block %" PRIu64 "\n"),
 
 			case XR_E_INUSE:
 			case XR_E_MULT:
-				set_bmap_ext(agno, agbno, blen, XR_E_MULT);
 				if (type == XR_INO_DATA &&
 				    xfs_sb_version_hasreflink(&mp->m_sb))
 					break;
@@ -792,6 +790,34 @@ _("%s fork in %s inode %" PRIu64 " claims CoW block %" PRIu64 "\n"),
 				do_error(
 _("illegal state %d in block map %" PRIu64 "\n"),
 					state, b);
+				goto done;
+			}
+		}
+
+		/*
+		 * Update the internal extent map only after we've checked
+		 * every block in this extent.  The first time we reject this
+		 * data fork we'll try to rebuild the bmbt from rmap data.
+		 * After a successful rebuild we'll try this scan again.
+		 * (If the rebuild fails we won't come back here.)
+		 */
+		agbno = XFS_FSB_TO_AGBNO(mp, irec.br_startblock);
+		ebno = agbno + irec.br_blockcount;
+		for (; agbno < ebno; agbno += blen) {
+			state = get_bmap_ext(agno, agbno, ebno, &blen);
+			switch (state)  {
+			case XR_E_FREE:
+			case XR_E_FREE1:
+			case XR_E_INUSE1:
+			case XR_E_UNKNOWN:
+				set_bmap_ext(agno, agbno, blen, XR_E_INUSE);
+				break;
+			case XR_E_INUSE:
+			case XR_E_MULT:
+				set_bmap_ext(agno, agbno, blen, XR_E_MULT);
+				break;
+			default:
+				break;
 			}
 		}
 		if (collect_rmaps) { /* && !check_dups */
