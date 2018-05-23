@@ -196,8 +196,6 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 # define barrier() __memory_barrier()
 #endif
 
-#define XFS_DQUOT_CLUSTER_SIZE_FSB (xfs_filblks_t)1
-
 /* miscellaneous kernel routines not in user space */
 #define down_read(a)		((void) 0)
 #define up_read(a)		((void) 0)

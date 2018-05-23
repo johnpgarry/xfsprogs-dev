@@ -229,6 +229,9 @@ int		count_bcnt_extents(xfs_agnumber_t);
 #define XR_INO_SOCK	9		/* socket */
 #define XR_INO_FIFO	10		/* fifo */
 #define XR_INO_MOUNTPOINT 11		/* mountpoint */
+#define XR_INO_UQUOTA	12		/* user quota inode */
+#define XR_INO_GQUOTA	13		/* group quota inode */
+#define XR_INO_PQUOTA	14		/* project quota inode */
 
 /* inode allocation tree */
 

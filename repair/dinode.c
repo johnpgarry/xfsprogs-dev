@@ -1303,6 +1303,118 @@ null_check(char *name, int length)
 	return(0);
 }
 
+/*
+ * This does /not/ do quotacheck, it validates the basic quota
+ * inode metadata, checksums, etc.
+ */
+#define uuid_equal(s,d) (platform_uuid_compare((s),(d)) == 0)
+static int
+process_quota_inode(
+	struct xfs_mount	*mp,
+	xfs_ino_t		lino,
+	struct xfs_dinode	*dino,
+	uint			ino_type,
+	struct blkmap		*blkmap)
+{
+	xfs_fsblock_t		fsbno;
+	struct xfs_buf		*bp;
+	xfs_filblks_t		dqchunklen;
+	uint			dqperchunk;
+	int			quota_type;
+	char			*quota_string;
+	xfs_dqid_t		dqid;
+	xfs_fileoff_t		qbno;
+	int			i;
+	int			t = 0;
+
+	switch (ino_type) {
+		case XR_INO_UQUOTA:
+			quota_type = XFS_DQ_USER;
+			quota_string = _("User quota");
+			break;
+		case XR_INO_GQUOTA:
+			quota_type = XFS_DQ_GROUP;
+			quota_string = _("Group quota");
+			break;
+		case XR_INO_PQUOTA:
+			quota_type = XFS_DQ_PROJ;
+			quota_string = _("Project quota");
+			break;
+		default:
+			ASSERT(0);
+	}
+
+	dqchunklen = XFS_FSB_TO_BB(mp, XFS_DQUOT_CLUSTER_SIZE_FSB);
+	dqperchunk = xfs_calc_dquots_per_chunk(dqchunklen);
+	dqid = 0;
+	qbno = NULLFILEOFF;
+
+	while ((qbno = blkmap_next_off(blkmap, qbno, &t)) != NULLFILEOFF) {
+		xfs_dqblk_t	*dqb;
+		int		writebuf = 0;
+
+		fsbno = blkmap_get(blkmap, qbno);
+		dqid = (xfs_dqid_t)qbno * dqperchunk;
+
+		bp = libxfs_readbuf(mp->m_dev, XFS_FSB_TO_DADDR(mp, fsbno),
+				    dqchunklen, 0, &xfs_dquot_buf_ops);
+		if (!bp) {
+			do_warn(
+_("cannot read inode %" PRIu64 ", file block %" PRIu64 ", disk block %" PRIu64 "\n"),
+				lino, qbno, fsbno);
+			return 1;
+		}
+
+		dqb = bp->b_addr;
+		for (i = 0; i < dqperchunk; i++, dqid++, dqb++) {
+			xfs_failaddr_t	fa;
+			int		bad_dqb = 0;
+
+			/* We only print the first problem we find */
+			if (xfs_sb_version_hascrc(&mp->m_sb)) {
+				if (!xfs_verify_cksum((char *)dqb, sizeof(*dqb),
+							XFS_DQUOT_CRC_OFF)) {
+					do_warn(_("%s: bad CRC for id %u. "),
+							quota_string, dqid);
+					bad_dqb = 1;
+					goto bad;
+				}
+
+				if (!uuid_equal(&dqb->dd_uuid,
+						&mp->m_sb.sb_meta_uuid)) {
+					do_warn(_("%s: bad UUID for id %u. "),
+							quota_string, dqid);
+					bad_dqb = 1;
+					goto bad;
+				}
+			}
+			fa = xfs_dquot_verify(mp, &dqb->dd_diskdq, dqid, quota_type, 0);
+			if (fa) {
+				do_warn(_("%s: Corrupt quota for id %u. "),
+						quota_string, dqid);
+				bad_dqb = 1;
+			}
+
+bad:
+			if (bad_dqb) {
+				if (no_modify)
+					do_warn(_("Would correct.\n"));
+				else {
+					do_warn(_("Corrected.\n"));
+					xfs_dquot_repair(mp, &dqb->dd_diskdq, dqid, quota_type);
+					writebuf = 1;
+				}
+			}
+		}
+
+		if (writebuf && !no_modify)
+			libxfs_writebuf(bp, 0);
+		else
+			libxfs_putbuf(bp);
+	}
+	return 0;
+}
+
 static int
 process_symlink_remote(
 	struct xfs_mount	*mp,
@@ -1512,6 +1624,13 @@ _("size of socket inode %" PRIu64 " != 0 (%" PRId64 " bytes)\n"), lino,
 _("size of fifo inode %" PRIu64 " != 0 (%" PRId64 " bytes)\n"), lino,
 				(int64_t)be64_to_cpu(dino->di_size));
 			break;
+		case XR_INO_UQUOTA:
+		case XR_INO_GQUOTA:
+		case XR_INO_PQUOTA:
+			do_warn(
+_("size of quota inode %" PRIu64 " != 0 (%" PRId64 " bytes)\n"), lino,
+				(int64_t)be64_to_cpu(dino->di_size));
+			break;
 		default:
 			do_warn(_("Internal error - process_misc_ino_types, "
 				  "illegal type %d\n"), type);
@@ -1632,7 +1751,7 @@ process_check_sb_inodes(
 	int		*dirty)
 {
 	if (lino == mp->m_sb.sb_rootino) {
-	 	if (*type != XR_INO_DIR)  {
+		if (*type != XR_INO_DIR)  {
 			do_warn(_("root inode %" PRIu64 " has bad type 0x%x\n"),
 				lino, dinode_fmt(dinoc));
 			*type = XR_INO_DIR;
@@ -1646,7 +1765,7 @@ process_check_sb_inodes(
 		return 0;
 	}
 	if (lino == mp->m_sb.sb_uquotino)  {
-		if (*type != XR_INO_DATA)  {
+		if (*type != XR_INO_UQUOTA)  {
 			do_warn(_("user quota inode %" PRIu64 " has bad type 0x%x\n"),
 				lino, dinode_fmt(dinoc));
 			mp->m_sb.sb_uquotino = NULLFSINO;
@@ -1655,7 +1774,7 @@ process_check_sb_inodes(
 		return 0;
 	}
 	if (lino == mp->m_sb.sb_gquotino)  {
-		if (*type != XR_INO_DATA)  {
+		if (*type != XR_INO_GQUOTA)  {
 			do_warn(_("group quota inode %" PRIu64 " has bad type 0x%x\n"),
 				lino, dinode_fmt(dinoc));
 			mp->m_sb.sb_gquotino = NULLFSINO;
@@ -1664,7 +1783,7 @@ process_check_sb_inodes(
 		return 0;
 	}
 	if (lino == mp->m_sb.sb_pquotino)  {
-		if (*type != XR_INO_DATA)  {
+		if (*type != XR_INO_PQUOTA)  {
 			do_warn(_("project quota inode %" PRIu64 " has bad type 0x%x\n"),
 				lino, dinode_fmt(dinoc));
 			mp->m_sb.sb_pquotino = NULLFSINO;
@@ -1767,6 +1886,14 @@ _("directory inode %" PRIu64 " has bad size %" PRId64 "\n"),
 	case XR_INO_SOCK:	/* fall through to FIFO case ... */
 	case XR_INO_MOUNTPOINT:	/* fall through to FIFO case ... */
 	case XR_INO_FIFO:
+		if (process_misc_ino_types(mp, dino, lino, type))
+			return 1;
+		break;
+
+	case XR_INO_UQUOTA:
+	case XR_INO_GQUOTA:
+	case XR_INO_PQUOTA:
+		/* Quota inodes have same restrictions as above types */
 		if (process_misc_ino_types(mp, dino, lino, type))
 			return 1;
 		break;
@@ -2675,6 +2802,12 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 			type = XR_INO_RTBITMAP;
 		else if (lino == mp->m_sb.sb_rsumino)
 			type = XR_INO_RTSUM;
+		else if (lino == mp->m_sb.sb_uquotino)
+			type = XR_INO_UQUOTA;
+		else if (lino == mp->m_sb.sb_gquotino)
+			type = XR_INO_GQUOTA;
+		else if (lino == mp->m_sb.sb_pquotino)
+			type = XR_INO_PQUOTA;
 		else
 			type = XR_INO_DATA;
 		break;
@@ -2843,6 +2976,15 @@ _("Cannot have CoW extent size of zero on cowextsize inode %" PRIu64 ", "),
 			do_warn(
 	_("problem with symbolic link in inode %" PRIu64 "\n"),
 				lino);
+			goto clear_bad_out;
+		}
+		break;
+	case XR_INO_UQUOTA:
+	case XR_INO_GQUOTA:
+	case XR_INO_PQUOTA:
+		if (process_quota_inode(mp, lino, dino, type, dblkmap) != 0) {
+			do_warn(
+	_("problem with quota inode %" PRIu64 "\n"), lino);
 			goto clear_bad_out;
 		}
 		break;

@@ -30,6 +30,8 @@
 typedef uint64_t	xfs_qcnt_t;
 typedef uint16_t	xfs_qwarncnt_t;
 
+#define XFS_DQUOT_CLUSTER_SIZE_FSB (xfs_filblks_t)1
+
 /*
  * flags for q_flags field in the dquot.
  */
