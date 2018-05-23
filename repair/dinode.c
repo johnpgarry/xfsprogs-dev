@@ -2233,6 +2233,28 @@ _("would clear obsolete nlink field in version 2 inode %" PRIu64 ", currently %d
 	return dirty;
 }
 
+/* Check nanoseconds of a timestamp don't exceed 1 second. */
+static void
+check_nsec(
+	const char		*name,
+	xfs_ino_t		lino,
+	struct xfs_timestamp	*t,
+	int			*dirty)
+{
+	if (be32_to_cpu(t->t_nsec) < 1000000000)
+		return;
+
+	do_warn(
+_("Bad %s nsec %u on inode %" PRIu64 ", "), name, be32_to_cpu(t->t_nsec), lino);
+	if (no_modify) {
+		do_warn(_("would reset to zero\n"));
+	} else {
+		do_warn(_("resetting to zero\n"));
+		t->t_nsec = 0;
+		*dirty = 1;
+	}
+}
+
 /*
  * returns 0 if the inode is ok, 1 if the inode is corrupt
  * check_dups can be set to 1 *only* when called by the
@@ -2748,6 +2770,13 @@ _("Cannot have CoW extent size of zero on cowextsize inode %" PRIu64 ", "),
 			do_warn(_("would clear cowextsize flag\n"));
 		}
 	}
+
+	/* nsec fields cannot be larger than 1 billion */
+	check_nsec("atime", lino, &dino->di_atime, dirty);
+	check_nsec("mtime", lino, &dino->di_mtime, dirty);
+	check_nsec("ctime", lino, &dino->di_ctime, dirty);
+	if (dino->di_version >= 3)
+		check_nsec("crtime", lino, &dino->di_crtime, dirty);
 
 	/*
 	 * general size/consistency checks:
