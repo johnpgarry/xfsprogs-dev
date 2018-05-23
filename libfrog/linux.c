@@ -77,7 +77,17 @@ platform_check_mount(char *name, char *block, struct stat *s, int flags)
 		    progname, name);
 		return 1;
 	}
+	/*
+	 * This whole business is to work out if our block device is mounted
+	 * after we lost ustat(2), see:
+	 *      4e7a824 libxfs/linux.c: Replace use of ustat by stat
+	 * We don't really want to stat every single mounted directory,
+	 * as that may include tmpfs, cgroups, procfs or - worst - hung nfs
+	 * servers.  So first, a simple check: does the "dev" start with "/" ?
+	 */
 	while ((mnt = getmntent(f)) != NULL) {
+		if (mnt->mnt_fsname[0] != '/')
+			continue;
 		if (stat(mnt->mnt_dir, &mst) < 0)
 			continue;
 		if (mst.st_dev != s->st_rdev)
