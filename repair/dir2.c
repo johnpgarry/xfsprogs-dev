@@ -1235,11 +1235,11 @@ process_node_dir2(
 		return 1;
 
 	/*
-	 * Skip directories with a root marked XFS_DIR2_LEAFN_MAGIC
+	 * Directories with a root marked XFS_DIR2_LEAFN_MAGIC are corrupt
 	 */
 	if (bno == 0) {
-		release_da_cursor(mp, &da_cursor, 0);
-		return 0;
+		err_release_da_cursor(mp, &da_cursor, 0);
+		return 1;
 	} else {
 		/*
 		 * Now pass cursor and bno into leaf-block processing routine.
