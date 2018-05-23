@@ -433,6 +433,7 @@ rmtval_get(xfs_mount_t *mp, xfs_ino_t ino, blkmap_t *blkmap,
 		if (bp->b_error == -EFSBADCRC || bp->b_error == -EFSCORRUPTED) {
 			do_warn(
 	_("Corrupt remote block for attributes of inode %" PRIu64 "\n"), ino);
+			libxfs_putbuf(bp);
 			clearit = 1;
 			break;
 		}
