@@ -69,7 +69,12 @@ openfile(
 	}
 
 	if (ioctl(fd, XFS_IOC_FSGEOMETRY, geom) < 0) {
-		perror("XFS_IOC_FSGEOMETRY");
+		if (errno == ENOTTY)
+			fprintf(stderr,
+_("%s: Not on a mounted XFS filesystem.\n"),
+					path);
+		else
+			perror("XFS_IOC_FSGEOMETRY");
 		close(fd);
 		return -1;
 	}
