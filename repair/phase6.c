@@ -1884,7 +1884,8 @@ longform_dir2_entry_check_data(
 		 * of when directory is moved to orphanage.
 		 */
 		if (ip->i_ino == inum)  {
-			ASSERT(dep->name[0] == '.' && dep->namelen == 1);
+			ASSERT(no_modify ||
+			       (dep->name[0] == '.' && dep->namelen == 1));
 			add_inode_ref(current_irec, current_ino_offset);
 			if (da_bno != 0 ||
 			    dep != M_DIROPS(mp)->data_entry_p(d)) {
