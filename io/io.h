@@ -40,6 +40,8 @@
 #define IO_FOREIGN	(1<<7)
 #define IO_NONBLOCK	(1<<8)
 #define IO_TMPFILE	(1<<9)
+#define IO_PATH		(1<<10)
+#define IO_NOFOLLOW	(1<<11)
 
 /*
  * Regular file I/O control

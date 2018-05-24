@@ -38,6 +38,18 @@
 #define O_TMPFILE (__O_TMPFILE | O_DIRECTORY)
 #endif
 
+#ifndef O_PATH
+#if defined __alpha__
+#define O_PATH          040000000
+#elif defined(__hppa__)
+#define O_PATH          020000000
+#elif defined(__sparc__)
+#define O_PATH          0x1000000
+#else
+#define O_PATH          010000000
+#endif
+#endif /* O_PATH */
+
 static cmdinfo_t open_cmd;
 static cmdinfo_t close_cmd;
 static cmdinfo_t chproj_cmd;
@@ -74,6 +86,10 @@ openfile(
 		oflags |= O_NONBLOCK;
 	if (flags & IO_TMPFILE)
 		oflags |= O_TMPFILE;
+	if (flags & IO_PATH)
+		oflags |= O_PATH;
+	if (flags & IO_NOFOLLOW)
+		oflags |= O_NOFOLLOW;
 
 	fd = open(path, oflags, mode);
 	if (fd < 0) {
@@ -97,13 +113,16 @@ openfile(
 	if (!geom || !platform_test_xfs_fd(fd))
 		return fd;
 
-	if (xfsctl(path, fd, XFS_IOC_FSGEOMETRY, geom) < 0) {
+	if (flags & IO_PATH) {
+		/* Can't call ioctl() on O_PATH fds */
+		memset(geom, 0, sizeof(*geom));
+	} else if (xfsctl(path, fd, XFS_IOC_FSGEOMETRY, geom) < 0) {
 		perror("XFS_IOC_FSGEOMETRY");
 		close(fd);
 		return -1;
 	}
 
-	if (!(flags & IO_READONLY) && (flags & IO_REALTIME)) {
+	if (!(flags & (IO_READONLY | IO_PATH)) && (flags & IO_REALTIME)) {
 		struct fsxattr	attr;
 
 		if (xfsctl(path, fd, FS_IOC_FSGETXATTR, &attr) < 0) {
@@ -191,6 +210,8 @@ open_help(void)
 " -t -- open with O_TRUNC (truncate the file to zero length if it exists)\n"
 " -R -- mark the file as a realtime XFS file immediately after opening it\n"
 " -T -- open with O_TMPFILE (create a file not visible in the namespace)\n"
+" -P -- open with O_PATH (create an fd that is merely a location reference)\n"
+" -L -- open with O_NOFOLLOW (don't follow symlink)\n"
 " Note1: usually read/write direct IO requests must be blocksize aligned;\n"
 "        some kernels, however, allow sectorsize alignment for direct IO.\n"
 " Note2: the bmap for non-regular files can be obtained provided the file\n"
@@ -216,7 +237,7 @@ open_f(
 		return 0;
 	}
 
-	while ((c = getopt(argc, argv, "FRTacdfm:nrstx")) != EOF) {
+	while ((c = getopt(argc, argv, "FLPRTacdfm:nrstx")) != EOF) {
 		switch (c) {
 		case 'F':
 			/* Ignored / deprecated now, handled automatically */
@@ -257,6 +278,12 @@ open_f(
 		case 'T':
 			flags |= IO_TMPFILE;
 			break;
+		case 'P':
+			flags |= IO_PATH;
+			break;
+		case 'L':
+			flags |= IO_NOFOLLOW;
+			break;
 		default:
 			return command_usage(&open_cmd);
 		}
@@ -267,6 +294,12 @@ open_f(
 
 	if ((flags & (IO_READONLY|IO_TMPFILE)) == (IO_READONLY|IO_TMPFILE)) {
 		fprintf(stderr, _("-T and -r options are incompatible\n"));
+		return -1;
+	}
+
+	if ((flags & (IO_PATH|IO_NOFOLLOW)) &&
+	    (flags & ~(IO_PATH|IO_NOFOLLOW))) {
+		fprintf(stderr, _("-P and -L are incompatible with the other options\n"));
 		return -1;
 	}
 
@@ -785,7 +818,7 @@ open_init(void)
 	open_cmd.argmax = -1;
 	open_cmd.flags = CMD_NOMAP_OK | CMD_NOFILE_OK |
 			 CMD_FOREIGN_OK | CMD_FLAG_ONESHOT;
-	open_cmd.args = _("[-acdrstxT] [-m mode] [path]");
+	open_cmd.args = _("[-acdrstxRTPL] [-m mode] [path]");
 	open_cmd.oneline = _("open the file specified by path");
 	open_cmd.help = open_help;
 

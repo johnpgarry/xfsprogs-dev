@@ -122,7 +122,7 @@ command for more details on any command.
 Display a list of all open files and (optionally) switch to an alternate
 current open file.
 .TP
-.BI "open [[ \-acdfrstRT ] " path " ]"
+.BI "open [[ \-acdfrstRTPL ] " path " ]"
 Closes the current file, and opens the file specified by
 .I path
 instead. Without any arguments, displays statistics about the current
@@ -164,6 +164,16 @@ option.
 .B \-R
 marks the file as a realtime XFS file after
 opening it, if it is not already marked as such.
+.TP
+.B \-P
+opens the path as a referent only (O_PATH).  This is incompatible with other
+flags specifying other O_xxx flags apart from
+.BR \-L .
+.TP
+.B \-L
+doesn't follow symlinks (O_NOFOLLOW).  This is incompatible with other
+flags specifying other O_xxx flags apart from
+.BR \-P .
 .PD
 .RE
 .TP

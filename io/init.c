@@ -155,7 +155,7 @@ init(
 	gettimeofday(&stopwatch, NULL);
 
 	fs_table_initialise(0, NULL, 0, NULL);
-	while ((c = getopt(argc, argv, "ac:C:dFfim:p:nrRstTVx")) != EOF) {
+	while ((c = getopt(argc, argv, "ac:C:dFfiLm:p:PnrRstTVx")) != EOF) {
 		switch (c) {
 		case 'a':
 			flags |= IO_APPEND;
@@ -200,6 +200,12 @@ init(
 			break;
 		case 't':
 			flags |= IO_TRUNC;
+			break;
+		case 'P':
+			flags |= IO_PATH;
+			break;
+		case 'L':
+			flags |= IO_NOFOLLOW;
 			break;
 		case 'R':
 			flags |= IO_REALTIME;
