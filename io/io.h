@@ -109,6 +109,7 @@ extern void		getrusage_init(void);
 extern void		help_init(void);
 extern void		imap_init(void);
 extern void		inject_init(void);
+extern void		label_init(void);
 extern void		mmap_init(void);
 extern void		open_init(void);
 extern void		parent_init(void);

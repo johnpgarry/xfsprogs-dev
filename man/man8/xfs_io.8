@@ -1175,6 +1175,19 @@ This is intended to be equivalent to the shell command:
 See the
 .B log_writes
 command.
+.TP
+.BI "label" " " "[ -c | -s " label " ] "
+On filesystems that support online label manipulation, get, set, or clear the
+filesystem label.  With no options, print the current filesystem label.  The
+.B \-c
+option clears the filesystem label by setting it to the null string.  The
+.BI "\-s " label
+option sets the filesystem label to
+.IR label .
+If the label is longer than the filesystem will accept,
+.B xfs_io
+will print an error message.  XFS filesystem labels can be at most 12
+characters long.
 .SH SEE ALSO
 .BR mkfs.xfs (8),
 .BR xfsctl (3),
