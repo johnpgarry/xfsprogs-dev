@@ -41,8 +41,10 @@ syncfs_f(
 	int			argc,
 	char			**argv)
 {
-	/* syncfs can't fail */
-	syncfs(file->fd);
+	if (syncfs(file->fd) < 0) {
+		perror("syncfs");
+		exitcode = 1;
+	}
 	return 0;
 }
 #endif
