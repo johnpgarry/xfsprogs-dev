@@ -160,9 +160,10 @@ print_flist_1(
 					(f->flags & FLD_ARRAY) != 0);
 				if (neednl)
 					dbprintf("\n");
-			} else {
-				ASSERT(fa->arg & FTARG_OKEMPTY);
+			} else if (fa->arg & FTARG_OKEMPTY) {
 				dbprintf(_("(empty)\n"));
+			} else {
+				dbprintf(_("Unrecognized metadata or type mismatch\n"));
 			}
 		}
 		free_strvec(pfx);
