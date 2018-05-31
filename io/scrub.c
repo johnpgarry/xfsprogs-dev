@@ -164,12 +164,11 @@ parse_args(
 			break;
 		}
 	}
-	optind++;
-
 	if (type < 0) {
 		printf(_("Unknown type '%s'.\n"), argv[optind]);
 		return command_usage(cmdinfo);
 	}
+	optind++;
 
 	switch (d->type) {
 	case ST_INODE:
