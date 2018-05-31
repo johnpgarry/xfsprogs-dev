@@ -313,7 +313,8 @@ verify_sb_loginfo(
 	if (xfs_sb_version_hascrc(sb) &&
 	    (sb->sb_logblocks == 0 ||
 	     sb->sb_logblocks > XFS_MAX_LOG_BLOCKS ||
-	     (sb->sb_logblocks << sb->sb_blocklog) > XFS_MAX_LOG_BYTES))
+	     ((unsigned long long)sb->sb_logblocks << sb->sb_blocklog) >
+	     XFS_MAX_LOG_BYTES))
 		return false;
 
 	if (sb->sb_logsunit > 1 && sb->sb_logsunit % sb->sb_blocksize)
