@@ -20,6 +20,10 @@ repair2fsck_code() {
 		;;
 	4)  return 1 # The fs has been fixed
 		;;
+	127)
+		echo "$NAME error: xfs_repair was not found!" 1>&2
+		return 4
+		;;
 	*)  echo "$NAME error: An unknown return code from xfs_repair '$1'" 1>&2
 		return 4 # something went wrong with xfs_repair
 	esac
@@ -59,13 +63,7 @@ if [ -n "$PS1" -o -t 0 ]; then
 fi
 
 if $FORCE; then
-	XFS_REPAIR=`command -v xfs_repair`
-	if [ ! -x "$XFS_REPAIR" ] ; then
-		echo "$NAME error: xfs_repair was not found!" 1>&2
-		exit 4
-	fi
-
-	$XFS_REPAIR -e $DEV
+	xfs_repair -e $DEV
 	repair2fsck_code $?
 	exit $?
 fi
