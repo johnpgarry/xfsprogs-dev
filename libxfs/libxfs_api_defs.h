@@ -126,6 +126,10 @@
 #define xfs_sb_quota_from_disk		libxfs_sb_quota_from_disk
 #define xfs_sb_to_disk			libxfs_sb_to_disk
 
+#define xfs_calc_dquots_per_chunk	libxfs_calc_dquots_per_chunk
+#define xfs_dquot_verify		libxfs_dquot_verify
+#define xfs_dquot_repair		libxfs_dquot_repair
+
 #define xfs_symlink_blocks		libxfs_symlink_blocks
 #define xfs_symlink_hdr_ok		libxfs_symlink_hdr_ok
 

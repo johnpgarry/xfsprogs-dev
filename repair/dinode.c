@@ -1345,7 +1345,7 @@ process_quota_inode(
 	}
 
 	dqchunklen = XFS_FSB_TO_BB(mp, XFS_DQUOT_CLUSTER_SIZE_FSB);
-	dqperchunk = xfs_calc_dquots_per_chunk(dqchunklen);
+	dqperchunk = libxfs_calc_dquots_per_chunk(dqchunklen);
 	dqid = 0;
 	qbno = NULLFILEOFF;
 
@@ -1367,12 +1367,12 @@ _("cannot read inode %" PRIu64 ", file block %" PRIu64 ", disk block %" PRIu64 "
 
 		dqb = bp->b_addr;
 		for (i = 0; i < dqperchunk; i++, dqid++, dqb++) {
-			xfs_failaddr_t	fa;
 			int		bad_dqb = 0;
 
 			/* We only print the first problem we find */
 			if (xfs_sb_version_hascrc(&mp->m_sb)) {
-				if (!xfs_verify_cksum((char *)dqb, sizeof(*dqb),
+				if (!libxfs_verify_cksum((char *)dqb,
+							sizeof(*dqb),
 							XFS_DQUOT_CRC_OFF)) {
 					do_warn(_("%s: bad CRC for id %u. "),
 							quota_string, dqid);
@@ -1388,8 +1388,8 @@ _("cannot read inode %" PRIu64 ", file block %" PRIu64 ", disk block %" PRIu64 "
 					goto bad;
 				}
 			}
-			fa = xfs_dquot_verify(mp, &dqb->dd_diskdq, dqid, quota_type, 0);
-			if (fa) {
+			if (libxfs_dquot_verify(mp, &dqb->dd_diskdq, dqid,
+						quota_type, 0) != NULL) {
 				do_warn(_("%s: Corrupt quota for id %u. "),
 						quota_string, dqid);
 				bad_dqb = 1;
@@ -1401,7 +1401,8 @@ bad:
 					do_warn(_("Would correct.\n"));
 				else {
 					do_warn(_("Corrected.\n"));
-					xfs_dquot_repair(mp, &dqb->dd_diskdq, dqid, quota_type);
+					libxfs_dquot_repair(mp, &dqb->dd_diskdq,
+							    dqid, quota_type);
 					writebuf = 1;
 				}
 			}
