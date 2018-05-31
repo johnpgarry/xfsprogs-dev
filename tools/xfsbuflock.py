@@ -87,7 +87,8 @@ class Buffer:
 		self.waiters = set()
 
 	def trylock(self, process, time):
-		self.lockdone(process, time)
+		if not self.locked:
+			self.lockdone(process, time)
 
 	def lockdone(self, process, time):
 		if self.locked:
