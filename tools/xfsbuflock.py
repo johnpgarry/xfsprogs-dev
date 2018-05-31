@@ -85,6 +85,7 @@ class Buffer:
 		self.locktime = None
 		self.owner = None
 		self.waiters = set()
+		self.lockline = 0
 
 	def trylock(self, process, time):
 		if not self.locked:
@@ -92,7 +93,8 @@ class Buffer:
 
 	def lockdone(self, process, time):
 		if self.locked:
-			print('Buffer already locked on line %d?!' % nr)
+			print('Buffer 0x%x already locked at line %d? (line %d)' % \
+					(self.bno, self.lockline, nr))
 		#	process.dump()
 		#	self.dump()
 		#	assert False
@@ -101,6 +103,7 @@ class Buffer:
 		self.locked = True
 		self.owner = process
 		self.locktime = time
+		self.lockline = nr
 		process.locked_bufs.add(self)
 		process.bufs.add(self)
 		locked_buffers.add(self)
@@ -118,7 +121,8 @@ class Buffer:
 
 	def dump(self):
 		if self.owner is not None:
-			pid = '%s@%f' % (self.owner.pid, self.locktime)
+			pid = '%s@%f (line %d)' % \
+				(self.owner.pid, self.locktime, self.lockline)
 		else:
 			pid = ''
 		print('dev %s bno 0x%x nblks 0x%x lock %d owner %s' % \
