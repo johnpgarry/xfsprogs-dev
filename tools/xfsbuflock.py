@@ -91,6 +91,13 @@ class Buffer:
 		if not self.locked:
 			self.lockdone(process, time)
 
+	def init(self, process, time):
+		# Buffers are initialized locked, but we could be allocating
+		# a surplus buffer while trying to grab a buffer that may or
+		# may not already exist.
+		if not self.locked:
+			self.lockdone(process, time)
+
 	def lockdone(self, process, time):
 		if self.locked:
 			print('Buffer 0x%x already locked at line %d? (line %d)' % \
@@ -183,6 +190,10 @@ for line in fileinput.input():
 		buf = getbuf(toks)
 		if buf is not None:
 			buf.trylock(proc, time)
+	elif fn == 'xfs_buf_init':
+		buf = getbuf(toks)
+		if buf is not None:
+			buf.init(proc, time)
 	elif fn == 'xfs_buf_item_unlock':
 		pass
 	else:
