@@ -86,7 +86,9 @@ scan_fs_dir(
 	/* Caller-specific directory checks. */
 	if (!sft->dir_fn(ctx, sftd->path, dir_fd, sft->arg)) {
 		sft->moveon = false;
-		close(dir_fd);
+		error = close(dir_fd);
+		if (error)
+			str_errno(ctx, sftd->path);
 		goto out;
 	}
 

@@ -53,6 +53,25 @@ struct scrub_inode_ctx {
 	bool			moveon;
 };
 
+/* Report a filesystem error that the vfs fed us on close. */
+static void
+xfs_scrub_inode_vfs_error(
+	struct scrub_ctx	*ctx,
+	struct xfs_bstat	*bstat)
+{
+	char			descr[DESCR_BUFSZ];
+	xfs_agnumber_t		agno;
+	xfs_agino_t		agino;
+	int			old_errno = errno;
+
+	agno = bstat->bs_ino / (1ULL << (ctx->inopblog + ctx->agblklog));
+	agino = bstat->bs_ino % (1ULL << (ctx->inopblog + ctx->agblklog));
+	snprintf(descr, DESCR_BUFSZ, _("inode %"PRIu64" (%u/%u)"),
+			(uint64_t)bstat->bs_ino, agno, agino);
+	errno = old_errno;
+	str_errno(ctx, descr);
+}
+
 /* Verify the contents, xattrs, and extent maps of an inode. */
 static int
 xfs_scrub_inode(
@@ -65,6 +84,7 @@ xfs_scrub_inode(
 	struct ptcounter	*icount = ictx->icount;
 	bool			moveon = true;
 	int			fd = -1;
+	int			error;
 
 	background_sleep();
 
@@ -116,8 +136,11 @@ xfs_scrub_inode(
 out:
 	ptcounter_add(icount, 1);
 	progress_add(1);
-	if (fd >= 0)
-		close(fd);
+	if (fd >= 0) {
+		error = close(fd);
+		if (error)
+			xfs_scrub_inode_vfs_error(ctx, bstat);
+	}
 	if (!moveon)
 		ictx->moveon = false;
 	return ictx->moveon ? 0 : XFS_ITERATE_INODES_ABORT;

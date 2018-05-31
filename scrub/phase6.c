@@ -212,7 +212,9 @@ _("Disappeared during read error reporting."));
 
 	/* Go find the badness. */
 	moveon = xfs_report_verify_fd(ctx, descr, fd, arg);
-	close(fd);
+	error = close(fd);
+	if (error)
+		str_errno(ctx, descr);
 
 	return moveon ? 0 : XFS_ITERATE_INODES_ABORT;
 }
@@ -243,6 +245,7 @@ xfs_report_verify_dirent(
 {
 	bool			moveon;
 	int			fd;
+	int			error;
 
 	/* Ignore things we can't open. */
 	if (!S_ISREG(sb->st_mode) && !S_ISDIR(sb->st_mode))
@@ -268,8 +271,9 @@ xfs_report_verify_dirent(
 		goto out;
 
 out:
-	close(fd);
-
+	error = close(fd);
+	if (error)
+		str_errno(ctx, path);
 	return moveon;
 }
 

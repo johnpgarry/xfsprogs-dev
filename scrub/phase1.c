@@ -60,6 +60,8 @@ bool
 xfs_cleanup_fs(
 	struct scrub_ctx	*ctx)
 {
+	int			error;
+
 	if (ctx->fshandle)
 		free_handle(ctx->fshandle, ctx->fshandle_len);
 	if (ctx->rtdev)
@@ -69,7 +71,9 @@ xfs_cleanup_fs(
 	if (ctx->datadev)
 		disk_close(ctx->datadev);
 	fshandle_destroy();
-	close(ctx->mnt_fd);
+	error = close(ctx->mnt_fd);
+	if (error)
+		str_errno(ctx, _("closing mountpoint fd"));
 	fs_table_destroy();
 
 	return true;

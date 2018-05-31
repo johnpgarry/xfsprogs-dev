@@ -250,6 +250,7 @@ xfs_scrub_connections(
 	xfs_agnumber_t		agno;
 	xfs_agino_t		agino;
 	int			fd = -1;
+	int			error;
 
 	agno = bstat->bs_ino / (1ULL << (ctx->inopblog + ctx->agblklog));
 	agino = bstat->bs_ino % (1ULL << (ctx->inopblog + ctx->agblklog));
@@ -285,8 +286,11 @@ xfs_scrub_connections(
 
 out:
 	progress_add(1);
-	if (fd >= 0)
-		close(fd);
+	if (fd >= 0) {
+		error = close(fd);
+		if (error)
+			str_errno(ctx, descr);
+	}
 	if (!moveon)
 		*pmoveon = false;
 	return *pmoveon ? 0 : XFS_ITERATE_INODES_ABORT;
