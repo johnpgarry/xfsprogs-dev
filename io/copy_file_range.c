@@ -47,7 +47,7 @@ copy_range_help(void)
  * glibc buffered copy fallback.
  */
 static loff_t
-copy_file_range_cmd(int fd, loff_t *src, loff_t *dst, size_t len)
+copy_file_range_cmd(int fd, long long *src, long long *dst, long long len)
 {
 	loff_t ret;
 
@@ -89,34 +89,36 @@ copy_dst_truncate(void)
 static int
 copy_range_f(int argc, char **argv)
 {
-	loff_t src = 0;
-	loff_t dst = 0;
+	long long src = 0;
+	long long dst = 0;
 	size_t len = 0;
-	char *sp;
 	int opt;
 	int ret;
 	int fd;
+	size_t fsblocksize, fssectsize;
+
+	init_cvtnum(&fsblocksize, &fssectsize);
 
 	while ((opt = getopt(argc, argv, "s:d:l:")) != -1) {
 		switch (opt) {
 		case 's':
-			src = strtoull(optarg, &sp, 10);
-			if (!sp || sp == optarg) {
-				printf(_("invalid source offset -- %s\n"), sp);
+			src = cvtnum(fsblocksize, fssectsize, optarg);
+			if (src < 0) {
+				printf(_("invalid source offset -- %s\n"), optarg);
 				return 0;
 			}
 			break;
 		case 'd':
-			dst = strtoull(optarg, &sp, 10);
-			if (!sp || sp == optarg) {
-				printf(_("invalid destination offset -- %s\n"), sp);
+			dst = cvtnum(fsblocksize, fssectsize, optarg);
+			if (dst < 0) {
+				printf(_("invalid destination offset -- %s\n"), optarg);
 				return 0;
 			}
 			break;
 		case 'l':
-			len = strtoull(optarg, &sp, 10);
-			if (!sp || sp == optarg) {
-				printf(_("invalid length -- %s\n"), sp);
+			len = cvtnum(fsblocksize, fssectsize, optarg);
+			if (len < 0) {
+				printf(_("invalid length -- %s\n"), optarg);
 				return 0;
 			}
 			break;
