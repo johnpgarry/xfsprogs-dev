@@ -2271,7 +2271,8 @@ _("data stripe width (%lld) is too large of a multiple of the data stripe unit (
 		dswidth = big_dswidth;
 	}
 
-	if (dsunit && (!dswidth || (dswidth % dsunit != 0))) {
+	if ((dsunit && !dswidth) || (!dsunit && dswidth) ||
+	    (dsunit && (dswidth % dsunit != 0))) {
 		fprintf(stderr,
 _("data stripe width (%d) must be a multiple of the data stripe unit (%d)\n"),
 			dswidth, dsunit);
