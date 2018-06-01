@@ -91,7 +91,7 @@ copy_range_f(int argc, char **argv)
 {
 	long long src = 0;
 	long long dst = 0;
-	size_t len = 0;
+	long long len = 0;
 	int opt;
 	int ret;
 	int fd;
