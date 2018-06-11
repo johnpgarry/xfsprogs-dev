@@ -55,6 +55,17 @@ struct sb_feat_args {
 };
 
 /*
+ * File configuration type settings
+ *
+ * These are the different possibilities by which you can end up parsing
+ * default settings with. DEFAULTS_BUILTIN indicates there was no configuration
+ * file parsed and we are using the built-in defaults on this code.
+ */
+enum default_params_type {
+	DEFAULTS_BUILTIN = 0,
+};
+
+/*
  * Default filesystem features and configuration values
  *
  * This structure contains the default mkfs values that are to be used when
@@ -63,7 +74,7 @@ struct sb_feat_args {
  * calculations.
  */
 struct mkfs_default_params {
-	char	*source;	/* where the defaults came from */
+	enum default_params_type type; /* where the defaults came from */
 
 	int	sectorsize;
 	int	blocksize;
@@ -74,5 +85,14 @@ struct mkfs_default_params {
 	/* root inode characteristics */
 	struct fsxattr		fsx;
 };
+
+static inline const char *default_type_str(enum default_params_type type)
+{
+	switch (type) {
+	case DEFAULTS_BUILTIN:
+		return _("package built-in definitions");
+	}
+	return _("Unkown\n");
+}
 
 #endif /* _XFS_MKFS_CONFIG_H */

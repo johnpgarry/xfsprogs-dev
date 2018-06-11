@@ -3722,7 +3722,7 @@ main(
 
 	/* build time defaults */
 	struct mkfs_default_params	dft = {
-		.source = _("package build definitions"),
+		.type = DEFAULTS_BUILTIN,
 		.sectorsize = XFS_MIN_SECTORSIZE,
 		.blocksize = 1 << XFS_DFL_BLOCKSIZE_LOG,
 		.sb_feat = {
@@ -3762,7 +3762,8 @@ main(
 	 * implemented, emit a message to indicate where the defaults being
 	 * used came from.
 	 *
-	 * printf(_("Default configuration sourced from %s\n"), dft.source);
+	 * printf(_("Default configuration sourced from %s\n"),
+	 *	  default_type_str(dft.type));
 	 */
 
 	/* copy new defaults into CLI parsing structure */
