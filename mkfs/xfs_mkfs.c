@@ -21,6 +21,7 @@
 #include "xfs_multidisk.h"
 #include "libxcmd.h"
 #include "fsgeom.h"
+#include "config.h"
 
 
 #define TERABYTES(count, blog)	((uint64_t)(count) << (40 - (blog)))
@@ -707,39 +708,6 @@ cli_opt_set(
 }
 
 /*
- * Shared superblock configuration options
- *
- * These options provide shared configuration tunables for the filesystem
- * superblock. There are three possible sources for these options set, each
- * source can overriding the later source:
- *
- * 	o built-in defaults
- * 	o configuration file (XXX)
- * 	o command line
- *
- * These values are not used directly - they are inputs into the mkfs geometry
- * validation.
- */
-struct sb_feat_args {
-	int	log_version;
-	int	attr_version;
-	int	dir_version;
-	bool	inode_align;		/* XFS_SB_VERSION_ALIGNBIT */
-	bool	nci;			/* XFS_SB_VERSION_BORGBIT */
-	bool	lazy_sb_counters;	/* XFS_SB_VERSION2_LAZYSBCOUNTBIT */
-	bool	parent_pointers;	/* XFS_SB_VERSION2_PARENTBIT */
-	bool	projid32bit;		/* XFS_SB_VERSION2_PROJID32BIT */
-	bool	crcs_enabled;		/* XFS_SB_VERSION2_CRCBIT */
-	bool	dirftype;		/* XFS_SB_VERSION2_FTYPE */
-	bool	finobt;			/* XFS_SB_FEAT_RO_COMPAT_FINOBT */
-	bool	spinodes;		/* XFS_SB_FEAT_INCOMPAT_SPINODES */
-	bool	rmapbt;			/* XFS_SB_FEAT_RO_COMPAT_RMAPBT */
-	bool	reflink;		/* XFS_SB_FEAT_RO_COMPAT_REFLINK */
-	bool	nodalign;
-	bool	nortalign;
-};
-
-/*
  * Options configured on the command line.
  *
  * This stores all the specific config parameters the user sets on the command
@@ -848,27 +816,6 @@ struct mkfs_params {
 	char		*label;
 
 	struct sb_feat_args	sb_feat;
-};
-
-/*
- * Default filesystem features and configuration values
- *
- * This structure contains the default mkfs values that are to be used when
- * a user does not specify the option on the command line. We do not use these
- * values directly - they are inputs to the mkfs geometry validation and
- * calculations.
- */
-struct mkfs_default_params {
-	char	*source;	/* where the defaults came from */
-
-	int	sectorsize;
-	int	blocksize;
-
-	/* feature flags that are set */
-	struct sb_feat_args	sb_feat;
-
-	/* root inode characteristics */
-	struct fsxattr		fsx;
 };
 
 static void __attribute__((noreturn))
