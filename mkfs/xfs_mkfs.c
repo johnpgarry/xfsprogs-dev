@@ -707,26 +707,18 @@ cli_opt_set(
 }
 
 /*
- * Options configured on the command line.
+ * Shared superblock configuration options
  *
- * This stores all the specific config parameters the user sets on the command
- * line. We do not use these values directly - they are inputs to the mkfs
- * geometry validation and override any default configuration value we have.
+ * These options provide shared configuration tunables for the filesystem
+ * superblock. There are three possible sources for these options set, each
+ * source can overriding the later source:
  *
- * We don't keep flags to indicate what parameters are set - if we need to check
- * if an option was set on the command line, we check the relevant entry in the
- * option table which records whether it was specified in the .seen and
- * .str_seen variables in the table.
+ * 	o built-in defaults
+ * 	o configuration file (XXX)
+ * 	o command line
  *
- * Some parameters are stored as strings for post-parsing after their dependent
- * options have been resolved (e.g. block size and sector size have been parsed
- * and validated).
- *
- * This allows us to check that values have been set without needing separate
- * flags for each value, and hence avoids needing to record and check for each
- * specific option that can set the value later on in the code. In the cases
- * where we don't have a cli_params structure around, the above cli_opt_set()
- * function can be used.
+ * These values are not used directly - they are inputs into the mkfs geometry
+ * validation.
  */
 struct sb_feat_args {
 	int	log_version;
@@ -747,6 +739,25 @@ struct sb_feat_args {
 	bool	nortalign;
 };
 
+/*
+ * Options configured on the command line.
+ *
+ * This stores all the specific config parameters the user sets on the command
+ * line.  We don't keep flags to indicate what parameters are set - if we need
+ * to check if an option was set on the command line, we check the relevant
+ * entry in the option table which records whether it was specified in the
+ * .seen and .str_seen variables in the table.
+ *
+ * Some parameters are stored as strings for post-parsing after their dependent
+ * options have been resolved (e.g. block size and sector size have been parsed
+ * and validated).
+ *
+ * This allows us to check that values have been set without needing separate
+ * flags for each value, and hence avoids needing to record and check for each
+ * specific option that can set the value later on in the code. In the cases
+ * where we don't have a cli_params structure around, the function cli_opt_set()
+ * function can be used.
+ */
 struct cli_params {
 	int	sectorsize;
 	int	blocksize;
