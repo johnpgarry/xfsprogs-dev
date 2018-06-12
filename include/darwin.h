@@ -79,6 +79,7 @@ static __inline__ void platform_getoptreset(void)
 {
 	extern int optreset;
 	optreset = 0;
+	opterr = 1;
 }
 
 static __inline__ int platform_uuid_compare(uuid_t *uu1, uuid_t *uu2)
