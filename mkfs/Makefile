@@ -8,7 +8,7 @@ include $(TOPDIR)/include/builddefs
 LTCOMMAND = mkfs.xfs
 
 HFILES =
-CFILES = proto.c xfs_mkfs.c
+CFILES = proto.c xfs_mkfs.c config.c
 
 LLDLIBS += $(LIBXFS) $(LIBXCMD) $(LIBFROG) $(LIBRT) $(LIBPTHREAD) $(LIBBLKID) \
 	$(LIBUUID)

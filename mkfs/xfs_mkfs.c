@@ -3744,6 +3744,9 @@ main(
 			.nortalign = false,
 		},
 	};
+	char			*cli_config_file = NULL;
+	char			*config_file = NULL;
+	int			fd, ret;
 
 	platform_uuid_generate(&cli.uuid);
 	progname = basename(argv[0]);
@@ -3752,26 +3755,75 @@ main(
 	textdomain(PACKAGE);
 
 	/*
-	 * TODO: Sourcing defaults from a config file
-	 *
 	 * Before anything else, see if there's a config file with different
-	 * defaults. If a file exists in <package location>, read in the new
-	 * default values and overwrite them in the &dft structure. This way the
-	 * new defaults will apply before we parse the CLI, and the CLI will
-	 * still be able to override them. When more than one source is
-	 * implemented, emit a message to indicate where the defaults being
-	 * used came from.
+	 * defaults. If the CLI specified a full path we use and require that.
+	 * If a relative path was provided on the CLI we search the allowed
+	 * search paths for the file. If no config file was specified on the
+	 * CLI we will look for MKFS_XFS_CONF_DIR/default and use that if
+	 * present, however this file is optional.
 	 *
-	 * printf(_("Default configuration sourced from %s\n"),
-	 *	  default_type_str(dft.type));
+	 * If a configuration file is found we use it to help overwrite default
+	 * values in the &dft structure. This way the new defaults will apply
+	 * before we parse the CLI, and the user will still be able to override
+	 * them through the CLI.
 	 */
 
-	/* copy new defaults into CLI parsing structure */
+	/*
+	 * Pull config line options from command line
+	 *
+	 * We only parse -c here, which is why we turn off getopt errors.
+	 * Leading "-" in opstring ensures that unknown args aren't reordered.
+	 * Full option string is parsed later after we do this step.
+	 */
+	 opterr = 0;
+	 while ((c = getopt(argc, argv, "-c:")) != EOF) {
+		switch (c) {
+		case 'c':
+			if (cli_config_file) {
+				fprintf(stderr, _("respecification of configuration not allowed\n"));
+				exit(1);
+			}
+			cli_config_file = optarg;
+			dft.type = DEFAULTS_CLI_CONFIG;
+			break;
+		default:
+			continue;
+		}
+	}
+
+	fd = open_config_file(cli_config_file, &dft, &config_file);
+	if (fd >= 0) {
+		ret = parse_defaults_file(fd, &dft, config_file);
+		if (ret) {
+			fprintf(stderr, _("Error parsing %s config file: %s : %s\n"),
+					default_type_str(dft.type),
+					config_file,
+					strerror(errno));
+			free(config_file);
+			close(fd);
+			exit(1);
+		}
+		free(config_file);
+		close(fd);
+	}
+
+	printf(_("Default configuration sourced from %s\n"),
+	       default_type_str(dft.type));
+
+	/*
+	 * Done parsing defaults now, so memcpy defaults into CLI
+	 * structure, reset getopt and start parsing CLI options
+	 */
 	memcpy(&cli.sb_feat, &dft.sb_feat, sizeof(cli.sb_feat));
 	memcpy(&cli.fsx, &dft.fsx, sizeof(cli.fsx));
 
-	while ((c = getopt(argc, argv, "b:d:i:l:L:m:n:KNp:qr:s:CfV")) != EOF) {
+	platform_getoptreset();
+
+	while ((c = getopt(argc, argv, "b:c:d:i:l:L:m:n:KNp:qr:s:CfV")) != EOF) {
 		switch (c) {
+		case 'c':
+			/* already validated and parsed, ignore */
+			break;
 		case 'C':
 		case 'f':
 			force_overwrite = 1;

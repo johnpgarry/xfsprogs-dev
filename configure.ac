@@ -5,6 +5,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([include/libxfs.h])
 AC_CONFIG_HEADER(include/platform_defs.h)
 AC_PREFIX_DEFAULT(/usr)
+test "$sysconfdir" = '${prefix}/etc' && sysconfdir=/etc
 
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL

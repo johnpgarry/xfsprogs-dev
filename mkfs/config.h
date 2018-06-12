@@ -19,6 +19,8 @@
 #ifndef _XFS_MKFS_CONFIG_H
 #define _XFS_MKFS_CONFIG_H
 
+#define MKFS_XFS_CONF_DIR      ROOT_SYSCONFDIR "/xfs/mkfs"
+
 struct fsxattr;
 
 /*
@@ -29,7 +31,7 @@ struct fsxattr;
  * source can overriding the later source:
  *
  * 	o built-in defaults
- * 	o configuration file (XXX)
+ * 	o configuration file
  * 	o command line
  *
  * These values are not used directly - they are inputs into the mkfs geometry
@@ -60,9 +62,14 @@ struct sb_feat_args {
  * These are the different possibilities by which you can end up parsing
  * default settings with. DEFAULTS_BUILTIN indicates there was no configuration
  * file parsed and we are using the built-in defaults on this code.
+ * DEFAULTS_CONFIG means the default configuration file was found and used.
+ * DEFAULTS_CLI_CONFIG means the user asked for a custom configuration type
+ * through the command line interface and it was used.
  */
 enum default_params_type {
 	DEFAULTS_BUILTIN = 0,
+	DEFAULTS_CONFIG,
+	DEFAULTS_CLI_CONFIG,
 };
 
 /*
@@ -91,8 +98,24 @@ static inline const char *default_type_str(enum default_params_type type)
 	switch (type) {
 	case DEFAULTS_BUILTIN:
 		return _("package built-in definitions");
+	case DEFAULTS_CONFIG:
+		return _("package default config file");
+	case DEFAULTS_CLI_CONFIG:
+		return _("CLI supplied file");
 	}
 	return _("Unkown\n");
 }
+
+int
+open_config_file(
+	const char			*cli_config_file,
+	struct mkfs_default_params	*dft,
+	char				**fpath);
+
+int
+parse_defaults_file(
+	int				fd,
+	struct mkfs_default_params	*dft,
+	const char			*config_file);
 
 #endif /* _XFS_MKFS_CONFIG_H */
