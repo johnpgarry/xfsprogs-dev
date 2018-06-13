@@ -3785,7 +3785,6 @@ _("respecification of configuration not allowed\n"));
 				exit(1);
 			}
 			cli_config_file = optarg;
-			dft.type = DEFAULTS_CLI_CONFIG;
 			break;
 		default:
 			continue;
