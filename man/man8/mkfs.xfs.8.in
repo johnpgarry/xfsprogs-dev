@@ -131,7 +131,7 @@ contains built-in default values for every option as described in the sections
 below.
 These built-in defaults may evolve over time as new capabilities are added.
 If the file
-.B /etc/xfs/mkfs/defaults
+.B @sysconfdir@/xfs/mkfs/defaults
 exists, it will be parsed to override built-in defaults, and the defaults
 described in sections below may no longer apply.
 .PP
@@ -143,7 +143,7 @@ as described in the OPTIONS section.
 .TP
 .BI \-c " configuration"
 This option may be used to specify a configuration file other than
-.B /etc/xfs/mkfs/defaults
+.B @sysconfdir@/xfs/mkfs/defaults
 to override selected built-in parameter defaults.
 If
 .B configuration
@@ -155,7 +155,7 @@ Otherwise,
 will search for
 .B configuration
 first in the current working directory, and then in the
-.B /etc/xfs/mkfs/
+.B @sysconfdir@/xfs/mkfs/
 directory.
 See also the CONFIGURATION FILE FORMAT section below.
 .TP
@@ -958,7 +958,7 @@ Do not attempt to discard blocks at mkfs time.
 Prints the version number and exits.
 .SH CONFIGURATION FILE FORMAT
 The optional default configuration file in
-.B /etc/xfs/mkfs/default
+.B @sysconfdir@/xfs/mkfs/default
 as well as any alternate configuration file specified via the
 .B \-c
 option follow a simple ini-style format as shown below.
