@@ -550,7 +550,7 @@ open_cli_config(
 		if (fd < 0)
 			goto out;
 
-		ret = fstatat(dirfd, cli_config_file, &st, AT_SYMLINK_NOFOLLOW);
+		ret = fstat(fd, &st);
 		if (ret != 0)
 			goto err_out_close;
 
@@ -563,7 +563,7 @@ open_cli_config(
 
 	memcpy(*fpath, cli_config_file, strlen(cli_config_file));
 
-	ret = fstatat(AT_FDCWD, cli_config_file, &st, AT_SYMLINK_NOFOLLOW);
+	ret = fstat(fd, &st);
 	if (ret != 0)
 		goto err_out_close;
 
@@ -628,7 +628,7 @@ open_config_file(
 		goto err_out_close;
 	}
 
-	ret = fstatat(dirfd, "default", &st, AT_SYMLINK_NOFOLLOW);
+	ret = fstat(fd, &st);
 	if (ret != 0)
 		goto err_out_close;
 
