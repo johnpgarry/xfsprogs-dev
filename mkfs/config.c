@@ -637,17 +637,15 @@ parse_defaults_file(
 
 	fp = fdopen(fd, "r");
 	if (!fp)
-		goto out;
+		return -1;
 
 	ret = parse_config_stream(dft, config_file, fp);
 	if (ret) {
 		fclose(fp);
-		goto out;
+		return -1;
 	}
 
 	printf(_("config-file=%s\n"), config_file);
 
 	return 0;
-out:
-	return -1;
 }
