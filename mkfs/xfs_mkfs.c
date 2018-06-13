@@ -3780,7 +3780,8 @@ main(
 		switch (c) {
 		case 'c':
 			if (cli_config_file) {
-				fprintf(stderr, _("respecification of configuration not allowed\n"));
+				fprintf(stderr,
+_("respecification of configuration not allowed\n"));
 				exit(1);
 			}
 			cli_config_file = optarg;
@@ -3795,10 +3796,10 @@ main(
 	if (fd >= 0) {
 		ret = parse_defaults_file(fd, &dft, config_file);
 		if (ret) {
-			fprintf(stderr, _("Error parsing %s config file: %s : %s\n"),
-					default_type_str(dft.type),
-					config_file,
-					strerror(errno));
+			fprintf(stderr,
+_("Error parsing %s config file: %s : %s\n"),
+				default_type_str(dft.type),
+				config_file, strerror(errno));
 			free(config_file);
 			close(fd);
 			exit(1);
@@ -3819,7 +3820,8 @@ main(
 
 	platform_getoptreset();
 
-	while ((c = getopt(argc, argv, "b:c:d:i:l:L:m:n:KNp:qr:s:CfV")) != EOF) {
+	while ((c = getopt(argc, argv,
+			   "b:c:d:i:l:L:m:n:KNp:qr:s:CfV")) != EOF) {
 		switch (c) {
 		case 'c':
 			/* already validated and parsed, ignore */
