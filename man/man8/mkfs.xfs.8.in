@@ -957,53 +957,61 @@ Do not attempt to discard blocks at mkfs time.
 .B \-V
 Prints the version number and exits.
 .SH CONFIGURATION FILE FORMAT
-The optional default configuration file in
+The optional defaults configuration file in
 .B @sysconfdir@/xfs/mkfs/default
 as well as any alternate configuration file specified via the
 .B \-c
-option follow a simple ini-style format as shown below.
-Available options consist of a small subset of the parameters available
-via the
-.BR mkfs.xfs (8)
-command line.
-Currently all default parameters can only be either enabled or disabled,
+option follow a simple ini-style format as shown below, with section names
+corresponding to command-line options as follows:
+.BR "\-d [data]" ,
+.BR "\-i [inode]" ,
+.BR "\-l [log]" ,
+.BR "\-m [metadata]" ,
+.BR "\-n [naming]" ,
+.BR "\-r [rtdev]" .
+.br
+In each of these sections, a subset of the command-line suboptions may be
+specified to override built-in default settings.
+Currently all parameters can only be either enabled or disabled,
 with a value of 1 to enable or 0 to disable.
 See below for a list of all supported configuration parameters and their
 current built-in default settings.
 .PP
-.BI [data]
+.B # Comments and blank lines  are allowed
 .br
-.BI noalign=0
+.B [data]
+.br
+.B noalign=0
 .PP
-.BI [inode]
+.B [inode]
 .br
-.BI align=1
+.B align=1
 .br
-.BI projid32bit=1
+.B projid32bit=1
 .br
-.BI sparse=0
+.B sparse=1
 .PP
-.BI [log]
+.B [log]
 .br
-.BI lazy-count=1
+.B lazy-count=1
 .PP
-.BI [metadata]
+.B [metadata]
 .br
-.BI crc=1
+.B crc=1
 .br
-.BI finobt=1
+.B finobt=1
 .br
-.BI rmapbt=0
+.B rmapbt=0
 .br
-.BI reflink=0
+.B reflink=0
 .PP
-.BI [naming]
+.B [naming]
 .br
-.BI ftype=1
+.B ftype=1
 .PP
-.BI [rtdev]
+.B [rtdev]
 .br
-.BI noalign=0
+.B noalign=0
 .PP
 .SH SEE ALSO
 .BR xfs (5),
