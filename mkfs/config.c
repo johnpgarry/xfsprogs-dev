@@ -385,7 +385,7 @@ parse_config_stream(
 	const char 			*config_file,
 	FILE				*fp)
 {
-	int				ret = -1;
+	int				ret = 0;
 	char				*line = NULL;
 	ssize_t				linelen;
 	size_t				len = 0, lineno = 0;
