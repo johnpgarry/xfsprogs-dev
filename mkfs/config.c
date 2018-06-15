@@ -557,6 +557,7 @@ open_config_file(
 {
 	int				dirfd = -1, fd = -1, len, ret = 0;
 	struct stat			st;
+	bool				cli_specified = false;
 
 	*fpath = malloc(PATH_MAX);
 	if (!*fpath)
@@ -566,18 +567,19 @@ open_config_file(
 
 	/* first try relative to pwd or absolute path to cli configfile */
 	if (config_file) {
-		dft->type = DEFAULTS_CLI_CONFIG;
+		cli_specified = true;
 		if (strlen(config_file) > PATH_MAX) {
 			errno = ENAMETOOLONG;
 			goto out;
 		}
-		memcpy(*fpath, config_file, strlen(config_file));
+		/* Get absolute path to this file */
+		realpath(config_file, *fpath);
 		fd = openat(AT_FDCWD, config_file, O_NOFOLLOW, O_RDONLY);
 	}
 
 	/* on failure search for cli config or default file in sysconfdir */
 	if (fd < 0) {
-		if (!config_file)
+		if (!cli_specified)
 			config_file = MKFS_XFS_DEFAULT_CONFIG;
 		len = snprintf(*fpath, PATH_MAX, "%s/%s", MKFS_XFS_CONF_DIR,
 				config_file);
@@ -592,8 +594,6 @@ open_config_file(
 		fd = openat(dirfd, config_file, O_NOFOLLOW, O_RDONLY);
 		if (fd < 0)
 			goto out;
-		if (!strcmp(config_file, MKFS_XFS_DEFAULT_CONFIG))
-			dft->type = DEFAULTS_CONFIG;
 	}
 
 	ret = fstat(fd, &st);
@@ -606,11 +606,9 @@ open_config_file(
 out:
 	/* stat check is always fatal; missing is fatal only if cli-specified */
 	if (ret ||
-	    (fd < 0 && dft->type == DEFAULTS_CLI_CONFIG)) {
-		fprintf(stderr,
-_("Unable to open %s config file: %s : %s\n"),
-			default_type_str(dft->type), *fpath,
-			strerror(errno));
+	    (fd < 0 && cli_specified)) {
+		fprintf(stderr, _("Unable to open config file: %s : %s\n"),
+			*fpath, strerror(errno));
 		free(*fpath);
 		exit(1);
 	}
@@ -644,8 +642,6 @@ parse_defaults_file(
 		fclose(fp);
 		return -1;
 	}
-
-	printf(_("config-file=%s\n"), config_file);
 
 	return 0;
 }

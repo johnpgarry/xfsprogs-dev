@@ -3722,7 +3722,6 @@ main(
 
 	/* build time defaults */
 	struct mkfs_default_params	dft = {
-		.type = DEFAULTS_BUILTIN,
 		.sectorsize = XFS_MIN_SECTORSIZE,
 		.blocksize = 1 << XFS_DFL_BLOCKSIZE_LOG,
 		.sb_feat = {
@@ -3796,19 +3795,18 @@ _("respecification of configuration not allowed\n"));
 		ret = parse_defaults_file(fd, &dft, config_file);
 		if (ret) {
 			fprintf(stderr,
-_("Error parsing %s config file: %s : %s\n"),
-				default_type_str(dft.type),
+_("Error parsing config file: %s : %s\n"),
 				config_file, strerror(errno));
 			free(config_file);
 			close(fd);
 			exit(1);
 		}
+		printf(_("Configuration file used for defaults: %s\n"),
+			config_file);
 		free(config_file);
 		close(fd);
 	}
 
-	printf(_("Default configuration sourced from %s\n"),
-	       default_type_str(dft.type));
 
 	/*
 	 * Done parsing defaults now, so memcpy defaults into CLI

@@ -58,22 +58,6 @@ struct sb_feat_args {
 };
 
 /*
- * File configuration type settings
- *
- * These are the different possibilities by which you can end up parsing
- * default settings with. DEFAULTS_BUILTIN indicates there was no configuration
- * file parsed and we are using the built-in defaults on this code.
- * DEFAULTS_CONFIG means the default configuration file was found and used.
- * DEFAULTS_CLI_CONFIG means the user asked for a custom configuration type
- * through the command line interface and it was used.
- */
-enum default_params_type {
-	DEFAULTS_BUILTIN = 0,
-	DEFAULTS_CONFIG,
-	DEFAULTS_CLI_CONFIG,
-};
-
-/*
  * Default filesystem features and configuration values
  *
  * This structure contains the default mkfs values that are to be used when
@@ -82,8 +66,6 @@ enum default_params_type {
  * calculations.
  */
 struct mkfs_default_params {
-	enum default_params_type type; /* where the defaults came from */
-
 	int	sectorsize;
 	int	blocksize;
 
@@ -93,19 +75,6 @@ struct mkfs_default_params {
 	/* root inode characteristics */
 	struct fsxattr		fsx;
 };
-
-static inline const char *default_type_str(enum default_params_type type)
-{
-	switch (type) {
-	case DEFAULTS_BUILTIN:
-		return _("package built-in definitions");
-	case DEFAULTS_CONFIG:
-		return _("package default config file");
-	case DEFAULTS_CLI_CONFIG:
-		return _("CLI supplied file");
-	}
-	return _("Unkown\n");
-}
 
 int
 open_config_file(
