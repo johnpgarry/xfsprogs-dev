@@ -573,7 +573,8 @@ open_config_file(
 			goto out;
 		}
 		/* Get absolute path to this file */
-		realpath(config_file, *fpath);
+		if (!realpath(config_file, *fpath))
+			goto out;
 		fd = openat(AT_FDCWD, config_file, O_NOFOLLOW, O_RDONLY);
 	}
 
