@@ -466,9 +466,6 @@ _("No section specified yet on line %s:%zu : %s\n"),
 			 */
 			snprintf(p, len, "%s=%lu", tag, value);
 
-			/* Not needed anymore */
-			free(tag);
-
 			/*
 			 * We only use getsubopt() to validate the possible
 			 * subopt, we already parsed the value and its already
@@ -476,6 +473,16 @@ _("No section specified yet on line %s:%zu : %s\n"),
 			 */
 			subopt = getsubopt(&p, (char **) confopt->subopts,
 					   &ignore_value);
+			if (subopt == -1) {
+				errno = EINVAL;
+				fprintf(stderr,
+_("Invalid token in section [%s] at line %s:%zu : %s\n"),
+					confopt->name, config_file, lineno, tag);
+				goto out_free_tag;
+			}
+
+			/* Not needed anymore */
+			free(tag);
 
 			ret = confopt->parser(dft, subopt, value);
 			if (ret) {
