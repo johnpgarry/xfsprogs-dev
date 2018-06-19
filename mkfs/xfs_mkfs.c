@@ -3791,7 +3791,7 @@ _("respecification of configuration not allowed\n"));
 		}
 	}
 
-	fd = open_config_file(cli_config_file, &dft, &config_file);
+	fd = open_config_file(cli_config_file, &config_file);
 	if (fd >= 0) {
 		ret = parse_defaults_file(fd, &dft, config_file);
 		if (ret) {

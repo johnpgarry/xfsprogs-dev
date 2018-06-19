@@ -79,7 +79,6 @@ struct mkfs_default_params {
 int
 open_config_file(
 	const char			*cli_config_file,
-	struct mkfs_default_params	*dft,
 	char				**fpath);
 
 int

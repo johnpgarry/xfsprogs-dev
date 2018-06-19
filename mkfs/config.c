@@ -549,9 +549,8 @@ config_stat_check(
  * If not specified or if above fails, try either cli-spec'd file or "default"
  * in MKFS_XFS_CONF_DIR.
  *
- * If any config file is successfully opened, dft->type is set to reflect the
- * source, an fd is returned, and the absolute path is returned in **fpath,
- * which must be free()'d by the caller.
+ * If any config file is successfully opened, an fd is returned, and the
+ * absolute path is returned in **fpath, which must be free()'d by the caller.
  *
  * If a cli-specified file is not found -1 is returned and errno set. Otherwise
  * the file descriptor is returned.
@@ -559,7 +558,6 @@ config_stat_check(
 int
 open_config_file(
 	const char			*config_file,
-	struct mkfs_default_params	*dft,
 	char				**fpath)
 {
 	int				dirfd = -1, fd = -1, len, ret = 0;
