@@ -43,6 +43,7 @@ bmap_help(void)
 " All the file offsets and disk blocks are in units of 512-byte blocks.\n"
 " -a -- prints the attribute fork map instead of the data fork.\n"
 " -c -- prints the copy-on-write fork map instead of the data fork.\n"
+"       This works only if the kernel was compiled in debug mode.\n"
 " -d -- suppresses a DMAPI read event, offline portions shown as holes.\n"
 " -e -- print delayed allocation extents.\n"
 " -l -- also displays the length of each extent in 512-byte blocks.\n"
