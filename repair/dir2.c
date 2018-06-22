@@ -495,8 +495,10 @@ _("corrected entry offsets in directory %" PRIu64 "\n"),
 
 	/*
 	 * if parent entry is bogus, null it out.  we'll fix it later .
+	 * If the validation fails for the root inode we fix it in
+	 * the next else case.
 	 */
-	if (verify_inum(mp, *parent))  {
+	if (verify_inum(mp, *parent) && ino != mp->m_sb.sb_rootino)  {
 
 		do_warn(
 _("bogus .. inode number (%" PRIu64 ") in directory inode %" PRIu64 ", "),
