@@ -1,3 +1,16 @@
+xfsprogs-4.17.0-rc1 (22 Jun 2018)
+	- mkfs.xfs: only stat block devices during mkfs init (Eric Sandeen)
+	- xfs_repair: multiple fixes and improvements (Darrick Wong)
+	- xfs_repair: check and repair quota metadata (Eric Sandeen)
+	- xfs_repair: fix shortform root inode parent (Marco Benatto)
+	- xfs_db: don't ASSERT on unrecognized metadata (Carlos Maiolino)
+	- xfs_db: add superblock info command ala xfs_info (Darrick Wong)
+	- xfs_spaceman: add superblock info command ala xfs_info (Darrick Wong)
+	- xfs_info: call xfs_db for unmounted devices (Darrick Wong)
+	- xfs_io: add online label command (Eric Sandeen)
+	- xfs_io: add O_PATH and O_NOFOLLOW options (David Howells)
+	- xfs_io: recognize *iB units in copy_range (Goldwyn Rodrigues)
+
 xfsprogs-4.16.1 (30 Apr 2018)
 	- fsck.xfs: remove bashism which may interfere with boot (Eric Sandeen)
 
