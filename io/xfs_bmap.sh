@@ -5,14 +5,15 @@
 
 OPTS=""
 VERSION=false
-USAGE="Usage: xfs_bmap [-adlpvV] [-n nx] file..."
+USAGE="Usage: xfs_bmap [-adelpvV] [-n nx] file..."
 DIRNAME=`dirname $0`
 
-while getopts "adln:pvV" c
+while getopts "adeln:pvV" c
 do
 	case $c in
 	a)	OPTS=$OPTS" -a";;
 	d)	OPTS=$OPTS" -d";;
+	e)	OPTS=$OPTS" -e";;
 	l)	OPTS=$OPTS" -l";;
 	n)	OPTS=$OPTS" -n "$OPTARG;;
 	p)	OPTS=$OPTS" -p";;
