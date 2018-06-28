@@ -579,6 +579,8 @@ bool xfs_log_check_lsn(struct xfs_mount *, xfs_lsn_t);
 
 typedef unsigned char u8;
 unsigned int hweight8(unsigned int w);
+unsigned int hweight32(unsigned int w);
+unsigned int hweight64(__u64 w);
 
 #define BIT_MASK(nr)	(1UL << ((nr) % BITS_PER_LONG))
 #define BIT_WORD(nr)	((nr) / BITS_PER_LONG)
