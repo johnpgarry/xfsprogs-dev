@@ -587,8 +587,8 @@ xfs_dir3_leaf_find_entry(
 				(index - lowstale - 1) *
 					sizeof(xfs_dir2_leaf_entry_t));
 		}
-		*lfloglow = MIN(lowstale, *lfloglow);
-		*lfloghigh = MAX(index - 1, *lfloghigh);
+		*lfloglow = min(lowstale, *lfloglow);
+		*lfloghigh = max(index - 1, *lfloghigh);
 		leafhdr->stale--;
 		return &ents[index - 1];
 	}
@@ -607,8 +607,8 @@ xfs_dir3_leaf_find_entry(
 		memmove(&ents[index + 1], &ents[index],
 			(highstale - index) * sizeof(xfs_dir2_leaf_entry_t));
 	}
-	*lfloglow = MIN(index, *lfloglow);
-	*lfloghigh = MAX(highstale, *lfloghigh);
+	*lfloglow = min(index, *lfloglow);
+	*lfloghigh = max(highstale, *lfloghigh);
 	leafhdr->stale--;
 	return &ents[index];
 }
