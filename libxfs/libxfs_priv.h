@@ -373,7 +373,7 @@ roundup_64(uint64_t x, uint32_t y)
 #define XFS_BUF_SET_BDSTRAT_FUNC(a,b)	((void) 0)
 
 /* avoid gcc warning */
-#define xfs_incore(bt,blkno,len,lockit)	({		\
+#define xfs_buf_incore(bt,blkno,len,lockit) ({		\
 	typeof(blkno) __foo = (blkno);			\
 	typeof(len) __bar = (len);			\
 	(blkno) = __foo;				\
