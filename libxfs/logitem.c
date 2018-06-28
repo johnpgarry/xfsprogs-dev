@@ -46,26 +46,26 @@ xfs_trans_buf_item_match(
 	struct xfs_buf_map	*map,
 	int			nmaps)
 {
-        struct xfs_log_item_desc *lidp;
-        struct xfs_buf_log_item *blip;
+	struct xfs_log_item	*lip;
+	struct xfs_buf_log_item *blip;
 	int			len = 0;
 	int			i;
 
 	for (i = 0; i < nmaps; i++)
 		len += map[i].bm_len;
 
-        list_for_each_entry(lidp, &tp->t_items, lid_trans) {
-                blip = (struct xfs_buf_log_item *)lidp->lid_item;
-                if (blip->bli_item.li_type == XFS_LI_BUF &&
+	list_for_each_entry(lip, &tp->t_items, li_trans) {
+		blip = (struct xfs_buf_log_item *)lip;
+		if (blip->bli_item.li_type == XFS_LI_BUF &&
 		    blip->bli_buf->b_target->dev == btp->dev &&
 		    XFS_BUF_ADDR(blip->bli_buf) == map[0].bm_bn &&
 		    blip->bli_buf->b_bcount == BBTOB(len)) {
 			ASSERT(blip->bli_buf->b_map_count == nmaps);
-                        return blip->bli_buf;
+			return blip->bli_buf;
 		}
-        }
+	}
 
-        return NULL;
+	return NULL;
 }
 /*
  * The following are from fs/xfs/xfs_buf_item.c
@@ -117,6 +117,7 @@ xfs_buf_item_init(
 #endif
 	bip->bli_item.li_type = XFS_LI_BUF;
 	bip->bli_item.li_mountp = mp;
+	INIT_LIST_HEAD(&bip->bli_item.li_trans);
 	bip->bli_buf = bp;
 	bip->bli_format.blf_type = XFS_LI_BUF;
 	bip->bli_format.blf_blkno = (int64_t)XFS_BUF_ADDR(bp);
@@ -162,5 +163,6 @@ xfs_inode_item_init(
 
 	iip->ili_item.li_type = XFS_LI_INODE;
 	iip->ili_item.li_mountp = mp;
+	INIT_LIST_HEAD(&iip->ili_item.li_trans);
 	iip->ili_inode = ip;
 }

@@ -384,7 +384,6 @@ manage_zones(int release)
 	extern kmem_zone_t	*xfs_btree_cur_zone;
 	extern kmem_zone_t	*xfs_bmap_free_item_zone;
 	extern kmem_zone_t	*xfs_trans_zone;
-	extern kmem_zone_t	*xfs_log_item_desc_zone;
 	extern void		xfs_dir_startup();
 
 	if (release) {	/* free zone allocation */
@@ -399,7 +398,6 @@ manage_zones(int release)
 		leaked += kmem_zone_destroy(xfs_btree_cur_zone);
 		leaked += kmem_zone_destroy(xfs_bmap_free_item_zone);
 		leaked += kmem_zone_destroy(xfs_trans_zone);
-		leaked += kmem_zone_destroy(xfs_log_item_desc_zone);
 
 		return leaked;
 	}
@@ -420,8 +418,6 @@ manage_zones(int release)
 			"xfs_bmap_free_item");
 	xfs_trans_zone = kmem_zone_init(
 			sizeof(struct xfs_trans), "xfs_trans");
-	xfs_log_item_desc_zone = kmem_zone_init(
-			sizeof(struct xfs_log_item_desc), "xfs_log_item_desc");
 	xfs_dir_startup();
 
 	return 0;

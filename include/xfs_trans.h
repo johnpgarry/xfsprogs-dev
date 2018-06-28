@@ -29,11 +29,14 @@ struct xfs_buf_map;
  */
 
 typedef struct xfs_log_item {
-	struct xfs_log_item_desc	*li_desc;	/* ptr to current desc*/
+	struct list_head		li_trans;	/* transaction list */
+	xfs_lsn_t			li_lsn;		/* last on-disk lsn */
 	struct xfs_mount		*li_mountp;	/* ptr to fs mount */
 	uint				li_type;	/* item type */
-	xfs_lsn_t			li_lsn;
+	unsigned long			li_flags;	/* misc flags */
 } xfs_log_item_t;
+
+#define XFS_LI_DIRTY	3	/* log item dirty in transaction */
 
 typedef struct xfs_inode_log_item {
 	xfs_log_item_t		ili_item;		/* common portion */

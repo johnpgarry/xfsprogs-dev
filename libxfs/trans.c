@@ -37,7 +37,6 @@ static void xfs_trans_free_items(struct xfs_trans *tp);
  */
 
 kmem_zone_t	*xfs_trans_zone;
-kmem_zone_t	*xfs_log_item_desc_zone;
 
 /*
  * Initialize the precomputed transaction reservation values
@@ -52,34 +51,18 @@ libxfs_trans_init(
 
 /*
  * Add the given log item to the transaction's list of log items.
- *
- * The log item will now point to its new descriptor with its li_desc field.
  */
 void
 libxfs_trans_add_item(
 	struct xfs_trans	*tp,
 	struct xfs_log_item	*lip)
 {
-	struct xfs_log_item_desc *lidp;
-
 	ASSERT(lip->li_mountp == tp->t_mountp);
 	ASSERT(lip->li_ailp == tp->t_mountp->m_ail);
+	ASSERT(list_empty(&lip->li_trans));
+	ASSERT(!test_bit(XFS_LI_DIRTY, &lip->li_flags));
 
-	lidp = kmem_zone_zalloc(xfs_log_item_desc_zone, KM_SLEEP | KM_NOFS);
-
-	lidp->lid_item = lip;
-	lidp->lid_flags = 0;
-	list_add_tail(&lidp->lid_trans, &tp->t_items);
-
-	lip->li_desc = lidp;
-}
-
-static void
-libxfs_trans_free_item_desc(
-        struct xfs_log_item_desc *lidp)
-{
-	list_del_init(&lidp->lid_trans);
-	kmem_zone_free(xfs_log_item_desc_zone, lidp);
+	list_add_tail(&lip->li_trans, &tp->t_items);
 }
 
 /*
@@ -89,8 +72,8 @@ void
 libxfs_trans_del_item(
 	struct xfs_log_item	*lip)
 {
-	libxfs_trans_free_item_desc(lip->li_desc);
-	lip->li_desc = NULL;
+	clear_bit(XFS_LI_DIRTY, &lip->li_flags);
+	list_del_init(&lip->li_trans);
 }
 
 /*
@@ -338,7 +321,7 @@ xfs_trans_log_inode(
 #endif
 
 	tp->t_flags |= XFS_TRANS_DIRTY;
-	ip->i_itemp->ili_item.li_desc->lid_flags |= XFS_LID_DIRTY;
+	set_bit(XFS_LI_DIRTY, &ip->i_itemp->ili_item.li_flags);
 
 	/*
 	 * Always OR in the bits from the ili_last_fields field.
@@ -383,7 +366,7 @@ libxfs_trans_dirty_buf(
 	fprintf(stderr, "dirtied buffer %p, transaction %p\n", bp, tp);
 #endif
 	tp->t_flags |= XFS_TRANS_DIRTY;
-	bip->bli_item.li_desc->lid_flags |= XFS_LID_DIRTY;
+	set_bit(XFS_LI_DIRTY, &bip->bli_item.li_flags);
 }
 
 /*
@@ -425,7 +408,7 @@ libxfs_trans_ordered_buf(
 	struct xfs_buf_log_item	*bip = bp->b_log_item;
 	bool			ret;
 
-	ret = (bip->bli_item.li_desc->lid_flags & XFS_LID_DIRTY);
+	ret = test_bit(XFS_LI_DIRTY, &bip->bli_item.li_flags);
 	libxfs_trans_log_buf(tp, bp, 0, bp->b_bcount);
 	return ret;
 }
@@ -455,7 +438,7 @@ libxfs_trans_brelse(
 	/* If dirty/stale, can't release till transaction committed */
 	if (bip->bli_flags & XFS_BLI_STALE)
 		return;
-	if (bip->bli_item.li_desc->lid_flags & XFS_LID_DIRTY)
+	if (test_bit(XFS_LI_DIRTY, &bip->bli_item.li_flags))
 		return;
 	xfs_trans_del_item(&bip->bli_item);
 	if (bip->bli_flags & XFS_BLI_HOLD)
@@ -485,7 +468,7 @@ libxfs_trans_binval(
 	bip->bli_flags &= ~XFS_BLI_DIRTY;
 	bip->bli_format.blf_flags &= ~XFS_BLF_INODE_BUF;
 	bip->bli_format.blf_flags |= XFS_BLF_CANCEL;
-	bip->bli_item.li_desc->lid_flags |= XFS_LID_DIRTY;
+	set_bit(XFS_LI_DIRTY, &bip->bli_item.li_flags);
 	tp->t_flags |= XFS_TRANS_DIRTY;
 }
 
@@ -788,11 +771,9 @@ static void
 trans_committed(
 	xfs_trans_t		*tp)
 {
-        struct xfs_log_item_desc *lidp, *next;
+	struct xfs_log_item	*lip, *next;
 
-        list_for_each_entry_safe(lidp, next, &tp->t_items, lid_trans) {
-		struct xfs_log_item *lip = lidp->lid_item;
-
+	list_for_each_entry_safe(lip, next, &tp->t_items, li_trans) {
 		xfs_trans_del_item(lip);
 
 		if (lip->li_type == XFS_LI_BUF)
@@ -804,7 +785,7 @@ trans_committed(
 				progname);
 			ASSERT(0);
 		}
-        }
+	}
 }
 
 static void
@@ -835,20 +816,15 @@ inode_item_unlock(
 	iip->ili_flags = 0;
 }
 
-/*
- * Unlock all of the items of a transaction and free all the descriptors
- * of that transaction.
- */
+/* Detach and unlock all of the items in a transaction */
 static void
 xfs_trans_free_items(
 	struct xfs_trans	*tp)
 {
-	struct xfs_log_item_desc *lidp, *next;
+	struct xfs_log_item	*lip, *next;
 
-	list_for_each_entry_safe(lidp, next, &tp->t_items, lid_trans) {
-		struct xfs_log_item	*lip = lidp->lid_item;
-
-                xfs_trans_del_item(lip);
+	list_for_each_entry_safe(lip, next, &tp->t_items, li_trans) {
+		xfs_trans_del_item(lip);
 		if (lip->li_type == XFS_LI_BUF)
 			buf_item_unlock((xfs_buf_log_item_t *)lip);
 		else if (lip->li_type == XFS_LI_INODE)
