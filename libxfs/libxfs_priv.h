@@ -554,8 +554,8 @@ int libxfs_rtfree_extent(struct xfs_trans *, xfs_rtblock_t, xfs_extlen_t);
 bool libxfs_verify_rtbno(struct xfs_mount *mp, xfs_rtblock_t rtbno);
 
 struct xfs_rtalloc_rec {
-	xfs_rtblock_t		ar_startblock;
-	xfs_rtblock_t		ar_blockcount;
+	xfs_rtblock_t		ar_startext;
+	xfs_rtblock_t		ar_extcount;
 };
 
 typedef int (*xfs_rtalloc_query_range_fn)(
