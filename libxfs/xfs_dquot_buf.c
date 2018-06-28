@@ -150,7 +150,8 @@ xfs_dqblk_repair(
 STATIC bool
 xfs_dquot_buf_verify_crc(
 	struct xfs_mount	*mp,
-	struct xfs_buf		*bp)
+	struct xfs_buf		*bp,
+	bool			readahead)
 {
 	struct xfs_dqblk	*d = (struct xfs_dqblk *)bp->b_addr;
 	int			ndquots;
@@ -171,8 +172,12 @@ xfs_dquot_buf_verify_crc(
 
 	for (i = 0; i < ndquots; i++, d++) {
 		if (!xfs_verify_cksum((char *)d, sizeof(struct xfs_dqblk),
-				 XFS_DQUOT_CRC_OFF))
+				 XFS_DQUOT_CRC_OFF)) {
+			if (!readahead)
+				xfs_buf_verifier_error(bp, -EFSBADCRC, __func__,
+					d, sizeof(*d), __this_address);
 			return false;
+		}
 	}
 	return true;
 }
@@ -180,7 +185,8 @@ xfs_dquot_buf_verify_crc(
 STATIC xfs_failaddr_t
 xfs_dquot_buf_verify(
 	struct xfs_mount	*mp,
-	struct xfs_buf		*bp)
+	struct xfs_buf		*bp,
+	bool			readahead)
 {
 	struct xfs_dqblk	*dqb = bp->b_addr;
 	xfs_failaddr_t		fa;
@@ -214,8 +220,13 @@ xfs_dquot_buf_verify(
 			id = be32_to_cpu(ddq->d_id);
 
 		fa = xfs_dqblk_verify(mp, &dqb[i], id + i, 0);
-		if (fa)
+		if (fa) {
+			if (!readahead)
+				xfs_buf_verifier_error(bp, -EFSCORRUPTED,
+					__func__, &dqb[i],
+					sizeof(struct xfs_dqblk), fa);
 			return fa;
+		}
 	}
 
 	return NULL;
@@ -227,7 +238,7 @@ xfs_dquot_buf_verify_struct(
 {
 	struct xfs_mount	*mp = bp->b_target->bt_mount;
 
-	return xfs_dquot_buf_verify(mp, bp);
+	return xfs_dquot_buf_verify(mp, bp, false);
 }
 
 static void
@@ -235,15 +246,10 @@ xfs_dquot_buf_read_verify(
 	struct xfs_buf		*bp)
 {
 	struct xfs_mount	*mp = bp->b_target->bt_mount;
-	xfs_failaddr_t		fa;
 
-	if (!xfs_dquot_buf_verify_crc(mp, bp))
-		xfs_verifier_error(bp, -EFSBADCRC, __this_address);
-	else {
-		fa = xfs_dquot_buf_verify(mp, bp);
-		if (fa)
-			xfs_verifier_error(bp, -EFSCORRUPTED, __this_address);
-	}
+	if (!xfs_dquot_buf_verify_crc(mp, bp, false))
+		return;
+	xfs_dquot_buf_verify(mp, bp, false);
 }
 
 /*
@@ -258,8 +264,8 @@ xfs_dquot_buf_readahead_verify(
 {
 	struct xfs_mount	*mp = bp->b_target->bt_mount;
 
-	if (!xfs_dquot_buf_verify_crc(mp, bp) ||
-	    xfs_dquot_buf_verify(mp, bp) != NULL) {
+	if (!xfs_dquot_buf_verify_crc(mp, bp, true) ||
+	    xfs_dquot_buf_verify(mp, bp, true) != NULL) {
 		xfs_buf_ioerror(bp, -EIO);
 		bp->b_flags &= ~XBF_DONE;
 	}
@@ -275,11 +281,8 @@ xfs_dquot_buf_write_verify(
 	struct xfs_buf		*bp)
 {
 	struct xfs_mount	*mp = bp->b_target->bt_mount;
-	xfs_failaddr_t		fa;
 
-	fa = xfs_dquot_buf_verify(mp, bp);
-	if (fa)
-		xfs_verifier_error(bp, -EFSCORRUPTED, __this_address);
+	xfs_dquot_buf_verify(mp, bp, false);
 }
 
 const struct xfs_buf_ops xfs_dquot_buf_ops = {
