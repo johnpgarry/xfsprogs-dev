@@ -194,6 +194,11 @@ clear_dinode_core(struct xfs_mount *mp, xfs_dinode_t *dinoc, xfs_ino_t ino_num)
 		dinoc->di_anextents = 0;
 	}
 
+	if (be32_to_cpu(dinoc->di_extsize) != 0)  {
+		__dirty_no_modify_ret(dirty);
+		dinoc->di_extsize = 0;
+	}
+
 	if (dinoc->di_version > 1 &&
 			be32_to_cpu(dinoc->di_nlink) != 0)  {
 		__dirty_no_modify_ret(dirty);
@@ -235,6 +240,11 @@ clear_dinode_core(struct xfs_mount *mp, xfs_dinode_t *dinoc, xfs_ino_t ino_num)
 	if (be64_to_cpu(dinoc->di_changecount) != 0)  {
 		__dirty_no_modify_ret(dirty);
 		dinoc->di_changecount = 0;
+	}
+
+	if (be32_to_cpu(dinoc->di_cowextsize) != 0)  {
+		__dirty_no_modify_ret(dirty);
+		dinoc->di_cowextsize = 0;
 	}
 
 	return dirty;
