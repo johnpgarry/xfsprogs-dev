@@ -128,6 +128,10 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 
 #define xfs_notice(mp,fmt,args...)		cmn_err(CE_NOTE,fmt, ## args)
 #define xfs_warn(mp,fmt,args...)		cmn_err(CE_WARN,fmt, ## args)
+#define xfs_err(mp,fmt,args...)			cmn_err(CE_ALERT,fmt, ## args)
+#define xfs_alert(mp,fmt,args...)		cmn_err(CE_ALERT,fmt, ## args)
+#define xfs_alert_tag(mp,tag,fmt,args...)	cmn_err(CE_ALERT,fmt, ## args)
+
 #define xfs_hex_dump(d,n)		((void) 0)
 
 #define xfs_force_shutdown(d,n)		((void) 0)
@@ -423,10 +427,6 @@ roundup_64(uint64_t x, uint32_t y)
 	__d = __d; /* no set-but-unused warning */	\
 })
 #define xfs_buf_readahead_map(a,b,c,ops)	((void) 0)	/* no readahead */
-
-#define xfs_warn(mp,fmt,args...)		cmn_err(CE_WARN,fmt, ## args)
-#define xfs_alert(mp,fmt,args...)		cmn_err(CE_ALERT,fmt, ## args)
-#define xfs_alert_tag(mp,tag,fmt,args...)	cmn_err(CE_ALERT,fmt, ## args)
 
 #define xfs_sort					qsort
 
