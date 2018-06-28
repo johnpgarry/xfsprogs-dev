@@ -1411,7 +1411,7 @@ bad:
 					do_warn(_("Would correct.\n"));
 				else {
 					do_warn(_("Corrected.\n"));
-					libxfs_dquot_repair(mp, &dqb->dd_diskdq,
+					libxfs_dqblk_repair(mp, dqb,
 							    dqid, quota_type);
 					writebuf = 1;
 				}
