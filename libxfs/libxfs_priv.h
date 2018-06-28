@@ -138,12 +138,12 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 
 /* stop unused var warnings by assigning mp to itself */
 
-#define xfs_corruption_error(fu,e,l,mp,fi,ln,fa)	do { \
+#define xfs_corruption_error(e,l,mp,b,sz,fi,ln,fa)	do { \
 	(mp) = (mp); \
 	cmn_err(CE_ALERT, "%s: XFS_CORRUPTION_ERROR", (e));  \
 } while (0)
 
-#define XFS_CORRUPTION_ERROR(e,l,mp,m)	do { \
+#define XFS_CORRUPTION_ERROR(e, lvl, mp, buf, bufsize)	do { \
 	(mp) = (mp); \
 	cmn_err(CE_ALERT, "%s: XFS_CORRUPTION_ERROR", (e));  \
 } while (0)
