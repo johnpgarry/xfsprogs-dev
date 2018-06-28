@@ -437,6 +437,9 @@ roundup_64(uint64_t x, uint32_t y)
 })
 
 /* space allocation */
+#define XFS_EXTENT_BUSY_DISCARDED	0x01	/* undergoing a discard op. */
+#define XFS_EXTENT_BUSY_SKIP_DISCARD	0x02	/* do not discard */
+
 #define xfs_extent_busy_reuse(mp,ag,bno,len,user)	((void) 0)
 /* avoid unused variable warning */
 #define xfs_extent_busy_insert(tp,ag,bno,len,flags)({ 	\
