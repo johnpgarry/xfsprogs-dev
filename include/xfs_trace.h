@@ -19,7 +19,7 @@
 #define __TRACE_H__
 
 #define trace_xfs_agfl_reset(a,b,c,d)		((void) 0)
-
+#define trace_xfs_agfl_free_defer(a,b,c,d,e)	((void) 0)
 #define trace_xfs_alloc_exact_done(a)		((void) 0)
 #define trace_xfs_alloc_exact_notfound(a)	((void) 0)
 #define trace_xfs_alloc_exact_error(a)		((void) 0)

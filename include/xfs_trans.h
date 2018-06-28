@@ -81,6 +81,8 @@ typedef struct xfs_trans {
 	long		t_fdblocks_delta;	/* superblock fdblocks chg */
 	long		t_frextents_delta;	/* superblock freextents chg */
 	struct list_head	t_items;	/* first log item desc chunk */
+	struct xfs_defer_ops	*t_agfl_dfops;	/* optional agfl fixup dfops */
+
 } xfs_trans_t;
 
 void	xfs_trans_init(struct xfs_mount *);
