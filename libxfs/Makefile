@@ -62,6 +62,7 @@ CFILES = cache.c \
 	rdwr.c \
 	trans.c \
 	util.c \
+	xfs_ag.c \
 	xfs_ag_resv.c \
 	xfs_alloc.c \
 	xfs_alloc_btree.c \
