@@ -5107,15 +5107,10 @@ xfs_bmap_del_extent_real(
 			if (error)
 				goto done;
 		} else {
-			if ((bflags & XFS_BMAPI_NODISCARD) ||
-			    (del->br_state == XFS_EXT_UNWRITTEN)) {
-				xfs_bmap_add_free_nodiscard(mp, dfops,
-					del->br_startblock, del->br_blockcount,
-					NULL);
-			} else {
-				xfs_bmap_add_free(mp, dfops, del->br_startblock,
-					del->br_blockcount, NULL);
-			}
+			__xfs_bmap_add_free(mp, dfops, del->br_startblock,
+					del->br_blockcount, NULL,
+					(bflags & XFS_BMAPI_NODISCARD) ||
+					del->br_state == XFS_EXT_UNWRITTEN);
 		}
 	}
 
