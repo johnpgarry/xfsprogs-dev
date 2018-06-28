@@ -45,7 +45,7 @@ xfs_dquot_verify(
 	struct xfs_mount *mp,
 	xfs_disk_dquot_t *ddq,
 	xfs_dqid_t	 id,
-	uint		 type)	  /* used only when IO_dorepair is true */
+	uint		 type)	  /* used only during quotacheck */
 {
 	/*
 	 * We can encounter an uninitialized dquot buffer for 2 reasons:
@@ -67,6 +67,8 @@ xfs_dquot_verify(
 	if (ddq->d_version != XFS_DQUOT_VERSION)
 		return __this_address;
 
+	if (type && ddq->d_flags != type)
+		return __this_address;
 	if (ddq->d_flags != XFS_DQ_USER &&
 	    ddq->d_flags != XFS_DQ_PROJ &&
 	    ddq->d_flags != XFS_DQ_GROUP)
