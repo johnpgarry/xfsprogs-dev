@@ -1,3 +1,6 @@
+xfsprogs-4.18.0-rc0 (05 Jul 2018)
+	- Majority of 4.18 libxfs changes merged from kernel
+
 xfsprogs-4.17.0 (28 Jun 2018)
 	- No further changes
 
