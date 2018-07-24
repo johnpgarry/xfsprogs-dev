@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0
+
 #ifndef XFS_IO_STATX_H
 #define XFS_IO_STATX_H
 

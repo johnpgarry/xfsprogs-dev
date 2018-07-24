@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0
+
 #ifndef	_XFS_REPAIR_PROGRESS_RPT_H_
 #define	_XFS_REPAIR_PROGRESS_RPT_H_
 

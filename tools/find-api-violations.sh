@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0
 
 # Find libxfs API violations -- calls to functions defined in libxfs/*.c that
 # don't use the libxfs wrappers; or failing to negate the integer return

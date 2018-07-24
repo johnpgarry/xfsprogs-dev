@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0
 
 # 2 args:
 #	libxfs-apply <repo> <commit ID or patchfile>

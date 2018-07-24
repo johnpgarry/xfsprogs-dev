@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0
+
 #ifndef _XFS_REPAIR_PREFETCH_H
 #define	_XFS_REPAIR_PREFETCH_H
 

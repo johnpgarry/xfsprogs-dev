@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Use slice-by-8, which is the fastest variant.
  *
