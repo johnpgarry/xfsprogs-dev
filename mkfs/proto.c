@@ -264,11 +264,10 @@ newfile(
 		bp = libxfs_trans_get_buf(logit ? tp : 0, mp->m_dev, d,
 			nb << mp->m_blkbb_log, 0);
 		memmove(bp->b_addr, buf, len);
-		if (len < XFS_BUF_COUNT(bp))
-			memset((char *)bp->b_addr + len, 0,
-			       XFS_BUF_COUNT(bp) - len);
+		if (len < bp->b_bcount)
+			memset((char *)bp->b_addr + len, 0, bp->b_bcount - len);
 		if (logit)
-			libxfs_trans_log_buf(tp, bp, 0, XFS_BUF_COUNT(bp) - 1);
+			libxfs_trans_log_buf(tp, bp, 0, bp->b_bcount - 1);
 		else
 			libxfs_writebuf(bp, LIBXFS_EXIT_ON_FAILURE);
 	}

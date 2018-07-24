@@ -131,7 +131,7 @@ static char *next(
 	struct xfs_buf	*buf = (struct xfs_buf *)private;
 
 	if (buf &&
-	    (XFS_BUF_COUNT(buf) < (int)(ptr - (char *)buf->b_addr) + offset))
+	    (buf->b_bcount < (int)(ptr - (char *)buf->b_addr) + offset))
 		abort();
 
 	return ptr + offset;

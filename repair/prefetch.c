@@ -405,7 +405,7 @@ pf_read_inode_dirs(
 	if (bp->b_error)
 		return;
 
-	for (icnt = 0; icnt < (XFS_BUF_COUNT(bp) >> mp->m_sb.sb_inodelog); icnt++) {
+	for (icnt = 0; icnt < (bp->b_bcount >> mp->m_sb.sb_inodelog); icnt++) {
 		dino = xfs_make_iptr(mp, bp, icnt);
 
 		/*

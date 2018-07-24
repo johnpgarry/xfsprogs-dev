@@ -375,7 +375,7 @@ libxfs_trans_log_buf(
 {
 	struct xfs_buf_log_item	*bip = bp->b_log_item;
 
-	ASSERT((first <= last) && (last < XFS_BUF_COUNT(bp)));
+	ASSERT((first <= last) && (last < bp->b_bcount));
 
 	xfs_trans_dirty_buf(tp, bp);
 	xfs_buf_item_log(bip, first, last);

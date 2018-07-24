@@ -109,7 +109,7 @@ xfs_buf_item_init(
 	bip->bli_buf = bp;
 	bip->bli_format.blf_type = XFS_LI_BUF;
 	bip->bli_format.blf_blkno = (int64_t)XFS_BUF_ADDR(bp);
-	bip->bli_format.blf_len = (unsigned short)BTOBB(XFS_BUF_COUNT(bp));
+	bip->bli_format.blf_len = (unsigned short)BTOBB(bp->b_bcount);
 	bp->b_log_item = bip;
 }
 
