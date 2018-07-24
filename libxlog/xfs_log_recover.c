@@ -119,7 +119,7 @@ xlog_bread_noalign(
 	ASSERT(BBTOB(nbblks) <= XFS_BUF_SIZE(bp));
 
 	XFS_BUF_SET_ADDR(bp, log->l_logBBstart + blk_no);
-	XFS_BUF_SET_COUNT(bp, BBTOB(nbblks));
+	bp->b_bcount = BBTOB(nbblks);
 	bp->b_error = 0;
 
 	return libxfs_readbufr(log->l_dev, XFS_BUF_ADDR(bp), bp, nbblks, 0);
