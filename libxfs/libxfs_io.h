@@ -89,7 +89,6 @@ enum xfs_buf_flags_t {	/* b_flags bits */
 #define XFS_BUF_ADDR(bp)		((bp)->b_bn)
 #define XFS_BUF_SIZE(bp)		((bp)->b_bcount)
 #define XFS_BUF_COUNT(bp)		((bp)->b_bcount)
-#define XFS_BUF_TARGET(bp)		((bp)->b_dev)
 
 #define XFS_BUF_SET_ADDR(bp,blk)	((bp)->b_bn = (blk))
 #define XFS_BUF_SET_COUNT(bp,cnt)	((bp)->b_bcount = (cnt))
