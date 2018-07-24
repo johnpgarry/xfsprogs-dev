@@ -27,10 +27,10 @@ xlog_print_find_oldest(
 	first_blk = 0;		/* read first block */
 	bp = xlog_get_bp(log, 1);
 	xlog_bread_noalign(log, 0, 1, bp);
-	first_half_cycle = xlog_get_cycle(XFS_BUF_PTR(bp));
+	first_half_cycle = xlog_get_cycle(bp->b_addr);
 	*last_blk = log->l_logBBsize-1;	/* read last block */
 	xlog_bread_noalign(log, *last_blk, 1, bp);
-	last_half_cycle = xlog_get_cycle(XFS_BUF_PTR(bp));
+	last_half_cycle = xlog_get_cycle(bp->b_addr);
 	ASSERT(last_half_cycle != 0);
 
 	if (first_half_cycle == last_half_cycle) /* all cycle nos are same */

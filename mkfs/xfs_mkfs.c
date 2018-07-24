@@ -3254,7 +3254,7 @@ prepare_devices(
 	 */
 	buf = libxfs_getbuf(mp->m_ddev_targp, (xi->dsize - whack_blks),
 			    whack_blks);
-	memset(XFS_BUF_PTR(buf), 0, WHACK_SIZE);
+	memset(buf->b_addr, 0, WHACK_SIZE);
 	libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 	libxfs_purgebuf(buf);
 
@@ -3265,15 +3265,15 @@ prepare_devices(
 	 * ext[2,3] and reiserfs (64k) - and hopefully all else.
 	 */
 	buf = libxfs_getbuf(mp->m_ddev_targp, 0, whack_blks);
-	memset(XFS_BUF_PTR(buf), 0, WHACK_SIZE);
+	memset(buf->b_addr, 0, WHACK_SIZE);
 	libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 	libxfs_purgebuf(buf);
 
 	/* OK, now write the superblock... */
 	buf = libxfs_getbuf(mp->m_ddev_targp, XFS_SB_DADDR, XFS_FSS_TO_BB(mp, 1));
 	buf->b_ops = &xfs_sb_buf_ops;
-	memset(XFS_BUF_PTR(buf), 0, cfg->sectorsize);
-	libxfs_sb_to_disk((void *)XFS_BUF_PTR(buf), sbp);
+	memset(buf->b_addr, 0, cfg->sectorsize);
+	libxfs_sb_to_disk(buf->b_addr, sbp);
 	libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 	libxfs_purgebuf(buf);
 
@@ -3293,7 +3293,7 @@ prepare_devices(
 		buf = libxfs_getbuf(mp->m_rtdev_targp,
 				    XFS_FSB_TO_BB(mp, cfg->rtblocks - 1LL),
 				    BTOBB(cfg->blocksize));
-		memset(XFS_BUF_PTR(buf), 0, cfg->blocksize);
+		memset(buf->b_addr, 0, cfg->blocksize);
 		libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 		libxfs_purgebuf(buf);
 	}
@@ -3337,8 +3337,8 @@ initialise_ag_headers(
 			XFS_AG_DADDR(mp, agno, XFS_SB_DADDR),
 			XFS_FSS_TO_BB(mp, 1));
 	buf->b_ops = &xfs_sb_buf_ops;
-	memset(XFS_BUF_PTR(buf), 0, cfg->sectorsize);
-	libxfs_sb_to_disk((void *)XFS_BUF_PTR(buf), sbp);
+	memset(buf->b_addr, 0, cfg->sectorsize);
+	libxfs_sb_to_disk(buf->b_addr, sbp);
 	libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 
 	/*

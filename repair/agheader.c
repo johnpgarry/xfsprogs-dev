@@ -278,8 +278,8 @@ secondary_sb_whack(
 			+ sizeof(sb->sb_dirblklog);
 
 	/* Check the buffer we read from disk for garbage outside size */
-	for (ip = XFS_BUF_PTR(sbuf) + size;
-	     ip < XFS_BUF_PTR(sbuf) + mp->m_sb.sb_sectsize;
+	for (ip = (char *)sbuf->b_addr + size;
+	     ip < (char *)sbuf->b_addr + mp->m_sb.sb_sectsize;
 	     ip++)  {
 		if (*ip)  {
 			do_bzero = 1;
@@ -302,7 +302,7 @@ secondary_sb_whack(
 			memcpy(&tmpuuid, &sb->sb_meta_uuid, sizeof(uuid_t));
 			memset((void *)((intptr_t)sb + size), 0,
 				mp->m_sb.sb_sectsize - size);
-			memset(XFS_BUF_PTR(sbuf) + size, 0,
+			memset((char *)sbuf->b_addr + size, 0,
 				mp->m_sb.sb_sectsize - size);
 			/* Preserve meta_uuid so we don't fail uuid checks */
 			memcpy(&sb->sb_meta_uuid, &tmpuuid, sizeof(uuid_t));

@@ -593,7 +593,7 @@ pf_batch_read(
 				size = XFS_BUF_SIZE(bplist[i]);
 				if (len < size)
 					break;
-				memcpy(XFS_BUF_PTR(bplist[i]), pbuf, size);
+				memcpy(bplist[i]->b_addr, pbuf, size);
 				bplist[i]->b_flags |= (LIBXFS_B_UPTODATE |
 						       LIBXFS_B_UNCHECKED);
 				len -= size;
