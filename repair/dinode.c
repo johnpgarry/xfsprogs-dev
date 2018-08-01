@@ -2841,24 +2841,21 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 	 * only regular files with REALTIME or EXTSIZE flags set can have
 	 * extsize set, or directories with EXTSZINHERIT.
 	 */
-	if (be32_to_cpu(dino->di_extsize) != 0) {
-		if ((type == XR_INO_RTDATA) ||
-		    (type == XR_INO_DIR && (be16_to_cpu(dino->di_flags) &
-					XFS_DIFLAG_EXTSZINHERIT)) ||
-		    (type == XR_INO_DATA && (be16_to_cpu(dino->di_flags) &
-				 XFS_DIFLAG_EXTSIZE)))  {
-			/* s'okay */ ;
-		} else {
-			do_warn(
-_("bad non-zero extent size %u for non-realtime/extsize inode %" PRIu64 ", "),
-					be32_to_cpu(dino->di_extsize), lino);
-			if (!no_modify)  {
-				do_warn(_("resetting to zero\n"));
-				dino->di_extsize = 0;
-				*dirty = 1;
-			} else
-				do_warn(_("would reset to zero\n"));
-		}
+	if (libxfs_inode_validate_extsize(mp,
+			be32_to_cpu(dino->di_extsize),
+			be16_to_cpu(dino->di_mode),
+			be16_to_cpu(dino->di_flags)) != NULL) {
+		do_warn(
+_("Bad extent size %u on inode %" PRIu64 ", "),
+				be32_to_cpu(dino->di_extsize), lino);
+		if (!no_modify)  {
+			do_warn(_("resetting to zero\n"));
+			dino->di_extsize = 0;
+			dino->di_flags &= ~cpu_to_be16(XFS_DIFLAG_EXTSIZE |
+						       XFS_DIFLAG_EXTSZINHERIT);
+			*dirty = 1;
+		} else
+			do_warn(_("would reset to zero\n"));
 	}
 
 	/*
@@ -2866,41 +2863,21 @@ _("bad non-zero extent size %u for non-realtime/extsize inode %" PRIu64 ", "),
 	 * set can have extsize set.
 	 */
 	if (dino->di_version >= 3 &&
-	    be32_to_cpu(dino->di_cowextsize) != 0) {
-		if ((type == XR_INO_DIR || type == XR_INO_DATA) &&
-		    (be64_to_cpu(dino->di_flags2) &
-					XFS_DIFLAG2_COWEXTSIZE)) {
-			/* s'okay */ ;
-		} else {
-			do_warn(
-_("Cannot have non-zero CoW extent size %u on non-cowextsize inode %" PRIu64 ", "),
-					be32_to_cpu(dino->di_cowextsize), lino);
-			if (!no_modify)  {
-				do_warn(_("resetting to zero\n"));
-				dino->di_flags2 &= ~cpu_to_be64(XFS_DIFLAG2_COWEXTSIZE);
-				dino->di_cowextsize = 0;
-				*dirty = 1;
-			} else
-				do_warn(_("would reset to zero\n"));
-		}
-	}
-
-	/*
-	 * Can't have the COWEXTSIZE flag set with no hint.
-	 */
-	if (dino->di_version >= 3 &&
-	    be32_to_cpu(dino->di_cowextsize) == 0 &&
-	    (be64_to_cpu(dino->di_flags2) & XFS_DIFLAG2_COWEXTSIZE)) {
+	    libxfs_inode_validate_cowextsize(mp,
+			be32_to_cpu(dino->di_cowextsize),
+			be16_to_cpu(dino->di_mode),
+			be16_to_cpu(dino->di_flags),
+			be64_to_cpu(dino->di_flags2)) != NULL) {
 		do_warn(
-_("Cannot have CoW extent size of zero on cowextsize inode %" PRIu64 ", "),
-				lino);
+_("Bad CoW extent size %u on inode %" PRIu64 ", "),
+				be32_to_cpu(dino->di_cowextsize), lino);
 		if (!no_modify)  {
-			do_warn(_("clearing cowextsize flag\n"));
+			do_warn(_("resetting to zero\n"));
 			dino->di_flags2 &= ~cpu_to_be64(XFS_DIFLAG2_COWEXTSIZE);
+			dino->di_cowextsize = 0;
 			*dirty = 1;
-		} else {
-			do_warn(_("would clear cowextsize flag\n"));
-		}
+		} else
+			do_warn(_("would reset to zero\n"));
 	}
 
 	/* nsec fields cannot be larger than 1 billion */

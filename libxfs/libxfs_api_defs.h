@@ -97,6 +97,8 @@
 #define xfs_dinode_calc_crc		libxfs_dinode_calc_crc
 #define xfs_idata_realloc		libxfs_idata_realloc
 #define xfs_idestroy_fork		libxfs_idestroy_fork
+#define xfs_inode_validate_extsize	libxfs_inode_validate_extsize
+#define xfs_inode_validate_cowextsize	libxfs_inode_validate_cowextsize
 
 #define xfs_rmap_ag_owner		libxfs_rmap_ag_owner
 #define xfs_rmap_alloc			libxfs_rmap_alloc
