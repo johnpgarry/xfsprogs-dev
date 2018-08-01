@@ -744,13 +744,6 @@ xfs_repair_metadata(
 		str_info(ctx, buf, _("Attempting optimization."));
 
 	error = ioctl(fd, XFS_IOC_SCRUB_METADATA, &meta);
-	/*
-	 * If the caller doesn't want us to complain, tell the caller to
-	 * requeue the repair for later and don't say a thing.
-	 */
-	if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED) &&
-	    (error || needs_repair(&meta)))
-		return CHECK_RETRY;
 	if (error) {
 		switch (errno) {
 		case EDEADLOCK:
@@ -767,6 +760,16 @@ _("Filesystem is shut down, aborting."));
 			return CHECK_ABORT;
 		case ENOTTY:
 		case EOPNOTSUPP:
+			/*
+			 * If we're in no-complain mode, requeue the check for
+			 * later.  It's possible that an error in another
+			 * component caused us to flag an error in this
+			 * component.  Even if the kernel didn't think it
+			 * could fix this, it's at least worth trying the scan
+			 * again to see if another repair fixed it.
+			 */
+			if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED))
+				return CHECK_RETRY;
 			/*
 			 * If we forced repairs or this is a preen, don't
 			 * error out if the kernel doesn't know how to fix.
@@ -796,7 +799,14 @@ _("Read-only filesystem; cannot make changes."));
 				return CHECK_DONE;
 			/* fall through */
 		default:
-			/* Operational error. */
+			/*
+			 * Operational error.  If the caller doesn't want us
+			 * to complain about repair failures, tell the caller
+			 * to requeue the repair for later and don't say a
+			 * thing.  Otherwise, print error and bail out.
+			 */
+			if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED))
+				return CHECK_RETRY;
 			str_errno(ctx, buf);
 			return CHECK_DONE;
 		}
@@ -804,9 +814,14 @@ _("Read-only filesystem; cannot make changes."));
 	if (repair_flags & XRM_COMPLAIN_IF_UNFIXED)
 		xfs_scrub_warn_incomplete_scrub(ctx, buf, &meta);
 	if (needs_repair(&meta)) {
-		/* Still broken, try again or fix offline. */
-		if ((repair_flags & XRM_COMPLAIN_IF_UNFIXED) || debug)
-			str_error(ctx, buf,
+		/*
+		 * Still broken; if we've been told not to complain then we
+		 * just requeue this and try again later.  Otherwise we
+		 * log the error loudly and don't try again.
+		 */
+		if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED))
+			return CHECK_RETRY;
+		str_error(ctx, buf,
 _("Repair unsuccessful; offline repair required."));
 	} else {
 		/* Clean operation, no corruption detected. */
