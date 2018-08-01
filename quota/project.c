@@ -89,7 +89,7 @@ check_project(
 	int			fd;
 
 	if (recurse_depth >= 0 && data->level > recurse_depth)
-		return -1;
+		return 0;
 
 	if (flag == FTW_NS ){
 		exitcode = 1;
@@ -134,7 +134,7 @@ clear_project(
 	int			fd;
 
 	if (recurse_depth >= 0 && data->level > recurse_depth)
-		return -1;
+		return 0;
 
 	if (flag == FTW_NS ){
 		exitcode = 1;
@@ -181,7 +181,7 @@ setup_project(
 	int			fd;
 
 	if (recurse_depth >= 0 && data->level > recurse_depth)
-		return -1;
+		return 0;
 
 	if (flag == FTW_NS ){
 		exitcode = 1;
