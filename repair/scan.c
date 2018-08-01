@@ -2095,17 +2095,36 @@ _("inode btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 	}
 }
 
+struct agfl_state {
+	unsigned int	count;
+	xfs_agnumber_t	agno;
+};
+
+static int
+scan_agfl(
+	struct xfs_mount	*mp,
+	xfs_agblock_t		bno,
+	void			*priv)
+{
+	struct agfl_state	*as = priv;
+
+	if (verify_agbno(mp, as->agno, bno))
+		set_bmap(as->agno, bno, XR_E_FREE);
+	else
+		do_warn(_("bad agbno %u in agfl, agno %d\n"),
+			bno, as->agno);
+	as->count++;
+	return 0;
+}
+
 static void
 scan_freelist(
-	xfs_agf_t	*agf,
-	struct aghdr_cnts *agcnts)
+	xfs_agf_t		*agf,
+	struct aghdr_cnts	*agcnts)
 {
-	xfs_buf_t	*agflbuf;
-	xfs_agnumber_t	agno;
-	xfs_agblock_t	bno;
-	int		count;
-	int		i;
-	__be32		*freelist;
+	xfs_buf_t		*agflbuf;
+	xfs_agnumber_t		agno;
+	struct agfl_state	state;
 
 	agno = be32_to_cpu(agf->agf_seqno);
 
@@ -2127,39 +2146,26 @@ scan_freelist(
 	if (agflbuf->b_error == -EFSBADCRC)
 		do_warn(_("agfl has bad CRC for ag %d\n"), agno);
 
-	freelist = XFS_BUF_TO_AGFL_BNO(mp, agflbuf);
-	i = be32_to_cpu(agf->agf_flfirst);
-
 	if (no_modify) {
 		/* agf values not fixed in verify_set_agf, so recheck */
 		if (be32_to_cpu(agf->agf_flfirst) >= libxfs_agfl_size(mp) ||
 		    be32_to_cpu(agf->agf_fllast) >= libxfs_agfl_size(mp)) {
 			do_warn(_("agf %d freelist blocks bad, skipping "
-				  "freelist scan\n"), i);
+				  "freelist scan\n"), agno);
 			return;
 		}
 	}
 
-	count = 0;
-	for (;;) {
-		bno = be32_to_cpu(freelist[i]);
-		if (verify_agbno(mp, agno, bno))
-			set_bmap(agno, bno, XR_E_FREE);
-		else
-			do_warn(_("bad agbno %u in agfl, agno %d\n"),
-				bno, agno);
-		count++;
-		if (i == be32_to_cpu(agf->agf_fllast))
-			break;
-		if (++i == libxfs_agfl_size(mp))
-			i = 0;
-	}
-	if (count != be32_to_cpu(agf->agf_flcount)) {
-		do_warn(_("freeblk count %d != flcount %d in ag %d\n"), count,
-			be32_to_cpu(agf->agf_flcount), agno);
+	state.count = 0;
+	state.agno = agno;
+	libxfs_agfl_walk(mp, agf, agflbuf, scan_agfl, &state);
+	if (state.count != be32_to_cpu(agf->agf_flcount)) {
+		do_warn(_("freeblk count %d != flcount %d in ag %d\n"),
+				state.count, be32_to_cpu(agf->agf_flcount),
+				agno);
 	}
 
-	agcnts->fdblocks += count;
+	agcnts->fdblocks += state.count;
 
 	libxfs_putbuf(agflbuf);
 }

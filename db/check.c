@@ -4010,16 +4010,30 @@ pop1_out:
 	pop_cur();
 }
 
+struct agfl_state {
+	xfs_agnumber_t	agno;
+	unsigned int	count;
+};
+
+static int
+scan_agfl(
+	struct xfs_mount	*mp,
+	xfs_agblock_t		bno,
+	void			*priv)
+{
+	struct agfl_state	*as = priv;
+
+	set_dbmap(as->agno, bno, 1, DBM_FREELIST, as->agno, XFS_AGFL_BLOCK(mp));
+	as->count++;
+	return 0;
+}
+
 static void
 scan_freelist(
-	xfs_agf_t	*agf)
+	xfs_agf_t		*agf)
 {
-	xfs_agnumber_t	seqno = be32_to_cpu(agf->agf_seqno);
-	xfs_agfl_t	*agfl;
-	xfs_agblock_t	bno;
-	uint		count;
-	int		i;
-	__be32		*freelist;
+	xfs_agnumber_t		seqno = be32_to_cpu(agf->agf_seqno);
+	struct agfl_state	state;
 
 	if (XFS_SB_BLOCK(mp) != XFS_AGFL_BLOCK(mp) &&
 	    XFS_AGF_BLOCK(mp) != XFS_AGFL_BLOCK(mp) &&
@@ -4032,46 +4046,36 @@ scan_freelist(
 	set_cur(&typtab[TYP_AGFL],
 		XFS_AG_DADDR(mp, seqno, XFS_AGFL_DADDR(mp)),
 		XFS_FSS_TO_BB(mp, 1), DB_RING_IGN, NULL);
-	if ((agfl = iocur_top->data) == NULL) {
+	if (iocur_top->data == NULL) {
 		dbprintf(_("can't read agfl block for ag %u\n"), seqno);
 		serious_error++;
 		pop_cur();
 		return;
 	}
-	i = be32_to_cpu(agf->agf_flfirst);
 
 	/* verify agf values before proceeding */
 	if (be32_to_cpu(agf->agf_flfirst) >= libxfs_agfl_size(mp) ||
 	    be32_to_cpu(agf->agf_fllast) >= libxfs_agfl_size(mp)) {
 		dbprintf(_("agf %d freelist blocks bad, skipping "
-			  "freelist scan\n"), i);
+			  "freelist scan\n"), seqno);
 		pop_cur();
 		return;
 	}
 
 	/* open coded XFS_BUF_TO_AGFL_BNO */
-	freelist = xfs_sb_version_hascrc(&((mp)->m_sb)) ? &agfl->agfl_bno[0]
-							: (__be32 *)agfl;
-	count = 0;
-	for (;;) {
-		bno = be32_to_cpu(freelist[i]);
-		set_dbmap(seqno, bno, 1, DBM_FREELIST, seqno,
-			XFS_AGFL_BLOCK(mp));
-		count++;
-		if (i == be32_to_cpu(agf->agf_fllast))
-			break;
-		if (++i == libxfs_agfl_size(mp))
-			i = 0;
-	}
-	if (count != be32_to_cpu(agf->agf_flcount)) {
+	state.count = 0;
+	state.agno = seqno;
+	libxfs_agfl_walk(mp, agf, iocur_top->bp, scan_agfl, &state);
+	if (state.count != be32_to_cpu(agf->agf_flcount)) {
 		if (!sflag)
 			dbprintf(_("freeblk count %u != flcount %u in ag %u\n"),
-				count, be32_to_cpu(agf->agf_flcount),
-				seqno);
+					state.count,
+					be32_to_cpu(agf->agf_flcount),
+					seqno);
 		error++;
 	}
-	fdblocks += count;
-	agf_aggr_freeblks += count;
+	fdblocks += state.count;
+	agf_aggr_freeblks += state.count;
 	pop_cur();
 }
 
