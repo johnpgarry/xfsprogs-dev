@@ -1,3 +1,15 @@
+xfsprogs-4.18.0-rc1 (01 Aug 2018)
+	- xfs_repair: notify user if free inodes are corrupt (Eric Sandeen)
+	- xfs_repair: use extent size validation helpers (Darrick Wong)
+	- xfs_quota: don't stop the directory tree walk at DEPTH (Kazuya Mio)
+	- xfs_scrub: ongoing updates (Darrick Wong)
+	- xfs_io: document shutdown -f (Carlos Maiolino)
+	- xfs_io: wire up online repair ioctls (Darrick Wong)
+	- misc: adddebian initramfs hook to package (Darrick Wong)
+	- misc: remove unused macros (Eric Sandeen)
+	- misc: remove many XFS_BUF macros (Carlos Maiolino)
+	- misc: convert to SPDX license tags (Dave Chinner)
+
 xfsprogs-4.18.0-rc0 (05 Jul 2018)
 	- Majority of 4.18 libxfs changes merged from kernel
 
