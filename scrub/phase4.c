@@ -55,7 +55,7 @@ xfs_repair_ag(
 		return;
 
 	/* Try once more, but this time complain if we can't fix things. */
-	flags |= ALP_NOFIX_COMPLAIN;
+	flags |= ALP_COMPLAIN_IF_UNFIXED;
 	moveon = xfs_action_list_process(ctx, ctx->mnt_fd, alist, flags);
 	if (!moveon)
 		*pmoveon = false;

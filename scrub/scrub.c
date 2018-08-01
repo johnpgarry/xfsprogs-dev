@@ -748,7 +748,7 @@ xfs_repair_metadata(
 	 * If the caller doesn't want us to complain, tell the caller to
 	 * requeue the repair for later and don't say a thing.
 	 */
-	if (!(repair_flags & XRM_NOFIX_COMPLAIN) &&
+	if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED) &&
 	    (error || needs_repair(&meta)))
 		return CHECK_RETRY;
 	if (error) {
@@ -801,11 +801,11 @@ _("Read-only filesystem; cannot make changes."));
 			return CHECK_DONE;
 		}
 	}
-	if (repair_flags & XRM_NOFIX_COMPLAIN)
+	if (repair_flags & XRM_COMPLAIN_IF_UNFIXED)
 		xfs_scrub_warn_incomplete_scrub(ctx, buf, &meta);
 	if (needs_repair(&meta)) {
 		/* Still broken, try again or fix offline. */
-		if ((repair_flags & XRM_NOFIX_COMPLAIN) || debug)
+		if ((repair_flags & XRM_COMPLAIN_IF_UNFIXED) || debug)
 			str_error(ctx, buf,
 _("Repair unsuccessful; offline repair required."));
 	} else {

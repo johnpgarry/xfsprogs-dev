@@ -29,7 +29,7 @@ void xfs_action_list_find_mustfix(struct xfs_action_list *actions,
 
 /* Passed through to xfs_repair_metadata() */
 #define ALP_REPAIR_ONLY		(XRM_REPAIR_ONLY)
-#define ALP_NOFIX_COMPLAIN	(XRM_NOFIX_COMPLAIN)
+#define ALP_COMPLAIN_IF_UNFIXED	(XRM_COMPLAIN_IF_UNFIXED)
 #define ALP_NOPROGRESS		(1U << 31)
 
 bool xfs_action_list_process(struct scrub_ctx *ctx, int fd,
