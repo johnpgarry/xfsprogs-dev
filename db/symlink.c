@@ -52,7 +52,6 @@ const struct field	symlink_crc_hfld[] = {
 };
 
 #define	OFF(f)	bitize(offsetof(struct xfs_dsymlink_hdr, sl_ ## f))
-#define	SZOF(f)	bitize(sizeof(struct xfs_dsymlink_hdr))
 const struct field	symlink_crc_flds[] = {
 	{ "magic", FLDT_UINT32X, OI(OFF(magic)), C1, 0, TYP_NONE },
 	{ "offset", FLDT_UINT32D, OI(OFF(offset)), C1, 0, TYP_NONE },

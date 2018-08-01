@@ -23,7 +23,6 @@ static int xfs_mac_valid(xfs_mac_label_t *lp);
  * dir v1 code, but that format is no longer supported yb the userspace
  * utilities and hence is now specific to the attribute tree implementation.
  */
-#define XR_DA_LEAF_MAPSIZE	XFS_ATTR_LEAF_MAPSIZE
 
 typedef unsigned char	da_freemap_t;
 

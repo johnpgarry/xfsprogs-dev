@@ -11,7 +11,6 @@
 #define trace_xfs_alloc_exact_done(a)		((void) 0)
 #define trace_xfs_alloc_exact_notfound(a)	((void) 0)
 #define trace_xfs_alloc_exact_error(a)		((void) 0)
-#define trace_xfs_alloc_near_nominleft(a)	((void) 0)
 #define trace_xfs_alloc_near_first(a)		((void) 0)
 #define trace_xfs_alloc_near_greater(a)		((void) 0)
 #define trace_xfs_alloc_near_lesser(a)		((void) 0)
@@ -34,8 +33,6 @@
 #define trace_xfs_alloc_vextent_loopfailed(a)	((void) 0)
 #define trace_xfs_alloc_vextent_allfailed(a)	((void) 0)
 
-#define trace_xfs_log_recover_item_reorder_head(a,b,c,d)	((void) 0)
-#define trace_xfs_log_recover_item_reorder_tail(a,b,c,d)	((void) 0)
 #define trace_xfs_log_recover_item_add_cont(a,b,c,d)	((void) 0)
 #define trace_xfs_log_recover_item_add(a,b,c,d)	((void) 0)
 
@@ -263,7 +260,6 @@
 #define trace_xfs_refcount_find_shared_error(...)	((void) 0)
 
 #define trace_xfs_bmap_remap_alloc(...)		((void) 0)
-#define trace_xfs_bmap_remap_alloc_error(...)	((void) 0)
 #define trace_xfs_bmap_deferred(...)		((void) 0)
 #define trace_xfs_bmap_defer(...)		((void) 0)
 

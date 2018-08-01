@@ -87,7 +87,6 @@ struct xfs_bag {
 	size_t			bg_inuse;	/* number of slots in use */
 	void			**bg_ptrs;	/* pointers */
 };
-#define BAG_SIZE(nr)	(sizeof(struct xfs_bag) + ((nr) * sizeof(void *)))
 #define BAG_END(bag)	(&(bag)->bg_ptrs[(bag)->bg_nr])
 
 /*

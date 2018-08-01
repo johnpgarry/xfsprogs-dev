@@ -22,14 +22,6 @@
 
 #define DEFAULT_MAX_EXT_SIZE	MAXEXTLEN
 
-/*
- * It's possible that multiple files in a directory (or attributes
- * in a file) produce the same obfuscated name.  If that happens, we
- * try to create another one.  After several rounds of this though,
- * we just give up and leave the original name as-is.
- */
-#define	DUP_MAX		5	/* Max duplicates before we give up */
-
 /* copy all metadata structures to/from a file */
 
 static int	metadump_f(int argc, char **argv);

@@ -2486,8 +2486,6 @@ out_free_sb:
 		do_error(_("can't get %s for ag %d\n"), objname, agno);
 }
 
-#define SCAN_THREADS 32
-
 void
 scan_ags(
 	struct xfs_mount	*mp,

@@ -101,8 +101,6 @@ typedef struct rt_extent_tree_node  {
 /* separate state bit, OR'ed into high (4th) bit of ex_state field */
 
 #define XR_E_WRITTEN	0x8	/* extent has been written out, can't reclaim */
-#define good_state(state)	(((state) & (~XR_E_WRITTEN)) >= XR_E_UNKNOWN && \
-				((state) & (~XR_E_WRITTEN) < XF_E_BAD_STATE))
 #define written(state)		((state) & XR_E_WRITTEN)
 #define set_written(state)	(state) &= XR_E_WRITTEN
 

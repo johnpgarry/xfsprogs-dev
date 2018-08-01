@@ -42,7 +42,6 @@ int ffn(const char *, const struct stat *, int, struct FTW *);
 #define LOGSIZE		1000
 
 #define FBLOCKS(n)	((n)/blocksize)
-#define RFBYTES(n)	((n) - (FBLOCKS(n) * blocksize))
 
 unsigned long long dirsize=0;		/* bytes */
 unsigned long long logsize=LOGSIZE*BLOCKSIZE;	/* bytes */

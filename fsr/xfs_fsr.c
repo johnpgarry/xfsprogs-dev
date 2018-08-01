@@ -52,10 +52,6 @@ static int64_t		minimumfree = 2048;
 #define NULLFD		-1
 #define GRABSZ		64
 #define TARGETRANGE	10
-#define	V_NONE		0
-#define	V_OVERVIEW	1
-#define	V_ALL		2
-#define BUFFER_SIZE	(1<<16)
 #define BUFFER_MAX	(1<<24)
 
 static time_t howlong = 7200;		/* default seconds of reorganizing */

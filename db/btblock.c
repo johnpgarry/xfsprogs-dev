@@ -716,8 +716,6 @@ const field_t	rmapbt_key_flds[] = {
 #undef HI_KOFF
 #undef KOFF
 
-#define	ROFF(f)	bitize(offsetof(struct xfs_rmap_rec, rm_ ## f))
-
 #define RMAPBT_STARTBLOCK_BITOFF	0
 #define RMAPBT_BLOCKCOUNT_BITOFF	(RMAPBT_STARTBLOCK_BITOFF + RMAPBT_STARTBLOCK_BITLEN)
 #define RMAPBT_OWNER_BITOFF		(RMAPBT_BLOCKCOUNT_BITOFF + RMAPBT_BLOCKCOUNT_BITLEN)
@@ -740,7 +738,6 @@ const field_t	rmapbt_rec_flds[] = {
 	  TYP_NONE },
 	{ NULL }
 };
-#undef ROFF
 
 /* refcount btree blocks */
 const field_t	refcbt_crc_hfld[] = {
@@ -773,13 +770,11 @@ const field_t	refcbt_crc_flds[] = {
 #define REFCNTBT_COWFLAG_BITOFF		0
 #define REFCNTBT_STARTBLOCK_BITOFF	(REFCNTBT_COWFLAG_BITOFF + REFCNTBT_COWFLAG_BITLEN)
 
-#define	KOFF(f)	bitize(offsetof(struct xfs_refcount_key, rc_ ## f))
 const field_t	refcbt_key_flds[] = {
 	{ "startblock", FLDT_CAGBLOCK, OI(REFCNTBT_STARTBLOCK_BITOFF), C1, 0, TYP_DATA },
 	{ "cowflag", FLDT_CCOWFLG, OI(REFCNTBT_COWFLAG_BITOFF), C1, 0, TYP_DATA },
 	{ NULL }
 };
-#undef KOFF
 
 #define	ROFF(f)	bitize(offsetof(struct xfs_refcount_rec, rc_ ## f))
 const field_t	refcbt_rec_flds[] = {

@@ -1023,8 +1023,6 @@ xlog_recover_add_item(
 	list_add_tail(&item->ri_list, head);
 }
 
-#define BLK_AVG(blk1, blk2)	((blk1+blk2) >> 1)
-
 STATIC int
 xlog_recover_add_to_cont_trans(
 	struct xlog		*log,

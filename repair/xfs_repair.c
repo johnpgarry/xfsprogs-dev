@@ -23,10 +23,6 @@
 #include "slab.h"
 #include "rmap.h"
 
-#define	rounddown(x, y)	(((x)/(y))*(y))
-
-#define		XR_MAX_SECT_SIZE	(64 * 1024)
-
 /*
  * option tables for getsubopt calls
  */

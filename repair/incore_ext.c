@@ -255,14 +255,6 @@ get_bno_extent(xfs_agnumber_t agno, extent_tree_node_t *ext)
 }
 
 /*
- * normalizing constant for bcnt size -> address conversion (see avl ops)
- * used by the AVL tree code to convert sizes and must be used when
- * doing an AVL search in the tree (e.g. avl_findrange(s))
- */
-#define MAXBCNT		0xFFFFFFFF
-#define BCNT_ADDR(cnt)	((unsigned int) MAXBCNT - (cnt))
-
-/*
  * the next 4 routines manage the trees of free extents -- 2 trees
  * per AG.  The first tree is sorted by block number.  The second
  * tree is sorted by extent size.  This is the bcnt tree.
