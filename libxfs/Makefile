@@ -48,13 +48,10 @@ HFILES = \
 	libxfs_io.h \
 	libxfs_api_defs.h \
 	init.h \
-	crc32defs.h \
-	crc32table.h \
 	libxfs_priv.h \
 	xfs_dir2_priv.h
 
 CFILES = cache.c \
-	crc32.c \
 	defer_item.c \
 	init.c \
 	kmem.c \
@@ -99,8 +96,6 @@ CFILES = cache.c \
 	xfs_trans_resv.c \
 	xfs_types.c
 
-LSRCFILES += gen_crc32table.c
-
 #
 # Tracing flags:
 # -DIO_DEBUG		reads and writes of buffers
@@ -117,25 +112,7 @@ LTLIBS = $(LIBPTHREAD) $(LIBRT)
 # don't try linking xfs_repair with a debug libxfs.
 DEBUG = -DNDEBUG
 
-LDIRT = gen_crc32table crc32table.h crc32selftest
-
-default: crc32selftest ltdepend $(LTLIBRARY)
-
-crc32table.h: gen_crc32table.c crc32defs.h
-	@echo "    [CC]     gen_crc32table"
-	$(Q) $(BUILD_CC) $(BUILD_CFLAGS) -o gen_crc32table $<
-	@echo "    [GENERATE] $@"
-	$(Q) ./gen_crc32table > crc32table.h
-
-# The selftest binary will return an error if it fails. This is made a
-# dependency of the build process so that we refuse to build the tools on broken
-# systems/architectures. Hence we make sure that xfsprogs will never use a
-# busted CRC calculation at build time and hence avoid putting bad CRCs down on
-# disk.
-crc32selftest: gen_crc32table.c crc32table.h crc32.c crc32defs.h
-	@echo "    [TEST]    CRC32"
-	$(Q) $(BUILD_CC) $(BUILD_CFLAGS) -D CRC32_SELFTEST=1 crc32.c -o $@
-	$(Q) ./$@
+default: ltdepend $(LTLIBRARY)
 
 # set up include/xfs header directory
 include $(BUILDRULES)

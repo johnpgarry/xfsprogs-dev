@@ -53,9 +53,9 @@
 #include "xfs_arch.h"
 
 #include "xfs_fs.h"
+#include "crc32c.h"
 
 /* CRC stuff, buffer API dependent on it */
-extern uint32_t crc32c_le(uint32_t crc, unsigned char const *p, size_t len);
 #define crc32c(c,p,l)	crc32c_le((c),(unsigned char const *)(p),(l))
 
 #include "xfs_cksum.h"
