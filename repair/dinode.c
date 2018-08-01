@@ -105,137 +105,24 @@ _("would have cleared inode %" PRIu64 " attributes\n"), ino_num);
 	return(1);
 }
 
-static int
+static void
 clear_dinode_core(struct xfs_mount *mp, xfs_dinode_t *dinoc, xfs_ino_t ino_num)
 {
-	int dirty = 0;
-	int i;
-
-#define __dirty_no_modify_ret(dirty) \
-	({ (dirty) = 1; if (no_modify) return 1; })
-
-	if (be16_to_cpu(dinoc->di_magic) != XFS_DINODE_MAGIC)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_magic = cpu_to_be16(XFS_DINODE_MAGIC);
-	}
-
-	if (!libxfs_dinode_good_version(mp, dinoc->di_version)) {
-		__dirty_no_modify_ret(dirty);
-		if (xfs_sb_version_hascrc(&mp->m_sb))
-			dinoc->di_version = 3;
-		else
-			dinoc->di_version = 2;
-	}
-
-	if (be16_to_cpu(dinoc->di_mode) != 0)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_mode = 0;
-	}
-
-	if (be16_to_cpu(dinoc->di_flags) != 0)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_flags = 0;
-	}
-
-	if (be32_to_cpu(dinoc->di_dmevmask) != 0)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_dmevmask = 0;
-	}
-
-	if (dinoc->di_forkoff != 0)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_forkoff = 0;
-	}
-
-	if (dinoc->di_format != XFS_DINODE_FMT_EXTENTS)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_format = XFS_DINODE_FMT_EXTENTS;
-	}
-
-	if (dinoc->di_aformat != XFS_DINODE_FMT_EXTENTS)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_aformat = XFS_DINODE_FMT_EXTENTS;
-	}
-
-	if (be64_to_cpu(dinoc->di_size) != 0)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_size = 0;
-	}
-
-	if (be64_to_cpu(dinoc->di_nblocks) != 0)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_nblocks = 0;
-	}
-
-	if (be16_to_cpu(dinoc->di_onlink) != 0)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_onlink = 0;
-	}
-
-	if (be32_to_cpu(dinoc->di_nextents) != 0)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_nextents = 0;
-	}
-
-	if (be16_to_cpu(dinoc->di_anextents) != 0)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_anextents = 0;
-	}
-
-	if (be32_to_cpu(dinoc->di_extsize) != 0)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_extsize = 0;
-	}
-
-	if (dinoc->di_version > 1 &&
-			be32_to_cpu(dinoc->di_nlink) != 0)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_nlink = 0;
-	}
-
+	memset(dinoc, 0, sizeof(*dinoc));
+	dinoc->di_magic = cpu_to_be16(XFS_DINODE_MAGIC);
+	if (xfs_sb_version_hascrc(&mp->m_sb))
+		dinoc->di_version = 3;
+	else
+		dinoc->di_version = 2;
+	dinoc->di_gen = cpu_to_be32(random());
+	dinoc->di_format = XFS_DINODE_FMT_EXTENTS;
+	dinoc->di_aformat = XFS_DINODE_FMT_EXTENTS;
 	/* we are done for version 1/2 inodes */
 	if (dinoc->di_version < 3)
-		return dirty;
-
-	if (be64_to_cpu(dinoc->di_ino) != ino_num) {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_ino = cpu_to_be64(ino_num);
-	}
-
-	if (platform_uuid_compare(&dinoc->di_uuid, &mp->m_sb.sb_meta_uuid)) {
-		__dirty_no_modify_ret(dirty);
-		platform_uuid_copy(&dinoc->di_uuid, &mp->m_sb.sb_meta_uuid);
-	}
-
-	for (i = 0; i < sizeof(dinoc->di_pad2)/sizeof(dinoc->di_pad2[0]); i++) {
-		if (dinoc->di_pad2[i] != 0) {
-			__dirty_no_modify_ret(dirty);
-			memset(dinoc->di_pad2, 0, sizeof(dinoc->di_pad2));
-			break;
-		}
-	}
-
-	if (be64_to_cpu(dinoc->di_flags2) != 0)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_flags2 = 0;
-	}
-
-	if (be64_to_cpu(dinoc->di_lsn) != 0)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_lsn = 0;
-	}
-
-	if (be64_to_cpu(dinoc->di_changecount) != 0)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_changecount = 0;
-	}
-
-	if (be32_to_cpu(dinoc->di_cowextsize) != 0)  {
-		__dirty_no_modify_ret(dirty);
-		dinoc->di_cowextsize = 0;
-	}
-
-	return dirty;
+		return;
+	dinoc->di_ino = cpu_to_be64(ino_num);
+	platform_uuid_copy(&dinoc->di_uuid, &mp->m_sb.sb_meta_uuid);
+	return;
 }
 
 static int
@@ -256,21 +143,15 @@ clear_dinode_unlinked(xfs_mount_t *mp, xfs_dinode_t *dino)
  * until after the agi unlinked lists are walked in phase 3.
  * returns > zero if the inode has been altered while being cleared
  */
-static int
+static void
 clear_dinode(xfs_mount_t *mp, xfs_dinode_t *dino, xfs_ino_t ino_num)
 {
-	int dirty;
-
-	dirty = clear_dinode_core(mp, dino, ino_num);
-	dirty += clear_dinode_unlinked(mp, dino);
+	clear_dinode_core(mp, dino, ino_num);
+	clear_dinode_unlinked(mp, dino);
 
 	/* and clear the forks */
-
-	if (dirty && !no_modify)
-		memset(XFS_DFORK_DPTR(dino), 0,
-		       XFS_LITINO(mp, dino->di_version));
-
-	return(dirty);
+	memset(XFS_DFORK_DPTR(dino), 0, XFS_LITINO(mp, dino->di_version));
+	return;
 }
 
 
@@ -2128,8 +2009,8 @@ process_inode_data_fork(
 	if (err)  {
 		do_warn(_("bad data fork in inode %" PRIu64 "\n"), lino);
 		if (!no_modify)  {
-			*dirty += clear_dinode(mp, dino, lino);
-			ASSERT(*dirty > 0);
+			clear_dinode(mp, dino, lino);
+			*dirty += 1;
 		}
 		return 1;
 	}
@@ -2539,7 +2420,7 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 	}
 
 	/*
-	 * if not in verify mode, check to sii if the inode and imap
+	 * if not in verify mode, check to see if the inode and imap
 	 * agree that the inode is free
 	 */
 	if (!verify_mode && di_mode == 0) {
@@ -2556,8 +2437,9 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 				do_warn(
  _("free inode %" PRIu64 " contains errors, "), lino);
 				if (!no_modify) {
-					*dirty += clear_dinode(mp, dino, lino);
+					clear_dinode(mp, dino, lino);
 					do_warn(_("corrected\n"));
+					*dirty += 1;
 				} else {
 					do_warn(_("would correct\n"));
 				}
@@ -2574,7 +2456,8 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 	_("imap claims a free inode %" PRIu64 " is in use, "), lino);
 		if (!no_modify)  {
 			do_warn(_("correcting imap and clearing inode\n"));
-			*dirty += clear_dinode(mp, dino, lino);
+			clear_dinode(mp, dino, lino);
+			*dirty += 1;
 			retval = 1;
 		} else
 			do_warn(_("would correct imap and clear inode\n"));
@@ -2792,8 +2675,10 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 	 * we're going to find.  check_dups is set to 1 only during
 	 * phase 4.  Ugly.
 	 */
-	if (check_dups && !no_modify)
-		*dirty += clear_dinode_unlinked(mp, dino);
+	if (check_dups && !no_modify) {
+		clear_dinode_unlinked(mp, dino);
+		*dirty += 1;
+	}
 
 	/* set type and map type info */
 
@@ -2989,8 +2874,8 @@ _("Bad CoW extent size %u on inode %" PRIu64 ", "),
 
 clear_bad_out:
 	if (!no_modify)  {
-		*dirty += clear_dinode(mp, dino, lino);
-		ASSERT(*dirty > 0);
+		clear_dinode(mp, dino, lino);
+		*dirty += 1;
 	}
 bad_out:
 	*used = is_free;
