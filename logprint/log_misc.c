@@ -199,7 +199,7 @@ xlog_print_trans_buffer(char **ptr, int len, int *i, int num_ops)
      * memmove to ensure 8-byte alignment for the long longs in
      * buf_log_format_t structure
      */
-    memmove(&lbuf, *ptr, MIN(sizeof(xfs_buf_log_format_t), len));
+    memmove(&lbuf, *ptr, min(sizeof(xfs_buf_log_format_t), len));
     f = &lbuf;
     *ptr += len;
 
@@ -422,7 +422,7 @@ xlog_print_trans_qoff(char **ptr, uint len)
     xfs_qoff_logformat_t *f;
     xfs_qoff_logformat_t lbuf;
 
-    memmove(&lbuf, *ptr, MIN(sizeof(xfs_qoff_logformat_t), len));
+    memmove(&lbuf, *ptr, min(sizeof(xfs_qoff_logformat_t), len));
     f = &lbuf;
     *ptr += len;
     if (len >= sizeof(xfs_qoff_logformat_t)) {
@@ -523,7 +523,7 @@ xlog_print_trans_inode(
      * len can be smaller than struct xfs_inode_log_format
      * if format data is split over operations
      */
-    memmove(&src_lbuf, *ptr, MIN(sizeof(src_lbuf), len));
+    memmove(&src_lbuf, *ptr, min(sizeof(src_lbuf), len));
     (*i)++;					/* bump index */
     *ptr += len;
     if (!continued &&
@@ -662,7 +662,7 @@ xlog_print_trans_dquot(char **ptr, int len, int *i, int num_ops)
      * memmove to ensure 8-byte alignment for the long longs in
      * xfs_dq_logformat_t structure
      */
-    memmove(&lbuf, *ptr, MIN(sizeof(xfs_dq_logformat_t), len));
+    memmove(&lbuf, *ptr, min(sizeof(xfs_dq_logformat_t), len));
     f = &lbuf;
     (*i)++;					/* bump index */
     *ptr += len;
@@ -712,7 +712,7 @@ xlog_print_trans_icreate(
 	struct xfs_icreate_log	icl_buf = {0};
 	struct xfs_icreate_log	*icl;
 
-	memmove(&icl_buf, *ptr, MIN(sizeof(struct xfs_icreate_log), len));
+	memmove(&icl_buf, *ptr, min(sizeof(struct xfs_icreate_log), len));
 	icl = &icl_buf;
 	*ptr += len;
 
@@ -1061,7 +1061,7 @@ xlog_print_rec_head(xlog_rec_header_t *head, int *len, int bad_hdr_warn)
 
     if (print_overwrite) {
 	printf(_("cycle num overwrites: "));
-	for (i=0; i< MIN(bbs, XLOG_HEADER_CYCLE_SIZE / BBSIZE); i++)
+	for (i=0; i< min(bbs, XLOG_HEADER_CYCLE_SIZE / BBSIZE); i++)
 	    printf("%d - 0x%x  ",
 		    i,
 		    be32_to_cpu(head->h_cycle_data[i]));

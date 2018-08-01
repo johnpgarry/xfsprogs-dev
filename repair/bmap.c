@@ -178,7 +178,7 @@ blkmap_getn(
 						nb * sizeof(bmap_ext_t));
 
 		bmp[nex].startblock = ext->startblock + (o - ext->startoff);
-		bmp[nex].blockcount = MIN(nb, ext->blockcount -
+		bmp[nex].blockcount = min(nb, ext->blockcount -
 				(bmp[nex].startblock - ext->startblock));
 		o += bmp[nex].blockcount;
 		nb -= bmp[nex].blockcount;

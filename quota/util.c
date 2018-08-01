@@ -29,7 +29,7 @@ time_to_string(
 		timer = origin;
 	} else {
 		time(&now);
-		timer = MAX(origin - now, 0);
+		timer = max(origin - now, 0);
 	}
 
 	/*

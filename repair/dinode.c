@@ -790,10 +790,10 @@ get_agino_buf(
 	 * we must find the buffer for its cluster, add the appropriate
 	 * offset, and return that.
 	 */
-	cluster_size = MAX(mp->m_inode_cluster_size, mp->m_sb.sb_blocksize);
+	cluster_size = max(mp->m_inode_cluster_size, mp->m_sb.sb_blocksize);
 	ino_per_cluster = cluster_size / mp->m_sb.sb_inodesize;
 	cluster_agino = agino & ~(ino_per_cluster - 1);
-	cluster_blks = XFS_FSB_TO_DADDR(mp, MAX(1,
+	cluster_blks = XFS_FSB_TO_DADDR(mp, max(1,
 			mp->m_inode_cluster_size >> mp->m_sb.sb_blocklog));
 	cluster_daddr = XFS_AGB_TO_DADDR(mp, agno,
 			XFS_AGINO_TO_AGBNO(mp, cluster_agino));
@@ -1363,7 +1363,7 @@ _("Bad symlink buffer CRC, block %" PRIu64 ", inode %" PRIu64 ".\n"
 		}
 
 		byte_cnt = XFS_SYMLINK_BUF_SPACE(mp, byte_cnt);
-		byte_cnt = MIN(pathlen, byte_cnt);
+		byte_cnt = min(pathlen, byte_cnt);
 
 		src = bp->b_addr;
 		if (xfs_sb_version_hascrc(&mp->m_sb)) {

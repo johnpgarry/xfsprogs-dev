@@ -181,7 +181,7 @@ libxfs_log_clear(
 	 * previous cycle.
 	 */
 	len = ((version == 2) && sunit) ? BTOBB(sunit) : 2;
-	len = MAX(len, 2);
+	len = max(len, 2);
 	lsn = xlog_assign_lsn(cycle, 0);
 	if (cycle == XLOG_INIT_CYCLE)
 		tail_lsn = lsn;
@@ -295,7 +295,7 @@ libxfs_log_header(
 	head->h_prev_block = cpu_to_be32(-1);
 	head->h_num_logops = cpu_to_be32(1);
 	head->h_fmt = cpu_to_be32(fmt);
-	head->h_size = cpu_to_be32(MAX(sunit, XLOG_BIG_RECORD_BSIZE));
+	head->h_size = cpu_to_be32(max(sunit, XLOG_BIG_RECORD_BSIZE));
 
 	head->h_lsn = cpu_to_be64(lsn);
 	head->h_tail_lsn = cpu_to_be64(tail_lsn);
@@ -346,7 +346,7 @@ libxfs_log_header(
 	 * minimum (1 hdr blk + 1 data blk). The record length is the total
 	 * minus however many header blocks are required.
 	 */
-	head->h_len = cpu_to_be32(MAX(BBTOB(2), sunit) - hdrs * BBSIZE);
+	head->h_len = cpu_to_be32(max(BBTOB(2), sunit) - hdrs * BBSIZE);
 
 	/*
 	 * Write out the unmount record, pack the first word into the record
@@ -363,7 +363,7 @@ libxfs_log_header(
 	 * the cycle. We don't need to pack any of these blocks because the
 	 * cycle data in the headers has already been zeroed.
 	 */
-	len = MAX(len, hdrs + 1);
+	len = max(len, hdrs + 1);
 	for (i = hdrs + 1; i < len; i++) {
 		p = nextfunc(p, BBSIZE, private);
 		memset(p, 0, BBSIZE);

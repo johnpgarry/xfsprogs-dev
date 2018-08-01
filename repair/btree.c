@@ -846,7 +846,7 @@ btree_insert_shift_to_prev(
 	if (!btree_copy_cursor_prev(root, tmp_cursor, level + 1))
 		return -1;
 
-	n = MIN(*index, (BTREE_PTR_MAX - tmp_cursor[level].node->num_keys) / 2);
+	n = min(*index, (BTREE_PTR_MAX - tmp_cursor[level].node->num_keys) / 2);
 	if (!n || !btree_shift_to_prev(root, level, tmp_cursor, n))
 		return -1;
 
@@ -869,7 +869,7 @@ btree_insert_shift_to_next(
 	if (!btree_copy_cursor_next(root, tmp_cursor, level + 1))
 		return -1;
 
-	n = MIN(BTREE_KEY_MAX - *index,
+	n = min(BTREE_KEY_MAX - *index,
 		(BTREE_PTR_MAX - tmp_cursor[level].node->num_keys) / 2);
 	if (!n || !btree_shift_to_next(root, level, tmp_cursor, n))
 		return -1;

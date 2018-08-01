@@ -430,7 +430,7 @@ clear_uncertain_ino_cache(xfs_agnumber_t agno)
  * XFS_INODES_PER_CHUNK (64) inode chunk
  *
  * Each inode resides in a 64-inode chunk which can be part one or more chunks
- * (MAX(64, inodes-per-block).  The fs allocates in chunks (as opposed to 1
+ * (max(64, inodes-per-block).  The fs allocates in chunks (as opposed to 1
  * chunk) when a block can hold more than one chunk (inodes per block > 64).
  * Allocating in one chunk pieces causes us problems when it takes more than
  * one fs block to contain an inode chunk because the chunks can start on

@@ -665,7 +665,7 @@ main(int argc, char **argv)
 		}
 
 		wbuf_align = d.d_mem;
-		wbuf_size = MIN(d.d_maxiosz, 1 * 1024 * 1024);
+		wbuf_size = min(d.d_maxiosz, 1 * 1024 * 1024);
 		wbuf_miniosize = d.d_miniosz;
 	} else  {
 		/* set arbitrary I/O params, miniosize at least 1 disk block */
@@ -848,9 +848,9 @@ main(int argc, char **argv)
 						progname, target[i].name);
 					die_perror();
 				} else {
-					wbuf_align = MAX(wbuf_align, d.d_mem);
-					wbuf_size = MIN(d.d_maxiosz, wbuf_size);
-					wbuf_miniosize = MAX(d.d_miniosz,
+					wbuf_align = max(wbuf_align, d.d_mem);
+					wbuf_size = min(d.d_maxiosz, wbuf_size);
+					wbuf_miniosize = max(d.d_miniosz,
 								wbuf_miniosize);
 				}
 			}
@@ -888,7 +888,7 @@ main(int argc, char **argv)
 
 	wblocks = wbuf_size / BBSIZE;
 
-	if (wbuf_init(&btree_buf, MAX(source_blocksize, wbuf_miniosize),
+	if (wbuf_init(&btree_buf, max(source_blocksize, wbuf_miniosize),
 				wbuf_align, wbuf_miniosize, 1) == NULL)  {
 		do_log(_("Error initializing btree buf 1\n"));
 		die_perror();

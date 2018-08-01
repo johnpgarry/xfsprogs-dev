@@ -1853,7 +1853,7 @@ init(
 	inomap = xmalloc((mp->m_sb.sb_agcount + rt) * sizeof(*inomap));
 	inodata = xmalloc(mp->m_sb.sb_agcount * sizeof(*inodata));
 	inodata_hash_size =
-		(int)MAX(MIN(mp->m_sb.sb_icount /
+		(int)max(min(mp->m_sb.sb_icount /
 				(INODATA_AVG_HASH_LENGTH * mp->m_sb.sb_agcount),
 			     MAX_INODATA_HASH_SIZE),
 			 MIN_INODATA_HASH_SIZE);
@@ -4581,7 +4581,7 @@ scanfunc_fino(
 					goto next_buf;
 
                                 check_set_dbmap(seqno, agbno,
-                                        (xfs_extlen_t)MAX(1,
+                                        (xfs_extlen_t)max(1,
                                                 inodes_per_buf >>
                                                 mp->m_sb.sb_inopblog),
                                         DBM_INODE, DBM_INODE, seqno, bno);

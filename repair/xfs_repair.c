@@ -748,7 +748,7 @@ main(int argc, char **argv)
 
 	chunks_pblock = mp->m_sb.sb_inopblock / XFS_INODES_PER_CHUNK;
 	max_symlink_blocks = libxfs_symlink_blocks(mp, XFS_SYMLINK_MAXLEN);
-	inodes_per_cluster = MAX(mp->m_sb.sb_inopblock,
+	inodes_per_cluster = max(mp->m_sb.sb_inopblock,
 			mp->m_inode_cluster_size >> mp->m_sb.sb_inodelog);
 
 	/*
@@ -846,9 +846,9 @@ main(int argc, char **argv)
 			rlim.rlim_cur = rlim.rlim_max;
 			setrlimit(RLIMIT_AS, &rlim);
 			/* use approximately 80% of rlimit to avoid overrun */
-			max_mem = MIN(max_mem, rlim.rlim_cur / 1280);
+			max_mem = min(max_mem, rlim.rlim_cur / 1280);
 		} else
-			max_mem = MIN(max_mem, (LONG_MAX >> 10) + 1);
+			max_mem = min(max_mem, (LONG_MAX >> 10) + 1);
 
 		if (verbose > 1)
 			do_log(

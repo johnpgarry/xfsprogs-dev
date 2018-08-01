@@ -183,7 +183,7 @@ xlog_print_trans_efd(char **ptr, uint len)
 	 * memmove to ensure 8-byte alignment for the long longs in
 	 * xfs_efd_log_format_t structure
 	 */
-	memmove(&lbuf, *ptr, MIN(core_size, len));
+	memmove(&lbuf, *ptr, min(core_size, len));
 	f = &lbuf;
 	*ptr += len;
 	if (len >= core_size) {
@@ -340,7 +340,7 @@ xlog_print_trans_rud(
 	 * memmove to ensure 8-byte alignment for the long longs in
 	 * xfs_efd_log_format_t structure
 	 */
-	memmove(&lbuf, *ptr, MIN(core_size, len));
+	memmove(&lbuf, *ptr, min(core_size, len));
 	f = &lbuf;
 	*ptr += len;
 	if (len >= core_size) {
@@ -483,7 +483,7 @@ xlog_print_trans_cud(
 	/* size without extents at end */
 	uint core_size = sizeof(struct xfs_cud_log_format);
 
-	memcpy(&lbuf, *ptr, MIN(core_size, len));
+	memcpy(&lbuf, *ptr, min(core_size, len));
 	f = &lbuf;
 	*ptr += len;
 	if (len >= core_size) {
@@ -627,7 +627,7 @@ xlog_print_trans_bud(
 	/* size without extents at end */
 	uint core_size = sizeof(struct xfs_bud_log_format);
 
-	memcpy(&lbuf, *ptr, MIN(core_size, len));
+	memcpy(&lbuf, *ptr, min(core_size, len));
 	f = &lbuf;
 	*ptr += len;
 	if (len >= core_size) {

@@ -479,7 +479,7 @@ pf_batch_read(
 		num = 0;
 		if (which == PF_SECONDARY) {
 			bplist[0] = btree_find(args->io_queue, 0, &fsbno);
-			max_fsbno = MIN(fsbno + pf_max_fsbs,
+			max_fsbno = min(fsbno + pf_max_fsbs,
 							args->last_bno_read);
 		} else {
 			bplist[0] = btree_find(args->io_queue,

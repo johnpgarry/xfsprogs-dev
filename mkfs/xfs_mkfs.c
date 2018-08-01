@@ -2097,7 +2097,7 @@ validate_inodesize(
 		int	maxsz;
 
 		fprintf(stderr, _("illegal inode size %d\n"), cfg->inodesize);
-		maxsz = MIN(cfg->blocksize / XFS_MIN_INODE_PERBLOCK,
+		maxsz = min(cfg->blocksize / XFS_MIN_INODE_PERBLOCK,
 			    XFS_DINODE_MAX_SIZE);
 		if (XFS_DINODE_MIN_SIZE == maxsz)
 			fprintf(stderr,
@@ -2406,10 +2406,10 @@ open_devices(
 	 * So, we reduce the size (in basic blocks) to a perfect
 	 * multiple of the sector size, or 1024, whichever is larger.
 	 */
-	sector_mask = (uint64_t)-1 << (MAX(cfg->sectorlog, 10) - BBSHIFT);
+	sector_mask = (uint64_t)-1 << (max(cfg->sectorlog, 10) - BBSHIFT);
 	xi->dsize &= sector_mask;
 	xi->rtsize &= sector_mask;
-	xi->logBBsize &= (uint64_t)-1 << (MAX(cfg->lsectorlog, 10) - BBSHIFT);
+	xi->logBBsize &= (uint64_t)-1 << (max(cfg->lsectorlog, 10) - BBSHIFT);
 
 
 	if (!discard)
@@ -2993,12 +2993,12 @@ calculate_log_size(
 	libxfs_umount(&mount);
 
 	ASSERT(min_logblocks);
-	min_logblocks = MAX(XFS_MIN_LOG_BLOCKS, min_logblocks);
+	min_logblocks = max(XFS_MIN_LOG_BLOCKS, min_logblocks);
 
 	/* if we have lots of blocks, check against XFS_MIN_LOG_BYTES, too */
 	if (!cli->logsize &&
 	    cfg->dblocks >= (1024*1024*1024) >> cfg->blocklog)
-		min_logblocks = MAX(min_logblocks,
+		min_logblocks = max(min_logblocks,
 				    XFS_MIN_LOG_BYTES >> cfg->blocklog);
 
 	/*
@@ -3034,7 +3034,7 @@ _("external log device %lld too small, must be at least %lld blocks\n"),
 			 * XFS_MIN_LOG_BYTES for filesystems smaller than 16G if
 			 * at all possible, ramping up to 128MB at 256GB.
 			 */
-			cfg->logblocks = MIN(XFS_MIN_LOG_BYTES >> cfg->blocklog,
+			cfg->logblocks = min(XFS_MIN_LOG_BYTES >> cfg->blocklog,
 					min_logblocks * XFS_DFL_LOG_FACTOR);
 		} else {
 			/*
@@ -3048,7 +3048,7 @@ _("external log device %lld too small, must be at least %lld blocks\n"),
 		}
 
 		/* Ensure the chosen size meets minimum log size requirements */
-		cfg->logblocks = MAX(min_logblocks, cfg->logblocks);
+		cfg->logblocks = max(min_logblocks, cfg->logblocks);
 
 		/*
 		 * Make sure the log fits wholly within an AG
@@ -3060,11 +3060,11 @@ _("external log device %lld too small, must be at least %lld blocks\n"),
 		 * opened to decide what is the valid maximum size of a log in
 		 * an AG.
 		 */
-		cfg->logblocks = MIN(cfg->logblocks,
+		cfg->logblocks = min(cfg->logblocks,
 				     libxfs_alloc_ag_max_usable(mp) - 1);
 
 		/* and now clamp the size to the maximum supported size */
-		cfg->logblocks = MIN(cfg->logblocks, XFS_MAX_LOG_BLOCKS);
+		cfg->logblocks = min(cfg->logblocks, XFS_MAX_LOG_BLOCKS);
 		if ((cfg->logblocks << cfg->blocklog) > XFS_MAX_LOG_BYTES)
 			cfg->logblocks = XFS_MAX_LOG_BYTES >> cfg->blocklog;
 

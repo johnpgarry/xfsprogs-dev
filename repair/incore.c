@@ -150,7 +150,7 @@ get_bmap_ext(
 		if (blen) {
 			if (!btree_peek_next(ag_bmap[agno], &key))
 				return -1;
-			*blen = MIN(maxbno, key) - agbno;
+			*blen = min(maxbno, key) - agbno;
 		}
 		return *statep;
 	}
@@ -159,7 +159,7 @@ get_bmap_ext(
 	if (!statep)
 		return -1;
 	if (blen)
-		*blen = MIN(maxbno, key) - agbno;
+		*blen = min(maxbno, key) - agbno;
 
 	return *statep;
 }
