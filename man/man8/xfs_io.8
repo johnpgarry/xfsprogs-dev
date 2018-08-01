@@ -1017,8 +1017,24 @@ Note \-\- this can be useful for exercising out of space behavior.
 Only available in expert mode and requires privileges.
 .TP
 .BR shutdown " [ " \-f " ]"
-Force the filesystem to shutdown (with or without flushing the log).
+Force the filesystem to shut down, preventing any further IO.
+XFS and other filesystems implement this functionality, although implementation
+details may differ slightly.
 Only available in expert mode and requires privileges.
+.PP
+.RS
+By default, the filesystem will not attempt to flush completed transactions to
+disk before shutting down the filesystem.  This simulates a disk failure or
+crash.
+.RE
+.RS 1.0i
+.PD 0
+.TP 0.4i
+.B \-f
+Force the filesystem to flush all completed transactions to disk before shutting
+down, matching XFS behavior when critical corruption is encountered.
+.PD
+.RE
 .TP
 .BR stat " [ " \-v "|" \-r " ]"
 Selected statistics from
