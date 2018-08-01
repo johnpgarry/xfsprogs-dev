@@ -2281,11 +2281,20 @@ _("data stripe width (%d) must be a multiple of the data stripe unit (%d)\n"),
 
 	/* if no stripe config set, use the device default */
 	if (!dsunit) {
-		dsunit = ft->dsunit;
-		dswidth = ft->dswidth;
-		use_dev = true;
+		/* Ignore nonsense from device.  XXX add more validation */
+		if (ft->dsunit && ft->dswidth == 0) {
+			fprintf(stderr,
+_("%s: Volume reports stripe unit of %d bytes and stripe width of 0, ignoring.\n"),
+				progname, BBTOB(ft->dsunit));
+			ft->dsunit = 0;
+			ft->dswidth = 0;
+		} else {
+			dsunit = ft->dsunit;
+			dswidth = ft->dswidth;
+			use_dev = true;
+		}
 	} else {
-		/* check and warn is alignment is sub-optimal */
+		/* check and warn if user-specified alignment is sub-optimal */
 		if (ft->dsunit && ft->dsunit != dsunit) {
 			fprintf(stderr,
 _("%s: Specified data stripe unit %d is not the same as the volume stripe unit %d\n"),
