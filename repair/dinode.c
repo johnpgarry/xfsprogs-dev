@@ -2548,12 +2548,20 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 		 */
 		if (was_free) {
 			/*
-			 * easy case, inode free -- inode and map agree, clear
+			 * easy case, inode free -- inode and map agree, check
 			 * it just in case to ensure that format, etc. are
 			 * set correctly
 			 */
-			if (!no_modify)
-				*dirty += clear_dinode(mp, dino, lino);
+			if (libxfs_dinode_verify(mp, lino, dino) != NULL) {
+				do_warn(
+ _("free inode %" PRIu64 " contains errors, "), lino);
+				if (!no_modify) {
+					*dirty += clear_dinode(mp, dino, lino);
+					do_warn(_("corrected\n"));
+				} else {
+					do_warn(_("would correct\n"));
+				}
+			}
 			*used = is_free;
 			return 0;
 		}

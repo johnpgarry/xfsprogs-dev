@@ -122,6 +122,7 @@
 #define xfs_symlink_hdr_ok		libxfs_symlink_hdr_ok
 
 #define xfs_verify_cksum		libxfs_verify_cksum
+#define xfs_dinode_verify		libxfs_dinode_verify
 
 #define xfs_alloc_ag_max_usable		libxfs_alloc_ag_max_usable
 #define xfs_allocbt_maxrecs		libxfs_allocbt_maxrecs
