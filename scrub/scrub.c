@@ -768,10 +768,11 @@ _("Filesystem is shut down, aborting."));
 		case ENOTTY:
 		case EOPNOTSUPP:
 			/*
-			 * If we forced repairs, don't complain if kernel
-			 * doesn't know how to fix.
+			 * If we forced repairs or this is a preen, don't
+			 * error out if the kernel doesn't know how to fix.
 			 */
-			if (debug_tweak_on("XFS_SCRUB_FORCE_REPAIR"))
+			if (is_unoptimized(&oldm) ||
+			    debug_tweak_on("XFS_SCRUB_FORCE_REPAIR"))
 				return CHECK_DONE;
 			/* fall through */
 		case EINVAL:
