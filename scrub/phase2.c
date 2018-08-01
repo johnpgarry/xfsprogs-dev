@@ -88,7 +88,7 @@ xfs_scan_metadata(
 	 */
 	moveon = xfs_scrub_primary_super(ctx);
 	if (!moveon)
-		return moveon;
+		goto out;
 
 	for (agno = 0; moveon && agno < ctx->geo.agcount; agno++) {
 		ret = workqueue_add(&wq, xfs_scan_ag_metadata, agno, &moveon);

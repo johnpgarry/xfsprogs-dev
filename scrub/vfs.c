@@ -196,7 +196,7 @@ scan_fs_tree(
 	if (ret) {
 		str_info(ctx, ctx->mntpoint,
 _("Could not queue directory scan work."));
-		goto out_free;
+		goto out_wq;
 	}
 
 	pthread_mutex_lock(&sft.lock);
@@ -206,6 +206,8 @@ _("Could not queue directory scan work."));
 	workqueue_destroy(&wq);
 
 	return sft.moveon;
+out_wq:
+	workqueue_destroy(&wq);
 out_free:
 	free(sftd->path);
 	free(sftd);
