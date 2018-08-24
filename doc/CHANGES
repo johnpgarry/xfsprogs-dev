@@ -1,3 +1,6 @@
+xfsprogs-4.18.0 (24 Aug 2018)
+	- Tweak SPDX license in xfs_cksum.h (Darrick Wong)
+
 xfsprogs-4.18.0-rc1 (01 Aug 2018)
 	- xfs_repair: notify user if free inodes are corrupt (Eric Sandeen)
 	- xfs_repair: use extent size validation helpers (Darrick Wong)
