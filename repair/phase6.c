@@ -836,7 +836,7 @@ mk_rsumino(xfs_mount_t *mp)
 	tres.tr_logcount = XFS_DEFAULT_PERM_LOG_COUNT;
 	tres.tr_logflags = XFS_TRANS_PERM_LOG_RES;
 	error = -libxfs_trans_alloc(mp, &tres,
-		mp->m_sb.sb_rbmblocks + (XFS_BM_MAXLEVELS(mp,XFS_DATA_FORK) - 1),
+		nsumblocks + (XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK) - 1),
 				    0, 0, &tp);
 	if (error)
 		res_failed(error);
