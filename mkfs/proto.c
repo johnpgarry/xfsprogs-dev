@@ -192,7 +192,9 @@ rsvfile(
 	/*
 	 * update the inode timestamp, mode, and prealloc flag bits
 	 */
-	libxfs_trans_alloc(mp, &tres, 0, 0, 0, &tp);
+	error = -libxfs_trans_alloc(mp, &tres, 0, 0, 0, &tp);
+	if (error)
+		fail(_("allocating transaction for a file"), error);
 	libxfs_trans_ijoin(tp, ip, 0);
 
 	VFS_I(ip)->i_mode &= ~S_ISUID;
