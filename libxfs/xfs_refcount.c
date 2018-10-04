@@ -1131,7 +1131,7 @@ xfs_refcount_finish_one(
 		if (!agbp)
 			return -EFSCORRUPTED;
 
-		rcur = xfs_refcountbt_init_cursor(mp, tp, agbp, agno, dfops);
+		rcur = xfs_refcountbt_init_cursor(mp, tp, agbp, agno);
 		if (!rcur) {
 			error = -ENOMEM;
 			goto out_cur;
@@ -1665,7 +1665,7 @@ xfs_refcount_recover_cow_leftovers(
 		error = -ENOMEM;
 		goto out_trans;
 	}
-	cur = xfs_refcountbt_init_cursor(mp, tp, agbp, agno, NULL);
+	cur = xfs_refcountbt_init_cursor(mp, tp, agbp, agno);
 
 	/* Find all the leftover CoW staging extents. */
 	memset(&low, 0, sizeof(low));
