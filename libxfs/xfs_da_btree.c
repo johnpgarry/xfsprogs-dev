@@ -2390,7 +2390,7 @@ xfs_da_shrink_inode(
 		 */
 		error = xfs_bunmapi(tp, dp, dead_blkno, count,
 				    xfs_bmapi_aflag(w), 0, args->firstblock,
-				    args->trans->t_dfops, &done);
+				    &done);
 		if (error == -ENOSPC) {
 			if (w != XFS_DATA_FORK)
 				break;
