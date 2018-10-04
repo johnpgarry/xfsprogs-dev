@@ -1494,7 +1494,6 @@ dir2_kill_block(
 	args.dp = ip;
 	args.trans = tp;
 	args.firstblock = &firstblock;
-	args.dfops = &dfops;
 	args.whichfork = XFS_DATA_FORK;
 	args.geo = mp->m_dir_geo;
 	if (da_bno >= mp->m_dir_geo->leafblk && da_bno < mp->m_dir_geo->freeblk)
