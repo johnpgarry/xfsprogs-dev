@@ -15,6 +15,7 @@ struct xfs_trans;
 struct xfs_mount;
 struct xfs_inode_log_item;
 struct xfs_dir_ops;
+struct xfs_defer_ops;
 
 /*
  * Inode interface. This fakes up a "VFS inode" to make the xfs_inode appear
