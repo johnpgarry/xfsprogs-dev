@@ -158,7 +158,7 @@ xfs_trans_dup(
 	ntp->t_blk_res = tp->t_blk_res - tp->t_blk_res_used;
 	tp->t_blk_res = tp->t_blk_res_used;
 
-	ntp->t_agfl_dfops = tp->t_agfl_dfops;
+	ntp->t_dfops = tp->t_dfops;
 
 	return ntp;
 }
@@ -975,8 +975,8 @@ __xfs_trans_commit(
 	if (tp == NULL)
 		return 0;
 
-	ASSERT(!tp->t_agfl_dfops ||
-	       !xfs_defer_has_unfinished_work(tp->t_agfl_dfops) || regrant);
+	ASSERT(!tp->t_dfops ||
+	       !xfs_defer_has_unfinished_work(tp->t_dfops) || regrant);
 
 	if (!(tp->t_flags & XFS_TRANS_DIRTY)) {
 #ifdef XACT_DEBUG
