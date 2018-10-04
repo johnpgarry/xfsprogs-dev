@@ -2421,7 +2421,6 @@ inject_lost_blocks(
 	struct xfs_trans	*tp = NULL;
 	struct xfs_slab_cursor	*cur = NULL;
 	xfs_fsblock_t		*fsb;
-	struct xfs_trans_res	tres = {0};
 	struct xfs_owner_info	oinfo;
 	int			error;
 
@@ -2431,7 +2430,7 @@ inject_lost_blocks(
 		return error;
 
 	while ((fsb = pop_slab_cursor(cur)) != NULL) {
-		error = -libxfs_trans_alloc(mp, &tres, 16, 0, 0, &tp);
+		error = -libxfs_trans_alloc_rollable(mp, 16, &tp);
 		if (error)
 			goto out_cancel;
 

@@ -289,6 +289,21 @@ libxfs_trans_alloc_empty(
 	return xfs_trans_alloc(mp, &resv, 0, 0, XFS_TRANS_NO_WRITECOUNT, tpp);
 }
 
+/*
+ * Allocate a transaction that can be rolled.  Since userspace doesn't have
+ * a need for log reservations, we really only tr_itruncate to get the
+ * permanent log reservation flag to avoid blowing asserts.
+ */
+int
+libxfs_trans_alloc_rollable(
+	struct xfs_mount	*mp,
+	unsigned int		blocks,
+	struct xfs_trans	**tpp)
+{
+	return libxfs_trans_alloc(mp, &M_RES(mp)->tr_itruncate, blocks,
+			0, 0, tpp);
+}
+
 void
 libxfs_trans_cancel(
 	struct xfs_trans	*tp)

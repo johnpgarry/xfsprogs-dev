@@ -449,7 +449,6 @@ rmap_store_ag_btree_rec(
 	struct xfs_buf		*agbp = NULL;
 	struct xfs_buf		*agflbp = NULL;
 	struct xfs_trans	*tp;
-	struct xfs_trans_res tres = {0};
 	__be32			*agfl_bno, *b;
 	int			error = 0;
 	struct xfs_owner_info	oinfo;
@@ -507,7 +506,7 @@ rmap_store_ag_btree_rec(
 	/* Insert rmaps into the btree one at a time */
 	rm_rec = pop_slab_cursor(rm_cur);
 	while (rm_rec) {
-		error = -libxfs_trans_alloc(mp, &tres, 16, 0, 0, &tp);
+		error = -libxfs_trans_alloc_rollable(mp, 16, &tp);
 		if (error)
 			goto err_slab;
 
@@ -1366,7 +1365,6 @@ fix_freelist(
 {
 	xfs_alloc_arg_t		args;
 	xfs_trans_t		*tp;
-	struct xfs_trans_res	tres = {0};
 	int			flags;
 	int			error;
 
@@ -1375,8 +1373,8 @@ fix_freelist(
 	args.agno = agno;
 	args.alignment = 1;
 	args.pag = libxfs_perag_get(mp, agno);
-	error = -libxfs_trans_alloc(mp, &tres,
-			libxfs_alloc_min_freelist(mp, args.pag), 0, 0, &tp);
+	error = -libxfs_trans_alloc_rollable(mp,
+			libxfs_alloc_min_freelist(mp, args.pag), &tp);
 	if (error)
 		do_error(_("failed to fix AGFL on AG %d, error %d\n"),
 				agno, error);

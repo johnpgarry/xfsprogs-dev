@@ -3674,10 +3674,9 @@ initialise_ag_freespace(
 {
 	struct xfs_alloc_arg	args;
 	struct xfs_trans	*tp;
-	struct xfs_trans_res tres = {0};
 	int			c;
 
-	c = -libxfs_trans_alloc(mp, &tres, worst_freelist, 0, 0, &tp);
+	c = -libxfs_trans_alloc_rollable(mp, worst_freelist, &tp);
 	if (c)
 		res_failed(c);
 
