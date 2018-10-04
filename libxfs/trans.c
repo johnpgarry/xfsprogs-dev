@@ -155,6 +155,9 @@ xfs_trans_dup(
 	/* We gave our writer reference to the new transaction */
 	tp->t_flags |= XFS_TRANS_NO_WRITECOUNT;
 
+	ntp->t_blk_res = tp->t_blk_res - tp->t_blk_res_used;
+	tp->t_blk_res = tp->t_blk_res_used;
+
 	ntp->t_agfl_dfops = tp->t_agfl_dfops;
 
 	return ntp;
@@ -778,6 +781,15 @@ libxfs_trans_mod_sb(
 	case XFS_TRANS_SB_RES_FDBLOCKS:
 		return;
 	case XFS_TRANS_SB_FDBLOCKS:
+		if (delta < 0) {
+			tp->t_blk_res_used += (uint)-delta;
+			if (tp->t_blk_res_used > tp->t_blk_res) {
+				fprintf(stderr,
+_("Transaction block reservation exceeded! %u > %u\n"),
+					tp->t_blk_res_used, tp->t_blk_res);
+				ASSERT(0);
+			}
+		}
 		tp->t_fdblocks_delta += delta;
 		break;
 	case XFS_TRANS_SB_ICOUNT:
