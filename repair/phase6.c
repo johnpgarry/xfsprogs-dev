@@ -1043,7 +1043,7 @@ mk_orphanage(xfs_mount_t *mp)
 	 * create the actual entry
 	 */
 	error = -libxfs_dir_createname(tp, pip, &xname, ip->i_ino, &first,
-					&dfops, nres);
+					nres);
 	if (error)
 		do_error(
 		_("can't make %s, createname error %d\n"),
@@ -1152,7 +1152,7 @@ mv_orphanage(
 
 			libxfs_defer_init(&dfops, &first);
 			err = -libxfs_dir_createname(tp, orphanage_ip, &xname,
-						ino, &first, &dfops, nres);
+						ino, &first, nres);
 			if (err)
 				do_error(
 	_("name create failed in %s (%d), filesystem may be out of space\n"),
@@ -1165,7 +1165,7 @@ mv_orphanage(
 			libxfs_trans_log_inode(tp, orphanage_ip, XFS_ILOG_CORE);
 
 			err = -libxfs_dir_createname(tp, ino_p, &xfs_name_dotdot,
-					orphanage_ino, &first, &dfops, nres);
+					orphanage_ino, &first, nres);
 			if (err)
 				do_error(
 	_("creation of .. entry failed (%d), filesystem may be out of space\n"),
@@ -1196,7 +1196,7 @@ mv_orphanage(
 			libxfs_defer_init(&dfops, &first);
 
 			err = -libxfs_dir_createname(tp, orphanage_ip, &xname,
-						ino, &first, &dfops, nres);
+						ino, &first, nres);
 			if (err)
 				do_error(
 	_("name create failed in %s (%d), filesystem may be out of space\n"),
@@ -1215,7 +1215,7 @@ mv_orphanage(
 			if (entry_ino_num != orphanage_ino)  {
 				err = -libxfs_dir_replace(tp, ino_p,
 						&xfs_name_dotdot, orphanage_ino,
-						&first, &dfops, nres);
+						&first, nres);
 				if (err)
 					do_error(
 	_("name replace op failed (%d), filesystem may be out of space\n"),
@@ -1252,7 +1252,7 @@ mv_orphanage(
 
 		libxfs_defer_init(&dfops, &first);
 		err = -libxfs_dir_createname(tp, orphanage_ip, &xname, ino,
-						&first, &dfops, nres);
+						&first, nres);
 		if (err)
 			do_error(
 	_("name create failed in %s (%d), filesystem may be out of space\n"),
@@ -1436,7 +1436,7 @@ longform_dir2_rebuild(
 
 		libxfs_defer_init(&dfops, &firstblock);
 		error = -libxfs_dir_createname(tp, ip, &p->name, p->inum,
-						&firstblock, &dfops, nres);
+						&firstblock, nres);
 		if (error) {
 			do_warn(
 _("name create failed in ino %" PRIu64 " (%d), filesystem may be out of space\n"),
@@ -3040,7 +3040,7 @@ process_dir_inode(
 		libxfs_defer_init(&dfops, &first);
 
 		error = -libxfs_dir_createname(tp, ip, &xfs_name_dotdot,
-					ip->i_ino, &first, &dfops, nres);
+					ip->i_ino, &first, nres);
 		if (error)
 			do_error(
 	_("can't make \"..\" entry in root inode %" PRIu64 ", createname error %d\n"), ino, error);
@@ -3098,7 +3098,7 @@ process_dir_inode(
 			libxfs_defer_init(&dfops, &first);
 
 			error = -libxfs_dir_createname(tp, ip, &xfs_name_dot,
-					ip->i_ino, &first, &dfops, nres);
+					ip->i_ino, &first, nres);
 			if (error)
 				do_error(
 	_("can't make \".\" entry in dir ino %" PRIu64 ", createname error %d\n"),

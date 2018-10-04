@@ -310,15 +310,14 @@ newdirent(
 	xfs_inode_t	*pip,
 	struct xfs_name	*name,
 	xfs_ino_t	inum,
-	xfs_fsblock_t	*first,
-	struct xfs_defer_ops	*dfops)
+	xfs_fsblock_t	*first)
 {
 	int	error;
 	int	rsv;
 
 	rsv = XFS_DIRENTER_SPACE_RES(mp, name->len);
 
-	error = -libxfs_dir_createname(tp, pip, name, inum, first, dfops, rsv);
+	error = -libxfs_dir_createname(tp, pip, name, inum, first, rsv);
 	if (error)
 		fail(_("directory createname error"), error);
 }
@@ -456,7 +455,7 @@ parseproto(
 			free(buf);
 		libxfs_trans_ijoin(tp, pip, 0);
 		xname.type = XFS_DIR3_FT_REG_FILE;
-		newdirent(mp, tp, pip, &xname, ip->i_ino, &first, &dfops);
+		newdirent(mp, tp, pip, &xname, ip->i_ino, &first);
 		break;
 
 	case IF_RESERVED:			/* pre-allocated space only */
@@ -479,7 +478,7 @@ parseproto(
 		libxfs_trans_ijoin(tp, pip, 0);
 
 		xname.type = XFS_DIR3_FT_REG_FILE;
-		newdirent(mp, tp, pip, &xname, ip->i_ino, &first, &dfops);
+		newdirent(mp, tp, pip, &xname, ip->i_ino, &first);
 		libxfs_trans_log_inode(tp, ip, flags);
 
 		libxfs_defer_ijoin(&dfops, ip);
@@ -502,7 +501,7 @@ parseproto(
 		}
 		libxfs_trans_ijoin(tp, pip, 0);
 		xname.type = XFS_DIR3_FT_BLKDEV;
-		newdirent(mp, tp, pip, &xname, ip->i_ino, &first, &dfops);
+		newdirent(mp, tp, pip, &xname, ip->i_ino, &first);
 		flags |= XFS_ILOG_DEV;
 		break;
 
@@ -516,7 +515,7 @@ parseproto(
 			fail(_("Inode allocation failed"), error);
 		libxfs_trans_ijoin(tp, pip, 0);
 		xname.type = XFS_DIR3_FT_CHRDEV;
-		newdirent(mp, tp, pip, &xname, ip->i_ino, &first, &dfops);
+		newdirent(mp, tp, pip, &xname, ip->i_ino, &first);
 		flags |= XFS_ILOG_DEV;
 		break;
 
@@ -528,7 +527,7 @@ parseproto(
 			fail(_("Inode allocation failed"), error);
 		libxfs_trans_ijoin(tp, pip, 0);
 		xname.type = XFS_DIR3_FT_FIFO;
-		newdirent(mp, tp, pip, &xname, ip->i_ino, &first, &dfops);
+		newdirent(mp, tp, pip, &xname, ip->i_ino, &first);
 		break;
 	case IF_SYMLINK:
 		buf = getstr(pp);
@@ -541,7 +540,7 @@ parseproto(
 		flags |= newfile(tp, ip, &dfops, &first, 1, 1, buf, len);
 		libxfs_trans_ijoin(tp, pip, 0);
 		xname.type = XFS_DIR3_FT_SYMLINK;
-		newdirent(mp, tp, pip, &xname, ip->i_ino, &first, &dfops);
+		newdirent(mp, tp, pip, &xname, ip->i_ino, &first);
 		break;
 	case IF_DIRECTORY:
 		tp = getres(mp, 0);
@@ -558,8 +557,7 @@ parseproto(
 		} else {
 			libxfs_trans_ijoin(tp, pip, 0);
 			xname.type = XFS_DIR3_FT_DIR;
-			newdirent(mp, tp, pip, &xname, ip->i_ino,
-				  &first, &dfops);
+			newdirent(mp, tp, pip, &xname, ip->i_ino, &first);
 			inc_nlink(VFS_I(pip));
 			libxfs_trans_log_inode(tp, pip, XFS_ILOG_CORE);
 		}
