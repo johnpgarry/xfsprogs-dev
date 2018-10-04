@@ -1909,7 +1909,6 @@ xfs_difree_inobt(
 	struct xfs_trans		*tp,
 	struct xfs_buf			*agbp,
 	xfs_agino_t			agino,
-	struct xfs_defer_ops		*dfops,
 	struct xfs_icluster		*xic,
 	struct xfs_inobt_rec_incore	*orec)
 {
@@ -1997,7 +1996,7 @@ xfs_difree_inobt(
 			goto error0;
 		}
 
-		xfs_difree_inode_chunk(mp, agno, &rec, dfops);
+		xfs_difree_inode_chunk(mp, agno, &rec, tp->t_dfops);
 	} else {
 		xic->deleted = false;
 
@@ -2142,7 +2141,6 @@ int
 xfs_difree(
 	struct xfs_trans	*tp,		/* transaction pointer */
 	xfs_ino_t		inode,		/* inode to be freed */
-	struct xfs_defer_ops	*dfops,		/* extents to free */
 	struct xfs_icluster	*xic)	/* cluster info if deleted */
 {
 	/* REFERENCED */
@@ -2194,7 +2192,7 @@ xfs_difree(
 	/*
 	 * Fix up the inode allocation btree.
 	 */
-	error = xfs_difree_inobt(mp, tp, agbp, agino, dfops, xic, &rec);
+	error = xfs_difree_inobt(mp, tp, agbp, agino, xic, &rec);
 	if (error)
 		goto error0;
 
