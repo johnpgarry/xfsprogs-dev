@@ -952,8 +952,7 @@ xfs_bmap_add_attrfork_extents(
 					  XFS_DATA_FORK);
 	if (cur) {
 		cur->bc_private.b.allocated = 0;
-		xfs_btree_del_cursor(cur,
-			error ? XFS_BTREE_ERROR : XFS_BTREE_NOERROR);
+		xfs_btree_del_cursor(cur, error);
 	}
 	return error;
 }
@@ -4438,8 +4437,7 @@ error0:
 		xfs_trans_log_inode(tp, ip, bma.logflags);
 
 	if (bma.cur) {
-		xfs_btree_del_cursor(bma.cur,
-			error ? XFS_BTREE_ERROR : XFS_BTREE_NOERROR);
+		xfs_btree_del_cursor(bma.cur, error);
 	}
 	if (!error)
 		xfs_bmap_validate_ret(orig_bno, orig_len, orig_flags, orig_mval,
@@ -4533,10 +4531,8 @@ error0:
 
 	if (logflags)
 		xfs_trans_log_inode(tp, ip, logflags);
-	if (cur) {
-		xfs_btree_del_cursor(cur,
-				error ? XFS_BTREE_ERROR : XFS_BTREE_NOERROR);
-	}
+	if (cur)
+		xfs_btree_del_cursor(cur, error);
 	return error;
 }
 
@@ -5430,8 +5426,7 @@ error0:
 	if (cur) {
 		if (!error)
 			cur->bc_private.b.allocated = 0;
-		xfs_btree_del_cursor(cur,
-			error ? XFS_BTREE_ERROR : XFS_BTREE_NOERROR);
+		xfs_btree_del_cursor(cur, error);
 	}
 	return error;
 }
@@ -5691,8 +5686,7 @@ done:
 	*next_fsb = got.br_startoff;
 del_cursor:
 	if (cur)
-		xfs_btree_del_cursor(cur,
-			error ? XFS_BTREE_ERROR : XFS_BTREE_NOERROR);
+		xfs_btree_del_cursor(cur, error);
 	if (logflags)
 		xfs_trans_log_inode(tp, ip, logflags);
 	return error;
@@ -5819,8 +5813,7 @@ xfs_bmap_insert_extents(
 	*next_fsb = got.br_startoff;
 del_cursor:
 	if (cur)
-		xfs_btree_del_cursor(cur,
-			error ? XFS_BTREE_ERROR : XFS_BTREE_NOERROR);
+		xfs_btree_del_cursor(cur, error);
 	if (logflags)
 		xfs_trans_log_inode(tp, ip, logflags);
 	return error;
@@ -5936,8 +5929,7 @@ xfs_bmap_split_extent_at(
 del_cursor:
 	if (cur) {
 		cur->bc_private.b.allocated = 0;
-		xfs_btree_del_cursor(cur,
-				error ? XFS_BTREE_ERROR : XFS_BTREE_NOERROR);
+		xfs_btree_del_cursor(cur, error);
 	}
 
 	if (logflags)
