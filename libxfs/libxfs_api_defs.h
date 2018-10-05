@@ -68,7 +68,6 @@
 #define xfs_verify_ino			libxfs_verify_ino
 #define xfs_zero_extent			libxfs_zero_extent
 
-#define xfs_defer_init			libxfs_defer_init
 #define xfs_defer_finish		libxfs_defer_finish
 #define xfs_defer_cancel		libxfs_defer_cancel
 
