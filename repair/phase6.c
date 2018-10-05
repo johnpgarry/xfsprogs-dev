@@ -1385,7 +1385,7 @@ longform_dir2_rebuild(
 
 	/* free all data, leaf, node and freespace blocks */
 	error = -libxfs_bunmapi(tp, ip, 0, lastblock, XFS_BMAPI_METADATA, 0,
-				&firstblock, &done);
+				&done);
 	if (error) {
 		do_warn(_("xfs_bunmapi failed -- error - %d\n"), error);
 		goto out_bmap_cancel;

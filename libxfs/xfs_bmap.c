@@ -5113,9 +5113,7 @@ __xfs_bunmapi(
 	xfs_fileoff_t		start,		/* first file offset deleted */
 	xfs_filblks_t		*rlen,		/* i/o: amount remaining */
 	int			flags,		/* misc flags */
-	xfs_extnum_t		nexts,		/* number of extents max */
-	xfs_fsblock_t		*firstblock)	/* first allocated block
-						   controls a.g. for allocs */
+	xfs_extnum_t		nexts)		/* number of extents max */
 {
 	struct xfs_btree_cur	*cur;		/* bmap btree cursor */
 	struct xfs_bmbt_irec	del;		/* extent being deleted */
@@ -5189,7 +5187,7 @@ __xfs_bunmapi(
 	if (ifp->if_flags & XFS_IFBROOT) {
 		ASSERT(XFS_IFORK_FORMAT(ip, whichfork) == XFS_DINODE_FMT_BTREE);
 		cur = xfs_bmbt_init_cursor(mp, tp, ip, whichfork);
-		cur->bc_private.b.firstblock = *firstblock;
+		cur->bc_private.b.firstblock = tp->t_firstblock;
 		cur->bc_private.b.flags = 0;
 	} else
 		cur = NULL;
@@ -5305,7 +5303,7 @@ __xfs_bunmapi(
 			del.br_state = XFS_EXT_UNWRITTEN;
 			error = xfs_bmap_add_extent_unwritten_real(tp, ip,
 					whichfork, &icur, &cur, &del,
-					firstblock, &logflags);
+					&tp->t_firstblock, &logflags);
 			if (error)
 				goto error0;
 			goto nodelete;
@@ -5362,7 +5360,8 @@ __xfs_bunmapi(
 				prev.br_state = XFS_EXT_UNWRITTEN;
 				error = xfs_bmap_add_extent_unwritten_real(tp,
 						ip, whichfork, &icur, &cur,
-						&prev, firstblock, &logflags);
+						&prev, &tp->t_firstblock,
+						&logflags);
 				if (error)
 					goto error0;
 				goto nodelete;
@@ -5371,7 +5370,8 @@ __xfs_bunmapi(
 				del.br_state = XFS_EXT_UNWRITTEN;
 				error = xfs_bmap_add_extent_unwritten_real(tp,
 						ip, whichfork, &icur, &cur,
-						&del, firstblock, &logflags);
+						&del, &tp->t_firstblock,
+						&logflags);
 				if (error)
 					goto error0;
 				goto nodelete;
@@ -5418,8 +5418,8 @@ nodelete:
 	 */
 	if (xfs_bmap_needs_btree(ip, whichfork)) {
 		ASSERT(cur == NULL);
-		error = xfs_bmap_extents_to_btree(tp, ip, firstblock, &cur, 0,
-				&tmp_logflags, whichfork);
+		error = xfs_bmap_extents_to_btree(tp, ip, &tp->t_firstblock,
+				&cur, 0, &tmp_logflags, whichfork);
 		logflags |= tmp_logflags;
 		if (error)
 			goto error0;
@@ -5458,7 +5458,7 @@ error0:
 		xfs_trans_log_inode(tp, ip, logflags);
 	if (cur) {
 		if (!error) {
-			*firstblock = cur->bc_private.b.firstblock;
+			tp->t_firstblock = cur->bc_private.b.firstblock;
 			cur->bc_private.b.allocated = 0;
 		}
 		xfs_btree_del_cursor(cur,
@@ -5476,12 +5476,11 @@ xfs_bunmapi(
 	xfs_filblks_t		len,
 	int			flags,
 	xfs_extnum_t		nexts,
-	xfs_fsblock_t		*firstblock,
 	int			*done)
 {
 	int			error;
 
-	error = __xfs_bunmapi(tp, ip, bno, &len, flags, nexts, firstblock);
+	error = __xfs_bunmapi(tp, ip, bno, &len, flags, nexts);
 	*done = (len == 0);
 	return error;
 }
@@ -6139,7 +6138,7 @@ xfs_bmap_finish_one(
 		break;
 	case XFS_BMAP_UNMAP:
 		error = __xfs_bunmapi(tp, ip, startoff, blockcount,
-				XFS_BMAPI_REMAP, 1, &tp->t_firstblock);
+				XFS_BMAPI_REMAP, 1);
 		break;
 	default:
 		ASSERT(0);
