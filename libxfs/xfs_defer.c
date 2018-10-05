@@ -179,9 +179,9 @@ static const struct xfs_defer_op_type *defer_op_types[XFS_DEFER_OPS_TYPE_MAX];
  */
 STATIC void
 xfs_defer_intake_work(
-	struct xfs_trans		*tp,
-	struct xfs_defer_ops		*dop)
+	struct xfs_trans		*tp)
 {
+	struct xfs_defer_ops		*dop = tp->t_dfops;
 	struct list_head		*li;
 	struct xfs_defer_pending	*dfp;
 
@@ -202,9 +202,9 @@ xfs_defer_intake_work(
 STATIC void
 xfs_defer_trans_abort(
 	struct xfs_trans		*tp,
-	struct xfs_defer_ops		*dop,
 	int				error)
 {
+	struct xfs_defer_ops		*dop = tp->t_dfops;
 	struct xfs_defer_pending	*dfp;
 
 	trace_xfs_defer_trans_abort(tp->t_mountp, dop, _RET_IP_);
@@ -228,7 +228,6 @@ STATIC int
 xfs_defer_trans_roll(
 	struct xfs_trans		**tp)
 {
-	struct xfs_defer_ops		*dop = (*tp)->t_dfops;
 	struct xfs_buf_log_item		*bli;
 	struct xfs_inode_log_item	*ili;
 	struct xfs_log_item		*lip;
@@ -270,14 +269,14 @@ xfs_defer_trans_roll(
 		}
 	}
 
-	trace_xfs_defer_trans_roll((*tp)->t_mountp, dop, _RET_IP_);
+	trace_xfs_defer_trans_roll((*tp)->t_mountp, (*tp)->t_dfops, _RET_IP_);
 
 	/* Roll the transaction. */
 	error = xfs_trans_roll(tp);
-	dop = (*tp)->t_dfops;
 	if (error) {
-		trace_xfs_defer_trans_roll_error((*tp)->t_mountp, dop, error);
-		xfs_defer_trans_abort(*tp, dop, error);
+		trace_xfs_defer_trans_roll_error((*tp)->t_mountp,
+						 (*tp)->t_dfops, error);
+		xfs_defer_trans_abort(*tp,  error);
 		return error;
 	}
 
@@ -297,9 +296,10 @@ xfs_defer_trans_roll(
 /* Do we have any work items to finish? */
 bool
 xfs_defer_has_unfinished_work(
-	struct xfs_defer_ops		*dop)
+	struct xfs_trans		*tp)
 {
-	return !list_empty(&dop->dop_pending) || !list_empty(&dop->dop_intake);
+	return !list_empty(&tp->t_dfops->dop_pending) ||
+		!list_empty(&tp->t_dfops->dop_intake);
 }
 
 /*
@@ -309,7 +309,7 @@ static void
 xfs_defer_reset(
 	struct xfs_trans	*tp)
 {
-	ASSERT(!xfs_defer_has_unfinished_work(tp->t_dfops));
+	ASSERT(!xfs_defer_has_unfinished_work(tp));
 
 	/*
 	 * Low mode state transfers across transaction rolls to mirror dfops
@@ -330,7 +330,6 @@ int
 xfs_defer_finish_noroll(
 	struct xfs_trans		**tp)
 {
-	struct xfs_defer_ops		*dop = (*tp)->t_dfops;
 	struct xfs_defer_pending	*dfp;
 	struct list_head		*li;
 	struct list_head		*n;
@@ -340,24 +339,22 @@ xfs_defer_finish_noroll(
 
 	ASSERT((*tp)->t_flags & XFS_TRANS_PERM_LOG_RES);
 
-	trace_xfs_defer_finish((*tp)->t_mountp, dop, _RET_IP_);
+	trace_xfs_defer_finish((*tp)->t_mountp, (*tp)->t_dfops, _RET_IP_);
 
 	/* Until we run out of pending work to finish... */
-	while (xfs_defer_has_unfinished_work(dop)) {
+	while (xfs_defer_has_unfinished_work(*tp)) {
 		/* Log intents for work items sitting in the intake. */
-		xfs_defer_intake_work(*tp, dop);
+		xfs_defer_intake_work(*tp);
 
 		/*
-		 * Roll the transaction and update dop in case dfops was
-		 * embedded in the transaction.
+		 * Roll the transaction.
 		 */
 		error = xfs_defer_trans_roll(tp);
 		if (error)
 			goto out;
-		dop = (*tp)->t_dfops;
 
 		/* Log an intent-done item for the first pending item. */
-		dfp = list_first_entry(&dop->dop_pending,
+		dfp = list_first_entry(&(*tp)->t_dfops->dop_pending,
 				struct xfs_defer_pending, dfp_list);
 		trace_xfs_defer_pending_finish((*tp)->t_mountp, dfp);
 		dfp->dfp_done = dfp->dfp_type->create_done(*tp, dfp->dfp_intent,
@@ -388,7 +385,7 @@ xfs_defer_finish_noroll(
 				 */
 				if (cleanup_fn)
 					cleanup_fn(*tp, state, error);
-				xfs_defer_trans_abort(*tp, dop, error);
+				xfs_defer_trans_abort(*tp, error);
 				goto out;
 			}
 		}
@@ -418,9 +415,11 @@ xfs_defer_finish_noroll(
 
 out:
 	if (error)
-		trace_xfs_defer_finish_error((*tp)->t_mountp, dop, error);
+		trace_xfs_defer_finish_error((*tp)->t_mountp, (*tp)->t_dfops,
+					     error);
 	 else
-		trace_xfs_defer_finish_done((*tp)->t_mountp, dop, _RET_IP_);
+		trace_xfs_defer_finish_done((*tp)->t_mountp, (*tp)->t_dfops,
+					    _RET_IP_);
 
 	return error;
 }
