@@ -104,6 +104,10 @@ int	libxfs_trans_alloc_rollable(struct xfs_mount *mp, uint blocks,
 int	libxfs_trans_alloc_empty(struct xfs_mount *mp, struct xfs_trans **tpp);
 int	libxfs_trans_commit(struct xfs_trans *);
 void	libxfs_trans_cancel(struct xfs_trans *);
+
+/* cancel dfops associated with a transaction */
+void xfs_defer_cancel(struct xfs_trans *);
+
 struct xfs_buf *libxfs_trans_getsb(struct xfs_trans *, struct xfs_mount *, int);
 
 int	libxfs_trans_iget(struct xfs_mount *, struct xfs_trans *, xfs_ino_t,

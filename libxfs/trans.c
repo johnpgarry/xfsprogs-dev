@@ -115,6 +115,14 @@ libxfs_trans_roll(
 	return xfs_trans_reserve(*tpp, &tres, 0, 0);
 }
 
+void
+xfs_defer_cancel(
+	struct xfs_trans	*tp)
+{
+	__xfs_defer_cancel(tp->t_dfops);
+}
+
+
 /*
  * Free the transaction structure.  If there is more clean up
  * to do when the structure is freed, add it here.
@@ -334,7 +342,7 @@ libxfs_trans_cancel(
 		goto out;
 
 	if (tp->t_dfops)
-		xfs_defer_cancel(tp->t_dfops);
+		xfs_defer_cancel(tp);
 
 	xfs_trans_free_items(tp);
 	xfs_trans_free(tp);
@@ -996,9 +1004,9 @@ __xfs_trans_commit(
 
 	/* finish deferred items on final commit */
 	if (!regrant && tp->t_dfops) {
-		error = xfs_defer_finish(&tp, tp->t_dfops);
+		error = xfs_defer_finish(&tp);
 		if (error) {
-			xfs_defer_cancel(tp->t_dfops);
+			xfs_defer_cancel(tp);
 			goto out_unreserve;
 		}
 	}
