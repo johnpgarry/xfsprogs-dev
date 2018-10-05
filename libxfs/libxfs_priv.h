@@ -204,6 +204,9 @@ static inline bool WARN_ON_ONCE(bool expr) {
 #define percpu_counter_read_positive(x)	((*x) > 0 ? (*x) : 0)
 #define percpu_counter_sum(x)		(*x)
 
+#define READ_ONCE(x)			(x)
+#define WRITE_ONCE(x, val)		((x) = (val))
+
 /*
  * prandom_u32 is used for di_gen inode allocation, it must be zero for libxfs
  * or all sorts of badness can occur!
