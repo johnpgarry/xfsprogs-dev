@@ -543,7 +543,6 @@ libxfs_alloc_file_space(
 	xfs_filblks_t	datablocks;
 	xfs_filblks_t	allocated_fsb;
 	xfs_filblks_t	allocatesize_fsb;
-	struct xfs_defer_ops free_list;
 	xfs_bmbt_irec_t *imapp;
 	xfs_bmbt_irec_t imaps[1];
 	int		reccount;
@@ -581,7 +580,6 @@ libxfs_alloc_file_space(
 		}
 		xfs_trans_ijoin(tp, ip, 0);
 
-		xfs_defer_init(NULL, &free_list);
 		error = xfs_bmapi_write(tp, ip, startoffset_fsb, allocatesize_fsb,
 				xfs_bmapi_flags, 0, imapp, &reccount);
 
@@ -591,10 +589,6 @@ libxfs_alloc_file_space(
 		/*
 		 * Complete the transaction
 		 */
-		error = xfs_defer_finish(&tp, &free_list);
-		if (error)
-			goto error0;
-
 		error = xfs_trans_commit(tp);
 		if (error)
 			break;
@@ -609,7 +603,6 @@ libxfs_alloc_file_space(
 	return error;
 
 error0:	/* Cancel bmap, cancel trans */
-	xfs_defer_cancel(&free_list);
 	xfs_trans_cancel(tp);
 	return error;
 }
