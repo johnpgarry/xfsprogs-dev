@@ -115,14 +115,6 @@ libxfs_trans_roll(
 	return xfs_trans_reserve(*tpp, &tres, 0, 0);
 }
 
-void
-xfs_defer_cancel(
-	struct xfs_trans	*tp)
-{
-	__xfs_defer_cancel(tp->t_dfops);
-}
-
-
 /*
  * Free the transaction structure.  If there is more clean up
  * to do when the structure is freed, add it here.
