@@ -74,7 +74,6 @@ xfs_extent_free_create_done(
 STATIC int
 xfs_extent_free_finish_item(
 	struct xfs_trans		*tp,
-	struct xfs_defer_ops		*dop,
 	struct list_head		*item,
 	void				*done_item,
 	void				**state)
@@ -177,7 +176,6 @@ xfs_rmap_update_create_done(
 STATIC int
 xfs_rmap_update_finish_item(
 	struct xfs_trans		*tp,
-	struct xfs_defer_ops		*dop,
 	struct list_head		*item,
 	void				*done_item,
 	void				**state)
@@ -298,7 +296,6 @@ xfs_refcount_update_create_done(
 STATIC int
 xfs_refcount_update_finish_item(
 	struct xfs_trans		*tp,
-	struct xfs_defer_ops		*dop,
 	struct list_head		*item,
 	void				*done_item,
 	void				**state)
@@ -309,7 +306,7 @@ xfs_refcount_update_finish_item(
 	int				error;
 
 	refc = container_of(item, struct xfs_refcount_intent, ri_list);
-	error = xfs_refcount_finish_one(tp, dop,
+	error = xfs_refcount_finish_one(tp,
 			refc->ri_type,
 			refc->ri_startblock,
 			refc->ri_blockcount,
@@ -425,7 +422,6 @@ xfs_bmap_update_create_done(
 STATIC int
 xfs_bmap_update_finish_item(
 	struct xfs_trans		*tp,
-	struct xfs_defer_ops		*dop,
 	struct list_head		*item,
 	void				*done_item,
 	void				**state)
@@ -436,7 +432,7 @@ xfs_bmap_update_finish_item(
 
 	bmap = container_of(item, struct xfs_bmap_intent, bi_list);
 	count = bmap->bi_bmap.br_blockcount;
-	error = xfs_bmap_finish_one(tp, dop,
+	error = xfs_bmap_finish_one(tp,
 			bmap->bi_owner,
 			bmap->bi_type, bmap->bi_whichfork,
 			bmap->bi_bmap.br_startoff,
