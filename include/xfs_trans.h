@@ -60,6 +60,20 @@ typedef struct xfs_qoff_logitem {
 	xfs_qoff_logformat_t	qql_format;	/* logged structure */
 } xfs_qoff_logitem_t;
 
+#define XFS_DEFER_OPS_NR_INODES	2	/* join up to two inodes */
+#define XFS_DEFER_OPS_NR_BUFS	2	/* join up to two buffers */
+
+struct xfs_defer_ops {
+	struct list_head		dop_intake;	/* unlogged pending work */
+	struct list_head		dop_pending;	/* logged pending work */
+
+	/* relog these with each roll */
+	struct xfs_inode		*dop_inodes[XFS_DEFER_OPS_NR_INODES];
+	struct xfs_buf		*dop_bufs[XFS_DEFER_OPS_NR_BUFS];
+
+	bool			dop_low;	/* alloc in low mode */
+};
+
 typedef struct xfs_trans {
 	unsigned int	t_type;			/* transaction type */
 	unsigned int	t_log_res;		/* amt of log space resvd */
@@ -75,6 +89,7 @@ typedef struct xfs_trans {
 	long		t_frextents_delta;	/* superblock freextents chg */
 	struct list_head	t_items;	/* first log item desc chunk */
 	struct xfs_defer_ops	*t_dfops;	/* deferred operations */
+	struct xfs_defer_ops	t_dfops_internal;
 
 } xfs_trans_t;
 

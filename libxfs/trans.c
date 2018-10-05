@@ -17,6 +17,7 @@
 #include "xfs_inode.h"
 #include "xfs_trans.h"
 #include "xfs_sb.h"
+#include "xfs_defer.h"
 
 static void xfs_trans_free_items(struct xfs_trans *tp);
 STATIC struct xfs_trans *xfs_trans_dup(struct xfs_trans *tp);
@@ -159,7 +160,12 @@ xfs_trans_dup(
 	ntp->t_blk_res = tp->t_blk_res - tp->t_blk_res_used;
 	tp->t_blk_res = tp->t_blk_res_used;
 
-	ntp->t_dfops = tp->t_dfops;
+	/* copy the dfops pointer if it's external, otherwise move it */
+	xfs_defer_init(ntp, &ntp->t_dfops_internal);
+	if (tp->t_dfops != &tp->t_dfops_internal)
+		ntp->t_dfops = tp->t_dfops;
+	else
+		xfs_defer_move(ntp->t_dfops, tp->t_dfops);
 
 	return ntp;
 }
@@ -260,6 +266,14 @@ libxfs_trans_alloc(
 	INIT_LIST_HEAD(&tp->t_items);
 	tp->t_firstblock = NULLFSBLOCK;
 
+	/*
+	 * We only roll transactions with permanent log reservation. Don't init
+	 * ->t_dfops to skip attempts to finish or cancel an empty dfops with a
+	 * non-permanent res.
+	 */
+	if (resp->tr_logflags & XFS_TRANS_PERM_LOG_RES)
+		xfs_defer_init(tp, &tp->t_dfops_internal);
+
 	error = xfs_trans_reserve(tp, resp, blocks, rtextents);
 	if (error) {
 		xfs_trans_cancel(tp);
@@ -318,6 +332,9 @@ libxfs_trans_cancel(
 #endif
 	if (tp == NULL)
 		goto out;
+
+	if (tp->t_dfops)
+		xfs_defer_cancel(tp->t_dfops);
 
 	xfs_trans_free_items(tp);
 	xfs_trans_free(tp);
@@ -977,8 +994,14 @@ __xfs_trans_commit(
 	if (tp == NULL)
 		return 0;
 
-	ASSERT(!tp->t_dfops ||
-	       !xfs_defer_has_unfinished_work(tp->t_dfops) || regrant);
+	/* finish deferred items on final commit */
+	if (!regrant && tp->t_dfops) {
+		error = xfs_defer_finish(&tp, tp->t_dfops);
+		if (error) {
+			xfs_defer_cancel(tp->t_dfops);
+			goto out_unreserve;
+		}
+	}
 
 	if (!(tp->t_flags & XFS_TRANS_DIRTY)) {
 #ifdef XACT_DEBUG
