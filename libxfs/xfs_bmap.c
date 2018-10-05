@@ -1110,7 +1110,6 @@ xfs_bmap_add_attrfork(
 			xfs_log_sb(tp);
 	}
 
-	xfs_defer_ijoin(tp->t_dfops, ip);
 	error = xfs_trans_commit(tp);
 	xfs_iunlock(ip, XFS_ILOCK_EXCL);
 	return error;
@@ -5978,7 +5977,6 @@ __xfs_bmap_add(
 	int				whichfork,
 	struct xfs_bmbt_irec		*bmap)
 {
-	int				error;
 	struct xfs_bmap_intent		*bi;
 
 	trace_xfs_bmap_defer(mp,
@@ -5996,12 +5994,6 @@ __xfs_bmap_add(
 	bi->bi_owner = ip;
 	bi->bi_whichfork = whichfork;
 	bi->bi_bmap = *bmap;
-
-	error = xfs_defer_ijoin(dfops, bi->bi_owner);
-	if (error) {
-		kmem_free(bi);
-		return error;
-	}
 
 	xfs_defer_add(dfops, XFS_DEFER_OPS_TYPE_BMAP, &bi->bi_list);
 	return 0;

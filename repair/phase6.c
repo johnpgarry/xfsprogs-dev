@@ -522,7 +522,6 @@ mk_rbmino(xfs_mount_t *mp)
 	int		i;
 	int		nmap;
 	int		error;
-	struct xfs_defer_ops	dfops;
 	xfs_fileoff_t	bno;
 	xfs_bmbt_irec_t	map[XFS_BMAP_MAX_NMAP];
 	int		vers;
@@ -605,7 +604,6 @@ mk_rbmino(xfs_mount_t *mp)
 			bno += ep->br_blockcount;
 		}
 	}
-	libxfs_defer_ijoin(&dfops, ip);
 	libxfs_trans_commit(tp);
 	IRELE(ip);
 }
@@ -753,7 +751,6 @@ mk_rsumino(xfs_mount_t *mp)
 	int		nmap;
 	int		error;
 	int		nsumblocks;
-	struct xfs_defer_ops	dfops;
 	xfs_fileoff_t	bno;
 	xfs_bmbt_irec_t	map[XFS_BMAP_MAX_NMAP];
 	int		vers;
@@ -836,7 +833,6 @@ mk_rsumino(xfs_mount_t *mp)
 			bno += ep->br_blockcount;
 		}
 	}
-	libxfs_defer_ijoin(&dfops, ip);
 	libxfs_trans_commit(tp);
 	IRELE(ip);
 }
@@ -925,7 +921,6 @@ mk_orphanage(xfs_mount_t *mp)
 	int		ino_offset = 0;
 	int		i;
 	int		error;
-	struct xfs_defer_ops	dfops;
 	const int	mode = 0755;
 	int		nres;
 	struct xfs_name	xname;
@@ -1033,8 +1028,6 @@ mk_orphanage(xfs_mount_t *mp)
 	libxfs_trans_log_inode(tp, pip, XFS_ILOG_CORE);
 	libxfs_dir_init(tp, ip, pip);
 	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
-
-	libxfs_defer_ijoin(&dfops, ip);
 	libxfs_trans_commit(tp);
 	IRELE(ip);
 	IRELE(pip);
@@ -1056,7 +1049,6 @@ mv_orphanage(
 	xfs_ino_t		entry_ino_num;
 	xfs_inode_t		*ino_p;
 	xfs_trans_t		*tp;
-	struct xfs_defer_ops	dfops;
 	int			err;
 	unsigned char		fname[MAXPATHLEN + 1];
 	int			nres;
@@ -1134,8 +1126,6 @@ mv_orphanage(
 
 			inc_nlink(VFS_I(ino_p));
 			libxfs_trans_log_inode(tp, ino_p, XFS_ILOG_CORE);
-
-			libxfs_defer_ijoin(&dfops, ino_p);
 			libxfs_trans_commit(tp);
 		} else  {
 			err = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_rename,
@@ -1176,7 +1166,6 @@ mv_orphanage(
 						err);
 			}
 
-			libxfs_defer_ijoin(&dfops, ino_p);
 			libxfs_trans_commit(tp);
 		}
 
@@ -1208,8 +1197,6 @@ mv_orphanage(
 
 		set_nlink(VFS_I(ino_p), 1);
 		libxfs_trans_log_inode(tp, ino_p, XFS_ILOG_CORE);
-
-		libxfs_defer_ijoin(&dfops, ino_p);
 		libxfs_trans_commit(tp);
 	}
 	IRELE(ino_p);
@@ -1294,7 +1281,6 @@ longform_dir2_rebuild(
 	int			nres;
 	xfs_trans_t		*tp;
 	xfs_fileoff_t		lastblock;
-	struct xfs_defer_ops		dfops;
 	xfs_inode_t		pip;
 	dir_hash_ent_t		*p;
 	int			done;
@@ -1347,7 +1333,6 @@ longform_dir2_rebuild(
 		goto out_bmap_cancel;
 	}
 
-	libxfs_defer_ijoin(&dfops, ip);
 	libxfs_trans_commit(tp);
 
 	if (ino == mp->m_sb.sb_rootino)
@@ -1379,7 +1364,6 @@ _("name create failed in ino %" PRIu64 " (%d), filesystem may be out of space\n"
 			goto out_bmap_cancel;
 		}
 
-		libxfs_defer_ijoin(&dfops, ip);
 		libxfs_trans_commit(tp);
 	}
 
@@ -1404,7 +1388,6 @@ dir2_kill_block(
 {
 	xfs_da_args_t	args;
 	int		error;
-	struct xfs_defer_ops	dfops;
 	int		nres;
 	xfs_trans_t	*tp;
 
@@ -1427,7 +1410,6 @@ dir2_kill_block(
 	if (error)
 		do_error(_("shrink_inode failed inode %" PRIu64 " block %u\n"),
 			ip->i_ino, da_bno);
-	libxfs_defer_ijoin(&dfops, ip);
 	libxfs_trans_commit(tp);
 }
 
@@ -1460,7 +1442,6 @@ longform_dir2_entry_check_data(
 	struct xfs_dir2_data_free *bf;
 	char			*endptr;
 	int			error;
-	struct xfs_defer_ops		dfops;
 	char			fname[MAXNAMELEN + 1];
 	freetab_t		*freetab;
 	int			i;
@@ -1902,7 +1883,6 @@ _("entry \"%s\" in dir inode %" PRIu64 " inconsistent with .. value (%" PRIu64 "
 				d, &i);
 	if (needlog)
 		libxfs_dir2_data_log_header(&da, bp);
-	libxfs_defer_ijoin(&dfops, ip);
 	libxfs_trans_commit(tp);
 
 	/* record the largest free space in the freetab for later checking */
@@ -2818,7 +2798,6 @@ process_dir_inode(
 	int			ino_offset)
 {
 	xfs_ino_t		ino;
-	struct xfs_defer_ops		dfops;
 	xfs_inode_t		*ip;
 	xfs_trans_t		*tp;
 	dir_hash_tab_t		*hashtab;
@@ -2961,8 +2940,6 @@ process_dir_inode(
 	_("can't make \"..\" entry in root inode %" PRIu64 ", createname error %d\n"), ino, error);
 
 		libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
-
-		libxfs_defer_ijoin(&dfops, ip);
 		libxfs_trans_commit(tp);
 
 		need_root_dotdot = 0;
@@ -3016,8 +2993,6 @@ process_dir_inode(
 					ino, error);
 
 			libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
-
-			libxfs_defer_ijoin(&dfops, ip);
 			libxfs_trans_commit(tp);
 		}
 	}

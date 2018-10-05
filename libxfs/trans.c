@@ -390,6 +390,9 @@ libxfs_trans_ijoin(
 	ASSERT(iip->ili_flags == 0);
 	ASSERT(iip->ili_inode != NULL);
 
+	ASSERT(iip->ili_lock_flags == 0);
+	iip->ili_lock_flags = lock_flags;
+
 	xfs_trans_add_item(tp, (xfs_log_item_t *)(iip));
 
 	ip->i_transp = tp;

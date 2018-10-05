@@ -351,7 +351,6 @@ parseproto(
 	char		*buf;
 	int		error;
 	int		flags;
-	struct xfs_defer_ops	dfops;
 	int		fmt;
 	int		i;
 	xfs_inode_t	*ip;
@@ -474,8 +473,6 @@ parseproto(
 		xname.type = XFS_DIR3_FT_REG_FILE;
 		newdirent(mp, tp, pip, &xname, ip->i_ino);
 		libxfs_trans_log_inode(tp, ip, flags);
-
-		libxfs_defer_ijoin(&dfops, ip);
 		libxfs_trans_commit(tp);
 		rsvfile(mp, ip, llen);
 		IRELE(ip);
@@ -554,7 +551,6 @@ parseproto(
 		}
 		newdirectory(mp, tp, ip, pip);
 		libxfs_trans_log_inode(tp, ip, flags);
-		libxfs_defer_ijoin(&dfops, ip);
 		libxfs_trans_commit(tp);
 		/*
 		 * RT initialization.  Do this here to ensure that
@@ -578,7 +574,6 @@ parseproto(
 		fail(_("Unknown format"), EINVAL);
 	}
 	libxfs_trans_log_inode(tp, ip, flags);
-	libxfs_defer_ijoin(&dfops, ip);
 	libxfs_trans_commit(tp);
 	IRELE(ip);
 }
@@ -603,7 +598,6 @@ rtinit(
 	xfs_fileoff_t	ebno;
 	xfs_bmbt_irec_t	*ep;
 	int		error;
-	struct xfs_defer_ops	dfops;
 	int		i;
 	xfs_bmbt_irec_t	map[XFS_BMAP_MAX_NMAP];
 	xfs_extlen_t	nsumblocks;
@@ -680,7 +674,6 @@ rtinit(
 		}
 	}
 
-	libxfs_defer_ijoin(&dfops, rbmip);
 	libxfs_trans_commit(tp);
 
 	/*
@@ -709,7 +702,6 @@ rtinit(
 			bno += ep->br_blockcount;
 		}
 	}
-	libxfs_defer_ijoin(&dfops, rsumip);
 	libxfs_trans_commit(tp);
 
 	/*
@@ -729,7 +721,6 @@ rtinit(
 			fail(_("Error initializing the realtime space"),
 				error);
 		}
-		libxfs_defer_ijoin(&dfops, rbmip);
 		libxfs_trans_commit(tp);
 	}
 }
