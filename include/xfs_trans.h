@@ -70,8 +70,6 @@ struct xfs_defer_ops {
 	/* relog these with each roll */
 	struct xfs_inode		*dop_inodes[XFS_DEFER_OPS_NR_INODES];
 	struct xfs_buf		*dop_bufs[XFS_DEFER_OPS_NR_BUFS];
-
-	bool			dop_low;	/* alloc in low mode */
 };
 
 typedef struct xfs_trans {
