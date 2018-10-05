@@ -797,7 +797,6 @@ xfs_attr_shortform_to_leaf(
 	memset((char *)&nargs, 0, sizeof(nargs));
 	nargs.dp = dp;
 	nargs.geo = args->geo;
-	nargs.firstblock = args->firstblock;
 	nargs.total = args->total;
 	nargs.whichfork = XFS_ATTR_FORK;
 	nargs.trans = args->trans;
@@ -1000,7 +999,6 @@ xfs_attr3_leaf_to_shortform(
 	memset((char *)&nargs, 0, sizeof(nargs));
 	nargs.geo = args->geo;
 	nargs.dp = dp;
-	nargs.firstblock = args->firstblock;
 	nargs.total = args->total;
 	nargs.whichfork = XFS_ATTR_FORK;
 	nargs.trans = args->trans;
