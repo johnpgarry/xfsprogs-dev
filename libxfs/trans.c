@@ -165,7 +165,7 @@ xfs_trans_dup(
 	if (tp->t_dfops != &tp->t_dfops_internal)
 		ntp->t_dfops = tp->t_dfops;
 	else
-		xfs_defer_move(ntp->t_dfops, tp->t_dfops);
+		xfs_defer_move(ntp, tp);
 
 	return ntp;
 }
