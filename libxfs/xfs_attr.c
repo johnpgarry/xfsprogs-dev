@@ -585,7 +585,7 @@ xfs_attr_leaf_addname(
 			goto out_defer_cancel;
 		error = xfs_defer_finish(&args->trans);
 		if (error)
-			goto out_defer_cancel;
+			return error;
 
 		/*
 		 * Commit the current trans (including the inode) and start
@@ -673,7 +673,7 @@ xfs_attr_leaf_addname(
 				goto out_defer_cancel;
 			error = xfs_defer_finish(&args->trans);
 			if (error)
-				goto out_defer_cancel;
+				return error;
 		}
 
 		/*
@@ -736,7 +736,7 @@ xfs_attr_leaf_removename(
 			goto out_defer_cancel;
 		error = xfs_defer_finish(&args->trans);
 		if (error)
-			goto out_defer_cancel;
+			return error;
 	}
 	return 0;
 out_defer_cancel:
@@ -862,7 +862,7 @@ restart:
 				goto out_defer_cancel;
 			error = xfs_defer_finish(&args->trans);
 			if (error)
-				goto out_defer_cancel;
+				goto out;
 
 			/*
 			 * Commit the node conversion and start the next
@@ -886,7 +886,7 @@ restart:
 			goto out_defer_cancel;
 		error = xfs_defer_finish(&args->trans);
 		if (error)
-			goto out_defer_cancel;
+			goto out;
 	} else {
 		/*
 		 * Addition succeeded, update Btree hashvals.
@@ -982,7 +982,7 @@ restart:
 				goto out_defer_cancel;
 			error = xfs_defer_finish(&args->trans);
 			if (error)
-				goto out_defer_cancel;
+				goto out;
 		}
 
 		/*
@@ -1105,7 +1105,7 @@ xfs_attr_node_removename(
 			goto out_defer_cancel;
 		error = xfs_defer_finish(&args->trans);
 		if (error)
-			goto out_defer_cancel;
+			goto out;
 		/*
 		 * Commit the Btree join operation and start a new trans.
 		 */
@@ -1136,7 +1136,7 @@ xfs_attr_node_removename(
 				goto out_defer_cancel;
 			error = xfs_defer_finish(&args->trans);
 			if (error)
-				goto out_defer_cancel;
+				goto out;
 		} else
 			xfs_trans_brelse(args->trans, bp);
 	}
