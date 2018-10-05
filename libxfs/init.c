@@ -392,7 +392,7 @@ manage_zones(int release)
 	/* otherwise initialise zone allocation */
 	xfs_buf_zone = kmem_zone_init(sizeof(xfs_buf_t), "xfs_buffer");
 	xfs_inode_zone = kmem_zone_init(sizeof(struct xfs_inode), "xfs_inode");
-	xfs_ifork_zone = kmem_zone_init(sizeof(xfs_ifork_t), "xfs_ifork");
+	xfs_ifork_zone = kmem_zone_init(sizeof(struct xfs_ifork), "xfs_ifork");
 	xfs_ili_zone = kmem_zone_init(
 			sizeof(xfs_inode_log_item_t), "xfs_inode_log_item");
 	xfs_buf_item_zone = kmem_zone_init(

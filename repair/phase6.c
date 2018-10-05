@@ -479,7 +479,7 @@ bmap_next_offset(
 	xfs_fileoff_t	bno;			/* current block */
 	int		error;			/* error return value */
 	xfs_bmbt_irec_t got;			/* current extent value */
-	xfs_ifork_t	*ifp;			/* inode fork pointer */
+	struct xfs_ifork	*ifp;		/* inode fork pointer */
 	struct xfs_iext_cursor	icur;
 
 	if (XFS_IFORK_FORMAT(ip, whichfork) != XFS_DINODE_FMT_BTREE &&

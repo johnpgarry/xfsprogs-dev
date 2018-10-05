@@ -386,7 +386,7 @@ libxfs_iprint(
 {
 	struct xfs_icdinode	*dip;
 	xfs_extnum_t		i = 0;
-	xfs_ifork_t		*ifp;		/* inode fork pointer */
+	struct xfs_ifork	*ifp;		/* inode fork pointer */
 	struct xfs_iext_cursor	icur;
 	xfs_bmbt_irec_t		rec;
 
