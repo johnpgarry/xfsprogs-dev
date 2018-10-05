@@ -15,8 +15,8 @@ static char *getstr(char **pp);
 static void fail(char *msg, int i);
 static struct xfs_trans * getres(struct xfs_mount *mp, uint blocks);
 static void rsvfile(xfs_mount_t *mp, xfs_inode_t *ip, long long len);
-static int newfile(xfs_trans_t *tp, xfs_inode_t *ip,
-	xfs_fsblock_t *first, int dolocal, int logit, char *buf, int len);
+static int newfile(xfs_trans_t *tp, xfs_inode_t *ip, int dolocal, int logit,
+			char *buf, int len);
 static char *newregfile(char **pp, int *len);
 static void rtinit(xfs_mount_t *mp);
 static long filesize(int fd);
@@ -218,7 +218,6 @@ static int
 newfile(
 	xfs_trans_t	*tp,
 	xfs_inode_t	*ip,
-	xfs_fsblock_t	*first,
 	int		dolocal,
 	int		logit,
 	char		*buf,
@@ -247,8 +246,7 @@ newfile(
 	} else if (len > 0) {
 		nb = XFS_B_TO_FSB(mp, len);
 		nmap = 1;
-		error = -libxfs_bmapi_write(tp, ip, 0, nb, 0, first, nb,
-				&map, &nmap);
+		error = -libxfs_bmapi_write(tp, ip, 0, nb, 0, nb, &map, &nmap);
 		if (error) {
 			fail(_("error allocating space for a file"), error);
 		}
@@ -448,7 +446,7 @@ parseproto(
 					   &creds, fsxp, &ip);
 		if (error)
 			fail(_("Inode allocation failed"), error);
-		flags |= newfile(tp, ip, &first, 0, 0, buf, len);
+		flags |= newfile(tp, ip, 0, 0, buf, len);
 		if (buf)
 			free(buf);
 		libxfs_trans_ijoin(tp, pip, 0);
@@ -540,7 +538,7 @@ parseproto(
 				&creds, fsxp, &ip);
 		if (error)
 			fail(_("Inode allocation failed"), error);
-		flags |= newfile(tp, ip, &first, 1, 1, buf, len);
+		flags |= newfile(tp, ip, 1, 1, buf, len);
 		libxfs_trans_ijoin(tp, pip, 0);
 		xname.type = XFS_DIR3_FT_SYMLINK;
 		newdirent(mp, tp, pip, &xname, ip->i_ino);
@@ -690,7 +688,7 @@ rtinit(
 		nmap = XFS_BMAP_MAX_NMAP;
 		error = -libxfs_bmapi_write(tp, rbmip, bno,
 				(xfs_extlen_t)(mp->m_sb.sb_rbmblocks - bno),
-				0, &first, mp->m_sb.sb_rbmblocks, map, &nmap);
+				0, mp->m_sb.sb_rbmblocks, map, &nmap);
 		if (error) {
 			fail(_("Allocation of the realtime bitmap failed"),
 				error);
@@ -725,7 +723,7 @@ rtinit(
 		nmap = XFS_BMAP_MAX_NMAP;
 		error = -libxfs_bmapi_write(tp, rsumip, bno,
 				(xfs_extlen_t)(nsumblocks - bno),
-				0, &first, nsumblocks, map, &nmap);
+				0, nsumblocks, map, &nmap);
 		if (error) {
 			fail(_("Allocation of the realtime summary failed"),
 				error);
