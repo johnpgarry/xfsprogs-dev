@@ -146,6 +146,7 @@ xfs_trans_dup(
 	 */
 	ntp->t_mountp = tp->t_mountp;
 	INIT_LIST_HEAD(&ntp->t_items);
+	ntp->t_firstblock = NULLFSBLOCK;
 
 	ASSERT(tp->t_flags & XFS_TRANS_PERM_LOG_RES);
 
@@ -257,6 +258,7 @@ libxfs_trans_alloc(
 		(flags & XFS_TRANS_NOFS) ? KM_NOFS : KM_SLEEP);
 	tp->t_mountp = mp;
 	INIT_LIST_HEAD(&tp->t_items);
+	tp->t_firstblock = NULLFSBLOCK;
 
 	error = xfs_trans_reserve(tp, resp, blocks, rtextents);
 	if (error) {

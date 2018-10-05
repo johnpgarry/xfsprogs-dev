@@ -65,6 +65,7 @@ typedef struct xfs_trans {
 	unsigned int	t_log_res;		/* amt of log space resvd */
 	unsigned int	t_log_count;		/* count for perm log res */
 	unsigned int	t_blk_res;		/* # of blocks resvd */
+	xfs_fsblock_t	t_firstblock;		/* first block allocated */
 	struct xfs_mount *t_mountp;		/* ptr to fs mount struct */
 	unsigned int	t_blk_res_used;		/* # of resvd blocks used */
 	unsigned int	t_flags;		/* misc flags */
