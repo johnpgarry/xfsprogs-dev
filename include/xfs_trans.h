@@ -66,7 +66,6 @@ typedef struct xfs_qoff_logitem {
 
 struct xfs_defer_ops {
 	struct list_head		dop_intake;	/* unlogged pending work */
-	struct list_head		dop_pending;	/* logged pending work */
 };
 
 typedef struct xfs_trans {

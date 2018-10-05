@@ -163,11 +163,8 @@
 
 #define trace_xfs_defer_init(a,b,c)		((void) 0)
 #define trace_xfs_defer_cancel(a,b,c)		((void) 0)
-#define trace_xfs_defer_intake_work(a,b)	((void) 0)
-#define trace_xfs_defer_intake_cancel(a,b)	((void) 0)
 #define trace_xfs_defer_pending_commit(a,b)	((void) 0)
 #define trace_xfs_defer_pending_abort(a,b)	((void) 0)
-#define trace_xfs_defer_pending_cancel(a,b)	((void) 0)
 #define trace_xfs_defer_pending_finish(a,b)	((void) 0)
 #define trace_xfs_defer_trans_abort(a,b,c)	((void) 0)
 #define trace_xfs_defer_trans_roll(a,b,c)	((void) 0)
@@ -175,6 +172,8 @@
 #define trace_xfs_defer_finish(a,b,c)		((void) 0)
 #define trace_xfs_defer_finish_error(a,b,c)	((void) 0)
 #define trace_xfs_defer_finish_done(a,b,c)	((void) 0)
+#define trace_xfs_defer_cancel_list(a,b)	((void) 0)
+#define trace_xfs_defer_create_intent(a,b)	((void) 0)
 
 #define trace_xfs_bmap_free_defer(...)		((void) 0)
 #define trace_xfs_bmap_free_deferred(...)	((void) 0)
