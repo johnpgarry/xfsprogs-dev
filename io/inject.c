@@ -52,11 +52,15 @@ error_tag(char *name)
 		{ XFS_ERRTAG_LOG_ITEM_PIN,		"log_item_pin" },
 		{ XFS_ERRTAG_BUF_LRU_REF,		"buf_lru_ref" },
 		{ XFS_ERRTAG_FORCE_SCRUB_REPAIR,	"force_repair" },
+		{ XFS_ERRTAG_FORCE_SUMMARY_RECALC,	"bad_summary" },
 		{ XFS_ERRTAG_MAX,			NULL }
 	};
 	int	count;
 
-	/* If this fails make sure every tag is defined in the array above */
+	/*
+	 * If this fails make sure every tag is defined in the array above,
+	 * see xfs_errortag_attrs in kernelspace.
+	 */
 	BUILD_BUG_ON(sizeof(eflags) != (XFS_ERRTAG_MAX + 1) * sizeof(*e));
 
 	/* Search for a name */
