@@ -399,7 +399,7 @@ roundup_64(uint64_t x, uint32_t y)
 #define XFS_MOUNT_IKEEP			0	/* ignored in userspace */
 #define XFS_MOUNT_SWALLOC		0	/* ignored in userspace */
 #define XFS_MOUNT_RDONLY		0	/* ignored in userspace */
-
+#define XFS_MOUNT_BAD_SUMMARY		0	/* ignored in userspace */
 
 #define xfs_trans_set_sync(tp)		((void) 0)
 #define	xfs_trans_agblocks_delta(tp, d)
