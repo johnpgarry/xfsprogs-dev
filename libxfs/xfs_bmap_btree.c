@@ -172,7 +172,6 @@ xfs_bmbt_dup_cursor(
 	 * Copy the firstblock, dfops, and flags values,
 	 * since init cursor doesn't get them.
 	 */
-	new->bc_private.b.firstblock = cur->bc_private.b.firstblock;
 	new->bc_private.b.flags = cur->bc_private.b.flags;
 
 	return new;
@@ -183,11 +182,11 @@ xfs_bmbt_update_cursor(
 	struct xfs_btree_cur	*src,
 	struct xfs_btree_cur	*dst)
 {
-	ASSERT((dst->bc_private.b.firstblock != NULLFSBLOCK) ||
+	ASSERT((dst->bc_tp->t_firstblock != NULLFSBLOCK) ||
 	       (dst->bc_private.b.ip->i_d.di_flags & XFS_DIFLAG_REALTIME));
 
 	dst->bc_private.b.allocated += src->bc_private.b.allocated;
-	dst->bc_private.b.firstblock = src->bc_private.b.firstblock;
+	dst->bc_tp->t_firstblock = src->bc_tp->t_firstblock;
 
 	src->bc_private.b.allocated = 0;
 }
@@ -205,7 +204,7 @@ xfs_bmbt_alloc_block(
 	memset(&args, 0, sizeof(args));
 	args.tp = cur->bc_tp;
 	args.mp = cur->bc_mp;
-	args.fsbno = cur->bc_private.b.firstblock;
+	args.fsbno = cur->bc_tp->t_firstblock;
 	args.firstblock = args.fsbno;
 	xfs_rmap_ino_bmbt_owner(&args.oinfo, cur->bc_private.b.ip->i_ino,
 			cur->bc_private.b.whichfork);
@@ -260,7 +259,7 @@ xfs_bmbt_alloc_block(
 	}
 
 	ASSERT(args.len == 1);
-	cur->bc_private.b.firstblock = args.fsbno;
+	cur->bc_tp->t_firstblock = args.fsbno;
 	cur->bc_private.b.allocated++;
 	cur->bc_private.b.ip->i_d.di_nblocks++;
 	xfs_trans_log_inode(args.tp, cur->bc_private.b.ip, XFS_ILOG_CORE);
@@ -559,7 +558,6 @@ xfs_bmbt_init_cursor(
 
 	cur->bc_private.b.forksize = XFS_IFORK_SIZE(ip, whichfork);
 	cur->bc_private.b.ip = ip;
-	cur->bc_private.b.firstblock = NULLFSBLOCK;
 	cur->bc_private.b.allocated = 0;
 	cur->bc_private.b.flags = 0;
 	cur->bc_private.b.whichfork = whichfork;
