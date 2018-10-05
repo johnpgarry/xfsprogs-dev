@@ -558,7 +558,9 @@ typedef int (*xfs_rtalloc_query_range_fn)(
 int libxfs_zero_extent(struct xfs_inode *ip, xfs_fsblock_t start_fsb,
                         xfs_off_t count_fsb);
 
+
 bool xfs_log_check_lsn(struct xfs_mount *, xfs_lsn_t);
+#define xfs_log_in_recovery(mp)	(false)
 
 /* xfs_icache.c */
 #define xfs_inode_set_cowblocks_tag(ip)	do { } while (0)
