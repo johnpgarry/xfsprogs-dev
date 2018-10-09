@@ -479,7 +479,7 @@ parseproto(
 		if (error)
 			fail(_("Space preallocation failed."), error);
 		rsvfile(mp, ip, llen);
-		IRELE(ip);
+		libxfs_irele(ip);
 		return;
 
 	case IF_BLOCK:
@@ -573,7 +573,7 @@ parseproto(
 				break;
 			parseproto(mp, ip, fsxp, pp, name);
 		}
-		IRELE(ip);
+		libxfs_irele(ip);
 		return;
 	default:
 		ASSERT(0);
@@ -585,7 +585,7 @@ parseproto(
 		fail(_("Error encountered creating file from prototype file"),
 			error);
 	}
-	IRELE(ip);
+	libxfs_irele(ip);
 }
 
 void

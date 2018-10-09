@@ -77,7 +77,7 @@ update_inode_nlinks(
 
 		ASSERT(error == 0);
 	}
-	IRELE(ip);
+	libxfs_irele(ip);
 }
 
 /*

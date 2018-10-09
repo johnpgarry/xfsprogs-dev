@@ -612,7 +612,7 @@ mk_rbmino(xfs_mount_t *mp)
 		_("allocation of the realtime bitmap failed, error = %d\n"),
 			error);
 	}
-	IRELE(ip);
+	libxfs_irele(ip);
 }
 
 static int
@@ -678,7 +678,7 @@ _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime bitmap inode %
 	error = -libxfs_trans_commit(tp);
 	if (error)
 		do_error(_("%s: commit failed, error %d\n"), __func__, error);
-	IRELE(ip);
+	libxfs_irele(ip);
 	return(0);
 }
 
@@ -733,7 +733,7 @@ fill_rsumino(xfs_mount_t *mp)
 			do_warn(
 _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime summary inode %" PRIu64 "\n"),
 				bno, map.br_startblock, mp->m_sb.sb_rsumino);
-			IRELE(ip);
+			libxfs_irele(ip);
 			return(1);
 		}
 
@@ -748,7 +748,7 @@ _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime summary inode 
 	error = -libxfs_trans_commit(tp);
 	if (error)
 		do_error(_("%s: commit failed, error %d\n"), __func__, error);
-	IRELE(ip);
+	libxfs_irele(ip);
 	return(0);
 }
 
@@ -852,7 +852,7 @@ mk_rsumino(xfs_mount_t *mp)
 	_("allocation of the realtime summary ino failed, error = %d\n"),
 			error);
 	}
-	IRELE(ip);
+	libxfs_irele(ip);
 }
 
 /*
@@ -920,7 +920,7 @@ mk_root_dir(xfs_mount_t *mp)
 	if (error)
 		do_error(_("%s: commit failed, error %d\n"), __func__, error);
 
-	IRELE(ip);
+	libxfs_irele(ip);
 
 	irec = find_inode_rec(mp, XFS_INO_TO_AGNO(mp, mp->m_sb.sb_rootino),
 				XFS_INO_TO_AGINO(mp, mp->m_sb.sb_rootino));
@@ -1054,8 +1054,8 @@ mk_orphanage(xfs_mount_t *mp)
 		do_error(_("%s directory creation failed -- bmapf error %d\n"),
 			ORPHANAGE, error);
 	}
-	IRELE(ip);
-	IRELE(pip);
+	libxfs_irele(ip);
+	libxfs_irele(pip);
 	add_inode_reached(irec,ino_offset);
 
 	return(ino);
@@ -1233,8 +1233,8 @@ mv_orphanage(
 			do_error(
 	_("orphanage name create failed (%d)\n"), err);
 	}
-	IRELE(ino_p);
-	IRELE(orphanage_ip);
+	libxfs_irele(ino_p);
+	libxfs_irele(orphanage_ip);
 }
 
 static int
@@ -3050,7 +3050,7 @@ process_dir_inode(
 	_("root inode \".\" entry recreation failed (%d)\n"), error);
 		}
 	}
-	IRELE(ip);
+	libxfs_irele(ip);
 }
 
 /*

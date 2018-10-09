@@ -1402,7 +1402,7 @@ libxfs_iget(
 	}
 
 	if (!libxfs_inode_verify_forks(ip, ifork_ops)) {
-		libxfs_iput(ip);
+		libxfs_irele(ip);
 		return -EFSCORRUPTED;
 	}
 
@@ -1435,7 +1435,8 @@ libxfs_idestroy(xfs_inode_t *ip)
 }
 
 void
-libxfs_iput(xfs_inode_t *ip)
+libxfs_irele(
+	struct xfs_inode	*ip)
 {
 	if (ip->i_itemp)
 		kmem_zone_free(xfs_ili_zone, ip->i_itemp);

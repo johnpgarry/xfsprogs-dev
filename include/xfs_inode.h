@@ -155,8 +155,6 @@ extern bool	libxfs_inode_verify_forks(struct xfs_inode *ip,
 extern int	libxfs_iget(struct xfs_mount *, struct xfs_trans *, xfs_ino_t,
 				uint, struct xfs_inode **,
 				struct xfs_ifork_ops *);
-extern void	libxfs_iput(struct xfs_inode *);
-
-#define IRELE(ip) libxfs_iput(ip)
+extern void	libxfs_irele(struct xfs_inode *ip);
 
 #endif /* __XFS_INODE_H__ */
