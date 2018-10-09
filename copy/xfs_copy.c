@@ -39,7 +39,6 @@ target_control	*target;
 wbuf		w_buf;
 wbuf		btree_buf;
 
-pid_t		parent_pid;
 unsigned int	kids;
 
 thread_control	glob_masks;
@@ -630,8 +629,6 @@ main(int argc, char **argv)
 		target[i].error = 0;
 		target[i].err_type = 0;
 	}
-
-	parent_pid = getpid();
 
 	/* open up source -- is it a file? */
 

@@ -12,7 +12,6 @@
 #include "libxfs_priv.h"
 #include "xfs_fs.h"
 
-int platform_has_uuid = 1;
 extern char *progname;
 static int max_block_alignment;
 
