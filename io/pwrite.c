@@ -55,7 +55,6 @@ do_pwritev(
 	int		fd,
 	off64_t		offset,
 	size_t		count,
-	size_t		buffer_size,
 	int 		pwritev2_flags)
 {
 	int vecs = 0;
@@ -91,7 +90,7 @@ do_pwritev(
 	return bytes;
 }
 #else
-#define do_pwritev(fd, offset, count, buffer_size, pwritev2_flags) (0)
+#define do_pwritev(fd, offset, count, pwritev2_flags) (0)
 #endif
 
 static ssize_t
@@ -105,7 +104,7 @@ do_pwrite(
 	if (!vectors)
 		return pwrite(fd, buffer, min(count, buffer_size), offset);
 
-	return do_pwritev(fd, offset, count, buffer_size, pwritev2_flags);
+	return do_pwritev(fd, offset, count, pwritev2_flags);
 }
 
 static int

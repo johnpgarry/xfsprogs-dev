@@ -164,8 +164,7 @@ static ssize_t
 do_preadv(
 	int		fd,
 	off64_t		offset,
-	size_t		count,
-	size_t		buffer_size)
+	size_t		count)
 {
 	int		vecs = 0;
 	ssize_t		oldlen = 0;
@@ -193,7 +192,7 @@ do_preadv(
 	return bytes;
 }
 #else
-#define do_preadv(fd, offset, count, buffer_size) (0)
+#define do_preadv(fd, offset, count) (0)
 #endif
 
 static ssize_t
@@ -206,7 +205,7 @@ do_pread(
 	if (!vectors)
 		return pread(fd, buffer, min(count, buffer_size), offset);
 
-	return do_preadv(fd, offset, count, buffer_size);
+	return do_preadv(fd, offset, count);
 }
 
 static int
