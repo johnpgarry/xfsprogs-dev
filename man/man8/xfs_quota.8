@@ -305,8 +305,6 @@ limit enforcement disabled.
 .IP 4.
 Turning on quotas on the root filesystem is slightly different from
 the above.
-For IRIX XFS, refer to
-.BR quotaon (1M).
 For Linux XFS, the quota mount flags must be passed in with the
 "rootflags=" boot parameter.
 .IP 5.
@@ -732,13 +730,6 @@ Mapping of numeric project identifiers to directories trees.
 .I /etc/projid
 Mapping of numeric project identifiers to project names.
 .PD
-.SH IRIX SEE ALSO
-.BR quotaon (1M),
-.BR xfs (4).
-
-.SH LINUX SEE ALSO
-.BR warnquota (8),
-.BR xfs (5).
 
 .SH SEE ALSO
 .BR df (1),
@@ -746,3 +737,5 @@ Mapping of numeric project identifiers to project names.
 .BR sync (2),
 .BR projid (5),
 .BR projects (5).
+.BR xfs (5).
+.BR warnquota (8),

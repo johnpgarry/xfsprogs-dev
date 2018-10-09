@@ -31,7 +31,7 @@ crc32table.h
 LSRCFILES += gen_crc32table.c
 
 CFILES += $(PKG_PLATFORM).c
-PCFILES = darwin.c freebsd.c irix.c linux.c
+PCFILES = darwin.c freebsd.c linux.c
 LSRCFILES = $(shell echo $(PCFILES) | sed -e "s/$(PKG_PLATFORM).c//g")
 
 ifeq ($(HAVE_GETMNTENT),yes)

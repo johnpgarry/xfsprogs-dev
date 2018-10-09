@@ -107,6 +107,7 @@ extern void		pread_init(void);
 extern void		prealloc_init(void);
 extern void		pwrite_init(void);
 extern void		quit_init(void);
+extern void		resblks_init(void);
 extern void		seek_init(void);
 extern void		shutdown_init(void);
 extern void		stat_init(void);
@@ -119,12 +120,6 @@ extern void		utimes_init(void);
 extern void		fadvise_init(void);
 #else
 #define fadvise_init()	do { } while (0)
-#endif
-
-#ifdef HAVE_RESBLKS
-extern void		resblks_init(void);
-#else
-#define resblks_init()	do { } while (0)
 #endif
 
 #ifdef HAVE_SENDFILE

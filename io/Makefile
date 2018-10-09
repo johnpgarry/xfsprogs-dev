@@ -10,9 +10,9 @@ LSRCFILES = xfs_bmap.sh xfs_freeze.sh xfs_mkfile.sh
 HFILES = init.h io.h
 CFILES = init.c \
 	attr.c bmap.c cowextsize.c encrypt.c file.c freeze.c fsync.c \
-	getrusage.c imap.c label.c link.c mmap.c open.c parent.c pread.c \
-	prealloc.c pwrite.c reflink.c scrub.c seek.c shutdown.c stat.c \
-	swapext.c sync.c truncate.c utimes.c
+	getrusage.c imap.c inject.c label.c link.c mmap.c open.c parent.c \
+	pread.c prealloc.c pwrite.c reflink.c resblks.c scrub.c seek.c \
+	shutdown.c stat.c swapext.c sync.c truncate.c utimes.c
 
 LLDLIBS = $(LIBXCMD) $(LIBHANDLE) $(LIBFROG) $(LIBPTHREAD)
 LTDEPENDENCIES = $(LIBXCMD) $(LIBHANDLE) $(LIBFROG)
@@ -51,13 +51,6 @@ CFILES += fiemap.c
 LCFLAGS += -DHAVE_FIEMAP
 else
 LSRCFILES += fiemap.c
-endif
-
-ifeq ($(PKG_PLATFORM),irix)
-LSRCFILES += inject.c resblks.c
-else
-CFILES += inject.c resblks.c
-LCFLAGS += -DHAVE_INJECT -DHAVE_RESBLKS
 endif
 
 ifeq ($(HAVE_COPY_FILE_RANGE),yes)
