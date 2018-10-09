@@ -582,7 +582,7 @@ xfs_attr_leaf_addname(
 		 */
 		error = xfs_attr3_leaf_to_node(args);
 		if (error)
-			goto out_defer_cancel;
+			return error;
 		error = xfs_defer_finish(&args->trans);
 		if (error)
 			return error;
@@ -670,7 +670,7 @@ xfs_attr_leaf_addname(
 			error = xfs_attr3_leaf_to_shortform(bp, args, forkoff);
 			/* bp is gone due to xfs_da_shrink_inode */
 			if (error)
-				goto out_defer_cancel;
+				return error;
 			error = xfs_defer_finish(&args->trans);
 			if (error)
 				return error;
@@ -687,9 +687,6 @@ xfs_attr_leaf_addname(
 		 */
 		error = xfs_attr3_leaf_clearflag(args);
 	}
-	return error;
-out_defer_cancel:
-	xfs_defer_cancel(args->trans);
 	return error;
 }
 
@@ -733,15 +730,12 @@ xfs_attr_leaf_removename(
 		error = xfs_attr3_leaf_to_shortform(bp, args, forkoff);
 		/* bp is gone due to xfs_da_shrink_inode */
 		if (error)
-			goto out_defer_cancel;
+			return error;
 		error = xfs_defer_finish(&args->trans);
 		if (error)
 			return error;
 	}
 	return 0;
-out_defer_cancel:
-	xfs_defer_cancel(args->trans);
-	return error;
 }
 
 /*
@@ -859,7 +853,7 @@ restart:
 			state = NULL;
 			error = xfs_attr3_leaf_to_node(args);
 			if (error)
-				goto out_defer_cancel;
+				goto out;
 			error = xfs_defer_finish(&args->trans);
 			if (error)
 				goto out;
@@ -883,7 +877,7 @@ restart:
 		 */
 		error = xfs_da3_split(state);
 		if (error)
-			goto out_defer_cancel;
+			goto out;
 		error = xfs_defer_finish(&args->trans);
 		if (error)
 			goto out;
@@ -979,7 +973,7 @@ restart:
 		if (retval && (state->path.active > 1)) {
 			error = xfs_da3_join(state);
 			if (error)
-				goto out_defer_cancel;
+				goto out;
 			error = xfs_defer_finish(&args->trans);
 			if (error)
 				goto out;
@@ -1008,9 +1002,6 @@ out:
 	if (error)
 		return error;
 	return retval;
-out_defer_cancel:
-	xfs_defer_cancel(args->trans);
-	goto out;
 }
 
 /*
@@ -1102,7 +1093,7 @@ xfs_attr_node_removename(
 	if (retval && (state->path.active > 1)) {
 		error = xfs_da3_join(state);
 		if (error)
-			goto out_defer_cancel;
+			goto out;
 		error = xfs_defer_finish(&args->trans);
 		if (error)
 			goto out;
@@ -1133,7 +1124,7 @@ xfs_attr_node_removename(
 			error = xfs_attr3_leaf_to_shortform(bp, args, forkoff);
 			/* bp is gone due to xfs_da_shrink_inode */
 			if (error)
-				goto out_defer_cancel;
+				goto out;
 			error = xfs_defer_finish(&args->trans);
 			if (error)
 				goto out;
@@ -1145,9 +1136,6 @@ xfs_attr_node_removename(
 out:
 	xfs_da_state_free(state);
 	return error;
-out_defer_cancel:
-	xfs_defer_cancel(args->trans);
-	goto out;
 }
 
 /*
