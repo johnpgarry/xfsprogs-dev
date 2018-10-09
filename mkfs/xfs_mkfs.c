@@ -1012,7 +1012,6 @@ check_device_type(
 	bool		no_size,
 	bool		no_name,
 	int		*create,
-	bool		force_overwrite,
 	const char	*optname)
 {
 	struct stat statbuf;
@@ -1043,13 +1042,6 @@ check_device_type(
 		return;
 	}
 
-	if (!force_overwrite && check_overwrite(name)) {
-		fprintf(stderr,
-	_("%s: Use the -f option to force overwrite.\n"),
-			progname);
-		exit(1);
-	}
-
 	/*
 	 * We only want to completely truncate and recreate an existing file if
 	 * we were specifically told it was a file. Set the create flag only in
@@ -1077,6 +1069,20 @@ check_device_type(
 	_("specified device %s not a file or block device\n"),
 		name);
 	usage();
+}
+
+static void
+validate_overwrite(
+	const char	*name,
+	bool		force_overwrite)
+{
+	if (!force_overwrite && check_overwrite(name)) {
+		fprintf(stderr,
+	_("%s: Use the -f option to force overwrite.\n"),
+			progname);
+		exit(1);
+	}
+
 }
 
 static void
@@ -1731,18 +1737,15 @@ validate_sectorsize(
 	 * files or block devices and set the control parameters correctly.
 	 */
 	check_device_type(dfile, &cli->xi->disfile, !cli->dsize, !dfile,
-			  dry_run ? NULL : &cli->xi->dcreat,
-			  force_overwrite, "d");
+			  dry_run ? NULL : &cli->xi->dcreat, "d");
 	if (!cli->loginternal)
 		check_device_type(cli->xi->logname, &cli->xi->lisfile,
 				  !cli->logsize, !cli->xi->logname,
-				  dry_run ? NULL : &cli->xi->lcreat,
-				  force_overwrite, "l");
+				  dry_run ? NULL : &cli->xi->lcreat, "l");
 	if (cli->xi->rtname)
 		check_device_type(cli->xi->rtname, &cli->xi->risfile,
 				  !cli->rtsize, !cli->xi->rtname,
-				  dry_run ? NULL : &cli->xi->rcreat,
-				  force_overwrite, "r");
+				  dry_run ? NULL : &cli->xi->rcreat, "r");
 
 	/*
 	 * Explicitly disable direct IO for image files so we don't error out on
@@ -3907,6 +3910,7 @@ main(
 	 * Open and validate the device configurations
 	 */
 	open_devices(&cfg, &xi);
+	validate_overwrite(dfile, force_overwrite);
 	validate_datadev(&cfg, &cli);
 	validate_logdev(&cfg, &cli, &logfile);
 	validate_rtdev(&cfg, &cli, &rtfile);
