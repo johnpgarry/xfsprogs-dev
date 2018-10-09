@@ -59,7 +59,7 @@ extern void	xfs_verify_recalc_crc(struct xfs_buf *bp);
  * returns -1 for unchecked, 0 for bad and 1 for good
  */
 static inline int
-iocur_crc_valid()
+iocur_crc_valid(void)
 {
 	if (!iocur_top->bp)
 		return -1;

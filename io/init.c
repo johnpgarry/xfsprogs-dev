@@ -244,7 +244,7 @@ idle_loop(void *arg)
 }
 
 void
-start_idle_thread()
+start_idle_thread(void)
 {
 	pthread_t t;
 
