@@ -11,7 +11,7 @@ CFILES = init.c util.c \
 	edit.c free.c path.c project.c quot.c quota.c report.c state.c
 
 CFILES += $(PKG_PLATFORM).c
-PCFILES = darwin.c freebsd.c linux.c
+PCFILES = darwin.c linux.c
 LSRCFILES = $(shell echo $(PCFILES) | sed -e "s/$(PKG_PLATFORM).c//g")
 
 LLDLIBS = $(LIBXCMD) $(LIBFROG)

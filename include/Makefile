@@ -40,7 +40,7 @@ HFILES = handle.h \
 	xqm.h \
 	xfs_arch.h
 
-PHFILES = darwin.h freebsd.h linux.h gnukfreebsd.h
+PHFILES = darwin.h linux.h
 LSRCFILES = $(shell echo $(PHFILES) | sed -e "s/$(PKG_PLATFORM).h//g")
 LSRCFILES += platform_defs.h.in builddefs.in buildmacros buildrules install-sh
 LSRCFILES += $(DKHFILES) $(LIBHFILES)

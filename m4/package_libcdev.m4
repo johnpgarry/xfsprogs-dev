@@ -79,7 +79,7 @@ AC_DEFUN([AC_HAVE_GETMNTENT],
   ])
 
 #
-# Check if we have a getmntinfo libc call (FreeBSD, Mac OS X)
+# Check if we have a getmntinfo libc call (Mac OS X)
 #
 AC_DEFUN([AC_HAVE_GETMNTINFO],
   [ AC_MSG_CHECKING([for getmntinfo ])

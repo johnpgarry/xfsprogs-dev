@@ -7,10 +7,6 @@
 
 #if defined(__linux__)
 #include <xfs/linux.h>
-#elif defined(__FreeBSD__)
-#include <xfs/freebsd.h>
-#elif defined(__FreeBSD_kernel__)
-#include <xfs/gnukfreebsd.h>
 #elif defined(__APPLE__)
 #include <xfs/darwin.h>
 #else
