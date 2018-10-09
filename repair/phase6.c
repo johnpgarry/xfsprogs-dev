@@ -573,7 +573,9 @@ mk_rbmino(xfs_mount_t *mp)
 	 * commit changes
 	 */
 	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
-	libxfs_trans_commit(tp);
+	error = -libxfs_trans_commit(tp);
+	if (error)
+		do_error(_("%s: commit failed, error %d\n"), __func__, error);
 
 	/*
 	 * then allocate blocks for file and fill with zeroes (stolen
@@ -604,7 +606,12 @@ mk_rbmino(xfs_mount_t *mp)
 			bno += ep->br_blockcount;
 		}
 	}
-	libxfs_trans_commit(tp);
+	error = -libxfs_trans_commit(tp);
+	if (error) {
+		do_error(
+		_("allocation of the realtime bitmap failed, error = %d\n"),
+			error);
+	}
 	IRELE(ip);
 }
 
@@ -668,7 +675,9 @@ _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime bitmap inode %
 		bno++;
 	}
 
-	libxfs_trans_commit(tp);
+	error = -libxfs_trans_commit(tp);
+	if (error)
+		do_error(_("%s: commit failed, error %d\n"), __func__, error);
 	IRELE(ip);
 	return(0);
 }
@@ -736,7 +745,9 @@ _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime summary inode 
 		bno++;
 	}
 
-	libxfs_trans_commit(tp);
+	error = -libxfs_trans_commit(tp);
+	if (error)
+		do_error(_("%s: commit failed, error %d\n"), __func__, error);
 	IRELE(ip);
 	return(0);
 }
@@ -802,7 +813,9 @@ mk_rsumino(xfs_mount_t *mp)
 	 * commit changes
 	 */
 	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
-	libxfs_trans_commit(tp);
+	error = -libxfs_trans_commit(tp);
+	if (error)
+		do_error(_("%s: commit failed, error %d\n"), __func__, error);
 
 	/*
 	 * then allocate blocks for file and fill with zeroes (stolen
@@ -833,7 +846,12 @@ mk_rsumino(xfs_mount_t *mp)
 			bno += ep->br_blockcount;
 		}
 	}
-	libxfs_trans_commit(tp);
+	error = -libxfs_trans_commit(tp);
+	if (error) {
+		do_error(
+	_("allocation of the realtime summary ino failed, error = %d\n"),
+			error);
+	}
 	IRELE(ip);
 }
 
@@ -898,7 +916,10 @@ mk_root_dir(xfs_mount_t *mp)
 	ip->d_ops = mp->m_dir_inode_ops;
 	libxfs_dir_init(tp, ip, ip);
 
-	libxfs_trans_commit(tp);
+	error = -libxfs_trans_commit(tp);
+	if (error)
+		do_error(_("%s: commit failed, error %d\n"), __func__, error);
+
 	IRELE(ip);
 
 	irec = find_inode_rec(mp, XFS_INO_TO_AGNO(mp, mp->m_sb.sb_rootino),
@@ -1028,7 +1049,11 @@ mk_orphanage(xfs_mount_t *mp)
 	libxfs_trans_log_inode(tp, pip, XFS_ILOG_CORE);
 	libxfs_dir_init(tp, ip, pip);
 	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
-	libxfs_trans_commit(tp);
+	error = -libxfs_trans_commit(tp);
+	if (error) {
+		do_error(_("%s directory creation failed -- bmapf error %d\n"),
+			ORPHANAGE, error);
+	}
 	IRELE(ip);
 	IRELE(pip);
 	add_inode_reached(irec,ino_offset);
@@ -1126,7 +1151,10 @@ mv_orphanage(
 
 			inc_nlink(VFS_I(ino_p));
 			libxfs_trans_log_inode(tp, ino_p, XFS_ILOG_CORE);
-			libxfs_trans_commit(tp);
+			err = -libxfs_trans_commit(tp);
+			if (err)
+				do_error(
+	_("creation of .. entry failed (%d)\n"), err);
 		} else  {
 			err = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_rename,
 						  nres, 0, 0, &tp);
@@ -1166,7 +1194,10 @@ mv_orphanage(
 						err);
 			}
 
-			libxfs_trans_commit(tp);
+			err = -libxfs_trans_commit(tp);
+			if (err)
+				do_error(
+	_("orphanage name replace op failed (%d)\n"), err);
 		}
 
 	} else  {
@@ -1197,7 +1228,10 @@ mv_orphanage(
 
 		set_nlink(VFS_I(ino_p), 1);
 		libxfs_trans_log_inode(tp, ino_p, XFS_ILOG_CORE);
-		libxfs_trans_commit(tp);
+		err = -libxfs_trans_commit(tp);
+		if (err)
+			do_error(
+	_("orphanage name create failed (%d)\n"), err);
 	}
 	IRELE(ino_p);
 	IRELE(orphanage_ip);
@@ -1333,7 +1367,10 @@ longform_dir2_rebuild(
 		goto out_bmap_cancel;
 	}
 
-	libxfs_trans_commit(tp);
+	error = -libxfs_trans_commit(tp);
+	if (error)
+		do_error(
+	_("dir init failed (%d)\n"), error);
 
 	if (ino == mp->m_sb.sb_rootino)
 		need_root_dotdot = 0;
@@ -1364,7 +1401,10 @@ _("name create failed in ino %" PRIu64 " (%d), filesystem may be out of space\n"
 			goto out_bmap_cancel;
 		}
 
-		libxfs_trans_commit(tp);
+		error = -libxfs_trans_commit(tp);
+		if (error)
+			do_error(
+_("name create failed (%d) during rebuild\n"), error);
 	}
 
 	return;
@@ -1410,7 +1450,10 @@ dir2_kill_block(
 	if (error)
 		do_error(_("shrink_inode failed inode %" PRIu64 " block %u\n"),
 			ip->i_ino, da_bno);
-	libxfs_trans_commit(tp);
+	error = -libxfs_trans_commit(tp);
+	if (error)
+		do_error(
+_("directory shrink failed (%d)\n"), error);
 }
 
 /*
@@ -1883,7 +1926,10 @@ _("entry \"%s\" in dir inode %" PRIu64 " inconsistent with .. value (%" PRIu64 "
 				d, &i);
 	if (needlog)
 		libxfs_dir2_data_log_header(&da, bp);
-	libxfs_trans_commit(tp);
+	error = -libxfs_trans_commit(tp);
+	if (error)
+		do_error(
+_("directory block fixing failed (%d)\n"), error);
 
 	/* record the largest free space in the freetab for later checking */
 	bf = M_DIROPS(mp)->data_bestfree_p(d);
@@ -2899,7 +2945,9 @@ process_dir_inode(
 			if (dirty)  {
 				libxfs_trans_log_inode(tp, ip,
 					XFS_ILOG_CORE | XFS_ILOG_DDATA);
-				libxfs_trans_commit(tp);
+				error = -libxfs_trans_commit(tp);
+				if (error)
+					res_failed(error);
 			} else  {
 				libxfs_trans_cancel(tp);
 			}
@@ -2940,7 +2988,10 @@ process_dir_inode(
 	_("can't make \"..\" entry in root inode %" PRIu64 ", createname error %d\n"), ino, error);
 
 		libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
-		libxfs_trans_commit(tp);
+		error = -libxfs_trans_commit(tp);
+		if (error)
+			do_error(
+	_("root inode \"..\" entry recreation failed (%d)\n"), error);
 
 		need_root_dotdot = 0;
 	} else if (need_root_dotdot && ino == mp->m_sb.sb_rootino)  {
@@ -2993,7 +3044,10 @@ process_dir_inode(
 					ino, error);
 
 			libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
-			libxfs_trans_commit(tp);
+			error = -libxfs_trans_commit(tp);
+			if (error)
+				do_error(
+	_("root inode \".\" entry recreation failed (%d)\n"), error);
 		}
 	}
 	IRELE(ip);

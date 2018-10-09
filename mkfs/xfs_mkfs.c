@@ -3689,7 +3689,9 @@ initialise_ag_freespace(
 
 	libxfs_alloc_fix_freelist(&args, 0);
 	libxfs_perag_put(args.pag);
-	libxfs_trans_commit(tp);
+	c = -libxfs_trans_commit(tp);
+	if (c)
+		res_failed(c);
 }
 
 /*

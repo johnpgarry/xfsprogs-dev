@@ -1410,7 +1410,9 @@ fix_freelist(
 		do_error(_("failed to fix AGFL on AG %d, error %d\n"),
 				agno, error);
 	}
-	libxfs_trans_commit(tp);
+	error = -libxfs_trans_commit(tp);
+	if (error)
+		do_error(_("%s: commit failed, error %d\n"), __func__, error);
 }
 
 /*
