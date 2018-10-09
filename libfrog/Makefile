@@ -31,15 +31,11 @@ crc32table.h
 LSRCFILES += gen_crc32table.c
 
 CFILES += $(PKG_PLATFORM).c
-PCFILES = darwin.c linux.c
+PCFILES = linux.c
 LSRCFILES = $(shell echo $(PCFILES) | sed -e "s/$(PKG_PLATFORM).c//g")
 
 ifeq ($(HAVE_GETMNTENT),yes)
 LCFLAGS += -DHAVE_GETMNTENT
-endif
-
-ifeq ($(HAVE_GETMNTINFO),yes)
-LCFLAGS += -DHAVE_GETMNTINFO
 endif
 
 LDIRT = gen_crc32table crc32table.h crc32selftest

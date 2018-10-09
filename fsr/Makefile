@@ -15,10 +15,6 @@ ifeq ($(HAVE_GETMNTENT),yes)
 LCFLAGS += -DHAVE_GETMNTENT
 endif
 
-ifeq ($(HAVE_GETMNTINFO),yes)
-LCFLAGS += -DHAVE_GETMNTINFO
-endif
-
 default: depend $(LTCOMMAND)
 
 include $(BUILDRULES)

@@ -415,61 +415,6 @@ fs_table_initialise_mounts(
 	return error;
 }
 
-#elif defined(HAVE_GETMNTINFO)
-#include <sys/mount.h>
-
-/*
- * If *path is NULL, initialize the fs table with all xfs mount points in mtab
- * If *path is specified, search for that path in mtab
- *
- * Everything - path, devices, and mountpoints - are boiled down to realpath()
- * for comparison, but fs_table is populated with what comes from getmntinfo.
- */
-static int
-fs_table_initialise_mounts(
-	char		*path)
-{
-	struct statfs	*stats;
-	int		i, count, error, found;
-	char		rpath[PATH_MAX], rmntfromname[PATH_MAX], rmntonname[PATH_MAX];
-
-	error = found = 0;
-	if ((count = getmntinfo(&stats, 0)) < 0) {
-		fprintf(stderr, _("%s: getmntinfo() failed: %s\n"),
-				progname, strerror(errno));
-		return 0;
-	}
-
-	/* Use realpath to resolve symlinks, relative paths, etc */
-	if (path)
-		if (!realpath(path, rpath))
-			return errno;
-
-	for (i = 0; i < count; i++) {
-		if (!realpath(stats[i].f_mntfromname, rmntfromname))
-			continue;
-		if (!realpath(stats[i].f_mntonname, rmntonname))
-			continue;
-
-		if (path &&
-		    ((strcmp(rpath, rmntonname) != 0) &&
-		     (strcmp(rpath, rmntfromname) != 0)))
-			continue;
-		/* TODO: external log and realtime device? */
-		(void) fs_table_insert(stats[i].f_mntonname, 0,
-					FS_MOUNT_POINT, stats[i].f_mntfromname,
-					NULL, NULL);
-		if (path) {
-			found = 1;
-			break;
-		}
-	}
-	if (path && !found)
-		error = ENXIO;
-
-	return error;
-}
-
 #else
 # error "How do I extract info about mounted filesystems on this platform?"
 #endif

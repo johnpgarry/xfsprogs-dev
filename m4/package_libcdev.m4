@@ -79,23 +79,6 @@ AC_DEFUN([AC_HAVE_GETMNTENT],
   ])
 
 #
-# Check if we have a getmntinfo libc call (Mac OS X)
-#
-AC_DEFUN([AC_HAVE_GETMNTINFO],
-  [ AC_MSG_CHECKING([for getmntinfo ])
-    AC_TRY_COMPILE([
-#include <sys/param.h>
-#include <sys/ucred.h>
-#include <sys/mount.h>
-    ], [
-         getmntinfo(0, 0);
-    ], have_getmntinfo=yes
-       AC_MSG_RESULT(yes),
-       AC_MSG_RESULT(no))
-    AC_SUBST(have_getmntinfo)
-  ])
-
-#
 # Check if we have a fallocate libc call (Linux)
 #
 AC_DEFUN([AC_HAVE_FALLOCATE],

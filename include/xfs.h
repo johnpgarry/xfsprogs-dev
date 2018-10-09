@@ -7,8 +7,6 @@
 
 #if defined(__linux__)
 #include <xfs/linux.h>
-#elif defined(__APPLE__)
-#include <xfs/darwin.h>
 #else
 # error unknown platform... have fun porting!
 #endif
