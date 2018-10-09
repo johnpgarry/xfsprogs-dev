@@ -430,7 +430,7 @@ xlog_recover_print_logitem(
 	}
 }
 
-void
+static void
 xlog_recover_print_item(
 	xlog_recover_item_t	*item)
 {

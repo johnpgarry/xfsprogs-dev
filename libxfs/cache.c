@@ -77,7 +77,7 @@ cache_init(
 	return cache;
 }
 
-void
+static void
 cache_expand(
 	struct cache *		cache)
 {

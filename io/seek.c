@@ -49,7 +49,7 @@ seek_help(void)
 #define	DATA		0
 #define	HOLE		1
 
-struct seekinfo {
+static struct seekinfo {
 	char		*name;		/* display item name */
 	int		seektype;	/* data or hole */
 	int		mask;		/* compared for print and looping */
@@ -59,7 +59,7 @@ struct seekinfo {
 };
 
 /* print item type and offset. catch special cases of eof and error */
-void
+static void
 seek_output(
 	int	startflag,
 	char	*type,

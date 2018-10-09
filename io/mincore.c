@@ -12,7 +12,7 @@
 
 static cmdinfo_t mincore_cmd;
 
-int
+static int
 mincore_f(
 	int		argc,
 	char		**argv)

@@ -996,7 +996,7 @@ blocktrash_b(
 		bit_offset / NBBY, bit_offset % NBBY, modestr[mode]);
 }
 
-int
+static int
 blocktrash_f(
 	int		argc,
 	char		**argv)
@@ -1204,7 +1204,7 @@ out:
 	return 0;
 }
 
-int
+static int
 blockuse_f(
 	int		argc,
 	char		**argv)

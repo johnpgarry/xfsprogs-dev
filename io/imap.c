@@ -11,7 +11,7 @@
 
 static cmdinfo_t imap_cmd;
 
-int
+static int
 imap_f(int argc, char **argv)
 {
 	int		count;

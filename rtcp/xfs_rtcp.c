@@ -9,10 +9,10 @@
 int rtcp(char *, char *, int);
 int xfsrtextsize(char *path);
 
-int pflag;
+static int pflag;
 char *progname;
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, _("%s [-e extsize] [-p] [-V] source target\n"), progname);

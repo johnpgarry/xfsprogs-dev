@@ -230,7 +230,7 @@ xfs_flags2diflags2(
  * This was once shared with the kernel, but has diverged to the point
  * where it's no longer worth the hassle of maintaining common code.
  */
-int
+static int
 libxfs_ialloc(
 	xfs_trans_t	*tp,
 	xfs_inode_t	*pip,
@@ -380,7 +380,7 @@ libxfs_ialloc(
 	return 0;
 }
 
-void
+static void
 libxfs_iprint(
 	xfs_inode_t		*ip)
 {
@@ -753,7 +753,7 @@ xfs_inode_verifier_error(
  * repair can validate it against the state of the log.
  */
 xfs_lsn_t	libxfs_max_lsn = 0;
-pthread_mutex_t	libxfs_max_lsn_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t	libxfs_max_lsn_lock = PTHREAD_MUTEX_INITIALIZER;
 
 bool
 xfs_log_check_lsn(

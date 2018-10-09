@@ -144,7 +144,7 @@ release_extent_tree_node(extent_tree_node_t *node)
  * reused.  the duplicate and bno/bcnt extent trees for each AG
  * are recycled after they're no longer needed to save memory
  */
-void
+static void
 release_extent_tree(avltree_desc_t *tree)
 {
 	extent_tree_node_t	*ext;
@@ -517,12 +517,12 @@ avl_ext_bcnt_end(avlnode_t *node)
 	return((uintptr_t) ((extent_tree_node_t *)node)->ex_blockcount);
 }
 
-avlops_t avl_extent_bcnt_tree_ops = {
+static avlops_t avl_extent_bcnt_tree_ops = {
 	avl_ext_bcnt_start,
 	avl_ext_bcnt_end
 };
 
-avlops_t avl_extent_tree_ops = {
+static avlops_t avl_extent_tree_ops = {
 	avl_ext_start,
 	avl_ext_end
 };
@@ -714,7 +714,7 @@ avl64_ext_end(avl64node_t *node)
 		((rt_extent_tree_node_t *) node)->rt_blockcount);
 }
 
-avl64ops_t avl64_extent_tree_ops = {
+static avl64ops_t avl64_extent_tree_ops = {
 	avl64_rt_ext_start,
 	avl64_ext_end
 };
@@ -792,7 +792,7 @@ incore_ext_teardown(xfs_mount_t *mp)
 	extent_bno_ptrs = NULL;
 }
 
-int
+static int
 count_extents(xfs_agnumber_t agno, avltree_desc_t *tree, int whichtree)
 {
 	extent_tree_node_t *node;

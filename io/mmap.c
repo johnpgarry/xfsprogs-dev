@@ -290,7 +290,7 @@ msync_help(void)
 "\n"));
 }
 
-int
+static int
 msync_f(
 	int		argc,
 	char		**argv)
@@ -374,7 +374,7 @@ mread_help(void)
 "\n"));
 }
 
-int
+static int
 mread_f(
 	int		argc,
 	char		**argv)
@@ -477,7 +477,7 @@ mread_f(
 	return 0;
 }
 
-int
+static int
 munmap_f(
 	int		argc,
 	char		**argv)
@@ -531,7 +531,7 @@ mwrite_help(void)
 "\n"));
 }
 
-int
+static int
 mwrite_f(
 	int		argc,
 	char		**argv)
@@ -618,7 +618,7 @@ mremap_help(void)
 "\n"));
 }
 
-int
+static int
 mremap_f(
 	int		argc,
 	char		**argv)

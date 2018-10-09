@@ -358,7 +358,7 @@ error:
 	return retval;
 }
 
-int
+static int
 parent_f(int argc, char **argv)
 {
 	int c;

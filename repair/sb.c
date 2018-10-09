@@ -71,7 +71,7 @@ copy_sb(xfs_sb_t *source, xfs_sb_t *dest)
 	memset(source->sb_fname, 0, 12);
 }
 
-int
+static int
 verify_sb_blocksize(xfs_sb_t *sb)
 {
 	/* check to make sure blocksize is legal 2^N, 9 <= N <= 16 */

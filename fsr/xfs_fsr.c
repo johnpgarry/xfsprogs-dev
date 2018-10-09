@@ -28,21 +28,21 @@
 
 char *progname;
 
-int vflag;
-int gflag;
+static int vflag;
+static int gflag;
 static int Mflag;
 /* static int nflag; */
-int dflag = 0;
+static int dflag = 0;
 /* static int sflag; */
-int argv_blksz_dio;
+static int argv_blksz_dio;
 extern int max_ext_size;
 static int npasses = 10;
 static int startpass = 0;
 
-struct getbmap  *outmap = NULL;
-int             outmap_size = 0;
-int		RealUid;
-int		tmp_agi;
+static struct getbmap  *outmap = NULL;
+static int		outmap_size = 0;
+static int		RealUid;
+static int		tmp_agi;
 static int64_t		minimumfree = 2048;
 
 #define MNTTYPE_XFS             "xfs"
@@ -85,7 +85,7 @@ static char * tmp_next(char *mnt);
 static void tmp_close(char *mnt);
 int xfs_getgeom(int , xfs_fsop_geom_v1_t * );
 
-xfs_fsop_geom_v1_t fsgeom;	/* geometry of active mounted system */
+static xfs_fsop_geom_v1_t fsgeom;	/* geometry of active mounted system */
 
 #define NMOUNT 64
 static int numfs;
@@ -96,19 +96,19 @@ typedef struct fsdesc {
 	int  npass;
 } fsdesc_t;
 
-fsdesc_t	*fs, *fsbase, *fsend;
-int		fsbufsize = 10;	/* A starting value */
-int		nfrags = 0;	/* Debug option: Coerse into specific number
+static fsdesc_t	*fs, *fsbase, *fsend;
+static int	fsbufsize = 10;	/* A starting value */
+static int	nfrags = 0;	/* Debug option: Coerse into specific number
 				 * of extents */
-int		openopts = O_CREAT|O_EXCL|O_RDWR|O_DIRECT;
+static int	openopts = O_CREAT|O_EXCL|O_RDWR|O_DIRECT;
 
-int
+static int
 xfs_fsgeometry(int fd, xfs_fsop_geom_v1_t *geom)
 {
     return ioctl(fd, XFS_IOC_FSGEOMETRY_V1, geom);
 }
 
-int
+static int
 xfs_bulkstat_single(int fd, xfs_ino_t *lastip, xfs_bstat_t *ubuffer)
 {
     xfs_fsop_bulkreq_t  bulkreq;
@@ -120,7 +120,7 @@ xfs_bulkstat_single(int fd, xfs_ino_t *lastip, xfs_bstat_t *ubuffer)
     return ioctl(fd, XFS_IOC_FSBULKSTAT_SINGLE, &bulkreq);
 }
 
-int
+static int
 xfs_bulkstat(int fd, xfs_ino_t *lastip, int icount,
                     xfs_bstat_t *ubuffer, __s32 *ocount)
 {
@@ -133,19 +133,19 @@ xfs_bulkstat(int fd, xfs_ino_t *lastip, int icount,
     return ioctl(fd, XFS_IOC_FSBULKSTAT, &bulkreq);
 }
 
-int
+static int
 xfs_swapext(int fd, xfs_swapext_t *sx)
 {
     return ioctl(fd, XFS_IOC_SWAPEXT, sx);
 }
 
-int
+static int
 xfs_fscounts(int fd, xfs_fsop_counts_t *counts)
 {
     return ioctl(fd, XFS_IOC_FSCOUNTS, counts);
 }
 
-void
+static void
 aborter(int unused)
 {
 	fsrall_cleanup(1);
@@ -1586,7 +1586,7 @@ int	read_fd_bmap(int fd, xfs_bstat_t *sin, int *cur_nextents)
 /*
  * Read the block map and return the number of extents.
  */
-int
+static int
 getnextents(int fd)
 {
 	int		nextents;

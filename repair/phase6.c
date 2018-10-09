@@ -513,7 +513,7 @@ res_failed(
 		do_error(_("xfs_trans_reserve returned %d\n"), err);
 }
 
-void
+static void
 mk_rbmino(xfs_mount_t *mp)
 {
 	xfs_trans_t	*tp;

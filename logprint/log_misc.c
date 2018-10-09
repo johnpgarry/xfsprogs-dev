@@ -24,7 +24,7 @@ typedef struct xlog_split_item {
 	int			si_skip;
 } xlog_split_item_t;
 
-xlog_split_item_t *split_list = NULL;
+static xlog_split_item_t *split_list = NULL;
 
 void
 print_xlog_op_line(void)
@@ -33,7 +33,7 @@ print_xlog_op_line(void)
 	   "--------------------------------------\n");
 }	/* print_xlog_op_line */
 
-void
+static void
 print_xlog_xhdr_line(void)
 {
     printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
@@ -58,7 +58,7 @@ print_stars(void)
  * Given a pointer to a data segment, print out the data as if it were
  * a log operation header.
  */
-void
+static void
 xlog_print_op_header(xlog_op_header_t	*op_head,
 		     int		i,
 		     char		**ptr)
@@ -98,7 +98,7 @@ xlog_print_op_header(xlog_op_header_t	*op_head,
 }	/* xlog_print_op_header */
 
 
-void
+static void
 xlog_print_add_to_trans(xlog_tid_t	tid,
 			int		skip)
 {
@@ -115,7 +115,7 @@ xlog_print_add_to_trans(xlog_tid_t	tid,
 }	/* xlog_print_add_to_trans */
 
 
-int
+static int
 xlog_print_find_tid(xlog_tid_t tid, uint was_cont)
 {
     xlog_split_item_t *listp = split_list;
@@ -149,7 +149,7 @@ xlog_print_find_tid(xlog_tid_t tid, uint was_cont)
     return 1;
 }	/* xlog_print_find_tid */
 
-int
+static int
 xlog_print_trans_header(char **ptr, int len)
 {
     xfs_trans_header_t  *h;
@@ -181,7 +181,7 @@ xlog_print_trans_header(char **ptr, int len)
 }	/* xlog_print_trans_header */
 
 
-int
+static int
 xlog_print_trans_buffer(char **ptr, int len, int *i, int num_ops)
 {
     xfs_buf_log_format_t *f;
@@ -416,7 +416,7 @@ xlog_print_trans_buffer(char **ptr, int len, int *i, int num_ops)
 }	/* xlog_print_trans_buffer */
 
 
-int
+static int
 xlog_print_trans_qoff(char **ptr, uint len)
 {
     xfs_qoff_logformat_t *f;
@@ -435,7 +435,7 @@ xlog_print_trans_qoff(char **ptr, uint len)
 }	/* xlog_print_trans_qoff */
 
 
-void
+static void
 xlog_print_trans_inode_core(
 	struct xfs_log_dinode	*ip)
 {
@@ -461,7 +461,7 @@ xlog_print_trans_inode_core(
     }
 }
 
-void
+static void
 xlog_print_dir2_sf(
 	struct xlog	*log,
 	xfs_dir2_sf_hdr_t *sfp,
@@ -496,7 +496,7 @@ xlog_print_dir2_sf(
 	}
 }
 
-int
+static int
 xlog_print_trans_inode(
 	struct xlog		*log,
 	char			**ptr,
@@ -647,7 +647,7 @@ xlog_print_trans_inode(
 }	/* xlog_print_trans_inode */
 
 
-int
+static int
 xlog_print_trans_dquot(char **ptr, int len, int *i, int num_ops)
 {
     xfs_dq_logformat_t	*f;
@@ -755,7 +755,7 @@ xlog_print_lseek(struct xlog *log, int fd, xfs_daddr_t blkno, int whence)
 }	/* xlog_print_lseek */
 
 
-void
+static void
 print_lsn(char		*string,
 	  __be64	*lsn)
 {
@@ -764,7 +764,7 @@ print_lsn(char		*string,
 }
 
 
-int
+static int
 xlog_print_record(
 	struct xlog		*log,
 	int			fd,
@@ -1019,7 +1019,7 @@ xlog_print_record(
 }	/* xlog_print_record */
 
 
-int
+static int
 xlog_print_rec_head(xlog_rec_header_t *head, int *len, int bad_hdr_warn)
 {
     int i;
@@ -1093,7 +1093,7 @@ xlog_print_rec_head(xlog_rec_header_t *head, int *len, int bad_hdr_warn)
     return(be32_to_cpu(head->h_num_logops));
 }	/* xlog_print_rec_head */
 
-void
+static void
 xlog_print_rec_xhead(xlog_rec_ext_header_t *head, int coverage)
 {
     int i;
@@ -1133,7 +1133,7 @@ print_xlog_bad_header(xfs_daddr_t blkno, char *buf)
 	    xlog_exit("Bad log record header");
 }	/* print_xlog_bad_header */
 
-void
+static void
 print_xlog_bad_data(xfs_daddr_t blkno)
 {
 	print_stars();

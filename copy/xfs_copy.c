@@ -18,33 +18,32 @@
 
 extern int	platform_check_ismounted(char *, char *, struct stat *, int);
 
-int		logfd;
-char 		*logfile_name;
-FILE		*logerr;
-char		LOGFILE_NAME[] = "/var/tmp/xfs_copy.log.XXXXXX";
+static char 		*logfile_name;
+static FILE		*logerr;
+static char		LOGFILE_NAME[] = "/var/tmp/xfs_copy.log.XXXXXX";
 
-char		*source_name;
-int		source_fd;
+static char		*source_name;
+static int		source_fd;
 
-unsigned int	source_blocksize;	/* source filesystem blocksize */
-unsigned int	source_sectorsize;	/* source disk sectorsize */
+static unsigned int	source_blocksize;	/* source filesystem blocksize */
+static unsigned int	source_sectorsize;	/* source disk sectorsize */
 
-xfs_agblock_t	first_agbno;
+static xfs_agblock_t	first_agbno;
 
-uint64_t	barcount[11];
+static uint64_t	barcount[11];
 
-unsigned int	num_targets;
-target_control	*target;
+static unsigned int	num_targets;
+static target_control	*target;
 
-wbuf		w_buf;
-wbuf		btree_buf;
+static wbuf		w_buf;
+static wbuf		btree_buf;
 
-unsigned int	kids;
+static unsigned int	kids;
 
-thread_control	glob_masks;
-thread_args	*targ;
+static thread_control	glob_masks;
+static thread_args	*targ;
 
-pthread_mutex_t	mainwait;
+static pthread_mutex_t	mainwait;
 
 #define ACTIVE		1
 #define INACTIVE	2
@@ -61,7 +60,7 @@ static int	format_logs(struct xfs_mount *);
 #define PRE	0x08		/* append strerror string */
 #define LAST	0x10		/* final message we print */
 
-void
+static void
 signal_maskfunc(int addset, int newset)
 {
 	sigset_t set;
@@ -71,7 +70,7 @@ signal_maskfunc(int addset, int newset)
 	sigprocmask(newset, &set, NULL);
 }
 
-void
+static void
 do_message(int flags, int code, const char *fmt, ...)
 {
 	va_list	ap;
@@ -133,7 +132,7 @@ int xlog_recover_do_trans(struct xlog *log, struct xlog_recover *t, int p)
 	return 0;
 }
 
-void
+static void
 check_errors(void)
 {
 	int	i, first_error = 0;
@@ -167,7 +166,7 @@ check_errors(void)
  * don't have to worry about alignment and mins because those
  * are taken care of when the buffer's read in
  */
-int
+static int
 do_write(
 	thread_args	*args,
 	wbuf		*buf)
@@ -200,7 +199,7 @@ do_write(
 	return error;
 }
 
-void *
+static void *
 begin_reader(void *arg)
 {
 	thread_args	*args = arg;
@@ -228,7 +227,7 @@ handle_error:
 	return NULL;
 }
 
-void
+static void
 handler(int sig)
 {
 	pid_t	pid;
@@ -290,7 +289,7 @@ handler(int sig)
 	signal(SIGCHLD, handler);
 }
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr,
@@ -299,7 +298,7 @@ usage(void)
 	exit(1);
 }
 
-void
+static void
 init_bar(uint64_t source_blocks)
 {
 	int	i;
@@ -308,7 +307,7 @@ init_bar(uint64_t source_blocks)
 		barcount[i] = (source_blocks/10)*i;
 }
 
-int
+static int
 bump_bar(int tenths, uint64_t numblocks)
 {
 	static char *bar[11] = {
@@ -340,7 +339,7 @@ bump_bar(int tenths, uint64_t numblocks)
 
 static xfs_off_t source_position = -1;
 
-wbuf *
+static wbuf *
 wbuf_init(wbuf *buf, int data_size, int data_align, int min_io_size, int id)
 {
 	ASSERT(data_size % BBSIZE == 0);
@@ -357,7 +356,7 @@ wbuf_init(wbuf *buf, int data_size, int data_align, int min_io_size, int id)
 	return buf;
 }
 
-void
+static void
 read_wbuf(int fd, wbuf *buf, xfs_mount_t *mp)
 {
 	int		res = 0;
@@ -412,7 +411,7 @@ read_wbuf(int fd, wbuf *buf, xfs_mount_t *mp)
 	buf->length = res;
 }
 
-void
+static void
 read_ag_header(int fd, xfs_agnumber_t agno, wbuf *buf, ag_header_t *ag,
 		xfs_mount_t *mp, int blocksize, int sectorsize)
 {
@@ -459,7 +458,7 @@ read_ag_header(int fd, xfs_agnumber_t agno, wbuf *buf, ag_header_t *ag,
 }
 
 
-void
+static void
 write_wbuf(void)
 {
 	int		i;
@@ -491,7 +490,7 @@ write_wbuf(void)
 	signal_maskfunc(SIGCHLD, SIG_BLOCK);
 }
 
-void
+static void
 sb_update_uuid(
 	xfs_sb_t	*sb,		/* Original fs superblock */
 	ag_header_t	*ag_hdr,	/* AG hdr to update for this copy */
@@ -528,6 +527,7 @@ int
 main(int argc, char **argv)
 {
 	int		i, j;
+	int		logfd;
 	int		howfar = 0;
 	int		open_flags;
 	xfs_off_t	pos;
@@ -1205,7 +1205,7 @@ main(int argc, char **argv)
 	return 0;
 }
 
-char *
+static char *
 next_log_chunk(char *p, int offset, void *private)
 {
 	wbuf	*buf = (wbuf *)private;

@@ -23,10 +23,10 @@ char			*fsdevice;
 int			blkbb;
 int			exitcode;
 int			expert_mode;
-int			force;
-struct xfs_mount	xmount;
+static int		force;
+static struct xfs_mount	xmount;
 struct xfs_mount	*mp;
-struct xlog		xlog;
+static struct xlog	xlog;
 libxfs_init_t		x;
 xfs_agnumber_t		cur_agno = NULLAGNUMBER;
 
@@ -39,7 +39,7 @@ usage(void)
 	exit(1);
 }
 
-void
+static void
 init(
 	int		argc,
 	char		**argv)

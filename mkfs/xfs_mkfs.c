@@ -31,8 +31,8 @@
  * XXX: The configured block and sector sizes are defined as global variables so
  * that they don't need to be passed to getnum/cvtnum().
  */
-unsigned int		blocksize;
-unsigned int		sectorsize;
+static unsigned int		blocksize;
+static unsigned int		sectorsize;
 
 /*
  * Enums for each CLI parameter type are declared first so we can calculate the
@@ -216,9 +216,9 @@ struct opt_params {
  * about tables that haven't yet been defined. Work around this ordering
  * issue with extern definitions here.
  */
-extern struct opt_params sopts;
+static struct opt_params sopts;
 
-struct opt_params bopts = {
+static struct opt_params bopts = {
 	.name = 'b',
 	.subopts = {
 		[B_SIZE] = "size",
@@ -235,7 +235,7 @@ struct opt_params bopts = {
 	},
 };
 
-struct opt_params dopts = {
+static struct opt_params dopts = {
 	.name = 'd',
 	.subopts = {
 		[D_AGCOUNT] = "agcount",
@@ -372,7 +372,7 @@ struct opt_params dopts = {
 };
 
 
-struct opt_params iopts = {
+static struct opt_params iopts = {
 	.name = 'i',
 	.subopts = {
 		[I_ALIGN] = "align",
@@ -433,7 +433,7 @@ struct opt_params iopts = {
 	},
 };
 
-struct opt_params lopts = {
+static struct opt_params lopts = {
 	.name = 'l',
 	.subopts = {
 		[L_AGNUM] = "agnum",
@@ -532,7 +532,7 @@ struct opt_params lopts = {
 	},
 };
 
-struct opt_params nopts = {
+static struct opt_params nopts = {
 	.name = 'n',
 	.subopts = {
 		[N_SIZE] = "size",
@@ -563,7 +563,7 @@ struct opt_params nopts = {
 	},
 };
 
-struct opt_params ropts = {
+static struct opt_params ropts = {
 	.name = 'r',
 	.subopts = {
 		[R_EXTSIZE] = "extsize",
@@ -613,7 +613,7 @@ struct opt_params ropts = {
 	},
 };
 
-struct opt_params sopts = {
+static struct opt_params sopts = {
 	.name = 's',
 	.subopts = {
 		[S_SIZE] = "size",
@@ -643,7 +643,7 @@ struct opt_params sopts = {
 	},
 };
 
-struct opt_params mopts = {
+static struct opt_params mopts = {
 	.name = 'm',
 	.subopts = {
 		[M_CRC] = "crc",
@@ -1664,7 +1664,7 @@ sector_opts_parser(
 	return 0;
 }
 
-struct subopts {
+static struct subopts {
 	char		opt;
 	struct opt_params *opts;
 	int		(*parser)(struct opt_params	*opts,
@@ -2971,7 +2971,7 @@ _("Due to stripe alignment, the internal log size (%lld) is too large.\n"
 	}
 }
 
-void
+static void
 validate_log_size(uint64_t logblocks, int blocklog, int min_logblocks)
 {
 	if (logblocks < min_logblocks) {

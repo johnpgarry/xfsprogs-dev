@@ -14,7 +14,7 @@
 char	*progname;
 int	exitcode;
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr,
@@ -54,7 +54,7 @@ init_check_command(
 	return 1;
 }
 
-void
+static void
 init(
 	int		argc,
 	char		**argv)

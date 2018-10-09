@@ -34,7 +34,7 @@ madvise_help(void)
 "\n"));
 }
 
-int
+static int
 madvise_f(
 	int		argc,
 	char		**argv)

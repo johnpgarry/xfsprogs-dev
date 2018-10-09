@@ -77,7 +77,8 @@ dump_raw_stat(struct stat *st)
 	return 0;
 }
 
-void print_file_info(void)
+static void
+print_file_info(void)
 {
 	printf(_("fd.path = \"%s\"\n"), file->name);
 	printf(_("fd.flags = %s,%s,%s%s%s%s%s\n"),
@@ -90,7 +91,8 @@ void print_file_info(void)
 		file->flags & IO_TMPFILE ? _(",tmpfile") : "");
 }
 
-void print_xfs_info(int verbose)
+static void
+print_xfs_info(int verbose)
 {
 	struct dioattr	dio;
 	struct fsxattr	fsx, fsxa;
@@ -291,7 +293,7 @@ dump_raw_statx(struct statx *stx)
  * 	- output style for flags (and all else?) (chars vs. hex?)
  * 	- output - mask out incidental flag or not?
  */
-int
+static int
 statx_f(
 	int		argc,
 	char		**argv)

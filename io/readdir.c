@@ -18,7 +18,7 @@
 
 static struct cmdinfo readdir_cmd;
 
-const char *d_type_str(unsigned int type)
+static const char *d_type_str(unsigned int type)
 {
 	const char *str;
 

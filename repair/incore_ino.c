@@ -535,7 +535,7 @@ set_inode_free_alloc(struct xfs_mount *mp, xfs_agnumber_t agno, xfs_agino_t ino)
 	return(ino_rec);
 }
 
-void
+static void
 print_inode_list_int(xfs_agnumber_t agno, int uncertain)
 {
 	ino_tree_node_t *ino_rec;
@@ -776,7 +776,7 @@ avl_ino_end(avlnode_t *node)
 		XFS_INODES_PER_CHUNK));
 }
 
-avlops_t avl_ino_tree_ops = {
+static avlops_t avl_ino_tree_ops = {
 	avl_ino_start,
 	avl_ino_end
 };

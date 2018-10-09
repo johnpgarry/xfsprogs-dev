@@ -364,7 +364,7 @@ dump_verbose_key(void)
 		NFLG+1, NFLG+1, FLG_ESW);
 }
 
-int
+static int
 fsmap_f(
 	int			argc,
 	char			**argv)

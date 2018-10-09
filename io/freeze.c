@@ -12,7 +12,7 @@
 static cmdinfo_t freeze_cmd;
 static cmdinfo_t thaw_cmd;
 
-int
+static int
 freeze_f(
 	int		argc,
 	char		**argv)
@@ -29,7 +29,7 @@ freeze_f(
 	return 0;
 }
 
-int
+static int
 thaw_f(
 	int		argc,
 	char		**argv)

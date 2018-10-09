@@ -544,7 +544,7 @@ libxfs_bcompare(struct cache_node *node, cache_key_t key)
 	return CACHE_MISS;
 }
 
-void
+static void
 libxfs_bprint(xfs_buf_t *bp)
 {
 	fprintf(stderr, "Buffer %p blkno=%llu bytes=%u flags=0x%x count=%u\n",
@@ -624,7 +624,7 @@ libxfs_initbuf_map(xfs_buf_t *bp, struct xfs_buftarg *btp,
 	bp->b_flags |= LIBXFS_B_DISCONTIG;
 }
 
-xfs_buf_t *
+static xfs_buf_t *
 __libxfs_getbufr(int blen)
 {
 	xfs_buf_t	*bp;
@@ -681,7 +681,7 @@ libxfs_getbufr(struct xfs_buftarg *btp, xfs_daddr_t blkno, int bblen)
 	return bp;
 }
 
-xfs_buf_t *
+static xfs_buf_t *
 libxfs_getbufr_map(struct xfs_buftarg *btp, xfs_daddr_t blkno, int bblen,
 		struct xfs_buf_map *map, int nmaps)
 {

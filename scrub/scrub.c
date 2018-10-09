@@ -305,7 +305,7 @@ _("Optimizations of %s are possible."), scrubbers[i].name);
 }
 
 /* Save a scrub context for later repairs. */
-bool
+static bool
 xfs_scrub_save_repair(
 	struct scrub_ctx		*ctx,
 	struct xfs_action_list		*alist,

@@ -19,8 +19,8 @@ struct cmdline {
 	bool	iterate;
 };
 
-static int	ncmdline;
-struct cmdline	*cmdline;
+static int		ncmdline;
+static struct cmdline	*cmdline;
 
 static int
 compare(const void *a, const void *b)

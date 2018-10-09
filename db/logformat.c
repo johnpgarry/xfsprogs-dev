@@ -145,7 +145,7 @@ print_logres(
 		i, res->tr_logres, res->tr_logcount, res->tr_logflags);
 }
 
-int
+static int
 logres_f(
 	int			argc,
 	char			**argv)

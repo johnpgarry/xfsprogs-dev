@@ -214,7 +214,7 @@ calc_print_format(
 	}
 }
 
-int
+static int
 fiemap_f(
 	int		argc,
 	char		**argv)

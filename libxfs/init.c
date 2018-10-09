@@ -37,7 +37,7 @@ static int manage_zones(int);	/* setup/teardown global zones */
  * dev_map - map open devices to fd.
  */
 #define MAX_DEVS 10	/* arbitary maximum */
-int nextfakedev = -1;	/* device number to give to next fake device */
+static int nextfakedev = -1;	/* device number to give to next fake device */
 static struct dev_to_fd {
 	dev_t	dev;
 	int	fd;

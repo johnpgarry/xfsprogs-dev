@@ -43,7 +43,7 @@ bmap_help(void)
 "\n"));
 }
 
-int
+static int
 bmap_f(
 	int			argc,
 	char			**argv)

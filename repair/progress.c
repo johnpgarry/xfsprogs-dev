@@ -81,7 +81,7 @@ progress_rpt_t progress_rpt_reports[] = {
 	&rpt_fmts[FMT1], &rpt_types[TYPE_AG]}
 };
 
-pthread_t	report_thread;
+static pthread_t	report_thread;
 
 typedef struct msg_block_s {
 	pthread_mutex_t	mutex;

@@ -20,9 +20,9 @@
 # include <histedit.h>
 #endif
 
-int	inputstacksize;
-FILE	**inputstack;
-FILE	*curinput;
+static int	inputstacksize;
+static FILE	**inputstack;
+static FILE	*curinput;
 
 static void	popfile(void);
 static int	source_f(int argc, char **argv);

@@ -25,9 +25,9 @@ int	print_overwrite;
 int     print_no_data;
 int     print_no_print;
 int     print_exit = 1; /* -e is now default. specify -c to override */
-int	print_operation = OP_PRINT;
+static int	print_operation = OP_PRINT;
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, _("Usage: %s [options...] <device>\n\n\
@@ -52,7 +52,7 @@ Options:\n\
 	exit(1);
 }
 
-int
+static int
 logstat(xfs_mount_t *mp)
 {
 	int		fd;

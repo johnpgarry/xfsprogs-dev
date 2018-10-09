@@ -14,11 +14,11 @@
 char	*progname;
 int	exitcode;
 int	expert;
-int	idlethread;
+static int	idlethread;
 size_t	pagesize;
 struct timeval stopwatch;
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr,
@@ -124,7 +124,7 @@ init_check_command(
 	return 1;
 }
 
-void
+static void
 init(
 	int		argc,
 	char		**argv)
@@ -235,7 +235,7 @@ init(
  * are not reference counted. Spawning an idle thread can help detecting file
  * struct reference leaks.
  */
-void *
+static void *
 idle_loop(void *arg)
 {
 	for (;;)
@@ -243,7 +243,7 @@ idle_loop(void *arg)
 	return NULL;
 }
 
-void
+static void
 start_idle_thread(void)
 {
 	pthread_t t;

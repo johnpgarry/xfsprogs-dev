@@ -444,7 +444,7 @@ btree_lookup_prev(
 	return value;
 }
 
-void *
+static void *
 btree_uncached_lookup(
 	struct btree_root	*root,
 	unsigned long		key)

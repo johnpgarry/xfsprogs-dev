@@ -1449,7 +1449,7 @@ enum inobt_type {
 	INOBT,
 	FINOBT
 };
-const char *inobt_names[] =	{
+static const char *inobt_names[] = {
 	"inobt",
 	"finobt"
 };

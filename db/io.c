@@ -155,7 +155,7 @@ print_iocur(
 		ioc->dirino, ioc->typ == NULL ? _("none") : ioc->typ->name);
 }
 
-void
+static void
 print_ring(void)
 {
 	int i;

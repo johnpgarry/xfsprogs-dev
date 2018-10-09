@@ -19,7 +19,7 @@
 /*
  * Definition of the possible btree block layouts.
  */
-struct xfs_db_btree {
+static struct xfs_db_btree {
 	uint32_t		magic;
 	size_t			block_len;
 	size_t			key_len;

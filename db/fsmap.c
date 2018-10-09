@@ -99,7 +99,7 @@ fsmap(
 	}
 }
 
-int
+static int
 fsmap_f(
 	int			argc,
 	char			**argv)

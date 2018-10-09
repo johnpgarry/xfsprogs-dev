@@ -8,9 +8,9 @@
 #include "xfs_metadump.h"
 
 char 		*progname;
-int		show_progress = 0;
-int		show_info = 0;
-int		progress_since_warning = 0;
+static int	show_progress = 0;
+static int	show_info = 0;
+static int	progress_since_warning = 0;
 
 static void
 fatal(const char *msg, ...)
