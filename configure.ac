@@ -95,9 +95,15 @@ AC_ARG_ENABLE(lto,
 	enable_lto=probe)
 AC_SUBST(enable_lto)
 
+# Enable xfs_scrub build
+AC_ARG_ENABLE(scrub,
+[ --enable-scrub=[yes/no]    Enable build of xfs_scrub utility [default=yes]],,
+	enable_scrub=yes)
+AC_SUBST(enable_scrub)
+
 # Enable libicu for xfs_scrubbing of malicious unicode sequences in names
 AC_ARG_ENABLE(libicu,
-[ --enable-libicu=[yes/no]   Enable Unicode name scanning (libicu) [default=probe]],,
+[ --enable-libicu=[yes/no]   Enable Unicode name scanning in xfs_scrub (libicu) [default=probe]],,
 	enable_libicu=probe)
 
 #
@@ -177,11 +183,13 @@ AC_HAVE_DEVMAPPER
 AC_HAVE_MALLINFO
 AC_PACKAGE_WANT_ATTRIBUTES_H
 AC_HAVE_LIBATTR
-if test "$enable_libicu" = "yes" || test "$enable_libicu" = "probe"; then
-	AC_HAVE_LIBICU
-fi
-if test "$enable_libicu" = "yes" && test "$have_libicu" != "yes"; then
-        AC_MSG_ERROR([libicu not found.])
+if test "$enable_scrub" = "yes"; then
+        if test "$enable_libicu" = "yes" || test "$enable_libicu" = "probe"; then
+                AC_HAVE_LIBICU
+        fi
+        if test "$enable_libicu" = "yes" && test "$have_libicu" != "yes"; then
+                AC_MSG_ERROR([libicu not found.])
+        fi
 fi
 AC_HAVE_OPENAT
 AC_HAVE_FSTATAT

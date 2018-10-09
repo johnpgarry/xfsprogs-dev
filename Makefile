@@ -49,7 +49,11 @@ LIBFROG_SUBDIR = libfrog
 DLIB_SUBDIRS = libxlog libxcmd libhandle
 LIB_SUBDIRS = libxfs $(DLIB_SUBDIRS)
 TOOL_SUBDIRS = copy db estimate fsck fsr growfs io logprint mkfs quota \
-		mdrestore repair rtcp m4 man doc debian spaceman scrub
+		mdrestore repair rtcp m4 man doc debian spaceman
+
+ifeq ("$(ENABLE_SCRUB)","yes")
+TOOL_SUBDIRS += scrub
+endif
 
 ifneq ("$(XGETTEXT)","")
 TOOL_SUBDIRS += po
