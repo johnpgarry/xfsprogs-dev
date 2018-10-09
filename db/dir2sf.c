@@ -30,8 +30,8 @@ const field_t	dir2sf_flds[] = {
 };
 
 const field_t	dir2_inou_flds[] = {
-	{ "i8", FLDT_DIR2_INO8, 0, dir2_inou_i8_count, FLD_COUNT, TYP_INODE },
-	{ "i4", FLDT_DIR2_INO4, 0, dir2_inou_i4_count, FLD_COUNT, TYP_INODE },
+	{ "i8", FLDT_DIR2_INO8, NULL, dir2_inou_i8_count, FLD_COUNT, TYP_INODE},
+	{ "i4", FLDT_DIR2_INO4, NULL, dir2_inou_i4_count, FLD_COUNT, TYP_INODE},
 	{ NULL }
 };
 

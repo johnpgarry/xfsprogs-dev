@@ -241,7 +241,7 @@ main(int argc, char **argv)
 	if (vflag)
 		setbuf(stdout, NULL);
 
-	starttime = time(0);
+	starttime = time(NULL);
 
 	/* Save the caller's real uid */
 	RealUid = getuid();
@@ -525,7 +525,7 @@ fsrallfs(char *mtab, int howlong, char *leftofffile)
 	signal(SIGTERM, aborter);
 
 	/* reorg for 'howlong' -- checked in 'fsrfs' */
-	while (endtime > time(0)) {
+	while (endtime > time(NULL)) {
 		pid_t pid;
 
 		if (npasses > 1 && !fs->npass)
@@ -560,7 +560,7 @@ fsrallfs(char *mtab, int howlong, char *leftofffile)
 			break;
 		}
 	}
-	fsrall_cleanup(endtime <= time(0));
+	fsrall_cleanup(endtime <= time(NULL));
 }
 
 /*
@@ -578,7 +578,7 @@ fsrall_cleanup(int timeout)
 	if (timeout) {
 		fsrprintf(_("%s startpass %d, endpass %d, time %d seconds\n"),
 			progname, startpass, fs->npass,
-			time(0) - endtime + howlong);
+			time(NULL) - endtime + howlong);
 
 		/* record where we left off */
 		fd = open(leftofffile, O_WRONLY|O_CREAT|O_EXCL, 0644);
@@ -688,7 +688,7 @@ fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 					break;
 			}
 		}
-		if (endtime && endtime < time(0)) {
+		if (endtime && endtime < time(NULL)) {
 			tmp_close(mntdir);
 			close(fsfd);
 			fsrall_cleanup(1);

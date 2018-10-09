@@ -779,7 +779,7 @@ struct xfs_buf *
 libxfs_getbuf_flags(struct xfs_buftarg *btp, xfs_daddr_t blkno, int len,
 		unsigned int flags)
 {
-	struct xfs_bufkey key = {0};
+	struct xfs_bufkey key = {NULL};
 
 	key.buftarg = btp;
 	key.blkno = blkno;
@@ -822,7 +822,7 @@ static struct xfs_buf *
 __libxfs_getbuf_map(struct xfs_buftarg *btp, struct xfs_buf_map *map,
 		    int nmaps, int flags)
 {
-	struct xfs_bufkey key = {0};
+	struct xfs_bufkey key = {NULL};
 	int i;
 
 	if (nmaps == 1)
@@ -882,7 +882,7 @@ libxfs_putbuf(xfs_buf_t *bp)
 void
 libxfs_purgebuf(xfs_buf_t *bp)
 {
-	struct xfs_bufkey key = {0};
+	struct xfs_bufkey key = {NULL};
 
 	key.buftarg = bp->b_target;
 	key.blkno = bp->b_bn;

@@ -259,7 +259,7 @@ newfile(
 			exit(1);
 		}
 		d = XFS_FSB_TO_DADDR(mp, map.br_startblock);
-		bp = libxfs_trans_get_buf(logit ? tp : 0, mp->m_dev, d,
+		bp = libxfs_trans_get_buf(logit ? tp : NULL, mp->m_dev, d,
 			nb << mp->m_blkbb_log, 0);
 		memmove(bp->b_addr, buf, len);
 		if (len < bp->b_bcount)
@@ -297,7 +297,7 @@ newregfile(
 			exit(1);
 		}
 	} else
-		buf = 0;
+		buf = NULL;
 	close(fd);
 	return buf;
 }
