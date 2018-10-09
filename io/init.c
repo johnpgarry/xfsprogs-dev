@@ -240,6 +240,7 @@ idle_loop(void *arg)
 {
 	for (;;)
 		pause();
+	return NULL;
 }
 
 void

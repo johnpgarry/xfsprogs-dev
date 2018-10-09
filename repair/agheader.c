@@ -245,7 +245,7 @@ secondary_sb_whack(
 	int		do_bzero = 0;
 	int		size;
 	char		*ip;
-	int		rval = 0;;
+	int		rval = 0;
 	uuid_t		tmpuuid;
 
 	rval = do_bzero = 0;
