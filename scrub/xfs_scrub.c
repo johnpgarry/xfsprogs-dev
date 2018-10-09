@@ -425,7 +425,7 @@ run_scrub_phases(
 	unsigned int		nr_threads;
 	int			rshift;
 
-	if (debug && debug_tweak_on("XFS_SCRUB_PHASE"))
+	if (debug_tweak_on("XFS_SCRUB_PHASE"))
 		debug_phase = atoi(getenv("XFS_SCRUB_PHASE"));
 
 	/* Run all phases of the scrub tool. */
