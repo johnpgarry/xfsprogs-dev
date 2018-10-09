@@ -1667,7 +1667,10 @@ sector_opts_parser(
 struct subopts {
 	char		opt;
 	struct opt_params *opts;
-	int		(*parser)();
+	int		(*parser)(struct opt_params	*opts,
+				  int			subopt,
+				  char			*value,
+				  struct cli_params	*cli);
 } subopt_tab[] = {
 	{ 'b', &bopts, block_opts_parser },
 	{ 'd', &dopts, data_opts_parser },
