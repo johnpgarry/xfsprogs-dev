@@ -7,9 +7,7 @@
 #ifndef _XFS_REPAIR_GLOBAL_H
 #define _XFS_REPAIR_GLOBAL_H
 
-#ifndef EXTERN
-#define EXTERN extern
-#endif
+#include "libxfs.h"
 
 /* useful macros */
 
@@ -53,91 +51,91 @@
 
 /* arguments and argument flag variables */
 
-EXTERN char	*fs_name;		/* name of filesystem */
-EXTERN int	verbose;		/* verbose flag, mostly for debugging */
+extern char	*fs_name;		/* name of filesystem */
+extern int	verbose;		/* verbose flag, mostly for debugging */
 
 
 /* for reading stuff in manually (bypassing libsim) */
 
-EXTERN char	*iobuf;			/* large buffer */
-EXTERN int	iobuf_size;
-EXTERN char	*smallbuf;		/* small (1-4 page) buffer */
-EXTERN int	smallbuf_size;
-EXTERN int	sbbuf_size;
+extern char	*iobuf;			/* large buffer */
+extern int	iobuf_size;
+extern char	*smallbuf;		/* small (1-4 page) buffer */
+extern int	smallbuf_size;
+extern int	sbbuf_size;
 
 /* direct I/O info */
 
-EXTERN int	minio_align;		/* min I/O size and alignment */
-EXTERN int	mem_align;		/* memory alignment */
-EXTERN int	max_iosize;		/* max I/O size */
+extern int	minio_align;		/* min I/O size and alignment */
+extern int	mem_align;		/* memory alignment */
+extern int	max_iosize;		/* max I/O size */
 
 /* file descriptors */
 
-EXTERN int	fs_fd;			/* filesystem fd */
+extern int	fs_fd;			/* filesystem fd */
 
 /* command-line flags */
 
-EXTERN int	verbose;
-EXTERN int	no_modify;
-EXTERN int	dangerously;		/* live dangerously ... fix ro mount */
-EXTERN int	isa_file;
-EXTERN int	zap_log;
-EXTERN int	dumpcore;		/* abort, not exit on fatal errs */
-EXTERN int	force_geo;		/* can set geo on low confidence info */
-EXTERN int	assume_xfs;		/* assume we have an xfs fs */
-EXTERN char	*log_name;		/* Name of log device */
-EXTERN int	log_spec;		/* Log dev specified as option */
-EXTERN char	*rt_name;		/* Name of realtime device */
-EXTERN int	rt_spec;		/* Realtime dev specified as option */
-EXTERN int	convert_lazy_count;	/* Convert lazy-count mode on/off */
-EXTERN int	lazy_count;		/* What to set if to if converting */
+extern int	verbose;
+extern int	no_modify;
+extern int	dangerously;		/* live dangerously ... fix ro mount */
+extern int	isa_file;
+extern int	zap_log;
+extern int	dumpcore;		/* abort, not exit on fatal errs */
+extern int	force_geo;		/* can set geo on low confidence info */
+extern int	assume_xfs;		/* assume we have an xfs fs */
+extern char	*log_name;		/* Name of log device */
+extern int	log_spec;		/* Log dev specified as option */
+extern char	*rt_name;		/* Name of realtime device */
+extern int	rt_spec;		/* Realtime dev specified as option */
+extern int	convert_lazy_count;	/* Convert lazy-count mode on/off */
+extern int	lazy_count;		/* What to set if to if converting */
 
 /* misc status variables */
 
-EXTERN int		primary_sb_modified;
-EXTERN int		bad_ino_btree;
-EXTERN int		copied_sunit;
-EXTERN int		fs_is_dirty;
+extern int		primary_sb_modified;
+extern int		bad_ino_btree;
+extern int		copied_sunit;
+extern int		fs_is_dirty;
 
 /* for hunting down the root inode */
 
-EXTERN int		need_root_inode;
-EXTERN int		need_root_dotdot;
+extern int		need_root_inode;
+extern int		need_root_dotdot;
 
-EXTERN int		need_rbmino;
-EXTERN int		need_rsumino;
+extern int		need_rbmino;
+extern int		need_rsumino;
 
-EXTERN int		lost_quotas;
-EXTERN int		have_uquotino;
-EXTERN int		have_gquotino;
-EXTERN int		have_pquotino;
-EXTERN int		lost_uquotino;
-EXTERN int		lost_gquotino;
-EXTERN int		lost_pquotino;
+extern int		lost_quotas;
+extern int		have_uquotino;
+extern int		have_gquotino;
+extern int		have_pquotino;
+extern int		lost_uquotino;
+extern int		lost_gquotino;
+extern int		lost_pquotino;
 
-EXTERN xfs_agino_t	first_prealloc_ino;
-EXTERN xfs_agino_t	last_prealloc_ino;
-EXTERN xfs_agblock_t	bnobt_root;
-EXTERN xfs_agblock_t	bcntbt_root;
-EXTERN xfs_agblock_t	inobt_root;
+extern xfs_agino_t	first_prealloc_ino;
+extern xfs_agino_t	last_prealloc_ino;
+extern xfs_agblock_t	bnobt_root;
+extern xfs_agblock_t	bcntbt_root;
+extern xfs_agblock_t	inobt_root;
 
 /* configuration vars -- fs geometry dependent */
 
-EXTERN int		inodes_per_block;
-EXTERN int		inodes_per_cluster;
-EXTERN unsigned int	glob_agcount;
-EXTERN int		chunks_pblock;	/* # of 64-ino chunks per allocation */
-EXTERN int		max_symlink_blocks;
-EXTERN int64_t		fs_max_file_offset;
+extern int		inodes_per_block;
+extern int		inodes_per_cluster;
+extern unsigned int	glob_agcount;
+extern int		chunks_pblock;	/* # of 64-ino chunks per allocation */
+extern int		max_symlink_blocks;
+extern int64_t		fs_max_file_offset;
 
 /* realtime info */
 
-EXTERN xfs_rtword_t	*btmcompute;
-EXTERN xfs_suminfo_t	*sumcompute;
+extern xfs_rtword_t	*btmcompute;
+extern xfs_suminfo_t	*sumcompute;
 
 /* inode tree records have full or partial backptr fields ? */
 
-EXTERN int		full_ino_ex_data;/*
+extern int		full_ino_ex_data;/*
 					  * if 1, use ino_ex_data_t component
 					  * of ino_un union, if 0, use
 					  * parent_list_t component.  see
@@ -148,26 +146,26 @@ EXTERN int		full_ino_ex_data;/*
 
 /* superblock counters */
 
-EXTERN uint64_t	sb_icount;	/* allocated (made) inodes */
-EXTERN uint64_t	sb_ifree;	/* free inodes */
-EXTERN uint64_t	sb_fdblocks;	/* free data blocks */
-EXTERN uint64_t	sb_frextents;	/* free realtime extents */
+extern uint64_t	sb_icount;	/* allocated (made) inodes */
+extern uint64_t	sb_ifree;	/* free inodes */
+extern uint64_t	sb_fdblocks;	/* free data blocks */
+extern uint64_t	sb_frextents;	/* free realtime extents */
 
 /* superblock geometry info */
 
-EXTERN xfs_extlen_t	sb_inoalignmt;
-EXTERN uint32_t	sb_unit;
-EXTERN uint32_t	sb_width;
+extern xfs_extlen_t	sb_inoalignmt;
+extern uint32_t	sb_unit;
+extern uint32_t	sb_width;
 
 struct aglock {
 	pthread_mutex_t	lock __attribute__((__aligned__(64)));
 };
-EXTERN struct aglock	*ag_locks;
+extern struct aglock	*ag_locks;
 
-EXTERN int		report_interval;
-EXTERN uint64_t		*prog_rpt_done;
+extern int		report_interval;
+extern uint64_t		*prog_rpt_done;
 
-EXTERN int		ag_stride;
-EXTERN int		thread_count;
+extern int		ag_stride;
+extern int		thread_count;
 
 #endif /* _XFS_REPAIR_GLOBAL_H */

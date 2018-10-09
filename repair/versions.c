@@ -6,11 +6,28 @@
 
 #include "libxfs.h"
 
-#define EXTERN
-#include "versions.h"
-#undef EXTERN
 #include "err_protos.h"
 #include "globals.h"
+#include "versions.h"
+
+/*
+ * filesystem feature global vars, set to 1 if the feature
+ * is on, 0 otherwise
+ */
+
+int fs_attributes;
+int fs_attributes2;
+int fs_inode_nlink;
+int fs_quotas;
+int fs_aligned_inodes;
+int fs_sb_feature_bits;
+int fs_has_extflgbit;
+
+/*
+ * inode chunk alignment, fsblocks
+ */
+
+xfs_extlen_t	fs_ino_alignment;
 
 void
 update_sb_version(xfs_mount_t *mp)

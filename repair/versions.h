@@ -16,19 +16,19 @@
  * is on, 0 otherwise
  */
 
-EXTERN int		fs_attributes;
-EXTERN int		fs_attributes2;
-EXTERN int		fs_inode_nlink;
-EXTERN int		fs_quotas;
-EXTERN int		fs_aligned_inodes;
-EXTERN int		fs_sb_feature_bits;
-EXTERN int		fs_has_extflgbit;
+extern int		fs_attributes;
+extern int		fs_attributes2;
+extern int		fs_inode_nlink;
+extern int		fs_quotas;
+extern int		fs_aligned_inodes;
+extern int		fs_sb_feature_bits;
+extern int		fs_has_extflgbit;
 
 /*
  * inode chunk alignment, fsblocks
  */
 
-EXTERN xfs_extlen_t	fs_ino_alignment;
+extern xfs_extlen_t	fs_ino_alignment;
 
 /*
  * modify superblock to reflect current state of global fs
