@@ -2389,8 +2389,7 @@ _("log stripe unit (%d bytes) is too large (maximum is 256KiB)\n"
 static void
 open_devices(
 	struct mkfs_params	*cfg,
-	struct libxfs_xinit	*xi,
-	bool			discard)
+	struct libxfs_xinit	*xi)
 {
 	uint64_t		sector_mask;
 
@@ -2419,10 +2418,15 @@ open_devices(
 	xi->dsize &= sector_mask;
 	xi->rtsize &= sector_mask;
 	xi->logBBsize &= (uint64_t)-1 << (max(cfg->lsectorlog, 10) - BBSHIFT);
+}
 
-
-	if (!discard)
-		return;
+static void
+discard_devices(
+	struct libxfs_xinit	*xi)
+{
+	/*
+	 * This function has to be called after libxfs has been initialized.
+	 */
 
 	if (!xi->disfile)
 		discard_blocks(xi->ddev, xi->dsize);
@@ -3902,7 +3906,7 @@ main(
 	/*
 	 * Open and validate the device configurations
 	 */
-	open_devices(&cfg, &xi, (discard && !dry_run));
+	open_devices(&cfg, &xi);
 	validate_datadev(&cfg, &cli);
 	validate_logdev(&cfg, &cli, &logfile);
 	validate_rtdev(&cfg, &cli, &rtfile);
@@ -3952,6 +3956,12 @@ main(
 		if (dry_run)
 			exit(0);
 	}
+
+	/*
+	 * All values have been validated, discard the old device layout.
+	 */
+	if (discard && !dry_run)
+		discard_devices(&xi);
 
 	/*
 	 * we need the libxfs buffer cache from here on in.
