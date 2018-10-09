@@ -16,6 +16,7 @@ convert.c \
 crc32.c \
 fsgeom.c \
 list_sort.c \
+linux.c \
 paths.c \
 projects.c \
 ptvar.c \
@@ -29,10 +30,6 @@ crc32defs.h \
 crc32table.h
 
 LSRCFILES += gen_crc32table.c
-
-CFILES += $(PKG_PLATFORM).c
-PCFILES = linux.c
-LSRCFILES = $(shell echo $(PCFILES) | sed -e "s/$(PKG_PLATFORM).c//g")
 
 ifeq ($(HAVE_GETMNTENT),yes)
 LCFLAGS += -DHAVE_GETMNTENT

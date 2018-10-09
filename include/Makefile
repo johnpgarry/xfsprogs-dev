@@ -35,14 +35,12 @@ LIBHFILES = libxfs.h \
 
 HFILES = handle.h \
 	jdm.h \
-	$(PKG_PLATFORM).h \
+	linux.h \
 	xfs.h \
 	xqm.h \
 	xfs_arch.h
 
-PHFILES = linux.h
-LSRCFILES = $(shell echo $(PHFILES) | sed -e "s/$(PKG_PLATFORM).h//g")
-LSRCFILES += platform_defs.h.in builddefs.in buildmacros buildrules install-sh
+LSRCFILES = platform_defs.h.in builddefs.in buildmacros buildrules install-sh
 LSRCFILES += $(DKHFILES) $(LIBHFILES)
 LDIRT = disk
 LDIRDIRT = xfs
@@ -56,7 +54,7 @@ disk:
 include $(BUILDRULES)
 
 # set up include/xfs header directory
-install-headers: $(addsuffix -hdrs, $(PHFILES) $(DKHFILES) $(HFILES))
+install-headers: $(addsuffix -hdrs, $(DKHFILES) $(HFILES))
 
 %-hdrs:
 	$(Q)$(LN_S) -f $(CURDIR)/$* xfs/$*

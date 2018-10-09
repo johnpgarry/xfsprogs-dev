@@ -108,11 +108,9 @@ LCFLAGS += -DHAVE_DEVMAPPER
 endif
 
 # On linux we get fsmap from the system or define it ourselves
-# so include this based on platform type.  If this reverts to only
-# the autoconf check w/o local definition, change to testing HAVE_GETFSMAP
-ifeq ($(PKG_PLATFORM),linux)
+# so include this unconditionally.  If this reverts to only
+# the autoconf check w/o local definition, test HAVE_GETFSMAP
 CFILES += fsmap.c
-endif
 
 ifeq ($(HAVE_STATFS_FLAGS),yes)
 LCFLAGS += -DHAVE_STATFS_FLAGS

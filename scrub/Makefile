@@ -8,9 +8,9 @@ include $(TOPDIR)/include/builddefs
 # On linux we get fsmap from the system or define it ourselves
 # so include this based on platform type.  If this reverts to only
 # the autoconf check w/o local definition, change to testing HAVE_GETFSMAP
-SCRUB_PREREQS=$(PKG_PLATFORM)$(HAVE_OPENAT)$(HAVE_FSTATAT)
+SCRUB_PREREQS=$(HAVE_OPENAT)$(HAVE_FSTATAT)
 
-ifeq ($(SCRUB_PREREQS),linuxyesyes)
+ifeq ($(SCRUB_PREREQS),yesyes)
 LTCOMMAND = xfs_scrub
 INSTALL_SCRUB = install-scrub
 XFS_SCRUB_ALL_PROG = xfs_scrub_all
