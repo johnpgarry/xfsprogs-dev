@@ -4,7 +4,6 @@
  */
 
 #include <sys/ioctl.h>
-#include <sys/mount.h>
 #include "platform_defs.h"
 #include "libxfs.h"
 #include "path.h"

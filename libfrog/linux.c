@@ -6,7 +6,6 @@
 
 #include <mntent.h>
 #include <sys/stat.h>
-#include <sys/mount.h>
 #include <sys/ioctl.h>
 #include <sys/sysinfo.h>
 
