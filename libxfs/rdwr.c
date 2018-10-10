@@ -545,14 +545,6 @@ libxfs_bcompare(struct cache_node *node, cache_key_t key)
 }
 
 static void
-libxfs_bprint(xfs_buf_t *bp)
-{
-	fprintf(stderr, "Buffer %p blkno=%llu bytes=%u flags=0x%x count=%u\n",
-		bp, (unsigned long long)bp->b_bn, (unsigned)bp->b_bcount,
-		bp->b_flags, bp->b_node.cn_count);
-}
-
-static void
 __initbuf(xfs_buf_t *bp, struct xfs_buftarg *btp, xfs_daddr_t bno,
 		unsigned int bytes)
 {

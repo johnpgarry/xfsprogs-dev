@@ -380,69 +380,6 @@ libxfs_ialloc(
 	return 0;
 }
 
-static void
-libxfs_iprint(
-	xfs_inode_t		*ip)
-{
-	struct xfs_icdinode	*dip;
-	xfs_extnum_t		i = 0;
-	struct xfs_ifork	*ifp;		/* inode fork pointer */
-	struct xfs_iext_cursor	icur;
-	xfs_bmbt_irec_t		rec;
-
-	printf("Inode %lx\n", (unsigned long)ip);
-	printf("    i_ino %llx\n", (unsigned long long)ip->i_ino);
-
-	if (ip->i_df.if_flags & XFS_IFEXTENTS)
-		printf("EXTENTS ");
-	printf("\n");
-	printf("    i_df.if_bytes %d\n", ip->i_df.if_bytes);
-	printf("    i_df.if_u1.if_root/if_data %lx\n",
-		(unsigned long)ip->i_df.if_u1.if_root);
-	if (ip->i_df.if_flags & XFS_IFEXTENTS) {
-		ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
-		for_each_xfs_iext(ifp, &icur, &rec) {
-			printf("\t%d: startoff %llu, startblock 0x%llx,"
-				" blockcount %llu, state %d\n",
-				i, (unsigned long long)rec.br_startoff,
-				(unsigned long long)rec.br_startblock,
-				(unsigned long long)rec.br_blockcount,
-				(int)rec.br_state);
-			i++;
-		}
-	}
-	printf("    i_df.if_broot %lx\n", (unsigned long)ip->i_df.if_broot);
-	printf("    i_df.if_broot_bytes %x\n", ip->i_df.if_broot_bytes);
-
-	dip = &ip->i_d;
-	printf("\nOn disk portion\n");
-	printf("    di_mode %o\n", VFS_I(ip)->i_mode);
-	printf("    di_version %x\n", (uint)dip->di_version);
-	switch (ip->i_d.di_format) {
-	case XFS_DINODE_FMT_LOCAL:
-		printf("    Inline inode\n");
-		break;
-	case XFS_DINODE_FMT_EXTENTS:
-		printf("    Extents inode\n");
-		break;
-	case XFS_DINODE_FMT_BTREE:
-		printf("    B-tree inode\n");
-		break;
-	default:
-		printf("    Other inode\n");
-		break;
-	}
-	printf("   di_nlink %x\n", VFS_I(ip)->i_nlink);
-	printf("   di_uid %d\n", dip->di_uid);
-	printf("   di_gid %d\n", dip->di_gid);
-	printf("   di_nextents %d\n", dip->di_nextents);
-	printf("   di_size %llu\n", (unsigned long long)dip->di_size);
-	printf("   di_gen %x\n", VFS_I(ip)->i_generation);
-	printf("   di_extsize %d\n", dip->di_extsize);
-	printf("   di_flags %x\n", dip->di_flags);
-	printf("   di_nblocks %llu\n", (unsigned long long)dip->di_nblocks);
-}
-
 /*
  * Writes a modified inode's changes out to the inode's on disk home.
  * Originally based on xfs_iflush_int() from xfs_inode.c in the kernel.

@@ -444,29 +444,6 @@ btree_lookup_prev(
 	return value;
 }
 
-static void *
-btree_uncached_lookup(
-	struct btree_root	*root,
-	unsigned long		key)
-{
-	/* cursor-less (ie. uncached) lookup */
-	int			height = root->height - 1;
-	struct btree_node	*node = root->root_node;
-	int			i;
-	int			key_found = 0;
-
-	while (height >= 0) {
-		for (i = 0; i < node->num_keys; i++)
-			if (node->keys[i] >= key) {
-				key_found = node->keys[i] == key;
-				break;
-			}
-		node = node->ptrs[i];
-		height--;
-	}
-	return key_found ? node : NULL;
-}
-
 /* Update functions */
 
 static inline void
