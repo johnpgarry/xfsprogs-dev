@@ -1,3 +1,10 @@
+xfsprogs-4.19.0-rc0 (10 Oct 2018)
+	- Majority of 4.19 libxfs changes merged from kernel
+	- Big sparse static checker cleanup (Eric Sandeen)
+	- mkfs.xfs discard fixes (Jan Tulak)
+	- xfs_io readv/writev cleanup (Zorro Lang)
+	- libxfs transaction commit error checking (Darrick Wong)
+
 xfsprogs-4.18.0 (24 Aug 2018)
 	- Tweak SPDX license in xfs_cksum.h (Darrick Wong)
 
