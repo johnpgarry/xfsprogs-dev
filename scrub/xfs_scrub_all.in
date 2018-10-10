@@ -82,11 +82,16 @@ def run_killable(cmd, stdout, killfuncs, kill_fn):
 # actually /can/ escape the dashes correctly if it is told that this is a path
 # (and not a unit name), but it didn't do this prior to January 2017, so fix
 # this for them.
+#
+# systemd path escaping also drops the initial slash so we add that back in so
+# that log messages from the service units preserve the full path and users can
+# look up log messages using full paths.  However, for "/" the escaping rules
+# do /not/ drop the initial slash, so we have to special-case that here.
 def systemd_escape(path):
 	'''Escape a path to avoid mangled systemd mangling.'''
 
-	if '-' not in path:
-		return path
+	if path == '/':
+		return '-'
 	cmd = ['systemd-escape', '--path', path]
 	try:
 		proc = subprocess.Popen(cmd, stdout = subprocess.PIPE)
