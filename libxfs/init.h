@@ -7,6 +7,7 @@
 #define LIBXFS_INIT_H
 
 struct stat;
+extern int     use_xfs_buf_lock;
 
 extern int platform_check_ismounted (char *path, char *block,
 					struct stat *sptr, int verbose);

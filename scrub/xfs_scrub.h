@@ -6,6 +6,8 @@
 #ifndef XFS_SCRUB_XFS_SCRUB_H_
 #define XFS_SCRUB_XFS_SCRUB_H_
 
+extern char *progname;
+
 #define _PATH_PROC_MOUNTS	"/proc/mounts"
 
 extern unsigned int		nr_threads;

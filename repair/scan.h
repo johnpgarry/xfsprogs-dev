@@ -8,6 +8,8 @@
 
 struct blkmap;
 
+void set_mp(xfs_mount_t *mpp);
+
 int scan_lbtree(
 	xfs_fsblock_t	root,
 	int		nlevels,

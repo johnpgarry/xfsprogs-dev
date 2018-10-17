@@ -712,8 +712,6 @@ struct list_head	lock_buf_list = {&lock_buf_list, &lock_buf_list};
 int			lock_buf_count = 0;
 #endif
 
-extern int     use_xfs_buf_lock;
-
 static struct xfs_buf *
 __cache_lookup(struct xfs_bufkey *key, unsigned int flags)
 {

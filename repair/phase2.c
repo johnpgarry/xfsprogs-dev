@@ -15,8 +15,6 @@
 #include "progress.h"
 #include "scan.h"
 
-void	set_mp(xfs_mount_t *mpp);
-
 /* workaround craziness in the xlog routines */
 int xlog_recover_do_trans(struct xlog *log, xlog_recover_t *t, int p)
 {
