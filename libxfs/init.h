@@ -19,5 +19,7 @@ extern char *platform_findblockpath (char *path);
 extern int platform_direct_blockdev (void);
 extern int platform_align_blockdev (void);
 extern unsigned long platform_physmem(void);	/* in kilobytes */
+extern void platform_findsizes(char *path, int fd, long long *sz, int *bsz);
+extern int platform_nproc(void);
 
 #endif	/* LIBXFS_INIT_H */

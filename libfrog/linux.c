@@ -11,6 +11,7 @@
 
 #include "libxfs_priv.h"
 #include "xfs_fs.h"
+#include "init.h"
 
 extern char *progname;
 static int max_block_alignment;
