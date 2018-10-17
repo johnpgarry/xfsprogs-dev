@@ -40,6 +40,21 @@ endif
 # Standard targets
 #
 
+ifeq ($(CHECKSRC),2)
+
+# Check every .c file with sparse CHECK_CMD, do not call compiler
+$(LTCOMMAND) $(LTLIBRARY) : $(SUBDIRS) $(OBJECTS)
+.PHONY: $(LTCOMMAND) $(LTLIBRARY)
+
+%.lo %.o : %.c FORCE
+	@echo "    [CHECK]  $<"
+	$(Q)$(CHECK_CMD) $(CFLAGS) $<
+
+FORCE:
+
+else
+# Regular build, possibly calling sparse CHECK_CMD as well
+
 ifdef LTCOMMAND
 $(LTCOMMAND) : $(SUBDIRS) $(OBJECTS) $(LTDEPENDENCIES)
 	@echo "    [LD]     $@"
@@ -62,6 +77,7 @@ else
 	$(Q)$(CC) $(CFLAGS) -c $<
 	$(Q)$(CHECK_CMD) $(CFLAGS) $<
 
+endif
 endif
 
 ifdef POTHEAD

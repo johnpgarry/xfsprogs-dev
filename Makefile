@@ -21,14 +21,14 @@ CHECK_OPTS=-Wsparse-all -Wbitwise -Wno-transparent-union -Wno-return-void -Wno-u
 	-Wno-non-pointer-null -D__CHECK_ENDIAN__ -D__linux__
 
 ifeq ("$(origin C)", "command line")
-  ifeq ("$(C)", "1")
-    CHECK_CMD=$(CHECK) $(CHECK_OPTS)
-  else
-    CHECK_CMD=@true
-  endif
+  CHECK_CMD=$(CHECK) $(CHECK_OPTS)
+  CHECKSRC=$(C)
+else
+  CHECK_CMD=@true
+  CHECKSRC=0
 endif
 
-export CHECK_CMD
+export CHECK_CMD CHECKSRC
 
 MAKEOPTS = --no-print-directory Q=$(Q)
 
