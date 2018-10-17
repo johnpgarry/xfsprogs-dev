@@ -15,12 +15,8 @@ char *projid_file;
 char *projects_file;
 
 static FILE *projects;
-static fs_project_t p;
-static char projects_buffer[512];
 
 static FILE *project_paths;
-static fs_project_path_t pp;
-static char project_paths_buffer[1024];
 
 void
 setprfiles(void)
@@ -64,8 +60,10 @@ endprpathent(void)
 fs_project_t *
 getprent(void)
 {
-	char	*idstart, *idend;
-	size_t	size = sizeof(projects_buffer) - 1;
+	static		fs_project_t p;
+	static char	projects_buffer[512];
+	char		*idstart, *idend;
+	size_t		size = sizeof(projects_buffer) - 1;
 
 	if (!projects)
 		return NULL;
@@ -125,6 +123,8 @@ getprprid(
 fs_project_path_t *
 getprpathent(void)
 {
+	static 		fs_project_path_t pp;
+	static char	project_paths_buffer[1024];
 	char		*nmstart, *nmend;
 	size_t		size = sizeof(project_paths_buffer) - 1;
 
