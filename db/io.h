@@ -26,10 +26,10 @@ typedef struct iocur {
 	const struct typ	*typ;	/* type of "data" */
 	bbmap_t			*bbmap;	/* map daddr if fragmented */
 	struct xfs_buf		*bp;	/* underlying buffer */
-	int			ino_crc_ok:1;
-	int			ino_buf:1;
-	int			dquot_buf:1;
-	int			need_crc:1;
+	bool			ino_crc_ok;
+	bool			ino_buf;
+	bool			dquot_buf;
+	bool			need_crc;
 } iocur_t;
 
 #define DB_RING_ADD 1                   /* add to ring on set_cur */

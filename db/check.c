@@ -41,8 +41,8 @@ typedef struct inodata {
 	struct inodata	*next;
 	nlink_t		link_set;
 	nlink_t		link_add;
-	char		isdir:1;
-	char		isreflink:1;
+	bool		isdir;
+	bool		isreflink;
 	char		security;
 	char		ilist;
 	xfs_ino_t	ino;
