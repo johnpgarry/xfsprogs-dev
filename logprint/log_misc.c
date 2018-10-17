@@ -192,7 +192,6 @@ xlog_print_trans_buffer(char **ptr, int len, int *i, int num_ops)
     int64_t			 blkno;
     xfs_buf_log_format_t lbuf;
     int			 size, blen, map_size, struct_size;
-    __be64		 x, y;
     unsigned short	 flags;
 
     /*
@@ -247,20 +246,22 @@ xlog_print_trans_buffer(char **ptr, int len, int *i, int num_ops)
 		if (be32_to_cpu(head->oh_len) < 4*8) {
 			printf(_("Out of space\n"));
 		} else {
+			__be64		 a, b;
+
 			printf("\n");
 			/*
 			 * memmove because *ptr may not be 8-byte aligned
 			 */
-			memmove(&x, *ptr, sizeof(__be64));
-			memmove(&y, *ptr+8, sizeof(__be64));
-		       printf(_("icount: %llu  ifree: %llu  "),
-			       (unsigned long long) be64_to_cpu(x),
-			       (unsigned long long) be64_to_cpu(y));
-			memmove(&x, *ptr+16, sizeof(__be64));
-			memmove(&y, *ptr+24, sizeof(__be64));
-		       printf(_("fdblks: %llu  frext: %llu\n"),
-			       (unsigned long long) be64_to_cpu(x),
-			       (unsigned long long) be64_to_cpu(y));
+			memmove(&a, *ptr, sizeof(__be64));
+			memmove(&b, *ptr+8, sizeof(__be64));
+			printf(_("icount: %llu  ifree: %llu  "),
+			       (unsigned long long) be64_to_cpu(a),
+			       (unsigned long long) be64_to_cpu(b));
+			memmove(&a, *ptr+16, sizeof(__be64));
+			memmove(&b, *ptr+24, sizeof(__be64));
+			printf(_("fdblks: %llu  frext: %llu\n"),
+			       (unsigned long long) be64_to_cpu(a),
+			       (unsigned long long) be64_to_cpu(b));
 		}
 		super_block = 0;
 	} else if (be32_to_cpu(*(__be32 *)(*ptr)) == XFS_AGI_MAGIC) {
@@ -1185,7 +1186,7 @@ xlog_print_extended_headers(
 	int 			num_hdrs;
 	int 			num_required;
 	char			xhbuf[XLOG_HEADER_SIZE];
-	xlog_rec_ext_header_t	*x;
+	xlog_rec_ext_header_t	*xhdr;
 
 	num_required = howmany(len, XLOG_HEADER_CYCLE_SIZE);
 	num_hdrs = be32_to_cpu(hdr->h_size) / XLOG_HEADER_CYCLE_SIZE;
@@ -1210,7 +1211,7 @@ xlog_print_extended_headers(
 	*ret_num_hdrs = num_hdrs;
 
 	/* don't include 1st header */
-	for (i = 1, x = *ret_xhdrs; i < num_hdrs; i++, (*blkno)++, x++) {
+	for (i = 1, xhdr = *ret_xhdrs; i < num_hdrs; i++, (*blkno)++, xhdr++) {
 	    /* read one extra header blk */
 	    if (read(fd, xhbuf, 512) == 0) {
 		printf(_("%s: physical end of log\n"), progname);
@@ -1240,9 +1241,9 @@ xlog_print_extended_headers(
 	     * will look asymmetric with the 1 hdr normal case
 	     * which does endian coversion on access.
 	     */
-	    x->xh_cycle = ((xlog_rec_ext_header_t*)xhbuf)->xh_cycle;
+	    xhdr->xh_cycle = ((xlog_rec_ext_header_t*)xhbuf)->xh_cycle;
 	    for (j = 0; j < XLOG_HEADER_CYCLE_SIZE / BBSIZE; j++) {
-		x->xh_cycle_data[j] =
+		xhdr->xh_cycle_data[j] =
 		    ((xlog_rec_ext_header_t*)xhbuf)->xh_cycle_data[j];
 	    }
 	}

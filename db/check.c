@@ -2050,7 +2050,7 @@ process_block_dir_v2(
 	int		nex;
 	xfs_ino_t	parent;
 	int		v;
-	int		x;
+	int		i;
 
 	nex = blkmap_getn(blkmap, 0, mp->m_dir_geo->fsbcount, &bmp);
 	v = id->ilist || verbose;
@@ -2067,9 +2067,9 @@ process_block_dir_v2(
 		make_bbmap(&bbmap, nex, bmp);
 	set_cur(&typtab[TYP_DIR2], XFS_FSB_TO_DADDR(mp, bmp->startblock),
 		mp->m_dir_geo->fsbcount * blkbb, DB_RING_IGN, nex > 1 ? &bbmap : NULL);
-	for (x = 0; !v && x < nex; x++) {
-		for (b = bmp[x].startblock;
-		     !v && b < bmp[x].startblock + bmp[x].blockcount;
+	for (i = 0; !v && i < nex; i++) {
+		for (b = bmp[i].startblock;
+		     !v && b < bmp[i].startblock + bmp[i].blockcount;
 		     b++)
 			v = CHECK_BLIST(b);
 	}
@@ -2998,7 +2998,6 @@ process_leaf_node_dir_v2(
 	int			t = 0;
 	int			v;
 	int			v2;
-	int			x;
 
 	v2 = verbose || id->ilist;
 	v = parent = 0;
@@ -3012,9 +3011,9 @@ process_leaf_node_dir_v2(
 	while ((dbno = blkmap_next_off(blkmap, dbno, &t)) != NULLFILEOFF) {
 		nex = blkmap_getn(blkmap, dbno, mp->m_dir_geo->fsbcount, &bmp);
 		ASSERT(nex > 0);
-		for (v = v2, x = 0; !v && x < nex; x++) {
-			for (b = bmp[x].startblock;
-			     !v && b < bmp[x].startblock + bmp[x].blockcount;
+		for (v = v2, i = 0; !v && i < nex; i++) {
+			for (b = bmp[i].startblock;
+			     !v && b < bmp[i].startblock + bmp[i].blockcount;
 			     b++)
 				v = CHECK_BLIST(b);
 		}
