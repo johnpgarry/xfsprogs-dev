@@ -19,6 +19,7 @@
 #include <pthread.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <sys/param.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <libgen.h>
@@ -65,6 +66,7 @@ typedef unsigned short umode_t;
 #define max(a,b)	(((a)>(b))?(a):(b))
 #endif
 
+/* If param.h doesn't provide it, i.e. for Android */
 #ifndef NBBY
 #define NBBY 8
 #endif
