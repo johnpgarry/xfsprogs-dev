@@ -17,6 +17,7 @@
 #include "output.h"
 #include "bit.h"
 #include "print.h"
+#include "crc.h"
 
 static int crc_f(int argc, char **argv);
 static void crc_help(void);

@@ -36,6 +36,7 @@
 /* For endian conversion routines */
 #include "xfs_arch.h"
 #include "crc32defs.h"
+#include "crc32c.h"
 
 /* types specifc to this file */
 typedef __u8	u8;

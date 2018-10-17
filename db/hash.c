@@ -10,6 +10,7 @@
 #include "type.h"
 #include "io.h"
 #include "output.h"
+#include "hash.h"
 
 static int hash_f(int argc, char **argv);
 static void hash_help(void);

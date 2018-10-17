@@ -9,6 +9,7 @@
 #include "init.h"
 #include "output.h"
 #include "libxlog.h"
+#include "logformat.h"
 
 #define MAX_LSUNIT	256 * 1024	/* max log buf. size */
 

@@ -11,7 +11,7 @@
 #include "field.h"
 #include "bit.h"
 #include "init.h"
-
+#include "symlink.h"
 
 /*
  * XXX: no idea how to handle multiple contiguous block symlinks here.

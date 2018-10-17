@@ -21,6 +21,7 @@
 #include "print.h"
 #include "write.h"
 #include "malloc.h"
+#include "fuzz.h"
 
 static int	fuzz_f(int argc, char **argv);
 static void     fuzz_help(void);

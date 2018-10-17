@@ -17,6 +17,7 @@
 #include "io.h"
 #include "output.h"
 #include "init.h"
+#include "text.h"
 
 static void     print_rawtext(void *data, int len);
 
