@@ -422,7 +422,6 @@ run_scrub_phases(
 	bool			moveon = true;
 	unsigned int		debug_phase = 0;
 	unsigned int		phase;
-	unsigned int		nr_threads;
 	int			rshift;
 
 	if (debug_tweak_on("XFS_SCRUB_PHASE"))
@@ -454,12 +453,14 @@ run_scrub_phases(
 		if (!moveon)
 			break;
 		if (sp->estimate_work) {
-			moveon = sp->estimate_work(ctx, &max_work, &nr_threads,
-					&rshift);
+			unsigned int		work_threads;
+
+			moveon = sp->estimate_work(ctx, &max_work,
+					&work_threads, &rshift);
 			if (!moveon)
 				break;
 			moveon = progress_init_phase(ctx, progress_fp, phase,
-					max_work, rshift, nr_threads);
+					max_work, rshift, work_threads);
 		} else {
 			moveon = progress_init_phase(ctx, NULL, phase, 0, 0, 0);
 		}
