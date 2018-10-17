@@ -8,6 +8,7 @@
 #include <libdevmapper.h>
 #include "command.h"
 #include "init.h"
+#include "io.h"
 
 static cmdinfo_t log_writes_cmd;
 

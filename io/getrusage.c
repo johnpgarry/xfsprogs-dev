@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include "init.h"
+#include "io.h"
 
 static cmdinfo_t getrusage_cmd;
 
