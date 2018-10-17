@@ -5,9 +5,18 @@ to check the source code of the open source XFS commands and utilites
 First you need to install sparse, either from your distribution or from
 source as provided at http://www.kernel.org/pub/software/devel/sparse/.
 
-To simply build the xfsprogs source code while checking the source using
-sparse just set the compiler to cgcc, which is a wrapper that calls both
-sparse and gcc using:
+The xfsprogs Makefile has a convenient shortcut to running sparse, by setting
+the C ("check") variable on the make commandline.  To perform these checks on
+files when they get rebuilt, use:
+
+	make C=1
+
+(Note that xfsprogs does not yet support the kernel convention of checking
+all C files without compilation via "make C=2", so to run sparse on all
+C files, start with a "make clean")
+
+If you'd rather run sparse more manually, just set the compiler to cgcc,
+which is a wrapper that calls both sparse and gcc using:
 
 	CC=cgcc ./configure
 
