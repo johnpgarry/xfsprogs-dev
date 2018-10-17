@@ -363,15 +363,6 @@ done:
 static int
 manage_zones(int release)
 {
-	extern kmem_zone_t	*xfs_buf_zone;
-	extern kmem_zone_t	*xfs_ili_zone;
-	extern kmem_zone_t	*xfs_inode_zone;
-	extern kmem_zone_t	*xfs_ifork_zone;
-	extern kmem_zone_t	*xfs_buf_item_zone;
-	extern kmem_zone_t	*xfs_da_state_zone;
-	extern kmem_zone_t	*xfs_btree_cur_zone;
-	extern kmem_zone_t	*xfs_bmap_free_item_zone;
-	extern kmem_zone_t	*xfs_trans_zone;
 	extern void		xfs_dir_startup();
 
 	if (release) {	/* free zone allocation */

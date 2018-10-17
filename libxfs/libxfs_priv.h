@@ -55,6 +55,13 @@
 #include "xfs_fs.h"
 #include "crc32c.h"
 
+/* Zones used in libxfs allocations that aren't in shared header files */
+extern kmem_zone_t *xfs_buf_item_zone;
+extern kmem_zone_t *xfs_ili_zone;
+extern kmem_zone_t *xfs_buf_zone;
+extern kmem_zone_t *xfs_inode_zone;
+extern kmem_zone_t *xfs_trans_zone;
+
 /* CRC stuff, buffer API dependent on it */
 #define crc32c(c,p,l)	crc32c_le((c),(unsigned char const *)(p),(l))
 
