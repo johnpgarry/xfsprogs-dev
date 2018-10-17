@@ -79,8 +79,8 @@ extern void		printxattr(uint, int, int, const char *, int, int);
 extern unsigned int	recurse_all;
 extern unsigned int	recurse_dir;
 
-extern void		*buffer;
-extern size_t		buffersize;
+extern void		*io_buffer;
+extern size_t		io_buffersize;
 extern int		vectors;
 extern struct iovec	*iov;
 extern int		alloc_buffer(size_t, int, unsigned int);

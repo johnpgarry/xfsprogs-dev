@@ -47,9 +47,9 @@ pread_help(void)
 "\n"));
 }
 
-void	*buffer;
+void	*io_buffer;
 size_t	highwater;
-size_t	buffersize;
+size_t	io_buffersize;
 int	vectors;
 struct iovec *iov;
 
@@ -65,7 +65,7 @@ alloc_iovec(
 	if (!iov)
 		return -1;
 
-	buffersize = 0;
+	io_buffersize = 0;
 	for (i = 0; i < vectors; i++) {
 		iov[i].iov_base = memalign(pagesize, bsize);
 		if (!iov[i].iov_base) {
@@ -76,7 +76,7 @@ alloc_iovec(
 		if (!uflag)
 			memset(iov[i].iov_base, seed, bsize);
 	}
-	buffersize = bsize * vectors;
+	io_buffersize = bsize * vectors;
 	return 0;
 unwind:
 	for( ; i >= 0; i--)
@@ -96,19 +96,19 @@ alloc_buffer(
 		return alloc_iovec(bsize, uflag, seed);
 
 	if (bsize > highwater) {
-		if (buffer)
-			free(buffer);
-		buffer = memalign(pagesize, bsize);
-		if (!buffer) {
+		if (io_buffer)
+			free(io_buffer);
+		io_buffer = memalign(pagesize, bsize);
+		if (!io_buffer) {
 			perror("memalign");
-			highwater = buffersize = 0;
+			highwater = io_buffersize = 0;
 			return -1;
 		}
 		highwater = bsize;
 	}
-	buffersize = bsize;
+	io_buffersize = bsize;
 	if (!uflag)
-		memset(buffer, seed, buffersize);
+		memset(io_buffer, seed, io_buffersize);
 	return 0;
 }
 
@@ -146,7 +146,7 @@ dump_buffer(
 	int		i, l;
 
 	if (!vectors) {
-		__dump_buffer(buffer, offset, len);
+		__dump_buffer(io_buffer, offset, len);
 		return;
 	}
 
@@ -171,7 +171,7 @@ do_preadv(
 	ssize_t		bytes = 0;
 
 	/* trim the iovec if necessary */
-	if (count < buffersize) {
+	if (count < io_buffersize) {
 		size_t	len = 0;
 		while (len + iov[vecs].iov_len < count) {
 			len += iov[vecs].iov_len;
@@ -203,7 +203,7 @@ do_pread(
 	size_t		buffer_size)
 {
 	if (!vectors)
-		return pread(fd, buffer, min(count, buffer_size), offset);
+		return pread(fd, io_buffer, min(count, buffer_size), offset);
 
 	return do_preadv(fd, offset, count);
 }
@@ -224,22 +224,22 @@ read_random(
 	srandom(seed);
 	end = lseek(fd, 0, SEEK_END);
 	offset = (eof || offset > end) ? end : offset;
-	if ((bytes = (offset % buffersize)))
+	if ((bytes = (offset % io_buffersize)))
 		offset -= bytes;
 	offset = max(0, offset);
-	if ((bytes = (count % buffersize)))
+	if ((bytes = (count % io_buffersize)))
 		count += bytes;
-	count = max(buffersize, count);
-	range = count - buffersize;
+	count = max(io_buffersize, count);
+	range = count - io_buffersize;
 
 	*total = 0;
 	while (count > 0) {
 		if (range)
-			off = ((offset + (random() % range)) / buffersize) *
-				buffersize;
+			off = ((offset + (random() % range)) / io_buffersize) *
+				io_buffersize;
 		else
 			off = offset;
-		bytes = do_pread(fd, off, buffersize, buffersize);
+		bytes = do_pread(fd, off, io_buffersize, io_buffersize);
 		if (bytes == 0)
 			break;
 		if (bytes < 0) {
@@ -248,7 +248,7 @@ read_random(
 		}
 		ops++;
 		*total += bytes;
-		if (bytes < buffersize)
+		if (bytes < io_buffersize)
 			break;
 		count -= bytes;
 	}
@@ -279,9 +279,9 @@ read_backward(
 	*offset = off;
 
 	/* Do initial unaligned read if needed */
-	if ((bytes_requested = (off % buffersize))) {
+	if ((bytes_requested = (off % io_buffersize))) {
 		off -= bytes_requested;
-		bytes = do_pread(fd, off, bytes_requested, buffersize);
+		bytes = do_pread(fd, off, bytes_requested, io_buffersize);
 		if (bytes == 0)
 			return ops;
 		if (bytes < 0) {
@@ -297,9 +297,9 @@ read_backward(
 
 	/* Iterate backward through the rest of the range */
 	while (cnt > end) {
-		bytes_requested = min(cnt, buffersize);
+		bytes_requested = min(cnt, io_buffersize);
 		off -= bytes_requested;
-		bytes = do_pread(fd, off, cnt, buffersize);
+		bytes = do_pread(fd, off, cnt, io_buffersize);
 		if (bytes == 0)
 			break;
 		if (bytes < 0) {
@@ -330,7 +330,7 @@ read_forward(
 
 	*total = 0;
 	while (count > 0 || eof) {
-		bytes = do_pread(fd, offset, count, buffersize);
+		bytes = do_pread(fd, offset, count, io_buffersize);
 		if (bytes == 0)
 			break;
 		if (bytes < 0) {
@@ -341,7 +341,7 @@ read_forward(
 		if (verbose)
 			dump_buffer(offset, bytes);
 		*total += bytes;
-		if (onlyone || bytes < min(count, buffersize))
+		if (onlyone || bytes < min(count, io_buffersize))
 			break;
 		offset += bytes;
 		count -= bytes;

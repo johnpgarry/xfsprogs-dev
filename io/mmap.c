@@ -436,7 +436,7 @@ mread_f(
 
 	if (alloc_buffer(pagesize, 0, 0) < 0)
 		return 0;
-	bp = (char *)buffer;
+	bp = (char *)io_buffer;
 
 	dumplen = length % pagesize;
 	if (!dumplen)
@@ -451,7 +451,7 @@ mread_f(
 					dump_buffer(printoffset, dumplen);
 					printoffset += dumplen;
 				}
-				bp = (char *)buffer;
+				bp = (char *)io_buffer;
 				dumplen = pagesize;
 				cnt = 0;
 			} else {
@@ -466,7 +466,7 @@ mread_f(
 				if (dump)
 					dump_buffer(printoffset + tmp -
 						(dumplen - 1), dumplen);
-				bp = (char *)buffer;
+				bp = (char *)io_buffer;
 				dumplen = pagesize;
 				cnt = 0;
 			} else {

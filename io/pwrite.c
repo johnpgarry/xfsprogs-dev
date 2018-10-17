@@ -62,7 +62,7 @@ do_pwritev(
 	ssize_t bytes = 0;
 
 	/* trim the iovec if necessary */
-	if (count < buffersize) {
+	if (count < io_buffersize) {
 		size_t	len = 0;
 		while (len + iov[vecs].iov_len < count) {
 			len += iov[vecs].iov_len;
@@ -102,7 +102,7 @@ do_pwrite(
 	int		pwritev2_flags)
 {
 	if (!vectors)
-		return pwrite(fd, buffer, min(count, buffer_size), offset);
+		return pwrite(fd, io_buffer, min(count, buffer_size), offset);
 
 	return do_pwritev(fd, offset, count, pwritev2_flags);
 }
@@ -120,22 +120,22 @@ write_random(
 	int		ops = 0;
 
 	srandom(seed);
-	if ((bytes = (offset % buffersize)))
+	if ((bytes = (offset % io_buffersize)))
 		offset -= bytes;
 	offset = max(0, offset);
-	if ((bytes = (count % buffersize)))
+	if ((bytes = (count % io_buffersize)))
 		count += bytes;
-	count = max(buffersize, count);
-	range = count - buffersize;
+	count = max(io_buffersize, count);
+	range = count - io_buffersize;
 
 	*total = 0;
 	while (count > 0) {
 		if (range)
-			off = ((offset + (random() % range)) / buffersize) *
-				buffersize;
+			off = ((offset + (random() % range)) / io_buffersize) *
+				io_buffersize;
 		else
 			off = offset;
-		bytes = do_pwrite(file->fd, off, buffersize, buffersize,
+		bytes = do_pwrite(file->fd, off, io_buffersize, io_buffersize,
 				pwritev2_flags);
 		if (bytes == 0)
 			break;
@@ -145,7 +145,7 @@ write_random(
 		}
 		ops++;
 		*total += bytes;
-		if (bytes < buffersize)
+		if (bytes < io_buffersize)
 			break;
 		count -= bytes;
 	}
@@ -172,10 +172,10 @@ write_backward(
 	*count = cnt;
 
 	/* Do initial unaligned write if needed */
-	if ((bytes_requested = (off % buffersize))) {
+	if ((bytes_requested = (off % io_buffersize))) {
 		bytes_requested = min(cnt, bytes_requested);
 		off -= bytes_requested;
-		bytes = do_pwrite(file->fd, off, bytes_requested, buffersize,
+		bytes = do_pwrite(file->fd, off, bytes_requested, io_buffersize,
 				pwritev2_flags);
 		if (bytes == 0)
 			return ops;
@@ -192,9 +192,9 @@ write_backward(
 
 	/* Iterate backward through the rest of the range */
 	while (cnt > end) {
-		bytes_requested = min(cnt, buffersize);
+		bytes_requested = min(cnt, io_buffersize);
 		off -= bytes_requested;
-		bytes = do_pwrite(file->fd, off, cnt, buffersize,
+		bytes = do_pwrite(file->fd, off, cnt, io_buffersize,
 				pwritev2_flags);
 		if (bytes == 0)
 			break;
