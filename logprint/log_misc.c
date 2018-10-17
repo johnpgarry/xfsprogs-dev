@@ -395,15 +395,15 @@ xlog_print_trans_buffer(char **ptr, int len, int *i, int num_ops)
 		if (print_data) {
 			uint *dp  = (uint *)*ptr;
 			int  nums = be32_to_cpu(head->oh_len) >> 2;
-			int  i = 0;
+			int  byte = 0;
 
-			while (i < nums) {
-				if ((i % 8) == 0)
-					printf("%2x ", i);
+			while (byte < nums) {
+				if ((byte % 8) == 0)
+					printf("%2x ", byte);
 				printf("%8x ", *dp);
 				dp++;
-				i++;
-				if ((i % 8) == 0)
+				byte++;
+				if ((byte % 8) == 0)
 					printf("\n");
 			}
 			printf("\n");
