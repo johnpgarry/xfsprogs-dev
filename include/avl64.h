@@ -69,6 +69,12 @@ avl64_insert_immediate(
 	avl64node_t *afterp,
 	avl64node_t *newnode);
 
+avl64node_t *
+avl64_firstino(avl64node_t *root);
+
+avl64node_t *
+avl64_lastino(avl64node_t *root);
+
 void
 avl64_init_tree(
 	avl64tree_desc_t  *tree,
