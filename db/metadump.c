@@ -1515,9 +1515,10 @@ process_dir_data_block(
 		dup = (xfs_dir2_data_unused_t *)ptr;
 
 		if (be16_to_cpu(dup->freetag) == XFS_DIR2_DATA_FREE_TAG) {
-			int	length = be16_to_cpu(dup->length);
-			if (dir_offset + length > end_of_data ||
-			    !length || (length & (XFS_DIR2_DATA_ALIGN - 1))) {
+			int	free_length = be16_to_cpu(dup->length);
+			if (dir_offset + free_length > end_of_data ||
+			    !free_length ||
+			    (free_length & (XFS_DIR2_DATA_ALIGN - 1))) {
 				if (show_warnings)
 					print_warning(
 			"invalid length for dir free space in inode %llu",
@@ -1527,15 +1528,15 @@ process_dir_data_block(
 			if (be16_to_cpu(*xfs_dir2_data_unused_tag_p(dup)) !=
 					dir_offset)
 				return;
-			dir_offset += length;
-			ptr += length;
+			dir_offset += free_length;
+			ptr += free_length;
 			/*
 			 * Zero the unused space up to the tag - the tag is
 			 * actually at a variable offset, so zeroing &dup->tag
 			 * is zeroing the free space in between
 			 */
 			if (zero_stale_data) {
-				int zlen = length -
+				int zlen = free_length -
 						sizeof(xfs_dir2_data_unused_t);
 
 				if (zlen > 0) {
