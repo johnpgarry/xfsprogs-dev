@@ -467,6 +467,7 @@ xlog_print_dir2_sf(
 	xfs_dir2_sf_hdr_t *sfp,
 	int		size)
 {
+	__be64		pino;	/* parent inode nr */
 	xfs_ino_t	ino;
 	int		count;
 	int		i;
@@ -481,8 +482,8 @@ xlog_print_dir2_sf(
 
 	printf(_("SHORTFORM DIRECTORY size %d count %d\n"),
 	       size, sfp->count);
-	memmove(&ino, &(sfp->parent), sizeof(ino));
-	printf(_(".. ino 0x%llx\n"), (unsigned long long) be64_to_cpu(ino));
+	memmove(&pino, &(sfp->parent), sizeof(pino));
+	printf(_(".. ino 0x%llx\n"), (unsigned long long) be64_to_cpu(pino));
 
 	count = sfp->count;
 	sfep = xfs_dir2_sf_firstentry(sfp);

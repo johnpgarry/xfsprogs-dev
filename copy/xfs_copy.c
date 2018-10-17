@@ -505,7 +505,7 @@ sb_update_uuid(
 	 */
 	if (xfs_sb_version_hascrc(sb) && !xfs_sb_version_hasmetauuid(sb) &&
 	    !uuid_equal(&tcarg->uuid, &sb->sb_uuid)) {
-		__be32 feat;
+		uint32_t feat;
 
 		feat = be32_to_cpu(ag_hdr->xfs_sb->sb_features_incompat);
 		feat |= XFS_SB_FEAT_INCOMPAT_META_UUID;

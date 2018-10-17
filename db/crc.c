@@ -130,7 +130,7 @@ crc_f(
 		flist_t		*sfl;
 		int		bit_length;
 		int		parentoffset;
-		int		crc;
+		uint32_t	crc;
 
 		sfl = fl;
 		parentoffset = 0;
@@ -144,8 +144,8 @@ crc_f(
 		bit_length *= fcount(sfl->fld, iocur_top->data, parentoffset);
 		crc = getbitval(iocur_top->data, sfl->offset, bit_length,
 				BVUNSIGNED);
-		/* Off by one.. */
-		crc = cpu_to_be32(crc + 1);
+		/* Off by one, ignore endianness - we're just corrupting it. */
+		crc++;
 		setbitval(iocur_top->data, sfl->offset, bit_length, &crc);
 
 		/* Temporarily remove write verifier to write a bad CRC */

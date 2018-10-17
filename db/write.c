@@ -525,7 +525,7 @@ convert_arg(
 	char		*endp;
 	char		*rbuf;
 	char		*ostr;
-	__u64		*value;
+	__be64		*value;
 	__u64		val = 0;
 
 	if (bit_length <= 64)
@@ -535,7 +535,7 @@ convert_arg(
 
 	buf = xrealloc(buf, alloc_size);
 	memset(buf, 0, alloc_size);
-	value = (__u64 *)buf;
+	value = (__be64 *)buf;
 	rbuf = buf;
 
 	if (*arg == '\"') {
