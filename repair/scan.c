@@ -738,7 +738,7 @@ _("%s freespace btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 	}
 
 	for (i = 0; i < numrecs; i++)  {
-		xfs_agblock_t		bno = be32_to_cpu(pp[i]);
+		xfs_agblock_t		agbno = be32_to_cpu(pp[i]);
 
 		/*
 		 * XXX - put sibling detection right here.
@@ -749,17 +749,17 @@ _("%s freespace btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 		 * pointer mismatch, try and extract as much data
 		 * as possible.
 		 */
-		if (bno != 0 && verify_agbno(mp, agno, bno)) {
+		if (agbno != 0 && verify_agbno(mp, agno, agbno)) {
 			switch (magic) {
 			case XFS_ABTB_CRC_MAGIC:
 			case XFS_ABTB_MAGIC:
-				scan_sbtree(bno, level, agno, suspect,
+				scan_sbtree(agbno, level, agno, suspect,
 					    scan_allocbt, 0, magic, priv,
 					    &xfs_allocbt_buf_ops);
 				break;
 			case XFS_ABTC_CRC_MAGIC:
 			case XFS_ABTC_MAGIC:
-				scan_sbtree(bno, level, agno, suspect,
+				scan_sbtree(agbno, level, agno, suspect,
 					    scan_allocbt, 0, magic, priv,
 					    &xfs_allocbt_buf_ops);
 				break;
@@ -1177,7 +1177,7 @@ advance:
 	}
 
 	for (i = 0; i < numrecs; i++)  {
-		xfs_agblock_t		bno = be32_to_cpu(pp[i]);
+		xfs_agblock_t		agbno = be32_to_cpu(pp[i]);
 
 		/*
 		 * XXX - put sibling detection right here.
@@ -1199,12 +1199,12 @@ advance:
 			/* Look for impossible flags. */
 			do_warn(
 	_("invalid flags in high key %u of %s btree block %u/%u\n"),
-				i, name, agno, bno);
+				i, name, agno, agbno);
 			continue;
 		}
 
-		if (bno != 0 && verify_agbno(mp, agno, bno)) {
-			scan_sbtree(bno, level, agno, suspect, scan_rmapbt, 0,
+		if (agbno != 0 && verify_agbno(mp, agno, agbno)) {
+			scan_sbtree(agbno, level, agno, suspect, scan_rmapbt, 0,
 				    magic, priv, &xfs_rmapbt_buf_ops);
 		}
 	}
@@ -1419,10 +1419,10 @@ _("extent (%u/%u) len %u claimed, state is %d\n"),
 	}
 
 	for (i = 0; i < numrecs; i++)  {
-		xfs_agblock_t		bno = be32_to_cpu(pp[i]);
+		xfs_agblock_t		agbno = be32_to_cpu(pp[i]);
 
-		if (bno != 0 && verify_agbno(mp, agno, bno)) {
-			scan_sbtree(bno, level, agno, suspect, scan_refcbt, 0,
+		if (agbno != 0 && verify_agbno(mp, agno, agbno)) {
+			scan_sbtree(agbno, level, agno, suspect, scan_refcbt, 0,
 				    magic, priv, &xfs_refcountbt_buf_ops);
 		}
 	}
