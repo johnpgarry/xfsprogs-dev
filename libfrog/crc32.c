@@ -29,8 +29,11 @@
  * match the hardware acceleration available on Intel CPUs.
  */
 
+#include <inttypes.h>
+#include <asm/types.h>
+#include <sys/time.h>
 #include "platform_defs.h"
-#include "xfs.h"
+/* For endian conversion routines */
 #include "xfs_arch.h"
 #include "crc32defs.h"
 
