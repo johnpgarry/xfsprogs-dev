@@ -151,13 +151,6 @@ LIBICU_CFLAGS = @libicu_CFLAGS@
 SANITIZER_CFLAGS += @addrsan_cflags@ @threadsan_cflags@ @ubsan_cflags@
 SANITIZER_LDFLAGS += @addrsan_ldflags@ @threadsan_ldflags@ @ubsan_ldflags@
 
-# Enable retpolines if available
-HAVE_RETPOLINE = @have_retpoline@
-ifeq ($(HAVE_RETPOLINE),yes)
-OPTIMIZER += @retpoline_cflags@
-LOADERFLAGS += @retpoline_ldflags@
-endif
-
 # Use special ar/ranlib wrappers if we have lto
 HAVE_LTO = @have_lto@
 ifeq ($(HAVE_LTO),yes)

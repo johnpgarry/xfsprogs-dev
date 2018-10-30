@@ -234,7 +234,6 @@ if test "$enable_lto" = "yes" && test "$have_lto" != "yes"; then
 	AC_MSG_ERROR([LTO not supported by compiler.])
 fi
 
-AC_PACKAGE_CHECK_RETPOLINE
 AC_CHECK_SIZEOF([long])
 AC_CHECK_SIZEOF([char *])
 AC_TYPE_UMODE_T

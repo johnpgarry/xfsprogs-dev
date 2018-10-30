@@ -429,25 +429,3 @@ AC_DEFUN([AC_PACKAGE_CHECK_LTO],
     AC_SUBST(lto_cflags)
     AC_SUBST(lto_ldflags)
   ])
-
-AC_DEFUN([AC_PACKAGE_CHECK_RETPOLINE],
-  [ AC_MSG_CHECKING([if C compiler supports retpoline])
-    OLD_CFLAGS="$CFLAGS"
-    OLD_LDFLAGS="$LDFLAGS"
-    RETPOLINE_FLAGS="-mindirect-branch=thunk"
-    CFLAGS="$CFLAGS $RETPOLINE_FLAGS"
-    LDFLAGS="$LDFLAGS $RETPOLINE_FLAGS"
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([])],
-        [AC_MSG_RESULT([yes])]
-        [retpoline_cflags=$RETPOLINE_FLAGS]
-        [retpoline_ldflags=$RETPOLINE_FLAGS],
-        [AC_MSG_RESULT([no])])
-    if test -n "$retpoline_cflags"; then
-        have_retpoline=yes
-    fi
-    CFLAGS="${OLD_CFLAGS}"
-    LDFLAGS="${OLD_LDFLAGS}"
-    AC_SUBST(have_retpoline)
-    AC_SUBST(retpoline_cflags)
-    AC_SUBST(retpoline_ldflags)
-  ])
