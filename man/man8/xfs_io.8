@@ -1222,6 +1222,10 @@ If the label is longer than the filesystem will accept,
 .B xfs_io
 will print an error message.  XFS filesystem labels can be at most 12
 characters long.
+.TP
+.B crc32cselftest
+Test the internal crc32c implementation to make sure that it computes results
+correctly.
 .SH SEE ALSO
 .BR mkfs.xfs (8),
 .BR xfsctl (3),

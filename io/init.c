@@ -85,6 +85,7 @@ init_commands(void)
 	sync_range_init();
 	truncate_init();
 	utimes_init();
+	crc32cselftest_init();
 }
 
 /*
