@@ -1317,7 +1317,7 @@ longform_dir2_rebuild(
 	xfs_fileoff_t		lastblock;
 	xfs_inode_t		pip;
 	dir_hash_ent_t		*p;
-	int			done;
+	int			done = 0;
 
 	/*
 	 * trash directory completely and rebuild from scratch using the
@@ -1352,14 +1352,25 @@ longform_dir2_rebuild(
 			error);
 
 	/* free all data, leaf, node and freespace blocks */
-	error = -libxfs_bunmapi(tp, ip, 0, lastblock, XFS_BMAPI_METADATA, 0,
-				&done);
-	if (error) {
-		do_warn(_("xfs_bunmapi failed -- error - %d\n"), error);
-		goto out_bmap_cancel;
-	}
-
-	ASSERT(done);
+	while (!done) {
+	       error = -libxfs_bunmapi(tp, ip, 0, lastblock, XFS_BMAPI_METADATA,
+			               0, &done);
+	       if (error) {
+		       do_warn(_("xfs_bunmapi failed -- error - %d\n"), error);
+		       goto out_bmap_cancel;
+	       }
+	       error = -libxfs_defer_finish(&tp);
+	       if (error) {
+		       do_warn(("defer_finish failed -- error - %d\n"), error);
+		       goto out_bmap_cancel;
+	       }
+	       /*
+		* Close out trans and start the next one in the chain.
+		*/
+	       error = -libxfs_trans_roll_inode(&tp, ip);
+	       if (error)
+			goto out_bmap_cancel;
+        }
 
 	error = -libxfs_dir_init(tp, ip, &pip);
 	if (error) {
