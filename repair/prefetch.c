@@ -768,8 +768,12 @@ pf_queuing_worker(
 			 * might get stuck on a buffer that has been locked
 			 * and added to the I/O queue but is waiting for
 			 * the thread to be woken.
+			 * Start processing as well, in case everything so
+			 * far was already prefetched and the queue is empty.
 			 */
+			
 			pf_start_io_workers(args);
+			pf_start_processing(args);
 			sem_wait(&args->ra_count);
 		}
 
