@@ -780,9 +780,15 @@ out:
 	 * for capturing all the log messages if the scrub fails, because the
 	 * fail service uses the service name to gather log messages for the
 	 * error report.
+	 *
+	 * Note: We don't count a lack of kernel support as a service failure
+	 * because we haven't determined that there's anything wrong with the
+	 * filesystem.
 	 */
 	if (is_service) {
 		sleep(2);
+		if (!ctx.scrub_setup_succeeded)
+			return 0;
 		if (ret != SCRUB_RET_SUCCESS)
 			return 1;
 	}
