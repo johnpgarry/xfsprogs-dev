@@ -125,23 +125,16 @@ clear_dinode_core(struct xfs_mount *mp, xfs_dinode_t *dinoc, xfs_ino_t ino_num)
 	return;
 }
 
-static int
+static void
 clear_dinode_unlinked(xfs_mount_t *mp, xfs_dinode_t *dino)
 {
 
-	if (be32_to_cpu(dino->di_next_unlinked) != NULLAGINO)  {
-		if (!no_modify)
-			dino->di_next_unlinked = cpu_to_be32(NULLAGINO);
-		return(1);
-	}
-
-	return(0);
+	dino->di_next_unlinked = cpu_to_be32(NULLAGINO);
 }
 
 /*
  * this clears the unlinked list too so it should not be called
  * until after the agi unlinked lists are walked in phase 3.
- * returns > zero if the inode has been altered while being cleared
  */
 static void
 clear_dinode(xfs_mount_t *mp, xfs_dinode_t *dino, xfs_ino_t ino_num)
@@ -2675,9 +2668,16 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 	 * we're going to find.  check_dups is set to 1 only during
 	 * phase 4.  Ugly.
 	 */
-	if (check_dups && !no_modify) {
-		clear_dinode_unlinked(mp, dino);
-		*dirty += 1;
+	if (check_dups && be32_to_cpu(dino->di_next_unlinked) != NULLAGINO) {
+		if (no_modify) {
+			do_warn(
+	_("Would clear next_unlinked in inode %" PRIu64 "\n"), lino);
+		} else  {
+			clear_dinode_unlinked(mp, dino);
+			do_warn(
+	_("Cleared next_unlinked in inode %" PRIu64 "\n"), lino);
+			*dirty += 1;
+		}
 	}
 
 	/* set type and map type info */
