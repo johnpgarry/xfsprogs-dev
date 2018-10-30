@@ -2335,6 +2335,8 @@ longform_dir2_entry_check(xfs_mount_t	*mp,
 
 		db = xfs_dir2_da_to_db(mp->m_dir_geo, da_bno);
 		if (db >= num_bps) {
+			int last_size = num_bps;
+
 			/* more data blocks than expected */
 			num_bps = db + 1;
 			bplist = realloc(bplist, num_bps * sizeof(struct xfs_buf*));
@@ -2342,6 +2344,9 @@ longform_dir2_entry_check(xfs_mount_t	*mp,
 				do_error(_("realloc failed in %s (%zu bytes)\n"),
 					__func__,
 					num_bps * sizeof(struct xfs_buf*));
+			/* Initialize the new elements */
+			for (i = last_size; i < num_bps; i++)
+				bplist[i] = NULL;
 		}
 
 		if (isblock)
