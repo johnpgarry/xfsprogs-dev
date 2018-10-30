@@ -91,8 +91,8 @@ AC_ARG_ENABLE(threadsan,
 AC_SUBST(enable_threadsan)
 
 AC_ARG_ENABLE(lto,
-[ --enable-lto=[yes/no]      Enable link time optimization (LTO) [default=probe]],,
-	enable_lto=probe)
+[ --enable-lto=[yes/no]      Enable link time optimization (LTO) [default=no]],,
+	enable_lto=no)
 AC_SUBST(enable_lto)
 
 # Enable xfs_scrub build
