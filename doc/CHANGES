@@ -1,3 +1,21 @@
+xfsprogs-4.19.0-rc1 (10 Oct 2018)
+	- Remove non-linux platforms (Eric Sandeen)
+	- Remove retpoline support (Eric Sandeen)
+	- Add sparse checking & related fixes/cleanups (Eric Sandeen)
+	- Fix cross-platform building w.r.t. crc32selftest
+	- libxfs: add agfl free deferred op type (Darrick Wong)
+	- mkfs.xfs: discard only after all validations (Jan Tulak)
+	- xfs_repair: fix segfault in longform_dir2_entry_check
+	- xfs_repair: fix ASSERT in xfs_bunmapi (Eric Sandeen)
+	- xfs_repair: fix readahead thread deadlock/stall (Eric Sandeen)
+	- xfs_repair: avoid writing back all inodes (Dave Chinner)
+	- xfs_repair: don't treat directory root LEAFN as corrupt (Dave Chinner)
+	- xfs_io: add crc32 self test (Darrick Wong)
+	- xfs_io: remove useless do_preadv and do_pwritev arguments (Zorro Lang)
+	- xfs_scrub: make scrub build config-optional (Eric Sandeen)
+	- xfs_scrub: lack of kernel support is not a service failure (Darrick Wong)
+	- xfs_scrub_all: fix systemd escaping (Darrick Wong)
+
 xfsprogs-4.19.0-rc0 (10 Oct 2018)
 	- Majority of 4.19 libxfs changes merged from kernel
 	- Big sparse static checker cleanup (Eric Sandeen)
