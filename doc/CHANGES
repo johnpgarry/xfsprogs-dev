@@ -1,11 +1,14 @@
-xfsprogs-4.19.0-rc1 (10 Oct 2018)
+xfsprogs-4.19.0 (09 Nov 2018)
+	- Fix up debian subdir build w.r.t. CHECK_CMD (Darrick Wong)
+
+xfsprogs-4.19.0-rc1 (02 Nov 2018)
 	- Remove non-linux platforms (Eric Sandeen)
 	- Remove retpoline support (Eric Sandeen)
 	- Add sparse checking & related fixes/cleanups (Eric Sandeen)
 	- Fix cross-platform building w.r.t. crc32selftest
 	- libxfs: add agfl free deferred op type (Darrick Wong)
 	- mkfs.xfs: discard only after all validations (Jan Tulak)
-	- xfs_repair: fix segfault in longform_dir2_entry_check
+	- xfs_repair: fix segfault in longform_dir2_entry_check (Eric Sandeen)
 	- xfs_repair: fix ASSERT in xfs_bunmapi (Eric Sandeen)
 	- xfs_repair: fix readahead thread deadlock/stall (Eric Sandeen)
 	- xfs_repair: avoid writing back all inodes (Dave Chinner)
