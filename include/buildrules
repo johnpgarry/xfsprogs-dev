@@ -36,6 +36,10 @@ $(SUBDIRS):
 	$(Q)$(MAKE) $(MAKEOPTS) -q -C $@ || $(MAKE) $(MAKEOPTS) -C $@
 endif
 
+ifndef CHECK_CMD
+CHECK_CMD = @true
+endif
+
 #
 # Standard targets
 #
