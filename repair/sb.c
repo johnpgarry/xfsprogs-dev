@@ -57,8 +57,7 @@ copy_sb(xfs_sb_t *source, xfs_sb_t *dest)
 	 */
 	if (xfs_sb_version_hasdalign(source))
 		dest->sb_versionnum |= XFS_SB_VERSION_DALIGNBIT;
-	if (xfs_sb_version_hasextflgbit(source))
-		dest->sb_versionnum |= XFS_SB_VERSION_EXTFLGBIT;
+	dest->sb_versionnum |= XFS_SB_VERSION_EXTFLGBIT;
 
 	/*
 	 * these are all supposed to be zero or will get reset anyway
@@ -683,9 +682,7 @@ get_sb_geometry(fs_geometry_t *geo, xfs_sb_t *sbp)
 	if (xfs_sb_version_hasdalign(sbp))
 		geo->sb_salignbit = 1;
 
-	if (xfs_sb_version_hasextflgbit(sbp))
-		geo->sb_extflgbit = 1;
-
+	geo->sb_extflgbit = 1;
 	geo->sb_fully_zeroed = 1;
 }
 

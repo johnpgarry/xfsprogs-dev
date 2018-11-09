@@ -102,7 +102,7 @@ parse_sb_version(xfs_sb_t *sb)
 	fs_aligned_inodes = 0;
 	fs_sb_feature_bits = 0;
 	fs_ino_alignment = 0;
-	fs_has_extflgbit = 0;
+	fs_has_extflgbit = 1;
 	have_uquotino = 0;
 	have_gquotino = 0;
 	have_pquotino = 0;
@@ -116,9 +116,6 @@ parse_sb_version(xfs_sb_t *sb)
 	 * ok, check to make sure that the sb isn't newer
 	 * than we are
 	 */
-	if (xfs_sb_version_hasextflgbit(sb))
-		fs_has_extflgbit = 1;
-
 	if (!xfs_sb_good_version(sb))  {
 		do_warn(_("WARNING:  unknown superblock version %d\n"),
 			XFS_SB_VERSION_NUM(sb));

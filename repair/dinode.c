@@ -339,29 +339,13 @@ _("inode %" PRIu64 " - bad rt extent overflows - start %" PRIu64 ", "
 	}
 
 	/*
-	 * verify that the blocks listed in the record
-	 * are multiples of an extent
-	 */
-	if (xfs_sb_version_hasextflgbit(&mp->m_sb) == 0 &&
-			(irec->br_startblock % mp->m_sb.sb_rextsize != 0 ||
-			 irec->br_blockcount % mp->m_sb.sb_rextsize != 0)) {
-		do_warn(
-_("malformed rt inode extent [%" PRIu64 " %" PRIu64 "] (fs rtext size = %u)\n"),
-			irec->br_startblock,
-			irec->br_blockcount,
-			mp->m_sb.sb_rextsize);
-		return 1;
-	}
-
-	/*
 	 * set the appropriate number of extents
 	 * this iterates block by block, this can be optimised using extents
 	 */
 	for (b = irec->br_startblock; b < irec->br_startblock +
 			irec->br_blockcount; b += mp->m_sb.sb_rextsize)  {
 		ext = (xfs_rtblock_t) b / mp->m_sb.sb_rextsize;
-		pwe = xfs_sb_version_hasextflgbit(&mp->m_sb) &&
-				irec->br_state == XFS_EXT_UNWRITTEN &&
+		pwe = irec->br_state == XFS_EXT_UNWRITTEN &&
 				(b % mp->m_sb.sb_rextsize != 0);
 
 		if (check_dups == 1)  {

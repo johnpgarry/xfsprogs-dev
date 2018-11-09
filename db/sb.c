@@ -658,7 +658,8 @@ version_string(
 		strcat(s, ",DALIGN");
 	if (xfs_sb_version_haslogv2(sbp))
 		strcat(s, ",LOGV2");
-	if (xfs_sb_version_hasextflgbit(sbp))
+	/* This feature is required now as well */
+	if (sbp->sb_versionnum & XFS_SB_VERSION_EXTFLGBIT)
 		strcat(s, ",EXTFLG");
 	if (xfs_sb_version_hassector(sbp))
 		strcat(s, ",SECTOR");
@@ -725,7 +726,8 @@ version_f(
 				version = 0x0034 | XFS_SB_VERSION_EXTFLGBIT;
 				break;
 			case XFS_SB_VERSION_4:
-				if (xfs_sb_version_hasextflgbit(&mp->m_sb))
+				if (mp->m_sb.sb_versionnum &
+						XFS_SB_VERSION_EXTFLGBIT)
 					dbprintf(
 		_("unwritten extents flag is already enabled\n"));
 				else
