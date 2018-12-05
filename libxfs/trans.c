@@ -570,6 +570,8 @@ libxfs_trans_brelse(
 	xfs_trans_del_item(&bip->bli_item);
 	if (bip->bli_flags & XFS_BLI_HOLD)
 		bip->bli_flags &= ~XFS_BLI_HOLD;
+	kmem_zone_free(xfs_buf_item_zone, bip);
+	bp->b_log_item = NULL;
 	bp->b_transp = NULL;
 	libxfs_putbuf(bp);
 }
@@ -856,6 +858,7 @@ inode_item_done(
 		return;
 	}
 
+	ASSERT(bp->b_log_item == NULL);
 	bp->b_log_item = iip;
 	error = libxfs_iflush_int(ip, bp);
 	if (error) {
