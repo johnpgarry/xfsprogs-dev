@@ -380,6 +380,7 @@ libxfs_trans_ijoin(
 	xfs_inode_log_item_t	*iip;
 
 	ASSERT(ip->i_transp == NULL);
+	ASSERT(ip->i_temp == NULL);
 	if (ip->i_itemp == NULL)
 		xfs_inode_item_init(ip, ip->i_mount);
 	iip = ip->i_itemp;
@@ -842,11 +843,8 @@ inode_item_done(
 	mp = iip->ili_item.li_mountp;
 	ASSERT(ip != NULL);
 
-	if (!(iip->ili_fields & XFS_ILOG_ALL)) {
-		ip->i_transp = NULL;	/* disassociate from transaction */
-		iip->ili_flags = 0;	/* reset all flags */
-		return;
-	}
+	if (!(iip->ili_fields & XFS_ILOG_ALL))
+		goto free;
 
 	/*
 	 * Get the buffer containing the on-disk inode.
@@ -867,7 +865,6 @@ inode_item_done(
 		return;
 	}
 
-	ip->i_transp = NULL;	/* disassociate from transaction */
 	bp->b_log_item = NULL;	/* remove log item */
 	bp->b_transp = NULL;	/* remove xact ptr */
 	libxfs_writebuf(bp, 0);
@@ -875,6 +872,10 @@ inode_item_done(
 	fprintf(stderr, "flushing dirty inode %llu, buffer %p\n",
 			ip->i_ino, bp);
 #endif
+free:
+	ip->i_transp = NULL;	/* disassociate from transaction */
+	ip->i_itemp = NULL;
+	kmem_zone_free(xfs_ili_zone, iip);
 }
 
 static void
