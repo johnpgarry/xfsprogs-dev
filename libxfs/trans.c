@@ -24,6 +24,7 @@ STATIC struct xfs_trans *xfs_trans_dup(struct xfs_trans *tp);
 static int xfs_trans_reserve(struct xfs_trans *tp, struct xfs_trans_res *resp,
 		uint blocks, uint rtextents);
 static int __xfs_trans_commit(struct xfs_trans *tp, bool regrant);
+static void trans_cancel(struct xfs_trans *tp);
 
 /*
  * Simple transaction interface
@@ -326,6 +327,7 @@ libxfs_trans_cancel(
 	if (tp->t_flags & XFS_TRANS_PERM_LOG_RES)
 		xfs_defer_cancel(tp);
 
+	trans_cancel(tp);
 	xfs_trans_free_items(tp);
 	xfs_trans_free(tp);
 
@@ -879,6 +881,55 @@ free:
 }
 
 static void
+inode_item_cancel(
+	struct xfs_inode_log_item	*iip)
+{
+	struct xfs_inode		*ip;
+
+	ip = iip->ili_inode;
+	ASSERT(ip != NULL);
+
+	if (iip->ili_fields & XFS_ILOG_ALL) {
+#ifdef XACT_DEBUG
+		fprintf(stderr, "cancelling dirty inode %lu\n", ip->i_ino);
+#endif
+	}
+
+	ip->i_transp = NULL;	/* disassociate from transaction */
+	ip->i_itemp = NULL;
+	kmem_zone_free(xfs_ili_zone, iip);
+}
+
+static void
+buf_item_cancel(
+	struct xfs_buf_log_item	*bip)
+{
+	struct xfs_buf		*bp;
+	int			hold;
+	extern kmem_zone_t	*xfs_buf_item_zone;
+
+	bp = bip->bli_buf;
+	ASSERT(bp != NULL);
+
+	hold = (bip->bli_flags & XFS_BLI_HOLD);
+	if (bip->bli_flags & XFS_BLI_DIRTY) {
+#ifdef XACT_DEBUG
+		fprintf(stderr, "cancelling dirty buffer %p (hold=%d)\n",
+			bp, hold);
+#endif
+	}
+	if (hold)
+		bip->bli_flags &= ~XFS_BLI_HOLD;
+	else
+		libxfs_putbuf(bp);
+
+	/* release the buf item */
+	bp->b_log_item = NULL;			/* remove log item */
+	bp->b_transp = NULL;			/* remove xact ptr */
+	kmem_zone_free(xfs_buf_item_zone, bip);
+}
+
+static void
 buf_item_done(
 	xfs_buf_log_item_t	*bip)
 {
@@ -920,6 +971,27 @@ trans_committed(
 			buf_item_done((xfs_buf_log_item_t *)lip);
 		else if (lip->li_type == XFS_LI_INODE)
 			inode_item_done((xfs_inode_log_item_t *)lip);
+		else {
+			fprintf(stderr, _("%s: unrecognised log item type\n"),
+				progname);
+			ASSERT(0);
+		}
+	}
+}
+
+static void
+trans_cancel(
+	struct xfs_trans	*tp)
+{
+	struct xfs_log_item	*lip, *next;
+
+	list_for_each_entry_safe(lip, next, &tp->t_items, li_trans) {
+		xfs_trans_del_item(lip);
+
+		if (lip->li_type == XFS_LI_BUF)
+			buf_item_cancel((xfs_buf_log_item_t *)lip);
+		else if (lip->li_type == XFS_LI_INODE)
+			inode_item_cancel((xfs_inode_log_item_t *)lip);
 		else {
 			fprintf(stderr, _("%s: unrecognised log item type\n"),
 				progname);
@@ -1033,6 +1105,7 @@ __xfs_trans_commit(
 	return 0;
 
 out_unreserve:
+	trans_cancel(tp);
 	xfs_trans_free_items(tp);
 	xfs_trans_free(tp);
 	return error;
