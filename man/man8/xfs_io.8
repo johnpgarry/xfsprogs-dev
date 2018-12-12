@@ -191,6 +191,15 @@ See the
 .B close
 command.
 .TP
+.B chmod \-r | \-w
+Change the mode of the currently open file. The
+.B \-r
+option will set the file permissions to read-only (0444), whilst the
+.B \-w
+option will set the file permissions to read-write (0644). This allows xfs_io to
+set up mismatches between the file permissions and the open file descriptor
+read/write mode to exercise permission checks inside various syscalls.
+.TP
 .BI "pread [ \-b " bsize " ] [ \-v ] [ \-FBR [ \-Z " seed " ] ] [ \-V " vectors " ] " "offset length"
 Reads a range of bytes in a specified blocksize from the given
 .IR offset .

@@ -44,6 +44,7 @@ static cmdinfo_t chproj_cmd;
 static cmdinfo_t lsproj_cmd;
 static cmdinfo_t extsize_cmd;
 static cmdinfo_t inode_cmd;
+static cmdinfo_t chmod_cmd;
 static prid_t prid;
 static long extsize;
 
@@ -809,6 +810,48 @@ inode_f(
 	return 0;
 }
 
+static void
+chmod_help(void)
+{
+	printf(_(
+"\n"
+" Change the read/write permissions on the current file\n"
+"\n"
+" Options:\n"
+" -r -- make the file read only (0444 permissions)\n"
+" -w -- make the file read/write (0664 permissions)\n"
+"\n"));
+}
+
+static int
+chmod_f(
+	int		argc,
+	char		**argv)
+{
+	mode_t		mode = S_IRUSR | S_IRGRP | S_IROTH;
+	int		c;
+
+	while ((c = getopt(argc, argv, "rw")) != EOF) {
+		switch (c) {
+		case 'r':
+			break;
+		case 'w':
+			mode |= S_IWUSR | S_IWGRP;
+			break;
+		default:
+			return command_usage(&chmod_cmd);
+		}
+	}
+
+	if (argc != optind)
+		return command_usage(&chmod_cmd);
+
+	if (fchmod(file->fd, mode) < 0) {
+		exitcode = 1;
+		perror("fchmod");
+	}
+	return 0;
+}
 void
 open_init(void)
 {
@@ -871,10 +914,21 @@ open_init(void)
 		_("Query inode number usage in the filesystem");
 	inode_cmd.help = inode_help;
 
+	chmod_cmd.name = "chmod";
+	chmod_cmd.cfunc = chmod_f;
+	chmod_cmd.args = _("-r | -w");
+	chmod_cmd.argmin = 1;
+	chmod_cmd.argmax = 1;
+	chmod_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK | CMD_FLAG_ONESHOT;
+	chmod_cmd.oneline =
+		_("change the read/write permissions on the currently open file");
+	chmod_cmd.help = chmod_help;
+
 	add_command(&open_cmd);
 	add_command(&close_cmd);
 	add_command(&chproj_cmd);
 	add_command(&lsproj_cmd);
 	add_command(&extsize_cmd);
 	add_command(&inode_cmd);
+	add_command(&chmod_cmd);
 }
