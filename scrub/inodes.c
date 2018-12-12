@@ -139,6 +139,12 @@ xfs_iterate_inodes_range(
 		/* Load the inodes. */
 		ino = inogrp.xi_startino - 1;
 		bulkreq.icount = inogrp.xi_alloccount;
+		/*
+		 * We can have totally empty inode chunks on filesystems where
+		 * there are more than 64 inodes per block.  Skip these.
+		 */
+		if (inogrp.xi_alloccount == 0)
+			goto igrp_retry;
 		error = ioctl(ctx->mnt_fd, XFS_IOC_FSBULKSTAT, &bulkreq);
 		if (error)
 			str_info(ctx, descr, "%s", strerror_r(errno,
