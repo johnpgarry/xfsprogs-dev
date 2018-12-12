@@ -34,7 +34,7 @@ copy_range_help(void)
  * glibc buffered copy fallback.
  */
 static loff_t
-copy_file_range_cmd(int fd, long long *src, long long *dst, long long len)
+copy_file_range_cmd(int fd, long long *src, long long *dst, size_t len)
 {
 	loff_t ret;
 
@@ -78,7 +78,7 @@ copy_range_f(int argc, char **argv)
 {
 	long long src = 0;
 	long long dst = 0;
-	long long len = 0;
+	size_t len = 0;
 	int opt;
 	int ret;
 	int fd;
@@ -104,7 +104,7 @@ copy_range_f(int argc, char **argv)
 			break;
 		case 'l':
 			len = cvtnum(fsblocksize, fssectsize, optarg);
-			if (len < 0) {
+			if (len == -1LL) {
 				printf(_("invalid length -- %s\n"), optarg);
 				return 0;
 			}
