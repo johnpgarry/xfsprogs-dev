@@ -200,10 +200,12 @@ no_prefix:
 double
 auto_units(
 	unsigned long long	number,
-	char			**units)
+	char			**units,
+	int			*precision)
 {
 	if (debug > 1)
 		goto no_prefix;
+	*precision = 1;
 	if (number > 1000000000000ULL) {
 		*units = "T";
 		return number / 1000000000000.0;
@@ -220,6 +222,7 @@ auto_units(
 
 no_prefix:
 	*units = "";
+	*precision = 0;
 	return number;
 }
 

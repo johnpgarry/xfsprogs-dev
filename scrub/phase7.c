@@ -107,6 +107,7 @@ xfs_scan_summary(
 	unsigned long long		f_free;
 	bool				moveon;
 	bool				complain;
+	int				ip;
 	int				error;
 
 	/* Flush everything out to disk before we start counting. */
@@ -176,27 +177,27 @@ xfs_scan_summary(
 		if (used_rt || stat_rt) {
 			d = auto_space_units(used_data, &du);
 			r = auto_space_units(used_rt, &ru);
-			i = auto_units(used_files, &iu);
+			i = auto_units(used_files, &iu, &ip);
 			fprintf(stdout,
-_("%.1f%s data used;  %.1f%s realtime data used;  %.2f%s inodes used.\n"),
-					d, du, r, ru, i, iu);
+_("%.1f%s data used;  %.1f%s realtime data used;  %.*f%s inodes used.\n"),
+					d, du, r, ru, ip, i, iu);
 			d = auto_space_units(stat_data, &du);
 			r = auto_space_units(stat_rt, &ru);
-			i = auto_units(counted_inodes, &iu);
+			i = auto_units(counted_inodes, &iu, &ip);
 			fprintf(stdout,
-_("%.1f%s data found; %.1f%s realtime data found; %.2f%s inodes found.\n"),
-					d, du, r, ru, i, iu);
+_("%.1f%s data found; %.1f%s realtime data found; %.*f%s inodes found.\n"),
+					d, du, r, ru, ip, i, iu);
 		} else {
 			d = auto_space_units(used_data, &du);
-			i = auto_units(used_files, &iu);
+			i = auto_units(used_files, &iu, &ip);
 			fprintf(stdout,
-_("%.1f%s data used;  %.1f%s inodes used.\n"),
-					d, du, i, iu);
+_("%.1f%s data used;  %.*f%s inodes used.\n"),
+					d, du, ip, i, iu);
 			d = auto_space_units(stat_data, &du);
-			i = auto_units(counted_inodes, &iu);
+			i = auto_units(counted_inodes, &iu, &ip);
 			fprintf(stdout,
-_("%.1f%s data found; %.1f%s inodes found.\n"),
-					d, du, i, iu);
+_("%.1f%s data found; %.*f%s inodes found.\n"),
+					d, du, ip, i, iu);
 		}
 		fflush(stdout);
 	}
@@ -210,12 +211,13 @@ _("%.1f%s data found; %.1f%s inodes found.\n"),
 			_("checked inodes"))) {
 		double		i1, i2;
 		char		*i1u, *i2u;
+		int		i1p, i2p;
 
-		i1 = auto_units(counted_inodes, &i1u);
-		i2 = auto_units(ctx->inodes_checked, &i2u);
+		i1 = auto_units(counted_inodes, &i1u, &i1p);
+		i2 = auto_units(ctx->inodes_checked, &i2u, &i2p);
 		fprintf(stdout,
-_("%.1f%s inodes counted; %.1f%s inodes checked.\n"),
-				i1, i1u, i2, i2u);
+_("%.*f%s inodes counted; %.*f%s inodes checked.\n"),
+				i1p, i1, i1u, i2p, i2, i2u);
 		fflush(stdout);
 	}
 

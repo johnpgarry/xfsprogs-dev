@@ -62,7 +62,7 @@ debug_tweak_on(
 
 double timeval_subtract(struct timeval *tv1, struct timeval *tv2);
 double auto_space_units(unsigned long long kilobytes, char **units);
-double auto_units(unsigned long long number, char **units);
+double auto_units(unsigned long long number, char **units, int *precision);
 unsigned int scrub_nproc(struct scrub_ctx *ctx);
 unsigned int scrub_nproc_workqueue(struct scrub_ctx *ctx);
 
