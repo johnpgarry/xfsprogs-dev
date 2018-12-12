@@ -56,6 +56,7 @@ openfile(
 	struct fs_path	*fs_path)
 {
 	struct fs_path	*fsp;
+	struct stat	st = { 0 };
 	int		fd;
 	int		oflags;
 
@@ -78,6 +79,18 @@ openfile(
 		oflags |= O_PATH;
 	if (flags & IO_NOFOLLOW)
 		oflags |= O_NOFOLLOW;
+
+	/*
+	 * if we've been passed a pipe to open, don't block waiting for a
+	 * reader or writer to appear. We want to either succeed or error out
+	 * immediately.
+	 */
+	if (stat(path, &st) < 0 && errno != ENOENT) {
+		perror("stat");
+		return -1;
+	}
+	if (S_ISFIFO(st.st_mode))
+		oflags |= O_NONBLOCK;
 
 	fd = open(path, oflags, mode);
 	if (fd < 0) {
