@@ -1243,10 +1243,21 @@ process_node_dir2(
 
 	/*
 	 * Skip directories with a root marked XFS_DIR2_LEAFN_MAGIC
+	 *
+	 * Be careful here: If any level of the da cursor was filled out then
+	 * the directory has a da btree containing an invalid before pointer to
+	 * dblock 0, and we should move on to rebuilding the directory.  If no
+	 * levels in the da cursor got filled out, then we just have a single
+	 * leafn block and we're done.
 	 */
 	if (bno == 0) {
-		release_da_cursor(mp, &da_cursor, 0);
-		return 0;
+		if (da_cursor.active > 0) {
+			err_release_da_cursor(mp, &da_cursor, 0);
+			return 1;
+		} else {
+			release_da_cursor(mp, &da_cursor, 0);
+			return 0;
+		}
 	} else {
 		/*
 		 * Now pass cursor and bno into leaf-block processing routine.
