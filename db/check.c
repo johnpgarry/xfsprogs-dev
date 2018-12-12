@@ -164,8 +164,19 @@ static const char	*typename[] = {
 	"btrmap",
 	"btrefcnt",
 	"rldata",
+	"cowdata",
 	NULL
 };
+
+/*
+ * Make sure typename has the same number of elements as there are DBM types.
+ * This function isn't called anywhere; we just use it to trip up the compiler.
+ */
+static inline void check_typename(void)
+{
+	BUILD_BUG_ON(ARRAY_SIZE(typename) != DBM_NDBM + 1);
+}
+
 static int		verbose;
 
 #define	CHECK_BLIST(b)	(blist_size && check_blist(b))
