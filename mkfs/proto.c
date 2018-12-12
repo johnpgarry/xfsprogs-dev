@@ -15,7 +15,7 @@ static char *getstr(char **pp);
 static void fail(char *msg, int i);
 static struct xfs_trans * getres(struct xfs_mount *mp, uint blocks);
 static void rsvfile(xfs_mount_t *mp, xfs_inode_t *ip, long long len);
-static int newfile(xfs_trans_t *tp, xfs_inode_t *ip, int dolocal, int logit,
+static int newfile(xfs_trans_t *tp, xfs_inode_t *ip, int symlink, int logit,
 			char *buf, int len);
 static char *newregfile(char **pp, int *len);
 static void rtinit(xfs_mount_t *mp);
@@ -220,7 +220,7 @@ static int
 newfile(
 	xfs_trans_t	*tp,
 	xfs_inode_t	*ip,
-	int		dolocal,
+	int		symlink,
 	int		logit,
 	char		*buf,
 	int		len)
@@ -236,13 +236,8 @@ newfile(
 
 	flags = 0;
 	mp = ip->i_mount;
-	if (dolocal && len <= XFS_IFORK_DSIZE(ip)) {
-		libxfs_idata_realloc(ip, len, XFS_DATA_FORK);
-		if (buf)
-			memmove(ip->i_df.if_u1.if_data, buf, len);
-		ip->i_d.di_size = len;
-		ip->i_df.if_flags &= ~XFS_IFEXTENTS;
-		ip->i_df.if_flags |= XFS_IFINLINE;
+	if (symlink && len <= XFS_IFORK_DSIZE(ip)) {
+		libxfs_init_local_fork(ip, XFS_DATA_FORK, buf, len);
 		ip->i_d.di_format = XFS_DINODE_FMT_LOCAL;
 		flags = XFS_ILOG_DDATA;
 	} else if (len > 0) {

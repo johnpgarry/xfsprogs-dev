@@ -149,5 +149,6 @@
 #define xfs_dir_get_ops			libxfs_dir_get_ops
 #define xfs_default_ifork_ops		libxfs_default_ifork_ops
 #define xfs_fs_geometry			libxfs_fs_geometry
+#define xfs_init_local_fork		libxfs_init_local_fork
 
 #endif /* __LIBXFS_API_DEFS_H__ */
