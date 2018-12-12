@@ -1374,8 +1374,7 @@ fix_freelist(
 	args.agno = agno;
 	args.alignment = 1;
 	args.pag = libxfs_perag_get(mp, agno);
-	error = -libxfs_trans_alloc_rollable(mp,
-			libxfs_alloc_min_freelist(mp, args.pag), &tp);
+	error = -libxfs_trans_alloc_rollable(mp, 0, &tp);
 	if (error)
 		do_error(_("failed to fix AGFL on AG %d, error %d\n"),
 				agno, error);
