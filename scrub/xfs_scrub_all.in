@@ -28,9 +28,21 @@ def DEVNULL():
 
 def find_mounts():
 	'''Map mountpoints to physical disks.'''
+	def find_xfs_mounts(bdev, fs, lastdisk):
+		'''Attach lastdisk to each fs found under bdev.'''
+		if bdev['fstype'] == 'xfs' and bdev['mountpoint'] is not None:
+			mnt = bdev['mountpoint']
+			if mnt in fs:
+				fs[mnt].add(lastdisk)
+			else:
+				fs[mnt] = set([lastdisk])
+		if 'children' not in bdev:
+			return
+		for child in bdev['children']:
+			find_xfs_mounts(child, fs, lastdisk)
 
 	fs = {}
-	cmd=['lsblk', '-o', 'KNAME,TYPE,FSTYPE,MOUNTPOINT', '-J']
+	cmd=['lsblk', '-o', 'NAME,KNAME,TYPE,FSTYPE,MOUNTPOINT', '-J']
 	result = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 	result.wait()
 	if result.returncode != 0:
@@ -38,18 +50,12 @@ def find_mounts():
 	sarray = [x.decode(sys.stdout.encoding) for x in result.stdout.readlines()]
 	output = ' '.join(sarray)
 	bdevdata = json.loads(output)
+
 	# The lsblk output had better be in disks-then-partitions order
 	for bdev in bdevdata['blockdevices']:
-		if bdev['type'] in ('disk', 'loop'):
-			lastdisk = bdev['kname']
-		if bdev['fstype'] == 'xfs':
-			mnt = bdev['mountpoint']
-			if mnt is None:
-				continue
-			if mnt in fs:
-				fs[mnt].add(lastdisk)
-			else:
-				fs[mnt] = set([lastdisk])
+		lastdisk = bdev['kname']
+		find_xfs_mounts(bdev, fs, lastdisk)
+
 	return fs
 
 def kill_systemd(unit, proc):
