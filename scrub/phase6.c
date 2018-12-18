@@ -33,18 +33,29 @@
  * and report the paths of the now corrupt files.
  */
 
+/* Verify disk blocks with GETFSMAP */
+
+struct xfs_verify_extent {
+	struct read_verify_pool	*rvp_data;
+	struct read_verify_pool	*rvp_log;
+	struct read_verify_pool	*rvp_realtime;
+	struct bitmap		*d_bad;		/* bytes */
+	struct bitmap		*r_bad;		/* bytes */
+};
+
 /* Find the fd for a given device identifier. */
-static struct disk *
-xfs_dev_to_disk(
-	struct scrub_ctx	*ctx,
-	dev_t			dev)
+static struct read_verify_pool *
+xfs_dev_to_pool(
+	struct scrub_ctx		*ctx,
+	struct xfs_verify_extent	*ve,
+	dev_t				dev)
 {
 	if (dev == ctx->fsinfo.fs_datadev)
-		return ctx->datadev;
+		return ve->rvp_data;
 	else if (dev == ctx->fsinfo.fs_logdev)
-		return ctx->logdev;
+		return ve->rvp_log;
 	else if (dev == ctx->fsinfo.fs_rtdev)
-		return ctx->rtdev;
+		return ve->rvp_realtime;
 	abort();
 }
 
@@ -285,14 +296,6 @@ xfs_report_verify_errors(
 	return xfs_scan_all_inodes(ctx, xfs_report_verify_inode, &vei);
 }
 
-/* Verify disk blocks with GETFSMAP */
-
-struct xfs_verify_extent {
-	struct read_verify_pool	*readverify;
-	struct bitmap		*d_bad;		/* bytes */
-	struct bitmap		*r_bad;		/* bytes */
-};
-
 /* Report an IO error resulting from read-verify based off getfsmap. */
 static bool
 xfs_check_rmap_error_report(
@@ -393,7 +396,9 @@ xfs_check_rmap(
 	void				*arg)
 {
 	struct xfs_verify_extent	*ve = arg;
-	struct disk			*disk;
+	struct read_verify_pool		*rvp;
+
+	rvp = xfs_dev_to_pool(ctx, ve, map->fmr_device);
 
 	dbg_printf("rmap dev %d:%d phys %"PRIu64" owner %"PRId64
 			" offset %"PRIu64" len %"PRIu64" flags 0x%x\n",
@@ -420,17 +425,30 @@ xfs_check_rmap(
 	/* XXX: Filter out directory data blocks. */
 
 	/* Schedule the read verify command for (eventual) running. */
-	disk = xfs_dev_to_disk(ctx, map->fmr_device);
-
-	read_verify_schedule_io(ve->readverify, disk, map->fmr_physical,
-			map->fmr_length, ve);
+	read_verify_schedule_io(rvp, map->fmr_physical, map->fmr_length, ve);
 
 out:
 	/* Is this the last extent?  Fire off the read. */
 	if (map->fmr_flags & FMR_OF_LAST)
-		read_verify_force_io(ve->readverify);
+		read_verify_force_io(rvp);
 
 	return true;
+}
+
+/* Wait for read/verify actions to finish, then return # bytes checked. */
+static uint64_t
+clean_pool(
+	struct read_verify_pool	*rvp)
+{
+	uint64_t		ret;
+
+	if (!rvp)
+		return 0;
+
+	read_verify_pool_flush(rvp);
+	ret += read_verify_bytes(rvp);
+	read_verify_pool_destroy(rvp);
+	return ret;
 }
 
 /*
@@ -445,7 +463,7 @@ bool
 xfs_scan_blocks(
 	struct scrub_ctx		*ctx)
 {
-	struct xfs_verify_extent	ve;
+	struct xfs_verify_extent	ve = { NULL };
 	bool				moveon;
 
 	moveon = bitmap_init(&ve.d_bad);
@@ -460,21 +478,43 @@ xfs_scan_blocks(
 		goto out_dbad;
 	}
 
-	ve.readverify = read_verify_pool_init(ctx, ctx->geo.blocksize,
-			xfs_check_rmap_ioerr, disk_heads(ctx->datadev),
+	ve.rvp_data = read_verify_pool_init(ctx, ctx->datadev,
+			ctx->geo.blocksize, xfs_check_rmap_ioerr,
 			scrub_nproc(ctx));
-	if (!ve.readverify) {
+	if (!ve.rvp_data) {
 		moveon = false;
 		str_info(ctx, ctx->mntpoint,
-_("Could not create media verifier."));
+_("Could not create data device media verifier."));
 		goto out_rbad;
+	}
+	if (ctx->logdev) {
+		ve.rvp_log = read_verify_pool_init(ctx, ctx->logdev,
+				ctx->geo.blocksize, xfs_check_rmap_ioerr,
+				scrub_nproc(ctx));
+		if (!ve.rvp_log) {
+			moveon = false;
+			str_info(ctx, ctx->mntpoint,
+	_("Could not create log device media verifier."));
+			goto out_datapool;
+		}
+	}
+	if (ctx->rtdev) {
+		ve.rvp_realtime = read_verify_pool_init(ctx, ctx->rtdev,
+				ctx->geo.blocksize, xfs_check_rmap_ioerr,
+				scrub_nproc(ctx));
+		if (!ve.rvp_realtime) {
+			moveon = false;
+			str_info(ctx, ctx->mntpoint,
+	_("Could not create realtime device media verifier."));
+			goto out_logpool;
+		}
 	}
 	moveon = xfs_scan_all_spacemaps(ctx, xfs_check_rmap, &ve);
 	if (!moveon)
-		goto out_pool;
-	read_verify_pool_flush(ve.readverify);
-	ctx->bytes_checked += read_verify_bytes(ve.readverify);
-	read_verify_pool_destroy(ve.readverify);
+		goto out_rtpool;
+	ctx->bytes_checked += clean_pool(ve.rvp_data);
+	ctx->bytes_checked += clean_pool(ve.rvp_log);
+	ctx->bytes_checked += clean_pool(ve.rvp_realtime);
 
 	/* Scan the whole dir tree to see what matches the bad extents. */
 	if (!bitmap_empty(ve.d_bad) || !bitmap_empty(ve.r_bad))
@@ -484,8 +524,14 @@ _("Could not create media verifier."));
 	bitmap_free(&ve.d_bad);
 	return moveon;
 
-out_pool:
-	read_verify_pool_destroy(ve.readverify);
+out_rtpool:
+	if (ve.rvp_realtime)
+		read_verify_pool_destroy(ve.rvp_realtime);
+out_logpool:
+	if (ve.rvp_log)
+		read_verify_pool_destroy(ve.rvp_log);
+out_datapool:
+	read_verify_pool_destroy(ve.rvp_data);
 out_rbad:
 	bitmap_free(&ve.r_bad);
 out_dbad:
