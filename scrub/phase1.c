@@ -109,13 +109,6 @@ _("Must be root to run scrub."));
 		return false;
 	}
 
-	ctx->nr_io_threads = nproc;
-	if (verbose) {
-		fprintf(stdout, _("%s: using %d threads to scrub.\n"),
-				ctx->mntpoint, scrub_nproc(ctx));
-		fflush(stdout);
-	}
-
 	if (!platform_test_xfs_fd(ctx->mnt_fd)) {
 		str_info(ctx, ctx->mntpoint,
 _("Does not appear to be an XFS filesystem!"));
@@ -191,6 +184,13 @@ _("Unable to find realtime device path."));
 	if (error) {
 		str_errno(ctx, ctx->fsinfo.fs_name);
 		return false;
+	}
+
+	ctx->nr_io_threads = disk_heads(ctx->datadev);
+	if (verbose) {
+		fprintf(stdout, _("%s: using %d threads to scrub.\n"),
+				ctx->mntpoint, scrub_nproc(ctx));
+		fflush(stdout);
 	}
 
 	if (ctx->fsinfo.fs_log) {
