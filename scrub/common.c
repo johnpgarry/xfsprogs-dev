@@ -231,8 +231,8 @@ unsigned int
 scrub_nproc(
 	struct scrub_ctx	*ctx)
 {
-	if (nr_threads)
-		return nr_threads;
+	if (force_nr_threads)
+		return force_nr_threads;
 	return ctx->nr_io_threads;
 }
 

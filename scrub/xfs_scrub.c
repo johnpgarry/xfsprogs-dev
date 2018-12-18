@@ -133,7 +133,7 @@ unsigned int			bg_mode;
 int				nproc;
 
 /* Number of threads we're allowed to use. */
-unsigned int			nr_threads;
+unsigned int			force_nr_threads;
 
 /* Verbosity; higher values print more information. */
 bool				verbose;
@@ -589,7 +589,7 @@ main(
 			}
 			break;
 		case 'b':
-			nr_threads = 1;
+			force_nr_threads = 1;
 			bg_mode++;
 			break;
 		case 'C':
@@ -659,7 +659,7 @@ main(
 			perror("nr_threads");
 			usage();
 		}
-		nr_threads = x;
+		force_nr_threads = x;
 	}
 
 	if (optind != argc - 1)

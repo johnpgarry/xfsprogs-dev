@@ -10,7 +10,7 @@ extern char *progname;
 
 #define _PATH_PROC_MOUNTS	"/proc/mounts"
 
-extern unsigned int		nr_threads;
+extern unsigned int		force_nr_threads;
 extern unsigned int		bg_mode;
 extern unsigned int		debug;
 extern int			nproc;
