@@ -50,6 +50,7 @@ struct read_verify_pool {
 	void			*readbuf;	/* read buffer */
 	struct ptcounter	*verified_bytes;
 	struct ptvar		*rvstate;	/* combines read requests */
+	struct disk		*disk;		/* which disk? */
 	read_verify_ioerr_fn_t	ioerr_fn;	/* io error callback */
 	size_t			miniosz;	/* minimum io size, bytes */
 };
@@ -57,19 +58,18 @@ struct read_verify_pool {
 /*
  * Create a thread pool to run read verifiers.
  *
+ * @disk is the disk we want to verify.
  * @miniosz is the minimum size of an IO to expect (in bytes).
  * @ioerr_fn will be called when IO errors occur.
- * @nproc is the maximum number of verify requests that may be sent to a disk
- * at any given time.
  * @submitter_threads is the number of threads that may be sending verify
  * requests at any given time.
  */
 struct read_verify_pool *
 read_verify_pool_init(
 	struct scrub_ctx		*ctx,
+	struct disk			*disk,
 	size_t				miniosz,
 	read_verify_ioerr_fn_t		ioerr_fn,
-	unsigned int			nproc,
 	unsigned int			submitter_threads)
 {
 	struct read_verify_pool		*rvp;
@@ -89,6 +89,7 @@ read_verify_pool_init(
 		goto out_buf;
 	rvp->miniosz = miniosz;
 	rvp->ctx = ctx;
+	rvp->disk = disk;
 	rvp->ioerr_fn = ioerr_fn;
 	rvp->rvstate = ptvar_init(submitter_threads,
 			sizeof(struct read_verify));
@@ -97,7 +98,8 @@ read_verify_pool_init(
 	/* Run in the main thread if we only want one thread. */
 	if (nproc == 1)
 		nproc = 0;
-	ret = workqueue_create(&rvp->wq, (struct xfs_mount *)rvp, nproc);
+	ret = workqueue_create(&rvp->wq, (struct xfs_mount *)rvp,
+			disk_heads(disk));
 	if (ret)
 		goto out_rvstate;
 	return rvp;
@@ -150,17 +152,16 @@ read_verify(
 	rvp = (struct read_verify_pool *)wq->wq_ctx;
 	while (rv->io_length > 0) {
 		len = min(rv->io_length, RVP_IO_MAX_SIZE);
-		dbg_printf("diskverify %d %"PRIu64" %zu\n", rv->io_disk->d_fd,
+		dbg_printf("diskverify %d %"PRIu64" %zu\n", rvp->disk->d_fd,
 				rv->io_start, len);
-		sz = disk_read_verify(rv->io_disk, rvp->readbuf,
-				rv->io_start, len);
+		sz = disk_read_verify(rvp->disk, rvp->readbuf, rv->io_start,
+				len);
 		if (sz < 0) {
 			dbg_printf("IOERR %d %"PRIu64" %zu\n",
-					rv->io_disk->d_fd,
-					rv->io_start, len);
+					rvp->disk->d_fd, rv->io_start, len);
 			/* IO error, so try the next logical block. */
 			len = rvp->miniosz;
-			rvp->ioerr_fn(rvp->ctx, rv->io_disk, rv->io_start, len,
+			rvp->ioerr_fn(rvp->ctx, rvp->disk, rv->io_start, len,
 					errno, rv->io_end_arg);
 		}
 
@@ -184,11 +185,11 @@ read_verify_queue(
 	bool				ret;
 
 	dbg_printf("verify fd %d start %"PRIu64" len %"PRIu64"\n",
-			rv->io_disk->d_fd, rv->io_start, rv->io_length);
+			rvp->disk->d_fd, rv->io_start, rv->io_length);
 
 	tmp = malloc(sizeof(struct read_verify));
 	if (!tmp) {
-		rvp->ioerr_fn(rvp->ctx, rv->io_disk, rv->io_start,
+		rvp->ioerr_fn(rvp->ctx, rvp->disk, rv->io_start,
 				rv->io_length, errno, rv->io_end_arg);
 		return true;
 	}
@@ -212,7 +213,6 @@ _("Could not queue read-verify work."));
 bool
 read_verify_schedule_io(
 	struct read_verify_pool		*rvp,
-	struct disk			*disk,
 	uint64_t			start,
 	uint64_t			length,
 	void				*end_arg)
@@ -231,7 +231,7 @@ read_verify_schedule_io(
 	 * reporting is the same, and the two extents are close,
 	 * we can combine them.
 	 */
-	if (rv->io_length > 0 && disk == rv->io_disk &&
+	if (rv->io_length > 0 &&
 	    end_arg == rv->io_end_arg &&
 	    ((start >= rv->io_start && start <= rv_end + RVP_IO_BATCH_LOCALITY) ||
 	     (rv->io_start >= start &&
@@ -244,7 +244,6 @@ read_verify_schedule_io(
 			return read_verify_queue(rvp, rv);
 
 		/* Stash the new IO. */
-		rv->io_disk = disk;
 		rv->io_start = start;
 		rv->io_length = length;
 		rv->io_end_arg = end_arg;
