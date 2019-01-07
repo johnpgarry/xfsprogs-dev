@@ -149,6 +149,8 @@
 #define xfs_default_ifork_ops		libxfs_default_ifork_ops
 #define xfs_fs_geometry			libxfs_fs_geometry
 #define xfs_init_local_fork		libxfs_init_local_fork
+#define xfs_dir2_namecheck		libxfs_dir2_namecheck
+#define xfs_attr_namecheck		libxfs_attr_namecheck
 
 #define LIBXFS_ATTR_ROOT		ATTR_ROOT
 #define LIBXFS_ATTR_SECURE		ATTR_SECURE
