@@ -44,14 +44,6 @@ _("malloc failed (%zu bytes) dir2_add_badlist:ino %" PRIu64 "\n"),
 	l->ino = ino;
 }
 
-static int
-dir_namecheck(
-	uint8_t	*name,
-	int	length)
-{
-	return namecheck((char *)name, length, true);
-}
-
 int
 dir2_is_badino(
 	xfs_ino_t	ino)
@@ -318,7 +310,7 @@ _("entry #%d %s in shortform dir %" PRIu64),
 		 * the length value is stored in a byte
 		 * so it can't be too big, it can only wrap
 		 */
-		if (dir_namecheck(sfep->name, namelen)) {
+		if (!libxfs_dir2_namecheck(sfep->name, namelen)) {
 			/*
 			 * junk entry
 			 */
@@ -789,7 +781,7 @@ _("\twould clear inode number in entry at offset %" PRIdPTR "...\n"),
 		 * during phase 4.
 		 */
 		junkit = dep->name[0] == '/';
-		nm_illegal = dir_namecheck(dep->name, dep->namelen);
+		nm_illegal = !libxfs_dir2_namecheck(dep->name, dep->namelen);
 		if (ino_discovery && nm_illegal) {
 			do_warn(
 _("entry at block %u offset %" PRIdPTR " in directory inode %" PRIu64 " has illegal name \"%*.*s\": "),
