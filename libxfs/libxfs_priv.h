@@ -104,14 +104,6 @@ extern char    *progname;
  */
 #define PTR_FMT "%p"
 
-/* XXX: need to push these out to make LIBXFS_ATTR defines */
-#define ATTR_ROOT			0x0002
-#define ATTR_SECURE			0x0008
-#define ATTR_CREATE			0x0010
-#define ATTR_REPLACE			0x0020
-#define ATTR_KERNOTIME			0
-#define ATTR_KERNOVAL			0
-
 #define XFS_IGET_CREATE			0x1
 #define XFS_IGET_UNTRUSTED		0x2
 
