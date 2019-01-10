@@ -3,8 +3,8 @@
  * Copyright (C) 2018 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#ifndef XFS_SCRUB_BITMAP_H_
-#define XFS_SCRUB_BITMAP_H_
+#ifndef LIBFROG_BITMAP_H_
+#define LIBFROG_BITMAP_H_
 
 struct bitmap {
 	pthread_mutex_t		bt_lock;
@@ -21,4 +21,4 @@ bool bitmap_test(struct bitmap *bmap, uint64_t start,
 bool bitmap_empty(struct bitmap *bmap);
 void bitmap_dump(struct bitmap *bmap);
 
-#endif /* XFS_SCRUB_BITMAP_H_ */
+#endif /* LIBFROG_BITMAP_H_ */
