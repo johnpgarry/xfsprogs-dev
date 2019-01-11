@@ -2177,6 +2177,19 @@ process_btinode(
 	}
 
 	pp = XFS_BMDR_PTR_ADDR(dib, 1, maxrecs);
+
+	if (zero_stale_data) {
+		char	*top;
+
+		/* Unused btree key space */
+		top = (char*)XFS_BMDR_KEY_ADDR(dib, nrecs + 1);
+		memset(top, 0, (char*)pp - top);
+
+		/* Unused btree ptr space */
+		top = (char*)&pp[nrecs];
+		memset(top, 0, (char*)dib + XFS_DFORK_SIZE(dip, mp, whichfork) - top);
+	}
+
 	for (i = 0; i < nrecs; i++) {
 		xfs_agnumber_t	ag;
 		xfs_agblock_t	bno;
