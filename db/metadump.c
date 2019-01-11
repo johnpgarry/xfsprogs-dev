@@ -1422,6 +1422,43 @@ process_sf_attr(
 }
 
 static void
+process_dir_free_block(
+	char				*block)
+{
+	struct xfs_dir2_free		*free;
+	struct xfs_dir3_icfree_hdr	freehdr;
+
+	if (!zero_stale_data)
+		return;
+
+	free = (struct xfs_dir2_free *)block;
+	M_DIROPS(mp)->free_hdr_from_disk(&freehdr, free);
+
+	switch (freehdr.magic) {
+	case XFS_DIR2_FREE_MAGIC:
+	case XFS_DIR3_FREE_MAGIC: {
+		__be16			*bests;
+		char			*high;
+		int			used;
+
+		/* Zero out space from end of bests[] to end of block */
+		bests = M_DIROPS(mp)->free_bests_p(free);
+		high = (char *)&bests[freehdr.nvalid];
+		used = high - (char*)free;
+		memset(high, 0, mp->m_dir_geo->blksize - used);
+		iocur_top->need_crc = 1;
+		break;
+	}
+	default:
+		if (show_warnings)
+			print_warning("invalid magic in dir inode %llu "
+				      "free block",
+				      (unsigned long long)cur_ino);
+		break;
+	}
+}
+
+static void
 process_dir_leaf_block(
 	char				*block)
 {
@@ -1518,7 +1555,7 @@ process_dir_data_block(
 		if (show_warnings)
 			print_warning(
 		"invalid magic in dir inode %llu block %ld",
-					(long long)cur_ino, (long)offset);
+					(unsigned long long)cur_ino, (long)offset);
 		return;
 	}
 
@@ -1833,8 +1870,7 @@ process_single_fsb_objects(
 		switch (btype) {
 		case TYP_DIR2:
 			if (o >= mp->m_dir_geo->freeblk) {
-				/* TODO, zap any stale data */
-				break;
+				process_dir_free_block(dp);
 			} else if (o >= mp->m_dir_geo->leafblk) {
 				process_dir_leaf_block(dp);
 			} else {
@@ -1928,8 +1964,7 @@ process_multi_fsb_objects(
 
 			dp = iocur_top->data;
 			if (o >= mp->m_dir_geo->freeblk) {
-				/* TODO, zap any stale data */
-				goto write;
+				process_dir_free_block(dp);
 			} else if (o >= mp->m_dir_geo->leafblk) {
 				process_dir_leaf_block(dp);
 			} else {
