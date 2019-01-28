@@ -151,7 +151,7 @@ static const typ_t	__typtab_spcrc[] = {
 	{ TYP_SYMLINK, "symlink", handle_struct, symlink_crc_hfld,
 		&xfs_symlink_buf_ops, XFS_SYMLINK_CRC_OFF },
 	{ TYP_TEXT, "text", handle_text, NULL, NULL, TYP_F_NO_CRC_OFF },
-	{ TYP_FINOBT, "finobt", handle_struct, inobt_crc_hfld,
+	{ TYP_FINOBT, "finobt", handle_struct, inobt_spcrc_hfld,
 		&xfs_inobt_buf_ops, XFS_BTREE_SBLOCK_CRC_OFF },
 	{ TYP_NONE, NULL }
 };
