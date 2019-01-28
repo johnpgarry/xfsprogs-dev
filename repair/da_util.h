@@ -27,7 +27,8 @@ typedef struct da_bt_cursor {
 int
 namecheck(
 	char		*name,
-	int		length);
+	int		length,
+	bool		isadir);
 
 struct xfs_buf *
 da_read_buf(
