@@ -26,7 +26,7 @@ static int	write_f(int argc, char **argv);
 static void     write_help(void);
 
 static const cmdinfo_t	write_cmd =
-	{ "write", NULL, write_f, 0, -1, 0, N_("[-c] [field or value]..."),
+	{ "write", NULL, write_f, 0, -1, 0, N_("[-c|-d] [field or value]..."),
 	  N_("write value to disk"), write_help };
 
 void
