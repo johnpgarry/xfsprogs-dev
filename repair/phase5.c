@@ -1500,7 +1500,7 @@ prop_rmap_highkey(
 		bt_key->rm_offset = cpu_to_be64(
 				libxfs_rmap_irec_offset_pack(&high_key));
 
-		for (i = 1; i < numrecs - 1; i++) {
+		for (i = 1; i <= numrecs; i++) {
 			bt_key = XFS_RMAP_HIGH_KEY_ADDR(bt_hdr, i);
 			key.rm_startblock = be32_to_cpu(bt_key->rm_startblock);
 			key.rm_owner = be64_to_cpu(bt_key->rm_owner);
