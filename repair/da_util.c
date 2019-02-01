@@ -31,7 +31,7 @@ namecheck(
 
 	for (c = name, i = 0; i < length; i++, c++) {
 		if (isadir && *c == '/')
-			return 0;
+			return 1;
 		if (*c == '\0')
 			return 1;
 	}
