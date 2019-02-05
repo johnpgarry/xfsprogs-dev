@@ -9,7 +9,6 @@
 #include <sys/statvfs.h>
 #include "handle.h"
 #include "path.h"
-#include "ptvar.h"
 #include "workqueue.h"
 #include "xfs_scrub.h"
 #include "common.h"
@@ -290,7 +289,6 @@ xfs_report_verify_errors(
 
 struct xfs_verify_extent {
 	struct read_verify_pool	*readverify;
-	struct ptvar		*rvstate;
 	struct bitmap		*d_bad;		/* bytes */
 	struct bitmap		*r_bad;		/* bytes */
 };
@@ -424,13 +422,13 @@ xfs_check_rmap(
 	/* Schedule the read verify command for (eventual) running. */
 	disk = xfs_dev_to_disk(ctx, map->fmr_device);
 
-	read_verify_schedule_io(ve->readverify, ptvar_get(ve->rvstate), disk,
-			map->fmr_physical, map->fmr_length, ve);
+	read_verify_schedule_io(ve->readverify, disk, map->fmr_physical,
+			map->fmr_length, ve);
 
 out:
 	/* Is this the last extent?  Fire off the read. */
 	if (map->fmr_flags & FMR_OF_LAST)
-		read_verify_force_io(ve->readverify, ptvar_get(ve->rvstate));
+		read_verify_force_io(ve->readverify);
 
 	return true;
 }
@@ -450,16 +448,10 @@ xfs_scan_blocks(
 	struct xfs_verify_extent	ve;
 	bool				moveon;
 
-	ve.rvstate = ptvar_init(scrub_nproc(ctx), sizeof(struct read_verify));
-	if (!ve.rvstate) {
-		str_errno(ctx, ctx->mntpoint);
-		return false;
-	}
-
 	moveon = bitmap_init(&ve.d_bad);
 	if (!moveon) {
 		str_errno(ctx, ctx->mntpoint);
-		goto out_ve;
+		goto out;
 	}
 
 	moveon = bitmap_init(&ve.r_bad);
@@ -469,7 +461,8 @@ xfs_scan_blocks(
 	}
 
 	ve.readverify = read_verify_pool_init(ctx, ctx->geo.blocksize,
-			xfs_check_rmap_ioerr, disk_heads(ctx->datadev));
+			xfs_check_rmap_ioerr, disk_heads(ctx->datadev),
+			scrub_nproc(ctx));
 	if (!ve.readverify) {
 		moveon = false;
 		str_info(ctx, ctx->mntpoint,
@@ -489,7 +482,6 @@ _("Could not create media verifier."));
 
 	bitmap_free(&ve.r_bad);
 	bitmap_free(&ve.d_bad);
-	ptvar_free(ve.rvstate);
 	return moveon;
 
 out_pool:
@@ -498,8 +490,7 @@ out_rbad:
 	bitmap_free(&ve.r_bad);
 out_dbad:
 	bitmap_free(&ve.d_bad);
-out_ve:
-	ptvar_free(ve.rvstate);
+out:
 	return moveon;
 }
 
