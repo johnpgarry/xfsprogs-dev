@@ -1,3 +1,24 @@
+xfsprogs-4.20.0-rc1 (08 Feb 2018)
+	- mkfs.xfs: null-terminate symlinks created via protofile (Eric Sandeen)
+	- xfs_repair: allow '/' in attribute names (Eric Sandeen)
+	- xfs_repair: skip block reservation when fixing freelist (Darrick Wong)
+	- xfs_repair: rebuild dir when nonroot blocks corrupt (Darrick Wong)
+	- xfs_repair: int nonleaf finobt blocks with proper magic (Brian Foster)
+	- xfs_repair: fix off by one error rebuilding high keys (Darrick Wong)
+	- xfs_io: allow open file permissions to be changed (Dave Chinner)
+	- xfs_io: open pipes in non-blocking mode (Dave Chinner)
+	- xfs_metadump: multiple stale data zeroing fixes (Stefan Ring)
+	- xfs_quota: allow reg files w/o prjinherit flag (Achilles Gaikwad)
+	- xfs_db: properly decode finobt record w/ sparse inodes (Darrick Wong)
+	- xfs_db: fix frag command to work w/ sparse inodes (Eric Sandeen)
+	- xfs_scrub: move all executables to /usr/sbin (Darrick Wong)
+	- xfs_scrub: handle totally empty inode chunks (Darrick Wong)
+	- xfs.5 manpage: Remove barrier related options (Eric Sandeen)
+	- xfs_io.8 manpage: rearrange command listings by section (Darrick Wong)
+	- Remove generated scrub files under make clean (Eric Sandeen)
+	- Skip scrub manpage install if not configured (Eric Sandeen)
+	- Merge libxfs from kernel 4.20
+
 xfsprogs-4.19.0 (09 Nov 2018)
 	- Fix up debian subdir build w.r.t. CHECK_CMD (Darrick Wong)
 
@@ -188,7 +209,6 @@ xfsprogs-4.11.0-rc1 (4 Apr 2017)
 
 xfsprogs-4.10.0 (6 Feb 2017)
 	- build: fix __bitwise definitions vs kernel headers (Darrick Wong)
-
 xfsprogs-4.10.0-rc1 (15 Feb 2017)
 	- build: fix cross-compile (Gwendal Grignou)
 	- remove old Irix support (Christoph Hellwig)
