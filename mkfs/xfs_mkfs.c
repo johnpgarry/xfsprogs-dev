@@ -2202,6 +2202,66 @@ validate_rtextsize(
 	ASSERT(cfg->rtextblocks);
 }
 
+/* Validate the incoming extsize hint as if we were a file. */
+static void
+validate_extsize_hint(
+	struct xfs_mount	*mp,
+	struct cli_params	*cli)
+{
+	xfs_failaddr_t		fa;
+	bool			rt;
+	uint16_t		flags = 0;
+
+	rt = (cli->fsx.fsx_xflags & XFS_DIFLAG_RTINHERIT);
+
+	if (cli->fsx.fsx_xflags & XFS_DIFLAG_EXTSZINHERIT)
+		flags |= XFS_DIFLAG_EXTSIZE;
+
+	fa = libxfs_inode_validate_extsize(mp, cli->fsx.fsx_extsize, S_IFREG,
+			flags);
+	if (rt && fa == NULL)
+		fa = libxfs_inode_validate_extsize(mp, cli->fsx.fsx_extsize,
+				S_IFREG, flags | XFS_DIFLAG_REALTIME);
+	if (fa == NULL)
+		return;
+
+	if (rt && mp->m_sb.sb_rextsize > 1)
+		fprintf(stderr,
+	_("illegal extent size hint %lld, must be less than %u and a multiple of %u.\n"),
+				(long long)cli->fsx.fsx_extsize,
+				min(MAXEXTLEN, mp->m_sb.sb_agblocks / 2),
+				mp->m_sb.sb_rextsize);
+	else
+		fprintf(stderr,
+	_("illegal extent size hint %lld, must be less than %u.\n"),
+				(long long)cli->fsx.fsx_extsize,
+				min(MAXEXTLEN, mp->m_sb.sb_agblocks / 2));
+	usage();
+}
+
+/* Validate the incoming CoW extsize hint as if we were a file. */
+static void
+validate_cowextsize_hint(
+	struct xfs_mount	*mp,
+	struct cli_params	*cli)
+{
+	xfs_failaddr_t		fa;
+	uint64_t		flags2 = 0;
+
+	if (cli->fsx.fsx_xflags & FS_XFLAG_COWEXTSIZE)
+		flags2 |= XFS_DIFLAG2_COWEXTSIZE;
+	fa = libxfs_inode_validate_cowextsize(mp, cli->fsx.fsx_cowextsize,
+			S_IFREG, 0, flags2);
+	if (fa == NULL)
+		return;
+
+	fprintf(stderr,
+_("illegal CoW extent size hint %lld, must be less than %u.\n"),
+			(long long)cli->fsx.fsx_cowextsize,
+			min(MAXEXTLEN, mp->m_sb.sb_agblocks / 2));
+	usage();
+}
+
 /*
  * Validate the configured stripe geometry, or is none is specified, pull
  * the configuration from the underlying device.
@@ -3944,6 +4004,10 @@ main(
 	calculate_log_size(&cfg, &cli, mp);
 
 	finish_superblock_setup(&cfg, mp, sbp);
+
+	/* Validate the extent size hints now that @mp is fully set up. */
+	validate_extsize_hint(mp, &cli);
+	validate_cowextsize_hint(mp, &cli);
 
 	/* Print the intended geometry of the fs. */
 	if (!quiet || dry_run) {
