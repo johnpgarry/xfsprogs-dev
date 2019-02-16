@@ -2202,6 +2202,85 @@ validate_rtextsize(
 	ASSERT(cfg->rtextblocks);
 }
 
+/* Validate the incoming extsize hint. */
+static void
+validate_extsize_hint(
+	struct xfs_mount	*mp,
+	struct cli_params	*cli)
+{
+	xfs_failaddr_t		fa;
+	uint16_t		flags = 0;
+
+	/*
+	 * First we validate the extent size inherit hint on a directory so
+	 * that we know that we'll be propagating a correct hint and flag to
+	 * new files on the data device.
+	 */
+	if (cli->fsx.fsx_xflags & FS_XFLAG_EXTSZINHERIT)
+		flags |= XFS_DIFLAG_EXTSZINHERIT;
+
+	fa = libxfs_inode_validate_extsize(mp, cli->fsx.fsx_extsize, S_IFDIR,
+			flags);
+	if (fa) {
+		fprintf(stderr,
+_("illegal extent size hint %lld, must be less than %u.\n"),
+				(long long)cli->fsx.fsx_extsize,
+				min(MAXEXTLEN, mp->m_sb.sb_agblocks / 2));
+		usage();
+	}
+
+	/*
+	 * Now we do it again with a realtime file so that we know the hint and
+	 * flag that get passed on to realtime files will be correct.
+	 */
+	if (mp->m_sb.sb_rextsize == 0)
+		return;
+
+	flags = XFS_DIFLAG_REALTIME;
+	if (cli->fsx.fsx_xflags & FS_XFLAG_EXTSZINHERIT)
+		flags |= XFS_DIFLAG_EXTSIZE;
+
+	fa = libxfs_inode_validate_extsize(mp, cli->fsx.fsx_extsize, S_IFREG,
+			flags);
+
+	if (fa) {
+		fprintf(stderr,
+_("illegal extent size hint %lld, must be less than %u and a multiple of %u.\n"),
+				(long long)cli->fsx.fsx_extsize,
+				min(MAXEXTLEN, mp->m_sb.sb_agblocks / 2),
+				mp->m_sb.sb_rextsize);
+		usage();
+	}
+}
+
+/* Validate the incoming CoW extsize hint. */
+static void
+validate_cowextsize_hint(
+	struct xfs_mount	*mp,
+	struct cli_params	*cli)
+{
+	xfs_failaddr_t		fa;
+	uint64_t		flags2 = 0;
+
+	/*
+	 * Validate the copy on write extent size inherit hint on a directory
+	 * so that we know that we'll be propagating a correct hint and flag to
+	 * new files on the data device.
+	 */
+	if (cli->fsx.fsx_xflags & FS_XFLAG_COWEXTSIZE)
+		flags2 |= XFS_DIFLAG2_COWEXTSIZE;
+
+	fa = libxfs_inode_validate_cowextsize(mp, cli->fsx.fsx_cowextsize,
+			S_IFDIR, 0, flags2);
+	if (fa) {
+		fprintf(stderr,
+_("illegal CoW extent size hint %lld, must be less than %u.\n"),
+				(long long)cli->fsx.fsx_cowextsize,
+				min(MAXEXTLEN, mp->m_sb.sb_agblocks / 2));
+		usage();
+	}
+}
+
 /*
  * Validate the configured stripe geometry, or is none is specified, pull
  * the configuration from the underlying device.
@@ -3944,6 +4023,10 @@ main(
 	calculate_log_size(&cfg, &cli, mp);
 
 	finish_superblock_setup(&cfg, mp, sbp);
+
+	/* Validate the extent size hints now that @mp is fully set up. */
+	validate_extsize_hint(mp, &cli);
+	validate_cowextsize_hint(mp, &cli);
 
 	/* Print the intended geometry of the fs. */
 	if (!quiet || dry_run) {
