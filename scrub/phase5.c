@@ -11,6 +11,9 @@
 #ifdef HAVE_LIBATTR
 # include <attr/attributes.h>
 #endif
+#ifdef HAVE_GETFSLABEL
+# include <linux/fs.h>
+#endif
 #include "handle.h"
 #include "list.h"
 #include "path.h"
@@ -282,6 +285,54 @@ out:
 	return *pmoveon ? 0 : XFS_ITERATE_INODES_ABORT;
 }
 
+#ifdef HAVE_GETFSLABEL
+/*
+ * Check the filesystem label for Unicode normalization problems or misleading
+ * sequences.
+ */
+static bool
+xfs_scrub_fs_label(
+	struct scrub_ctx		*ctx)
+{
+	char				label[FSLABEL_MAX];
+	struct unicrash			*uc = NULL;
+	bool				moveon = true;
+	int				error;
+
+	moveon = unicrash_fs_label_init(&uc, ctx);
+	if (!moveon)
+		return false;
+
+	/* Retrieve label; quietly bail if we don't support that. */
+	error = ioctl(ctx->mnt_fd, FS_IOC_GETFSLABEL, &label);
+	if (error) {
+		if (errno != EOPNOTSUPP && errno != ENOTTY) {
+			moveon = false;
+			perror(ctx->mntpoint);
+		}
+		goto out;
+	}
+
+	/* Ignore empty labels. */
+	if (label[0] == 0)
+		goto out;
+
+	/* Otherwise check for weirdness. */
+	if (uc)
+		moveon = unicrash_check_fs_label(uc, ctx->mntpoint, label);
+	else
+		moveon = xfs_scrub_check_name(ctx, ctx->mntpoint,
+				_("filesystem label"), label);
+	if (!moveon)
+		goto out;
+out:
+	unicrash_free(uc);
+	return moveon;
+}
+#else
+# define xfs_scrub_fs_label(c)	(true)
+#endif /* HAVE_GETFSLABEL */
+
 /* Check directory connectivity. */
 bool
 xfs_scan_connections(
@@ -295,6 +346,10 @@ xfs_scan_connections(
 _("Filesystem has errors, skipping connectivity checks."));
 		return true;
 	}
+
+	moveon = xfs_scrub_fs_label(ctx);
+	if (!moveon)
+		return false;
 
 	ret = xfs_scan_all_inodes(ctx, xfs_scrub_connections, &moveon);
 	if (!ret)

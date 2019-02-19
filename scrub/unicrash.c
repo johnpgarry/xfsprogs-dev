@@ -465,6 +465,15 @@ unicrash_xattr_init(
 			is_only_root_writable(bstat));
 }
 
+/* Initialize the collision detector for a filesystem label. */
+bool
+unicrash_fs_label_init(
+	struct unicrash		**ucp,
+	struct scrub_ctx	*ctx)
+{
+	return unicrash_init(ucp, ctx, false, 16, true);
+}
+
 /* Free the crash detector. */
 void
 unicrash_free(
@@ -697,4 +706,19 @@ unicrash_check_xattr_name(
 		return true;
 	return __unicrash_check_name(uc, descr, _("extended attribute"),
 			attrname, 0);
+}
+
+/*
+ * Check the fs label for unicode normalization problems or misleading bits.
+ */
+bool
+unicrash_check_fs_label(
+	struct unicrash		*uc,
+	const char		*descr,
+	const char		*label)
+{
+	if (!uc)
+		return true;
+	return __unicrash_check_name(uc, descr, _("filesystem label"),
+			label, 0);
 }

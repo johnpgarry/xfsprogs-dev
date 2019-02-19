@@ -99,6 +99,10 @@ ifeq ($(HAVE_HDIO_GETGEO),yes)
 LCFLAGS += -DHAVE_HDIO_GETGEO
 endif
 
+ifeq ($(HAVE_GETFSLABEL),yes)
+LCFLAGS += -DHAVE_GETFSLABEL
+endif
+
 LDIRT = $(XFS_SCRUB_ALL_PROG) *.service *.cron
 
 default: depend $(LTCOMMAND) $(XFS_SCRUB_ALL_PROG) $(OPTIONAL_TARGETS)

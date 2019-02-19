@@ -429,3 +429,20 @@ AC_DEFUN([AC_PACKAGE_CHECK_LTO],
     AC_SUBST(lto_cflags)
     AC_SUBST(lto_ldflags)
   ])
+
+#
+# Check if we have the GETFSLABEL ioctl
+#
+AC_DEFUN([AC_HAVE_GETFSLABEL],
+  [ AC_MSG_CHECKING([for FS_IOC_GETFSLABEL])
+    AC_TRY_LINK([
+#define _GNU_SOURCE
+#include <linux/fs.h>
+    ], [
+         char label[FSLABEL_MAX];
+         ioctl(0, FS_IOC_GETFSLABEL, &label);
+    ], have_getfslabel=yes
+       AC_MSG_RESULT(yes),
+       AC_MSG_RESULT(no))
+    AC_SUBST(have_getfslabel)
+  ])
