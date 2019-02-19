@@ -59,9 +59,11 @@ xfs_cleanup_fs(
 	if (ctx->datadev)
 		disk_close(ctx->datadev);
 	fshandle_destroy();
-	error = close(ctx->mnt_fd);
-	if (error)
-		str_errno(ctx, _("closing mountpoint fd"));
+	if (ctx->mnt_fd >= 0) {
+		error = close(ctx->mnt_fd);
+		if (error)
+			str_errno(ctx, _("closing mountpoint fd"));
+	}
 	fs_table_destroy();
 
 	return true;
