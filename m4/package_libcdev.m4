@@ -223,14 +223,14 @@ AC_DEFUN([AC_HAVE_FLS],
   ])
 
 #
-# Check if we have a fsetxattr call (Mac OS X)
+# Check if we have a fsetxattr call
 #
 AC_DEFUN([AC_HAVE_FSETXATTR],
   [ AC_CHECK_DECL([fsetxattr],
        have_fsetxattr=yes,
        [],
        [#include <sys/types.h>
-        #include <attr/xattr.h>]
+        #include <sys/xattr.h>]
        )
     AC_SUBST(have_fsetxattr)
   ])
