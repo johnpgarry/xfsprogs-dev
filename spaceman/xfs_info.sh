@@ -24,11 +24,19 @@ set -- extra "$@"
 shift $OPTIND
 case $# in
 	1)
-		if [ -b "$1" ] || [ -f "$1" ]; then
-			xfs_db -p xfs_info -c "info" $OPTS "$1"
+		arg="$1"
+
+		# See if we can map the arg to a loop device
+		loopdev="$(losetup -n -O NAME -j "${arg}" 2> /dev/null)"
+		test -n "${loopdev}" && arg="${loopdev}"
+
+		# If we find a mountpoint for the device, do a live query;
+		# otherwise try reading the fs with xfs_db.
+		if mountpt="$(findmnt -f -n -o TARGET "${arg}" 2> /dev/null)"; then
+			xfs_spaceman -p xfs_info -c "info" $OPTS "${mountpt}"
 			status=$?
 		else
-			xfs_spaceman -p xfs_info -c "info" $OPTS "$1"
+			xfs_db -p xfs_info -c "info" $OPTS "${arg}"
 			status=$?
 		fi
 		;;
