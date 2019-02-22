@@ -201,7 +201,7 @@ convert_f(int argc, char **argv)
 		break;
 	case CT_AGINO:
 		v = (v >> mp->m_sb.sb_inodelog) %
-		    (mp->m_sb.sb_agblocks << mp->m_sb.sb_inopblog);
+		    XFS_AGB_TO_AGINO(mp, mp->m_sb.sb_agblocks);
 		break;
 	case CT_AGNUMBER:
 		v = xfs_daddr_to_agno(mp, v >> BBSHIFT);
@@ -223,7 +223,7 @@ convert_f(int argc, char **argv)
 	case CT_INO:
 		v = XFS_AGINO_TO_INO(mp, xfs_daddr_to_agno(mp, v >> BBSHIFT),
 			(v >> mp->m_sb.sb_inodelog) %
-			(mp->m_sb.sb_agblocks << mp->m_sb.sb_inopblog));
+			XFS_AGB_TO_AGINO(mp, mp->m_sb.sb_agblocks));
 		break;
 	case CT_INOIDX:
 		v = (v >> mp->m_sb.sb_inodelog) & (mp->m_sb.sb_inopblock - 1);

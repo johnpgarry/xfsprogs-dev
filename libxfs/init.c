@@ -495,7 +495,7 @@ libxfs_initialize_perag(
 	 * If we mount with the inode64 option, or no inode overflows
 	 * the legacy 32-bit address space clear the inode32 option.
 	 */
-	agino = XFS_OFFBNO_TO_AGINO(mp, sbp->sb_agblocks - 1, 0);
+	agino = XFS_AGB_TO_AGINO(mp, sbp->sb_agblocks - 1);
 	ino = XFS_AGINO_TO_INO(mp, agcount - 1, agino);
 
 	if ((mp->m_flags & XFS_MOUNT_SMALL_INUMS) && ino > XFS_MAXINUMBER_32)
@@ -662,8 +662,9 @@ libxfs_mount(
 		 * units we allocate inodes in.
 		 */
 		mp->m_maxicount = (sbp->sb_dblocks * sbp->sb_imax_pct) / 100;
-		mp->m_maxicount = ((mp->m_maxicount / mp->m_ialloc_blks) *
-				  mp->m_ialloc_blks)  << sbp->sb_inopblog;
+		mp->m_maxicount = XFS_FSB_TO_INO(mp,
+				(mp->m_maxicount / mp->m_ialloc_blks) *
+				 mp->m_ialloc_blks);
 	} else
 		mp->m_maxicount = 0;
 
