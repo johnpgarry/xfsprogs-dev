@@ -1,3 +1,6 @@
+xfsprogs-4.20.0 (22 Feb 2018)
+	- No further changes
+
 xfsprogs-4.20.0-rc1 (08 Feb 2018)
 	- mkfs.xfs: null-terminate symlinks created via protofile (Eric Sandeen)
 	- xfs_repair: allow '/' in attribute names (Eric Sandeen)
