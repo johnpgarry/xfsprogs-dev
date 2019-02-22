@@ -97,7 +97,6 @@
 #define xfs_inode_validate_extsize	libxfs_inode_validate_extsize
 #define xfs_inode_validate_cowextsize	libxfs_inode_validate_cowextsize
 
-#define xfs_rmap_ag_owner		libxfs_rmap_ag_owner
 #define xfs_rmap_alloc			libxfs_rmap_alloc
 #define xfs_rmap_query_range		libxfs_rmap_query_range
 #define xfs_rmap_lookup_le		libxfs_rmap_lookup_le

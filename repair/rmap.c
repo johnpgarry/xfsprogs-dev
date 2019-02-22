@@ -451,7 +451,6 @@ rmap_store_ag_btree_rec(
 	struct xfs_trans	*tp;
 	__be32			*agfl_bno, *b;
 	int			error = 0;
-	struct xfs_owner_info	oinfo;
 
 	if (!xfs_sb_version_hasrmapbt(&mp->m_sb))
 		return 0;
@@ -507,6 +506,10 @@ rmap_store_ag_btree_rec(
 	/* Insert rmaps into the btree one at a time */
 	rm_rec = pop_slab_cursor(rm_cur);
 	while (rm_rec) {
+		struct xfs_owner_info	oinfo = {
+			.oi_owner	= rm_rec->rm_owner,
+		};
+
 		error = -libxfs_trans_alloc_rollable(mp, 16, &tp);
 		if (error)
 			goto err_slab;
@@ -516,7 +519,6 @@ rmap_store_ag_btree_rec(
 			goto err_trans;
 
 		ASSERT(XFS_RMAP_NON_INODE_OWNER(rm_rec->rm_owner));
-		libxfs_rmap_ag_owner(&oinfo, rm_rec->rm_owner);
 		error = -libxfs_rmap_alloc(tp, agbp, agno, rm_rec->rm_startblock,
 				rm_rec->rm_blockcount, &oinfo);
 		if (error)
