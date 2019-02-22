@@ -107,7 +107,7 @@ xfs_extent_free_cancel_item(
 	kmem_free(free);
 }
 
-static const struct xfs_defer_op_type xfs_extent_free_defer_type = {
+const struct xfs_defer_op_type xfs_extent_free_defer_type = {
 	.type		= XFS_DEFER_OPS_TYPE_FREE,
 	.diff_items	= xfs_extent_free_diff_items,
 	.create_intent	= xfs_extent_free_create_intent,
@@ -150,7 +150,7 @@ xfs_agfl_free_finish_item(
 }
 
 /* sub-type with special handling for AGFL deferred frees */
-static const struct xfs_defer_op_type xfs_agfl_free_defer_type = {
+const struct xfs_defer_op_type xfs_agfl_free_defer_type = {
 	.type		= XFS_DEFER_OPS_TYPE_AGFL_FREE,
 	.diff_items	= xfs_extent_free_diff_items,
 	.create_intent	= xfs_extent_free_create_intent,
@@ -160,14 +160,6 @@ static const struct xfs_defer_op_type xfs_agfl_free_defer_type = {
 	.finish_item	= xfs_agfl_free_finish_item,
 	.cancel_item	= xfs_extent_free_cancel_item,
 };
-
-/* Register the deferred op type. */
-void
-xfs_extent_free_init_defer_op(void)
-{
-	xfs_defer_init_op_type(&xfs_extent_free_defer_type);
-	xfs_defer_init_op_type(&xfs_agfl_free_defer_type);
-}
 
 /* Reverse Mapping */
 
@@ -270,7 +262,7 @@ xfs_rmap_update_cancel_item(
 	kmem_free(rmap);
 }
 
-static const struct xfs_defer_op_type xfs_rmap_update_defer_type = {
+const struct xfs_defer_op_type xfs_rmap_update_defer_type = {
 	.type		= XFS_DEFER_OPS_TYPE_RMAP,
 	.diff_items	= xfs_rmap_update_diff_items,
 	.create_intent	= xfs_rmap_update_create_intent,
@@ -281,13 +273,6 @@ static const struct xfs_defer_op_type xfs_rmap_update_defer_type = {
 	.finish_cleanup = xfs_rmap_update_finish_cleanup,
 	.cancel_item	= xfs_rmap_update_cancel_item,
 };
-
-/* Register the deferred op type. */
-void
-xfs_rmap_update_init_defer_op(void)
-{
-	xfs_defer_init_op_type(&xfs_rmap_update_defer_type);
-}
 
 /* Reference Counting */
 
@@ -398,7 +383,7 @@ xfs_refcount_update_cancel_item(
 	kmem_free(refc);
 }
 
-static const struct xfs_defer_op_type xfs_refcount_update_defer_type = {
+const struct xfs_defer_op_type xfs_refcount_update_defer_type = {
 	.type		= XFS_DEFER_OPS_TYPE_REFCOUNT,
 	.diff_items	= xfs_refcount_update_diff_items,
 	.create_intent	= xfs_refcount_update_create_intent,
@@ -409,13 +394,6 @@ static const struct xfs_defer_op_type xfs_refcount_update_defer_type = {
 	.finish_cleanup = xfs_refcount_update_finish_cleanup,
 	.cancel_item	= xfs_refcount_update_cancel_item,
 };
-
-/* Register the deferred op type. */
-void
-xfs_refcount_update_init_defer_op(void)
-{
-	xfs_defer_init_op_type(&xfs_refcount_update_defer_type);
-}
 
 /* Inode Block Mapping */
 
@@ -510,7 +488,7 @@ xfs_bmap_update_cancel_item(
 	kmem_free(bmap);
 }
 
-static const struct xfs_defer_op_type xfs_bmap_update_defer_type = {
+const struct xfs_defer_op_type xfs_bmap_update_defer_type = {
 	.type		= XFS_DEFER_OPS_TYPE_BMAP,
 	.diff_items	= xfs_bmap_update_diff_items,
 	.create_intent	= xfs_bmap_update_create_intent,
@@ -520,10 +498,3 @@ static const struct xfs_defer_op_type xfs_bmap_update_defer_type = {
 	.finish_item	= xfs_bmap_update_finish_item,
 	.cancel_item	= xfs_bmap_update_cancel_item,
 };
-
-/* Register the deferred op type. */
-void
-xfs_bmap_update_init_defer_op(void)
-{
-	xfs_defer_init_op_type(&xfs_bmap_update_defer_type);
-}
