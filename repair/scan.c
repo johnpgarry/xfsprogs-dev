@@ -2289,7 +2289,7 @@ validate_agi(
 					XFS_FIBT_CRC_MAGIC : XFS_FIBT_MAGIC;
 			scan_sbtree(bno, be32_to_cpu(agi->agi_free_level),
 				    agno, 0, scan_inobt, 1, magic, agcnts,
-				    &xfs_inobt_buf_ops);
+				    &xfs_finobt_buf_ops);
 		} else {
 			do_warn(_("bad agbno %u for finobt root, agno %d\n"),
 				be32_to_cpu(agi->agi_free_root), agno);
