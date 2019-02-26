@@ -643,6 +643,7 @@ libxfs_mount(
 
 	libxfs_buftarg_init(mp, dev, logdev, rtdev);
 
+	mp->m_finobt_nores = true;
 	mp->m_flags = (LIBXFS_MOUNT_32BITINODES|LIBXFS_MOUNT_32BITINOOPT);
 	mp->m_sb = *sb;
 	INIT_RADIX_TREE(&mp->m_perag_tree, GFP_KERNEL);
