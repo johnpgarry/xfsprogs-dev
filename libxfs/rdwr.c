@@ -1332,7 +1332,7 @@ struct cache_operations libxfs_bcache_operations = {
 bool
 xfs_verify_magic(
 	struct xfs_buf		*bp,
-	uint32_t		dmagic)
+	__be32			dmagic)
 {
 	struct xfs_mount	*mp = bp->b_target->bt_mount;
 	int			idx;
@@ -1341,6 +1341,20 @@ xfs_verify_magic(
 	if (unlikely(WARN_ON(!bp->b_ops || !bp->b_ops->magic[idx])))
 		return false;
 	return dmagic == bp->b_ops->magic[idx];
+}
+
+bool
+xfs_verify_magic16(
+	struct xfs_buf		*bp,
+	__be16			dmagic)
+{
+	struct xfs_mount	*mp = bp->b_target->bt_mount;
+	int			idx;
+
+	idx = xfs_sb_version_hascrc(&mp->m_sb);
+	if (unlikely(WARN_ON(!bp->b_ops || !bp->b_ops->magic16[idx])))
+		return false;
+	return dmagic == bp->b_ops->magic16[idx];
 }
 
 /*
