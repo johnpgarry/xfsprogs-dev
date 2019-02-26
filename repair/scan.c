@@ -59,7 +59,8 @@ scan_sbtree(
 				int			suspect,
 				int			isroot,
 				uint32_t		magic,
-				void			*priv),
+				void			*priv,
+				const struct xfs_buf_ops *ops),
 	int		isroot,
 	uint32_t	magic,
 	void		*priv,
@@ -80,7 +81,7 @@ scan_sbtree(
 	}
 
 	(*func)(XFS_BUF_TO_BLOCK(bp), nlevels - 1, root, agno, suspect,
-							isroot, magic, priv);
+			isroot, magic, priv, ops);
 	libxfs_putbuf(bp);
 }
 
@@ -543,7 +544,8 @@ scan_allocbt(
 	int			suspect,
 	int			isroot,
 	uint32_t		magic,
-	void			*priv)
+	void			*priv,
+	const struct xfs_buf_ops *ops)
 {
 	struct aghdr_cnts	*agcnts = priv;
 	const char 		*name;
@@ -750,20 +752,8 @@ _("%s freespace btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 		 * as possible.
 		 */
 		if (agbno != 0 && verify_agbno(mp, agno, agbno)) {
-			switch (magic) {
-			case XFS_ABTB_CRC_MAGIC:
-			case XFS_ABTB_MAGIC:
-				scan_sbtree(agbno, level, agno, suspect,
-					    scan_allocbt, 0, magic, priv,
-					    &xfs_allocbt_buf_ops);
-				break;
-			case XFS_ABTC_CRC_MAGIC:
-			case XFS_ABTC_MAGIC:
-				scan_sbtree(agbno, level, agno, suspect,
-					    scan_allocbt, 0, magic, priv,
-					    &xfs_allocbt_buf_ops);
-				break;
-			}
+			scan_sbtree(agbno, level, agno, suspect, scan_allocbt,
+				    0, magic, priv, ops);
 		}
 	}
 }
@@ -926,7 +916,8 @@ scan_rmapbt(
 	int			suspect,
 	int			isroot,
 	uint32_t		magic,
-	void			*priv)
+	void			*priv,
+	const struct xfs_buf_ops *ops)
 {
 	const char		*name = "rmap";
 	int			i;
@@ -1205,7 +1196,7 @@ advance:
 
 		if (agbno != 0 && verify_agbno(mp, agno, agbno)) {
 			scan_sbtree(agbno, level, agno, suspect, scan_rmapbt, 0,
-				    magic, priv, &xfs_rmapbt_buf_ops);
+				    magic, priv, ops);
 		}
 	}
 
@@ -1229,7 +1220,8 @@ scan_refcbt(
 	int			suspect,
 	int			isroot,
 	uint32_t		magic,
-	void			*priv)
+	void			*priv,
+	const struct xfs_buf_ops *ops)
 {
 	const char		*name = "refcount";
 	int			i;
@@ -1423,7 +1415,7 @@ _("extent (%u/%u) len %u claimed, state is %d\n"),
 
 		if (agbno != 0 && verify_agbno(mp, agno, agbno)) {
 			scan_sbtree(agbno, level, agno, suspect, scan_refcbt, 0,
-				    magic, priv, &xfs_refcountbt_buf_ops);
+				    magic, priv, ops);
 		}
 	}
 out:
@@ -1935,7 +1927,8 @@ scan_inobt(
 	int			suspect,
 	int			isroot,
 	uint32_t		magic,
-	void			*priv)
+	void			*priv,
+	const struct xfs_buf_ops *ops)
 {
 	struct aghdr_cnts	*agcnts = priv;
 	int			i;
@@ -2091,7 +2084,7 @@ _("inode btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 							be32_to_cpu(pp[i])))
 			scan_sbtree(be32_to_cpu(pp[i]), level, agno,
 					suspect, scan_inobt, 0, magic, priv,
-					&xfs_inobt_buf_ops);
+					ops);
 	}
 }
 
