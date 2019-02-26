@@ -226,7 +226,7 @@ xfs_validate_sb_common(
 	uint32_t		agcount = 0;
 	uint32_t		rem;
 
-	if (dsb->sb_magicnum != cpu_to_be32(XFS_SB_MAGIC)) {
+	if (!xfs_verify_magic(bp, dsb->sb_magicnum)) {
 		xfs_warn(mp, "bad magic number");
 		return -EWRONGFS;
 	}
@@ -759,12 +759,14 @@ out_error:
 
 const struct xfs_buf_ops xfs_sb_buf_ops = {
 	.name = "xfs_sb",
+	.magic = { cpu_to_be32(XFS_SB_MAGIC), cpu_to_be32(XFS_SB_MAGIC) },
 	.verify_read = xfs_sb_read_verify,
 	.verify_write = xfs_sb_write_verify,
 };
 
 const struct xfs_buf_ops xfs_sb_quiet_buf_ops = {
 	.name = "xfs_sb_quiet",
+	.magic = { cpu_to_be32(XFS_SB_MAGIC), cpu_to_be32(XFS_SB_MAGIC) },
 	.verify_read = xfs_sb_quiet_read_verify,
 	.verify_write = xfs_sb_write_verify,
 };
