@@ -2178,7 +2178,7 @@ validate_agf(
 							 : XFS_ABTB_MAGIC;
 		scan_sbtree(bno, be32_to_cpu(agf->agf_levels[XFS_BTNUM_BNO]),
 			    agno, 0, scan_allocbt, 1, magic, agcnts,
-			    &xfs_allocbt_buf_ops);
+			    &xfs_bnobt_buf_ops);
 	} else {
 		do_warn(_("bad agbno %u for btbno root, agno %d\n"),
 			bno, agno);
@@ -2190,7 +2190,7 @@ validate_agf(
 							 : XFS_ABTC_MAGIC;
 		scan_sbtree(bno, be32_to_cpu(agf->agf_levels[XFS_BTNUM_CNT]),
 			    agno, 0, scan_allocbt, 1, magic, agcnts,
-			    &xfs_allocbt_buf_ops);
+			    &xfs_cntbt_buf_ops);
 	} else  {
 		do_warn(_("bad agbno %u for btbcnt root, agno %d\n"),
 			bno, agno);
