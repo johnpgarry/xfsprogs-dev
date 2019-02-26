@@ -208,6 +208,7 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 static inline bool WARN_ON_ONCE(bool expr) {
 	return (expr);
 }
+#define WARN_ON(e)		WARN_ON_ONCE(e)
 
 #define percpu_counter_read(x)		(*x)
 #define percpu_counter_read_positive(x)	((*x) > 0 ? (*x) : 0)
