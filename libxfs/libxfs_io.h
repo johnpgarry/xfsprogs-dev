@@ -41,6 +41,7 @@ struct xfs_buf_map {
 
 struct xfs_buf_ops {
 	char *name;
+	uint32_t magic[2];		/* v4 and v5 on disk magic values */
 	void (*verify_read)(struct xfs_buf *);
 	void (*verify_write)(struct xfs_buf *);
 	xfs_failaddr_t (*verify_struct)(struct xfs_buf *);
@@ -217,5 +218,7 @@ xfs_buf_associate_memory(struct xfs_buf *bp, void *mem, size_t len)
 	bp->b_bcount = len;
 	return 0;
 }
+
+bool xfs_verify_magic(struct xfs_buf *bp, uint32_t dmagic);
 
 #endif	/* __LIBXFS_IO_H__ */
