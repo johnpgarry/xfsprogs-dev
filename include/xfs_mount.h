@@ -28,6 +28,13 @@ typedef struct xfs_mount {
 	xfs_agnumber_t		m_maxagi;	/* highest inode alloc group */
 	uint			m_rsumlevels;	/* rt summary levels */
 	uint			m_rsumsize;	/* size of rt summary, bytes */
+	/*
+	 * Optional cache of rt summary level per bitmap block with the
+	 * invariant that m_rsum_cache[bbno] <= the minimum i for which
+	 * rsum[i][bbno] != 0. Reads and writes are serialized by the rsumip
+	 * inode lock.
+	 */
+	uint8_t			*m_rsum_cache;
 	struct xfs_inode	*m_rbmip;	/* pointer to bitmap inode */
 	struct xfs_inode	*m_rsumip;	/* pointer to summary inode */
 	struct xfs_buftarg	*m_ddev_targp;
