@@ -166,7 +166,7 @@ verify_inode_chunk(xfs_mount_t		*mp,
 
 		pthread_mutex_unlock(&ag_locks[agno].lock);
 
-		start_agino = XFS_OFFBNO_TO_AGINO(mp, agbno, 0);
+		start_agino = XFS_AGB_TO_AGINO(mp, agbno);
 		*start_ino = XFS_AGINO_TO_INO(mp, agno, start_agino);
 
 		/*
@@ -227,14 +227,14 @@ verify_inode_chunk(xfs_mount_t		*mp,
 		 * ok, put the record into the tree, if no conflict.
 		 */
 		if (find_uncertain_inode_rec(agno,
-				XFS_OFFBNO_TO_AGINO(mp, start_agbno, 0)))
+				XFS_AGB_TO_AGINO(mp, start_agbno)))
 			return(0);
 
-		start_agino = XFS_OFFBNO_TO_AGINO(mp, start_agbno, 0);
+		start_agino = XFS_AGB_TO_AGINO(mp, start_agbno);
 		*start_ino = XFS_AGINO_TO_INO(mp, agno, start_agino);
 
 		irec_p = set_inode_free_alloc(mp, agno,
-				XFS_OFFBNO_TO_AGINO(mp, start_agbno, 0));
+				XFS_AGB_TO_AGINO(mp, start_agbno));
 
 		for (i = 1; i < XFS_INODES_PER_CHUNK; i++)
 			set_inode_free(irec_p, i);
@@ -271,7 +271,7 @@ verify_inode_chunk(xfs_mount_t		*mp,
 	 */
 	irec_before_p = irec_after_p = NULL;
 
-	find_inode_rec_range(mp, agno, XFS_OFFBNO_TO_AGINO(mp, start_agbno, 0),
+	find_inode_rec_range(mp, agno, XFS_AGB_TO_AGINO(mp, start_agbno),
 		XFS_OFFBNO_TO_AGINO(mp, end_agbno, mp->m_sb.sb_inopblock - 1),
 		&irec_before_p, &irec_after_p);
 
@@ -446,7 +446,7 @@ verify_inode_chunk(xfs_mount_t		*mp,
 	 * ok because we'll override the free setting later if the
 	 * contents of the inode indicate it's in use.
 	 */
-	start_agino = XFS_OFFBNO_TO_AGINO(mp, chunk_start_agbno, 0);
+	start_agino = XFS_AGB_TO_AGINO(mp, chunk_start_agbno);
 	*start_ino = XFS_AGINO_TO_INO(mp, agno, start_agino);
 
 	ASSERT(find_inode_rec(mp, agno, start_agino) == NULL);

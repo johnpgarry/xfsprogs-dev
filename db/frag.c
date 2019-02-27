@@ -477,7 +477,7 @@ scanfunc_ino(
 		blks_per_buf = xfs_icluster_size_fsb(mp);
 	else
 		blks_per_buf = mp->m_ialloc_blks;
-	inodes_per_buf = min(blks_per_buf << mp->m_sb.sb_inopblog,
+	inodes_per_buf = min(XFS_FSB_TO_INO(mp, blks_per_buf),
 			     XFS_INODES_PER_CHUNK);
 
 	if (level == 0) {

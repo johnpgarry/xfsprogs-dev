@@ -596,7 +596,7 @@ set_iocur_type(
  		 */
 		ino = XFS_AGINO_TO_INO(mp, xfs_daddr_to_agno(mp, b),
 			((b << BBSHIFT) >> mp->m_sb.sb_inodelog) %
-			(mp->m_sb.sb_agblocks << mp->m_sb.sb_inopblog));
+			XFS_AGB_TO_AGINO(mp, mp->m_sb.sb_agblocks));
 		set_cur_inode(ino);
 		return;
 	}

@@ -435,16 +435,15 @@ calc_mkfs(xfs_mount_t *mp)
 	 * ditto the location of the first inode chunks in the fs ('/')
 	 */
 	if (xfs_sb_version_hasdalign(&mp->m_sb) && do_inoalign)  {
-		first_prealloc_ino = XFS_OFFBNO_TO_AGINO(mp, roundup(fino_bno,
-					mp->m_sb.sb_unit), 0);
+		first_prealloc_ino = XFS_AGB_TO_AGINO(mp, roundup(fino_bno,
+					mp->m_sb.sb_unit));
 	} else if (xfs_sb_version_hasalign(&mp->m_sb) &&
 					mp->m_sb.sb_inoalignmt > 1)  {
-		first_prealloc_ino = XFS_OFFBNO_TO_AGINO(mp,
+		first_prealloc_ino = XFS_AGB_TO_AGINO(mp,
 					roundup(fino_bno,
-						mp->m_sb.sb_inoalignmt),
-					0);
+						mp->m_sb.sb_inoalignmt));
 	} else  {
-		first_prealloc_ino = XFS_OFFBNO_TO_AGINO(mp, fino_bno, 0);
+		first_prealloc_ino = XFS_AGB_TO_AGINO(mp, fino_bno);
 	}
 
 	ASSERT(mp->m_ialloc_blks > 0);
@@ -452,7 +451,7 @@ calc_mkfs(xfs_mount_t *mp)
 	if (mp->m_ialloc_blks > 1)
 		last_prealloc_ino = first_prealloc_ino + XFS_INODES_PER_CHUNK;
 	else
-		last_prealloc_ino = XFS_OFFBNO_TO_AGINO(mp, fino_bno + 1, 0);
+		last_prealloc_ino = XFS_AGB_TO_AGINO(mp, fino_bno + 1);
 
 	/*
 	 * now the first 3 inodes in the system
