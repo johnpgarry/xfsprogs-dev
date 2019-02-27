@@ -456,21 +456,21 @@ out:
  */
 STATIC int
 xfs_rmap_unmap(
-	struct xfs_btree_cur	*cur,
-	xfs_agblock_t		bno,
-	xfs_extlen_t		len,
-	bool			unwritten,
-	struct xfs_owner_info	*oinfo)
+	struct xfs_btree_cur		*cur,
+	xfs_agblock_t			bno,
+	xfs_extlen_t			len,
+	bool				unwritten,
+	const struct xfs_owner_info	*oinfo)
 {
-	struct xfs_mount	*mp = cur->bc_mp;
-	struct xfs_rmap_irec	ltrec;
-	uint64_t		ltoff;
-	int			error = 0;
-	int			i;
-	uint64_t		owner;
-	uint64_t		offset;
-	unsigned int		flags;
-	bool			ignore_off;
+	struct xfs_mount		*mp = cur->bc_mp;
+	struct xfs_rmap_irec		ltrec;
+	uint64_t			ltoff;
+	int				error = 0;
+	int				i;
+	uint64_t			owner;
+	uint64_t			offset;
+	unsigned int			flags;
+	bool				ignore_off;
 
 	xfs_owner_info_unpack(oinfo, &owner, &offset, &flags);
 	ignore_off = XFS_RMAP_NON_INODE_OWNER(owner) ||
@@ -651,16 +651,16 @@ out_error:
  */
 int
 xfs_rmap_free(
-	struct xfs_trans	*tp,
-	struct xfs_buf		*agbp,
-	xfs_agnumber_t		agno,
-	xfs_agblock_t		bno,
-	xfs_extlen_t		len,
-	struct xfs_owner_info	*oinfo)
+	struct xfs_trans		*tp,
+	struct xfs_buf			*agbp,
+	xfs_agnumber_t			agno,
+	xfs_agblock_t			bno,
+	xfs_extlen_t			len,
+	const struct xfs_owner_info	*oinfo)
 {
-	struct xfs_mount	*mp = tp->t_mountp;
-	struct xfs_btree_cur	*cur;
-	int			error;
+	struct xfs_mount		*mp = tp->t_mountp;
+	struct xfs_btree_cur		*cur;
+	int				error;
 
 	if (!xfs_sb_version_hasrmapbt(&mp->m_sb))
 		return 0;
@@ -708,23 +708,23 @@ xfs_rmap_is_mergeable(
  */
 STATIC int
 xfs_rmap_map(
-	struct xfs_btree_cur	*cur,
-	xfs_agblock_t		bno,
-	xfs_extlen_t		len,
-	bool			unwritten,
-	struct xfs_owner_info	*oinfo)
+	struct xfs_btree_cur		*cur,
+	xfs_agblock_t			bno,
+	xfs_extlen_t			len,
+	bool				unwritten,
+	const struct xfs_owner_info	*oinfo)
 {
-	struct xfs_mount	*mp = cur->bc_mp;
-	struct xfs_rmap_irec	ltrec;
-	struct xfs_rmap_irec	gtrec;
-	int			have_gt;
-	int			have_lt;
-	int			error = 0;
-	int			i;
-	uint64_t		owner;
-	uint64_t		offset;
-	unsigned int		flags = 0;
-	bool			ignore_off;
+	struct xfs_mount		*mp = cur->bc_mp;
+	struct xfs_rmap_irec		ltrec;
+	struct xfs_rmap_irec		gtrec;
+	int				have_gt;
+	int				have_lt;
+	int				error = 0;
+	int				i;
+	uint64_t			owner;
+	uint64_t			offset;
+	unsigned int			flags = 0;
+	bool				ignore_off;
 
 	xfs_owner_info_unpack(oinfo, &owner, &offset, &flags);
 	ASSERT(owner != 0);
@@ -888,16 +888,16 @@ out_error:
  */
 int
 xfs_rmap_alloc(
-	struct xfs_trans	*tp,
-	struct xfs_buf		*agbp,
-	xfs_agnumber_t		agno,
-	xfs_agblock_t		bno,
-	xfs_extlen_t		len,
-	struct xfs_owner_info	*oinfo)
+	struct xfs_trans		*tp,
+	struct xfs_buf			*agbp,
+	xfs_agnumber_t			agno,
+	xfs_agblock_t			bno,
+	xfs_extlen_t			len,
+	const struct xfs_owner_info	*oinfo)
 {
-	struct xfs_mount	*mp = tp->t_mountp;
-	struct xfs_btree_cur	*cur;
-	int			error;
+	struct xfs_mount		*mp = tp->t_mountp;
+	struct xfs_btree_cur		*cur;
+	int				error;
 
 	if (!xfs_sb_version_hasrmapbt(&mp->m_sb))
 		return 0;
@@ -927,16 +927,16 @@ xfs_rmap_alloc(
  */
 STATIC int
 xfs_rmap_convert(
-	struct xfs_btree_cur	*cur,
-	xfs_agblock_t		bno,
-	xfs_extlen_t		len,
-	bool			unwritten,
-	struct xfs_owner_info	*oinfo)
+	struct xfs_btree_cur		*cur,
+	xfs_agblock_t			bno,
+	xfs_extlen_t			len,
+	bool				unwritten,
+	const struct xfs_owner_info	*oinfo)
 {
-	struct xfs_mount	*mp = cur->bc_mp;
-	struct xfs_rmap_irec	r[4];	/* neighbor extent entries */
-					/* left is 0, right is 1, prev is 2 */
-					/* new is 3 */
+	struct xfs_mount		*mp = cur->bc_mp;
+	struct xfs_rmap_irec		r[4];	/* neighbor extent entries */
+						/* left is 0, right is 1, */
+						/* prev is 2, new is 3 */
 	uint64_t		owner;
 	uint64_t		offset;
 	uint64_t		new_endoff;
@@ -1352,16 +1352,16 @@ done:
  */
 STATIC int
 xfs_rmap_convert_shared(
-	struct xfs_btree_cur	*cur,
-	xfs_agblock_t		bno,
-	xfs_extlen_t		len,
-	bool			unwritten,
-	struct xfs_owner_info	*oinfo)
+	struct xfs_btree_cur		*cur,
+	xfs_agblock_t			bno,
+	xfs_extlen_t			len,
+	bool				unwritten,
+	const struct xfs_owner_info	*oinfo)
 {
-	struct xfs_mount	*mp = cur->bc_mp;
-	struct xfs_rmap_irec	r[4];	/* neighbor extent entries */
-					/* left is 0, right is 1, prev is 2 */
-					/* new is 3 */
+	struct xfs_mount		*mp = cur->bc_mp;
+	struct xfs_rmap_irec		r[4];	/* neighbor extent entries */
+						/* left is 0, right is 1, */
+						/* prev is 2, new is 3 */
 	uint64_t		owner;
 	uint64_t		offset;
 	uint64_t		new_endoff;
@@ -1741,20 +1741,20 @@ done:
  */
 STATIC int
 xfs_rmap_unmap_shared(
-	struct xfs_btree_cur	*cur,
-	xfs_agblock_t		bno,
-	xfs_extlen_t		len,
-	bool			unwritten,
-	struct xfs_owner_info	*oinfo)
+	struct xfs_btree_cur		*cur,
+	xfs_agblock_t			bno,
+	xfs_extlen_t			len,
+	bool				unwritten,
+	const struct xfs_owner_info	*oinfo)
 {
-	struct xfs_mount	*mp = cur->bc_mp;
-	struct xfs_rmap_irec	ltrec;
-	uint64_t		ltoff;
-	int			error = 0;
-	int			i;
-	uint64_t		owner;
-	uint64_t		offset;
-	unsigned int		flags;
+	struct xfs_mount		*mp = cur->bc_mp;
+	struct xfs_rmap_irec		ltrec;
+	uint64_t			ltoff;
+	int				error = 0;
+	int				i;
+	uint64_t			owner;
+	uint64_t			offset;
+	unsigned int			flags;
 
 	xfs_owner_info_unpack(oinfo, &owner, &offset, &flags);
 	if (unwritten)
@@ -1903,22 +1903,22 @@ out_error:
  */
 STATIC int
 xfs_rmap_map_shared(
-	struct xfs_btree_cur	*cur,
-	xfs_agblock_t		bno,
-	xfs_extlen_t		len,
-	bool			unwritten,
-	struct xfs_owner_info	*oinfo)
+	struct xfs_btree_cur		*cur,
+	xfs_agblock_t			bno,
+	xfs_extlen_t			len,
+	bool				unwritten,
+	const struct xfs_owner_info	*oinfo)
 {
-	struct xfs_mount	*mp = cur->bc_mp;
-	struct xfs_rmap_irec	ltrec;
-	struct xfs_rmap_irec	gtrec;
-	int			have_gt;
-	int			have_lt;
-	int			error = 0;
-	int			i;
-	uint64_t		owner;
-	uint64_t		offset;
-	unsigned int		flags = 0;
+	struct xfs_mount		*mp = cur->bc_mp;
+	struct xfs_rmap_irec		ltrec;
+	struct xfs_rmap_irec		gtrec;
+	int				have_gt;
+	int				have_lt;
+	int				error = 0;
+	int				i;
+	uint64_t			owner;
+	uint64_t			offset;
+	unsigned int			flags = 0;
 
 	xfs_owner_info_unpack(oinfo, &owner, &offset, &flags);
 	if (unwritten)
@@ -2457,18 +2457,18 @@ xfs_rmap_has_record(
  */
 int
 xfs_rmap_record_exists(
-	struct xfs_btree_cur	*cur,
-	xfs_agblock_t		bno,
-	xfs_extlen_t		len,
-	struct xfs_owner_info	*oinfo,
-	bool			*has_rmap)
+	struct xfs_btree_cur		*cur,
+	xfs_agblock_t			bno,
+	xfs_extlen_t			len,
+	const struct xfs_owner_info	*oinfo,
+	bool				*has_rmap)
 {
-	uint64_t		owner;
-	uint64_t		offset;
-	unsigned int		flags;
-	int			has_record;
-	struct xfs_rmap_irec	irec;
-	int			error;
+	uint64_t			owner;
+	uint64_t			offset;
+	unsigned int			flags;
+	int				has_record;
+	struct xfs_rmap_irec		irec;
+	int				error;
 
 	xfs_owner_info_unpack(oinfo, &owner, &offset, &flags);
 	ASSERT(XFS_RMAP_NON_INODE_OWNER(owner) ||
@@ -2528,7 +2528,7 @@ xfs_rmap_has_other_keys(
 	struct xfs_btree_cur		*cur,
 	xfs_agblock_t			bno,
 	xfs_extlen_t			len,
-	struct xfs_owner_info		*oinfo,
+	const struct xfs_owner_info	*oinfo,
 	bool				*has_rmap)
 {
 	struct xfs_rmap_irec		low = {0};
