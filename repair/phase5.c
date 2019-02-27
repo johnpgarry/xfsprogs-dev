@@ -2421,10 +2421,8 @@ inject_lost_blocks(
 	struct xfs_trans	*tp = NULL;
 	struct xfs_slab_cursor	*cur = NULL;
 	xfs_fsblock_t		*fsb;
-	struct xfs_owner_info	oinfo;
 	int			error;
 
-	libxfs_rmap_ag_owner(&oinfo, XFS_RMAP_OWN_AG);
 	error = init_slab_cursor(lost_fsbs, NULL, &cur);
 	if (error)
 		return error;
@@ -2434,7 +2432,7 @@ inject_lost_blocks(
 		if (error)
 			goto out_cancel;
 
-		error = -libxfs_free_extent(tp, *fsb, 1, &oinfo,
+		error = -libxfs_free_extent(tp, *fsb, 1, &XFS_RMAP_OINFO_AG,
 					    XFS_AG_RESV_NONE);
 		if (error)
 			goto out_cancel;
