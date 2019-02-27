@@ -2420,7 +2420,7 @@ copy_inode_chunk(
 	 * we've been passed (large block sizes can hold multiple inode chunks).
 	 */
 	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
-		blks_per_buf = xfs_icluster_size_fsb(mp);
+		blks_per_buf = mp->m_blocks_per_cluster;
 	else
 		blks_per_buf = mp->m_ialloc_blks;
 	inodes_per_buf = min(XFS_FSB_TO_INO(mp, blks_per_buf),
