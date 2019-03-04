@@ -285,18 +285,24 @@ fzero_f(
 {
 	xfs_flock64_t	segment;
 	int		mode = FALLOC_FL_ZERO_RANGE;
-	int		index = 1;
+	int		c;
 
-	if (strncmp(argv[index], "-k", 3) == 0) {
-		mode |= FALLOC_FL_KEEP_SIZE;
-		index++;
+	while ((c = getopt(argc, argv, "k")) != EOF) {
+		switch (c) {
+		case 'k':
+			mode |= FALLOC_FL_KEEP_SIZE;
+			break;
+		default:
+			command_usage(&fzero_cmd);
+		}
 	}
+        if (optind != argc - 2)
+                return command_usage(&fzero_cmd);
 
-	if (!offset_length(argv[index], argv[index + 1], &segment))
+	if (!offset_length(argv[optind], argv[optind + 1], &segment))
 		return 0;
 
-	if (fallocate(file->fd, mode,
-			segment.l_start, segment.l_len)) {
+	if (fallocate(file->fd, mode, segment.l_start, segment.l_len)) {
 		perror("fallocate");
 		return 0;
 	}
