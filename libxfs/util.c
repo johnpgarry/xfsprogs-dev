@@ -420,7 +420,7 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 		VFS_I(ip)->i_version++;
 
 	/* Check the inline fork data before we write out. */
-	if (!libxfs_inode_verify_forks(ip, &xfs_default_ifork_ops))
+	if (!libxfs_inode_verify_forks(ip, ip->i_fork_ops))
 		return -EFSCORRUPTED;
 
 	/*

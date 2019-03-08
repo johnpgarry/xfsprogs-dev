@@ -51,6 +51,7 @@ typedef struct xfs_inode {
 
 	xfs_fsize_t		i_size;		/* in-memory size */
 	const struct xfs_dir_ops *d_ops;	/* directory ops vector */
+	struct xfs_ifork_ops	*i_fork_ops;	/* fork verifiers */
 	struct inode		i_vnode;
 } xfs_inode_t;
 
