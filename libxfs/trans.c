@@ -824,8 +824,10 @@ _("Transaction block reservation exceeded! %u > %u\n"),
 
 /*
  * Transaction commital code follows (i.e. write to disk in libxfs)
+ *
+ * XXX (dgc): should failure to flush the inode (e.g. due to uncorrected
+ * corruption) result in transaction commit failure w/ EFSCORRUPTED?
  */
-
 static void
 inode_item_done(
 	xfs_inode_log_item_t	*iip)
@@ -856,17 +858,24 @@ inode_item_done(
 		return;
 	}
 
+	/*
+	 * Flush the inode and disassociate it from the transaction regardless
+	 * of whether the flush succeed or not. If we fail the flush, make sure
+	 * we still release the buffer reference we currently hold.
+	 */
 	bp->b_log_item = iip;
 	error = libxfs_iflush_int(ip, bp);
-	if (error) {
-		fprintf(stderr, _("%s: warning - iflush_int failed (%d)\n"),
-			progname, error);
-		return;
-	}
-
 	ip->i_transp = NULL;	/* disassociate from transaction */
 	bp->b_log_item = NULL;	/* remove log item */
 	bp->b_transp = NULL;	/* remove xact ptr */
+
+	if (error) {
+		fprintf(stderr, _("%s: warning - iflush_int failed (%d)\n"),
+			progname, error);
+		libxfs_putbuf(bp);
+		return;
+	}
+
 	libxfs_writebuf(bp, 0);
 #ifdef XACT_DEBUG
 	fprintf(stderr, "flushing dirty inode %llu, buffer %p\n",
