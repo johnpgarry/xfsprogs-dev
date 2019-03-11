@@ -336,41 +336,6 @@ out:
 	return;
 }
 
-int
-libxfs_trans_iget(
-	xfs_mount_t		*mp,
-	xfs_trans_t		*tp,
-	xfs_ino_t		ino,
-	uint			flags,
-	uint			lock_flags,
-	xfs_inode_t		**ipp)
-{
-	int			error;
-	xfs_inode_t		*ip;
-	xfs_inode_log_item_t	*iip;
-
-	if (tp == NULL)
-		return libxfs_iget(mp, tp, ino, lock_flags, ipp,
-				&xfs_default_ifork_ops);
-
-	error = libxfs_iget(mp, tp, ino, lock_flags, &ip,
-			&xfs_default_ifork_ops);
-	if (error)
-		return error;
-	ASSERT(ip != NULL);
-
-	if (ip->i_itemp == NULL)
-		xfs_inode_item_init(ip, mp);
-	iip = ip->i_itemp;
-	xfs_trans_add_item(tp, (xfs_log_item_t *)(iip));
-
-	/* initialize i_transp so we can find it incore */
-	ip->i_transp = tp;
-
-	*ipp = ip;
-	return 0;
-}
-
 void
 libxfs_trans_ijoin(
 	xfs_trans_t		*tp,

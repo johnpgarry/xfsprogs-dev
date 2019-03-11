@@ -31,7 +31,6 @@
 #define xfs_trans_del_item		libxfs_trans_del_item
 #define xfs_trans_get_buf		libxfs_trans_get_buf
 #define xfs_trans_getsb			libxfs_trans_getsb
-#define xfs_trans_iget			libxfs_trans_iget
 #define xfs_trans_ichgtime		libxfs_trans_ichgtime
 #define xfs_trans_ijoin			libxfs_trans_ijoin
 #define xfs_trans_init			libxfs_trans_init

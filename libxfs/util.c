@@ -262,7 +262,8 @@ libxfs_ialloc(
 	}
 	ASSERT(*ialloc_context == NULL);
 
-	error = xfs_trans_iget(tp->t_mountp, tp, ino, 0, 0, &ip);
+	error = libxfs_iget(tp->t_mountp, tp, ino, 0, &ip,
+			&xfs_default_ifork_ops);
 	if (error != 0)
 		return error;
 	ASSERT(ip != NULL);
@@ -376,6 +377,7 @@ libxfs_ialloc(
 	/*
 	 * Log the new values stuffed into the inode.
 	 */
+	xfs_trans_ijoin(tp, ip, 0);
 	xfs_trans_log_inode(tp, ip, flags);
 	*ipp = ip;
 	return 0;
