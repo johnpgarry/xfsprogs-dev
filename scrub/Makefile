@@ -3,7 +3,8 @@
 #
 
 TOPDIR = ..
-include $(TOPDIR)/include/builddefs
+builddefs=$(TOPDIR)/include/builddefs
+include $(builddefs)
 
 # On linux we get fsmap from the system or define it ourselves
 # so include this based on platform type.  If this reverts to only
@@ -103,27 +104,27 @@ LDIRT = $(XFS_SCRUB_ALL_PROG) *.service *.cron
 
 default: depend $(LTCOMMAND) $(XFS_SCRUB_ALL_PROG) $(OPTIONAL_TARGETS)
 
-xfs_scrub_all: xfs_scrub_all.in
+xfs_scrub_all: xfs_scrub_all.in $(builddefs)
 	@echo "    [SED]    $@"
 	$(Q)$(SED) -e "s|@sbindir@|$(PKG_SBIN_DIR)|g" \
 		   -e "s|@pkg_version@|$(PKG_VERSION)|g" \
 		   -e "s|@scrub_args@|$(XFS_SCRUB_ARGS)|g" < $< > $@
 	$(Q)chmod a+x $@
 
-phase5.o unicrash.o xfs.o: $(TOPDIR)/include/builddefs
+phase5.o unicrash.o xfs.o: $(builddefs)
 
 include $(BUILDRULES)
 
 install: $(INSTALL_SCRUB)
 
-%.service: %.service.in
+%.service: %.service.in $(builddefs)
 	@echo "    [SED]    $@"
 	$(Q)$(SED) -e "s|@sbindir@|$(PKG_SBIN_DIR)|g" \
 		   -e "s|@scrub_args@|$(XFS_SCRUB_ARGS)|g" \
 		   -e "s|@pkg_lib_dir@|$(PKG_LIB_DIR)|g" \
 		   -e "s|@pkg_name@|$(PKG_NAME)|g" < $< > $@
 
-%.cron: %.cron.in
+%.cron: %.cron.in $(builddefs)
 	@echo "    [SED]    $@"
 	$(Q)$(SED) -e "s|@sbindir@|$(PKG_SBIN_DIR)|g" < $< > $@
 
