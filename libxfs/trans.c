@@ -861,10 +861,8 @@ inode_item_done(
 	 * of whether the flush succeed or not. If we fail the flush, make sure
 	 * we still release the buffer reference we currently hold.
 	 */
-	bp->b_log_item = iip;
 	error = libxfs_iflush_int(ip, bp);
 	ip->i_transp = NULL;	/* disassociate from transaction */
-	bp->b_log_item = NULL;	/* remove log item */
 	bp->b_transp = NULL;	/* remove xact ptr */
 
 	if (error) {
