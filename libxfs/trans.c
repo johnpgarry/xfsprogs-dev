@@ -540,6 +540,16 @@ libxfs_trans_ordered_buf(
 	return ret;
 }
 
+static void
+xfs_buf_item_put(
+	struct xfs_buf_log_item	*bip)
+{
+	struct xfs_buf		*bp = bip->bli_buf;
+
+	bp->b_log_item = NULL;
+	kmem_zone_free(xfs_buf_item_zone, bip);
+}
+
 void
 libxfs_trans_brelse(
 	xfs_trans_t		*tp,
@@ -881,7 +891,6 @@ buf_item_done(
 
 	bp = bip->bli_buf;
 	ASSERT(bp != NULL);
-	bp->b_log_item = NULL;			/* remove log item */
 	bp->b_transp = NULL;			/* remove xact ptr */
 
 	hold = (bip->bli_flags & XFS_BLI_HOLD);
@@ -896,8 +905,7 @@ buf_item_done(
 		bip->bli_flags &= ~XFS_BLI_HOLD;
 	else
 		libxfs_putbuf(bp);
-	/* release the buf item */
-	kmem_zone_free(xfs_buf_item_zone, bip);
+	xfs_buf_item_put(bip);
 }
 
 static void
