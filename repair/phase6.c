@@ -535,7 +535,8 @@ mk_rbmino(xfs_mount_t *mp)
 	if (i)
 		res_failed(i);
 
-	error = -libxfs_trans_iget(mp, tp, mp->m_sb.sb_rbmino, 0, 0, &ip);
+	error = -libxfs_iget(mp, tp, mp->m_sb.sb_rbmino, 0, &ip,
+			&xfs_default_ifork_ops);
 	if (error) {
 		do_error(
 		_("couldn't iget realtime bitmap inode -- error - %d\n"),
@@ -572,6 +573,7 @@ mk_rbmino(xfs_mount_t *mp)
 	/*
 	 * commit changes
 	 */
+	libxfs_trans_ijoin(tp, ip, 0);
 	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 	error = -libxfs_trans_commit(tp);
 	if (error)
@@ -634,7 +636,8 @@ fill_rbmino(xfs_mount_t *mp)
 	if (error)
 		res_failed(error);
 
-	error = -libxfs_trans_iget(mp, tp, mp->m_sb.sb_rbmino, 0, 0, &ip);
+	error = -libxfs_iget(mp, tp, mp->m_sb.sb_rbmino, 0, &ip,
+			&xfs_default_ifork_ops);
 	if (error) {
 		do_error(
 		_("couldn't iget realtime bitmap inode -- error - %d\n"),
@@ -645,6 +648,7 @@ fill_rbmino(xfs_mount_t *mp)
 		/*
 		 * fill the file one block at a time
 		 */
+		libxfs_trans_ijoin(tp, ip, 0);
 		nmap = 1;
 		error = -libxfs_bmapi_write(tp, ip, bno, 1, 0, 1, &map, &nmap);
 		if (error || nmap != 1) {
@@ -703,7 +707,8 @@ fill_rsumino(xfs_mount_t *mp)
 	if (error)
 		res_failed(error);
 
-	error = -libxfs_trans_iget(mp, tp, mp->m_sb.sb_rsumino, 0, 0, &ip);
+	error = -libxfs_iget(mp, tp, mp->m_sb.sb_rsumino, 0, &ip,
+			&xfs_default_ifork_ops);
 	if (error) {
 		do_error(
 		_("couldn't iget realtime summary inode -- error - %d\n"),
@@ -714,6 +719,7 @@ fill_rsumino(xfs_mount_t *mp)
 		/*
 		 * fill the file one block at a time
 		 */
+		libxfs_trans_ijoin(tp, ip, 0);
 		nmap = 1;
 		error = -libxfs_bmapi_write(tp, ip, bno, 1, 0, 1, &map, &nmap);
 		if (error || nmap != 1) {
@@ -775,7 +781,8 @@ mk_rsumino(xfs_mount_t *mp)
 	if (i)
 		res_failed(i);
 
-	error = -libxfs_trans_iget(mp, tp, mp->m_sb.sb_rsumino, 0, 0, &ip);
+	error = -libxfs_iget(mp, tp, mp->m_sb.sb_rsumino, 0, &ip,
+			&xfs_default_ifork_ops);
 	if (error) {
 		do_error(
 		_("couldn't iget realtime summary inode -- error - %d\n"),
@@ -812,6 +819,7 @@ mk_rsumino(xfs_mount_t *mp)
 	/*
 	 * commit changes
 	 */
+	libxfs_trans_ijoin(tp, ip, 0);
 	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 	error = -libxfs_trans_commit(tp);
 	if (error)
@@ -875,7 +883,8 @@ mk_root_dir(xfs_mount_t *mp)
 	if (i)
 		res_failed(i);
 
-	error = -libxfs_trans_iget(mp, tp, mp->m_sb.sb_rootino, 0, 0, &ip);
+	error = -libxfs_iget(mp, tp, mp->m_sb.sb_rootino, 0, &ip,
+			&xfs_default_ifork_ops);
 	if (error) {
 		do_error(_("could not iget root inode -- error - %d\n"), error);
 	}
@@ -900,7 +909,7 @@ mk_root_dir(xfs_mount_t *mp)
 		times |= XFS_ICHGTIME_CREATE;
 	}
 	libxfs_trans_ichgtime(tp, ip, times);
-
+	libxfs_trans_ijoin(tp, ip, 0);
 	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 
 	/*
