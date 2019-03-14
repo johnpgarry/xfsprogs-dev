@@ -785,6 +785,16 @@ _("Transaction block reservation exceeded! %u > %u\n"),
 	tp->t_flags |= (XFS_TRANS_SB_DIRTY | XFS_TRANS_DIRTY);
 }
 
+static void
+xfs_inode_item_put(
+	struct xfs_inode_log_item	*iip)
+{
+	struct xfs_inode		*ip = iip->ili_inode;
+
+	ip->i_itemp = NULL;
+	kmem_zone_free(xfs_ili_zone, iip);
+}
+
 
 /*
  * Transaction commital code follows (i.e. write to disk in libxfs)
@@ -809,7 +819,7 @@ inode_item_done(
 	if (!(iip->ili_fields & XFS_ILOG_ALL)) {
 		ip->i_transp = NULL;	/* disassociate from transaction */
 		iip->ili_flags = 0;	/* reset all flags */
-		return;
+		goto free;
 	}
 
 	/*
@@ -819,7 +829,7 @@ inode_item_done(
 	if (error) {
 		fprintf(stderr, _("%s: warning - imap_to_bp failed (%d)\n"),
 			progname, error);
-		return;
+		goto free;
 	}
 
 	/*
@@ -835,7 +845,7 @@ inode_item_done(
 		fprintf(stderr, _("%s: warning - iflush_int failed (%d)\n"),
 			progname, error);
 		libxfs_putbuf(bp);
-		return;
+		goto free;
 	}
 
 	libxfs_writebuf(bp, 0);
@@ -843,6 +853,8 @@ inode_item_done(
 	fprintf(stderr, "flushing dirty inode %llu, buffer %p\n",
 			ip->i_ino, bp);
 #endif
+free:
+	xfs_inode_item_put(iip);
 }
 
 static void
@@ -920,6 +932,7 @@ inode_item_unlock(
 	ip->i_transp = NULL;
 
 	iip->ili_flags = 0;
+	xfs_inode_item_put(iip);
 }
 
 /* Detach and unlock all of the items in a transaction */
