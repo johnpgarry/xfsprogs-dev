@@ -3270,8 +3270,17 @@ finish_superblock_setup(
 	struct xfs_mount	*mp,
 	struct xfs_sb		*sbp)
 {
-	if (cfg->label)
-		strncpy(sbp->sb_fname, cfg->label, sizeof(sbp->sb_fname));
+	if (cfg->label) {
+		size_t		label_len;
+
+		/*
+		 * Labels are null terminated unless the string fits exactly
+		 * in the label field, so assume sb_fname is zeroed and then
+		 * do a memcpy because the destination isn't a normal C string.
+		 */
+		label_len = min(sizeof(sbp->sb_fname), strlen(cfg->label));
+		memcpy(sbp->sb_fname, cfg->label, label_len);
+	}
 
 	sbp->sb_dblocks = cfg->dblocks;
 	sbp->sb_rblocks = cfg->rtblocks;
