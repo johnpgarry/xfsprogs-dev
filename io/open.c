@@ -698,6 +698,9 @@ get_last_inode(void)
 		lastgrp = ocount;
 	}
 
+	if (lastgrp == 0)
+		return 0;
+
 	lastgrp--;
 
 	/* The last inode number in use */
