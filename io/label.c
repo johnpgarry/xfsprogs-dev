@@ -40,7 +40,7 @@ label_f(
 {
 	int		c;
 	int		error;
-	char		label[FSLABEL_MAX];
+	char		label[FSLABEL_MAX + 1];
 
 	if (argc == 1) {
 		memset(label, 0, sizeof(label));
@@ -54,7 +54,13 @@ label_f(
 			label[0] = '\0';
 			break;
 		case 's':
-			strncpy(label, optarg, sizeof(label));
+			if (strlen(optarg) > FSLABEL_MAX) {
+				errno = EINVAL;
+				error = 1;
+				goto out;
+			}
+			strncpy(label, optarg, sizeof(label) - 1);
+			label[sizeof(label) - 1] = 0;
 			break;
 		default:
 			return command_usage(&label_cmd);
