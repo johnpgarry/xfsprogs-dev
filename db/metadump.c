@@ -1911,7 +1911,7 @@ static struct bbmap mfsb_map;
 static int mfsb_length;
 
 static int
-process_multi_fsb_objects(
+process_multi_fsb_dir(
 	xfs_fileoff_t	o,
 	xfs_fsblock_t	s,
 	xfs_filblks_t	c,
@@ -1920,14 +1920,6 @@ process_multi_fsb_objects(
 {
 	char		*dp;
 	int		ret = 0;
-
-	switch (btype) {
-	case TYP_DIR2:
-		break;
-	default:
-		print_warning("bad type for multi-fsb object %d", btype);
-		return -EINVAL;
-	}
 
 	while (c > 0) {
 		unsigned int	bm_len;
@@ -1985,6 +1977,23 @@ out_pop:
 	}
 
 	return ret;
+}
+
+static int
+process_multi_fsb_objects(
+	xfs_fileoff_t	o,
+	xfs_fsblock_t	s,
+	xfs_filblks_t	c,
+	typnm_t		btype,
+	xfs_fileoff_t	last)
+{
+	switch (btype) {
+	case TYP_DIR2:
+		return process_multi_fsb_dir(o, s, c, btype, last);
+	default:
+		print_warning("bad type for multi-fsb object %d", btype);
+		return -EINVAL;
+	}
 }
 
 /* inode copy routines */
