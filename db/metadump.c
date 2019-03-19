@@ -1979,6 +1979,16 @@ out_pop:
 	return ret;
 }
 
+static bool
+is_multi_fsb_object(
+	struct xfs_mount	*mp,
+	typnm_t			btype)
+{
+	if (btype == TYP_DIR2 && mp->m_dir_geo->fsbcount > 1)
+		return true;
+	return false;
+}
+
 static int
 process_multi_fsb_objects(
 	xfs_fileoff_t	o,
@@ -2011,6 +2021,7 @@ process_bmbt_reclist(
 	xfs_fileoff_t		last;
 	xfs_agnumber_t		agno;
 	xfs_agblock_t		agbno;
+	bool			is_multi_fsb = is_multi_fsb_object(mp, btype);
 	int			error;
 
 	if (btype == TYP_DATA)
@@ -2074,11 +2085,12 @@ process_bmbt_reclist(
 		}
 
 		/* multi-extent blocks require special handling */
-		if (btype != TYP_DIR2 || mp->m_dir_geo->fsbcount == 1) {
-			error = process_single_fsb_objects(o, s, c, btype, last);
-		} else {
-			error = process_multi_fsb_objects(o, s, c, btype, last);
-		}
+		if (is_multi_fsb)
+			error = process_multi_fsb_objects(o, s, c, btype,
+					last);
+		else
+			error = process_single_fsb_objects(o, s, c, btype,
+					last);
 		if (error)
 			return 0;
 	}
