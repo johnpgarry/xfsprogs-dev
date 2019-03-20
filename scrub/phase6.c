@@ -111,11 +111,6 @@ xfs_decode_special_owner(
 
 /* Routines to translate bad physical extents into file paths and offsets. */
 
-struct xfs_verify_error_info {
-	struct bitmap			*d_bad;		/* bytes */
-	struct bitmap			*r_bad;		/* bytes */
-};
-
 /* Report if this extent overlaps a bad region. */
 static bool
 xfs_report_verify_inode_bmap(
@@ -127,7 +122,7 @@ xfs_report_verify_inode_bmap(
 	struct xfs_bmap			*bmap,
 	void				*arg)
 {
-	struct xfs_verify_error_info	*vei = arg;
+	struct media_verify_state	*vs = arg;
 	struct bitmap			*bmp;
 
 	/* Only report errors for real extents. */
@@ -135,9 +130,9 @@ xfs_report_verify_inode_bmap(
 		return true;
 
 	if (fsx->fsx_xflags & FS_XFLAG_REALTIME)
-		bmp = vei->r_bad;
+		bmp = vs->r_bad;
 	else
-		bmp = vei->d_bad;
+		bmp = vs->d_bad;
 
 	if (!bitmap_test(bmp, bmap->bm_physical, bmap->bm_length))
 		return true;
@@ -277,23 +272,18 @@ out:
 static bool
 xfs_report_verify_errors(
 	struct scrub_ctx		*ctx,
-	struct bitmap			*d_bad,
-	struct bitmap			*r_bad)
+	struct media_verify_state	*ve)
 {
-	struct xfs_verify_error_info	vei;
 	bool				moveon;
-
-	vei.d_bad = d_bad;
-	vei.r_bad = r_bad;
 
 	/* Scan the directory tree to get file paths. */
 	moveon = scan_fs_tree(ctx, xfs_report_verify_dir,
-			xfs_report_verify_dirent, &vei);
+			xfs_report_verify_dirent, ve);
 	if (!moveon)
 		return false;
 
 	/* Scan for unlinked files. */
-	return xfs_scan_all_inodes(ctx, xfs_report_verify_inode, &vei);
+	return xfs_scan_all_inodes(ctx, xfs_report_verify_inode, ve);
 }
 
 /* Report an IO error resulting from read-verify based off getfsmap. */
@@ -518,7 +508,7 @@ _("Could not create data device media verifier."));
 
 	/* Scan the whole dir tree to see what matches the bad extents. */
 	if (!bitmap_empty(vs.d_bad) || !bitmap_empty(vs.r_bad))
-		moveon = xfs_report_verify_errors(ctx, vs.d_bad, vs.r_bad);
+		moveon = xfs_report_verify_errors(ctx, &vs);
 
 	bitmap_free(&vs.r_bad);
 	bitmap_free(&vs.d_bad);
