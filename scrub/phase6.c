@@ -35,7 +35,7 @@
 
 /* Verify disk blocks with GETFSMAP */
 
-struct xfs_verify_extent {
+struct media_verify_state {
 	struct read_verify_pool	*rvp_data;
 	struct read_verify_pool	*rvp_log;
 	struct read_verify_pool	*rvp_realtime;
@@ -47,7 +47,7 @@ struct xfs_verify_extent {
 static struct read_verify_pool *
 xfs_dev_to_pool(
 	struct scrub_ctx		*ctx,
-	struct xfs_verify_extent	*ve,
+	struct media_verify_state	*ve,
 	dev_t				dev)
 {
 	if (dev == ctx->fsinfo.fs_datadev)
@@ -348,7 +348,7 @@ xfs_check_rmap_ioerr(
 {
 	struct fsmap			keys[2];
 	char				descr[DESCR_BUFSZ];
-	struct xfs_verify_extent	*ve = arg;
+	struct media_verify_state	*ve = arg;
 	struct bitmap			*tree;
 	dev_t				dev;
 	bool				moveon;
@@ -395,7 +395,7 @@ xfs_check_rmap(
 	struct fsmap			*map,
 	void				*arg)
 {
-	struct xfs_verify_extent	*ve = arg;
+	struct media_verify_state	*ve = arg;
 	struct read_verify_pool		*rvp;
 
 	rvp = xfs_dev_to_pool(ctx, ve, map->fmr_device);
@@ -463,7 +463,7 @@ bool
 xfs_scan_blocks(
 	struct scrub_ctx		*ctx)
 {
-	struct xfs_verify_extent	ve = { NULL };
+	struct media_verify_state	ve = { NULL };
 	bool				moveon;
 
 	moveon = bitmap_init(&ve.d_bad);
