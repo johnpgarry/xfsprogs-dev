@@ -1451,15 +1451,15 @@ data_opts_parser(
 		break;
 	case D_RTINHERIT:
 		if (getnum(value, opts, subopt))
-			cli->fsx.fsx_xflags |= XFS_DIFLAG_RTINHERIT;
+			cli->fsx.fsx_xflags |= FS_XFLAG_RTINHERIT;
 		break;
 	case D_PROJINHERIT:
 		cli->fsx.fsx_projid = getnum(value, opts, subopt);
-		cli->fsx.fsx_xflags |= XFS_DIFLAG_PROJINHERIT;
+		cli->fsx.fsx_xflags |= FS_XFLAG_PROJINHERIT;
 		break;
 	case D_EXTSZINHERIT:
 		cli->fsx.fsx_extsize = getnum(value, opts, subopt);
-		cli->fsx.fsx_xflags |= XFS_DIFLAG_EXTSZINHERIT;
+		cli->fsx.fsx_xflags |= FS_XFLAG_EXTSZINHERIT;
 		break;
 	case D_COWEXTSIZE:
 		cli->fsx.fsx_cowextsize = getnum(value, opts, subopt);
