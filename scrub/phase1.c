@@ -26,6 +26,7 @@
 #include "disk.h"
 #include "scrub.h"
 #include "repair.h"
+#include "fsgeom.h"
 
 /* Phase 1: Find filesystem geometry (and clean up after) */
 
@@ -129,7 +130,7 @@ _("Does not appear to be an XFS filesystem!"));
 	}
 
 	/* Retrieve XFS geometry. */
-	error = ioctl(ctx->mnt_fd, XFS_IOC_FSGEOMETRY, &ctx->geo);
+	error = xfs_fsgeometry(ctx->mnt_fd, &ctx->geo);
 	if (error) {
 		str_errno(ctx, ctx->mntpoint);
 		return false;
