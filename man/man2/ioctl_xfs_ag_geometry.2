@@ -1,0 +1,74 @@
+.\" Copyright (c) 2019, Oracle.  All rights reserved.
+.\"
+.\" %%%LICENSE_START(GPLv2+_DOC_FULL)
+.\" SPDX-License-Identifier: GPL-2.0+
+.\" %%%LICENSE_END
+.TH IOCTL-XFS-AG-GEOMETRY 2 2019-04-11 "XFS"
+.SH NAME
+ioctl_xfs_ag_geometry \- query XFS allocation group geometry information
+.SH SYNOPSIS
+.br
+.B #include <xfs/xfs_fs.h>
+.PP
+.BI "int ioctl(int " fd ", XFS_IOC_AG_GEOMETRY, struct xfs_ag_geometry *" arg );
+.SH DESCRIPTION
+This XFS ioctl retrieves the geometry information for a given allocation group.
+The geometry information is conveyed in a structure of the following form:
+.PP
+.in +4n
+.nf
+struct xfs_ag_geometry {
+	uint32_t  ag_number;
+	uint32_t  ag_length;
+	uint32_t  ag_freeblks;
+	uint32_t  ag_icount;
+	uint32_t  ag_ifree;
+	uint32_t  ag_sick;
+	uint32_t  ag_checked;
+	uint32_t  ag_reserved32;
+	uint64_t  ag_reserved[12];
+};
+.fi
+.in
+.TP
+.I ag_number
+The number of allocation group that the caller wishes to learn about.
+.TP
+.I ag_length
+Length of the allocation group, in units of filesystem blocks.
+.TP
+.I ag_freeblks
+Number of free blocks in the allocation group, in units of filesystem blocks.
+.TP
+.I ag_icount
+Number of inode records allocated in this allocation group.
+.TP
+.I ag_ifree
+Number of unused inode records (of the space allocated) in this allocation
+group.
+.TP
+.IR ag_reserved " and " ag_reserved32
+Will be set to zero.
+.SH RETURN VALUE
+On error, \-1 is returned, and
+.I errno
+is set to indicate the error.
+.PP
+.SH ERRORS
+Error codes can be one of, but are not limited to, the following:
+.TP
+.B EFSBADCRC
+Metadata checksum validation failed while performing the query.
+.TP
+.B EFSCORRUPTED
+Metadata corruption was encountered while performing the query.
+.TP
+.B EINVAL
+The specified allocation group number is not valid for this filesystem.
+.TP
+.B EIO
+An I/O error was encountered while performing the query.
+.SH CONFORMING TO
+This API is specific to XFS filesystem on the Linux kernel.
+.SH SEE ALSO
+.BR ioctl (2)
