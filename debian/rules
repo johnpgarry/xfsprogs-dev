@@ -51,7 +51,7 @@ dibuild:
 			$(MAKE) -C $$dir NODEP=1 install-headers; \
 		done; \
 		for dir in include libxfs libxcmd libfrog mkfs; do \
-			$(MAKE) -C $$dir; \
+			$(MAKE) $$dir; \
 		done; \
 		mv mkfs/mkfs.xfs mkfs/mkfs.xfs-$(bootpkg); \
 		$(MAKE) distclean; \
