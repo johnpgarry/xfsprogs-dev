@@ -2607,7 +2607,7 @@ copy_inodes(
 		levels = be32_to_cpu(agi->agi_free_level);
 
 		finobt = 1;
-		if (!scan_btree(agno, root, levels, TYP_INOBT, &finobt,
+		if (!scan_btree(agno, root, levels, TYP_FINOBT, &finobt,
 				scanfunc_ino))
 			return 0;
 	}
