@@ -516,10 +516,13 @@ Call fallocate with FALLOC_FL_UNSHARE_RANGE flag as described in the
 .BR fallocate (2)
 manual page to unshare all shared blocks within the range.
 .TP
-.BI fzero " offset length"
+.BI "fzero [ \-k ]" " offset length"
 Call fallocate with FALLOC_FL_ZERO_RANGE flag as described in the
 .BR fallocate (2)
 manual page to allocate and zero blocks within the range.
+With the
+.B -k
+option, use the FALLOC_FL_KEEP_SIZE flag as well.
 .TP
 .BI zero " offset length"
 Call xfsctl with
