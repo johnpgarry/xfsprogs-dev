@@ -75,8 +75,8 @@ unsigned int
 disk_heads(
 	struct disk		*disk)
 {
-	if (nr_threads)
-		return nr_threads;
+	if (force_nr_threads)
+		return force_nr_threads;
 	return __disk_heads(disk);
 }
 
