@@ -6,6 +6,9 @@
  * Portions of statx support written by David Howells (dhowells@redhat.com)
  */
 
+/* Try to pick up statx definitions from the system headers. */
+#include <linux/stat.h>
+
 #include "command.h"
 #include "input.h"
 #include "init.h"
@@ -272,6 +275,7 @@ dump_raw_statx(struct statx *stx)
 	printf("stat.ino = %llu\n", (unsigned long long)stx->stx_ino);
 	printf("stat.size = %llu\n", (unsigned long long)stx->stx_size);
 	printf("stat.blocks = %llu\n", (unsigned long long)stx->stx_blocks);
+	printf("stat.attributes_mask = 0x%llx\n", (unsigned long long)stx->stx_attributes_mask);
 	printf("stat.atime.tv_sec = %lld\n", (long long)stx->stx_atime.tv_sec);
 	printf("stat.atime.tv_nsec = %d\n", stx->stx_atime.tv_nsec);
 	printf("stat.btime.tv_sec = %lld\n", (long long)stx->stx_btime.tv_sec);
