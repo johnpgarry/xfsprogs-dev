@@ -16,21 +16,13 @@ typedef void (*read_verify_ioerr_fn_t)(struct scrub_ctx *ctx,
 
 struct read_verify_pool *read_verify_pool_init(struct scrub_ctx *ctx,
 		size_t miniosz, read_verify_ioerr_fn_t ioerr_fn,
-		unsigned int nproc);
+		unsigned int nproc, unsigned int submitter_threads);
 void read_verify_pool_flush(struct read_verify_pool *rvp);
 void read_verify_pool_destroy(struct read_verify_pool *rvp);
 
-struct read_verify {
-	void			*io_end_arg;
-	struct disk		*io_disk;
-	uint64_t		io_start;	/* bytes */
-	uint64_t		io_length;	/* bytes */
-};
-
-bool read_verify_schedule_io(struct read_verify_pool *rvp,
-		struct read_verify *rv, struct disk *disk, uint64_t start,
-		uint64_t length, void *end_arg);
-bool read_verify_force_io(struct read_verify_pool *rvp, struct read_verify *rv);
+bool read_verify_schedule_io(struct read_verify_pool *rvp, struct disk *disk,
+		uint64_t start, uint64_t length, void *end_arg);
+bool read_verify_force_io(struct read_verify_pool *rvp);
 uint64_t read_verify_bytes(struct read_verify_pool *rvp);
 
 #endif /* XFS_SCRUB_READ_VERIFY_H_ */

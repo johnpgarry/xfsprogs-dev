@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/statvfs.h>
+#include "ptvar.h"
 #include "workqueue.h"
 #include "path.h"
 #include "xfs_scrub.h"
@@ -36,22 +37,40 @@
 /* Tolerate 64k holes in adjacent read verify requests. */
 #define RVP_IO_BATCH_LOCALITY	(65536)
 
+struct read_verify {
+	void			*io_end_arg;
+	struct disk		*io_disk;
+	uint64_t		io_start;	/* bytes */
+	uint64_t		io_length;	/* bytes */
+};
+
 struct read_verify_pool {
 	struct workqueue	wq;		/* thread pool */
 	struct scrub_ctx	*ctx;		/* scrub context */
 	void			*readbuf;	/* read buffer */
 	struct ptcounter	*verified_bytes;
+	struct ptvar		*rvstate;	/* combines read requests */
 	read_verify_ioerr_fn_t	ioerr_fn;	/* io error callback */
 	size_t			miniosz;	/* minimum io size, bytes */
 };
 
-/* Create a thread pool to run read verifiers. */
+/*
+ * Create a thread pool to run read verifiers.
+ *
+ * @miniosz is the minimum size of an IO to expect (in bytes).
+ * @ioerr_fn will be called when IO errors occur.
+ * @nproc is the maximum number of verify requests that may be sent to a disk
+ * at any given time.
+ * @submitter_threads is the number of threads that may be sending verify
+ * requests at any given time.
+ */
 struct read_verify_pool *
 read_verify_pool_init(
 	struct scrub_ctx		*ctx,
 	size_t				miniosz,
 	read_verify_ioerr_fn_t		ioerr_fn,
-	unsigned int			nproc)
+	unsigned int			nproc,
+	unsigned int			submitter_threads)
 {
 	struct read_verify_pool		*rvp;
 	bool				ret;
@@ -71,14 +90,20 @@ read_verify_pool_init(
 	rvp->miniosz = miniosz;
 	rvp->ctx = ctx;
 	rvp->ioerr_fn = ioerr_fn;
+	rvp->rvstate = ptvar_init(submitter_threads,
+			sizeof(struct read_verify));
+	if (rvp->rvstate == NULL)
+		goto out_counter;
 	/* Run in the main thread if we only want one thread. */
 	if (nproc == 1)
 		nproc = 0;
 	ret = workqueue_create(&rvp->wq, (struct xfs_mount *)rvp, nproc);
 	if (ret)
-		goto out_counter;
+		goto out_rvstate;
 	return rvp;
 
+out_rvstate:
+	ptvar_free(rvp->rvstate);
 out_counter:
 	ptcounter_free(rvp->verified_bytes);
 out_buf:
@@ -101,6 +126,7 @@ void
 read_verify_pool_destroy(
 	struct read_verify_pool		*rvp)
 {
+	ptvar_free(rvp->rvstate);
 	ptcounter_free(rvp->verified_bytes);
 	free(rvp->readbuf);
 	free(rvp);
@@ -186,16 +212,17 @@ _("Could not queue read-verify work."));
 bool
 read_verify_schedule_io(
 	struct read_verify_pool		*rvp,
-	struct read_verify		*rv,
 	struct disk			*disk,
 	uint64_t			start,
 	uint64_t			length,
 	void				*end_arg)
 {
+	struct read_verify		*rv;
 	uint64_t			req_end;
 	uint64_t			rv_end;
 
 	assert(rvp->readbuf);
+	rv = ptvar_get(rvp->rvstate);
 	req_end = start + length;
 	rv_end = rv->io_start + rv->io_length;
 
@@ -229,12 +256,13 @@ read_verify_schedule_io(
 /* Force any stashed IOs into the verifier. */
 bool
 read_verify_force_io(
-	struct read_verify_pool		*rvp,
-	struct read_verify		*rv)
+	struct read_verify_pool		*rvp)
 {
+	struct read_verify		*rv;
 	bool				moveon;
 
 	assert(rvp->readbuf);
+	rv = ptvar_get(rvp->rvstate);
 	if (rv->io_length == 0)
 		return true;
 
