@@ -120,11 +120,24 @@ copy_range_f(int argc, char **argv)
 		return 0;
 
 	if (src == 0 && dst == 0 && len == 0) {
-		len = copy_src_filesize(fd);
-		copy_dst_truncate();
+		off64_t	sz;
+
+		sz = copy_src_filesize(fd);
+		if (sz < 0 || (unsigned long long)sz > SIZE_MAX) {
+			ret = 1;
+			goto out;
+		}
+		len = sz;
+
+		ret = copy_dst_truncate();
+		if (ret < 0) {
+			ret = 1;
+			goto out;
+		}
 	}
 
 	ret = copy_file_range_cmd(fd, &src, &dst, len);
+out:
 	close(fd);
 	return ret;
 }
