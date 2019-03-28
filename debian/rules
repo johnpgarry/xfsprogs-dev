@@ -2,6 +2,11 @@
 
 export DH_VERBOSE=1
 
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+    NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+    PMAKEFLAGS += -j$(NUMJOBS)
+endif
+
 package = xfsprogs
 develop = xfslibs-dev
 bootpkg = xfsprogs-udeb
@@ -30,7 +35,7 @@ build-arch: built
 build-indep: built
 built: dibuild config
 	@echo "== dpkg-buildpackage: build" 1>&2
-	$(MAKE) default
+	$(MAKE) $(PMAKEFLAGS) default
 	touch built
 
 config: .census
@@ -38,7 +43,7 @@ config: .census
 	@echo "== dpkg-buildpackage: configure" 1>&2
 	$(checkdir)
 	AUTOHEADER=/bin/true dh_autoreconf
-	$(options) $(MAKE) include/platform_defs.h
+	$(options) $(MAKE) $(PMAKEFLAGS) include/platform_defs.h
 	touch .census
 
 dibuild:
@@ -48,10 +53,10 @@ dibuild:
 		$(diopts) $(MAKE) include/platform_defs.h; \
 		mkdir -p include/xfs; \
 		for dir in include libxfs; do \
-			$(MAKE) -C $$dir NODEP=1 install-headers; \
+			$(MAKE) $(PMAKEFLAGS) -C $$dir NODEP=1 install-headers; \
 		done; \
 		for dir in include libxfs libxcmd libfrog mkfs; do \
-			$(MAKE) $$dir; \
+			$(MAKE) $(PMAKEFLAGS) $$dir; \
 		done; \
 		mv mkfs/mkfs.xfs mkfs/mkfs.xfs-$(bootpkg); \
 		$(MAKE) distclean; \
