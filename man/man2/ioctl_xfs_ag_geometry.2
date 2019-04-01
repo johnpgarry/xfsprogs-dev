@@ -57,12 +57,12 @@ indicate the relative health of various allocation group metadata:
 If a given sick flag is set in
 .IR ag_sick ,
 then that piece of metadata has been observed to be damaged.
-The same bit should be set in
+The same bit will be set in
 .IR ag_checked .
 .IP \[bu]
 If a given sick flag is set in
 .I ag_checked
-but is not set in
+and is not set in
 .IR ag_sick ,
 then that piece of metadata has been checked and is not faulty.
 .IP \[bu]
