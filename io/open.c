@@ -52,7 +52,7 @@ static long extsize;
 int
 openfile(
 	char		*path,
-	xfs_fsop_geom_t	*geom,
+	struct xfs_fsop_geom *geom,
 	int		flags,
 	mode_t		mode,
 	struct fs_path	*fs_path)
@@ -157,7 +157,7 @@ int
 addfile(
 	char		*name,
 	int		fd,
-	xfs_fsop_geom_t	*geometry,
+	struct xfs_fsop_geom *geometry,
 	int		flags,
 	struct fs_path	*fs_path)
 {
@@ -230,7 +230,7 @@ open_f(
 	int		c, fd, flags = 0;
 	char		*sp;
 	mode_t		mode = 0600;
-	xfs_fsop_geom_t	geometry = { 0 };
+	struct xfs_fsop_geom geometry = { 0 };
 	struct fs_path	fsp;
 
 	if (argc == 1) {

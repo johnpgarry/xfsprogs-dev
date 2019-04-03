@@ -44,7 +44,7 @@ main(int argc, char **argv)
 	int			error;	/* we have hit an error */
 	long			esize;	/* new rt extent size */
 	int			ffd;	/* mount point file descriptor */
-	xfs_fsop_geom_t		geo;	/* current fs geometry */
+	struct xfs_fsop_geom	geo;	/* current fs geometry */
 	int			iflag;	/* -i flag */
 	int			isint;	/* log is currently internal */
 	int			lflag;	/* -l flag */
@@ -52,7 +52,7 @@ main(int argc, char **argv)
 	int			maxpct;	/* -m flag value */
 	int			mflag;	/* -m flag */
 	int			nflag;	/* -n flag */
-	xfs_fsop_geom_t		ngeo;	/* new fs geometry */
+	struct xfs_fsop_geom	ngeo;	/* new fs geometry */
 	int			rflag;	/* -r flag */
 	long long		rsize;	/* new rt size in fs blocks */
 	int			xflag;	/* -x flag */
