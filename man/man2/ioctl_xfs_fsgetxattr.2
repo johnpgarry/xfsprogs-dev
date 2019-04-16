@@ -1,0 +1,219 @@
+.\" %%%LICENSE_START(GPLv2+_DOC_FULL)
+.\" SPDX-License-Identifier: GPL-2.0+
+.\" %%%LICENSE_END
+.TH IOCTL-XFS-FSGETXATTR 2 2019-04-16 "XFS"
+.SH NAME
+ioctl_xfs_fsgetxattr \- query information for an open file
+.SH SYNOPSIS
+.br
+.B #include <linux/fs.h>
+.PP
+.BI "int ioctl(int " fd ", XFS_IOC_FSGETXATTR, struct fsxattr *" arg );
+.PP
+.BI "int ioctl(int " fd ", XFS_IOC_FSGETXATTRA, struct fsxattr *" arg );
+.PP
+.BI "int ioctl(int " fd ", XFS_IOC_FSSETXATTR, struct fsxattr *" arg );
+.SH DESCRIPTION
+Query or set additional attributes associated with files in various file
+systems.
+The attributes are conveyed in a structure of the form:
+.PP
+.in +4n
+.nf
+struct fsxattr {
+	__u32         fsx_xflags;
+	__u32         fsx_extsize;
+	__u32         fsx_nextents;
+	__u32         fsx_projid;
+	__u32         fsx_cowextsize;
+	unsigned char fsx_pad[8];
+};
+.fi
+.in
+.PP
+.I fsx_xflags
+are extended flags that apply to this file.
+This field can be a combination of the following:
+
+.RS 0.4i
+.TP
+.B FS_XFLAG_REALTIME
+The file is a realtime file.
+This bit can only be changed when the file is empty.
+.TP
+.B FS_XFLAG_PREALLOC
+The file has preallocated space.
+.TP
+.B FS_XFLAG_IMMUTABLE
+The file is immutable - it cannot be modified, deleted or renamed,
+no link can be created to this file and no data can be written to the
+file.
+Only the superuser or a process possessing the CAP_LINUX_IMMUTABLE
+capability can set or clear this flag.
+If this flag is set before a
+.B FS_IOC_SETXATTR
+call and would not be cleared by the call, then no other attributes can be
+changed and
+.B EPERM
+will be returned.
+.TP
+.B FS_XFLAG_APPEND
+The file is append-only - it can only be open in append mode for
+writing.
+Only the superuser or a process possessing the CAP_LINUX_IMMUTABLE
+capability can set or clear this flag.
+.TP
+.B FS_XFLAG_SYNC
+All writes to the file are synchronous.
+.TP
+.B FS_XFLAG_NOATIME
+When the file is accessed, its atime record is not modified.
+.TP
+.B FS_XFLAG_NODUMP
+The file should be skipped by backup utilities.
+.TP
+.B FS_XFLAG_RTINHERIT
+Realtime inheritance bit - new files created in the directory
+will be automatically realtime, and new directories created in
+the directory will inherit the inheritance bit.
+.TP
+.B FS_XFLAG_PROJINHERIT
+Project inheritance bit - new files and directories created in
+the directory will inherit the parents project ID.
+New directories also inherit the project inheritance bit.
+.TP
+.B FS_XFLAG_NOSYMLINKS
+Can only be set on a directory and disallows creation of
+symbolic links in that directory.
+.TP
+.B FS_XFLAG_EXTSIZE
+Extent size bit - if a basic extent size value is set on the file
+then the allocator will allocate in multiples of the set size for
+this file (see
+.B fsx_extsize
+below).
+This flag can only be set on a file if it is empty.
+.TP
+.B FS_XFLAG_EXTSZINHERIT
+Extent size inheritance bit - new files and directories created in
+the directory will inherit the parents basic extent size value (see
+.B fsx_extsize
+below).
+Can only be set on a directory.
+.TP
+.B FS_XFLAG_NODEFRAG
+No defragment file bit - the file should be skipped during a defragmentation
+operation. When applied to a directory, new files and directories created will
+inherit the no\-defrag bit.
+.TP
+.B FS_XFLAG_FILESTREAM
+Filestream allocator bit - allows a directory to reserve an allocation group
+for exclusive use by files created within that directory.
+Files being written in other directories will not use the same allocation group
+and so files within different directories will not interleave extents on disk.
+The reservation is only active while files are being created and written into
+the directory.
+.TP
+.B FS_XFLAG_DAX
+If the filesystem lives on directly accessible persistent memory, reads and
+writes to this file will go straight to the persistent memory, bypassing the
+page cache.
+A file cannot be reflinked and have the
+.BR FS_XFLAG_DAX
+set at the same time.
+That is to say that DAX files cannot share blocks.
+If this flag is set on a directory, files created within that directory will
+have this flag set.
+.TP
+.B FS_XFLAG_COWEXTSIZE
+Copy on Write Extent size bit - if a CoW extent size value is set on the file,
+the allocator will allocate extents for staging a copy on write operation
+in multiples of the set size for this file (see
+.B fsx_cowextsize
+below).
+If the CoW extent size is set on a directory, then new file and directories
+created in the directory will inherit the parent's CoW extent size value.
+.TP
+.B FS_XFLAG_HASATTR
+The file has extended attributes associated with it.
+.RE
+.PP
+.PD
+
+.PP
+.I fsx_extsize
+is the preferred extent allocation size for data blocks mapped to this file,
+in units of filesystem blocks.
+If this value is zero, the filesystem will choose a default option, which
+is currently zero.
+If
+.B XFS_IOC_FSSETXATTR
+is called with
+.B FS_XFLAG_EXTSIZE
+set in
+.I fsx_xflags
+and this field is zero, the XFLAG will be cleared instead.
+.PP
+.I fsx_nextents
+is the number of data extents in this file.
+If
+.B XFS_IOC_FSGETXATTRA
+was used, then this is the number of extended attribute extents in the file.
+.PP
+.I fsx_projid
+is the project ID of this file.
+.PP
+.I fsx_cowextsize
+is the preferred extent allocation size for copy on write operations
+targeting this file, in units of filesystem blocks.
+If this field is zero, the filesystem will choose a default option,
+which is currently 128 filesystem blocks.
+If
+.B XFS_IOC_FSSETXATTR
+is called with
+.B FS_XFLAG_COWEXTSIZE
+set in
+.I fsx_xflags
+and this field is zero, the XFLAG will be cleared instead.
+
+.PP
+.I fsx_pad
+must be zeroed.
+
+.SH RETURN VALUE
+On error, \-1 is returned, and
+.I errno
+is set to indicate the error.
+.PP
+.SH ERRORS
+Error codes can be one of, but are not limited to, the following:
+.TP
+.B EACCESS
+Caller does not have sufficient access to change the attributes.
+.TP
+.B EFAULT
+The kernel was not able to copy into the userspace buffer.
+.TP
+.B EFSBADCRC
+Metadata checksum validation failed while performing the query.
+.TP
+.B EFSCORRUPTED
+Metadata corruption was encountered while performing the query.
+.TP
+.B EINVAL
+One of the arguments was not valid.
+.TP
+.B EIO
+An I/O error was encountered while performing the query.
+.TP
+.B ENOMEM
+There was insufficient memory to perform the query.
+.TP
+.B EPERM
+Caller did not have permission to change the attributes.
+.SH CONFORMING TO
+This API is implemented by the ext4, xfs, btrfs, and f2fs filesystems on the
+Linux kernel.
+Not all fields may be understood by filesystems other than xfs.
+.SH SEE ALSO
+.BR ioctl (2)

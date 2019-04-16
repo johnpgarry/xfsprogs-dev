@@ -132,161 +132,17 @@ will fail with EINVAL.
 All I/O requests are kept consistent with any data brought into
 the cache with an access through a non-direct I/O file descriptor.
 
-.TP
-.B XFS_IOC_FSGETXATTR
-Get additional attributes associated with files in XFS file systems.
-The final argument points to a variable of type
-.BR "struct fsxattr" ,
-whose fields include:
-.B fsx_xflags
-(extended flag bits),
-.B fsx_extsize
-(nominal extent size in file system blocks),
-.B fsx_nextents
-(number of data extents in the file).
-A
-.B fsx_extsize
-value returned indicates that a preferred extent size was previously
-set on the file, a
-.B fsx_extsize
-of zero indicates that the defaults for that filesystem will be used.
-A
-.B fsx_cowextsize
-value returned indicates that a preferred copy on write extent size was
-previously set on the file, whereas a
-.B fsx_cowextsize
-of zero indicates that the defaults for that filesystem will be used.
-The current default for
-.B fsx_cowextsize
-is 128 blocks.
-Currently the meaningful bits for the
-.B fsx_xflags
-field are:
-.PD 0
-.RS
-.TP 1.0i
-.SM "Bit 0 (0x1) \- XFS_XFLAG_REALTIME"
-The file is a realtime file.
-.TP
-.SM "Bit 1 (0x2) \- XFS_XFLAG_PREALLOC"
-The file has preallocated space.
-.TP
-.SM "Bit 3 (0x8) \- XFS_XFLAG_IMMUTABLE"
-The file is immutable - it cannot be modified, deleted or renamed,
-no link can be created to this file and no data can be written to the
-file.
-Only the superuser or a process possessing the CAP_LINUX_IMMUTABLE
-capability can set or clear this flag.
-.TP
-.SM "Bit 4 (0x10) \- XFS_XFLAG_APPEND"
-The file is append-only - it can only be open in append mode for
-writing.
-Only the superuser or a process possessing the CAP_LINUX_IMMUTABLE
-capability can set or clear this flag.
-.TP
-.SM "Bit 5 (0x20) \- XFS_XFLAG_SYNC"
-All writes to the file are synchronous.
-.TP
-.SM "Bit 6 (0x40) \- XFS_XFLAG_NOATIME"
-When the file is accessed, its atime record is not modified.
-.TP
-.SM "Bit 7 (0x80) \- XFS_XFLAG_NODUMP"
-The file should be skipped by backup utilities.
-.TP
-.SM "Bit 8 (0x100) \- XFS_XFLAG_RTINHERIT"
-Realtime inheritance bit - new files created in the directory
-will be automatically realtime, and new directories created in
-the directory will inherit the inheritance bit.
-.TP
-.SM "Bit 9 (0x200) \- XFS_XFLAG_PROJINHERIT"
-Project inheritance bit - new files and directories created in
-the directory will inherit the parents project ID.  New
-directories also inherit the project inheritance bit.
-.TP
-.SM "Bit 10 (0x400) \- XFS_XFLAG_NOSYMLINKS"
-Can only be set on a directory and disallows creation of
-symbolic links in that directory.
-.TP
-.SM "Bit 11 (0x800) \- XFS_XFLAG_EXTSIZE"
-Extent size bit - if a basic extent size value is set on the file
-then the allocator will allocate in multiples of the set size for
-this file (see
-.B XFS_IOC_FSSETXATTR
-below).
-.TP
-.SM "Bit 12 (0x1000) \- XFS_XFLAG_EXTSZINHERIT"
-Extent size inheritance bit - new files and directories created in
-the directory will inherit the parents basic extent size value (see
-.B XFS_IOC_FSSETXATTR
-below).
-Can only be set on a directory.
-.TP
-.SM "Bit 13 (0x2000) \- XFS_XFLAG_NODEFRAG"
-No defragment file bit - the file should be skipped during a defragmentation
-operation. When applied to a directory, new files and directories created will
-inherit the no\-defrag bit.
-.TP
-.SM "Bit 14 (0x4000) \- XFS_XFLAG_FILESTREAM"
-Filestream allocator bit - allows a directory to reserve an allocation
-group for exclusive use by files created within that directory. Files
-being written in other directories will not use the same allocation
-group and so files within different directories will not interleave
-extents on disk. The reservation is only active while files are being
-created and written into the directory.
-.TP
-.SM "Bit 15 (0x8000) \- XFS_XFLAG_DAX"
-If the filesystem lives on directly accessible persistent memory, reads and
-writes to this file will go straight to the persistent memory, bypassing the
-page cache.
-A file cannot be reflinked and have the
-.BR XFS_XFLAG_DAX
-set at the same time.
-That is to say that DAX files cannot share blocks.
-.TP
-.SM "Bit 16 (0x10000) \- XFS_XFLAG_COWEXTSIZE"
-Copy on Write Extent size bit - if a CoW extent size value is set on the file,
-the allocator will allocate extents for staging a copy on write operation
-in multiples of the set size for this file (see
-.B XFS_IOC_FSSETXATTR
-below).
-If the CoW extent size is set on a directory, then new file and directories
-created in the directory will inherit the parent's CoW extent size value.
-.TP
-.SM "Bit 31 (0x80000000) \- XFS_XFLAG_HASATTR"
-The file has extended attributes associated with it.
-.RE
 .PP
-.PD
-
-.TP
-.B XFS_IOC_FSGETXATTRA
-Identical to
+.nf
 .B XFS_IOC_FSGETXATTR
-except that the
-.B fsx_nextents
-field contains the number of attribute extents in the file.
-
+.B XFS_IOC_FSGETXATTRA
+.fi
+.PD 0
 .TP
 .B XFS_IOC_FSSETXATTR
-Set additional attributes associated with files in XFS file systems.
-The final argument points to a variable of type
-.BR "struct fsxattr" ,
-but only the following fields are used in this call:
-.BR fsx_xflags ,
-.BR fsx_extsize ,
-.BR fsx_cowextsize ,
-and
-.BR fsx_projid .
-The
-.B fsx_xflags
-realtime file bit and the file's extent size may be changed only
-when the file is empty, except in the case of a directory where
-the extent size can be set at any time (this value is only used
-for regular file allocations, so should only be set on a directory
-in conjunction with the XFS_XFLAG_EXTSZINHERIT flag).
-The copy on write extent size,
-.BR fsx_cowextsize ,
-can be set at any time.
+See
+.BR ioctl_xfs_fsgetxattr (2)
+for more information.
 
 .TP
 .B XFS_IOC_GETBMAP
