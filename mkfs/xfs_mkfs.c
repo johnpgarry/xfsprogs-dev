@@ -59,6 +59,7 @@ enum {
 	D_PROJINHERIT,
 	D_EXTSZINHERIT,
 	D_COWEXTSIZE,
+	D_DAX,
 	D_MAX_OPTS,
 };
 
@@ -253,6 +254,7 @@ static struct opt_params dopts = {
 		[D_PROJINHERIT] = "projinherit",
 		[D_EXTSZINHERIT] = "extszinherit",
 		[D_COWEXTSIZE] = "cowextsize",
+		[D_DAX] = "dax",
 	},
 	.subopt_params = {
 		{ .index = D_AGCOUNT,
@@ -367,6 +369,12 @@ static struct opt_params dopts = {
 		  .minval = 0,
 		  .maxval = UINT_MAX,
 		  .defaultval = SUBOPT_NEEDS_VAL,
+		},
+		{ .index = D_DAX,
+		  .conflicts = { { NULL, LAST_CONFLICT } },
+		  .minval = 0,
+		  .maxval = 1,
+		  .defaultval = 1,
 		},
 	},
 };
@@ -1464,6 +1472,9 @@ data_opts_parser(
 	case D_COWEXTSIZE:
 		cli->fsx.fsx_cowextsize = getnum(value, opts, subopt);
 		cli->fsx.fsx_xflags |= FS_XFLAG_COWEXTSIZE;
+		break;
+	case D_DAX:
+		cli->fsx.fsx_xflags |= FS_XFLAG_DAX;
 		break;
 	default:
 		return -EINVAL;

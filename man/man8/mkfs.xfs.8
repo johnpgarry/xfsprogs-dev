@@ -391,6 +391,17 @@ All inodes created by
 will have this extent size hint applied.
 The value must be provided in units of filesystem blocks.
 Directories will pass on this hint to newly created children.
+.TP
+.BI dax= value
+All inodes created by
+.B mkfs.xfs
+will have the DAX flag set.
+This means that directories will pass the flag on to newly created files
+and files will use the DAX IO paths when possible.
+This value is either 1 to enable the use or 0 to disable.
+By default,
+.B mkfs.xfs
+will not enable DAX mode.
 .RE
 .TP
 .B \-f
