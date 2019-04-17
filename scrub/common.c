@@ -253,21 +253,23 @@ scrub_nproc_workqueue(
 }
 
 /*
- * Sleep for 100ms * however many -b we got past the initial one.
+ * Sleep for 100us * however many -b we got past the initial one.
  * This is an (albeit clumsy) way to throttle scrub activity.
  */
+#define NSEC_PER_SEC	1000000000ULL
+#define NSEC_PER_USEC	1000ULL
 void
 background_sleep(void)
 {
-	unsigned long long	time;
+	unsigned long long	time_ns;
 	struct timespec		tv;
 
 	if (bg_mode < 2)
 		return;
 
-	time = 100000ULL * (bg_mode - 1);
-	tv.tv_sec = time / 1000000;
-	tv.tv_nsec = time % 1000000;
+	time_ns =  100 * NSEC_PER_USEC * (bg_mode - 1);
+	tv.tv_sec = time_ns / NSEC_PER_SEC;
+	tv.tv_nsec = time_ns % NSEC_PER_SEC;
 	nanosleep(&tv, NULL);
 }
 
