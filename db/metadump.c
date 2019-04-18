@@ -1638,11 +1638,34 @@ process_dir_data_block(
 	}
 }
 
-static void
+static int
 process_symlink_block(
-	char			*block)
+	xfs_fileoff_t	o,
+	xfs_fsblock_t	s,
+	xfs_filblks_t	c,
+	typnm_t		btype,
+	xfs_fileoff_t	last)
 {
-	char *link = block;
+	struct bbmap	map;
+	char		*link;
+	int		ret = 0;
+
+	push_cur();
+	map.nmaps = 1;
+	map.b[0].bm_bn = XFS_FSB_TO_DADDR(mp, s);
+	map.b[0].bm_len = XFS_FSB_TO_BB(mp, c);
+	set_cur(&typtab[btype], 0, 0, DB_RING_IGN, &map);
+	if (!iocur_top->data) {
+		xfs_agnumber_t	agno = XFS_FSB_TO_AGNO(mp, s);
+		xfs_agblock_t	agbno = XFS_FSB_TO_AGBNO(mp, s);
+
+		print_warning("cannot read %s block %u/%u (%llu)",
+				typtab[btype].name, agno, agbno, s);
+		if (stop_on_read_error)
+			ret = -1;
+		goto out_pop;
+	}
+	link = iocur_top->data;
 
 	if (xfs_sb_version_hascrc(&(mp)->m_sb))
 		link += sizeof(struct xfs_dsymlink_hdr);
@@ -1660,6 +1683,12 @@ process_symlink_block(
 		if (zlen < mp->m_sb.sb_blocksize)
 			memset(link + linklen, 0, zlen);
 	}
+
+	iocur_top->need_crc = 1;
+	ret = write_buf(iocur_top);
+out_pop:
+	pop_cur();
+	return ret;
 }
 
 #define MAX_REMOTE_VALS		4095
@@ -1879,10 +1908,6 @@ process_single_fsb_objects(
 			}
 			iocur_top->need_crc = 1;
 			break;
-		case TYP_SYMLINK:
-			process_symlink_block(dp);
-			iocur_top->need_crc = 1;
-			break;
 		case TYP_ATTR:
 			process_attr_block(dp, o);
 			iocur_top->need_crc = 1;
@@ -1986,6 +2011,8 @@ is_multi_fsb_object(
 {
 	if (btype == TYP_DIR2 && mp->m_dir_geo->fsbcount > 1)
 		return true;
+	if (btype == TYP_SYMLINK)
+		return true;
 	return false;
 }
 
@@ -2000,6 +2027,8 @@ process_multi_fsb_objects(
 	switch (btype) {
 	case TYP_DIR2:
 		return process_multi_fsb_dir(o, s, c, btype, last);
+	case TYP_SYMLINK:
+		return process_symlink_block(o, s, c, btype, last);
 	default:
 		print_warning("bad type for multi-fsb object %d", btype);
 		return -EINVAL;
