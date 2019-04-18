@@ -28,7 +28,7 @@ bool unicrash_check_fs_label(struct unicrash *uc, const char *descr,
 #else
 # define unicrash_dir_init(u, c, b)		(true)
 # define unicrash_xattr_init(u, c, b)		(true)
-# define unicrash_label_init(u, c)		(true)
+# define unicrash_fs_label_init(u, c)		(true)
 # define unicrash_free(u)			do {(u) = (u);} while (0)
 # define unicrash_check_dir_name(u, d, n)	(true)
 # define unicrash_check_xattr_name(u, d, n)	(true)
