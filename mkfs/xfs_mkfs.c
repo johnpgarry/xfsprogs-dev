@@ -1451,15 +1451,15 @@ data_opts_parser(
 		break;
 	case D_RTINHERIT:
 		if (getnum(value, opts, subopt))
-			cli->fsx.fsx_xflags |= XFS_DIFLAG_RTINHERIT;
+			cli->fsx.fsx_xflags |= FS_XFLAG_RTINHERIT;
 		break;
 	case D_PROJINHERIT:
 		cli->fsx.fsx_projid = getnum(value, opts, subopt);
-		cli->fsx.fsx_xflags |= XFS_DIFLAG_PROJINHERIT;
+		cli->fsx.fsx_xflags |= FS_XFLAG_PROJINHERIT;
 		break;
 	case D_EXTSZINHERIT:
 		cli->fsx.fsx_extsize = getnum(value, opts, subopt);
-		cli->fsx.fsx_xflags |= XFS_DIFLAG_EXTSZINHERIT;
+		cli->fsx.fsx_xflags |= FS_XFLAG_EXTSZINHERIT;
 		break;
 	case D_COWEXTSIZE:
 		cli->fsx.fsx_cowextsize = getnum(value, opts, subopt);
@@ -2216,7 +2216,7 @@ validate_extsize_hint(
 	 * that we know that we'll be propagating a correct hint and flag to
 	 * new files on the data device.
 	 */
-	if (cli->fsx.fsx_xflags & XFS_DIFLAG_EXTSZINHERIT)
+	if (cli->fsx.fsx_xflags & FS_XFLAG_EXTSZINHERIT)
 		flags |= XFS_DIFLAG_EXTSZINHERIT;
 
 	fa = libxfs_inode_validate_extsize(mp, cli->fsx.fsx_extsize, S_IFDIR,
@@ -2237,7 +2237,7 @@ _("illegal extent size hint %lld, must be less than %u.\n"),
 		return;
 
 	flags = XFS_DIFLAG_REALTIME;
-	if (cli->fsx.fsx_xflags & XFS_DIFLAG_EXTSIZE)
+	if (cli->fsx.fsx_xflags & FS_XFLAG_EXTSZINHERIT)
 		flags |= XFS_DIFLAG_EXTSIZE;
 
 	fa = libxfs_inode_validate_extsize(mp, cli->fsx.fsx_extsize, S_IFREG,
