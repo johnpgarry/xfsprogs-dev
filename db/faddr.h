@@ -13,7 +13,6 @@ extern void	fa_cfileoffd(void *obj, int bit, typnm_t next);
 extern void	fa_cfsblock(void *obj, int bit, typnm_t next);
 extern void	fa_dfiloffd(void *obj, int bit, typnm_t next);
 extern void	fa_dfsbno(void *obj, int bit, typnm_t next);
-extern void	fa_dinode_union(void *obj, int bit, typnm_t next);
 extern void	fa_dirblock(void *obj, int bit, typnm_t next);
 extern void	fa_drfsbno(void *obj, int bit, typnm_t next);
 extern void	fa_drtbno(void *obj, int bit, typnm_t next);

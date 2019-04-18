@@ -119,8 +119,4 @@ extern int xfs_dir2_sf_removename(struct xfs_da_args *args);
 extern int xfs_dir2_sf_replace(struct xfs_da_args *args);
 extern xfs_failaddr_t xfs_dir2_sf_verify(struct xfs_inode *ip);
 
-/* xfs_dir2_readdir.c */
-extern int xfs_readdir(struct xfs_trans *tp, struct xfs_inode *dp,
-		       struct dir_context *ctx, size_t bufsize);
-
 #endif /* __XFS_DIR2_PRIV_H__ */

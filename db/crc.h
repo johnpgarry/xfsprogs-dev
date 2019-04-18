@@ -7,4 +7,3 @@
 struct field;
 
 extern void	crc_init(void);
-extern void	crc_struct(const field_t *fields, int argc, char **argv);

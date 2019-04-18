@@ -176,7 +176,6 @@ extern void	libxfs_bcache_free(void);
 extern void	libxfs_bcache_flush(void);
 extern void	libxfs_purgebuf(xfs_buf_t *);
 extern int	libxfs_bcache_overflowed(void);
-extern int	libxfs_bcache_usage(void);
 
 /* Buffer (Raw) Interfaces */
 extern xfs_buf_t *libxfs_getbufr(struct xfs_buftarg *, xfs_daddr_t, int);
