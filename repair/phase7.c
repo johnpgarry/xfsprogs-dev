@@ -32,8 +32,7 @@ update_inode_nlinks(
 	error = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_remove, nres, 0, 0, &tp);
 	ASSERT(error == 0);
 
-	error = -libxfs_trans_iget(mp, tp, ino, 0, 0, &ip);
-
+	error = -libxfs_iget(mp, tp, ino, 0, &ip, &xfs_default_ifork_ops);
 	if (error)  {
 		if (!no_modify)
 			do_error(
@@ -67,6 +66,7 @@ update_inode_nlinks(
 	if (!dirty)  {
 		libxfs_trans_cancel(tp);
 	} else  {
+		libxfs_trans_ijoin(tp, ip, 0);
 		libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 		/*
 		 * no need to do a bmap finish since
