@@ -7,6 +7,14 @@
 OPTS=""
 USAGE="Usage: xfs_info [-V] [-t mtab] [mountpoint|device|file]"
 
+# Try to find a loop device associated with a file.  We only want to return
+# one loopdev (multiple loop devices can attach to a single file) so we grab
+# the last line and return it if it's actually a block device.
+try_find_loop_dev_for_file() {
+	local x="$(losetup -O NAME -j "$1" 2> /dev/null | tail -n 1)"
+	test -b "$x" && echo "$x"
+}
+
 while getopts "t:V" c
 do
 	case $c in
@@ -24,11 +32,19 @@ set -- extra "$@"
 shift $OPTIND
 case $# in
 	1)
-		if [ -b "$1" ] || [ -f "$1" ]; then
-			xfs_db -p xfs_info -c "info" $OPTS "$1"
+		arg="$1"
+
+		# See if we can map the arg to a loop device
+		loopdev="$(try_find_loop_dev_for_file "${arg}")"
+		test -n "${loopdev}" && arg="${loopdev}"
+
+		# If we find a mountpoint for the device, do a live query;
+		# otherwise try reading the fs with xfs_db.
+		if mountpt="$(findmnt -f -n -o TARGET "${arg}" 2> /dev/null)"; then
+			xfs_spaceman -p xfs_info -c "info" $OPTS "${mountpt}"
 			status=$?
 		else
-			xfs_spaceman -p xfs_info -c "info" $OPTS "$1"
+			xfs_db -p xfs_info -c "info" $OPTS "${arg}"
 			status=$?
 		fi
 		;;
