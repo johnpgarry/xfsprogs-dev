@@ -233,10 +233,16 @@ process_args(int argc, char **argv)
 					if (max_mem_specified)
 						do_abort(
 		_("-o bhash option cannot be used with -m option\n"));
+					if (!val)
+						do_abort(
+		_("-o bhash requires a parameter\n"));
 					libxfs_bhash_size = (int)strtol(val, NULL, 0);
 					bhash_option_used = 1;
 					break;
 				case AG_STRIDE:
+					if (!val)
+						do_abort(
+		_("-o ag_stride requires a parameter\n"));
 					ag_stride = (int)strtol(val, NULL, 0);
 					break;
 				case FORCE_GEO:
@@ -247,6 +253,9 @@ process_args(int argc, char **argv)
 					force_geo = 1;
 					break;
 				case PHASE2_THREADS:
+					if (!val)
+						do_abort(
+		_("-o phase2_threads requires a parameter\n"));
 					phase2_threads = (int)strtol(val, NULL, 0);
 					break;
 				default:
@@ -262,6 +271,9 @@ process_args(int argc, char **argv)
 
 				switch (getsubopt(&p, c_opts, &val)) {
 				case CONVERT_LAZY_COUNT:
+					if (!val)
+						do_abort(
+		_("-c lazycount requires a parameter\n"));
 					lazy_count = (int)strtol(val, NULL, 0);
 					convert_lazy_count = 1;
 					break;
