@@ -119,12 +119,12 @@ out:
 
 #ifdef HAVE_LIBATTR
 /* Routines to scan all of an inode's xattrs for name problems. */
-struct xfs_attr_ns {
+struct attrns_decode {
 	int			flags;
 	const char		*name;
 };
 
-static const struct xfs_attr_ns attr_ns[] = {
+static const struct attrns_decode attr_ns[] = {
 	{0,			"user"},
 	{ATTR_ROOT,		"system"},
 	{ATTR_SECURE,		"secure"},
@@ -141,7 +141,7 @@ xfs_scrub_scan_fhandle_namespace_xattrs(
 	const char			*descr,
 	struct xfs_handle		*handle,
 	struct xfs_bstat		*bstat,
-	const struct xfs_attr_ns	*attr_ns)
+	const struct attrns_decode	*attr_ns)
 {
 	struct attrlist_cursor		cur;
 	char				attrbuf[XFS_XATTR_LIST_MAX];
@@ -202,7 +202,7 @@ xfs_scrub_scan_fhandle_xattrs(
 	struct xfs_handle		*handle,
 	struct xfs_bstat		*bstat)
 {
-	const struct xfs_attr_ns	*ns;
+	const struct attrns_decode	*ns;
 	bool				moveon = true;
 
 	for (ns = attr_ns; ns->name; ns++) {

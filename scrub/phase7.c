@@ -16,7 +16,7 @@
 
 /* Phase 7: Check summary counters. */
 
-struct xfs_summary_counts {
+struct summary_counts {
 	unsigned long long	dbytes;		/* data dev bytes */
 	unsigned long long	rbytes;		/* rt dev bytes */
 	unsigned long long	next_phys;	/* next phys bytes we see? */
@@ -26,13 +26,13 @@ struct xfs_summary_counts {
 /* Record block usage. */
 static bool
 xfs_record_block_summary(
-	struct scrub_ctx		*ctx,
-	const char			*descr,
-	struct fsmap			*fsmap,
-	void				*arg)
+	struct scrub_ctx	*ctx,
+	const char		*descr,
+	struct fsmap		*fsmap,
+	void			*arg)
 {
-	struct xfs_summary_counts	*counts;
-	unsigned long long		len;
+	struct summary_counts	*counts;
+	unsigned long long	len;
 
 	counts = ptvar_get((struct ptvar *)arg);
 	if (fsmap->fmr_device == ctx->fsinfo.fs_logdev)
@@ -67,12 +67,12 @@ xfs_record_block_summary(
 /* Add all the summaries in the per-thread counter */
 static bool
 xfs_add_summaries(
-	struct ptvar			*ptv,
-	void				*data,
-	void				*arg)
+	struct ptvar		*ptv,
+	void			*data,
+	void			*arg)
 {
-	struct xfs_summary_counts	*total = arg;
-	struct xfs_summary_counts	*item = data;
+	struct summary_counts	*total = arg;
+	struct summary_counts	*item = data;
 
 	total->dbytes += item->dbytes;
 	total->rbytes += item->rbytes;
@@ -88,27 +88,27 @@ xfs_add_summaries(
  */
 bool
 xfs_scan_summary(
-	struct scrub_ctx		*ctx)
+	struct scrub_ctx	*ctx)
 {
-	struct xfs_summary_counts	totalcount = {0};
-	struct ptvar			*ptvar;
-	unsigned long long		used_data;
-	unsigned long long		used_rt;
-	unsigned long long		used_files;
-	unsigned long long		stat_data;
-	unsigned long long		stat_rt;
-	uint64_t			counted_inodes = 0;
-	unsigned long long		absdiff;
-	unsigned long long		d_blocks;
-	unsigned long long		d_bfree;
-	unsigned long long		r_blocks;
-	unsigned long long		r_bfree;
-	unsigned long long		f_files;
-	unsigned long long		f_free;
-	bool				moveon;
-	bool				complain;
-	int				ip;
-	int				error;
+	struct summary_counts	totalcount = {0};
+	struct ptvar		*ptvar;
+	unsigned long long	used_data;
+	unsigned long long	used_rt;
+	unsigned long long	used_files;
+	unsigned long long	stat_data;
+	unsigned long long	stat_rt;
+	uint64_t		counted_inodes = 0;
+	unsigned long long	absdiff;
+	unsigned long long	d_blocks;
+	unsigned long long	d_bfree;
+	unsigned long long	r_blocks;
+	unsigned long long	r_bfree;
+	unsigned long long	f_files;
+	unsigned long long	f_free;
+	bool			moveon;
+	bool			complain;
+	int			ip;
+	int			error;
 
 	/* Flush everything out to disk before we start counting. */
 	error = syncfs(ctx->mnt_fd);
@@ -117,7 +117,7 @@ xfs_scan_summary(
 		return false;
 	}
 
-	ptvar = ptvar_init(scrub_nproc(ctx), sizeof(struct xfs_summary_counts));
+	ptvar = ptvar_init(scrub_nproc(ctx), sizeof(struct summary_counts));
 	if (!ptvar) {
 		str_errno(ctx, ctx->mntpoint);
 		return false;
