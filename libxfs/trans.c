@@ -545,6 +545,7 @@ libxfs_trans_brelse(
 	xfs_trans_del_item(&bip->bli_item);
 	if (bip->bli_flags & XFS_BLI_HOLD)
 		bip->bli_flags &= ~XFS_BLI_HOLD;
+	xfs_buf_item_put(bip);
 	bp->b_transp = NULL;
 	libxfs_putbuf(bp);
 }
@@ -905,6 +906,7 @@ buf_item_unlock(
 
 	hold = bip->bli_flags & XFS_BLI_HOLD;
 	bip->bli_flags &= ~XFS_BLI_HOLD;
+	xfs_buf_item_put(bip);
 	if (!hold)
 		libxfs_putbuf(bp);
 }
