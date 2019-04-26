@@ -88,7 +88,6 @@ extern int	xlog_find_cycle_start(struct xlog *log, xfs_buf_t *bp,
 extern int	xlog_find_tail(struct xlog *log, xfs_daddr_t *head_blk,
 				xfs_daddr_t *tail_blk);
 
-extern int	xlog_test_footer(struct xlog *log);
 extern int	xlog_recover(struct xlog *log, int readonly);
 extern void	xlog_recover_print_data(char *p, int len);
 extern void	xlog_recover_print_logitem(xlog_recover_item_t *item);

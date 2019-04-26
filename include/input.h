@@ -19,7 +19,6 @@ extern char	*fetchline(void);
 
 extern size_t numlen(uint64_t val, size_t base);
 
-extern struct timeval tadd(struct timeval t1, struct timeval t2);
 extern struct timeval tsub(struct timeval t1, struct timeval t2);
 extern double	tdiv(double value, struct timeval tv);
 
