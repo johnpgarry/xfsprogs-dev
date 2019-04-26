@@ -1428,9 +1428,7 @@ void
 libxfs_irele(
 	struct xfs_inode	*ip)
 {
-	if (ip->i_itemp)
-		kmem_zone_free(xfs_ili_zone, ip->i_itemp);
-	ip->i_itemp = NULL;
+	ASSERT(ip->i_itemp == NULL);
 	libxfs_idestroy(ip);
 	kmem_zone_free(xfs_inode_zone, ip);
 }
