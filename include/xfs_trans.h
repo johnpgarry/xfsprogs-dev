@@ -98,8 +98,6 @@ void xfs_defer_cancel(struct xfs_trans *);
 
 struct xfs_buf *libxfs_trans_getsb(struct xfs_trans *, struct xfs_mount *, int);
 
-int	libxfs_trans_iget(struct xfs_mount *, struct xfs_trans *, xfs_ino_t,
-				uint, uint, struct xfs_inode **);
 void	libxfs_trans_ijoin(struct xfs_trans *, struct xfs_inode *, uint);
 void	libxfs_trans_ijoin_ref(struct xfs_trans *, struct xfs_inode *, int);
 void	libxfs_trans_log_inode (struct xfs_trans *, struct xfs_inode *,
