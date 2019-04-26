@@ -1019,6 +1019,7 @@ mk_orphanage(xfs_mount_t *mp)
 	 */
 	set_inode_used(irec, ino_offset);
 	add_inode_ref(irec, ino_offset);
+	add_inode_reached(irec, ino_offset);
 
 	/*
 	 * now that we know the transaction will stay around,
@@ -1037,14 +1038,14 @@ mk_orphanage(xfs_mount_t *mp)
 
 	/*
 	 * bump up the link count in the root directory to account
-	 * for .. in the new directory
+	 * for .. in the new directory, and update the irec copy of the
+	 * on-disk nlink so we don't fail the link count check later.
 	 */
 	inc_nlink(VFS_I(pip));
-	add_inode_ref(find_inode_rec(mp,
-				XFS_INO_TO_AGNO(mp, mp->m_sb.sb_rootino),
-				XFS_INO_TO_AGINO(mp, mp->m_sb.sb_rootino)), 0);
-
-
+	irec = find_inode_rec(mp, XFS_INO_TO_AGNO(mp, mp->m_sb.sb_rootino),
+				  XFS_INO_TO_AGINO(mp, mp->m_sb.sb_rootino));
+	add_inode_ref(irec, 0);
+	set_inode_disk_nlinks(irec, 0, get_inode_disk_nlinks(irec, 0) + 1);
 
 	libxfs_trans_log_inode(tp, pip, XFS_ILOG_CORE);
 	libxfs_dir_init(tp, ip, pip);
@@ -1056,7 +1057,6 @@ mk_orphanage(xfs_mount_t *mp)
 	}
 	libxfs_irele(ip);
 	libxfs_irele(pip);
-	add_inode_reached(irec,ino_offset);
 
 	return(ino);
 }
