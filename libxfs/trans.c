@@ -663,13 +663,9 @@ libxfs_trans_get_buf_map(
 	fprintf(stderr, "trans_get_buf buffer %p, transaction %p\n", bp, tp);
 #endif
 
-	xfs_buf_item_init(bp, tp->t_mountp);
+	libxfs_trans_bjoin(tp, bp);
 	bip = bp->b_log_item;
 	bip->bli_recur = 0;
-	xfs_trans_add_item(tp, (xfs_log_item_t *)bip);
-
-	/* initialize b_transp so we can find it incore */
-	bp->b_transp = tp;
 	return bp;
 }
 
@@ -701,13 +697,9 @@ libxfs_trans_getsb(
 	fprintf(stderr, "trans_get_sb buffer %p, transaction %p\n", bp, tp);
 #endif
 
-	xfs_buf_item_init(bp, mp);
+	libxfs_trans_bjoin(tp, bp);
 	bip = bp->b_log_item;
 	bip->bli_recur = 0;
-	xfs_trans_add_item(tp, (xfs_log_item_t *)bip);
-
-	/* initialize b_transp so we can find it incore */
-	bp->b_transp = tp;
 	return bp;
 }
 
@@ -758,13 +750,9 @@ libxfs_trans_read_buf_map(
 	fprintf(stderr, "trans_read_buf buffer %p, transaction %p\n", bp, tp);
 #endif
 
-	xfs_buf_item_init(bp, tp->t_mountp);
+	xfs_trans_bjoin(tp, bp);
 	bip = bp->b_log_item;
 	bip->bli_recur = 0;
-	xfs_trans_add_item(tp, (xfs_log_item_t *)bip);
-
-	/* initialise b_transp so we can find it incore */
-	bp->b_transp = tp;
 done:
 	*bpp = bp;
 	return 0;
