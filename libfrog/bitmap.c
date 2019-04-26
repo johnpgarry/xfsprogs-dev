@@ -104,6 +104,7 @@ bitmap_free(
 		free(ext);
 	}
 	free(bmap->bt_tree);
+	free(bmap);
 	*bmapp = NULL;
 }
 
