@@ -368,8 +368,7 @@ restore_file(
 	uint		type)
 {
 	char		buffer[512];
-	char		devbuffer[512];
-	char		*dev = NULL;
+	char		dev[512];
 	uint		mask;
 	int		cnt;
 	uint32_t	id;
@@ -377,7 +376,11 @@ restore_file(
 
 	while (fgets(buffer, sizeof(buffer), fp) != NULL) {
 		if (strncmp("fs = ", buffer, 5) == 0) {
-			dev = strncpy(devbuffer, buffer+5, sizeof(devbuffer));
+			/*
+			 * Copy the device name to dev, strip off the trailing
+			 * newline, and move on to the next line.
+			 */
+			strncpy(dev, buffer + 5, sizeof(dev) - 1);
 			dev[strlen(dev) - 1] = '\0';
 			continue;
 		}
