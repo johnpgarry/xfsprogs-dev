@@ -16,6 +16,7 @@
 #include "path.h"
 #include "xfs_scrub.h"
 #include "common.h"
+#include "unicrash.h"
 
 /*
  * Detect Unicode confusable names in directories and attributes.
