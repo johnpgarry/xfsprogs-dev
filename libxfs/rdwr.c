@@ -1391,6 +1391,7 @@ libxfs_iget(
 		return error;
 	}
 
+	ip->i_fork_ops = ifork_ops;
 	if (!libxfs_inode_verify_forks(ip, ifork_ops)) {
 		libxfs_irele(ip);
 		return -EFSCORRUPTED;
