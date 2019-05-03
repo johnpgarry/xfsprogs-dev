@@ -507,7 +507,7 @@ scanfunc_ino(
 
 				for (j = 0; j < inodes_per_buf; j++) {
 					if (XFS_INOBT_IS_FREE_DISK(&rp[i], ioff + j))
-						goto next_buf;
+						continue;
 					dip = (xfs_dinode_t *)((char *)iocur_top->data +
 						((off + j) << mp->m_sb.sb_inodelog));
 					process_inode(agf, agino + ioff + j, dip);
