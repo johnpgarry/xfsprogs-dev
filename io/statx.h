@@ -33,7 +33,14 @@
 # endif
 #endif
 
+
 #ifndef STATX_TYPE
+/* Pick up kernel definitions if glibc didn't already provide them */
+#include <linux/stat.h>
+#endif
+
+#ifndef STATX_TYPE
+/* Local definitions if glibc & kernel headers didn't already provide them */
 
 /*
  * Timestamp structure for the timestamps in struct statx.

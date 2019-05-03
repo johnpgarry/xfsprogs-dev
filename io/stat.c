@@ -6,9 +6,6 @@
  * Portions of statx support written by David Howells (dhowells@redhat.com)
  */
 
-/* Try to pick up statx definitions from the system headers. */
-#include <linux/stat.h>
-
 #include "command.h"
 #include "input.h"
 #include "init.h"
