@@ -275,6 +275,8 @@ xfs_dquot_buf_write_verify(
 
 const struct xfs_buf_ops xfs_dquot_buf_ops = {
 	.name = "xfs_dquot",
+	.magic = { cpu_to_be16(XFS_DQUOT_MAGIC),
+		   cpu_to_be16(XFS_DQUOT_MAGIC) },
 	.verify_read = xfs_dquot_buf_read_verify,
 	.verify_write = xfs_dquot_buf_write_verify,
 	.verify_struct = xfs_dquot_buf_verify_struct,
@@ -282,6 +284,8 @@ const struct xfs_buf_ops xfs_dquot_buf_ops = {
 
 const struct xfs_buf_ops xfs_dquot_buf_ra_ops = {
 	.name = "xfs_dquot_ra",
+	.magic = { cpu_to_be16(XFS_DQUOT_MAGIC),
+		   cpu_to_be16(XFS_DQUOT_MAGIC) },
 	.verify_read = xfs_dquot_buf_readahead_verify,
 	.verify_write = xfs_dquot_buf_write_verify,
 };
