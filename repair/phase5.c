@@ -622,8 +622,9 @@ btnum_to_ops(
 {
 	switch (btnum) {
 	case XFS_BTNUM_BNO:
+		return &xfs_bnobt_buf_ops;
 	case XFS_BTNUM_CNT:
-		return &xfs_allocbt_buf_ops;
+		return &xfs_cntbt_buf_ops;
 	case XFS_BTNUM_INO:
 		return &xfs_inobt_buf_ops;
 	case XFS_BTNUM_FINO:
