@@ -205,10 +205,11 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 #define rcu_read_lock()		((void) 0)
 #define rcu_read_unlock()	((void) 0)
 /* Need to be able to handle this bare or in control flow */
-static inline bool WARN_ON_ONCE(bool expr) {
+static inline bool WARN_ON(bool expr) {
 	return (expr);
 }
 
+#define WARN_ON_ONCE(e)			WARN_ON(e)
 #define percpu_counter_read(x)		(*x)
 #define percpu_counter_read_positive(x)	((*x) > 0 ? (*x) : 0)
 #define percpu_counter_sum(x)		(*x)
