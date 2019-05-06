@@ -3678,7 +3678,7 @@ initialise_ag_headers(
 		buf = libxfs_getbuf(mp->m_ddev_targp,
 				XFS_AGB_TO_DADDR(mp, agno, XFS_FIBT_BLOCK(mp)),
 				BTOBB(cfg->blocksize));
-		buf->b_ops = &xfs_inobt_buf_ops;
+		buf->b_ops = &xfs_finobt_buf_ops;
 		block = XFS_BUF_TO_BLOCK(buf);
 		memset(block, 0, cfg->blocksize);
 		libxfs_btree_init_block(mp, buf, XFS_BTNUM_FINO, 0, 0, agno, 0);

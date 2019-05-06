@@ -625,8 +625,9 @@ btnum_to_ops(
 	case XFS_BTNUM_CNT:
 		return &xfs_allocbt_buf_ops;
 	case XFS_BTNUM_INO:
-	case XFS_BTNUM_FINO:
 		return &xfs_inobt_buf_ops;
+	case XFS_BTNUM_FINO:
+		return &xfs_finobt_buf_ops;
 	case XFS_BTNUM_RMAP:
 		return &xfs_rmapbt_buf_ops;
 	case XFS_BTNUM_REFC:

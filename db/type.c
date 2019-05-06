@@ -108,7 +108,7 @@ static const typ_t	__typtab_crc[] = {
 		&xfs_symlink_buf_ops, XFS_SYMLINK_CRC_OFF },
 	{ TYP_TEXT, "text", handle_text, NULL, NULL, TYP_F_NO_CRC_OFF },
 	{ TYP_FINOBT, "finobt", handle_struct, inobt_crc_hfld,
-		&xfs_inobt_buf_ops, XFS_BTREE_SBLOCK_CRC_OFF },
+		&xfs_finobt_buf_ops, XFS_BTREE_SBLOCK_CRC_OFF },
 	{ TYP_NONE, NULL }
 };
 
@@ -152,7 +152,7 @@ static const typ_t	__typtab_spcrc[] = {
 		&xfs_symlink_buf_ops, XFS_SYMLINK_CRC_OFF },
 	{ TYP_TEXT, "text", handle_text, NULL, NULL, TYP_F_NO_CRC_OFF },
 	{ TYP_FINOBT, "finobt", handle_struct, inobt_spcrc_hfld,
-		&xfs_inobt_buf_ops, XFS_BTREE_SBLOCK_CRC_OFF },
+		&xfs_finobt_buf_ops, XFS_BTREE_SBLOCK_CRC_OFF },
 	{ TYP_NONE, NULL }
 };
 
