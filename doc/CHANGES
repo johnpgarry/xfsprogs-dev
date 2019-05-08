@@ -1,3 +1,6 @@
+xfsprogs-5.1.0-rc0 (07 May 2019)
+	- libxfs changes merged from kernel 5.1
+
 xfsprogs-5.0.0 (03 May 2019)
 	- xfs_db: scan all sparse inodes when using 'frag' (Jorge Guerra)
 	- Fix build with newer statx headers (Eric Sandeen)
