@@ -16,9 +16,6 @@
 #define xfs_highbit32			libxfs_highbit32
 #define xfs_highbit64			libxfs_highbit64
 
-#define xfs_fs_repair_cmn_err		libxfs_fs_repair_cmn_err
-#define xfs_fs_cmn_err			libxfs_fs_cmn_err
-
 #define xfs_trans_alloc			libxfs_trans_alloc
 #define xfs_trans_alloc_empty		libxfs_trans_alloc_empty
 #define xfs_trans_add_item		libxfs_trans_add_item
@@ -61,7 +58,6 @@
 #define xfs_bmapi_write			libxfs_bmapi_write
 #define xfs_bmapi_read			libxfs_bmapi_read
 #define xfs_bunmapi			libxfs_bunmapi
-#define xfs_bmbt_get_all		libxfs_bmbt_get_all
 #define xfs_rtfree_extent		libxfs_rtfree_extent
 #define xfs_verify_rtbno		libxfs_verify_rtbno
 #define xfs_verify_ino			libxfs_verify_ino
@@ -70,7 +66,6 @@
 #define xfs_defer_finish		libxfs_defer_finish
 #define xfs_defer_cancel		libxfs_defer_cancel
 
-#define xfs_da_brelse			libxfs_da_brelse
 #define xfs_da_hashname			libxfs_da_hashname
 #define xfs_da_shrink_inode		libxfs_da_shrink_inode
 #define xfs_da_read_buf			libxfs_da_read_buf

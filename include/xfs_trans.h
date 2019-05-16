@@ -47,13 +47,6 @@ typedef struct xfs_buf_log_item {
 #define XFS_BLI_STALE			(1<<2)
 #define XFS_BLI_INODE_ALLOC_BUF		(1<<3)
 
-typedef struct xfs_dq_logitem {
-	xfs_log_item_t		qli_item;	/* common portion */
-	struct xfs_dquot	*qli_dquot;	/* dquot ptr */
-	xfs_lsn_t		qli_flush_lsn;	/* lsn at last flush */
-	xfs_dq_logformat_t	qli_format;	/* logged structure */
-} xfs_dq_logitem_t;
-
 typedef struct xfs_qoff_logitem {
 	xfs_log_item_t		qql_item;	/* common portion */
 	struct xfs_qoff_logitem	*qql_start_lip;	/* qoff-start logitem, if any */
@@ -64,7 +57,6 @@ typedef struct xfs_qoff_logitem {
 #define XFS_DEFER_OPS_NR_BUFS	2	/* join up to two buffers */
 
 typedef struct xfs_trans {
-	unsigned int	t_type;			/* transaction type */
 	unsigned int	t_log_res;		/* amt of log space resvd */
 	unsigned int	t_log_count;		/* count for perm log res */
 	unsigned int	t_blk_res;		/* # of blocks resvd */
@@ -98,7 +90,6 @@ void xfs_defer_cancel(struct xfs_trans *);
 struct xfs_buf *libxfs_trans_getsb(struct xfs_trans *, struct xfs_mount *, int);
 
 void	libxfs_trans_ijoin(struct xfs_trans *, struct xfs_inode *, uint);
-void	libxfs_trans_ijoin_ref(struct xfs_trans *, struct xfs_inode *, int);
 void	libxfs_trans_log_inode (struct xfs_trans *, struct xfs_inode *,
 				uint);
 int	libxfs_trans_roll_inode (struct xfs_trans **, struct xfs_inode *);

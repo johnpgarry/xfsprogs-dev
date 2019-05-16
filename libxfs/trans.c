@@ -360,21 +360,6 @@ libxfs_trans_ijoin(
 }
 
 void
-libxfs_trans_ijoin_ref(
-	xfs_trans_t		*tp,
-	xfs_inode_t		*ip,
-	int			lock_flags)
-{
-	ASSERT(ip->i_itemp != NULL);
-
-	xfs_trans_ijoin(tp, ip, lock_flags);
-
-#ifdef XACT_DEBUG
-	fprintf(stderr, "ijoin_ref'd inode %llu, transaction %p\n", ip->i_ino, tp);
-#endif
-}
-
-void
 libxfs_trans_inode_alloc_buf(
 	xfs_trans_t		*tp,
 	xfs_buf_t		*bp)
