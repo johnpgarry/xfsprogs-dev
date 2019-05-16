@@ -366,7 +366,7 @@ libxfs_trans_inode_alloc_buf(
 {
 	xfs_buf_log_item_t	*bip = bp->b_log_item;
 
-	ASSERT(bp->bp_transp == tp);
+	ASSERT(bp->b_transp == tp);
 	ASSERT(bip != NULL);
 	bip->bli_flags |= XFS_BLI_INODE_ALLOC_BUF;
 	xfs_trans_buf_set_type(tp, bp, XFS_BLFT_DINO_BUF);
@@ -431,7 +431,7 @@ libxfs_trans_dirty_buf(
 {
 	struct xfs_buf_log_item	*bip = bp->b_log_item;
 
-	ASSERT(bp->bp_transp == tp);
+	ASSERT(bp->b_transp == tp);
 	ASSERT(bip != NULL);
 
 #ifdef XACT_DEBUG
@@ -506,11 +506,11 @@ libxfs_trans_brelse(
 #endif
 
 	if (tp == NULL) {
-		ASSERT(bp->bp_transp == NULL);
+		ASSERT(bp->b_transp == NULL);
 		libxfs_putbuf(bp);
 		return;
 	}
-	ASSERT(bp->bp_transp == tp);
+	ASSERT(bp->b_transp == tp);
 	bip = bp->b_log_item;
 	ASSERT(bip->bli_item.li_type == XFS_LI_BUF);
 	if (bip->bli_recur > 0) {
@@ -540,7 +540,7 @@ libxfs_trans_binval(
 	fprintf(stderr, "binval'd buffer %p, transaction %p\n", bp, tp);
 #endif
 
-	ASSERT(bp->bp_transp == tp);
+	ASSERT(bp->b_transp == tp);
 	ASSERT(bip != NULL);
 
 	if (bip->bli_flags & XFS_BLI_STALE)
@@ -562,7 +562,7 @@ libxfs_trans_bjoin(
 {
 	xfs_buf_log_item_t	*bip;
 
-	ASSERT(bp->bp_transp == NULL);
+	ASSERT(bp->b_transp == NULL);
 #ifdef XACT_DEBUG
 	fprintf(stderr, "bjoin'd buffer %p, transaction %p\n", bp, tp);
 #endif
@@ -580,7 +580,7 @@ libxfs_trans_bhold(
 {
 	xfs_buf_log_item_t	*bip = bp->b_log_item;
 
-	ASSERT(bp->bp_transp == tp);
+	ASSERT(bp->b_transp == tp);
 	ASSERT(bip != NULL);
 #ifdef XACT_DEBUG
 	fprintf(stderr, "bhold'd buffer %p, transaction %p\n", bp, tp);
@@ -605,7 +605,7 @@ libxfs_trans_get_buf_map(
 
 	bp = xfs_trans_buf_item_match(tp, btp, map, nmaps);
 	if (bp != NULL) {
-		ASSERT(bp->bp_transp == tp);
+		ASSERT(bp->b_transp == tp);
 		bip = bp->b_log_item;
 		ASSERT(bip != NULL);
 		bip->bli_recur++;
@@ -641,7 +641,7 @@ libxfs_trans_getsb(
 
 	bp = xfs_trans_buf_item_match(tp, mp->m_dev, &map, 1);
 	if (bp != NULL) {
-		ASSERT(bp->bp_transp == tp);
+		ASSERT(bp->b_transp == tp);
 		bip = bp->b_log_item;
 		ASSERT(bip != NULL);
 		bip->bli_recur++;
@@ -688,7 +688,7 @@ libxfs_trans_read_buf_map(
 
 	bp = xfs_trans_buf_item_match(tp, btp, map, nmaps);
 	if (bp != NULL) {
-		ASSERT(bp->bp_transp == tp);
+		ASSERT(bp->b_transp == tp);
 		ASSERT(bp->b_log_item != NULL);
 		bip = bp->b_log_item;
 		bip->bli_recur++;
