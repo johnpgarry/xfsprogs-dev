@@ -29,7 +29,6 @@ typedef struct xfs_log_item {
 typedef struct xfs_inode_log_item {
 	xfs_log_item_t		ili_item;		/* common portion */
 	struct xfs_inode	*ili_inode;		/* inode pointer */
-	unsigned short		ili_flags;		/* misc flags */
 	unsigned short		ili_lock_flags;		/* lock flags */
 	unsigned int		ili_fields;		/* fields to be logged */
 	unsigned int		ili_last_fields;	/* fields when flushed*/

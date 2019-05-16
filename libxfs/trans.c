@@ -347,7 +347,6 @@ libxfs_trans_ijoin(
 	if (ip->i_itemp == NULL)
 		xfs_inode_item_init(ip, ip->i_mount);
 	iip = ip->i_itemp;
-	ASSERT(iip->ili_flags == 0);
 	ASSERT(iip->ili_inode != NULL);
 
 	ASSERT(iip->ili_lock_flags == 0);
@@ -812,10 +811,8 @@ inode_item_done(
 	mp = iip->ili_item.li_mountp;
 	ASSERT(ip != NULL);
 
-	if (!(iip->ili_fields & XFS_ILOG_ALL)) {
-		iip->ili_flags = 0;	/* reset all flags */
+	if (!(iip->ili_fields & XFS_ILOG_ALL))
 		goto free;
-	}
 
 	/*
 	 * Get the buffer containing the on-disk inode.
@@ -921,7 +918,6 @@ static void
 inode_item_unlock(
 	xfs_inode_log_item_t	*iip)
 {
-	iip->ili_flags = 0;
 	xfs_inode_item_put(iip);
 }
 
