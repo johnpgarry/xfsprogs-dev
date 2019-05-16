@@ -41,7 +41,6 @@ typedef struct xfs_inode {
 	struct xfs_ifork	*i_afp;		/* attribute fork pointer */
 	struct xfs_ifork	*i_cowfp;	/* copy on write extents */
 	struct xfs_ifork	i_df;		/* data fork */
-	struct xfs_trans	*i_transp;	/* ptr to owning transaction */
 	struct xfs_inode_log_item *i_itemp;	/* logging information */
 	unsigned int		i_delayed_blks;	/* count of delay alloc blks */
 	struct xfs_icdinode	i_d;		/* most of ondisk inode */

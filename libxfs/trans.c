@@ -344,7 +344,6 @@ libxfs_trans_ijoin(
 {
 	xfs_inode_log_item_t	*iip;
 
-	ASSERT(ip->i_transp == NULL);
 	if (ip->i_itemp == NULL)
 		xfs_inode_item_init(ip, ip->i_mount);
 	iip = ip->i_itemp;
@@ -356,7 +355,6 @@ libxfs_trans_ijoin(
 
 	xfs_trans_add_item(tp, (xfs_log_item_t *)(iip));
 
-	ip->i_transp = tp;
 #ifdef XACT_DEBUG
 	fprintf(stderr, "ijoin'd inode %llu, transaction %p\n", ip->i_ino, tp);
 #endif
@@ -368,7 +366,6 @@ libxfs_trans_ijoin_ref(
 	xfs_inode_t		*ip,
 	int			lock_flags)
 {
-	ASSERT(ip->i_transp == tp);
 	ASSERT(ip->i_itemp != NULL);
 
 	xfs_trans_ijoin(tp, ip, lock_flags);
@@ -406,7 +403,6 @@ xfs_trans_log_inode(
 	xfs_inode_t		*ip,
 	uint			flags)
 {
-	ASSERT(ip->i_transp == tp);
 	ASSERT(ip->i_itemp != NULL);
 #ifdef XACT_DEBUG
 	fprintf(stderr, "dirtied inode %llu, transaction %p\n", ip->i_ino, tp);
@@ -817,7 +813,6 @@ inode_item_done(
 	ASSERT(ip != NULL);
 
 	if (!(iip->ili_fields & XFS_ILOG_ALL)) {
-		ip->i_transp = NULL;	/* disassociate from transaction */
 		iip->ili_flags = 0;	/* reset all flags */
 		goto free;
 	}
@@ -838,7 +833,6 @@ inode_item_done(
 	 * we still release the buffer reference we currently hold.
 	 */
 	error = libxfs_iflush_int(ip, bp);
-	ip->i_transp = NULL;	/* disassociate from transaction */
 	bp->b_transp = NULL;	/* remove xact ptr */
 
 	if (error) {
@@ -927,11 +921,6 @@ static void
 inode_item_unlock(
 	xfs_inode_log_item_t	*iip)
 {
-	xfs_inode_t		*ip = iip->ili_inode;
-
-	/* Clear the transaction pointer in the inode. */
-	ip->i_transp = NULL;
-
 	iip->ili_flags = 0;
 	xfs_inode_item_put(iip);
 }
