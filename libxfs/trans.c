@@ -331,25 +331,6 @@ libxfs_trans_cancel(
 }
 
 void
-libxfs_trans_ijoin(
-	xfs_trans_t		*tp,
-	xfs_inode_t		*ip,
-	uint			lock_flags)
-{
-	xfs_inode_log_item_t	*iip;
-
-	if (ip->i_itemp == NULL)
-		xfs_inode_item_init(ip, ip->i_mount);
-	iip = ip->i_itemp;
-	ASSERT(iip->ili_inode != NULL);
-
-	ASSERT(iip->ili_lock_flags == 0);
-	iip->ili_lock_flags = lock_flags;
-
-	xfs_trans_add_item(tp, &iip->ili_item);
-}
-
-void
 libxfs_trans_inode_alloc_buf(
 	xfs_trans_t		*tp,
 	xfs_buf_t		*bp)
@@ -361,52 +342,6 @@ libxfs_trans_inode_alloc_buf(
 	bip->bli_flags |= XFS_BLI_INODE_ALLOC_BUF;
 	xfs_trans_buf_set_type(tp, bp, XFS_BLFT_DINO_BUF);
 }
-
-/*
- * This is called to mark the fields indicated in fieldmask as needing
- * to be logged when the transaction is committed.  The inode must
- * already be associated with the given transaction.
- *
- * The values for fieldmask are defined in xfs_log_format.h.  We always
- * log all of the core inode if any of it has changed, and we always log
- * all of the inline data/extents/b-tree root if any of them has changed.
- */
-void
-xfs_trans_log_inode(
-	xfs_trans_t		*tp,
-	xfs_inode_t		*ip,
-	uint			flags)
-{
-	ASSERT(ip->i_itemp != NULL);
-
-	tp->t_flags |= XFS_TRANS_DIRTY;
-	set_bit(XFS_LI_DIRTY, &ip->i_itemp->ili_item.li_flags);
-
-	/*
-	 * Always OR in the bits from the ili_last_fields field.
-	 * This is to coordinate with the xfs_iflush() and xfs_iflush_done()
-	 * routines in the eventual clearing of the ilf_fields bits.
-	 * See the big comment in xfs_iflush() for an explanation of
-	 * this coordination mechanism.
-	 */
-	flags |= ip->i_itemp->ili_last_fields;
-	ip->i_itemp->ili_fields |= flags;
-}
-
-int
-libxfs_trans_roll_inode(
-	struct xfs_trans	**tpp,
-	struct xfs_inode	*ip)
-{
-	int			error;
-
-	xfs_trans_log_inode(*tpp, ip, XFS_ILOG_CORE);
-	error = xfs_trans_roll(tpp);
-	if (!error)
-		xfs_trans_ijoin(*tpp, ip, 0);
-	return error;
-}
-
 
 /*
  * Mark a buffer dirty in the transaction.

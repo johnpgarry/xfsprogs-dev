@@ -149,33 +149,6 @@ current_time(struct inode *inode)
 	return tv;
 }
 
-/*
- * Change the requested timestamp in the given inode.
- */
-void
-libxfs_trans_ichgtime(
-	struct xfs_trans	*tp,
-	struct xfs_inode	*ip,
-	int			flags)
-{
-	struct inode		*inode = VFS_I(ip);
-	struct timespec64	tv;
-
-	ASSERT(tp);
-	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
-
-	tv = current_time(inode);
-
-	if (flags & XFS_ICHGTIME_MOD)
-		VFS_I(ip)->i_mtime = tv;
-	if (flags & XFS_ICHGTIME_CHG)
-		VFS_I(ip)->i_ctime = tv;
-	if (flags & XFS_ICHGTIME_CREATE) {
-		ip->i_d.di_crtime.t_sec = (int32_t)tv.tv_sec;
-		ip->i_d.di_crtime.t_nsec = (int32_t)tv.tv_nsec;
-	}
-}
-
 STATIC uint16_t
 xfs_flags2diflags(
 	struct xfs_inode	*ip,

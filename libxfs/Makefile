@@ -93,6 +93,7 @@ CFILES = cache.c \
 	xfs_rtbitmap.c \
 	xfs_sb.c \
 	xfs_symlink_remote.c \
+	xfs_trans_inode.c \
 	xfs_trans_resv.c \
 	xfs_types.c
 
