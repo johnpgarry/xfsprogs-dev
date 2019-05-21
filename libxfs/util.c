@@ -136,11 +136,21 @@ xfs_log_calc_unit_res(
 	return unit_bytes;
 }
 
+struct timespec64
+current_time(struct inode *inode)
+{
+	struct timespec64	tv;
+	struct timeval		stv;
+
+	gettimeofday(&stv, (struct timezone *)0);
+	tv.tv_sec = stv.tv_sec;
+	tv.tv_nsec = stv.tv_usec * 1000;
+
+	return tv;
+}
+
 /*
  * Change the requested timestamp in the given inode.
- *
- * This was once shared with the kernel, but has diverged to the point
- * where it's no longer worth the hassle of maintaining common code.
  */
 void
 libxfs_trans_ichgtime(
@@ -148,12 +158,14 @@ libxfs_trans_ichgtime(
 	struct xfs_inode	*ip,
 	int			flags)
 {
-	struct timespec tv;
-	struct timeval	stv;
+	struct inode		*inode = VFS_I(ip);
+	struct timespec64	tv;
 
-	gettimeofday(&stv, (struct timezone *)0);
-	tv.tv_sec = stv.tv_sec;
-	tv.tv_nsec = stv.tv_usec * 1000;
+	ASSERT(tp);
+	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
+
+	tv = current_time(inode);
+
 	if (flags & XFS_ICHGTIME_MOD)
 		VFS_I(ip)->i_mtime = tv;
 	if (flags & XFS_ICHGTIME_CHG)

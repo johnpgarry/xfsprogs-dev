@@ -17,6 +17,16 @@ struct xfs_inode_log_item;
 struct xfs_dir_ops;
 
 /*
+ * These are not actually used, they are only for userspace build
+ * compatibility in code that looks at i_state
+ */
+#define I_DIRTY_TIME		0
+#define I_DIRTY_TIME_EXPIRED	0
+
+#define IS_I_VERSION(inode)			(0)
+#define inode_maybe_inc_iversion(inode,flags)	(0)
+
+/*
  * Inode interface. This fakes up a "VFS inode" to make the xfs_inode appear
  * similar to the kernel which now is used tohold certain parts of the on-disk
  * metadata.
@@ -25,6 +35,7 @@ struct inode {
 	mode_t		i_mode;
 	uint32_t	i_nlink;
 	xfs_dev_t	i_rdev;		/* This actually holds xfs_dev_t */
+	unsigned long	i_state;	/* Not actually used in userspace */
 	uint32_t	i_generation;
 	uint64_t	i_version;
 	struct timespec	i_atime;
@@ -148,6 +159,9 @@ extern void	libxfs_trans_inode_alloc_buf (struct xfs_trans *,
 extern void	libxfs_trans_ichgtime(struct xfs_trans *,
 				struct xfs_inode *, int);
 extern int	libxfs_iflush_int (struct xfs_inode *, struct xfs_buf *);
+
+#define timespec64 timespec
+extern struct timespec64 current_time(struct inode *inode);
 
 /* Inode Cache Interfaces */
 extern bool	libxfs_inode_verify_forks(struct xfs_inode *ip);
