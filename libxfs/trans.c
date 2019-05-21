@@ -346,7 +346,7 @@ libxfs_trans_ijoin(
 	ASSERT(iip->ili_lock_flags == 0);
 	iip->ili_lock_flags = lock_flags;
 
-	xfs_trans_add_item(tp, (xfs_log_item_t *)(iip));
+	xfs_trans_add_item(tp, &iip->ili_item);
 }
 
 void
@@ -570,7 +570,7 @@ _libxfs_trans_bjoin(
 	 * Attach the item to the transaction so we can find it in
 	 * xfs_trans_get_buf() and friends.
 	 */
-	xfs_trans_add_item(tp, (xfs_log_item_t *)bip);
+	xfs_trans_add_item(tp, &bip->bli_item);
 	bp->b_transp = tp;
 
 }
