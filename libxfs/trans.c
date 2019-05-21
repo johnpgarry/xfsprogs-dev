@@ -537,19 +537,50 @@ libxfs_trans_binval(
 	tp->t_flags |= XFS_TRANS_DIRTY;
 }
 
-void
-libxfs_trans_bjoin(
-	xfs_trans_t		*tp,
-	xfs_buf_t		*bp)
+/*
+ * Add the locked buffer to the transaction.
+ *
+ * The buffer must be locked, and it cannot be associated with any
+ * transaction.
+ *
+ * If the buffer does not yet have a buf log item associated with it,
+ * then allocate one for it.  Then add the buf item to the transaction.
+ */
+STATIC void
+_libxfs_trans_bjoin(
+	struct xfs_trans	*tp,
+	struct xfs_buf		*bp,
+	int			reset_recur)
 {
-	xfs_buf_log_item_t	*bip;
+	struct xfs_buf_log_item	*bip;
 
 	ASSERT(bp->b_transp == NULL);
 
+        /*
+	 * The xfs_buf_log_item pointer is stored in b_log_item.  If
+	 * it doesn't have one yet, then allocate one and initialize it.
+	 * The checks to see if one is there are in xfs_buf_item_init().
+	 */
 	xfs_buf_item_init(bp, tp->t_mountp);
 	bip = bp->b_log_item;
+	if (reset_recur)
+		bip->bli_recur = 0;
+
+	/*
+	 * Attach the item to the transaction so we can find it in
+	 * xfs_trans_get_buf() and friends.
+	 */
 	xfs_trans_add_item(tp, (xfs_log_item_t *)bip);
 	bp->b_transp = tp;
+
+}
+
+void
+libxfs_trans_bjoin(
+	struct xfs_trans	*tp,
+	struct xfs_buf		*bp)
+{
+	_libxfs_trans_bjoin(tp, bp, 0);
 	trace_xfs_trans_bjoin(bp->b_log_item);
 }
 
@@ -594,9 +625,7 @@ libxfs_trans_get_buf_map(
 	if (bp == NULL)
 		return NULL;
 
-	libxfs_trans_bjoin(tp, bp);
-	bip = bp->b_log_item;
-	bip->bli_recur = 0;
+	_libxfs_trans_bjoin(tp, bp, 1);
 	trace_xfs_trans_get_buf(bp->b_log_item);
 	return bp;
 }
@@ -627,9 +656,7 @@ libxfs_trans_getsb(
 
 	bp = libxfs_getsb(mp, flags);
 
-	libxfs_trans_bjoin(tp, bp);
-	bip = bp->b_log_item;
-	bip->bli_recur = 0;
+	_libxfs_trans_bjoin(tp, bp, 1);
 	trace_xfs_trans_getsb(bp->b_log_item);
 	return bp;
 }
@@ -678,9 +705,7 @@ libxfs_trans_read_buf_map(
 	if (bp->b_error)
 		goto out_relse;
 
-	xfs_trans_bjoin(tp, bp);
-	bip = bp->b_log_item;
-	bip->bli_recur = 0;
+	_libxfs_trans_bjoin(tp, bp, 1);
 done:
 	trace_xfs_trans_read_buf(bp->b_log_item);
 	*bpp = bp;
