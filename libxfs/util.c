@@ -692,6 +692,18 @@ xfs_log_check_lsn(
 	return true;
 }
 
+void
+xfs_log_item_init(
+	struct xfs_mount	*mp,
+	struct xfs_log_item	*item,
+	int			type)
+{
+	item->li_mountp = mp; 
+	item->li_type = type;
+        
+	INIT_LIST_HEAD(&item->li_trans);
+}   
+
 static struct xfs_buftarg *
 xfs_find_bdev_for_inode(
 	struct xfs_inode	*ip)

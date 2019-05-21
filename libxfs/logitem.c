@@ -103,9 +103,7 @@ xfs_buf_item_init(
 	fprintf(stderr, "adding buf item %p for not-logged buffer %p\n",
 		bip, bp);
 #endif
-	bip->bli_item.li_type = XFS_LI_BUF;
-	bip->bli_item.li_mountp = mp;
-	INIT_LIST_HEAD(&bip->bli_item.li_trans);
+	xfs_log_item_init(mp, &bip->bli_item, XFS_LI_BUF);
 	bip->bli_buf = bp;
 	bip->__bli_format.blf_type = XFS_LI_BUF;
 	bip->__bli_format.blf_blkno = (int64_t)XFS_BUF_ADDR(bp);
@@ -149,8 +147,6 @@ xfs_inode_item_init(
 		ip->i_ino, iip);
 #endif
 
-	iip->ili_item.li_type = XFS_LI_INODE;
-	iip->ili_item.li_mountp = mp;
-	INIT_LIST_HEAD(&iip->ili_item.li_trans);
+	xfs_log_item_init(mp, &iip->ili_item, XFS_LI_INODE);
 	iip->ili_inode = ip;
 }
