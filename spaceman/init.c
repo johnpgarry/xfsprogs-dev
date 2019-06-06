@@ -60,7 +60,7 @@ init(
 	char		**argv)
 {
 	int		c;
-	xfs_fsop_geom_t	geometry = { 0 };
+	struct xfs_fsop_geom geometry = { 0 };
 	struct fs_path	fsp;
 
 	progname = basename(argv[0]);

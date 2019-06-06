@@ -133,7 +133,7 @@ init(
 	int		c, flags = 0;
 	char		*sp;
 	mode_t		mode = 0600;
-	xfs_fsop_geom_t	geometry = { 0 };
+	struct xfs_fsop_geom geometry = { 0 };
 	struct fs_path	fsp;
 
 	progname = basename(argv[0]);

@@ -44,7 +44,7 @@ print_f(
 int
 openfile(
 	char		*path,
-	xfs_fsop_geom_t	*geom,
+	struct xfs_fsop_geom *geom,
 	struct fs_path	*fs_path)
 {
 	struct fs_path	*fsp;
@@ -84,7 +84,7 @@ int
 addfile(
 	char		*name,
 	int		fd,
-	xfs_fsop_geom_t	*geometry,
+	struct xfs_fsop_geom *geometry,
 	struct fs_path	*fs_path)
 {
 	char		*filename;

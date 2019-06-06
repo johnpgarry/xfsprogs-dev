@@ -38,7 +38,7 @@ typedef struct fileio {
 	int		fd;		/* open file descriptor */
 	int		flags;		/* flags describing file state */
 	char		*name;		/* file name at time of open */
-	xfs_fsop_geom_t	geom;		/* XFS filesystem geometry */
+	struct xfs_fsop_geom geom;	/* XFS filesystem geometry */
 	struct fs_path	fs_path;	/* XFS path information */
 } fileio_t;
 
@@ -70,9 +70,9 @@ extern void *check_mapping_range(mmap_region_t *, off64_t, size_t, int);
  */
 
 extern off64_t		filesize(void);
-extern int		openfile(char *, xfs_fsop_geom_t *, int, mode_t,
+extern int		openfile(char *, struct xfs_fsop_geom *, int, mode_t,
 				 struct fs_path *);
-extern int		addfile(char *, int , xfs_fsop_geom_t *, int,
+extern int		addfile(char *, int , struct xfs_fsop_geom *, int,
 				struct fs_path *);
 extern void		printxattr(uint, int, int, const char *, int, int);
 
