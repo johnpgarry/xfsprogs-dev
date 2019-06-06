@@ -490,16 +490,22 @@ rmap_store_ag_btree_rec(
 	error = init_slab_cursor(ag_rmap->ar_raw_rmaps, rmap_compare, &rm_cur);
 	if (error)
 		goto err;
-	if (!bitmap_init(&own_ag_bitmap)) {
-		error = -ENOMEM;
+	error = -bitmap_init(&own_ag_bitmap);
+	if (error)
 		goto err_slab;
-	}
 	while ((rm_rec = pop_slab_cursor(rm_cur)) != NULL) {
 		if (rm_rec->rm_owner != XFS_RMAP_OWN_AG)
 			continue;
-		if (!bitmap_set(own_ag_bitmap, rm_rec->rm_startblock,
-					rm_rec->rm_blockcount)) {
-			error = EFSCORRUPTED;
+		error = -bitmap_set(own_ag_bitmap, rm_rec->rm_startblock,
+					rm_rec->rm_blockcount);
+		if (error) {
+			/*
+			 * If this range is already set, then the incore rmap
+			 * records for the AG free space btrees overlap and
+			 * we're toast because that is not allowed.
+			 */
+			if (error == EEXIST)
+				error = EFSCORRUPTED;
 			goto err_slab;
 		}
 	}

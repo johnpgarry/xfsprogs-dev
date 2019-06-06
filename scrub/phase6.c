@@ -341,7 +341,6 @@ xfs_check_rmap_ioerr(
 	struct media_verify_state	*vs = arg;
 	struct bitmap			*tree;
 	dev_t				dev;
-	bool				moveon;
 
 	dev = xfs_disk_to_dev(ctx, disk);
 
@@ -356,8 +355,8 @@ xfs_check_rmap_ioerr(
 	else
 		tree = NULL;
 	if (tree) {
-		moveon = bitmap_set(tree, start, length);
-		if (!moveon)
+		errno = -bitmap_set(tree, start, length);
+		if (errno)
 			str_errno(ctx, ctx->mntpoint);
 	}
 
@@ -454,16 +453,16 @@ xfs_scan_blocks(
 	struct scrub_ctx		*ctx)
 {
 	struct media_verify_state	vs = { NULL };
-	bool				moveon;
+	bool				moveon = false;
 
-	moveon = bitmap_init(&vs.d_bad);
-	if (!moveon) {
+	errno = -bitmap_init(&vs.d_bad);
+	if (errno) {
 		str_errno(ctx, ctx->mntpoint);
 		goto out;
 	}
 
-	moveon = bitmap_init(&vs.r_bad);
-	if (!moveon) {
+	errno = -bitmap_init(&vs.r_bad);
+	if (errno) {
 		str_errno(ctx, ctx->mntpoint);
 		goto out_dbad;
 	}
@@ -472,7 +471,6 @@ xfs_scan_blocks(
 			ctx->geo.blocksize, xfs_check_rmap_ioerr,
 			scrub_nproc(ctx));
 	if (!vs.rvp_data) {
-		moveon = false;
 		str_info(ctx, ctx->mntpoint,
 _("Could not create data device media verifier."));
 		goto out_rbad;
@@ -482,7 +480,6 @@ _("Could not create data device media verifier."));
 				ctx->geo.blocksize, xfs_check_rmap_ioerr,
 				scrub_nproc(ctx));
 		if (!vs.rvp_log) {
-			moveon = false;
 			str_info(ctx, ctx->mntpoint,
 	_("Could not create log device media verifier."));
 			goto out_datapool;
@@ -493,7 +490,6 @@ _("Could not create data device media verifier."));
 				ctx->geo.blocksize, xfs_check_rmap_ioerr,
 				scrub_nproc(ctx));
 		if (!vs.rvp_realtime) {
-			moveon = false;
 			str_info(ctx, ctx->mntpoint,
 	_("Could not create realtime device media verifier."));
 			goto out_logpool;

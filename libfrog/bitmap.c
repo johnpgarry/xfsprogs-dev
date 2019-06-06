@@ -66,7 +66,7 @@ static struct avl64ops bitmap_ops = {
 };
 
 /* Initialize a bitmap. */
-bool
+int
 bitmap_init(
 	struct bitmap		**bmapp)
 {
@@ -74,18 +74,18 @@ bitmap_init(
 
 	bmap = calloc(1, sizeof(struct bitmap));
 	if (!bmap)
-		return false;
+		return -ENOMEM;
 	bmap->bt_tree = malloc(sizeof(struct avl64tree_desc));
 	if (!bmap->bt_tree) {
 		free(bmap);
-		return false;
+		return -ENOMEM;
 	}
 
 	pthread_mutex_init(&bmap->bt_lock, NULL);
 	avl64_init_tree(bmap->bt_tree, &bitmap_ops);
 	*bmapp = bmap;
 
-	return true;
+	return 0;
 }
 
 /* Free a bitmap. */
@@ -127,8 +127,31 @@ bitmap_node_init(
 	return ext;
 }
 
+/* Create a new bitmap node and insert it. */
+static inline int
+__bitmap_insert(
+	struct bitmap		*bmap,
+	uint64_t		start,
+	uint64_t		length)
+{
+	struct bitmap_node	*ext;
+	struct avl64node	*node;
+
+	ext = bitmap_node_init(start, length);
+	if (!ext)
+		return -ENOMEM;
+
+	node = avl64_insert(bmap->bt_tree, &ext->btn_node);
+	if (node == NULL) {
+		free(ext);
+		return -EEXIST;
+	}
+
+	return 0;
+}
+
 /* Set a region of bits (locked). */
-static bool
+static int
 __bitmap_set(
 	struct bitmap		*bmap,
 	uint64_t		start,
@@ -142,28 +165,14 @@ __bitmap_set(
 	struct bitmap_node	*ext;
 	uint64_t		new_start;
 	uint64_t		new_length;
-	struct avl64node	*node;
-	bool			res = true;
 
 	/* Find any existing nodes adjacent or within that range. */
 	avl64_findranges(bmap->bt_tree, start - 1, start + length + 1,
 			&firstn, &lastn);
 
 	/* Nothing, just insert a new extent. */
-	if (firstn == NULL && lastn == NULL) {
-		ext = bitmap_node_init(start, length);
-		if (!ext)
-			return false;
-
-		node = avl64_insert(bmap->bt_tree, &ext->btn_node);
-		if (node == NULL) {
-			free(ext);
-			errno = EEXIST;
-			return false;
-		}
-
-		return true;
-	}
+	if (firstn == NULL && lastn == NULL)
+		return __bitmap_insert(bmap, start, length);
 
 	assert(firstn != NULL && lastn != NULL);
 	new_start = start;
@@ -175,7 +184,7 @@ __bitmap_set(
 		/* Bail if the new extent is contained within an old one. */
 		if (ext->btn_start <= start &&
 		    ext->btn_start + ext->btn_length >= start + length)
-			return res;
+			return 0;
 
 		/* Check for overlapping and adjacent extents. */
 		if (ext->btn_start + ext->btn_length >= start ||
@@ -195,28 +204,17 @@ __bitmap_set(
 		}
 	}
 
-	ext = bitmap_node_init(new_start, new_length);
-	if (!ext)
-		return false;
-
-	node = avl64_insert(bmap->bt_tree, &ext->btn_node);
-	if (node == NULL) {
-		free(ext);
-		errno = EEXIST;
-		return false;
-	}
-
-	return res;
+	return __bitmap_insert(bmap, new_start, new_length);
 }
 
 /* Set a region of bits. */
-bool
+int
 bitmap_set(
 	struct bitmap		*bmap,
 	uint64_t		start,
 	uint64_t		length)
 {
-	bool			res;
+	int			res;
 
 	pthread_mutex_lock(&bmap->bt_lock);
 	res = __bitmap_set(bmap, start, length);
@@ -308,26 +306,26 @@ bitmap_clear(
 
 #ifdef DEBUG
 /* Iterate the set regions of this bitmap. */
-bool
+int
 bitmap_iterate(
 	struct bitmap		*bmap,
-	bool			(*fn)(uint64_t, uint64_t, void *),
+	int			(*fn)(uint64_t, uint64_t, void *),
 	void			*arg)
 {
 	struct avl64node	*node;
 	struct bitmap_node	*ext;
-	bool			moveon = true;
+	int			error = 0;
 
 	pthread_mutex_lock(&bmap->bt_lock);
 	avl_for_each(bmap->bt_tree, node) {
 		ext = container_of(node, struct bitmap_node, btn_node);
-		moveon = fn(ext->btn_start, ext->btn_length, arg);
-		if (!moveon)
+		error = fn(ext->btn_start, ext->btn_length, arg);
+		if (error)
 			break;
 	}
 	pthread_mutex_unlock(&bmap->bt_lock);
 
-	return moveon;
+	return error;
 }
 #endif
 
@@ -372,14 +370,14 @@ bitmap_empty(
 }
 
 #ifdef DEBUG
-static bool
+static int
 bitmap_dump_fn(
 	uint64_t		startblock,
 	uint64_t		blockcount,
 	void			*arg)
 {
 	printf("%"PRIu64":%"PRIu64"\n", startblock, blockcount);
-	return true;
+	return 0;
 }
 
 /* Dump bitmap. */
