@@ -24,12 +24,6 @@ typedef struct da_bt_cursor {
 	struct blkmap		*blkmap;
 } da_bt_cursor_t;
 
-int
-namecheck(
-	char		*name,
-	int		length,
-	bool		isadir);
-
 struct xfs_buf *
 da_read_buf(
 	xfs_mount_t	*mp,

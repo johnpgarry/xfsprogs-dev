@@ -122,14 +122,6 @@ set_da_freemap(xfs_mount_t *mp, da_freemap_t *map, int start, int stop)
  * fork being emptied and put in shortform format.
  */
 
-static int
-attr_namecheck(
-	uint8_t	*name,
-	int	length)
-{
-	return namecheck((char *)name, length, false);
-}
-
 /*
  * This routine just checks what security needs are for attribute values
  * only called when root flag is set, otherwise these names could exist in
@@ -301,8 +293,8 @@ process_shortform_attr(
 		}
 
 		/* namecheck checks for null chars in attr names. */
-		if (attr_namecheck(currententry->nameval,
-						currententry->namelen)) {
+		if (!libxfs_attr_namecheck(currententry->nameval,
+					   currententry->namelen)) {
 			do_warn(
 	_("entry contains illegal character in shortform attribute name\n"));
 			junkit = 1;
@@ -464,8 +456,9 @@ process_leaf_attr_local(
 	xfs_attr_leaf_name_local_t *local;
 
 	local = xfs_attr3_leaf_name_local(leaf, i);
-	if (local->namelen == 0 || attr_namecheck(local->nameval,
-							local->namelen)) {
+	if (local->namelen == 0 ||
+	    !libxfs_attr_namecheck(local->nameval,
+				   local->namelen)) {
 		do_warn(
 	_("attribute entry %d in attr block %u, inode %" PRIu64 " has bad name (namelen = %d)\n"),
 			i, da_bno, ino, local->namelen);
@@ -519,13 +512,14 @@ process_leaf_attr_remote(
 
 	remotep = xfs_attr3_leaf_name_remote(leaf, i);
 
-	if (remotep->namelen == 0 || attr_namecheck(remotep->name,
-						remotep->namelen) ||
-			be32_to_cpu(entry->hashval) !=
-				libxfs_da_hashname((unsigned char *)&remotep->name[0],
-						remotep->namelen) ||
-			be32_to_cpu(entry->hashval) < last_hashval ||
-			be32_to_cpu(remotep->valueblk) == 0) {
+	if (remotep->namelen == 0 ||
+	    !libxfs_attr_namecheck(remotep->name,
+				   remotep->namelen) ||
+	    be32_to_cpu(entry->hashval) !=
+			libxfs_da_hashname((unsigned char *)&remotep->name[0],
+					   remotep->namelen) ||
+	    be32_to_cpu(entry->hashval) < last_hashval ||
+	    be32_to_cpu(remotep->valueblk) == 0) {
 		do_warn(
 	_("inconsistent remote attribute entry %d in attr block %u, ino %" PRIu64 "\n"), i, da_bno, ino);
 		return -1;
