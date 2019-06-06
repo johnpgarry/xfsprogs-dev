@@ -211,14 +211,6 @@ libxfs_bmbt_disk_get_all(
 int libxfs_rtfree_extent(struct xfs_trans *, xfs_rtblock_t, xfs_extlen_t);
 bool libxfs_verify_rtbno(struct xfs_mount *mp, xfs_rtblock_t rtbno);
 
-/* XXX: need parts of xfs_attr.h in userspace */
-#define LIBXFS_ATTR_ROOT	0x0002	/* use attrs in root namespace */
-#define LIBXFS_ATTR_SECURE	0x0008	/* use attrs in security namespace */
-#define LIBXFS_ATTR_CREATE	0x0010	/* create, but fail if attr exists */
-#define LIBXFS_ATTR_REPLACE	0x0020	/* set, but fail if attr not exists */
-
-int xfs_attr_remove(struct xfs_inode *dp, const unsigned char *name, int flags);
-int xfs_attr_set(struct xfs_inode *dp, const unsigned char *name,
-		 unsigned char *value, int valuelen, int flags);
+#include "xfs_attr.h"
 
 #endif	/* __LIBXFS_H__ */
