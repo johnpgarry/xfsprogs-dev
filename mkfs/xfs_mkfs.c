@@ -1973,15 +1973,15 @@ _("Directory ftype field always enabled on CRC enabled filesystems\n"));
 			usage();
 		}
 
-	} else {
+	} else {	/* !crcs_enabled */
 		/*
-		 * The kernel doesn't currently support crc=0,finobt=1
-		 * filesystems. If crcs are not enabled and the user has not
-		 * explicitly turned finobt on, then silently turn it off to
-		 * avoid an unnecessary warning.
+		 * The kernel doesn't support crc=0,finobt=1 filesystems.
+		 * If crcs are not enabled and the user has not explicitly
+		 * turned finobt on, then silently turn it off to avoid an
+		 * unnecessary warning.
 		 * If the user explicitly tried to use crc=0,finobt=1,
 		 * then issue an error.
-		 * The same is also for sparse inodes.
+		 * The same is also true for sparse inodes and reflink.
 		 */
 		if (cli->sb_feat.finobt && cli_opt_set(&mopts, M_FINOBT)) {
 			fprintf(stderr,
@@ -2004,7 +2004,7 @@ _("rmapbt not supported without CRC support\n"));
 		}
 		cli->sb_feat.rmapbt = false;
 
-		if (cli->sb_feat.reflink) {
+		if (cli->sb_feat.reflink && cli_opt_set(&mopts, M_REFLINK)) {
 			fprintf(stderr,
 _("reflink not supported without CRC support\n"));
 			usage();
@@ -3876,7 +3876,7 @@ main(
 			.finobt = true,
 			.spinodes = true,
 			.rmapbt = false,
-			.reflink = false,
+			.reflink = true,
 			.parent_pointers = false,
 			.nodalign = false,
 			.nortalign = false,

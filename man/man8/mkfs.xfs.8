@@ -231,7 +231,7 @@ available for the data forks of regular files.
 .IP
 By default,
 .B mkfs.xfs
-will not create reference count btrees and therefore will not enable the
+will create reference count btrees and therefore will enable the
 reflink feature.  This feature is only available for filesystems created with
 the (default)
 .B \-m crc=1
@@ -239,6 +239,13 @@ option set. When the option
 .B \-m crc=0
 is used, the reference count btree feature is not supported and reflink is
 disabled.
+.IP
+Note: the filesystem DAX mount option (
+.B \-o dax
+) is incompatible with
+reflink-enabled XFS filesystems.  To use filesystem DAX with XFS, specify the
+.B \-m reflink=0
+option to mkfs.xfs to disable the reflink feature.
 .RE
 .TP
 .BI \-d " data_section_options"
