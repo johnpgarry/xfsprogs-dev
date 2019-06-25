@@ -6,7 +6,6 @@
 
 #include "libxfs.h"
 #include "command.h"
-#include "convert.h"
 #include "output.h"
 #include "init.h"
 
