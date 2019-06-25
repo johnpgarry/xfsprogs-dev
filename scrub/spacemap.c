@@ -56,7 +56,7 @@ xfs_iterate_fsmap(
 	memcpy(head->fmh_keys, keys, sizeof(struct fsmap) * 2);
 	head->fmh_count = FSMAP_NR;
 
-	while ((error = ioctl(ctx->mnt_fd, FS_IOC_GETFSMAP, head)) == 0) {
+	while ((error = ioctl(ctx->mnt.fd, FS_IOC_GETFSMAP, head)) == 0) {
 		for (i = 0, p = head->fmh_recs;
 		     i < head->fmh_entries;
 		     i++, p++) {
@@ -107,8 +107,8 @@ xfs_scan_ag_blocks(
 	off64_t			bperag;
 	bool			moveon;
 
-	bperag = (off64_t)ctx->geo.agblocks *
-		 (off64_t)ctx->geo.blocksize;
+	bperag = (off64_t)ctx->mnt.fsgeom.agblocks *
+		 (off64_t)ctx->mnt.fsgeom.blocksize;
 
 	snprintf(descr, DESCR_BUFSZ, _("dev %d:%d AG %u fsmap"),
 				major(ctx->fsinfo.fs_datadev),
@@ -205,7 +205,7 @@ xfs_scan_all_spacemaps(
 	}
 	if (ctx->fsinfo.fs_rt) {
 		ret = workqueue_add(&wq, xfs_scan_rt_blocks,
-				ctx->geo.agcount + 1, &sbx);
+				ctx->mnt.fsgeom.agcount + 1, &sbx);
 		if (ret) {
 			sbx.moveon = false;
 			str_info(ctx, ctx->mntpoint,
@@ -215,7 +215,7 @@ _("Could not queue rtdev fsmap work."));
 	}
 	if (ctx->fsinfo.fs_log) {
 		ret = workqueue_add(&wq, xfs_scan_log_blocks,
-				ctx->geo.agcount + 2, &sbx);
+				ctx->mnt.fsgeom.agcount + 2, &sbx);
 		if (ret) {
 			sbx.moveon = false;
 			str_info(ctx, ctx->mntpoint,
@@ -223,7 +223,7 @@ _("Could not queue logdev fsmap work."));
 			goto out;
 		}
 	}
-	for (agno = 0; agno < ctx->geo.agcount; agno++) {
+	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++) {
 		ret = workqueue_add(&wq, xfs_scan_ag_blocks, agno, &sbx);
 		if (ret) {
 			sbx.moveon = false;

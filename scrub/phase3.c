@@ -33,7 +33,7 @@ xfs_scrub_fd(
 	struct xfs_bstat	*bs,
 	struct xfs_action_list	*alist)
 {
-	return fn(ctx, bs->bs_ino, bs->bs_gen, ctx->mnt_fd, alist);
+	return fn(ctx, bs->bs_ino, bs->bs_gen, ctx->mnt.fd, alist);
 }
 
 struct scrub_inode_ctx {
@@ -115,7 +115,7 @@ xfs_scrub_inode(
 	if (S_ISLNK(bstat->bs_mode)) {
 		/* Check symlink contents. */
 		moveon = xfs_scrub_symlink(ctx, bstat->bs_ino,
-				bstat->bs_gen, ctx->mnt_fd, &alist);
+				bstat->bs_gen, ctx->mnt.fd, &alist);
 	} else if (S_ISDIR(bstat->bs_mode)) {
 		/* Check the directory entries. */
 		moveon = xfs_scrub_fd(ctx, xfs_scrub_dir, bstat, &alist);
