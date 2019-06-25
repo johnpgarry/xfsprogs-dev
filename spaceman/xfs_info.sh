@@ -40,7 +40,7 @@ case $# in
 
 		# If we find a mountpoint for the device, do a live query;
 		# otherwise try reading the fs with xfs_db.
-		if mountpt="$(findmnt -f -n -o TARGET "${arg}" 2> /dev/null)"; then
+		if mountpt="$(findmnt -t xfs -f -n -o TARGET "${arg}" 2> /dev/null)"; then
 			xfs_spaceman -p xfs_info -c "info" $OPTS "${mountpt}"
 			status=$?
 		else
