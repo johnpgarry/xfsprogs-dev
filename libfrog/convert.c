@@ -47,7 +47,7 @@ cvt_s64(
 		return i;
 
 	/* Not all the input was consumed, return error. */
-	errno = -ERANGE;
+	errno = ERANGE;
 	return INT64_MIN;
 }
 
@@ -68,7 +68,7 @@ cvt_s32(
 	if (errno)
 		return i;
 	if (i > INT32_MAX || i < INT32_MIN) {
-		errno = -ERANGE;
+		errno = ERANGE;
 		return INT32_MIN;
 	}
 	return i;
@@ -91,7 +91,7 @@ cvt_s16(
 	if (errno)
 		return i;
 	if (i > INT16_MAX || i < INT16_MIN) {
-		errno = -ERANGE;
+		errno = ERANGE;
 		return INT16_MIN;
 	}
 	return i;
@@ -123,7 +123,7 @@ cvt_u64(
 		return i;
 
 	/* Not all the input was consumed, return error. */
-	errno = -ERANGE;
+	errno = ERANGE;
 	return UINT64_MAX;
 }
 
@@ -144,7 +144,7 @@ cvt_u32(
 	if (errno)
 		return i;
 	if (i > UINT32_MAX) {
-		errno = -ERANGE;
+		errno = ERANGE;
 		return UINT32_MAX;
 	}
 	return i;
@@ -167,7 +167,7 @@ cvt_u16(
 	if (errno)
 		return i;
 	if (i > UINT16_MAX) {
-		errno = -ERANGE;
+		errno = ERANGE;
 		return UINT16_MAX;
 	}
 	return i;
