@@ -293,7 +293,7 @@ repair_ioctl(
 
 	error = ioctl(fd, XFS_IOC_SCRUB_METADATA, &meta);
 	if (error)
-		perror("scrub");
+		perror("repair");
 	if (meta.sm_flags & XFS_SCRUB_OFLAG_CORRUPT)
 		printf(_("Corruption remains.\n"));
 	if (meta.sm_flags & XFS_SCRUB_OFLAG_PREEN)
