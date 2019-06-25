@@ -103,31 +103,6 @@ static int	nfrags = 0;	/* Debug option: Coerse into specific number
 static int	openopts = O_CREAT|O_EXCL|O_RDWR|O_DIRECT;
 
 static int
-xfs_bulkstat_single(int fd, xfs_ino_t *lastip, xfs_bstat_t *ubuffer)
-{
-    xfs_fsop_bulkreq_t  bulkreq;
-
-    bulkreq.lastip = (__u64 *)lastip;
-    bulkreq.icount = 1;
-    bulkreq.ubuffer = ubuffer;
-    bulkreq.ocount = NULL;
-    return ioctl(fd, XFS_IOC_FSBULKSTAT_SINGLE, &bulkreq);
-}
-
-static int
-xfs_bulkstat(int fd, xfs_ino_t *lastip, int icount,
-                    xfs_bstat_t *ubuffer, __s32 *ocount)
-{
-    xfs_fsop_bulkreq_t  bulkreq;
-
-    bulkreq.lastip = (__u64 *)lastip;
-    bulkreq.icount = icount;
-    bulkreq.ubuffer = ubuffer;
-    bulkreq.ocount = ocount;
-    return ioctl(fd, XFS_IOC_FSBULKSTAT, &bulkreq);
-}
-
-static int
 xfs_swapext(int fd, xfs_swapext_t *sx)
 {
     return ioctl(fd, XFS_IOC_SWAPEXT, sx);
@@ -596,11 +571,11 @@ fsrall_cleanup(int timeout)
 static int
 fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 {
-
-	int	fsfd, fd;
+	struct xfs_fd	fsxfd = XFS_FD_INIT_EMPTY;
+	int	fd;
 	int	count = 0;
 	int	ret;
-	__s32	buflenout;
+	uint32_t buflenout;
 	xfs_bstat_t buf[GRABSZ];
 	char	fname[64];
 	char	*tname;
@@ -617,25 +592,27 @@ fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 		return -1;
 	}
 
-	if ((fsfd = open(mntdir, O_RDONLY)) < 0) {
+	if ((fsxfd.fd = open(mntdir, O_RDONLY)) < 0) {
 		fsrprintf(_("unable to open: %s: %s\n"),
 		          mntdir, strerror( errno ));
 		free(fshandlep);
 		return -1;
 	}
 
-	if (xfrog_geometry(fsfd, &fsgeom) < 0 ) {
+	ret = xfrog_prepare_geometry(&fsxfd);
+	if (ret) {
 		fsrprintf(_("Skipping %s: could not get XFS geometry\n"),
 			  mntdir);
-		close(fsfd);
+		xfrog_close(&fsxfd);
 		free(fshandlep);
 		return -1;
 	}
+	memcpy(&fsgeom, &fsxfd.fsgeom, sizeof(fsgeom));
 
 	tmp_init(mntdir);
 
-	while ((ret = xfs_bulkstat(fsfd,
-				&lastino, GRABSZ, &buf[0], &buflenout)) == 0) {
+	while ((ret = xfrog_bulkstat(&fsxfd, &lastino, GRABSZ, &buf[0],
+				&buflenout)) == 0) {
 		xfs_bstat_t *p;
 		xfs_bstat_t *endp;
 
@@ -684,16 +661,16 @@ fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 		}
 		if (endtime && endtime < time(NULL)) {
 			tmp_close(mntdir);
-			close(fsfd);
+			xfrog_close(&fsxfd);
 			fsrall_cleanup(1);
 			exit(1);
 		}
 	}
 	if (ret < 0)
-		fsrprintf(_("%s: xfs_bulkstat: %s\n"), progname, strerror(errno));
+		fsrprintf(_("%s: xfrog_bulkstat: %s\n"), progname, strerror(errno));
 out0:
 	tmp_close(mntdir);
-	close(fsfd);
+	xfrog_close(&fsxfd);
 	free(fshandlep);
 	return 0;
 }
@@ -726,13 +703,16 @@ fsrdir(char *dirname)
  * an open on the file and passes this all to fsrfile_common.
  */
 static int
-fsrfile(char *fname, xfs_ino_t ino)
+fsrfile(
+	char			*fname,
+	xfs_ino_t		ino)
 {
-	xfs_bstat_t	statbuf;
-	jdm_fshandle_t	*fshandlep;
-	int	fd = -1, fsfd = -1;
-	int	error = -1;
-	char	*tname;
+	struct xfs_fd		fsxfd = XFS_FD_INIT_EMPTY;
+	struct xfs_bstat	statbuf;
+	jdm_fshandle_t		*fshandlep;
+	int			fd = -1;
+	int			error = -1;
+	char			*tname;
 
 	fshandlep = jdm_getfshandle(getparent (fname) );
 	if (!fshandlep) {
@@ -745,14 +725,21 @@ fsrfile(char *fname, xfs_ino_t ino)
 	 * Need to open something on the same filesystem as the
 	 * file.  Open the parent.
 	 */
-	fsfd = open(getparent(fname), O_RDONLY);
-	if (fsfd < 0) {
+	fsxfd.fd = open(getparent(fname), O_RDONLY);
+	if (fsxfd.fd < 0) {
 		fsrprintf(_("unable to open sys handle for %s: %s\n"),
 			fname, strerror(errno));
 		goto out;
 	}
 
-	if ((xfs_bulkstat_single(fsfd, &ino, &statbuf)) < 0) {
+	error = xfrog_prepare_geometry(&fsxfd);
+	if (error) {
+		fsrprintf(_("Unable to get geom on fs for: %s\n"), fname);
+		goto out;
+	}
+
+	error = xfrog_bulkstat_single(&fsxfd, ino, &statbuf);
+	if (error < 0) {
 		fsrprintf(_("unable to get bstat on %s: %s\n"),
 			fname, strerror(errno));
 		goto out;
@@ -765,11 +752,8 @@ fsrfile(char *fname, xfs_ino_t ino)
 		goto out;
 	}
 
-	/* Get the fs geometry */
-	if (xfrog_geometry(fsfd, &fsgeom) < 0 ) {
-		fsrprintf(_("Unable to get geom on fs for: %s\n"), fname);
-		goto out;
-	}
+	/* Stash the fs geometry for general use. */
+	memcpy(&fsgeom, &fsxfd.fsgeom, sizeof(fsgeom));
 
 	tname = gettmpname(fname);
 
@@ -777,8 +761,7 @@ fsrfile(char *fname, xfs_ino_t ino)
 		error = fsrfile_common(fname, tname, NULL, fd, &statbuf);
 
 out:
-	if (fsfd >= 0)
-		close(fsfd);
+	xfrog_close(&fsxfd);
 	if (fd >= 0)
 		close(fd);
 	free(fshandlep);
@@ -945,6 +928,7 @@ fsr_setup_attr_fork(
 	xfs_bstat_t	*bstatp)
 {
 #ifdef HAVE_FSETXATTR
+	struct xfs_fd	txfd = XFS_FD_INIT(tfd);
 	struct stat	tstatbuf;
 	int		i;
 	int		diff = 0;
@@ -962,7 +946,7 @@ fsr_setup_attr_fork(
 	if (!(fsgeom.flags & XFS_FSOP_GEOM_FLAGS_ATTR2) ||
 	    bstatp->bs_forkoff == 0) {
 		/* attr1 */
-		ret = fsetxattr(tfd, "user.X", "X", 1, XATTR_CREATE);
+		ret = fsetxattr(txfd.fd, "user.X", "X", 1, XATTR_CREATE);
 		if (ret) {
 			fsrprintf(_("could not set ATTR\n"));
 			return -1;
@@ -972,7 +956,7 @@ fsr_setup_attr_fork(
 
 	/* attr2 w/ fork offsets */
 
-	if (fstat(tfd, &tstatbuf) < 0) {
+	if (fstat(txfd.fd, &tstatbuf) < 0) {
 		fsrprintf(_("unable to stat temp file: %s\n"),
 					strerror(errno));
 		return -1;
@@ -981,16 +965,16 @@ fsr_setup_attr_fork(
 	i = 0;
 	do {
 		xfs_bstat_t	tbstat;
-		xfs_ino_t	ino;
 		char		name[64];
+		int		ret;
 
 		/*
 		 * bulkstat the temp inode to see what the forkoff is.  Use
 		 * this to compare against the target and determine what we
 		 * need to do.
 		 */
-		ino = tstatbuf.st_ino;
-		if ((xfs_bulkstat_single(tfd, &ino, &tbstat)) < 0) {
+		ret = xfrog_bulkstat_single(&txfd, tstatbuf.st_ino, &tbstat);
+		if (ret < 0) {
 			fsrprintf(_("unable to get bstat on temp file: %s\n"),
 						strerror(errno));
 			return -1;
@@ -1012,7 +996,7 @@ fsr_setup_attr_fork(
 		 */
 		if (!tbstat.bs_forkoff) {
 			ASSERT(i == 0);
-			ret = fsetxattr(tfd, name, "XX", 2, XATTR_CREATE);
+			ret = fsetxattr(txfd.fd, name, "XX", 2, XATTR_CREATE);
 			if (ret) {
 				fsrprintf(_("could not set ATTR\n"));
 				return -1;
@@ -1048,7 +1032,7 @@ fsr_setup_attr_fork(
 			if (diff < 0) {
 				char val[2048];
 				memset(val, 'X', 2048);
-				if (fsetxattr(tfd, name, val, 2048, 0)) {
+				if (fsetxattr(txfd.fd, name, val, 2048, 0)) {
 					fsrprintf(_("big ATTR set failed\n"));
 					return -1;
 				}
@@ -1092,7 +1076,7 @@ fsr_setup_attr_fork(
 		}
 
 		/* we need to grow the attr fork, so create another attr */
-		ret = fsetxattr(tfd, name, "XX", 2, XATTR_CREATE);
+		ret = fsetxattr(txfd.fd, name, "XX", 2, XATTR_CREATE);
 		if (ret) {
 			fsrprintf(_("could not set ATTR\n"));
 			return -1;
