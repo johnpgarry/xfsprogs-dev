@@ -745,3 +745,4 @@ hweight64(__u64 w)
 	       hweight32((unsigned int)(w >> 32));
 }
 
+void xfs_fs_mark_healthy(struct xfs_mount *mp, unsigned int mask) { }
