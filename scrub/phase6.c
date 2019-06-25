@@ -468,7 +468,7 @@ xfs_scan_blocks(
 	}
 
 	vs.rvp_data = read_verify_pool_init(ctx, ctx->datadev,
-			ctx->geo.blocksize, xfs_check_rmap_ioerr,
+			ctx->mnt.fsgeom.blocksize, xfs_check_rmap_ioerr,
 			scrub_nproc(ctx));
 	if (!vs.rvp_data) {
 		str_info(ctx, ctx->mntpoint,
@@ -477,7 +477,7 @@ _("Could not create data device media verifier."));
 	}
 	if (ctx->logdev) {
 		vs.rvp_log = read_verify_pool_init(ctx, ctx->logdev,
-				ctx->geo.blocksize, xfs_check_rmap_ioerr,
+				ctx->mnt.fsgeom.blocksize, xfs_check_rmap_ioerr,
 				scrub_nproc(ctx));
 		if (!vs.rvp_log) {
 			str_info(ctx, ctx->mntpoint,
@@ -487,7 +487,7 @@ _("Could not create data device media verifier."));
 	}
 	if (ctx->rtdev) {
 		vs.rvp_realtime = read_verify_pool_init(ctx, ctx->rtdev,
-				ctx->geo.blocksize, xfs_check_rmap_ioerr,
+				ctx->mnt.fsgeom.blocksize, xfs_check_rmap_ioerr,
 				scrub_nproc(ctx));
 		if (!vs.rvp_realtime) {
 			str_info(ctx, ctx->mntpoint,

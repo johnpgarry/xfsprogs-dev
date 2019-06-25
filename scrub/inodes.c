@@ -72,7 +72,7 @@ xfs_iterate_inodes_range_check(
 		/* Load the one inode. */
 		oneino = inogrp->xi_startino + i;
 		onereq.ubuffer = bs;
-		error = ioctl(ctx->mnt_fd, XFS_IOC_FSBULKSTAT_SINGLE,
+		error = ioctl(ctx->mnt.fd, XFS_IOC_FSBULKSTAT_SINGLE,
 				&onereq);
 		if (error || bs->bs_ino != inogrp->xi_startino + i) {
 			memset(bs, 0, sizeof(struct xfs_bstat));
@@ -134,7 +134,7 @@ xfs_iterate_inodes_range(
 
 	/* Find the inode chunk & alloc mask */
 	igrp_ino = first_ino;
-	error = ioctl(ctx->mnt_fd, XFS_IOC_FSINUMBERS, &igrpreq);
+	error = ioctl(ctx->mnt.fd, XFS_IOC_FSINUMBERS, &igrpreq);
 	while (!error && igrplen) {
 		/* Load the inodes. */
 		ino = inogrp.xi_startino - 1;
@@ -145,7 +145,7 @@ xfs_iterate_inodes_range(
 		 */
 		if (inogrp.xi_alloccount == 0)
 			goto igrp_retry;
-		error = ioctl(ctx->mnt_fd, XFS_IOC_FSBULKSTAT, &bulkreq);
+		error = ioctl(ctx->mnt.fd, XFS_IOC_FSBULKSTAT, &bulkreq);
 		if (error)
 			str_info(ctx, descr, "%s", strerror_r(errno,
 						buf, DESCR_BUFSZ));
@@ -190,7 +190,7 @@ _("Changed too many times during scan; giving up."));
 
 		stale_count = 0;
 igrp_retry:
-		error = ioctl(ctx->mnt_fd, XFS_IOC_FSINUMBERS, &igrpreq);
+		error = ioctl(ctx->mnt.fd, XFS_IOC_FSINUMBERS, &igrpreq);
 	}
 
 err:
@@ -260,7 +260,7 @@ xfs_scan_all_inodes(
 		return false;
 	}
 
-	for (agno = 0; agno < ctx->geo.agcount; agno++) {
+	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++) {
 		ret = workqueue_add(&wq, xfs_scan_ag_inodes, agno, &si);
 		if (ret) {
 			si.moveon = false;

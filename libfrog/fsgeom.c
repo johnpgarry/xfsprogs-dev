@@ -85,3 +85,28 @@ xfrog_geometry(
 
 	return ioctl(fd, XFS_IOC_FSGEOMETRY_V1, fsgeo);
 }
+
+/*
+ * Prepare xfrog structure for future ioctl operations by computing the xfs
+ * geometry for @xfd->fd.
+ */
+int
+xfrog_prepare_geometry(
+	struct xfs_fd		*xfd)
+{
+	return xfrog_geometry(xfd->fd, &xfd->fsgeom);
+}
+
+/* Release any resources associated with this xfrog structure. */
+int
+xfrog_close(
+	struct xfs_fd		*xfd)
+{
+	int			ret = 0;
+
+	if (xfd->fd >= 0)
+		ret = close(xfd->fd);
+
+	xfd->fd = -1;
+	return ret;
+}

@@ -306,7 +306,7 @@ xfs_scrub_fs_label(
 		return false;
 
 	/* Retrieve label; quietly bail if we don't support that. */
-	error = ioctl(ctx->mnt_fd, FS_IOC_GETFSLABEL, &label);
+	error = ioctl(ctx->mnt.fd, FS_IOC_GETFSLABEL, &label);
 	if (error) {
 		if (errno != EOPNOTSUPP && errno != ENOTTY) {
 			moveon = false;
