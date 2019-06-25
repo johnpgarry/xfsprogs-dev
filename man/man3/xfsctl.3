@@ -144,59 +144,17 @@ See
 .BR ioctl_xfs_fsgetxattr (2)
 for more information.
 
-.TP
+.PP
+.nf
 .B XFS_IOC_GETBMAP
-Get the block map for a segment of a file in an XFS file system.
-The final argument points to an arry of variables of type
-.BR "struct getbmap" .
-All sizes and offsets in the structure are in units of 512 bytes.
-The structure fields include:
-.B bmv_offset
-(file offset of segment),
-.B bmv_block
-(starting block of segment),
-.B bmv_length
-(length of segment),
-.B bmv_count
-(number of array entries, including the first), and
-.B bmv_entries
-(number of entries filled in).
-The first structure in the array is a header, and the remaining
-structures in the array contain block map information on return.
-The header controls iterative calls to the
-.B XFS_IOC_GETBMAP
-command.
-The caller fills in the
-.B bmv_offset
-and
-.B bmv_length
-fields of the header to indicate the area of interest in the file,
-and fills in the
-.B bmv_count
-field to indicate the length of the array.
-If the
-.B bmv_length
-value is set to \-1 then the length of the interesting area is the rest
-of the file.
-On return from a call, the header is updated so that the command can be
-reused to obtain more information, without re-initializing the structures.
-Also on return, the
-.B bmv_entries
-field of the header is set to the number of array entries actually filled in.
-The non-header structures will be filled in with
-.BR bmv_offset ,
-.BR bmv_block ,
-and
-.BR bmv_length .
-If a region of the file has no blocks (is a hole in the file) then the
-.B bmv_block
-field is set to \-1.
-
-.TP
 .B XFS_IOC_GETBMAPA
-Identical to
-.B XFS_IOC_GETBMAP
-except that information about the attribute fork of the file is returned.
+.fi
+.PD 0
+.TP
+.B XFS_IOC_GETBMAPX
+See
+.BR ioctl_getbmap (2)
+for more information.
 
 .PP
 .B XFS_IOC_RESVSP
@@ -429,6 +387,7 @@ as they are not of general use to applications.
 .BR ioctl_xfs_fsinumbers (2),
 .BR ioctl_xfs_fscounts (2),
 .BR ioctl_xfs_getresblks (2),
+.BR ioctl_xfs_getbmap (2),
 .BR fstatfs (2),
 .BR statfs (2),
 .BR xfs (5),
