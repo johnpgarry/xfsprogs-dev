@@ -400,89 +400,15 @@ An output
 value of zero means that the inode table has been exhausted.
 
 .TP
-.B XFS_IOC_FSBULKSTAT
-This interface is used to extract inode information (stat
-information) "in bulk" from a filesystem.  It is intended to
-be called iteratively, to obtain information about the entire
-set of inodes in a filesystem.
-The information is passed in and out via a structure of type
-.B xfs_fsop_bulkreq_t
-pointed to by the final argument.
-.B lastip
-is a pointer to a variable containing the last inode number returned,
-initially it should be zero.
-.B icount
-indicates the size of the array of structures specified by
-.B ubuffer.
-.B ubuffer
-is the address of an array of structures of type
-.BR xfs_bstat_t .
-Many of the elements in the structure are the same as for the stat
-structure.
-The structure has the following elements:
-.B bs_ino
-(inode number),
-.B bs_mode
-(type and mode),
-.B bs_nlink
-(number of links),
-.B bs_uid
-(user id),
-.B bs_gid
-(group id),
-.B bs_rdev
-(device value),
-.B bs_blksize
-(block size of the filesystem),
-.B bs_size
-(file size in bytes),
-.B bs_atime
-(access time),
-.B bs_mtime
-(modify time),
-.B bs_ctime
-(inode change time),
-.B bs_blocks
-(number of blocks used by the file),
-.B bs_xflags
-(extended flags),
-.B bs_extsize
-(extent size),
-.B bs_extents
-(number of extents),
-.B bs_gen
-(generation count),
-.B bs_projid_lo
-(project id - low word),
-.B bs_projid_hi
-(project id - high word, used when projid32bit feature is enabled),
-.B bs_dmevmask
-(DMIG event mask),
-.B bs_dmstate
-(DMIG state information), and
-.B bs_aextents
-(attribute extent count).
-.B ocount
-is a pointer to a count of returned values, filled in by the call.
-An output
-.B ocount
-value of zero means that the inode table has been exhausted.
-
-.TP
-.B XFS_IOC_FSBULKSTAT_SINGLE
-This interface is a variant of the
-.B XFS_IOC_FSBULKSTAT
-interface, used to obtain information about a single inode.
-for an open file in the filesystem of interest.
-The same structure is used to pass information in and out of
-the kernel, except no output count parameter is used (should
-be initialized to zero).
-An error is returned if the inode number is invalid.
-
-.TP
 .B XFS_IOC_FSGEOMETRY
 See
 .BR ioctl_xfs_fsop_geometry (2)
+for more information.
+
+.TP
+.BR XFS_IOC_FSBULKSTAT " or " XFS_IOC_FSBULKSTAT_SINGLE
+See
+.BR ioctl_xfs_fsbulkstat (2)
 for more information.
 
 .PP
@@ -509,6 +435,7 @@ as they are not of general use to applications.
 .SH SEE ALSO
 .BR ioctl_xfs_fsgetxattr (2),
 .BR ioctl_xfs_fsop_geometry (2),
+.BR ioctl_xfs_fsbulkstat (2),
 .BR fstatfs (2),
 .BR statfs (2),
 .BR xfs (5),
