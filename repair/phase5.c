@@ -887,7 +887,7 @@ build_freespace_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 }
 
 /*
- * XXX(hch): any reason we don't just look at mp->m_inobt_mxr?
+ * XXX(hch): any reason we don't just look at M_IGEO(mp)->inobt_mxr?
  */
 #define XR_INOBT_BLOCK_MAXRECS(mp, level) \
 			libxfs_inobt_maxrecs((mp), (mp)->m_sb.sb_blocksize, \
@@ -1087,7 +1087,7 @@ prop_ino_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 				    be16_to_cpu(bt_hdr->bb_numrecs));
 	bt_ptr = XFS_INOBT_PTR_ADDR(mp, bt_hdr,
 				    be16_to_cpu(bt_hdr->bb_numrecs),
-				    mp->m_inobt_mxr[1]);
+				    M_IGEO(mp)->inobt_mxr[1]);
 
 	bt_key->ir_startino = cpu_to_be32(startino);
 	*bt_ptr = cpu_to_be32(btree_curs->level[level-1].agbno);

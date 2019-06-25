@@ -716,7 +716,7 @@ pf_queuing_worker(
 	int			err;
 	uint64_t		sparse;
 
-	blks_per_cluster = mp->m_inode_cluster_size >> mp->m_sb.sb_blocklog;
+	blks_per_cluster = M_IGEO(mp)->inode_cluster_size >> mp->m_sb.sb_blocklog;
 	if (blks_per_cluster == 0)
 		blks_per_cluster = 1;
 
@@ -748,7 +748,7 @@ pf_queuing_worker(
 		cur_irec = irec;
 
 		num_inos = XFS_INODES_PER_CHUNK;
-		while (num_inos < mp->m_ialloc_inos && irec != NULL) {
+		while (num_inos < M_IGEO(mp)->ialloc_inos && irec != NULL) {
 			irec = next_ino_rec(irec);
 			num_inos += XFS_INODES_PER_CHUNK;
 		}
@@ -800,7 +800,7 @@ pf_queuing_worker(
 			bno += blks_per_cluster;
 			num_inos += inodes_per_cluster;
 			sparse >>= inodes_per_cluster;
-		} while (num_inos < mp->m_ialloc_inos);
+		} while (num_inos < M_IGEO(mp)->ialloc_inos);
 	}
 
 	pthread_mutex_lock(&args->lock);
@@ -900,10 +900,10 @@ start_inode_prefetch(
 	 */
 
 	max_queue = libxfs_bcache->c_maxcount / thread_count / 8;
-	if (mp->m_inode_cluster_size > mp->m_sb.sb_blocksize)
+	if (M_IGEO(mp)->inode_cluster_size > mp->m_sb.sb_blocksize)
 		max_queue = max_queue *
-			(mp->m_inode_cluster_size >> mp->m_sb.sb_blocklog) /
-			mp->m_ialloc_blks;
+			(M_IGEO(mp)->inode_cluster_size >> mp->m_sb.sb_blocklog) /
+			M_IGEO(mp)->ialloc_blks;
 
 	sem_init(&args->ra_count, 0, max_queue);
 

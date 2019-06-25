@@ -1985,12 +1985,12 @@ _("inode btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 	if (level == 0) {
 		/* check for trashed btree block */
 
-		if (numrecs > mp->m_inobt_mxr[0])  {
-			numrecs = mp->m_inobt_mxr[0];
+		if (numrecs > M_IGEO(mp)->inobt_mxr[0])  {
+			numrecs = M_IGEO(mp)->inobt_mxr[0];
 			hdr_errors++;
 		}
-		if (isroot == 0 && numrecs < mp->m_inobt_mnr[0])  {
-			numrecs = mp->m_inobt_mnr[0];
+		if (isroot == 0 && numrecs < M_IGEO(mp)->inobt_mnr[0])  {
+			numrecs = M_IGEO(mp)->inobt_mnr[0];
 			hdr_errors++;
 		}
 
@@ -2053,16 +2053,16 @@ _("inode btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 	/*
 	 * interior record, continue on
 	 */
-	if (numrecs > mp->m_inobt_mxr[1])  {
-		numrecs = mp->m_inobt_mxr[1];
+	if (numrecs > M_IGEO(mp)->inobt_mxr[1])  {
+		numrecs = M_IGEO(mp)->inobt_mxr[1];
 		hdr_errors++;
 	}
-	if (isroot == 0 && numrecs < mp->m_inobt_mnr[1])  {
-		numrecs = mp->m_inobt_mnr[1];
+	if (isroot == 0 && numrecs < M_IGEO(mp)->inobt_mnr[1])  {
+		numrecs = M_IGEO(mp)->inobt_mnr[1];
 		hdr_errors++;
 	}
 
-	pp = XFS_INOBT_PTR_ADDR(mp, block, 1, mp->m_inobt_mxr[1]);
+	pp = XFS_INOBT_PTR_ADDR(mp, block, 1, M_IGEO(mp)->inobt_mxr[1]);
 
 	/*
 	 * don't pass bogus tree flag down further if this block

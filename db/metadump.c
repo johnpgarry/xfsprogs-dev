@@ -265,11 +265,11 @@ zero_btree_node(
 		break;
 	case TYP_INOBT:
 	case TYP_FINOBT:
-		if (nrecs > mp->m_inobt_mxr[1])
+		if (nrecs > M_IGEO(mp)->inobt_mxr[1])
 			return;
 
 		ikp = XFS_INOBT_KEY_ADDR(mp, block, 1);
-		ipp = XFS_INOBT_PTR_ADDR(mp, block, 1, mp->m_inobt_mxr[1]);
+		ipp = XFS_INOBT_PTR_ADDR(mp, block, 1, M_IGEO(mp)->inobt_mxr[1]);
 		zp1 = (char *)&ikp[nrecs];
 		zp2 = (char *)&ipp[nrecs];
 		key_end = (char *)ipp;
@@ -328,7 +328,7 @@ zero_btree_leaf(
 		break;
 	case TYP_INOBT:
 	case TYP_FINOBT:
-		if (nrecs > mp->m_inobt_mxr[0])
+		if (nrecs > M_IGEO(mp)->inobt_mxr[0])
 			return;
 
 		irp = XFS_INOBT_REC_ADDR(mp, block, 1);
@@ -2458,7 +2458,7 @@ copy_inode_chunk(
 
 	agino = be32_to_cpu(rp->ir_startino);
 	agbno = XFS_AGINO_TO_AGBNO(mp, agino);
-	end_agbno = agbno + mp->m_ialloc_blks;
+	end_agbno = agbno + M_IGEO(mp)->ialloc_blks;
 	off = XFS_INO_TO_OFFSET(mp, agino);
 
 	/*
@@ -2470,9 +2470,9 @@ copy_inode_chunk(
 	 * we've been passed (large block sizes can hold multiple inode chunks).
 	 */
 	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
-		blks_per_buf = mp->m_blocks_per_cluster;
+		blks_per_buf = M_IGEO(mp)->blocks_per_cluster;
 	else
-		blks_per_buf = mp->m_ialloc_blks;
+		blks_per_buf = M_IGEO(mp)->ialloc_blks;
 	inodes_per_buf = min(XFS_FSB_TO_INO(mp, blks_per_buf),
 			     XFS_INODES_PER_CHUNK);
 
@@ -2576,12 +2576,12 @@ scanfunc_ino(
 	numrecs = be16_to_cpu(block->bb_numrecs);
 
 	if (level == 0) {
-		if (numrecs > mp->m_inobt_mxr[0]) {
+		if (numrecs > M_IGEO(mp)->inobt_mxr[0]) {
 			if (show_warnings)
 				print_warning("invalid numrecs %d in %s "
 					"block %u/%u", numrecs,
 					typtab[btype].name, agno, agbno);
-			numrecs = mp->m_inobt_mxr[0];
+			numrecs = M_IGEO(mp)->inobt_mxr[0];
 		}
 
 		/*
@@ -2599,14 +2599,14 @@ scanfunc_ino(
 		return 1;
 	}
 
-	if (numrecs > mp->m_inobt_mxr[1]) {
+	if (numrecs > M_IGEO(mp)->inobt_mxr[1]) {
 		if (show_warnings)
 			print_warning("invalid numrecs %d in %s block %u/%u",
 				numrecs, typtab[btype].name, agno, agbno);
-		numrecs = mp->m_inobt_mxr[1];
+		numrecs = M_IGEO(mp)->inobt_mxr[1];
 	}
 
-	pp = XFS_INOBT_PTR_ADDR(mp, block, 1, mp->m_inobt_mxr[1]);
+	pp = XFS_INOBT_PTR_ADDR(mp, block, 1, M_IGEO(mp)->inobt_mxr[1]);
 	for (i = 0; i < numrecs; i++) {
 		if (!valid_bno(agno, be32_to_cpu(pp[i]))) {
 			if (show_warnings)
