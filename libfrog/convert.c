@@ -105,14 +105,14 @@ cvt_s16(
  */
 uint64_t
 cvt_u64(
-	char		*s,
-	int		base)
+	char			*s,
+	int			base)
 {
-	long long	i;
-	char		*sp;
+	unsigned long long	i;
+	char			*sp;
 
 	errno = 0;
-	i = strtoll(s, &sp, base);
+	i = strtoull(s, &sp, base);
 	/*
 	 * If the input would over or underflow, return the clamped
 	 * value and let the user check errno.  If we went all the
