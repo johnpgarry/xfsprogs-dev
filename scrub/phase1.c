@@ -39,7 +39,7 @@ xfs_shutdown_fs(
 
 	flag = XFS_FSOP_GOING_FLAGS_LOGFLUSH;
 	str_info(ctx, ctx->mntpoint, _("Shutting down filesystem!"));
-	if (ioctl(ctx->mnt_fd, XFS_IOC_GOINGDOWN, &flag))
+	if (ioctl(ctx->mnt.fd, XFS_IOC_GOINGDOWN, &flag))
 		str_errno(ctx, ctx->mntpoint);
 }
 
@@ -60,11 +60,9 @@ xfs_cleanup_fs(
 	if (ctx->datadev)
 		disk_close(ctx->datadev);
 	fshandle_destroy();
-	if (ctx->mnt_fd >= 0) {
-		error = close(ctx->mnt_fd);
-		if (error)
-			str_errno(ctx, _("closing mountpoint fd"));
-	}
+	error = xfrog_close(&ctx->mnt);
+	if (error)
+		str_errno(ctx, _("closing mountpoint fd"));
 	fs_table_destroy();
 
 	return true;
@@ -86,8 +84,8 @@ xfs_setup_fs(
 	 * CAP_SYS_ADMIN, which we probably need to do anything fancy
 	 * with the (XFS driver) kernel.
 	 */
-	ctx->mnt_fd = open(ctx->mntpoint, O_RDONLY | O_NOATIME | O_DIRECTORY);
-	if (ctx->mnt_fd < 0) {
+	ctx->mnt.fd = open(ctx->mntpoint, O_RDONLY | O_NOATIME | O_DIRECTORY);
+	if (ctx->mnt.fd < 0) {
 		if (errno == EPERM)
 			str_info(ctx, ctx->mntpoint,
 _("Must be root to run scrub."));
@@ -96,23 +94,23 @@ _("Must be root to run scrub."));
 		return false;
 	}
 
-	error = fstat(ctx->mnt_fd, &ctx->mnt_sb);
+	error = fstat(ctx->mnt.fd, &ctx->mnt_sb);
 	if (error) {
 		str_errno(ctx, ctx->mntpoint);
 		return false;
 	}
-	error = fstatvfs(ctx->mnt_fd, &ctx->mnt_sv);
+	error = fstatvfs(ctx->mnt.fd, &ctx->mnt_sv);
 	if (error) {
 		str_errno(ctx, ctx->mntpoint);
 		return false;
 	}
-	error = fstatfs(ctx->mnt_fd, &ctx->mnt_sf);
+	error = fstatfs(ctx->mnt.fd, &ctx->mnt_sf);
 	if (error) {
 		str_errno(ctx, ctx->mntpoint);
 		return false;
 	}
 
-	if (!platform_test_xfs_fd(ctx->mnt_fd)) {
+	if (!platform_test_xfs_fd(ctx->mnt.fd)) {
 		str_info(ctx, ctx->mntpoint,
 _("Does not appear to be an XFS filesystem!"));
 		return false;
@@ -123,27 +121,28 @@ _("Does not appear to be an XFS filesystem!"));
 	 * This seems to reduce the incidence of stale file handle
 	 * errors when we open things by handle.
 	 */
-	error = syncfs(ctx->mnt_fd);
+	error = syncfs(ctx->mnt.fd);
 	if (error) {
 		str_errno(ctx, ctx->mntpoint);
 		return false;
 	}
 
-	/* Retrieve XFS geometry. */
-	error = xfrog_geometry(ctx->mnt_fd, &ctx->geo);
+	/* Set up xfrog and compute XFS geometry. */
+	error = xfrog_prepare_geometry(&ctx->mnt);
 	if (error < 0) {
 		str_errno(ctx, ctx->mntpoint);
 		return false;
 	}
 
-	if (!xfs_action_lists_alloc(ctx->geo.agcount, &ctx->action_lists)) {
+	if (!xfs_action_lists_alloc(ctx->mnt.fsgeom.agcount,
+				&ctx->action_lists)) {
 		str_error(ctx, ctx->mntpoint, _("Not enough memory."));
 		return false;
 	}
 
-	ctx->agblklog = log2_roundup(ctx->geo.agblocks);
-	ctx->blocklog = highbit32(ctx->geo.blocksize);
-	ctx->inodelog = highbit32(ctx->geo.inodesize);
+	ctx->agblklog = log2_roundup(ctx->mnt.fsgeom.agblocks);
+	ctx->blocklog = highbit32(ctx->mnt.fsgeom.blocksize);
+	ctx->inodelog = highbit32(ctx->mnt.fsgeom.inodesize);
 	ctx->inopblog = ctx->blocklog - ctx->inodelog;
 
 	error = path_to_fshandle(ctx->mntpoint, &ctx->fshandle,
@@ -171,12 +170,12 @@ _("Kernel metadata repair facility is not available.  Use -n to scrub."));
 	}
 
 	/* Did we find the log and rt devices, if they're present? */
-	if (ctx->geo.logstart == 0 && ctx->fsinfo.fs_log == NULL) {
+	if (ctx->mnt.fsgeom.logstart == 0 && ctx->fsinfo.fs_log == NULL) {
 		str_info(ctx, ctx->mntpoint,
 _("Unable to find log device path."));
 		return false;
 	}
-	if (ctx->geo.rtblocks && ctx->fsinfo.fs_rt == NULL) {
+	if (ctx->mnt.fsgeom.rtblocks && ctx->fsinfo.fs_rt == NULL) {
 		str_info(ctx, ctx->mntpoint,
 _("Unable to find realtime device path."));
 		return false;

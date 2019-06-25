@@ -40,7 +40,7 @@ xfs_repair_ag(
 
 	/* Repair anything broken until we fail to make progress. */
 	do {
-		moveon = xfs_action_list_process(ctx, ctx->mnt_fd, alist, flags);
+		moveon = xfs_action_list_process(ctx, ctx->mnt.fd, alist, flags);
 		if (!moveon) {
 			*pmoveon = false;
 			return;
@@ -56,7 +56,7 @@ xfs_repair_ag(
 
 	/* Try once more, but this time complain if we can't fix things. */
 	flags |= ALP_COMPLAIN_IF_UNFIXED;
-	moveon = xfs_action_list_process(ctx, ctx->mnt_fd, alist, flags);
+	moveon = xfs_action_list_process(ctx, ctx->mnt.fd, alist, flags);
 	if (!moveon)
 		*pmoveon = false;
 }
@@ -77,7 +77,7 @@ xfs_process_action_items(
 		str_error(ctx, ctx->mntpoint, _("Could not create workqueue."));
 		return false;
 	}
-	for (agno = 0; agno < ctx->geo.agcount; agno++) {
+	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++) {
 		if (xfs_action_list_length(&ctx->action_lists[agno]) > 0) {
 			ret = workqueue_add(&wq, xfs_repair_ag, agno, &moveon);
 			if (ret) {
@@ -121,7 +121,7 @@ xfs_estimate_repair_work(
 	xfs_agnumber_t		agno;
 	size_t			need_fixing = 0;
 
-	for (agno = 0; agno < ctx->geo.agcount; agno++)
+	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++)
 		need_fixing += xfs_action_list_length(&ctx->action_lists[agno]);
 	need_fixing++;
 	*items = need_fixing;

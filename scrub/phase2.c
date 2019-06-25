@@ -141,7 +141,7 @@ xfs_scan_metadata(
 	if (!moveon)
 		goto out;
 
-	for (agno = 0; moveon && agno < ctx->geo.agcount; agno++) {
+	for (agno = 0; moveon && agno < ctx->mnt.fsgeom.agcount; agno++) {
 		ret = workqueue_add(&wq, xfs_scan_ag_metadata, agno, &moveon);
 		if (ret) {
 			moveon = false;

@@ -232,7 +232,7 @@ fstrim(
 	int			error;
 
 	range.len = ULLONG_MAX;
-	error = ioctl(ctx->mnt_fd, FITRIM, &range);
+	error = ioctl(ctx->mnt.fd, FITRIM, &range);
 	if (error && errno != EOPNOTSUPP && errno != ENOTTY)
 		perror(_("fstrim"));
 }
