@@ -131,3 +131,14 @@ xfrog_close(
 	xfd->fd = -1;
 	return ret;
 }
+
+/* Try to obtain an AG's geometry. */
+int
+xfrog_ag_geometry(
+	int			fd,
+	unsigned int		agno,
+	struct xfs_ag_geometry	*ageo)
+{
+	ageo->ag_number = agno;
+	return ioctl(fd, XFS_IOC_AG_GEOMETRY, ageo);
+}
