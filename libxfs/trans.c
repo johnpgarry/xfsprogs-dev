@@ -533,6 +533,22 @@ libxfs_trans_bhold(
 	trace_xfs_trans_bhold(bip);
 }
 
+void
+libxfs_trans_bhold_release(
+	struct xfs_trans	*tp,
+	struct xfs_buf		*bp)
+{
+	struct xfs_buf_log_item	*bip = bp->b_log_item;
+
+	ASSERT(bp->bp_transp == tp);
+	ASSERT(bip != NULL);
+#ifdef XACT_DEBUG
+	fprintf(stderr, "unhold bhold'd buffer %p, transaction %p\n", bp, tp);
+#endif
+
+	bip->bli_flags &= ~XFS_BLI_HOLD;
+}
+
 xfs_buf_t *
 libxfs_trans_get_buf_map(
 	xfs_trans_t		*tp,
