@@ -23,7 +23,8 @@ trim_f(
 	char			**argv)
 {
 	struct fstrim_range	trim = {0};
-	struct xfs_fsop_geom	*fsgeom = &file->xfd.fsgeom;
+	struct xfs_fd		*xfd = &file->xfd;
+	struct xfs_fsop_geom	*fsgeom = &xfd->fsgeom;
 	xfs_agnumber_t		agno = 0;
 	off64_t			offset = 0;
 	ssize_t			length = 0;
@@ -66,11 +67,11 @@ trim_f(
 		length = cvtnum(fsgeom->blocksize, fsgeom->sectsize,
 				argv[optind + 1]);
 	} else if (agno) {
-		offset = (off64_t)agno * fsgeom->agblocks * fsgeom->blocksize;
-		length = fsgeom->agblocks * fsgeom->blocksize;
+		offset = xfrog_bbtob(xfrog_agb_to_daddr(xfd, agno, 0));
+		length = xfrog_fsb_to_b(xfd, fsgeom->agblocks);
 	} else {
 		offset = 0;
-		length = fsgeom->datablocks * fsgeom->blocksize;
+		length = xfrog_fsb_to_b(xfd, fsgeom->datablocks);
 	}
 
 	trim.start = offset;

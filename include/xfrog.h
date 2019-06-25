@@ -45,6 +45,9 @@ struct xfs_fd {
 
 	/* bits for agino in inum */
 	unsigned int		aginolog;
+
+	/* log2 of sb_blocksize / sb_sectsize */
+	unsigned int		blkbb_log;
 };
 
 /* Static initializers */
@@ -98,6 +101,69 @@ xfrog_b_to_fsbt(
 	uint64_t		bytes)
 {
 	return bytes >> xfd->blocklog;
+}
+
+/* Convert sector number to bytes. */
+static inline uint64_t
+xfrog_bbtob(
+	uint64_t		daddr)
+{
+	return daddr << BBSHIFT;
+}
+
+/* Convert bytes to sector number, rounding down. */
+static inline uint64_t
+xfrog_btobbt(
+	uint64_t		bytes)
+{
+	return bytes >> BBSHIFT;
+}
+
+/* Convert fs block number to sector number. */
+static inline uint64_t
+xfrog_fsb_to_bb(
+	struct xfs_fd		*xfd,
+	uint64_t		fsbno)
+{
+	return fsbno << xfd->blkbb_log;
+}
+
+/* Convert sector number to fs block number, rounded down. */
+static inline uint64_t
+xfrog_bb_to_fsbt(
+	struct xfs_fd		*xfd,
+	uint64_t		daddr)
+{
+	return daddr >> xfd->blkbb_log;
+}
+
+/* Convert AG number and AG block to fs block number */
+static inline uint64_t
+xfrog_agb_to_daddr(
+	struct xfs_fd		*xfd,
+	uint32_t		agno,
+	uint32_t		agbno)
+{
+	return xfrog_fsb_to_bb(xfd,
+			(uint64_t)agno * xfd->fsgeom.agblocks + agbno);
+}
+
+/* Convert sector number to AG number. */
+static inline uint32_t
+xfrog_daddr_to_agno(
+	struct xfs_fd		*xfd,
+	uint64_t		daddr)
+{
+	return xfrog_bb_to_fsbt(xfd, daddr) / xfd->fsgeom.agblocks;
+}
+
+/* Convert sector number to AG block number. */
+static inline uint32_t
+xfrog_daddr_to_agbno(
+	struct xfs_fd		*xfd,
+	uint64_t		daddr)
+{
+	return xfrog_bb_to_fsbt(xfd, daddr) % xfd->fsgeom.agblocks;
 }
 
 /* Bulkstat wrappers */

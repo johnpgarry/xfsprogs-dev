@@ -150,17 +150,13 @@ scan_ag(
 	struct fsmap		*extent;
 	struct fsmap		*l, *h;
 	struct fsmap		*p;
-	struct xfs_fsop_geom	*fsgeom = &file->xfd.fsgeom;
-	off64_t			blocksize = fsgeom->blocksize;
-	off64_t			bperag;
+	struct xfs_fd		*xfd = &file->xfd;
 	off64_t			aglen;
 	xfs_agblock_t		agbno;
 	unsigned long long	freeblks = 0;
 	unsigned long long	freeexts = 0;
 	int			ret;
 	int			i;
-
-	bperag = (off64_t)fsgeom->agblocks * blocksize;
 
 	fsmap = malloc(fsmap_sizeof(NR_EXTENTS));
 	if (!fsmap) {
@@ -174,8 +170,10 @@ scan_ag(
 	l = fsmap->fmh_keys;
 	h = fsmap->fmh_keys + 1;
 	if (agno != NULLAGNUMBER) {
-		l->fmr_physical = agno * bperag;
-		h->fmr_physical = ((agno + 1) * bperag) - 1;
+		l->fmr_physical = xfrog_bbtob(
+				xfrog_agb_to_daddr(xfd, agno, 0));
+		h->fmr_physical = xfrog_bbtob(
+				xfrog_agb_to_daddr(xfd, agno + 1, 0));
 		l->fmr_device = h->fmr_device = file->fs_path.fs_datadev;
 	} else {
 		l->fmr_physical = 0;
@@ -206,9 +204,9 @@ scan_ag(
 			if (!(extent->fmr_flags & FMR_OF_SPECIAL_OWNER) ||
 			    extent->fmr_owner != XFS_FMR_OWN_FREE)
 				continue;
-			agbno = (extent->fmr_physical - (bperag * agno)) /
-								blocksize;
-			aglen = extent->fmr_length / blocksize;
+			agbno = xfrog_daddr_to_agbno(xfd,
+					xfrog_btobbt(extent->fmr_physical));
+			aglen = xfrog_b_to_fsbt(xfd, extent->fmr_length);
 			freeblks += aglen;
 			freeexts++;
 
