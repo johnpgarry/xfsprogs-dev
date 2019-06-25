@@ -88,6 +88,10 @@ xfrog_geometry(
 	if (!ret)
 		return 0;
 
+	ret = ioctl(fd, XFS_IOC_FSGEOMETRY_V4, fsgeo);
+	if (!ret)
+		return 0;
+
 	return ioctl(fd, XFS_IOC_FSGEOMETRY_V1, fsgeo);
 }
 
