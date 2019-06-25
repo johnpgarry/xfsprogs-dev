@@ -767,7 +767,7 @@ get_agino_buf(
 	 * we must find the buffer for its cluster, add the appropriate
 	 * offset, and return that.
 	 */
-	cluster_size = max(M_IGEO(mp)->inode_cluster_size, mp->m_sb.sb_blocksize);
+	cluster_size = M_IGEO(mp)->inode_cluster_size;
 	ino_per_cluster = cluster_size / mp->m_sb.sb_inodesize;
 	cluster_agino = agino & ~(ino_per_cluster - 1);
 	cluster_blks = XFS_FSB_TO_DADDR(mp, max(1,
