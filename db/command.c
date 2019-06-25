@@ -11,7 +11,6 @@
 #include "bmap.h"
 #include "check.h"
 #include "command.h"
-#include "convert.h"
 #include "debug.h"
 #include "type.h"
 #include "echo.h"
