@@ -125,6 +125,8 @@
 #define xfs_dir_ino_validate		libxfs_dir_ino_validate
 #define xfs_initialize_perag_data	libxfs_initialize_perag_data
 #define xfs_inobt_maxrecs		libxfs_inobt_maxrecs
+#define xfs_rmapbt_maxrecs		libxfs_rmapbt_maxrecs
+#define xfs_refcountbt_maxrecs		libxfs_refcountbt_maxrecs
 #define xfs_iread_extents		libxfs_iread_extents
 #define xfs_log_calc_minimum_size	libxfs_log_calc_minimum_size
 #define xfs_perag_get			libxfs_perag_get
