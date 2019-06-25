@@ -6,6 +6,7 @@
  */
 
 #include "libxfs.h"
+#include "xfrog.h"
 #include <sys/mman.h>
 #include "command.h"
 #include "input.h"
@@ -56,7 +57,7 @@ openfile(
 		return -1;
 	}
 
-	if (ioctl(fd, XFS_IOC_FSGEOMETRY, geom) < 0) {
+	if (xfrog_geometry(fd, geom) < 0) {
 		if (errno == ENOTTY)
 			fprintf(stderr,
 _("%s: Not on a mounted XFS filesystem.\n"),
