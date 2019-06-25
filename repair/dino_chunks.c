@@ -607,7 +607,6 @@ process_inode_chunk(
 	xfs_ino_t		ino;
 	int			dirty = 0;
 	int			isa_dir = 0;
-	int			blks_per_cluster;
 	int			cluster_count;
 	int			bp_index;
 	int			cluster_offset;
@@ -618,10 +617,7 @@ process_inode_chunk(
 	*bogus = 0;
 	ASSERT(M_IGEO(mp)->ialloc_blks > 0);
 
-	blks_per_cluster = M_IGEO(mp)->inode_cluster_size >> mp->m_sb.sb_blocklog;
-	if (blks_per_cluster == 0)
-		blks_per_cluster = 1;
-	cluster_count = XFS_INODES_PER_CHUNK / inodes_per_cluster;
+	cluster_count = XFS_INODES_PER_CHUNK / M_IGEO(mp)->inodes_per_cluster;
 	if (cluster_count == 0)
 		cluster_count = 1;
 
@@ -660,13 +656,16 @@ process_inode_chunk(
 
 		bplist[bp_index] = libxfs_readbuf(mp->m_dev,
 					XFS_AGB_TO_DADDR(mp, agno, agbno),
-					XFS_FSB_TO_BB(mp, blks_per_cluster), 0,
+					XFS_FSB_TO_BB(mp,
+						M_IGEO(mp)->blocks_per_cluster),
+					0,
 					&xfs_inode_buf_ops);
 		if (!bplist[bp_index]) {
 			do_warn(_("cannot read inode %" PRIu64 ", disk block %" PRId64 ", cnt %d\n"),
 				XFS_AGINO_TO_INO(mp, agno, first_irec->ino_startnum),
 				XFS_AGB_TO_DADDR(mp, agno, agbno),
-				XFS_FSB_TO_BB(mp, blks_per_cluster));
+				XFS_FSB_TO_BB(mp,
+					M_IGEO(mp)->blocks_per_cluster));
 			while (bp_index > 0) {
 				bp_index--;
 				libxfs_putbuf(bplist[bp_index]);
@@ -682,8 +681,9 @@ process_inode_chunk(
 		bplist[bp_index]->b_ops = &xfs_inode_buf_ops;
 
 next_readbuf:
-		irec_offset += mp->m_sb.sb_inopblock * blks_per_cluster;
-		agbno += blks_per_cluster;
+		irec_offset += mp->m_sb.sb_inopblock *
+				M_IGEO(mp)->blocks_per_cluster;
+		agbno += M_IGEO(mp)->blocks_per_cluster;
 	}
 	agbno = XFS_AGINO_TO_AGBNO(mp, first_irec->ino_startnum);
 
@@ -743,7 +743,7 @@ next_readbuf:
 				ASSERT(ino_rec->ino_startnum == agino + 1);
 				irec_offset = 0;
 			}
-			if (cluster_offset == inodes_per_cluster) {
+			if (cluster_offset == M_IGEO(mp)->inodes_per_cluster) {
 				bp_index++;
 				cluster_offset = 0;
 			}
@@ -962,7 +962,7 @@ process_next:
 			ASSERT(ino_rec->ino_startnum == agino + 1);
 			irec_offset = 0;
 		}
-		if (cluster_offset == inodes_per_cluster) {
+		if (cluster_offset == M_IGEO(mp)->inodes_per_cluster) {
 			bp_index++;
 			cluster_offset = 0;
 		}

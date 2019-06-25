@@ -656,16 +656,14 @@ set_cur_inode(
 	    M_IGEO(mp)->inoalign_mask) {
 		xfs_agblock_t	chunk_agbno;
 		xfs_agblock_t	offset_agbno;
-		int		blks_per_cluster;
 
-		blks_per_cluster = M_IGEO(mp)->inode_cluster_size >>
-							mp->m_sb.sb_blocklog;
 		offset_agbno = agbno & M_IGEO(mp)->inoalign_mask;
 		chunk_agbno = agbno - offset_agbno;
 		cluster_agbno = chunk_agbno +
-			((offset_agbno / blks_per_cluster) * blks_per_cluster);
+			((offset_agbno / M_IGEO(mp)->blocks_per_cluster) *
+			 M_IGEO(mp)->blocks_per_cluster);
 		offset += ((agbno - cluster_agbno) * mp->m_sb.sb_inopblock);
-		numblks = XFS_FSB_TO_BB(mp, blks_per_cluster);
+		numblks = XFS_FSB_TO_BB(mp, M_IGEO(mp)->blocks_per_cluster);
 	} else
 		cluster_agbno = agbno;
 
