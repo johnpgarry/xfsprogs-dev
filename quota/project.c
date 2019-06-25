@@ -43,7 +43,7 @@ project_help(void)
 " and subdirectories below it (i.e. a tree) can be restricted to using a\n"
 " subset of the available space in the filesystem.\n"
 "\n"
-" A managed tree must be setup initially using the -c option with a project.\n"
+" A managed tree must be setup initially using the -s option with a project.\n"
 " The specified project name or identifier is matched to one or more trees\n"
 " defined in /etc/projects, and these trees are then recursively descended\n"
 " to mark the affected inodes as being part of that tree - which sets inode\n"
