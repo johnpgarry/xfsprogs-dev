@@ -363,7 +363,7 @@ xfs_scrub_metadata(
 		background_sleep();
 
 		/* Check the item. */
-		fix = xfs_check_metadata(ctx, ctx->mnt_fd, &meta, false);
+		fix = xfs_check_metadata(ctx, ctx->mnt.fd, &meta, false);
 		progress_add(1);
 		switch (fix) {
 		case CHECK_ABORT:
@@ -399,7 +399,7 @@ xfs_scrub_primary_super(
 	enum check_outcome		fix;
 
 	/* Check the item. */
-	fix = xfs_check_metadata(ctx, ctx->mnt_fd, &meta, false);
+	fix = xfs_check_metadata(ctx, ctx->mnt.fd, &meta, false);
 	switch (fix) {
 	case CHECK_ABORT:
 		return false;
@@ -460,7 +460,7 @@ xfs_scrub_estimate_ag_work(
 		switch (sc->type) {
 		case ST_AGHEADER:
 		case ST_PERAG:
-			estimate += ctx->geo.agcount;
+			estimate += ctx->mnt.fsgeom.agcount;
 			break;
 		case ST_FS:
 			estimate++;
@@ -605,9 +605,9 @@ __xfs_scrub_test(
 	if (debug_tweak_on("XFS_SCRUB_NO_KERNEL"))
 		return false;
 	if (debug_tweak_on("XFS_SCRUB_FORCE_REPAIR") && !injected) {
-		inject.fd = ctx->mnt_fd;
+		inject.fd = ctx->mnt.fd;
 		inject.errtag = XFS_ERRTAG_FORCE_SCRUB_REPAIR;
-		error = ioctl(ctx->mnt_fd, XFS_IOC_ERROR_INJECTION, &inject);
+		error = ioctl(ctx->mnt.fd, XFS_IOC_ERROR_INJECTION, &inject);
 		if (error == 0)
 			injected = true;
 	}
@@ -615,7 +615,7 @@ __xfs_scrub_test(
 	meta.sm_type = type;
 	if (repair)
 		meta.sm_flags |= XFS_SCRUB_IFLAG_REPAIR;
-	error = ioctl(ctx->mnt_fd, XFS_IOC_SCRUB_METADATA, &meta);
+	error = ioctl(ctx->mnt.fd, XFS_IOC_SCRUB_METADATA, &meta);
 	if (!error)
 		return true;
 	switch (errno) {
