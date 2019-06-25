@@ -28,6 +28,7 @@ enum scrub_type {
 	ST_PERAG,	/* per-AG metadata */
 	ST_FS,		/* per-FS metadata */
 	ST_INODE,	/* per-inode metadata */
+	ST_SUMMARY,	/* summary counters (phase 7) */
 };
 struct scrub_descr {
 	const char	*name;
@@ -84,6 +85,8 @@ static const struct scrub_descr scrubbers[XFS_SCRUB_TYPE_NR] = {
 		{"group quotas",			ST_FS},
 	[XFS_SCRUB_TYPE_PQUOTA] =
 		{"project quotas",			ST_FS},
+	[XFS_SCRUB_TYPE_FSCOUNTERS] =
+		{"filesystem summary counters",		ST_SUMMARY},
 };
 
 /* Format a scrub description. */
@@ -105,6 +108,7 @@ format_scrub_descr(
 				(uint64_t)meta->sm_ino, _(sc->name));
 		break;
 	case ST_FS:
+	case ST_SUMMARY:
 		snprintf(buf, buflen, _("%s"), _(sc->name));
 		break;
 	case ST_NONE:
@@ -444,6 +448,15 @@ xfs_scrub_fs_metadata(
 	struct xfs_action_list		*alist)
 {
 	return xfs_scrub_metadata(ctx, ST_FS, 0, alist);
+}
+
+/* Scrub FS summary metadata. */
+bool
+xfs_scrub_fs_summary(
+	struct scrub_ctx		*ctx,
+	struct xfs_action_list		*alist)
+{
+	return xfs_scrub_metadata(ctx, ST_SUMMARY, 0, alist);
 }
 
 /* How many items do we have to check? */

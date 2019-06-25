@@ -107,6 +107,18 @@ bool
 xfs_repair_fs(
 	struct scrub_ctx		*ctx)
 {
+	bool				moveon;
+
+	/*
+	 * Check the summary counters early.  Normally we do this during phase
+	 * seven, but some of the cross-referencing requires fairly-accurate
+	 * counters, so counter repairs have to be put on the list now so that
+	 * they get fixed before we stop retrying unfixed metadata repairs.
+	 */
+	moveon = xfs_scrub_fs_summary(ctx, &ctx->action_lists[0]);
+	if (!moveon)
+		return false;
+
 	return xfs_process_action_items(ctx);
 }
 
