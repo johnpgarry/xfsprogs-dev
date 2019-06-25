@@ -4053,17 +4053,8 @@ main(
 	/* Print the intended geometry of the fs. */
 	if (!quiet || dry_run) {
 		struct xfs_fsop_geom	geo;
-		int			error;
 
-		error = -libxfs_fs_geometry(sbp, &geo,
-				XFS_FS_GEOM_MAX_STRUCT_VER);
-		if (error) {
-			fprintf(stderr,
-	_("%s: failed to generate filesystem geometry\n"),
-				progname);
-			exit(1);
-		}
-
+		libxfs_fs_geometry(sbp, &geo, XFS_FS_GEOM_MAX_STRUCT_VER);
 		xfs_report_geom(&geo, dfile, logfile, rtfile);
 		if (dry_run)
 			exit(0);
