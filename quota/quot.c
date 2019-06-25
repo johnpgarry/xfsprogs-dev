@@ -11,6 +11,7 @@
 #include <grp.h>
 #include "init.h"
 #include "quota.h"
+#include "xfrog.h"
 
 typedef struct du {
 	struct du	*next;
@@ -124,13 +125,13 @@ quot_bulkstat_add(
 static void
 quot_bulkstat_mount(
 	char			*fsdir,
-	uint			flags)
+	unsigned int		flags)
 {
-	xfs_fsop_bulkreq_t	bulkreq;
-	xfs_bstat_t		*buf;
-	__u64			last = 0;
-	__s32			count;
-	int			i, sts, fsfd;
+	struct xfs_fd		fsxfd = XFS_FD_INIT_EMPTY;
+	struct xfs_bstat	*buf;
+	uint64_t		last = 0;
+	uint32_t		count;
+	int			i, sts;
 	du_t			**dp;
 
 	/*
@@ -145,8 +146,8 @@ quot_bulkstat_mount(
 			*dp = NULL;
 	ndu[0] = ndu[1] = ndu[2] = 0;
 
-	fsfd = open(fsdir, O_RDONLY);
-	if (fsfd < 0) {
+	fsxfd.fd = open(fsdir, O_RDONLY);
+	if (fsxfd.fd < 0) {
 		perror(fsdir);
 		return;
 	}
@@ -154,16 +155,12 @@ quot_bulkstat_mount(
 	buf = (xfs_bstat_t *)calloc(NBSTAT, sizeof(xfs_bstat_t));
 	if (!buf) {
 		perror("calloc");
-		close(fsfd);
+		xfrog_close(&fsxfd);
 		return;
 	}
 
-	bulkreq.lastip = &last;
-	bulkreq.icount = NBSTAT;
-	bulkreq.ubuffer = buf;
-	bulkreq.ocount = &count;
-
-	while ((sts = xfsctl(fsdir, fsfd, XFS_IOC_FSBULKSTAT, &bulkreq)) == 0) {
+	while ((sts = xfrog_bulkstat(&fsxfd, &last, NBSTAT, buf,
+				&count)) == 0) {
 		if (count == 0)
 			break;
 		for (i = 0; i < count; i++)
@@ -172,7 +169,7 @@ quot_bulkstat_mount(
 	if (sts < 0)
 		perror("XFS_IOC_FSBULKSTAT"),
 	free(buf);
-	close(fsfd);
+	xfrog_close(&fsxfd);
 }
 
 static int
