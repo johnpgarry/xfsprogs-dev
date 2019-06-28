@@ -47,7 +47,9 @@ struct xfs_fsop_geom {
 	__u32         logsunit;
 	/* struct xfs_fsop_geom_v4 stops here. */
 
-	__u64         reserved[18];
+	__u32         sick;
+	__u32         checked;
+	__u64         reserved[17];
 };
 .fi
 .in
@@ -130,6 +132,13 @@ This field is meaningful only if the flag
 .B  XFS_FSOP_GEOM_FLAGS_LOGV2
 is set.
 .PP
+The fields
+.IR sick " and " checked
+indicate the relative health of various whole-filesystem metadata.
+Please see the section
+.B XFS METADATA HEALTH REPORTING
+for more details.
+.PP
 .I reserved
 is set to zero.
 .SH FILESYSTEM FEATURE FLAGS
@@ -202,6 +211,51 @@ Filesystem stores reverse mappings of blocks to owners.
 .TP
 .B XFS_FSOP_GEOM_FLAGS_REFLINK
 Filesystem supports sharing blocks between files.
+.RE
+.SH XFS METADATA HEALTH REPORTING
+.PP
+The online filesystem checking utility scans metadata and records what it
+finds in the kernel incore state.
+The following scheme is used for userspace to read the incore health status
+of the filesystem:
+
+.IP \[bu] 2
+If a given sick flag is set in
+.IR sick ,
+then that piece of metadata has been observed to be damaged.
+The same bit should be set in
+.IR checked .
+.IP \[bu]
+If a given sick flag is set in
+.I checked
+but is not set in
+.IR sick ,
+then that piece of metadata has been checked and is not faulty.
+.IP \[bu]
+If a given sick flag is not set in
+.IR checked ,
+then no conclusion can be made.
+.PP
+The following flags apply to these fields:
+.RS 0.4i
+.TP
+.B XFS_FSOP_GEOM_SICK_COUNTERS
+Inode and space summary counters.
+.TP
+.B XFS_FSOP_GEOM_SICK_UQUOTA
+User quota information.
+.TP
+.B XFS_FSOP_GEOM_SICK_GQUOTA
+Group quota information.
+.TP
+.B XFS_FSOP_GEOM_SICK_PQUOTA
+Project quota information.
+.TP
+.B XFS_FSOP_GEOM_SICK_RT_BITMAP
+Free space bitmap for the realtime device.
+.TP
+.B XFS_FSOP_GEOM_SICK_RT_SUMMARY
+Free space summary for the realtime device.
 .RE
 
 .SH RETURN VALUE
