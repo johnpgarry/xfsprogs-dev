@@ -1045,7 +1045,7 @@ _("Warning:  project quota information would be cleared.\n"
 	/*
 	 * Clear the quota flags if they're on.
 	 */
-	sbp = libxfs_getsb(mp, 0);
+	sbp = libxfs_getsb(mp);
 	if (!sbp)
 		do_error(_("couldn't get superblock\n"));
 
