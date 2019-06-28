@@ -648,37 +648,6 @@ libxfs_mount(
 
 	xfs_sb_mount_common(mp, sb);
 
-	xfs_alloc_compute_maxlevels(mp);
-	xfs_bmap_compute_maxlevels(mp, XFS_DATA_FORK);
-	xfs_bmap_compute_maxlevels(mp, XFS_ATTR_FORK);
-	xfs_ialloc_compute_maxlevels(mp);
-	xfs_rmapbt_compute_maxlevels(mp);
-	xfs_refcountbt_compute_maxlevels(mp);
-
-	if (sbp->sb_imax_pct) {
-		/* Make sure the maximum inode count is a multiple of the
-		 * units we allocate inodes in.
-		 */
-		M_IGEO(mp)->maxicount = (sbp->sb_dblocks * sbp->sb_imax_pct) / 100;
-		M_IGEO(mp)->maxicount = XFS_FSB_TO_INO(mp,
-				(M_IGEO(mp)->maxicount / M_IGEO(mp)->ialloc_blks) *
-				 M_IGEO(mp)->ialloc_blks);
-	} else
-		M_IGEO(mp)->maxicount = 0;
-
-	M_IGEO(mp)->inode_cluster_size = XFS_INODE_BIG_CLUSTER_SIZE;
-	if (xfs_sb_version_hascrc(&mp->m_sb)) {
-		int	new_size = M_IGEO(mp)->inode_cluster_size;
-
-		new_size *= mp->m_sb.sb_inodesize / XFS_DINODE_MIN_SIZE;
-		if (mp->m_sb.sb_inoalignmt >= XFS_B_TO_FSBT(mp, new_size))
-			M_IGEO(mp)->inode_cluster_size = new_size;
-	}
-	M_IGEO(mp)->blocks_per_cluster = xfs_icluster_size_fsb(mp);
-	M_IGEO(mp)->inodes_per_cluster = XFS_FSB_TO_INO(mp, M_IGEO(mp)->blocks_per_cluster);
-	M_IGEO(mp)->cluster_align = xfs_ialloc_cluster_alignment(mp);
-	M_IGEO(mp)->cluster_align_inodes = XFS_FSB_TO_INO(mp, M_IGEO(mp)->cluster_align);
-
 	/*
 	 * Set whether we're using stripe alignment.
 	 */
@@ -687,15 +656,13 @@ libxfs_mount(
 		mp->m_swidth = sbp->sb_width;
 	}
 
-	/*
-	 * Set whether we're using inode alignment.
-	 */
-	if (xfs_sb_version_hasalign(&mp->m_sb) &&
-	    mp->m_sb.sb_inoalignmt >=
-	    XFS_B_TO_FSBT(mp, M_IGEO(mp)->inode_cluster_size))
-		M_IGEO(mp)->inoalign_mask = mp->m_sb.sb_inoalignmt - 1;
-	else
-		M_IGEO(mp)->inoalign_mask = 0;
+	xfs_alloc_compute_maxlevels(mp);
+	xfs_bmap_compute_maxlevels(mp, XFS_DATA_FORK);
+	xfs_bmap_compute_maxlevels(mp, XFS_ATTR_FORK);
+	xfs_ialloc_setup_geometry(mp);
+	xfs_rmapbt_compute_maxlevels(mp);
+	xfs_refcountbt_compute_maxlevels(mp);
+
 	/*
 	 * If we are using stripe alignment, check whether
 	 * the stripe unit is a multiple of the inode alignment
