@@ -178,7 +178,7 @@ extern void	libxfs_putbuf (xfs_buf_t *);
 
 extern void	libxfs_readbuf_verify(struct xfs_buf *bp,
 			const struct xfs_buf_ops *ops);
-extern xfs_buf_t *libxfs_getsb(struct xfs_mount *, int);
+extern xfs_buf_t *libxfs_getsb(struct xfs_mount *);
 extern void	libxfs_bcache_purge(void);
 extern void	libxfs_bcache_free(void);
 extern void	libxfs_bcache_flush(void);

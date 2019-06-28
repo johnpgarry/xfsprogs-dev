@@ -2177,7 +2177,7 @@ sync_sb(xfs_mount_t *mp)
 {
 	xfs_buf_t	*bp;
 
-	bp = libxfs_getsb(mp, 0);
+	bp = libxfs_getsb(mp);
 	if (!bp)
 		do_error(_("couldn't get superblock\n"));
 

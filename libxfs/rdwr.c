@@ -476,10 +476,10 @@ libxfs_trace_putbuf(const char *func, const char *file, int line, xfs_buf_t *bp)
 
 
 xfs_buf_t *
-libxfs_getsb(xfs_mount_t *mp, int flags)
+libxfs_getsb(xfs_mount_t *mp)
 {
 	return libxfs_readbuf(mp->m_ddev_targp, XFS_SB_DADDR,
-				XFS_FSS_TO_BB(mp, 1), flags, &xfs_sb_buf_ops);
+				XFS_FSS_TO_BB(mp, 1), 0, &xfs_sb_buf_ops);
 }
 
 kmem_zone_t			*xfs_buf_zone;
