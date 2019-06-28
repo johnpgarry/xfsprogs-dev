@@ -3571,7 +3571,7 @@ initialise_ag_headers(
 	buf->b_ops = &xfs_bnobt_buf_ops;
 	block = XFS_BUF_TO_BLOCK(buf);
 	memset(block, 0, cfg->blocksize);
-	libxfs_btree_init_block(mp, buf, XFS_BTNUM_BNO, 0, 1, agno, 0);
+	libxfs_btree_init_block(mp, buf, XFS_BTNUM_BNO, 0, 1, agno);
 
 	arec = XFS_ALLOC_REC_ADDR(mp, block, 1);
 	arec->ar_startblock = cpu_to_be32(libxfs_prealloc_blocks(mp));
@@ -3623,7 +3623,7 @@ initialise_ag_headers(
 	buf->b_ops = &xfs_cntbt_buf_ops;
 	block = XFS_BUF_TO_BLOCK(buf);
 	memset(block, 0, cfg->blocksize);
-	libxfs_btree_init_block(mp, buf, XFS_BTNUM_CNT, 0, 1, agno, 0);
+	libxfs_btree_init_block(mp, buf, XFS_BTNUM_CNT, 0, 1, agno);
 
 	arec = XFS_ALLOC_REC_ADDR(mp, block, 1);
 	arec->ar_startblock = cpu_to_be32(libxfs_prealloc_blocks(mp));
@@ -3667,7 +3667,7 @@ initialise_ag_headers(
 
 		block = XFS_BUF_TO_BLOCK(buf);
 		memset(block, 0, cfg->blocksize);
-		libxfs_btree_init_block(mp, buf, XFS_BTNUM_REFC, 0, 0, agno, 0);
+		libxfs_btree_init_block(mp, buf, XFS_BTNUM_REFC, 0, 0, agno);
 		libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 	}
 
@@ -3680,7 +3680,7 @@ initialise_ag_headers(
 	buf->b_ops = &xfs_inobt_buf_ops;
 	block = XFS_BUF_TO_BLOCK(buf);
 	memset(block, 0, cfg->blocksize);
-	libxfs_btree_init_block(mp, buf, XFS_BTNUM_INO, 0, 0, agno, 0);
+	libxfs_btree_init_block(mp, buf, XFS_BTNUM_INO, 0, 0, agno);
 	libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 
 	/*
@@ -3693,7 +3693,7 @@ initialise_ag_headers(
 		buf->b_ops = &xfs_finobt_buf_ops;
 		block = XFS_BUF_TO_BLOCK(buf);
 		memset(block, 0, cfg->blocksize);
-		libxfs_btree_init_block(mp, buf, XFS_BTNUM_FINO, 0, 0, agno, 0);
+		libxfs_btree_init_block(mp, buf, XFS_BTNUM_FINO, 0, 0, agno);
 		libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 	}
 
@@ -3708,7 +3708,7 @@ initialise_ag_headers(
 		block = XFS_BUF_TO_BLOCK(buf);
 		memset(block, 0, cfg->blocksize);
 
-		libxfs_btree_init_block(mp, buf, XFS_BTNUM_RMAP, 0, 0, agno, 0);
+		libxfs_btree_init_block(mp, buf, XFS_BTNUM_RMAP, 0, 0, agno);
 
 		/*
 		 * mark the AG header regions as static metadata
