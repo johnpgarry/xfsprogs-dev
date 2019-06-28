@@ -664,4 +664,6 @@ int xfs_bmap_last_extent(struct xfs_trans *tp, struct xfs_inode *ip,
 			 int whichfork, struct xfs_bmbt_irec *rec,
 			 int *is_empty);
 
+#define xfs_mod_delalloc(mp, delta)	do { } while (0)
+
 #endif	/* __LIBXFS_INTERNAL_XFS_H__ */
