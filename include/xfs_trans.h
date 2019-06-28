@@ -99,6 +99,7 @@ void	libxfs_trans_brelse(struct xfs_trans *, struct xfs_buf *);
 void	libxfs_trans_binval(struct xfs_trans *, struct xfs_buf *);
 void	libxfs_trans_bjoin(struct xfs_trans *, struct xfs_buf *);
 void	libxfs_trans_bhold(struct xfs_trans *, struct xfs_buf *);
+void	libxfs_trans_bhold_release(struct xfs_trans *, struct xfs_buf *);
 void	libxfs_trans_dirty_buf(struct xfs_trans *, struct xfs_buf *);
 void	libxfs_trans_log_buf(struct xfs_trans *, struct xfs_buf *,
 				uint, uint);
