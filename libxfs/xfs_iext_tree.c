@@ -13,6 +13,7 @@
 #include "xfs_inode.h"
 #include "xfs_inode_fork.h"
 #include "xfs_trans_resv.h"
+#include "xfs_shared.h"
 #include "xfs_mount.h"
 #include "xfs_bmap.h"
 #include "xfs_trace.h"
