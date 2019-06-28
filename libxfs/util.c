@@ -746,3 +746,4 @@ hweight64(__u64 w)
 }
 
 void xfs_fs_mark_healthy(struct xfs_mount *mp, unsigned int mask) { }
+void xfs_ag_geom_health(struct xfs_perag *pag, struct xfs_ag_geometry *ageo) { }
