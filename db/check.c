@@ -4396,9 +4396,9 @@ scanfunc_ino(
 	int			ioff;
 
 	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
-		blks_per_buf = mp->m_blocks_per_cluster;
+		blks_per_buf = M_IGEO(mp)->blocks_per_cluster;
 	else
-		blks_per_buf = mp->m_ialloc_blks;
+		blks_per_buf = M_IGEO(mp)->ialloc_blks;
 	inodes_per_buf = min(XFS_FSB_TO_INO(mp, blks_per_buf),
 			     XFS_INODES_PER_CHUNK);
 
@@ -4418,12 +4418,12 @@ scanfunc_ino(
 	}
 	set_dbmap(seqno, bno, 1, DBM_BTINO, seqno, bno);
 	if (level == 0) {
-		if (be16_to_cpu(block->bb_numrecs) > mp->m_inobt_mxr[0] ||
-		    (isroot == 0 && be16_to_cpu(block->bb_numrecs) < mp->m_inobt_mnr[0])) {
+		if (be16_to_cpu(block->bb_numrecs) > M_IGEO(mp)->inobt_mxr[0] ||
+		    (isroot == 0 && be16_to_cpu(block->bb_numrecs) < M_IGEO(mp)->inobt_mnr[0])) {
 			dbprintf(_("bad btree nrecs (%u, min=%u, max=%u) in "
 				 "inobt block %u/%u\n"),
-				be16_to_cpu(block->bb_numrecs), mp->m_inobt_mnr[0],
-				mp->m_inobt_mxr[0], seqno, bno);
+				be16_to_cpu(block->bb_numrecs), M_IGEO(mp)->inobt_mnr[0],
+				M_IGEO(mp)->inobt_mxr[0], seqno, bno);
 			serious_error++;
 			return;
 		}
@@ -4432,7 +4432,7 @@ scanfunc_ino(
 			agino = be32_to_cpu(rp[i].ir_startino);
 			agbno = XFS_AGINO_TO_AGBNO(mp, agino);
 			off = XFS_AGINO_TO_OFFSET(mp, agino);
-			end_agbno = agbno + mp->m_ialloc_blks;
+			end_agbno = agbno + M_IGEO(mp)->ialloc_blks;
 			if (off == 0) {
 				if ((sbversion & XFS_SB_VERSION_ALIGNBIT) &&
 				    mp->m_sb.sb_inoalignmt &&
@@ -4504,16 +4504,16 @@ next_buf:
 		}
 		return;
 	}
-	if (be16_to_cpu(block->bb_numrecs) > mp->m_inobt_mxr[1] ||
-	    (isroot == 0 && be16_to_cpu(block->bb_numrecs) < mp->m_inobt_mnr[1])) {
+	if (be16_to_cpu(block->bb_numrecs) > M_IGEO(mp)->inobt_mxr[1] ||
+	    (isroot == 0 && be16_to_cpu(block->bb_numrecs) < M_IGEO(mp)->inobt_mnr[1])) {
 		dbprintf(_("bad btree nrecs (%u, min=%u, max=%u) in inobt block "
 			 "%u/%u\n"),
-			be16_to_cpu(block->bb_numrecs), mp->m_inobt_mnr[1],
-			mp->m_inobt_mxr[1], seqno, bno);
+			be16_to_cpu(block->bb_numrecs), M_IGEO(mp)->inobt_mnr[1],
+			M_IGEO(mp)->inobt_mxr[1], seqno, bno);
 		serious_error++;
 		return;
 	}
-	pp = XFS_INOBT_PTR_ADDR(mp, block, 1, mp->m_inobt_mxr[1]);
+	pp = XFS_INOBT_PTR_ADDR(mp, block, 1, M_IGEO(mp)->inobt_mxr[1]);
 	for (i = 0; i < be16_to_cpu(block->bb_numrecs); i++)
 		scan_sbtree(agf, be32_to_cpu(pp[i]), level, 0, scanfunc_ino, TYP_INOBT);
 }
@@ -4539,9 +4539,9 @@ scanfunc_fino(
 	int			ioff;
 
 	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
-		blks_per_buf = mp->m_blocks_per_cluster;
+		blks_per_buf = M_IGEO(mp)->blocks_per_cluster;
 	else
-		blks_per_buf = mp->m_ialloc_blks;
+		blks_per_buf = M_IGEO(mp)->ialloc_blks;
 	inodes_per_buf = min(XFS_FSB_TO_INO(mp, blks_per_buf),
 			     XFS_INODES_PER_CHUNK);
 
@@ -4561,12 +4561,12 @@ scanfunc_fino(
 	}
 	set_dbmap(seqno, bno, 1, DBM_BTFINO, seqno, bno);
 	if (level == 0) {
-		if (be16_to_cpu(block->bb_numrecs) > mp->m_inobt_mxr[0] ||
-		    (isroot == 0 && be16_to_cpu(block->bb_numrecs) < mp->m_inobt_mnr[0])) {
+		if (be16_to_cpu(block->bb_numrecs) > M_IGEO(mp)->inobt_mxr[0] ||
+		    (isroot == 0 && be16_to_cpu(block->bb_numrecs) < M_IGEO(mp)->inobt_mnr[0])) {
 			dbprintf(_("bad btree nrecs (%u, min=%u, max=%u) in "
 				 "finobt block %u/%u\n"),
-				be16_to_cpu(block->bb_numrecs), mp->m_inobt_mnr[0],
-				mp->m_inobt_mxr[0], seqno, bno);
+				be16_to_cpu(block->bb_numrecs), M_IGEO(mp)->inobt_mnr[0],
+				M_IGEO(mp)->inobt_mxr[0], seqno, bno);
 			serious_error++;
 			return;
 		}
@@ -4575,7 +4575,7 @@ scanfunc_fino(
 			agino = be32_to_cpu(rp[i].ir_startino);
 			agbno = XFS_AGINO_TO_AGBNO(mp, agino);
 			off = XFS_AGINO_TO_OFFSET(mp, agino);
-			end_agbno = agbno + mp->m_ialloc_blks;
+			end_agbno = agbno + M_IGEO(mp)->ialloc_blks;
 			if (off == 0) {
 				if ((sbversion & XFS_SB_VERSION_ALIGNBIT) &&
 				    mp->m_sb.sb_inoalignmt &&
@@ -4604,16 +4604,16 @@ next_buf:
 		}
 		return;
 	}
-	if (be16_to_cpu(block->bb_numrecs) > mp->m_inobt_mxr[1] ||
-	    (isroot == 0 && be16_to_cpu(block->bb_numrecs) < mp->m_inobt_mnr[1])) {
+	if (be16_to_cpu(block->bb_numrecs) > M_IGEO(mp)->inobt_mxr[1] ||
+	    (isroot == 0 && be16_to_cpu(block->bb_numrecs) < M_IGEO(mp)->inobt_mnr[1])) {
 		dbprintf(_("bad btree nrecs (%u, min=%u, max=%u) in finobt block "
 			 "%u/%u\n"),
-			be16_to_cpu(block->bb_numrecs), mp->m_inobt_mnr[1],
-			mp->m_inobt_mxr[1], seqno, bno);
+			be16_to_cpu(block->bb_numrecs), M_IGEO(mp)->inobt_mnr[1],
+			M_IGEO(mp)->inobt_mxr[1], seqno, bno);
 		serious_error++;
 		return;
 	}
-	pp = XFS_INOBT_PTR_ADDR(mp, block, 1, mp->m_inobt_mxr[1]);
+	pp = XFS_INOBT_PTR_ADDR(mp, block, 1, M_IGEO(mp)->inobt_mxr[1]);
 	for (i = 0; i < be16_to_cpu(block->bb_numrecs); i++)
 		scan_sbtree(agf, be32_to_cpu(pp[i]), level, 0, scanfunc_fino, TYP_FINOBT);
 }

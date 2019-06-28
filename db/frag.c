@@ -474,9 +474,9 @@ scanfunc_ino(
 	int			ioff;
 
 	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
-		blks_per_buf = mp->m_blocks_per_cluster;
+		blks_per_buf = M_IGEO(mp)->blocks_per_cluster;
 	else
-		blks_per_buf = mp->m_ialloc_blks;
+		blks_per_buf = M_IGEO(mp)->ialloc_blks;
 	inodes_per_buf = min(XFS_FSB_TO_INO(mp, blks_per_buf),
 			     XFS_INODES_PER_CHUNK);
 
@@ -486,7 +486,7 @@ scanfunc_ino(
 			agino = be32_to_cpu(rp[i].ir_startino);
 			agbno = XFS_AGINO_TO_AGBNO(mp, agino);
 			off = XFS_AGINO_TO_OFFSET(mp, agino);
-			end_agbno = agbno + mp->m_ialloc_blks;
+			end_agbno = agbno + M_IGEO(mp)->ialloc_blks;
 
 			push_cur();
 			ioff = 0;
@@ -521,7 +521,7 @@ next_buf:
 		}
 		return;
 	}
-	pp = XFS_INOBT_PTR_ADDR(mp, block, 1, mp->m_inobt_mxr[1]);
+	pp = XFS_INOBT_PTR_ADDR(mp, block, 1, M_IGEO(mp)->inobt_mxr[1]);
 	for (i = 0; i < be16_to_cpu(block->bb_numrecs); i++)
 		scan_sbtree(agf, be32_to_cpu(pp[i]), level, scanfunc_ino,
 								TYP_INOBT);

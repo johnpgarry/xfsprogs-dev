@@ -56,12 +56,6 @@ typedef struct xfs_mount {
 	uint8_t			m_blkbb_log;	/* blocklog - BBSHIFT */
 	uint8_t			m_sectbb_log;	/* sectorlog - BBSHIFT */
 	uint8_t			m_agno_log;	/* log #ag's */
-	uint8_t			m_agino_log;	/* #bits for agino in inum */
-	uint			m_inode_cluster_size;/* min inode buf size */
-	unsigned int		m_inodes_per_cluster;
-	unsigned int		m_blocks_per_cluster;
-	unsigned int		m_cluster_align;
-	unsigned int		m_cluster_align_inodes;
 	uint			m_blockmask;	/* sb_blocksize-1 */
 	uint			m_blockwsize;	/* sb_blocksize in words */
 	uint			m_blockwmask;	/* blockwsize-1 */
@@ -69,15 +63,12 @@ typedef struct xfs_mount {
 	uint			m_alloc_mnr[2];	/* XFS_ALLOC_BLOCK_MINRECS */
 	uint			m_bmap_dmxr[2];	/* XFS_BMAP_BLOCK_DMAXRECS */
 	uint			m_bmap_dmnr[2];	/* XFS_BMAP_BLOCK_DMINRECS */
-	uint			m_inobt_mxr[2];	/* XFS_INOBT_BLOCK_MAXRECS */
-	uint			m_inobt_mnr[2];	/* XFS_INOBT_BLOCK_MINRECS */
 	uint			m_rmap_mxr[2];	/* max rmap btree records */
 	uint			m_rmap_mnr[2];	/* min rmap btree records */
 	uint			m_refc_mxr[2];	/* max refc btree records */
 	uint			m_refc_mnr[2];	/* min refc btree records */
 	uint			m_ag_maxlevels;	/* XFS_AG_MAXLEVELS */
 	uint			m_bm_maxlevels[2]; /* XFS_BM_MAXLEVELS */
-	uint			m_in_maxlevels;	/* XFS_IN_MAXLEVELS */
 	uint			m_rmap_maxlevels; /* max rmap btree levels */
 	uint			m_refc_maxlevels; /* max refc btree levels */
 	xfs_extlen_t		m_ag_prealloc_blocks; /* reserved ag blocks */
@@ -88,14 +79,7 @@ typedef struct xfs_mount {
 	bool			m_finobt_nores; /* no per-AG finobt resv. */
 	uint			m_qflags;	/* quota status flags */
 	uint			m_attroffset;	/* inode attribute offset */
-	int			m_ialloc_inos;	/* inodes in inode allocation */
-	int			m_ialloc_blks;	/* blocks in inode allocation */
-	int			m_ialloc_min_blks; /* min blocks in sparse inode
-						    * allocation */
-	int			m_litino;	/* size of inode union area */
-	int			m_inoalign_mask;/* mask sb_inoalignmt if used */
 	struct xfs_trans_resv	m_resv;		/* precomputed res values */
-	uint64_t		m_maxicount;	/* maximum inode count */
 	int			m_dalign;	/* stripe unit */
 	int			m_swidth;	/* stripe width */
 	int			m_sinoalign;	/* stripe unit inode alignmnt */
@@ -106,6 +90,7 @@ typedef struct xfs_mount {
 	const struct xfs_dir_ops *m_dir_inode_ops; /* vector of dir inode ops */
 	const struct xfs_dir_ops *m_nondir_inode_ops; /* !dir inode ops */
 #define M_DIROPS(mp)	((mp)->m_dir_inode_ops)
+	struct xfs_ino_geometry	m_ino_geo;	/* inode geometry */
 
 	/*
 	 * anonymous struct to allow xfs_dquot_buf.c to compile.
@@ -122,6 +107,8 @@ typedef struct xfs_mount {
 	 */
 	struct xlog		*m_log;
 } xfs_mount_t;
+
+#define M_IGEO(mp)		(&(mp)->m_ino_geo)
 
 /* per-AG block reservation data structures*/
 enum xfs_ag_resv_type {

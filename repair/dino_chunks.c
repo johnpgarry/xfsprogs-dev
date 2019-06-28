@@ -105,7 +105,7 @@ verify_inode_chunk(xfs_mount_t		*mp,
 	agbno = XFS_INO_TO_AGBNO(mp, ino);
 	*start_ino = NULLFSINO;
 
-	ASSERT(mp->m_ialloc_blks > 0);
+	ASSERT(M_IGEO(mp)->ialloc_blks > 0);
 
 	if (agno == mp->m_sb.sb_agcount - 1)
 		max_agbno = mp->m_sb.sb_dblocks -
@@ -123,7 +123,7 @@ verify_inode_chunk(xfs_mount_t		*mp,
 	 * check for the easy case, inodes per block >= XFS_INODES_PER_CHUNK
 	 * (multiple chunks per block)
 	 */
-	if (mp->m_ialloc_blks == 1)  {
+	if (M_IGEO(mp)->ialloc_blks == 1)  {
 		if (agbno > max_agbno)
 			return 0;
 		if (check_aginode_block(mp, agno, agino) == 0)
@@ -196,7 +196,7 @@ verify_inode_chunk(xfs_mount_t		*mp,
 		 */
 		start_agbno = rounddown(XFS_INO_TO_AGBNO(mp, ino),
 					fs_ino_alignment);
-		end_agbno = start_agbno + mp->m_ialloc_blks;
+		end_agbno = start_agbno + M_IGEO(mp)->ialloc_blks;
 
 		/*
 		 * if this fs has aligned inodes but the end of the
@@ -254,14 +254,14 @@ verify_inode_chunk(xfs_mount_t		*mp,
 	 * a discovered inode chunk completely within that range
 	 * would include the inode passed into us.
 	 */
-	if (mp->m_ialloc_blks > 1)  {
-		if (agino > mp->m_ialloc_inos)
-			start_agbno = agbno - mp->m_ialloc_blks + 1;
+	if (M_IGEO(mp)->ialloc_blks > 1)  {
+		if (agino > M_IGEO(mp)->ialloc_inos)
+			start_agbno = agbno - M_IGEO(mp)->ialloc_blks + 1;
 		else
 			start_agbno = 1;
 	}
 
-	end_agbno = agbno + mp->m_ialloc_blks;
+	end_agbno = agbno + M_IGEO(mp)->ialloc_blks;
 
 	if (end_agbno > max_agbno)
 		end_agbno = max_agbno;
@@ -316,7 +316,7 @@ verify_inode_chunk(xfs_mount_t		*mp,
 
 			start_agbno = XFS_AGINO_TO_AGBNO(mp,
 						irec_p->ino_startnum) +
-						mp->m_ialloc_blks;
+						M_IGEO(mp)->ialloc_blks;
 
 			/*
 			 * we know that the inode we're trying to verify isn't
@@ -324,7 +324,7 @@ verify_inode_chunk(xfs_mount_t		*mp,
 			 * of the gap -- is it within the search range?
 			 */
 			if (irec_next_p != NULL &&
-					agino + mp->m_ialloc_inos >=
+					agino + M_IGEO(mp)->ialloc_inos >=
 						irec_next_p->ino_startnum)
 				end_agbno = XFS_AGINO_TO_AGBNO(mp,
 						irec_next_p->ino_startnum);
@@ -339,7 +339,7 @@ verify_inode_chunk(xfs_mount_t		*mp,
 	 * the inode in question and that the space between them
 	 * is too small for a legal inode chunk
 	 */
-	if (end_agbno - start_agbno < mp->m_ialloc_blks)
+	if (end_agbno - start_agbno < M_IGEO(mp)->ialloc_blks)
 		return(0);
 
 	/*
@@ -383,7 +383,7 @@ verify_inode_chunk(xfs_mount_t		*mp,
 
 	num_blks = chunk_stop_agbno - chunk_start_agbno;
 
-	if (num_blks < mp->m_ialloc_blks || ino_cnt == 0)
+	if (num_blks < M_IGEO(mp)->ialloc_blks || ino_cnt == 0)
 		return 0;
 
 	/*
@@ -399,8 +399,8 @@ verify_inode_chunk(xfs_mount_t		*mp,
 	 * the chunk
 	 */
 
-	if (num_blks % mp->m_ialloc_blks != 0)  {
-		num_blks = rounddown(num_blks, mp->m_ialloc_blks);
+	if (num_blks % M_IGEO(mp)->ialloc_blks != 0)  {
+		num_blks = rounddown(num_blks, M_IGEO(mp)->ialloc_blks);
 		chunk_stop_agbno = chunk_start_agbno + num_blks;
 	}
 
@@ -616,9 +616,9 @@ process_inode_chunk(
 	ASSERT(XFS_AGINO_TO_OFFSET(mp, first_irec->ino_startnum) == 0);
 
 	*bogus = 0;
-	ASSERT(mp->m_ialloc_blks > 0);
+	ASSERT(M_IGEO(mp)->ialloc_blks > 0);
 
-	blks_per_cluster = mp->m_inode_cluster_size >> mp->m_sb.sb_blocklog;
+	blks_per_cluster = M_IGEO(mp)->inode_cluster_size >> mp->m_sb.sb_blocklog;
 	if (blks_per_cluster == 0)
 		blks_per_cluster = 1;
 	cluster_count = XFS_INODES_PER_CHUNK / inodes_per_cluster;
@@ -728,7 +728,7 @@ next_readbuf:
 			icnt++;
 			cluster_offset++;
 
-			if (icnt == mp->m_ialloc_inos &&
+			if (icnt == M_IGEO(mp)->ialloc_inos &&
 					irec_offset == XFS_INODES_PER_CHUNK)  {
 				/*
 				 * done! - finished up irec and block
@@ -924,7 +924,7 @@ process_next:
 		icnt++;
 		cluster_offset++;
 
-		if (icnt == mp->m_ialloc_inos &&
+		if (icnt == M_IGEO(mp)->ialloc_inos &&
 				irec_offset == XFS_INODES_PER_CHUNK)  {
 			/*
 			 * done! - finished up irec and block simultaneously
@@ -1008,7 +1008,7 @@ process_aginodes(
 		 * the next block before we call the processing routines.
 		 */
 		num_inos = XFS_INODES_PER_CHUNK;
-		while (num_inos < mp->m_ialloc_inos && ino_rec != NULL)  {
+		while (num_inos < M_IGEO(mp)->ialloc_inos && ino_rec != NULL)  {
 			/*
 			 * inodes chunks will always be aligned and sized
 			 * correctly
@@ -1017,7 +1017,7 @@ process_aginodes(
 				num_inos += XFS_INODES_PER_CHUNK;
 		}
 
-		ASSERT(num_inos == mp->m_ialloc_inos);
+		ASSERT(num_inos == M_IGEO(mp)->ialloc_inos);
 
 		if (pf_args) {
 			sem_post(&pf_args->ra_count);
@@ -1049,7 +1049,7 @@ process_aginodes(
 			 */
 			num_inos = 0;
 			ino_rec = first_ino_rec;
-			while (num_inos < mp->m_ialloc_inos &&
+			while (num_inos < M_IGEO(mp)->ialloc_inos &&
 					ino_rec != NULL)  {
 				prev_ino_rec = ino_rec;
 
@@ -1233,7 +1233,7 @@ process_uncertain_aginodes(xfs_mount_t *mp, xfs_agnumber_t agno)
 			 * processing may add more records to the
 			 * uncertain inode lists.
 			 */
-			if (process_inode_chunk(mp, agno, mp->m_ialloc_inos,
+			if (process_inode_chunk(mp, agno, M_IGEO(mp)->ialloc_inos,
 						nrec, 1, 0, 0, &bogus))  {
 				/* XXX - i/o error, we've got a problem */
 				abort();
