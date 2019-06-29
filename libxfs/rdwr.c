@@ -553,6 +553,7 @@ __initbuf(xfs_buf_t *bp, struct xfs_buftarg *btp, xfs_daddr_t bno,
 	bp->b_bcount = bytes;
 	bp->b_length = BTOBB(bytes);
 	bp->b_target = btp;
+	bp->b_mount = btp->bt_mount;
 	bp->b_error = 0;
 	if (!bp->b_addr)
 		bp->b_addr = memalign(libxfs_device_alignment(), bytes);
