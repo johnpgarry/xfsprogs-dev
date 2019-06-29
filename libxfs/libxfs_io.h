@@ -58,6 +58,7 @@ typedef struct xfs_buf {
 	unsigned int		b_length;
 	struct xfs_buftarg	*b_target;
 #define b_dev		b_target->dev
+	struct xfs_mount	*b_mount;
 	pthread_mutex_t		b_lock;
 	pthread_t		b_holder;
 	unsigned int		b_recur;
