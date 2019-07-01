@@ -16,6 +16,7 @@
 #include "path.h"
 #include "xfs_scrub.h"
 #include "common.h"
+#include "descr.h"
 #include "unicrash.h"
 
 /*
@@ -501,7 +502,7 @@ unicrash_free(
 static void
 unicrash_complain(
 	struct unicrash		*uc,
-	const char		*descr,
+	struct descr		*dsc,
 	const char		*what,
 	struct name_entry	*entry,
 	unsigned int		badflags,
@@ -520,7 +521,7 @@ unicrash_complain(
 	 * that makes "hig<rtl>gnp.sh" render like "highs.png".
 	 */
 	if (badflags & UNICRASH_BIDI_OVERRIDE) {
-		str_warn(uc->ctx, descr,
+		str_warn(uc->ctx, descr_render(dsc),
 _("Unicode name \"%s\" in %s contains suspicious text direction overrides."),
 				bad1, what);
 		goto out;
@@ -533,7 +534,7 @@ _("Unicode name \"%s\" in %s contains suspicious text direction overrides."),
 	 * sequences, but they both appear as "café".
 	 */
 	if (badflags & UNICRASH_NOT_UNIQUE) {
-		str_warn(uc->ctx, descr,
+		str_warn(uc->ctx, descr_render(dsc),
 _("Unicode name \"%s\" in %s renders identically to \"%s\"."),
 				bad1, what, bad2);
 		goto out;
@@ -546,7 +547,7 @@ _("Unicode name \"%s\" in %s renders identically to \"%s\"."),
 	 */
 	if ((badflags & UNICRASH_ZERO_WIDTH) &&
 	    (badflags & UNICRASH_CONFUSABLE)) {
-		str_warn(uc->ctx, descr,
+		str_warn(uc->ctx, descr_render(dsc),
 _("Unicode name \"%s\" in %s could be confused with '%s' due to invisible characters."),
 				bad1, what, bad2);
 		goto out;
@@ -557,7 +558,7 @@ _("Unicode name \"%s\" in %s could be confused with '%s' due to invisible charac
 	 * invisibly in filechooser UIs.
 	 */
 	if (badflags & UNICRASH_CONTROL_CHAR) {
-		str_warn(uc->ctx, descr,
+		str_warn(uc->ctx, descr_render(dsc),
 _("Unicode name \"%s\" in %s contains control characters."),
 				bad1, what);
 		goto out;
@@ -579,7 +580,7 @@ _("Unicode name \"%s\" in %s contains control characters."),
 	 * warn about this too loudly.
 	 */
 	if (badflags & UNICRASH_BIDI_MIXED) {
-		str_info(uc->ctx, descr,
+		str_info(uc->ctx, descr_render(dsc),
 _("Unicode name \"%s\" in %s mixes bidirectional characters."),
 				bad1, what);
 		goto out;
@@ -592,7 +593,7 @@ _("Unicode name \"%s\" in %s mixes bidirectional characters."),
 	 * and "moo.l" look the same, maybe they do not.
 	 */
 	if (badflags & UNICRASH_CONFUSABLE) {
-		str_info(uc->ctx, descr,
+		str_info(uc->ctx, descr_render(dsc),
 _("Unicode name \"%s\" in %s could be confused with \"%s\"."),
 				bad1, what, bad2);
 	}
@@ -653,7 +654,7 @@ unicrash_add(
 static bool
 __unicrash_check_name(
 	struct unicrash		*uc,
-	const char		*descr,
+	struct descr		*dsc,
 	const char		*namedescr,
 	const char		*name,
 	xfs_ino_t		ino)
@@ -674,7 +675,7 @@ __unicrash_check_name(
 		return false;
 
 	if (badflags)
-		unicrash_complain(uc, descr, namedescr, new_entry, badflags,
+		unicrash_complain(uc, dsc, namedescr, new_entry, badflags,
 				dup_entry);
 
 	return true;
@@ -684,12 +685,12 @@ __unicrash_check_name(
 bool
 unicrash_check_dir_name(
 	struct unicrash		*uc,
-	const char		*descr,
+	struct descr		*dsc,
 	struct dirent		*dentry)
 {
 	if (!uc)
 		return true;
-	return __unicrash_check_name(uc, descr, _("directory"),
+	return __unicrash_check_name(uc, dsc, _("directory"),
 			dentry->d_name, dentry->d_ino);
 }
 
@@ -700,12 +701,12 @@ unicrash_check_dir_name(
 bool
 unicrash_check_xattr_name(
 	struct unicrash		*uc,
-	const char		*descr,
+	struct descr		*dsc,
 	const char		*attrname)
 {
 	if (!uc)
 		return true;
-	return __unicrash_check_name(uc, descr, _("extended attribute"),
+	return __unicrash_check_name(uc, dsc, _("extended attribute"),
 			attrname, 0);
 }
 
@@ -715,11 +716,11 @@ unicrash_check_xattr_name(
 bool
 unicrash_check_fs_label(
 	struct unicrash		*uc,
-	const char		*descr,
+	struct descr		*dsc,
 	const char		*label)
 {
 	if (!uc)
 		return true;
-	return __unicrash_check_name(uc, descr, _("filesystem label"),
+	return __unicrash_check_name(uc, dsc, _("filesystem label"),
 			label, 0);
 }
