@@ -151,8 +151,8 @@ xfs_iterate_inodes_range(
 					igrp_ino = inogrp.xi_startino;
 					goto igrp_retry;
 				}
-				snprintf(idescr, DESCR_BUFSZ, "inode %"PRIu64,
-						(uint64_t)bs->bs_ino);
+				xfs_scrub_render_ino(ctx, idescr, DESCR_BUFSZ,
+						bs->bs_ino, bs->bs_gen);
 				str_info(ctx, idescr,
 _("Changed too many times during scan; giving up."));
 				break;

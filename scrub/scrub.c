@@ -92,24 +92,26 @@ static const struct scrub_descr scrubbers[XFS_SCRUB_TYPE_NR] = {
 /* Format a scrub description. */
 static void
 format_scrub_descr(
+	struct scrub_ctx		*ctx,
 	char				*buf,
 	size_t				buflen,
-	struct xfs_scrub_metadata	*meta,
-	const struct scrub_descr	*sc)
+	struct xfs_scrub_metadata	*meta)
 {
-	switch (sc->type) {
+	const struct scrub_descr	*sd = &scrubbers[meta->sm_type];
+
+	switch (sd->type) {
 	case ST_AGHEADER:
 	case ST_PERAG:
 		snprintf(buf, buflen, _("AG %u %s"), meta->sm_agno,
-				_(sc->name));
+				_(sd->name));
 		break;
 	case ST_INODE:
-		snprintf(buf, buflen, _("Inode %"PRIu64" %s"),
-				(uint64_t)meta->sm_ino, _(sc->name));
+		xfs_scrub_render_ino_suffix(ctx, buf, buflen,
+				meta->sm_ino, meta->sm_gen, " %s", _(sd->name));
 		break;
 	case ST_FS:
 	case ST_SUMMARY:
-		snprintf(buf, buflen, _("%s"), _(sc->name));
+		snprintf(buf, buflen, _("%s"), _(sd->name));
 		break;
 	case ST_NONE:
 		assert(0);
@@ -191,7 +193,7 @@ xfs_check_metadata(
 
 	assert(!debug_tweak_on("XFS_SCRUB_NO_KERNEL"));
 	assert(meta->sm_type < XFS_SCRUB_TYPE_NR);
-	format_scrub_descr(buf, DESCR_BUFSZ, meta, &scrubbers[meta->sm_type]);
+	format_scrub_descr(ctx, buf, DESCR_BUFSZ, meta);
 
 	dbg_printf("check %s flags %xh\n", buf, meta->sm_flags);
 retry:
@@ -749,7 +751,7 @@ xfs_repair_metadata(
 		return CHECK_RETRY;
 
 	memcpy(&oldm, &meta, sizeof(oldm));
-	format_scrub_descr(buf, DESCR_BUFSZ, &meta, &scrubbers[meta.sm_type]);
+	format_scrub_descr(ctx, buf, DESCR_BUFSZ, &meta);
 
 	if (needs_repair(&meta))
 		str_info(ctx, buf, _("Attempting repair."));

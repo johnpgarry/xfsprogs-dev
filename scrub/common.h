@@ -86,4 +86,10 @@ bool within_range(struct scrub_ctx *ctx, unsigned long long value,
 		unsigned long long desired, unsigned long long abs_threshold,
 		unsigned int n, unsigned int d, const char *descr);
 
+int xfs_scrub_render_ino_suffix(const struct scrub_ctx *ctx, char *buf,
+		size_t buflen, uint64_t ino, uint32_t gen,
+		const char *format, ...);
+int xfs_scrub_render_ino(const struct scrub_ctx *ctx, char *buf,
+		size_t buflen, uint64_t ino, uint32_t gen);
+
 #endif /* XFS_SCRUB_COMMON_H_ */

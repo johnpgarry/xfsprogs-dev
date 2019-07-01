@@ -48,14 +48,10 @@ xfs_scrub_inode_vfs_error(
 	struct xfs_bstat	*bstat)
 {
 	char			descr[DESCR_BUFSZ];
-	xfs_agnumber_t		agno;
-	xfs_agino_t		agino;
 	int			old_errno = errno;
 
-	agno = xfrog_ino_to_agno(&ctx->mnt, bstat->bs_ino);
-	agino = xfrog_ino_to_agino(&ctx->mnt, bstat->bs_ino);
-	snprintf(descr, DESCR_BUFSZ, _("inode %"PRIu64" (%u/%u)"),
-			(uint64_t)bstat->bs_ino, agno, agino);
+	xfs_scrub_render_ino(ctx, descr, DESCR_BUFSZ, bstat->bs_ino,
+			bstat->bs_gen);
 	errno = old_errno;
 	str_errno(ctx, descr);
 }

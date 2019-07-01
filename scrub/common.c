@@ -354,3 +354,50 @@ within_range(
 
 	return true;
 }
+
+/*
+ * Render an inode number as both the raw inode number and as an AG number
+ * and AG inode pair.  This is intended for use with status message reporting.
+ * If @format is not NULL, it should provide any desired leading whitespace.
+ *
+ * For example, "inode 287232352 (13/352) <suffix>: <status message>"
+ */
+int
+xfs_scrub_render_ino_suffix(
+	const struct scrub_ctx	*ctx,
+	char			*buf,
+	size_t			buflen,
+	uint64_t		ino,
+	uint32_t		gen,
+	const char		*format,
+	...)
+{
+	va_list			args;
+	uint32_t		agno;
+	uint32_t		agino;
+	int			ret;
+
+	agno = xfrog_ino_to_agno(&ctx->mnt, ino);
+	agino = xfrog_ino_to_agino(&ctx->mnt, ino);
+	ret = snprintf(buf, buflen, _("inode %"PRIu64" (%"PRIu32"/%"PRIu32")"),
+			ino, agno, agino);
+	if (ret < 0 || ret >= buflen || format == NULL)
+		return ret;
+
+	va_start(args, format);
+	ret += vsnprintf(buf + ret, buflen - ret, format, args);
+	va_end(args);
+	return ret;
+}
+
+/* Render an inode number for message reporting with no suffix. */
+int
+xfs_scrub_render_ino(
+	const struct scrub_ctx	*ctx,
+	char			*buf,
+	size_t			buflen,
+	uint64_t		ino,
+	uint32_t		gen)
+{
+	return xfs_scrub_render_ino_suffix(ctx, buf, buflen, ino, gen, NULL);
+}

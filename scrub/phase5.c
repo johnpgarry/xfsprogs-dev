@@ -234,15 +234,11 @@ xfs_scrub_connections(
 	bool			*pmoveon = arg;
 	char			descr[DESCR_BUFSZ];
 	bool			moveon = true;
-	xfs_agnumber_t		agno;
-	xfs_agino_t		agino;
 	int			fd = -1;
 	int			error;
 
-	agno = xfrog_ino_to_agno(&ctx->mnt, bstat->bs_ino);
-	agino = xfrog_ino_to_agino(&ctx->mnt, bstat->bs_ino);
-	snprintf(descr, DESCR_BUFSZ, _("inode %"PRIu64" (%u/%u)"),
-			(uint64_t)bstat->bs_ino, agno, agino);
+	xfs_scrub_render_ino(ctx, descr, DESCR_BUFSZ, bstat->bs_ino,
+			bstat->bs_gen);
 	background_sleep();
 
 	/* Warn about naming problems in xattrs. */
