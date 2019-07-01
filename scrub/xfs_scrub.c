@@ -458,6 +458,13 @@ run_scrub_phases(
 					&work_threads, &rshift);
 			if (!moveon)
 				break;
+
+			/*
+			 * The thread that starts the worker threads is also
+			 * allowed to contribute to the progress counters and
+			 * whatever other per-thread data we need to allocate.
+			 */
+			work_threads++;
 			moveon = progress_init_phase(ctx, progress_fp, phase,
 					max_work, rshift, work_threads);
 		} else {
