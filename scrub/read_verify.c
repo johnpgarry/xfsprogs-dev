@@ -91,9 +91,9 @@ read_verify_pool_init(
 	rvp->ctx = ctx;
 	rvp->disk = disk;
 	rvp->ioerr_fn = ioerr_fn;
-	rvp->rvstate = ptvar_init(submitter_threads,
-			sizeof(struct read_verify));
-	if (rvp->rvstate == NULL)
+	error = ptvar_alloc(submitter_threads, sizeof(struct read_verify),
+			&rvp->rvstate);
+	if (error)
 		goto out_counter;
 	/* Run in the main thread if we only want one thread. */
 	if (nproc == 1)
@@ -220,9 +220,12 @@ read_verify_schedule_io(
 	struct read_verify		*rv;
 	uint64_t			req_end;
 	uint64_t			rv_end;
+	int				ret;
 
 	assert(rvp->readbuf);
-	rv = ptvar_get(rvp->rvstate);
+	rv = ptvar_get(rvp->rvstate, &ret);
+	if (ret)
+		return false;
 	req_end = start + length;
 	rv_end = rv->io_start + rv->io_length;
 
@@ -259,9 +262,12 @@ read_verify_force_io(
 {
 	struct read_verify		*rv;
 	bool				moveon;
+	int				ret;
 
 	assert(rvp->readbuf);
-	rv = ptvar_get(rvp->rvstate);
+	rv = ptvar_get(rvp->rvstate, &ret);
+	if (ret)
+		return false;
 	if (rv->io_length == 0)
 		return true;
 
