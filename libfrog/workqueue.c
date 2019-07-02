@@ -82,6 +82,7 @@ workqueue_create(
 		goto out_mutex;
 	}
 	wq->terminate = false;
+	wq->terminated = false;
 
 	for (i = 0; i < nr_workers; i++) {
 		err = pthread_create(&wq->threads[i], NULL, workqueue_thread,
@@ -118,6 +119,8 @@ workqueue_add(
 {
 	struct workqueue_item	*wi;
 	int			ret;
+
+	assert(!wq->terminated);
 
 	if (wq->thread_count == 0) {
 		func(wq, index, arg);
@@ -160,22 +163,48 @@ out_item:
 
 /*
  * Wait for all pending work items to be processed and tear down the
- * workqueue.
+ * workqueue thread pool.
  */
+int
+workqueue_terminate(
+	struct workqueue	*wq)
+{
+	unsigned int		i;
+	int			ret;
+
+	ret = pthread_mutex_lock(&wq->lock);
+	if (ret)
+		return ret;
+
+	wq->terminate = true;
+	pthread_mutex_unlock(&wq->lock);
+
+	ret = pthread_cond_broadcast(&wq->wakeup);
+	if (ret)
+		return ret;
+
+	for (i = 0; i < wq->thread_count; i++) {
+		ret = pthread_join(wq->threads[i], NULL);
+		if (ret)
+			return ret;
+	}
+
+	ret = pthread_mutex_lock(&wq->lock);
+	if (ret)
+		return ret;
+
+	wq->terminated = true;
+	pthread_mutex_unlock(&wq->lock);
+
+	return 0;
+}
+
+/* Tear down the workqueue. */
 void
 workqueue_destroy(
 	struct workqueue	*wq)
 {
-	unsigned int		i;
-
-	pthread_mutex_lock(&wq->lock);
-	wq->terminate = 1;
-	pthread_mutex_unlock(&wq->lock);
-
-	pthread_cond_broadcast(&wq->wakeup);
-
-	for (i = 0; i < wq->thread_count; i++)
-		pthread_join(wq->threads[i], NULL);
+	assert(wq->terminated);
 
 	free(wq->threads);
 	pthread_mutex_destroy(&wq->lock);

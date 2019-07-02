@@ -239,6 +239,11 @@ scan_fs_tree(
 	assert(sft.nr_dirs == 0);
 	pthread_mutex_unlock(&sft.lock);
 
+	ret = workqueue_terminate(&wq);
+	if (ret) {
+		sft.moveon = false;
+		str_liberror(ctx, ret, _("finishing directory scan work"));
+	}
 out_wq:
 	workqueue_destroy(&wq);
 	return sft.moveon;

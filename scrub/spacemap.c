@@ -230,6 +230,11 @@ xfs_scan_all_spacemaps(
 		}
 	}
 out:
+	ret = workqueue_terminate(&wq);
+	if (ret) {
+		sbx.moveon = false;
+		str_liberror(ctx, ret, _("finishing fsmap work"));
+	}
 	workqueue_destroy(&wq);
 
 	return sbx.moveon;

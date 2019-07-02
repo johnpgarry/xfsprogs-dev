@@ -161,6 +161,11 @@ xfs_scan_metadata(
 	}
 
 out:
+	ret = workqueue_terminate(&wq);
+	if (ret) {
+		moveon = false;
+		str_liberror(ctx, ret, _("finishing scrub work"));
+	}
 	workqueue_destroy(&wq);
 	return moveon;
 }
