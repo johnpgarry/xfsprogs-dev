@@ -65,37 +65,37 @@ struct read_verify_pool {
  * @submitter_threads is the number of threads that may be sending verify
  * requests at any given time.
  */
-struct read_verify_pool *
-read_verify_pool_init(
+int
+read_verify_pool_alloc(
 	struct scrub_ctx		*ctx,
 	struct disk			*disk,
 	size_t				miniosz,
 	read_verify_ioerr_fn_t		ioerr_fn,
-	unsigned int			submitter_threads)
+	unsigned int			submitter_threads,
+	struct read_verify_pool		**prvp)
 {
 	struct read_verify_pool		*rvp;
-	bool				ret;
-	int				error;
+	int				ret;
 
 	rvp = calloc(1, sizeof(struct read_verify_pool));
 	if (!rvp)
-		return NULL;
+		return errno;
 
-	error = posix_memalign((void **)&rvp->readbuf, page_size,
+	ret = posix_memalign((void **)&rvp->readbuf, page_size,
 			RVP_IO_MAX_SIZE);
-	if (error || !rvp->readbuf)
+	if (ret)
 		goto out_free;
-	error = ptcounter_alloc(nproc, &rvp->verified_bytes);
-	if (error)
+	ret = ptcounter_alloc(nproc, &rvp->verified_bytes);
+	if (ret)
 		goto out_buf;
 	rvp->miniosz = miniosz;
 	rvp->ctx = ctx;
 	rvp->disk = disk;
 	rvp->ioerr_fn = ioerr_fn;
-	rvp->errors_seen = false;
-	error = ptvar_alloc(submitter_threads, sizeof(struct read_verify),
+	rvp->errors_seen = 0;
+	ret = ptvar_alloc(submitter_threads, sizeof(struct read_verify),
 			&rvp->rvstate);
-	if (error)
+	if (ret)
 		goto out_counter;
 	/* Run in the main thread if we only want one thread. */
 	if (nproc == 1)
@@ -104,7 +104,8 @@ read_verify_pool_init(
 			disk_heads(disk));
 	if (ret)
 		goto out_rvstate;
-	return rvp;
+	*prvp = rvp;
+	return 0;
 
 out_rvstate:
 	ptvar_free(rvp->rvstate);
@@ -114,7 +115,7 @@ out_buf:
 	free(rvp->readbuf);
 out_free:
 	free(rvp);
-	return NULL;
+	return ret;
 }
 
 /* Abort all verification work. */
@@ -128,11 +129,11 @@ read_verify_pool_abort(
 }
 
 /* Finish up any read verification work. */
-void
+int
 read_verify_pool_flush(
 	struct read_verify_pool		*rvp)
 {
-	workqueue_terminate(&rvp->wq);
+	return workqueue_terminate(&rvp->wq);
 }
 
 /* Finish up any read verification work and tear it down. */
@@ -187,15 +188,12 @@ read_verify(
 
 	free(rv);
 	ret = ptcounter_add(rvp->verified_bytes, verified);
-	if (ret) {
-		str_liberror(rvp->ctx, ret,
-				_("updating bytes verified counter"));
-		rvp->errors_seen = true;
-	}
+	if (ret)
+		rvp->errors_seen = ret;
 }
 
 /* Queue a read verify request. */
-static bool
+static int
 read_verify_queue(
 	struct read_verify_pool		*rvp,
 	struct read_verify		*rv)
@@ -208,34 +206,33 @@ read_verify_queue(
 
 	/* Worker thread saw a runtime error, don't queue more. */
 	if (rvp->errors_seen)
-		return false;
+		return rvp->errors_seen;
 
 	/* Otherwise clone the request and queue the copy. */
 	tmp = malloc(sizeof(struct read_verify));
 	if (!tmp) {
-		str_errno(rvp->ctx, _("allocating read-verify request"));
-		rvp->errors_seen = true;
-		return false;
+		rvp->errors_seen = errno;
+		return errno;
 	}
 
 	memcpy(tmp, rv, sizeof(*tmp));
 
 	ret = workqueue_add(&rvp->wq, read_verify, 0, tmp);
 	if (ret) {
-		str_liberror(rvp->ctx, ret, _("queueing read-verify work"));
 		free(tmp);
-		rvp->errors_seen = true;
-		return false;
+		rvp->errors_seen = ret;
+		return ret;
 	}
+
 	rv->io_length = 0;
-	return true;
+	return 0;
 }
 
 /*
  * Issue an IO request.  We'll batch subsequent requests if they're
  * within 64k of each other
  */
-bool
+int
 read_verify_schedule_io(
 	struct read_verify_pool		*rvp,
 	uint64_t			start,
@@ -250,7 +247,7 @@ read_verify_schedule_io(
 	assert(rvp->readbuf);
 	rv = ptvar_get(rvp->rvstate, &ret);
 	if (ret)
-		return false;
+		return ret;
 	req_end = start + length;
 	rv_end = rv->io_start + rv->io_length;
 
@@ -277,38 +274,32 @@ read_verify_schedule_io(
 		rv->io_end_arg = end_arg;
 	}
 
-	return true;
+	return 0;
 }
 
 /* Force any stashed IOs into the verifier. */
-bool
+int
 read_verify_force_io(
 	struct read_verify_pool		*rvp)
 {
 	struct read_verify		*rv;
-	bool				moveon;
 	int				ret;
 
 	assert(rvp->readbuf);
 	rv = ptvar_get(rvp->rvstate, &ret);
 	if (ret)
-		return false;
+		return ret;
 	if (rv->io_length == 0)
-		return true;
+		return 0;
 
-	moveon = read_verify_queue(rvp, rv);
-	if (moveon)
-		rv->io_length = 0;
-	return moveon;
+	return read_verify_queue(rvp, rv);
 }
 
 /* How many bytes has this process verified? */
-uint64_t
+int
 read_verify_bytes(
-	struct read_verify_pool		*rvp)
+	struct read_verify_pool		*rvp,
+	uint64_t			*bytes_checked)
 {
-	uint64_t			ret;
-
-	ptcounter_value(rvp->verified_bytes, &ret);
-	return ret;
+	return ptcounter_value(rvp->verified_bytes, bytes_checked);
 }
