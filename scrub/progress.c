@@ -119,6 +119,8 @@ progress_report_thread(void *arg)
 
 	pthread_mutex_lock(&pt.lock);
 	while (1) {
+		uint64_t	progress_val;
+
 		/* Every half second. */
 		ret = clock_gettime(CLOCK_REALTIME, &abstime);
 		if (ret)
@@ -131,7 +133,9 @@ progress_report_thread(void *arg)
 		pthread_cond_timedwait(&pt.wakeup, &pt.lock, &abstime);
 		if (pt.terminate)
 			break;
-		progress_report(ptcounter_value(pt.ptc));
+		ret = ptcounter_value(pt.ptc, &progress_val);
+		if (!ret)
+			progress_report(progress_val);
 	}
 	pthread_mutex_unlock(&pt.lock);
 	return NULL;
@@ -187,9 +191,11 @@ progress_init_phase(
 	pt.twiddle = 0;
 	pt.terminate = false;
 
-	pt.ptc = ptcounter_init(nr_threads);
-	if (!pt.ptc)
+	ret = ptcounter_alloc(nr_threads, &pt.ptc);
+	if (ret) {
+		str_liberror(ctx, ret, _("allocating progress counter"));
 		goto out_max;
+	}
 
 	ret = pthread_create(&pt.thread, NULL, progress_report_thread, NULL);
 	if (ret)

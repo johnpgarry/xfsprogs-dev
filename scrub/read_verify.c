@@ -84,8 +84,8 @@ read_verify_pool_init(
 			RVP_IO_MAX_SIZE);
 	if (error || !rvp->readbuf)
 		goto out_free;
-	rvp->verified_bytes = ptcounter_init(nproc);
-	if (!rvp->verified_bytes)
+	error = ptcounter_alloc(nproc, &rvp->verified_bytes);
+	if (error)
 		goto out_buf;
 	rvp->miniosz = miniosz;
 	rvp->ctx = ctx;
@@ -282,5 +282,8 @@ uint64_t
 read_verify_bytes(
 	struct read_verify_pool		*rvp)
 {
-	return ptcounter_value(rvp->verified_bytes);
+	uint64_t			ret;
+
+	ptcounter_value(rvp->verified_bytes, &ret);
+	return ret;
 }

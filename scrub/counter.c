@@ -26,23 +26,25 @@ struct ptcounter {
 	struct ptvar	*var;
 };
 
-/* Initialize per-thread counter. */
-struct ptcounter *
-ptcounter_init(
-	size_t			nr)
+/* Allocate per-thread counter. */
+int
+ptcounter_alloc(
+	size_t			nr,
+	struct ptcounter	**pp)
 {
 	struct ptcounter	*p;
 	int			ret;
 
 	p = malloc(sizeof(struct ptcounter));
 	if (!p)
-		return NULL;
+		return errno;
 	ret = ptvar_alloc(nr, sizeof(uint64_t), &p->var);
 	if (ret) {
 		free(p);
-		return NULL;
+		return ret;
 	}
-	return p;
+	*pp = p;
+	return 0;
 }
 
 /* Free per-thread counter. */
@@ -55,7 +57,7 @@ ptcounter_free(
 }
 
 /* Add a quantity to the counter. */
-void
+int
 ptcounter_add(
 	struct ptcounter	*ptc,
 	int64_t			nr)
@@ -64,8 +66,10 @@ ptcounter_add(
 	int			ret;
 
 	p = ptvar_get(ptc->var, &ret);
-	assert(ret == 0);
+	if (ret)
+		return ret;
 	*p += nr;
+	return 0;
 }
 
 static int
@@ -82,12 +86,11 @@ ptcounter_val_helper(
 }
 
 /* Return the approximate value of this counter. */
-uint64_t
+int
 ptcounter_value(
-	struct ptcounter	*ptc)
+	struct ptcounter	*ptc,
+	uint64_t		*sum)
 {
-	uint64_t		sum = 0;
-
-	ptvar_foreach(ptc->var, ptcounter_val_helper, &sum);
-	return sum;
+	*sum = 0;
+	return ptvar_foreach(ptc->var, ptcounter_val_helper, sum);
 }

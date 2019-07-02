@@ -7,9 +7,9 @@
 #define XFS_SCRUB_COUNTER_H_
 
 struct ptcounter;
-struct ptcounter *ptcounter_init(size_t nr);
+int ptcounter_alloc(size_t nr, struct ptcounter **pp);
 void ptcounter_free(struct ptcounter *ptc);
-void ptcounter_add(struct ptcounter *ptc, int64_t nr);
-uint64_t ptcounter_value(struct ptcounter *ptc);
+int ptcounter_add(struct ptcounter *ptc, int64_t nr);
+int ptcounter_value(struct ptcounter *ptc, uint64_t *sum);
 
 #endif /* XFS_SCRUB_COUNTER_H_ */
