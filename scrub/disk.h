@@ -10,7 +10,8 @@
 struct disk {
 	struct stat	d_sb;
 	int		d_fd;
-	int		d_lbalog;
+	unsigned int	d_lbalog;
+	unsigned int	d_lbasize;	/* bytes */
 	unsigned int	d_flags;
 	unsigned int	d_blksize;	/* bytes */
 	uint64_t	d_size;		/* bytes */
