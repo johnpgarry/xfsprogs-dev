@@ -200,7 +200,7 @@ xfs_scan_all_spacemaps(
 	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
-		str_info(ctx, ctx->mntpoint, _("Could not create workqueue."));
+		str_liberror(ctx, ret, _("creating fsmap workqueue"));
 		return false;
 	}
 	if (ctx->fsinfo.fs_rt) {
@@ -208,8 +208,7 @@ xfs_scan_all_spacemaps(
 				ctx->mnt.fsgeom.agcount + 1, &sbx);
 		if (ret) {
 			sbx.moveon = false;
-			str_info(ctx, ctx->mntpoint,
-_("Could not queue rtdev fsmap work."));
+			str_liberror(ctx, ret, _("queueing rtdev fsmap work"));
 			goto out;
 		}
 	}
@@ -218,8 +217,7 @@ _("Could not queue rtdev fsmap work."));
 				ctx->mnt.fsgeom.agcount + 2, &sbx);
 		if (ret) {
 			sbx.moveon = false;
-			str_info(ctx, ctx->mntpoint,
-_("Could not queue logdev fsmap work."));
+			str_liberror(ctx, ret, _("queueing logdev fsmap work"));
 			goto out;
 		}
 	}
@@ -227,8 +225,7 @@ _("Could not queue logdev fsmap work."));
 		ret = workqueue_add(&wq, xfs_scan_ag_blocks, agno, &sbx);
 		if (ret) {
 			sbx.moveon = false;
-			str_info(ctx, ctx->mntpoint,
-_("Could not queue AG %u fsmap work."), agno);
+			str_liberror(ctx, ret, _("queueing per-AG fsmap work"));
 			break;
 		}
 	}

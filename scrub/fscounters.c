@@ -118,15 +118,14 @@ xfs_count_all_inodes(
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
 		moveon = false;
-		str_info(ctx, ctx->mntpoint, _("Could not create workqueue."));
+		str_liberror(ctx, ret, _("creating icount workqueue"));
 		goto out_free;
 	}
 	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++) {
 		ret = workqueue_add(&wq, xfs_count_ag_inodes, agno, ci);
 		if (ret) {
 			moveon = false;
-			str_info(ctx, ctx->mntpoint,
-_("Could not queue AG %u icount work."), agno);
+			str_liberror(ctx, ret, _("queueing icount work"));
 			break;
 		}
 	}
