@@ -169,30 +169,92 @@ read_verify(
 	struct read_verify		*rv = arg;
 	struct read_verify_pool		*rvp;
 	unsigned long long		verified = 0;
+	ssize_t				io_max_size;
 	ssize_t				sz;
 	ssize_t				len;
+	int				io_error;
 	int				ret;
 
 	rvp = (struct read_verify_pool *)wq->wq_ctx;
+	if (rvp->errors_seen)
+		return;
+
+	io_max_size = RVP_IO_MAX_SIZE;
+
 	while (rv->io_length > 0) {
-		len = min(rv->io_length, RVP_IO_MAX_SIZE);
+		io_error = 0;
+		len = min(rv->io_length, io_max_size);
 		dbg_printf("diskverify %d %"PRIu64" %zu\n", rvp->disk->d_fd,
 				rv->io_start, len);
 		sz = disk_read_verify(rvp->disk, rvp->readbuf, rv->io_start,
 				len);
-		if (sz < 0) {
-			dbg_printf("IOERR %d %"PRIu64" %zu\n",
-					rvp->disk->d_fd, rv->io_start, len);
-			/* IO error, so try the next logical block. */
-			len = rvp->miniosz;
-			rvp->ioerr_fn(rvp->ctx, rvp->disk, rv->io_start, len,
-					errno, rv->io_end_arg);
+		if (sz == len && io_max_size < rvp->miniosz) {
+			/*
+			 * If the verify request was 100% successful and less
+			 * than a single block in length, we were trying to
+			 * read to the end of a block after a short read.  That
+			 * suggests there's something funny with this device,
+			 * so single-step our way through the rest of the @rv
+			 * range.
+			 */
+			io_max_size = rvp->miniosz;
+		} else if (sz < 0) {
+			io_error = errno;
+
+			/* Runtime error, bail out... */
+			if (io_error != EIO && io_error != EILSEQ) {
+				rvp->errors_seen = io_error;
+				return;
+			}
+
+			/*
+			 * A direct read encountered an error while performing
+			 * a multi-block read.  Reduce the transfer size to a
+			 * single block so that we can identify the exact range
+			 * of bad blocks and good blocks.  We single-step all
+			 * the way to the end of the @rv range, (re)starting
+			 * with the block that just failed.
+			 */
+			if (io_max_size > rvp->miniosz) {
+				io_max_size = rvp->miniosz;
+				continue;
+			}
+
+			/*
+			 * A direct read hit an error while we were stepping
+			 * through single blocks.  Mark everything bad from
+			 * io_start to the next miniosz block.
+			 */
+			sz = rvp->miniosz - (rv->io_start % rvp->miniosz);
+			dbg_printf("IOERR %d @ %"PRIu64" %zu err %d\n",
+					rvp->disk->d_fd, rv->io_start, sz,
+					io_error);
+			rvp->ioerr_fn(rvp->ctx, rvp->disk, rv->io_start, sz,
+					io_error, rv->io_end_arg);
+		} else if (sz < len) {
+			/*
+			 * A short direct read suggests that we might have hit
+			 * an IO error midway through the read but still had to
+			 * return the number of bytes that were actually read.
+			 *
+			 * We need to force an EIO, so try reading the rest of
+			 * the block (if it was a partial block read) or the
+			 * next full block.
+			 */
+			io_max_size = rvp->miniosz - (sz % rvp->miniosz);
+			dbg_printf("SHORT %d READ @ %"PRIu64" %zu try for %zd\n",
+					rvp->disk->d_fd, rv->io_start, sz,
+					io_max_size);
+		} else {
+			/* We should never get back more bytes than we asked. */
+			assert(sz == len);
 		}
 
-		progress_add(len);
-		verified += len;
-		rv->io_start += len;
-		rv->io_length -= len;
+		progress_add(sz);
+		if (io_error == 0)
+			verified += sz;
+		rv->io_start += sz;
+		rv->io_length -= sz;
 	}
 
 	free(rv);
