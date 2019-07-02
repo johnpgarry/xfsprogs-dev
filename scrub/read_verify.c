@@ -77,6 +77,15 @@ read_verify_pool_alloc(
 	struct read_verify_pool		*rvp;
 	int				ret;
 
+	/*
+	 * The minimum IO size must be a multiple of the disk sector size
+	 * and a factor of the max io size.
+	 */
+	if (miniosz % disk->d_lbasize)
+		return EINVAL;
+	if (RVP_IO_MAX_SIZE % miniosz)
+		return EINVAL;
+
 	rvp = calloc(1, sizeof(struct read_verify_pool));
 	if (!rvp)
 		return errno;
@@ -245,6 +254,11 @@ read_verify_schedule_io(
 	int				ret;
 
 	assert(rvp->readbuf);
+
+	/* Round up and down to the start of a miniosz chunk. */
+	start &= ~(rvp->miniosz - 1);
+	length = roundup(length, rvp->miniosz);
+
 	rv = ptvar_get(rvp->rvstate, &ret);
 	if (ret)
 		return ret;
