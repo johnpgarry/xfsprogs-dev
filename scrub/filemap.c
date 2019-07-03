@@ -71,7 +71,6 @@ xfs_iterate_filemaps(
 		map->bmv_length = ULLONG_MAX;
 	else
 		map->bmv_length = BTOBB(key->bm_length);
-	map->bmv_count = BMAP_NR;
 	map->bmv_iflags = BMV_IF_NO_DMAPI_READ | BMV_IF_PREALLOC |
 			  BMV_IF_NO_HOLES;
 	switch (whichfork) {
@@ -96,6 +95,7 @@ xfs_iterate_filemaps(
 		moveon = false;
 		goto out;
 	}
+	map->bmv_count = min(fsx.fsx_nextents + 2, BMAP_NR);
 
 	while ((error = ioctl(fd, XFS_IOC_GETBMAPX, map)) == 0) {
 		for (i = 0, p = &map[i + 1]; i < map->bmv_entries; i++, p++) {
