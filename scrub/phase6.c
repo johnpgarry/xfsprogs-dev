@@ -167,7 +167,9 @@ report_data_loss(
 	int				ret;
 
 	/* Only report errors for real extents. */
-	if (bmap->bm_flags & (BMV_OF_PREALLOC | BMV_OF_DELALLOC))
+	if (scrub_data < 3 && (bmap->bm_flags & BMV_OF_PREALLOC))
+		return true;
+	if (bmap->bm_flags & BMV_OF_DELALLOC)
 		return true;
 
 	if (fsx->fsx_xflags & FS_XFLAG_REALTIME)
@@ -355,7 +357,7 @@ ioerr_fsmap_report(
 	uint64_t		err_off;
 
 	/* Don't care about unwritten extents. */
-	if (map->fmr_flags & FMR_OF_PREALLOC)
+	if (scrub_data < 3 && (map->fmr_flags & FMR_OF_PREALLOC))
 		return true;
 
 	if (err_physical > map->fmr_physical)
@@ -602,6 +604,49 @@ out_destroy:
 	return ret;
 }
 
+/* Schedule an entire disk for read verification. */
+static int
+verify_entire_disk(
+	struct read_verify_pool		*rvp,
+	struct disk			*disk,
+	struct media_verify_state	*vs)
+{
+	return read_verify_schedule_io(rvp, 0, disk->d_size, vs);
+}
+
+/* Scan every part of every disk. */
+static bool
+verify_all_disks(
+	struct scrub_ctx		*ctx,
+	struct media_verify_state	*vs)
+{
+	int				ret;
+
+	ret = verify_entire_disk(vs->rvp_data, ctx->datadev, vs);
+	if (ret) {
+		str_liberror(ctx, ret, _("scheduling datadev verify"));
+		return false;
+	}
+
+	if (ctx->logdev) {
+		ret = verify_entire_disk(vs->rvp_log, ctx->logdev, vs);
+		if (ret) {
+			str_liberror(ctx, ret, _("scheduling logdev verify"));
+			return false;
+		}
+	}
+
+	if (ctx->rtdev) {
+		ret = verify_entire_disk(vs->rvp_realtime, ctx->rtdev, vs);
+		if (ret) {
+			str_liberror(ctx, ret, _("scheduling rtdev verify"));
+			return false;
+		}
+	}
+
+	return true;
+}
+
 /*
  * Read verify all the file data blocks in a filesystem.  Since XFS doesn't
  * do data checksums, we trust that the underlying storage will pass back
@@ -657,7 +702,11 @@ xfs_scan_blocks(
 			goto out_logpool;
 		}
 	}
-	moveon = xfs_scan_all_spacemaps(ctx, xfs_check_rmap, &vs);
+
+	if (scrub_data > 1)
+		moveon = verify_all_disks(ctx, &vs);
+	else
+		moveon = xfs_scan_all_spacemaps(ctx, xfs_check_rmap, &vs);
 	if (!moveon)
 		goto out_rtpool;
 
@@ -729,8 +778,9 @@ xfs_estimate_verify_work(
 	if (!moveon)
 		return moveon;
 
-	*items = xfrog_fsb_to_b(&ctx->mnt,
-			(d_blocks - d_bfree) + (r_blocks - r_bfree));
+	*items = xfrog_fsb_to_b(&ctx->mnt, d_blocks + r_blocks);
+	if (scrub_data == 1)
+		*items -= xfrog_fsb_to_b(&ctx->mnt, d_bfree + r_bfree);
 	*nr_threads = disk_heads(ctx->datadev);
 	*rshift = 20;
 	return moveon;

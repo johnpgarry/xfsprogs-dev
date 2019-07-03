@@ -139,7 +139,7 @@ unsigned int			force_nr_threads;
 bool				verbose;
 
 /* Should we scrub the data blocks? */
-static bool			scrub_data;
+int				scrub_data;
 
 /* Size of a memory page. */
 long				page_size;
@@ -666,7 +666,7 @@ main(
 			fflush(stdout);
 			return SCRUB_RET_SUCCESS;
 		case 'x':
-			scrub_data = true;
+			scrub_data++;
 			break;
 		case '?':
 			/* fall through */

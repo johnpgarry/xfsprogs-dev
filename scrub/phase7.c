@@ -255,6 +255,11 @@ _("%.*f%s inodes counted; %.*f%s inodes checked.\n"),
 		double		b1, b2;
 		char		*b1u, *b2u;
 
+		if (scrub_data > 1) {
+			used_data = xfrog_fsb_to_b(&ctx->mnt, d_blocks);
+			used_rt = xfrog_fsb_to_b(&ctx->mnt, r_blocks);
+		}
+
 		b1 = auto_space_units(used_data + used_rt, &b1u);
 		b2 = auto_space_units(ctx->bytes_checked, &b2u);
 		fprintf(stdout,

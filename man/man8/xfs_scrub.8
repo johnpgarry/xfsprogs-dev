@@ -97,6 +97,9 @@ Prints the version number and exits.
 .TP
 .B \-x
 Read all file data extents to look for disk errors.
+If this option is given more than once, scrub all disk contents.
+If this option is given more than twice, report errors even if they have not
+yet caused data loss.
 .B xfs_scrub
 will issue O_DIRECT reads to the block device directly.
 If the block device is a SCSI disk, it will instead issue READ VERIFY commands
