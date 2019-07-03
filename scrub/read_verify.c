@@ -282,22 +282,30 @@ read_verify_schedule_io(
 	return 0;
 }
 
+/* Force any per-thread stashed IOs into the verifier. */
+static int
+force_one_io(
+	struct ptvar		*ptv,
+	void			*data,
+	void			*foreach_arg)
+{
+	struct read_verify_pool	*rvp = foreach_arg;
+	struct read_verify	*rv = data;
+
+	if (rv->io_length == 0)
+		return 0;
+
+	return read_verify_queue(rvp, rv);
+}
+
 /* Force any stashed IOs into the verifier. */
 int
 read_verify_force_io(
 	struct read_verify_pool		*rvp)
 {
-	struct read_verify		*rv;
-	int				ret;
-
 	assert(rvp->readbuf);
-	rv = ptvar_get(rvp->rvstate, &ret);
-	if (ret)
-		return ret;
-	if (rv->io_length == 0)
-		return 0;
 
-	return read_verify_queue(rvp, rv);
+	return ptvar_foreach(rvp->rvstate, force_one_io, rvp);
 }
 
 /* How many bytes has this process verified? */

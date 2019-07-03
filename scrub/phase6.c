@@ -411,7 +411,7 @@ xfs_check_rmap(
 	 */
 	if (map->fmr_flags & (FMR_OF_PREALLOC | FMR_OF_ATTR_FORK |
 			      FMR_OF_EXTENT_MAP | FMR_OF_SPECIAL_OWNER))
-		goto out;
+		return true;
 
 	/* XXX: Filter out directory data blocks. */
 
@@ -421,16 +421,6 @@ xfs_check_rmap(
 	if (ret) {
 		str_liberror(ctx, ret, descr);
 		return false;
-	}
-
-out:
-	/* Is this the last extent?  Fire off the read. */
-	if (map->fmr_flags & FMR_OF_LAST) {
-		ret = read_verify_force_io(rvp);
-		if (ret) {
-			str_liberror(ctx, ret, descr);
-			return false;
-		}
 	}
 
 	return true;
@@ -447,6 +437,10 @@ clean_pool(
 
 	if (!rvp)
 		return 0;
+
+	ret = read_verify_force_io(rvp);
+	if (ret)
+		return ret;
 
 	ret = read_verify_pool_flush(rvp);
 	if (ret)
