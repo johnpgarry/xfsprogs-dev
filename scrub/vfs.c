@@ -235,7 +235,8 @@ scan_fs_tree(
 		goto out_wq;
 
 	pthread_mutex_lock(&sft.lock);
-	pthread_cond_wait(&sft.wakeup, &sft.lock);
+	if (sft.nr_dirs)
+		pthread_cond_wait(&sft.wakeup, &sft.lock);
 	assert(sft.nr_dirs == 0);
 	pthread_mutex_unlock(&sft.lock);
 
