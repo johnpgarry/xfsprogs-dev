@@ -117,6 +117,16 @@ out_free:
 	return NULL;
 }
 
+/* Abort all verification work. */
+void
+read_verify_pool_abort(
+	struct read_verify_pool		*rvp)
+{
+	if (!rvp->errors_seen)
+		rvp->errors_seen = ECANCELED;
+	workqueue_terminate(&rvp->wq);
+}
+
 /* Finish up any read verification work. */
 void
 read_verify_pool_flush(

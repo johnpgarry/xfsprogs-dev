@@ -19,6 +19,7 @@ struct read_verify_pool *read_verify_pool_init(struct scrub_ctx *ctx,
 		struct disk *disk, size_t miniosz,
 		read_verify_ioerr_fn_t ioerr_fn,
 		unsigned int submitter_threads);
+void read_verify_pool_abort(struct read_verify_pool *rvp);
 void read_verify_pool_flush(struct read_verify_pool *rvp);
 void read_verify_pool_destroy(struct read_verify_pool *rvp);
 
