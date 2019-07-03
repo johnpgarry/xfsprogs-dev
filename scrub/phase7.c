@@ -116,6 +116,7 @@ xfs_scan_summary(
 	unsigned long long	f_free;
 	bool			moveon;
 	bool			complain;
+	bool			scrub_all = scrub_data > 1;
 	int			ip;
 	int			error;
 
@@ -244,14 +245,15 @@ _("%.*f%s inodes counted; %.*f%s inodes checked.\n"),
 	}
 
 	/*
-	 * Complain if the checked block counts are off, which
+	 * Complain if the data file verification block counts are off, which
 	 * implies an incomplete check.
 	 */
-	if (ctx->bytes_checked &&
+	if (scrub_data &&
 	    (verbose ||
 	     !within_range(ctx, used_data + used_rt,
 			ctx->bytes_checked, absdiff, 1, 10,
-			_("verified blocks")))) {
+			scrub_all ? _("verified blocks") :
+				    _("verified file data blocks")))) {
 		double		b1, b2;
 		char		*b1u, *b2u;
 
@@ -262,8 +264,9 @@ _("%.*f%s inodes counted; %.*f%s inodes checked.\n"),
 
 		b1 = auto_space_units(used_data + used_rt, &b1u);
 		b2 = auto_space_units(ctx->bytes_checked, &b2u);
-		fprintf(stdout,
-_("%.1f%s data counted; %.1f%s data verified.\n"),
+		fprintf(stdout, scrub_all ?
+_("%.1f%s data counted; %.1f%s disk media verified.\n") :
+_("%.1f%s data counted; %.1f%s file data media verified.\n"),
 				b1, b1u, b2, b2u);
 		fflush(stdout);
 	}
