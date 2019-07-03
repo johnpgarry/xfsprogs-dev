@@ -121,7 +121,6 @@ read_verify_pool_flush(
 	struct read_verify_pool		*rvp)
 {
 	workqueue_terminate(&rvp->wq);
-	workqueue_destroy(&rvp->wq);
 }
 
 /* Finish up any read verification work and tear it down. */
@@ -129,6 +128,7 @@ void
 read_verify_pool_destroy(
 	struct read_verify_pool		*rvp)
 {
+	workqueue_destroy(&rvp->wq);
 	ptvar_free(rvp->rvstate);
 	ptcounter_free(rvp->verified_bytes);
 	free(rvp->readbuf);
