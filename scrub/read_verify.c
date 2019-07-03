@@ -53,6 +53,7 @@ struct read_verify_pool {
 	struct disk		*disk;		/* which disk? */
 	read_verify_ioerr_fn_t	ioerr_fn;	/* io error callback */
 	size_t			miniosz;	/* minimum io size, bytes */
+	int			errors_seen;
 };
 
 /*
@@ -91,6 +92,7 @@ read_verify_pool_init(
 	rvp->ctx = ctx;
 	rvp->disk = disk;
 	rvp->ioerr_fn = ioerr_fn;
+	rvp->errors_seen = false;
 	error = ptvar_alloc(submitter_threads, sizeof(struct read_verify),
 			&rvp->rvstate);
 	if (error)
@@ -149,6 +151,7 @@ read_verify(
 	unsigned long long		verified = 0;
 	ssize_t				sz;
 	ssize_t				len;
+	int				ret;
 
 	rvp = (struct read_verify_pool *)wq->wq_ctx;
 	while (rv->io_length > 0) {
@@ -173,7 +176,12 @@ read_verify(
 	}
 
 	free(rv);
-	ptcounter_add(rvp->verified_bytes, verified);
+	ret = ptcounter_add(rvp->verified_bytes, verified);
+	if (ret) {
+		str_liberror(rvp->ctx, ret,
+				_("updating bytes verified counter"));
+		rvp->errors_seen = true;
+	}
 }
 
 /* Queue a read verify request. */
@@ -188,18 +196,25 @@ read_verify_queue(
 	dbg_printf("verify fd %d start %"PRIu64" len %"PRIu64"\n",
 			rvp->disk->d_fd, rv->io_start, rv->io_length);
 
+	/* Worker thread saw a runtime error, don't queue more. */
+	if (rvp->errors_seen)
+		return false;
+
+	/* Otherwise clone the request and queue the copy. */
 	tmp = malloc(sizeof(struct read_verify));
 	if (!tmp) {
-		rvp->ioerr_fn(rvp->ctx, rvp->disk, rv->io_start,
-				rv->io_length, errno, rv->io_end_arg);
-		return true;
+		str_errno(rvp->ctx, _("allocating read-verify request"));
+		rvp->errors_seen = true;
+		return false;
 	}
+
 	memcpy(tmp, rv, sizeof(*tmp));
 
 	ret = workqueue_add(&rvp->wq, read_verify, 0, tmp);
 	if (ret) {
 		str_liberror(rvp->ctx, ret, _("queueing read-verify work"));
 		free(tmp);
+		rvp->errors_seen = true;
 		return false;
 	}
 	rv->io_length = 0;
