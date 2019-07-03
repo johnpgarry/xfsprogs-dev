@@ -341,27 +341,9 @@ out:
 	return moveon;
 }
 
-/* Given bad extent lists for the data & rtdev, find bad files. */
-static bool
-xfs_report_verify_errors(
-	struct scrub_ctx		*ctx,
-	struct media_verify_state	*vs)
-{
-	bool				moveon;
-
-	/* Scan the directory tree to get file paths. */
-	moveon = scan_fs_tree(ctx, xfs_report_verify_dir,
-			xfs_report_verify_dirent, vs);
-	if (!moveon)
-		return false;
-
-	/* Scan for unlinked files. */
-	return xfs_scan_all_inodes(ctx, xfs_report_verify_inode, vs);
-}
-
 /* Report an IO error resulting from read-verify based off getfsmap. */
 static bool
-xfs_check_rmap_error_report(
+ioerr_fsmap_report(
 	struct scrub_ctx	*ctx,
 	const char		*descr,
 	struct fsmap		*map,
@@ -409,12 +391,31 @@ xfs_check_rmap_error_report(
 	return true;
 }
 
+static struct bitmap *
+bitmap_for_disk(
+	struct scrub_ctx		*ctx,
+	struct disk			*disk,
+	struct media_verify_state	*vs)
+{
+	dev_t				dev = xfs_disk_to_dev(ctx, disk);
+
+	/*
+	 * If we don't have parent pointers, save the bad extent for
+	 * later rescanning.
+	 */
+	if (dev == ctx->fsinfo.fs_datadev)
+		return vs->d_bad;
+	else if (dev == ctx->fsinfo.fs_rtdev)
+		return vs->r_bad;
+	return NULL;
+}
+
 /*
  * Remember a read error for later, and see if rmap will tell us about the
  * owner ahead of time.
  */
 static void
-xfs_check_rmap_ioerr(
+remember_ioerr(
 	struct scrub_ctx		*ctx,
 	struct disk			*disk,
 	uint64_t			start,
@@ -422,32 +423,39 @@ xfs_check_rmap_ioerr(
 	int				error,
 	void				*arg)
 {
-	struct fsmap			keys[2];
-	char				descr[DESCR_BUFSZ];
 	struct media_verify_state	*vs = arg;
 	struct bitmap			*tree;
-	dev_t				dev;
 	int				ret;
 
-	dev = xfs_disk_to_dev(ctx, disk);
+	tree = bitmap_for_disk(ctx, disk, vs);
+	if (!tree)
+		return;
 
-	/*
-	 * If we don't have parent pointers, save the bad extent for
-	 * later rescanning.
-	 */
-	if (dev == ctx->fsinfo.fs_datadev)
-		tree = vs->d_bad;
-	else if (dev == ctx->fsinfo.fs_rtdev)
-		tree = vs->r_bad;
-	else
-		tree = NULL;
-	if (tree) {
-		ret = bitmap_set(tree, start, length);
-		if (ret)
-			str_liberror(ctx, ret, _("setting bad block bitmap"));
-	}
+	ret = bitmap_set(tree, start, length);
+	if (ret)
+		str_liberror(ctx, ret, _("setting bad block bitmap"));
+}
 
-	snprintf(descr, DESCR_BUFSZ, _("dev %d:%d ioerr @ %"PRIu64":%"PRIu64" "),
+struct walk_ioerr {
+	struct scrub_ctx	*ctx;
+	struct disk		*disk;
+};
+
+static int
+walk_ioerr(
+	uint64_t		start,
+	uint64_t		length,
+	void			*arg)
+{
+	struct walk_ioerr	*wioerr = arg;
+	struct fsmap		keys[2];
+	char			descr[DESCR_BUFSZ];
+	dev_t			dev;
+
+	dev = xfs_disk_to_dev(wioerr->ctx, wioerr->disk);
+
+	snprintf(descr, DESCR_BUFSZ,
+_("dev %d:%d ioerr @ %"PRIu64":%"PRIu64" "),
 			major(dev), minor(dev), start, length);
 
 	/* Go figure out which blocks are bad from the fsmap. */
@@ -459,8 +467,60 @@ xfs_check_rmap_ioerr(
 	(keys + 1)->fmr_owner = ULLONG_MAX;
 	(keys + 1)->fmr_offset = ULLONG_MAX;
 	(keys + 1)->fmr_flags = UINT_MAX;
-	xfs_iterate_fsmap(ctx, descr, keys, xfs_check_rmap_error_report,
+	xfs_iterate_fsmap(wioerr->ctx, descr, keys, ioerr_fsmap_report,
 			&start);
+	return 0;
+}
+
+static int
+walk_ioerrs(
+	struct scrub_ctx		*ctx,
+	struct disk			*disk,
+	struct media_verify_state	*vs)
+{
+	struct walk_ioerr		wioerr = {
+		.ctx			= ctx,
+		.disk			= disk,
+	};
+	struct bitmap			*tree;
+
+	if (!disk)
+		return 0;
+	tree = bitmap_for_disk(ctx, disk, vs);
+	if (!tree)
+		return 0;
+	return bitmap_iterate(tree, walk_ioerr, &wioerr);
+}
+
+/* Given bad extent lists for the data & rtdev, find bad files. */
+static bool
+xfs_report_verify_errors(
+	struct scrub_ctx		*ctx,
+	struct media_verify_state	*vs)
+{
+	bool				moveon;
+	int				ret;
+
+	ret = walk_ioerrs(ctx, ctx->datadev, vs);
+	if (ret) {
+		str_liberror(ctx, ret, _("walking datadev io errors"));
+		return false;
+	}
+
+	ret = walk_ioerrs(ctx, ctx->rtdev, vs);
+	if (ret) {
+		str_liberror(ctx, ret, _("walking rtdev io errors"));
+		return false;
+	}
+
+	/* Scan the directory tree to get file paths. */
+	moveon = scan_fs_tree(ctx, xfs_report_verify_dir,
+			xfs_report_verify_dirent, vs);
+	if (!moveon)
+		return false;
+
+	/* Scan for unlinked files. */
+	return xfs_scan_all_inodes(ctx, xfs_report_verify_inode, vs);
 }
 
 /* Schedule a read-verify of a (data block) extent. */
@@ -571,7 +631,7 @@ xfs_scan_blocks(
 	}
 
 	ret = read_verify_pool_alloc(ctx, ctx->datadev,
-			ctx->mnt.fsgeom.blocksize, xfs_check_rmap_ioerr,
+			ctx->mnt.fsgeom.blocksize, remember_ioerr,
 			scrub_nproc(ctx), &vs.rvp_data);
 	if (ret) {
 		str_liberror(ctx, ret, _("creating datadev media verifier"));
@@ -579,7 +639,7 @@ xfs_scan_blocks(
 	}
 	if (ctx->logdev) {
 		ret = read_verify_pool_alloc(ctx, ctx->logdev,
-				ctx->mnt.fsgeom.blocksize, xfs_check_rmap_ioerr,
+				ctx->mnt.fsgeom.blocksize, remember_ioerr,
 				scrub_nproc(ctx), &vs.rvp_log);
 		if (ret) {
 			str_liberror(ctx, ret,
@@ -589,7 +649,7 @@ xfs_scan_blocks(
 	}
 	if (ctx->rtdev) {
 		ret = read_verify_pool_alloc(ctx, ctx->rtdev,
-				ctx->mnt.fsgeom.blocksize, xfs_check_rmap_ioerr,
+				ctx->mnt.fsgeom.blocksize, remember_ioerr,
 				scrub_nproc(ctx), &vs.rvp_realtime);
 		if (ret) {
 			str_liberror(ctx, ret,
