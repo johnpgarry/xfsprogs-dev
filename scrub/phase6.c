@@ -140,7 +140,7 @@ report_badfile(
 	bad_length = min(start + length,
 			 br->bmap->bm_physical + br->bmap->bm_length) - start;
 
-	str_error(br->ctx, br->descr,
+	str_unfixable_error(br->ctx, br->descr,
 _("media error at data offset %llu length %llu."),
 			br->bmap->bm_offset + bad_offset, bad_length);
 	return 0;

@@ -36,7 +36,8 @@ xfs_scrub_excessive_errors(
 	bool			ret;
 
 	pthread_mutex_lock(&ctx->lock);
-	ret = ctx->max_errors > 0 && ctx->errors_found >= ctx->max_errors;
+	ret = ctx->max_errors > 0 &&
+	      (ctx->unfixable_errors + ctx->errors_found) >= ctx->max_errors;
 	pthread_mutex_unlock(&ctx->lock);
 
 	return ret;
@@ -47,6 +48,10 @@ static struct {
 	int loglevel;
 } err_levels[] = {
 	[S_ERROR]  = { .string = "Error",	.loglevel = LOG_ERR },
+	[S_UNFIXABLE] = {
+		.string = "Unfixable error",
+		.loglevel = LOG_ERR
+	},
 	[S_WARN]   = { .string = "Warning",	.loglevel = LOG_WARNING },
 	[S_REPAIR] = { .string = "Repaired",	.loglevel = LOG_WARNING },
 	[S_INFO]   = { .string = "Info",	.loglevel = LOG_INFO },
@@ -108,6 +113,8 @@ __str_out(
 out_record:
 	if (error)      /* A syscall failed */
 		ctx->runtime_errors++;
+	else if (level == S_UNFIXABLE)
+		ctx->unfixable_errors++;
 	else if (level == S_ERROR)
 		ctx->errors_found++;
 	else if (level == S_WARN)

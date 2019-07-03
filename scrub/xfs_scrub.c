@@ -515,12 +515,16 @@ report_outcome(
 
 	total_errors = ctx->errors_found + ctx->runtime_errors;
 
-	if (total_errors == 0 && ctx->warnings_found == 0) {
+	if (total_errors == 0 &&
+	    ctx->unfixable_errors == 0 &&
+	    ctx->warnings_found == 0) {
 		log_info(ctx, _("No errors found."));
 		return;
 	}
 
-	if (total_errors == 0) {
+	if (total_errors == 0 && ctx->warnings_found == 0) {
+		/* nothing to report */
+	} else if (total_errors == 0) {
 		fprintf(stderr, _("%s: warnings found: %llu\n"), ctx->mntpoint,
 				ctx->warnings_found);
 		log_warn(ctx, _("warnings found: %llu"), ctx->warnings_found);
@@ -534,6 +538,13 @@ report_outcome(
 				ctx->warnings_found);
 		log_err(ctx, _("errors found: %llu; warnings found: %llu"),
 				total_errors, ctx->warnings_found);
+	}
+
+	if (ctx->unfixable_errors) {
+		fprintf(stderr, _("%s: unfixable errors found: %llu\n"),
+				ctx->mntpoint, ctx->unfixable_errors);
+		log_err(ctx, _("unfixable errors found: %llu"),
+				ctx->unfixable_errors);
 	}
 
 	/*

@@ -99,7 +99,8 @@ xfs_process_action_items(
 	workqueue_destroy(&wq);
 
 	pthread_mutex_lock(&ctx->lock);
-	if (moveon && ctx->errors_found == 0 && want_fstrim) {
+	if (moveon && ctx->errors_found == 0 && ctx->unfixable_errors == 0 &&
+	    want_fstrim) {
 		fstrim(ctx);
 		progress_add(1);
 	}
