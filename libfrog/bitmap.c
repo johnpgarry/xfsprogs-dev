@@ -342,6 +342,45 @@ bitmap_iterate(
 }
 #endif
 
+/* Iterate the set regions of part of this bitmap. */
+int
+bitmap_iterate_range(
+	struct bitmap		*bmap,
+	uint64_t		start,
+	uint64_t		length,
+	int			(*fn)(uint64_t, uint64_t, void *),
+	void			*arg)
+{
+	struct avl64node	*firstn;
+	struct avl64node	*lastn;
+	struct avl64node	*pos;
+	struct avl64node	*n;
+	struct avl64node	*l;
+	struct bitmap_node	*ext;
+	int			ret;
+
+	ret = pthread_mutex_lock(&bmap->bt_lock);
+	if (ret)
+		return ret;
+
+	avl64_findranges(bmap->bt_tree, start, start + length, &firstn,
+			&lastn);
+
+	if (firstn == NULL && lastn == NULL)
+		goto out;
+
+	avl_for_each_range_safe(pos, n, l, firstn, lastn) {
+		ext = container_of(pos, struct bitmap_node, btn_node);
+		ret = fn(ext->btn_start, ext->btn_length, arg);
+		if (ret)
+			break;
+	}
+
+out:
+	pthread_mutex_unlock(&bmap->bt_lock);
+	return ret;
+}
+
 /* Do any bitmap extents overlap the given one?  (locked) */
 static bool
 __bitmap_test(
