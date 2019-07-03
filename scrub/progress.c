@@ -198,8 +198,10 @@ progress_init_phase(
 	}
 
 	ret = pthread_create(&pt.thread, NULL, progress_report_thread, NULL);
-	if (ret)
+	if (ret) {
+		str_liberror(ctx, ret, _("creating progress reporting thread"));
 		goto out_ptcounter;
+	}
 
 	return true;
 
