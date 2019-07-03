@@ -11,7 +11,7 @@ struct bitmap {
 	struct avl64tree_desc	*bt_tree;
 };
 
-int bitmap_init(struct bitmap **bmap);
+int bitmap_alloc(struct bitmap **bmap);
 void bitmap_free(struct bitmap **bmap);
 int bitmap_set(struct bitmap *bmap, uint64_t start, uint64_t length);
 int bitmap_iterate(struct bitmap *bmap, int (*fn)(uint64_t, uint64_t, void *),
