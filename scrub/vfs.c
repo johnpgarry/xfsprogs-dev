@@ -215,6 +215,7 @@ scan_fs_tree(
 {
 	struct workqueue	wq;
 	struct scan_fs_tree	sft;
+	bool			moveon = false;
 	int			ret;
 
 	sft.moveon = true;
@@ -223,14 +224,22 @@ scan_fs_tree(
 	sft.dir_fn = dir_fn;
 	sft.dirent_fn = dirent_fn;
 	sft.arg = arg;
-	pthread_mutex_init(&sft.lock, NULL);
-	pthread_cond_init(&sft.wakeup, NULL);
+	ret = pthread_mutex_init(&sft.lock, NULL);
+	if (ret) {
+		str_liberror(ctx, ret, _("creating directory scan lock"));
+		return false;
+	}
+	ret = pthread_cond_init(&sft.wakeup, NULL);
+	if (ret) {
+		str_liberror(ctx, ret, _("creating directory scan signal"));
+		goto out_mutex;
+	}
 
 	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
-		str_info(ctx, ctx->mntpoint, _("Could not create workqueue."));
-		return false;
+		str_liberror(ctx, ret, _("creating directory scan workqueue"));
+		goto out_cond;
 	}
 
 	ret = queue_subdir(ctx, &sft, &wq, ctx->mntpoint, true);
@@ -239,7 +248,12 @@ scan_fs_tree(
 		goto out_wq;
 	}
 
-	pthread_mutex_lock(&sft.lock);
+	ret = pthread_mutex_lock(&sft.lock);
+	if (ret) {
+		str_liberror(ctx, ret, _("locking directory scan lock"));
+		goto out_wq;
+	}
+
 	if (sft.nr_dirs)
 		pthread_cond_wait(&sft.wakeup, &sft.lock);
 	assert(sft.nr_dirs == 0);
@@ -247,12 +261,18 @@ scan_fs_tree(
 
 	ret = workqueue_terminate(&wq);
 	if (ret) {
-		sft.moveon = false;
 		str_liberror(ctx, ret, _("finishing directory scan work"));
+		goto out_wq;
 	}
+
+	moveon = sft.moveon;
 out_wq:
 	workqueue_destroy(&wq);
-	return sft.moveon;
+out_cond:
+	pthread_cond_destroy(&sft.wakeup);
+out_mutex:
+	pthread_mutex_destroy(&sft.lock);
+	return moveon;
 }
 
 #ifndef FITRIM
