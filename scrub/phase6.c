@@ -385,6 +385,17 @@ xfs_check_rmap_error_report(
 		str_error(ctx, buf, _("media error in %s."), type);
 	}
 
+	/* Report extent maps */
+	if (map->fmr_flags & FMR_OF_EXTENT_MAP) {
+		bool		attr = (map->fmr_flags & FMR_OF_ATTR_FORK);
+
+		xfs_scrub_render_ino_suffix(ctx, buf, DESCR_BUFSZ,
+				map->fmr_owner, 0, " %s",
+				attr ? _("extended attribute") :
+				       _("file data"));
+		str_error(ctx, buf, _("media error in extent map"));
+	}
+
 	/*
 	 * XXX: If we had a getparent() call we could report IO errors
 	 * efficiently.  Until then, we'll have to scan the dir tree
