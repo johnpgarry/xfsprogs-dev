@@ -258,8 +258,7 @@ libxfs_trans_alloc(
 	struct xfs_trans	*tp;
 	int			error;
 
-	tp = kmem_zone_zalloc(xfs_trans_zone,
-		(flags & XFS_TRANS_NOFS) ? KM_NOFS : KM_SLEEP);
+	tp = kmem_zone_zalloc(xfs_trans_zone, KM_SLEEP);
 	tp->t_mountp = mp;
 	INIT_LIST_HEAD(&tp->t_items);
 	INIT_LIST_HEAD(&tp->t_dfops);
