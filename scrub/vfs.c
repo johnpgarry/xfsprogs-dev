@@ -43,6 +43,49 @@ struct scan_fs_tree_dir {
 	bool			rootdir;
 };
 
+static void scan_fs_dir(struct workqueue *wq, xfs_agnumber_t agno, void *arg);
+
+/* Queue a directory for scanning. */
+static bool
+queue_subdir(
+	struct scrub_ctx	*ctx,
+	struct scan_fs_tree	*sft,
+	struct workqueue	*wq,
+	const char		*path,
+	bool			is_rootdir)
+{
+	struct scan_fs_tree_dir	*new_sftd;
+	int			error;
+
+	new_sftd = malloc(sizeof(struct scan_fs_tree_dir));
+	if (!new_sftd) {
+		str_errno(ctx, _("creating directory scan context"));
+		return false;
+	}
+
+	new_sftd->path = strdup(path);
+	if (!new_sftd->path) {
+		str_errno(ctx, _("creating directory scan path"));
+		free(new_sftd);
+		return false;
+	}
+
+	new_sftd->sft = sft;
+	new_sftd->rootdir = is_rootdir;
+
+	pthread_mutex_lock(&sft->lock);
+	sft->nr_dirs++;
+	pthread_mutex_unlock(&sft->lock);
+	error = workqueue_add(wq, scan_fs_dir, 0, new_sftd);
+	if (error) {
+		str_info(ctx, ctx->mntpoint,
+_("Could not queue subdirectory scan work."));
+		return false;
+	}
+
+	return true;
+}
+
 /* Scan a directory sub tree. */
 static void
 scan_fs_dir(
@@ -56,7 +99,6 @@ scan_fs_dir(
 	DIR			*dir;
 	struct dirent		*dirent;
 	char			newpath[PATH_MAX];
-	struct scan_fs_tree_dir	*new_sftd;
 	struct stat		sb;
 	int			dir_fd;
 	int			error;
@@ -117,25 +159,10 @@ scan_fs_dir(
 		/* If directory, call ourselves recursively. */
 		if (S_ISDIR(sb.st_mode) && strcmp(".", dirent->d_name) &&
 		    strcmp("..", dirent->d_name)) {
-			new_sftd = malloc(sizeof(struct scan_fs_tree_dir));
-			if (!new_sftd) {
-				str_errno(ctx, newpath);
-				sft->moveon = false;
+			sft->moveon = queue_subdir(ctx, sft, wq, newpath,
+					false);
+			if (!sft->moveon)
 				break;
-			}
-			new_sftd->path = strdup(newpath);
-			new_sftd->sft = sft;
-			new_sftd->rootdir = false;
-			pthread_mutex_lock(&sft->lock);
-			sft->nr_dirs++;
-			pthread_mutex_unlock(&sft->lock);
-			error = workqueue_add(wq, scan_fs_dir, 0, new_sftd);
-			if (error) {
-				str_info(ctx, ctx->mntpoint,
-_("Could not queue subdirectory scan work."));
-				sft->moveon = false;
-				break;
-			}
 		}
 	}
 
@@ -165,11 +192,10 @@ scan_fs_tree(
 {
 	struct workqueue	wq;
 	struct scan_fs_tree	sft;
-	struct scan_fs_tree_dir	*sftd;
 	int			ret;
 
 	sft.moveon = true;
-	sft.nr_dirs = 1;
+	sft.nr_dirs = 0;
 	sft.root_sb = ctx->mnt_sb;
 	sft.dir_fn = dir_fn;
 	sft.dirent_fn = dirent_fn;
@@ -177,41 +203,25 @@ scan_fs_tree(
 	pthread_mutex_init(&sft.lock, NULL);
 	pthread_cond_init(&sft.wakeup, NULL);
 
-	sftd = malloc(sizeof(struct scan_fs_tree_dir));
-	if (!sftd) {
-		str_errno(ctx, ctx->mntpoint);
-		return false;
-	}
-	sftd->path = strdup(ctx->mntpoint);
-	sftd->sft = &sft;
-	sftd->rootdir = true;
-
 	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
 		str_info(ctx, ctx->mntpoint, _("Could not create workqueue."));
-		goto out_free;
+		return false;
 	}
-	ret = workqueue_add(&wq, scan_fs_dir, 0, sftd);
-	if (ret) {
-		str_info(ctx, ctx->mntpoint,
-_("Could not queue directory scan work."));
+
+	sft.moveon = queue_subdir(ctx, &sft, &wq, ctx->mntpoint, true);
+	if (!sft.moveon)
 		goto out_wq;
-	}
 
 	pthread_mutex_lock(&sft.lock);
 	pthread_cond_wait(&sft.wakeup, &sft.lock);
 	assert(sft.nr_dirs == 0);
 	pthread_mutex_unlock(&sft.lock);
-	workqueue_destroy(&wq);
 
-	return sft.moveon;
 out_wq:
 	workqueue_destroy(&wq);
-out_free:
-	free(sftd->path);
-	free(sftd);
-	return false;
+	return sft.moveon;
 }
 
 #ifndef FITRIM
