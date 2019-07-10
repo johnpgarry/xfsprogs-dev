@@ -26,6 +26,8 @@ copy_range_help(void)
 					       file at offset 200\n\
  'copy_range some_file' - copies all bytes from some_file into the open file\n\
                           at position 0\n\
+ 'copy_range -f 2' - copies all bytes from open file 2 into the current open file\n\
+                          at position 0\n\
 "));
 }
 
@@ -82,11 +84,12 @@ copy_range_f(int argc, char **argv)
 	int opt;
 	int ret;
 	int fd;
+	int src_file_arg = 1;
 	size_t fsblocksize, fssectsize;
 
 	init_cvtnum(&fsblocksize, &fssectsize);
 
-	while ((opt = getopt(argc, argv, "s:d:l:")) != -1) {
+	while ((opt = getopt(argc, argv, "s:d:l:f:")) != -1) {
 		switch (opt) {
 		case 's':
 			src = cvtnum(fsblocksize, fssectsize, optarg);
@@ -109,15 +112,28 @@ copy_range_f(int argc, char **argv)
 				return 0;
 			}
 			break;
+		case 'f':
+			fd = atoi(argv[1]);
+			if (fd < 0 || fd >= filecount) {
+				printf(_("value %d is out of range (0-%d)\n"),
+					fd, filecount-1);
+				return 0;
+			}
+			fd = filetable[fd].fd;
+			/* Expect no src_file arg */
+			src_file_arg = 0;
+			break;
 		}
 	}
 
-	if (optind != argc - 1)
+	if (optind != argc - src_file_arg)
 		return command_usage(&copy_range_cmd);
 
-	fd = openfile(argv[optind], NULL, IO_READONLY, 0, NULL);
-	if (fd < 0)
-		return 0;
+	if (src_file_arg) {
+		fd = openfile(argv[optind], NULL, IO_READONLY, 0, NULL);
+		if (fd < 0)
+			return 0;
+	}
 
 	if (src == 0 && dst == 0 && len == 0) {
 		off64_t	sz;
@@ -150,7 +166,7 @@ copy_range_init(void)
 	copy_range_cmd.argmin = 1;
 	copy_range_cmd.argmax = 7;
 	copy_range_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
-	copy_range_cmd.args = _("[-s src_off] [-d dst_off] [-l len] src_file");
+	copy_range_cmd.args = _("[-s src_off] [-d dst_off] [-l len] src_file | -f N");
 	copy_range_cmd.oneline = _("Copy a range of data between two files");
 	copy_range_cmd.help = copy_range_help;
 
