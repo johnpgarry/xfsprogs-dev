@@ -479,6 +479,12 @@ the kernel, except no output count parameter is used (should
 be initialized to zero).
 An error is returned if the inode number is invalid.
 
+.TP
+.B XFS_IOC_FSGEOMETRY
+See
+.BR ioctl_xfs_fsop_geometry (2)
+for more information.
+
 .PP
 .nf
 .B XFS_IOC_THAW
@@ -494,10 +500,6 @@ An error is returned if the inode number is invalid.
 These interfaces are used to implement various filesystem internal
 operations on XFS filesystems.
 For
-.B XFS_IOC_FSGEOMETRY
-(get filesystem mkfs time information), the output structure is of type
-.BR struct xfs_fsop_geom .
-For
 .B XFS_FS_COUNTS
 (get filesystem dynamic global information), the output structure is of type
 .BR xfs_fsop_counts_t .
@@ -506,6 +508,7 @@ as they are not of general use to applications.
 
 .SH SEE ALSO
 .BR ioctl_xfs_fsgetxattr (2),
+.BR ioctl_xfs_fsop_geometry (2),
 .BR fstatfs (2),
 .BR statfs (2),
 .BR xfs (5),
