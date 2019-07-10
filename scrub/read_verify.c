@@ -32,7 +32,19 @@
  * because that's the biggest SCSI VERIFY(16) we dare to send.
  */
 #define RVP_IO_MAX_SIZE		(33554432)
-#define RVP_IO_MAX_SECTORS	(RVP_IO_MAX_SIZE >> BBSHIFT)
+
+/*
+ * If we're running in the background then we perform IO in 128k chunks
+ * to reduce the load on the IO subsystem.
+ */
+#define RVP_BACKGROUND_IO_MAX_SIZE	(131072)
+
+/* What's the real maximum IO size? */
+static inline unsigned int
+rvp_io_max_size(void)
+{
+	return bg_mode > 0 ? RVP_BACKGROUND_IO_MAX_SIZE : RVP_IO_MAX_SIZE;
+}
 
 /* Tolerate 64k holes in adjacent read verify requests. */
 #define RVP_IO_BATCH_LOCALITY	(65536)
@@ -84,7 +96,7 @@ read_verify_pool_alloc(
 	 */
 	if (miniosz % disk->d_lbasize)
 		return EINVAL;
-	if (RVP_IO_MAX_SIZE % miniosz)
+	if (rvp_io_max_size() % miniosz)
 		return EINVAL;
 
 	rvp = calloc(1, sizeof(struct read_verify_pool));
@@ -92,7 +104,7 @@ read_verify_pool_alloc(
 		return errno;
 
 	ret = posix_memalign((void **)&rvp->readbuf, page_size,
-			RVP_IO_MAX_SIZE);
+			rvp_io_max_size());
 	if (ret)
 		goto out_free;
 	ret = ptcounter_alloc(verifier_threads, &rvp->verified_bytes);
@@ -177,7 +189,7 @@ read_verify(
 	if (rvp->errors_seen)
 		return;
 
-	io_max_size = RVP_IO_MAX_SIZE;
+	io_max_size = rvp_io_max_size();
 
 	while (rv->io_length > 0) {
 		io_error = 0;
@@ -253,6 +265,7 @@ read_verify(
 			verified += sz;
 		rv->io_start += sz;
 		rv->io_length -= sz;
+		background_sleep();
 	}
 
 	free(rv);
