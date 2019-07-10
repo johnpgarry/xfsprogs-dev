@@ -72,21 +72,30 @@ bitmap_alloc(
 	struct bitmap		**bmapp)
 {
 	struct bitmap		*bmap;
+	int			ret;
 
 	bmap = calloc(1, sizeof(struct bitmap));
 	if (!bmap)
 		return errno;
 	bmap->bt_tree = malloc(sizeof(struct avl64tree_desc));
 	if (!bmap->bt_tree) {
-		free(bmap);
-		return errno;
+		ret = errno;
+		goto out;
 	}
 
-	pthread_mutex_init(&bmap->bt_lock, NULL);
+	ret = pthread_mutex_init(&bmap->bt_lock, NULL);
+	if (ret)
+		goto out_tree;
+
 	avl64_init_tree(bmap->bt_tree, &bitmap_ops);
 	*bmapp = bmap;
 
 	return 0;
+out_tree:
+	free(bmap->bt_tree);
+out:
+	free(bmap);
+	return ret;
 }
 
 /* Free a bitmap. */
@@ -217,7 +226,10 @@ bitmap_set(
 {
 	int			res;
 
-	pthread_mutex_lock(&bmap->bt_lock);
+	res = pthread_mutex_lock(&bmap->bt_lock);
+	if (res)
+		return res;
+
 	res = __bitmap_set(bmap, start, length);
 	pthread_mutex_unlock(&bmap->bt_lock);
 
