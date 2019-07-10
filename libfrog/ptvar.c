@@ -44,8 +44,12 @@ ptvar_alloc(
 	int		ret;
 
 #ifdef _SC_LEVEL1_DCACHE_LINESIZE
+	long		l1_dcache;
+
 	/* Try to prevent cache pingpong by aligning to cacheline size. */
-	size = max(size, sysconf(_SC_LEVEL1_DCACHE_LINESIZE));
+	l1_dcache = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
+	if (l1_dcache > 0)
+		size = roundup(size, l1_dcache);
 #endif
 
 	ptv = malloc(PTVAR_SIZE(nr, size));
@@ -88,17 +92,30 @@ ptvar_get(
 	int		*retp)
 {
 	void		*p;
+	int		ret;
 
 	p = pthread_getspecific(ptv->key);
 	if (!p) {
-		pthread_mutex_lock(&ptv->lock);
+		ret = pthread_mutex_lock(&ptv->lock);
+		if (ret) {
+			*retp = ret;
+			return NULL;
+		}
 		assert(ptv->nr_used < ptv->nr_counters);
 		p = &ptv->data[(ptv->nr_used++) * ptv->data_size];
-		pthread_setspecific(ptv->key, p);
+		ret = pthread_setspecific(ptv->key, p);
+		if (ret)
+			goto out_unlock;
 		pthread_mutex_unlock(&ptv->lock);
 	}
 	*retp = 0;
 	return p;
+
+out_unlock:
+	ptv->nr_used--;
+	pthread_mutex_unlock(&ptv->lock);
+	*retp = ret;
+	return NULL;
 }
 
 /* Iterate all of the per-thread variables. */
@@ -111,7 +128,10 @@ ptvar_foreach(
 	size_t		i;
 	int		ret;
 
-	pthread_mutex_lock(&ptv->lock);
+	ret = pthread_mutex_lock(&ptv->lock);
+	if (ret)
+		return ret;
+
 	for (i = 0; i < ptv->nr_used; i++) {
 		ret = fn(ptv, &ptv->data[i * ptv->data_size], foreach_arg);
 		if (ret)
