@@ -131,9 +131,6 @@ static bool			display_rusage;
 /* Background mode; higher values insert more pauses between scrub calls. */
 unsigned int			bg_mode;
 
-/* Maximum number of processors available to us. */
-int				nproc;
-
 /* Number of threads we're allowed to use. */
 unsigned int			force_nr_threads;
 
@@ -716,11 +713,6 @@ main(
 		goto out;
 	}
 	memcpy(&ctx.fsinfo, fsp, sizeof(struct fs_path));
-
-	/* How many CPUs? */
-	nproc = sysconf(_SC_NPROCESSORS_ONLN);
-	if (nproc < 1)
-		nproc = 1;
 
 	/* Set up a page-aligned buffer for read verification. */
 	page_size = sysconf(_SC_PAGESIZE);

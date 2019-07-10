@@ -15,7 +15,6 @@ extern char *progname;
 extern unsigned int		force_nr_threads;
 extern unsigned int		bg_mode;
 extern unsigned int		debug;
-extern int			nproc;
 extern bool			verbose;
 extern long			page_size;
 extern bool			want_fstrim;
