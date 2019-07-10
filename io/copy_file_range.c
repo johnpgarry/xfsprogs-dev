@@ -84,7 +84,8 @@ copy_range_f(int argc, char **argv)
 	int opt;
 	int ret;
 	int fd;
-	int src_file_arg = 1;
+	int src_path_arg = 1;
+	int src_file_nr = 0;
 	size_t fsblocksize, fssectsize;
 
 	init_cvtnum(&fsblocksize, &fssectsize);
@@ -113,26 +114,27 @@ copy_range_f(int argc, char **argv)
 			}
 			break;
 		case 'f':
-			fd = atoi(argv[1]);
-			if (fd < 0 || fd >= filecount) {
-				printf(_("value %d is out of range (0-%d)\n"),
-					fd, filecount-1);
+			src_file_nr = atoi(argv[1]);
+			if (src_file_nr < 0 || src_file_nr >= filecount) {
+				printf(_("file value %d is out of range (0-%d)\n"),
+					src_file_nr, filecount - 1);
 				return 0;
 			}
-			fd = filetable[fd].fd;
-			/* Expect no src_file arg */
-			src_file_arg = 0;
+			/* Expect no src_path arg */
+			src_path_arg = 0;
 			break;
 		}
 	}
 
-	if (optind != argc - src_file_arg)
+	if (optind != argc - src_path_arg)
 		return command_usage(&copy_range_cmd);
 
-	if (src_file_arg) {
+	if (src_path_arg) {
 		fd = openfile(argv[optind], NULL, IO_READONLY, 0, NULL);
 		if (fd < 0)
 			return 0;
+	} else {
+		fd = filetable[src_file_nr].fd;
 	}
 
 	if (src == 0 && dst == 0 && len == 0) {
