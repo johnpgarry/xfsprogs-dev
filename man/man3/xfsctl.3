@@ -396,12 +396,21 @@ See
 .BR ioctl_xfs_fscounts (2)
 for more information.
 
+.TP
+.nf
+.B XFS_IOC_GET_RESBLKS
+.fi
+.TP
+.B XFS_IOC_SET_RESBLKS
+See
+.BR ioctl_xfs_getresblks (2)
+for more information.
+Save yourself a lot of frustration and avoid these ioctls.
+
 .PP
 .nf
 .B XFS_IOC_THAW
 .B XFS_IOC_FREEZE
-.B XFS_IOC_GET_RESBLKS
-.B XFS_IOC_SET_RESBLKS
 .B XFS_IOC_FSGROWFSDATA
 .B XFS_IOC_FSGROWFSLOG
 .fi
@@ -419,6 +428,7 @@ as they are not of general use to applications.
 .BR ioctl_xfs_scrub_metadata (2),
 .BR ioctl_xfs_fsinumbers (2),
 .BR ioctl_xfs_fscounts (2),
+.BR ioctl_xfs_getresblks (2),
 .BR fstatfs (2),
 .BR statfs (2),
 .BR xfs (5),
