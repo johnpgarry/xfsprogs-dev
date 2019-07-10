@@ -242,10 +242,17 @@ platform_align_blockdev(void)
 	return max_block_alignment;
 }
 
+/* How many CPUs are online? */
 int
 platform_nproc(void)
 {
-	return sysconf(_SC_NPROCESSORS_ONLN);
+	long nproc = sysconf(_SC_NPROCESSORS_ONLN);
+
+	if (nproc < 1)
+		return 1;
+	if (nproc >= INT_MAX)
+		return INT_MAX;
+	return nproc;
 }
 
 unsigned long

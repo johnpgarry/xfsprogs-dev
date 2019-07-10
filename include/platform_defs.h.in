@@ -77,4 +77,6 @@ typedef unsigned short umode_t;
 # define ASSERT(EX)	((void) 0)
 #endif
 
+extern int	platform_nproc(void);
+
 #endif	/* __XFS_PLATFORM_DEFS_H__ */
