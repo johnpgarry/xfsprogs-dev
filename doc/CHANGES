@@ -1,3 +1,18 @@
+xfsprogs-5.1.0-rc1 (11 Jul 2019)
+	- mkfs: enable reflink by default (Darrick Wong)
+	- mkfs: fix stripe unit handling (Allison Collins)
+	- mkfs: remove useless log options in usage() (Yang Xu)
+	- mkfs: validate start and end of aligned logs (Darrick Wong)
+	- xfs_quota: fix built-in help for project setup (Eric Sandeen)
+	- xfs_io: allow passing an open file to copy_range (Amir Goldstein)
+	- xfs_info: limit findmnt to mounted xfs filesystems (Amir Goldstein)
+	- man: break out several ioctl man pages (Darrick Wong)
+	- man: Fix an inconsistency in the mkfs man page (Alvin Zheng)
+	- xfs_scrub: fix background-mode sleep throttling (Darrick Wong)
+	- libxfs: sync up xfs_trans_inode.c with the kernel (Eric Sandeen)
+	- libfrog: fix bitmap return values (Darrick Wong)
+	- libfrog: don't set negative errno in conversion f'ns (Darrick Wong)
+
 xfsprogs-5.1.0-rc0 (07 May 2019)
 	- libxfs changes merged from kernel 5.1
 
