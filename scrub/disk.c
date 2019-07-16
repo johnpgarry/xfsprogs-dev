@@ -144,7 +144,7 @@ disk_scsi_verify(
 	iohdr.timeout = 30000; /* 30s */
 
 	error = ioctl(disk->d_fd, SG_IO, &iohdr);
-	if (error)
+	if (error < 0)
 		return error;
 
 	dbg_printf("VERIFY(16) fd %d lba %"PRIu64" len %"PRIu64" info %x "
@@ -163,7 +163,7 @@ disk_scsi_verify(
 		return -1;
 	}
 
-	return error;
+	return blockcount << BBSHIFT;
 }
 #else
 # define disk_scsi_verify(...)		(ENOTTY)
