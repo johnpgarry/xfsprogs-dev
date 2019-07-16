@@ -45,6 +45,32 @@ struct scan_fs_tree_dir {
 
 static void scan_fs_dir(struct workqueue *wq, xfs_agnumber_t agno, void *arg);
 
+/* Increment the number of directories that are queued for processing. */
+static void
+inc_nr_dirs(
+	struct scan_fs_tree	*sft)
+{
+	pthread_mutex_lock(&sft->lock);
+	sft->nr_dirs++;
+	pthread_mutex_unlock(&sft->lock);
+}
+
+/*
+ * Decrement the number of directories that are queued for processing and if
+ * we ran out of dirs to process, wake up anyone who was waiting for processing
+ * to finish.
+ */
+static void
+dec_nr_dirs(
+	struct scan_fs_tree	*sft)
+{
+	pthread_mutex_lock(&sft->lock);
+	sft->nr_dirs--;
+	if (sft->nr_dirs == 0)
+		pthread_cond_signal(&sft->wakeup);
+	pthread_mutex_unlock(&sft->lock);
+}
+
 /* Queue a directory for scanning. */
 static bool
 queue_subdir(
@@ -73,11 +99,10 @@ queue_subdir(
 	new_sftd->sft = sft;
 	new_sftd->rootdir = is_rootdir;
 
-	pthread_mutex_lock(&sft->lock);
-	sft->nr_dirs++;
-	pthread_mutex_unlock(&sft->lock);
+	inc_nr_dirs(sft);
 	error = workqueue_add(wq, scan_fs_dir, 0, new_sftd);
 	if (error) {
+		dec_nr_dirs(sft);
 		str_info(ctx, ctx->mntpoint,
 _("Could not queue subdirectory scan work."));
 		return false;
@@ -172,12 +197,7 @@ scan_fs_dir(
 		str_errno(ctx, sftd->path);
 
 out:
-	pthread_mutex_lock(&sft->lock);
-	sft->nr_dirs--;
-	if (sft->nr_dirs == 0)
-		pthread_cond_signal(&sft->wakeup);
-	pthread_mutex_unlock(&sft->lock);
-
+	dec_nr_dirs(sft);
 	free(sftd->path);
 	free(sftd);
 }
