@@ -131,7 +131,7 @@ xfs_log_calc_unit_res(
 	} else {
 		/* BB roundoff */
 		unit_bytes += 2 * BBSIZE;
-        }
+	}
 
 	return unit_bytes;
 }
@@ -685,7 +685,7 @@ xfs_log_item_init(
 {
 	item->li_mountp = mp; 
 	item->li_type = type;
-        
+
 	INIT_LIST_HEAD(&item->li_trans);
 }   
 
@@ -743,5 +743,22 @@ hweight64(__u64 w)
 {
 	return hweight32((unsigned int)w) +
 	       hweight32((unsigned int)(w >> 32));
+}
+
+/* xfs_health.c */
+
+/* Mark a per-fs metadata healed. */
+void
+xfs_fs_mark_healthy(
+	struct xfs_mount	*mp,
+	unsigned int		mask)
+{
+	ASSERT(!(mask & ~XFS_SICK_FS_PRIMARY));
+	trace_xfs_fs_mark_healthy(mp, mask);
+
+	spin_lock(&mp->m_sb_lock);
+	mp->m_fs_sick &= ~mask;
+	mp->m_fs_checked |= mask;
+	spin_unlock(&mp->m_sb_lock);
 }
 

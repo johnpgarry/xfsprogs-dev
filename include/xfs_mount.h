@@ -21,6 +21,14 @@ typedef struct xfs_mount {
 #define m_icount	m_sb.sb_icount
 #define m_ifree		m_sb.sb_ifree
 #define m_fdblocks	m_sb.sb_fdblocks
+
+	/*
+	 * Bitsets of per-fs metadata that have been checked and/or are sick.
+	 * Callers must hold m_sb_lock to access these two fields.
+	 */
+	uint8_t			m_fs_checked;
+	uint8_t			m_fs_sick;
+
 	char			*m_fsname;	/* filesystem name */
 	int			m_bsize;	/* fs logical block size */
 	xfs_agnumber_t		m_agfrotor;	/* last ag where space found */
