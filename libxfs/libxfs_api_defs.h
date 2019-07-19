@@ -20,6 +20,7 @@
 #define xfs_trans_alloc_empty		libxfs_trans_alloc_empty
 #define xfs_trans_add_item		libxfs_trans_add_item
 #define xfs_trans_bhold			libxfs_trans_bhold
+#define xfs_trans_bhold_release		libxfs_trans_bhold_release
 #define xfs_trans_binval		libxfs_trans_binval
 #define xfs_trans_bjoin			libxfs_trans_bjoin
 #define xfs_trans_brelse		libxfs_trans_brelse

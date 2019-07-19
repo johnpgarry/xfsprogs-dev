@@ -519,6 +519,12 @@ libxfs_trans_bjoin(
 	trace_xfs_trans_bjoin(bp->b_log_item);
 }
 
+/*
+ * Mark the buffer as not needing to be unlocked when the buf item's
+ * iop_unlock() routine is called.  The buffer must already be locked
+ * and associated with the given transaction.
+ */
+/* ARGSUSED */
 void
 libxfs_trans_bhold(
 	xfs_trans_t		*tp,
@@ -531,6 +537,24 @@ libxfs_trans_bhold(
 
 	bip->bli_flags |= XFS_BLI_HOLD;
 	trace_xfs_trans_bhold(bip);
+}
+
+/*
+ * Cancel the previous buffer hold request made on this buffer
+ * for this transaction.
+ */
+void
+libxfs_trans_bhold_release(
+	xfs_trans_t		*tp,
+	xfs_buf_t		*bp)
+{
+	struct xfs_buf_log_item *bip = bp->b_log_item;
+
+	ASSERT(bp->b_transp == tp);
+	ASSERT(bip != NULL);
+
+	bip->bli_flags &= ~XFS_BLI_HOLD;
+	trace_xfs_trans_bhold_release(bip);
 }
 
 xfs_buf_t *

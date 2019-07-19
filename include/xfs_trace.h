@@ -167,6 +167,7 @@
 #define trace_xfs_trans_binval(a)		((void) 0)
 #define trace_xfs_trans_bjoin(a)		((void) 0)
 #define trace_xfs_trans_bhold(a)		((void) 0)
+#define trace_xfs_trans_bhold_release(a)	((void) 0)
 #define trace_xfs_trans_get_buf(a)		((void) 0)
 #define trace_xfs_trans_getsb_recur(a)		((void) 0)
 #define trace_xfs_trans_getsb(a)		((void) 0)
