@@ -83,9 +83,9 @@ int cmp(const void *, const void *);
 static void tmp_init(char *mnt);
 static char * tmp_next(char *mnt);
 static void tmp_close(char *mnt);
-int xfs_getgeom(int , xfs_fsop_geom_v1_t * );
+int xfs_getgeom(int , struct xfs_fsop_geom_v1 * );
 
-static xfs_fsop_geom_v1_t fsgeom;	/* geometry of active mounted system */
+static struct xfs_fsop_geom_v1 fsgeom;	/* geometry of active mounted system */
 
 #define NMOUNT 64
 static int numfs;
@@ -103,7 +103,7 @@ static int	nfrags = 0;	/* Debug option: Coerse into specific number
 static int	openopts = O_CREAT|O_EXCL|O_RDWR|O_DIRECT;
 
 static int
-xfs_fsgeometry(int fd, xfs_fsop_geom_v1_t *geom)
+xfs_fsgeometry(int fd, struct xfs_fsop_geom_v1 *geom)
 {
     return ioctl(fd, XFS_IOC_FSGEOMETRY_V1, geom);
 }
@@ -1616,7 +1616,7 @@ getnextents(int fd)
  * Get the fs geometry
  */
 int
-xfs_getgeom(int fd, xfs_fsop_geom_v1_t * fsgeom)
+xfs_getgeom(int fd, struct xfs_fsop_geom_v1 *fsgeom)
 {
 	if (xfs_fsgeometry(fd, fsgeom) < 0) {
 		return -1;
