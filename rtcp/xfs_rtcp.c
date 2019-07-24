@@ -369,7 +369,7 @@ int
 xfsrtextsize( char *path)
 {
 	int fd, rval, rtextsize;
-	xfs_fsop_geom_v1_t geo;
+	struct xfs_fsop_geom_v1 geo;
 
 	fd = open( path, O_RDONLY );
 	if ( fd < 0 ) {
