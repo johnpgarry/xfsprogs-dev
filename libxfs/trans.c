@@ -361,7 +361,7 @@ _libxfs_trans_bjoin(
 
 	ASSERT(bp->b_transp == NULL);
 
-        /*
+	/*
 	 * The xfs_buf_log_item pointer is stored in b_log_item.  If
 	 * it doesn't have one yet, then allocate one and initialize it.
 	 * The checks to see if one is there are in xfs_buf_item_init().
@@ -407,21 +407,21 @@ libxfs_trans_bhold_release(
 	trace_xfs_trans_bhold_release(bip);
 }
 
-xfs_buf_t *
+struct xfs_buf *
 libxfs_trans_get_buf_map(
-	xfs_trans_t		*tp,
-	struct xfs_buftarg	*btp,
+	struct xfs_trans	*tp,
+	struct xfs_buftarg	*target,
 	struct xfs_buf_map	*map,
 	int			nmaps,
-	uint			f)
+	uint			flags)
 {
 	xfs_buf_t		*bp;
-	xfs_buf_log_item_t	*bip;
+	struct xfs_buf_log_item	*bip;
 
 	if (tp == NULL)
-		return libxfs_getbuf_map(btp, map, nmaps, 0);
+		return libxfs_getbuf_map(target, map, nmaps, 0);
 
-	bp = xfs_trans_buf_item_match(tp, btp, map, nmaps);
+	bp = xfs_trans_buf_item_match(tp, target, map, nmaps);
 	if (bp != NULL) {
 		ASSERT(bp->b_transp == tp);
 		bip = bp->b_log_item;
@@ -430,7 +430,7 @@ libxfs_trans_get_buf_map(
 		return bp;
 	}
 
-	bp = libxfs_getbuf_map(btp, map, nmaps, 0);
+	bp = libxfs_getbuf_map(target, map, nmaps, 0);
 	if (bp == NULL)
 		return NULL;
 
@@ -442,11 +442,11 @@ libxfs_trans_get_buf_map(
 xfs_buf_t *
 libxfs_trans_getsb(
 	xfs_trans_t		*tp,
-	xfs_mount_t		*mp,
+	struct xfs_mount	*mp,
 	int			flags)
 {
 	xfs_buf_t		*bp;
-	xfs_buf_log_item_t	*bip;
+	struct xfs_buf_log_item	*bip;
 	int			len = XFS_FSS_TO_BB(mp, 1);
 	DEFINE_SINGLE_BUF_MAP(map, XFS_SB_DADDR, len);
 
@@ -472,23 +472,23 @@ libxfs_trans_getsb(
 
 int
 libxfs_trans_read_buf_map(
-	xfs_mount_t		*mp,
-	xfs_trans_t		*tp,
-	struct xfs_buftarg	*btp,
+	struct xfs_mount	*mp,
+	struct xfs_trans	*tp,
+	struct xfs_buftarg	*target,
 	struct xfs_buf_map	*map,
 	int			nmaps,
 	uint			flags,
-	xfs_buf_t		**bpp,
+	struct xfs_buf		**bpp,
 	const struct xfs_buf_ops *ops)
 {
-	xfs_buf_t		*bp;
-	xfs_buf_log_item_t	*bip;
+	struct xfs_buf		*bp;
+	struct xfs_buf_log_item	*bip;
 	int			error;
 
 	*bpp = NULL;
 
 	if (tp == NULL) {
-		bp = libxfs_readbuf_map(btp, map, nmaps, flags, ops);
+		bp = libxfs_readbuf_map(target, map, nmaps, flags, ops);
 		if (!bp) {
 			return (flags & XBF_TRYLOCK) ?  -EAGAIN : -ENOMEM;
 		}
@@ -497,7 +497,7 @@ libxfs_trans_read_buf_map(
 		goto done;
 	}
 
-	bp = xfs_trans_buf_item_match(tp, btp, map, nmaps);
+	bp = xfs_trans_buf_item_match(tp, target, map, nmaps);
 	if (bp != NULL) {
 		ASSERT(bp->b_transp == tp);
 		ASSERT(bp->b_log_item != NULL);
@@ -507,7 +507,7 @@ libxfs_trans_read_buf_map(
 		goto done;
 	}
 
-	bp = libxfs_readbuf_map(btp, map, nmaps, flags, ops);
+	bp = libxfs_readbuf_map(target, map, nmaps, flags, ops);
 	if (!bp) {
 		return (flags & XBF_TRYLOCK) ?  -EAGAIN : -ENOMEM;
 	}
@@ -527,10 +527,10 @@ out_relse:
 
 void
 libxfs_trans_brelse(
-	xfs_trans_t		*tp,
-	xfs_buf_t		*bp)
+	struct xfs_trans	*tp,
+	struct xfs_buf		*bp)
 {
-	xfs_buf_log_item_t	*bip;
+	struct xfs_buf_log_item	*bip;
 
 	if (tp == NULL) {
 		ASSERT(bp->b_transp == NULL);
@@ -542,19 +542,23 @@ libxfs_trans_brelse(
 	ASSERT(bp->b_transp == tp);
 	bip = bp->b_log_item;
 	ASSERT(bip->bli_item.li_type == XFS_LI_BUF);
+
 	if (bip->bli_recur > 0) {
 		bip->bli_recur--;
 		return;
 	}
+
 	/* If dirty/stale, can't release till transaction committed */
 	if (bip->bli_flags & XFS_BLI_STALE)
 		return;
 	if (test_bit(XFS_LI_DIRTY, &bip->bli_item.li_flags))
 		return;
+
 	xfs_trans_del_item(&bip->bli_item);
 	if (bip->bli_flags & XFS_BLI_HOLD)
 		bip->bli_flags &= ~XFS_BLI_HOLD;
 	xfs_buf_item_put(bip);
+
 	bp->b_transp = NULL;
 	libxfs_putbuf(bp);
 }
@@ -570,7 +574,7 @@ libxfs_trans_bhold(
 	xfs_trans_t		*tp,
 	xfs_buf_t		*bp)
 {
-	xfs_buf_log_item_t	*bip = bp->b_log_item;
+	struct xfs_buf_log_item	*bip = bp->b_log_item;
 
 	ASSERT(bp->b_transp == tp);
 	ASSERT(bip != NULL);
@@ -617,6 +621,7 @@ libxfs_trans_log_buf(
 	ASSERT((first <= last) && (last < bp->b_bcount));
 
 	xfs_trans_dirty_buf(tp, bp);
+
 	xfs_buf_item_log(bip, first, last);
 }
 
@@ -625,7 +630,7 @@ libxfs_trans_binval(
 	xfs_trans_t		*tp,
 	xfs_buf_t		*bp)
 {
-	xfs_buf_log_item_t	*bip = bp->b_log_item;
+	struct xfs_buf_log_item	*bip = bp->b_log_item;
 
 	ASSERT(bp->b_transp == tp);
 	ASSERT(bip != NULL);
@@ -636,6 +641,7 @@ libxfs_trans_binval(
 		return;
 	XFS_BUF_UNDELAYWRITE(bp);
 	xfs_buf_stale(bp);
+
 	bip->bli_flags |= XFS_BLI_STALE;
 	bip->bli_flags &= ~XFS_BLI_DIRTY;
 	bip->__bli_format.blf_flags &= ~XFS_BLF_INODE_BUF;
@@ -649,7 +655,7 @@ libxfs_trans_inode_alloc_buf(
 	xfs_trans_t		*tp,
 	xfs_buf_t		*bp)
 {
-	xfs_buf_log_item_t	*bip = bp->b_log_item;
+	struct xfs_buf_log_item	*bip = bp->b_log_item;
 
 	ASSERT(bp->b_transp == tp);
 	ASSERT(bip != NULL);
