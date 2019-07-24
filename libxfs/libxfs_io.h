@@ -81,14 +81,15 @@ typedef struct xfs_buf {
 bool xfs_verify_magic(struct xfs_buf *bp, __be32 dmagic);
 bool xfs_verify_magic16(struct xfs_buf *bp, __be16 dmagic);
 
-enum xfs_buf_flags_t {	/* b_flags bits */
-	LIBXFS_B_EXIT		= 0x0001,	/* ==LIBXFS_EXIT_ON_FAILURE */
-	LIBXFS_B_DIRTY		= 0x0002,	/* buffer has been modified */
-	LIBXFS_B_STALE		= 0x0004,	/* buffer marked as invalid */
-	LIBXFS_B_UPTODATE	= 0x0008,	/* buffer is sync'd to disk */
-	LIBXFS_B_DISCONTIG	= 0x0010,	/* discontiguous buffer */
-	LIBXFS_B_UNCHECKED	= 0x0020,	/* needs verification */
-};
+/* b_flags bits */
+#define LIBXFS_B_EXIT		0x0001	/* ==LIBXFS_EXIT_ON_FAILURE */
+#define LIBXFS_B_DIRTY		0x0002	/* buffer has been modified */
+#define LIBXFS_B_STALE		0x0004	/* buffer marked as invalid */
+#define LIBXFS_B_UPTODATE	0x0008	/* buffer is sync'd to disk */
+#define LIBXFS_B_DISCONTIG	0x0010	/* discontiguous buffer */
+#define LIBXFS_B_UNCHECKED	0x0020	/* needs verification */
+
+typedef unsigned int xfs_buf_flags_t;
 
 #define XFS_BUF_DADDR_NULL		((xfs_daddr_t) (-1LL))
 

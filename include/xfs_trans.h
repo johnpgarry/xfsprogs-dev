@@ -108,12 +108,12 @@ bool	libxfs_trans_ordered_buf(xfs_trans_t *, struct xfs_buf *);
 struct xfs_buf	*libxfs_trans_get_buf_map(struct xfs_trans *tp,
 					struct xfs_buftarg *btp,
 					struct xfs_buf_map *map, int nmaps,
-					uint flags);
+					xfs_buf_flags_t flags);
 
 int	libxfs_trans_read_buf_map(struct xfs_mount *mp, struct xfs_trans *tp,
 				  struct xfs_buftarg *btp,
 				  struct xfs_buf_map *map, int nmaps,
-				  uint flags, struct xfs_buf **bpp,
+				  xfs_buf_flags_t flags, struct xfs_buf **bpp,
 				  const struct xfs_buf_ops *ops);
 static inline struct xfs_buf *
 libxfs_trans_get_buf(
@@ -134,7 +134,7 @@ libxfs_trans_read_buf(
 	struct xfs_buftarg	*btp,
 	xfs_daddr_t		blkno,
 	int			numblks,
-	uint			flags,
+	xfs_buf_flags_t		flags,
 	struct xfs_buf		**bpp,
 	const struct xfs_buf_ops *ops)
 {
