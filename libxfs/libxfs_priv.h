@@ -120,6 +120,7 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 
 
 #define xfs_force_shutdown(d,n)		((void) 0)
+#define xfs_mod_delalloc(a,b) 		((void) 0)
 
 /* stop unused var warnings by assigning mp to itself */
 
