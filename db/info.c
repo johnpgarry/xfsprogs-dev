@@ -27,16 +27,8 @@ info_f(
 	char			**argv)
 {
 	struct xfs_fsop_geom	geo;
-	int			error;
 
-	error = -libxfs_fs_geometry(&mp->m_sb, &geo,
-			XFS_FS_GEOM_MAX_STRUCT_VER);
-	if (error) {
-		dbprintf(_("could not obtain geometry\n"));
-		exitcode = 1;
-		return 0;
-	}
-
+	libxfs_fs_geometry(&mp->m_sb, &geo, XFS_FS_GEOM_MAX_STRUCT_VER);
 	xfs_report_geom(&geo, fsdevice, x.logname, x.rtname);
 	return 0;
 }
