@@ -1,3 +1,9 @@
+xfsprogs (5.2.0-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Nathan Scott <nathans@debian.org>  Fri, 09 Aug 2019 11:39:01 -0500
+
 xfsprogs (5.1.0-1) unstable; urgency=low
 
   * New upstream release

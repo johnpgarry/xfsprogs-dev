@@ -1,3 +1,9 @@
+xfsprogs-5.2.0 (09 Aug 2019)
+	- libxfs: cosmetic changes to trans.c to match kernel (Eric Sandeen)
+
+xfsprogs-5.2.0-rc0 (24 Jul 2019)
+	- libxfs changes merged from kernel 5.2
+
 xfsprogs-5.1.0 (19 Jul 2019)
 	- No further changes
 
