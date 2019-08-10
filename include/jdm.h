@@ -40,24 +40,24 @@ jdm_readlink( jdm_fshandle_t *fshandlep,
 
 extern intgen_t
 jdm_attr_multi(	jdm_fshandle_t *fshp,
-		xfs_bstat_t *statp,
+		struct xfs_bstat *statp,
 		char *bufp, int rtrvcnt, int flags);
 
 extern intgen_t
 jdm_attr_list(	jdm_fshandle_t *fshp,
-		xfs_bstat_t *statp,
+		struct xfs_bstat *statp,
 		char *bufp, size_t bufsz, int flags,
 		struct attrlist_cursor *cursor);
 
 extern int
 jdm_parents( jdm_fshandle_t *fshp,
-		xfs_bstat_t *statp,
+		struct xfs_bstat *statp,
 		struct parent *bufp, size_t bufsz,
 		unsigned int *count);
 
 extern int
 jdm_parentpaths( jdm_fshandle_t *fshp,
-		xfs_bstat_t *statp,
+		struct xfs_bstat *statp,
 		struct parent *bufp, size_t bufsz,
 		unsigned int *count);
 

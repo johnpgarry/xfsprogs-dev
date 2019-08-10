@@ -68,7 +68,7 @@ quot_help(void)
 
 static void
 quot_bulkstat_add(
-	xfs_bstat_t	*p,
+	struct xfs_bstat	*p,
 	uint		flags)
 {
 	du_t		*dp;
@@ -152,7 +152,7 @@ quot_bulkstat_mount(
 		return;
 	}
 
-	buf = (xfs_bstat_t *)calloc(NBSTAT, sizeof(xfs_bstat_t));
+	buf = (struct xfs_bstat *)calloc(NBSTAT, sizeof(struct xfs_bstat));
 	if (!buf) {
 		perror("calloc");
 		xfrog_close(&fsxfd);
