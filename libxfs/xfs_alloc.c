@@ -3135,7 +3135,7 @@ xfs_alloc_has_record(
 
 /*
  * Walk all the blocks in the AGFL.  The @walk_fn can return any negative
- * error code or XFS_BTREE_QUERY_RANGE_ABORT.
+ * error code or XFS_ITER_*.
  */
 int
 xfs_agfl_walk(
