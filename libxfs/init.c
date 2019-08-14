@@ -637,8 +637,6 @@ libxfs_mount(
 	xfs_buf_t	*bp;
 	xfs_sb_t	*sbp;
 	int		error;
-	struct xfs_ino_geometry *igeo = M_IGEO(mp);
-
 
 	libxfs_buftarg_init(mp, dev, logdev, rtdev);
 
@@ -650,37 +648,6 @@ libxfs_mount(
 
 	xfs_sb_mount_common(mp, sb);
 
-	xfs_alloc_compute_maxlevels(mp);
-	xfs_bmap_compute_maxlevels(mp, XFS_DATA_FORK);
-	xfs_bmap_compute_maxlevels(mp, XFS_ATTR_FORK);
-	xfs_ialloc_compute_maxlevels(mp);
-	xfs_rmapbt_compute_maxlevels(mp);
-	xfs_refcountbt_compute_maxlevels(mp);
-
-	if (sbp->sb_imax_pct) {
-		/* Make sure the maximum inode count is a multiple of the
-		 * units we allocate inodes in.
-		 */
-		igeo->maxicount = (sbp->sb_dblocks * sbp->sb_imax_pct) / 100;
-		igeo->maxicount = XFS_FSB_TO_INO(mp,
-				(igeo->maxicount / igeo->ialloc_blks) *
-				 igeo->ialloc_blks);
-	} else
-		igeo->maxicount = 0;
-
-	igeo->inode_cluster_size = XFS_INODE_BIG_CLUSTER_SIZE;
-	if (xfs_sb_version_hascrc(&mp->m_sb)) {
-		int	new_size = igeo->inode_cluster_size;
-
-		new_size *= mp->m_sb.sb_inodesize / XFS_DINODE_MIN_SIZE;
-		if (mp->m_sb.sb_inoalignmt >= XFS_B_TO_FSBT(mp, new_size))
-			igeo->inode_cluster_size = new_size;
-	}
-	igeo->blocks_per_cluster = xfs_icluster_size_fsb(mp);
-	igeo->inodes_per_cluster = XFS_FSB_TO_INO(mp, igeo->blocks_per_cluster);
-	igeo->cluster_align = xfs_ialloc_cluster_alignment(mp);
-	igeo->cluster_align_inodes = XFS_FSB_TO_INO(mp, igeo->cluster_align);
-
 	/*
 	 * Set whether we're using stripe alignment.
 	 */
@@ -689,24 +656,12 @@ libxfs_mount(
 		mp->m_swidth = sbp->sb_width;
 	}
 
-	/*
-	 * Set whether we're using inode alignment.
-	 */
-	if (xfs_sb_version_hasalign(&mp->m_sb) &&
-	    mp->m_sb.sb_inoalignmt >=
-	    XFS_B_TO_FSBT(mp, igeo->inode_cluster_size))
-		igeo->inoalign_mask = mp->m_sb.sb_inoalignmt - 1;
-	else
-		igeo->inoalign_mask = 0;
-	/*
-	 * If we are using stripe alignment, check whether
-	 * the stripe unit is a multiple of the inode alignment
-	 */
-	if (mp->m_dalign && igeo->inoalign_mask &&
-					!(mp->m_dalign & igeo->inoalign_mask))
-		igeo->ialloc_align = mp->m_dalign;
-	else
-		igeo->ialloc_align = 0;
+	xfs_alloc_compute_maxlevels(mp);
+	xfs_bmap_compute_maxlevels(mp, XFS_DATA_FORK);
+	xfs_bmap_compute_maxlevels(mp, XFS_ATTR_FORK);
+	xfs_ialloc_setup_geometry(mp);
+	xfs_rmapbt_compute_maxlevels(mp);
+	xfs_refcountbt_compute_maxlevels(mp);
 
 	/*
 	 * Check that the data (and log if separate) are an ok size.
