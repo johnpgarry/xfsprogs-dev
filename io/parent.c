@@ -26,7 +26,7 @@ static char *mntpt;
  * check out a parent entry to see if the values seem valid
  */
 static void
-check_parent_entry(xfs_bstat_t *bstatp, parent_t *parent)
+check_parent_entry(struct xfs_bstat *bstatp, parent_t *parent)
 {
 	int sts;
 	char fullpath[PATH_MAX];
@@ -109,7 +109,7 @@ check_parent_entry(xfs_bstat_t *bstatp, parent_t *parent)
 
 static void
 check_parents(parent_t *parentbuf, size_t *parentbuf_size,
-	     jdm_fshandle_t *fshandlep, xfs_bstat_t *statp)
+	     jdm_fshandle_t *fshandlep, struct xfs_bstat *statp)
 {
 	int error, i;
 	__u32 count;
@@ -146,14 +146,14 @@ check_parents(parent_t *parentbuf, size_t *parentbuf_size,
 }
 
 static int
-do_bulkstat(parent_t *parentbuf, size_t *parentbuf_size, xfs_bstat_t *bstatbuf,
-	    int fsfd, jdm_fshandle_t *fshandlep)
+do_bulkstat(parent_t *parentbuf, size_t *parentbuf_size,
+	    struct xfs_bstat *bstatbuf, int fsfd, jdm_fshandle_t *fshandlep)
 {
 	__s32 buflenout;
 	__u64 lastino = 0;
-	xfs_bstat_t *p;
-	xfs_bstat_t *endp;
-	xfs_fsop_bulkreq_t bulkreq;
+	struct xfs_bstat *p;
+	struct xfs_bstat *endp;
+	struct xfs_fsop_bulkreq bulkreq;
 	struct stat mntstat;
 
 	if (stat(mntpt, &mntstat)) {
@@ -222,7 +222,7 @@ parent_check(void)
 	jdm_fshandle_t *fshandlep;
 	parent_t *parentbuf;
 	size_t parentbuf_size = PARENTBUF_SZ;
-	xfs_bstat_t *bstatbuf;
+	struct xfs_bstat *bstatbuf;
 
 	err_status = 0;
 	inodes_checked = 0;
@@ -240,7 +240,7 @@ parent_check(void)
 	}
 
 	/* allocate buffers */
-        bstatbuf = (xfs_bstat_t *)calloc(BSTATBUF_SZ, sizeof(xfs_bstat_t));
+        bstatbuf = (struct xfs_bstat *)calloc(BSTATBUF_SZ, sizeof(struct xfs_bstat));
 	parentbuf = (parent_t *)malloc(parentbuf_size);
 	if (!bstatbuf || !parentbuf) {
 		fprintf(stderr, _("unable to allocate buffers: %s\n"),
