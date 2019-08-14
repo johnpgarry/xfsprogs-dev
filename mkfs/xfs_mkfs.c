@@ -4126,7 +4126,9 @@ main(
 	/*
 	 * Mark the filesystem ok.
 	 */
-	buf = libxfs_getsb(mp, LIBXFS_EXIT_ON_FAILURE);
+	buf = libxfs_getsb(mp);
+	if (!buf || buf->b_error)
+		exit(1);
 	(XFS_BUF_TO_SBP(buf))->sb_inprogress = 0;
 	libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 
