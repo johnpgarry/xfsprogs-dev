@@ -553,6 +553,7 @@ __initbuf(xfs_buf_t *bp, struct xfs_buftarg *btp, xfs_daddr_t bno,
 	bp->b_bcount = bytes;
 	bp->b_length = BTOBB(bytes);
 	bp->b_target = btp;
+	bp->b_mount = btp->bt_mount;
 	bp->b_error = 0;
 	if (!bp->b_addr)
 		bp->b_addr = memalign(libxfs_device_alignment(), bytes);
@@ -1334,7 +1335,7 @@ xfs_verify_magic(
 	struct xfs_buf		*bp,
 	__be32			dmagic)
 {
-	struct xfs_mount	*mp = bp->b_target->bt_mount;
+	struct xfs_mount	*mp = bp->b_mount;
 	int			idx;
 
 	idx = xfs_sb_version_hascrc(&mp->m_sb);
@@ -1353,7 +1354,7 @@ xfs_verify_magic16(
 	struct xfs_buf		*bp,
 	__be16			dmagic)
 {
-	struct xfs_mount	*mp = bp->b_target->bt_mount;
+	struct xfs_mount	*mp = bp->b_mount;
 	int			idx;
 
 	idx = xfs_sb_version_hascrc(&mp->m_sb);

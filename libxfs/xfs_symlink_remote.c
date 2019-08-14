@@ -86,7 +86,7 @@ static xfs_failaddr_t
 xfs_symlink_verify(
 	struct xfs_buf		*bp)
 {
-	struct xfs_mount	*mp = bp->b_target->bt_mount;
+	struct xfs_mount	*mp = bp->b_mount;
 	struct xfs_dsymlink_hdr	*dsl = bp->b_addr;
 
 	if (!xfs_sb_version_hascrc(&mp->m_sb))
@@ -112,7 +112,7 @@ static void
 xfs_symlink_read_verify(
 	struct xfs_buf	*bp)
 {
-	struct xfs_mount *mp = bp->b_target->bt_mount;
+	struct xfs_mount *mp = bp->b_mount;
 	xfs_failaddr_t	fa;
 
 	/* no verification of non-crc buffers */
@@ -132,7 +132,7 @@ static void
 xfs_symlink_write_verify(
 	struct xfs_buf	*bp)
 {
-	struct xfs_mount *mp = bp->b_target->bt_mount;
+	struct xfs_mount *mp = bp->b_mount;
 	struct xfs_buf_log_item	*bip = bp->b_log_item;
 	xfs_failaddr_t		fa;
 
