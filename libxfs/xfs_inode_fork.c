@@ -16,12 +16,10 @@
 #include "xfs_bmap_btree.h"
 #include "xfs_bmap.h"
 #include "xfs_trace.h"
-#include "xfs_attr_sf.h"
 #include "xfs_da_format.h"
 #include "xfs_da_btree.h"
 #include "xfs_dir2_priv.h"
 #include "xfs_attr_leaf.h"
-#include "xfs_shared.h"
 
 
 kmem_zone_t *xfs_ifork_zone;
