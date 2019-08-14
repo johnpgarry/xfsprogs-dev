@@ -399,7 +399,7 @@ calc_mkfs(xfs_mount_t *mp)
 	xfs_agblock_t	fino_bno;
 	int		do_inoalign;
 
-	do_inoalign = mp->m_sinoalign;
+	do_inoalign = M_IGEO(mp)->ialloc_align;
 
 	/*
 	 * Pre-calculate the geometry of ag 0. We know what it looks like
@@ -458,9 +458,9 @@ calc_mkfs(xfs_mount_t *mp)
 		first_prealloc_ino = XFS_AGB_TO_AGINO(mp, fino_bno);
 	}
 
-	ASSERT(mp->m_ialloc_blks > 0);
+	ASSERT(M_IGEO(mp)->ialloc_blks > 0);
 
-	if (mp->m_ialloc_blks > 1)
+	if (M_IGEO(mp)->ialloc_blks > 1)
 		last_prealloc_ino = first_prealloc_ino + XFS_INODES_PER_CHUNK;
 	else
 		last_prealloc_ino = XFS_AGB_TO_AGINO(mp, fino_bno + 1);
@@ -670,6 +670,7 @@ main(int argc, char **argv)
 	char		*msgbuf;
 	struct xfs_sb	psb;
 	int		rval;
+	struct xfs_ino_geometry	*igeo;
 
 	progname = basename(argv[0]);
 	setlocale(LC_ALL, "");
@@ -747,6 +748,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 	mp->m_log = &log;
+	igeo = M_IGEO(mp);
 
 	/* Spit out function & line on these corruption macros */
 	if (verbose > 2)
@@ -760,7 +762,7 @@ main(int argc, char **argv)
 	chunks_pblock = mp->m_sb.sb_inopblock / XFS_INODES_PER_CHUNK;
 	max_symlink_blocks = libxfs_symlink_blocks(mp, XFS_SYMLINK_MAXLEN);
 	inodes_per_cluster = max(mp->m_sb.sb_inopblock,
-			mp->m_inode_cluster_size >> mp->m_sb.sb_inodelog);
+			igeo->inode_cluster_size >> mp->m_sb.sb_inodelog);
 
 	/*
 	 * Automatic striding for high agcount filesystems.
@@ -896,7 +898,7 @@ main(int argc, char **argv)
 		if (max_mem >= (1 << 30))
 			max_mem = 1 << 30;
 		libxfs_bhash_size = max_mem / (HASH_CACHE_RATIO *
-				(mp->m_inode_cluster_size >> 10));
+				(igeo->inode_cluster_size >> 10));
 		if (libxfs_bhash_size < 512)
 			libxfs_bhash_size = 512;
 
