@@ -1,3 +1,6 @@
+xfsprogs-5.2.1 (21 Aug 2019)
+	- fix geometry calls for kernels older than 5.2 (Eric Sandeen)
+
 xfsprogs-5.2.0 (09 Aug 2019)
 	- libxfs: cosmetic changes to trans.c to match kernel (Eric Sandeen)
 
