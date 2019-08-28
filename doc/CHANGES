@@ -1,3 +1,9 @@
+xfsprogs-5.3.0-rc0 (28 Aug 2019)
+	- rebase 5.3 branch on top of 5.2.1
+
+xfsprogs-5.3.0-rc0 (16 Aug 2019)
+	- libxfs changes merged from kernel 5.3
+
 xfsprogs-5.2.1 (21 Aug 2019)
 	- fix geometry calls for kernels older than 5.2 (Eric Sandeen)
 
