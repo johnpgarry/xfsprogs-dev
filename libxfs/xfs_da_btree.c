@@ -121,7 +121,7 @@ xfs_da3_blkinfo_verify(
 	struct xfs_buf		*bp,
 	struct xfs_da3_blkinfo	*hdr3)
 {
-	struct xfs_mount	*mp = bp->b_target->bt_mount;
+	struct xfs_mount	*mp = bp->b_mount;
 	struct xfs_da_blkinfo	*hdr = &hdr3->hdr;
 
 	if (!xfs_verify_magic16(bp, hdr->magic))
@@ -143,7 +143,7 @@ static xfs_failaddr_t
 xfs_da3_node_verify(
 	struct xfs_buf		*bp)
 {
-	struct xfs_mount	*mp = bp->b_target->bt_mount;
+	struct xfs_mount	*mp = bp->b_mount;
 	struct xfs_da_intnode	*hdr = bp->b_addr;
 	struct xfs_da3_icnode_hdr ichdr;
 	const struct xfs_dir_ops *ops;
@@ -181,7 +181,7 @@ static void
 xfs_da3_node_write_verify(
 	struct xfs_buf	*bp)
 {
-	struct xfs_mount	*mp = bp->b_target->bt_mount;
+	struct xfs_mount	*mp = bp->b_mount;
 	struct xfs_buf_log_item	*bip = bp->b_log_item;
 	struct xfs_da3_node_hdr *hdr3 = bp->b_addr;
 	xfs_failaddr_t		fa;

@@ -67,6 +67,7 @@ typedef struct xfs_buf {
 	int			b_error;
 	const struct xfs_buf_ops *b_ops;
 	struct xfs_perag	*b_pag;
+	struct xfs_mount	*b_mount;
 	struct xfs_buf_map	*b_maps;
 	struct xfs_buf_map	__b_map;
 	int			b_nmaps;
