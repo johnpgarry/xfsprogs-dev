@@ -13,11 +13,7 @@
 #include "xfs_mount.h"
 #include "xfs_inode.h"
 #include "xfs_bmap.h"
-#include "xfs_bmap_btree.h"
-#include "xfs_alloc.h"
 #include "xfs_trans.h"
-#include "xfs_trans_space.h"
-#include "xfs_trace.h"
 
 
 /*
