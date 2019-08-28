@@ -67,7 +67,7 @@ quot_help(void)
 
 static void
 quot_bulkstat_add(
-	xfs_bstat_t	*p,
+	struct xfs_bstat *p,
 	uint		flags)
 {
 	du_t		*dp;
@@ -126,8 +126,8 @@ quot_bulkstat_mount(
 	char			*fsdir,
 	uint			flags)
 {
-	xfs_fsop_bulkreq_t	bulkreq;
-	xfs_bstat_t		*buf;
+	struct xfs_fsop_bulkreq	bulkreq;
+	struct xfs_bstat	*buf;
 	__u64			last = 0;
 	__s32			count;
 	int			i, sts, fsfd;
@@ -151,7 +151,7 @@ quot_bulkstat_mount(
 		return;
 	}
 
-	buf = (xfs_bstat_t *)calloc(NBSTAT, sizeof(xfs_bstat_t));
+	buf = (struct xfs_bstat *)calloc(NBSTAT, sizeof(struct xfs_bstat));
 	if (!buf) {
 		perror("calloc");
 		close(fsfd);

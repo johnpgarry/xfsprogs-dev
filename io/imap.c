@@ -18,8 +18,8 @@ imap_f(int argc, char **argv)
 	int		nent;
 	int		i;
 	__u64		last = 0;
-	xfs_inogrp_t	*t;
-	xfs_fsop_bulkreq_t bulkreq;
+	struct xfs_inogrp *t;
+	struct xfs_fsop_bulkreq bulkreq;
 
 	if (argc != 2)
 		nent = 1;
