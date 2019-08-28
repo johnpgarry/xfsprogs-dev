@@ -760,6 +760,7 @@ get_agino_buf(
 	xfs_agino_t		cluster_agino;
 	xfs_daddr_t		cluster_daddr;
 	xfs_daddr_t		cluster_blks;
+	struct xfs_ino_geometry	*igeo = M_IGEO(mp);
 
 	/*
 	 * Inode buffers have been read into memory in inode_cluster_size
@@ -767,11 +768,11 @@ get_agino_buf(
 	 * we must find the buffer for its cluster, add the appropriate
 	 * offset, and return that.
 	 */
-	cluster_size = max(mp->m_inode_cluster_size, mp->m_sb.sb_blocksize);
+	cluster_size = max(igeo->inode_cluster_size, mp->m_sb.sb_blocksize);
 	ino_per_cluster = cluster_size / mp->m_sb.sb_inodesize;
 	cluster_agino = agino & ~(ino_per_cluster - 1);
 	cluster_blks = XFS_FSB_TO_DADDR(mp, max(1,
-			mp->m_inode_cluster_size >> mp->m_sb.sb_blocklog));
+			igeo->inode_cluster_size >> mp->m_sb.sb_blocklog));
 	cluster_daddr = XFS_AGB_TO_DADDR(mp, agno,
 			XFS_AGINO_TO_AGBNO(mp, cluster_agino));
 
