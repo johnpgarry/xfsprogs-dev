@@ -704,7 +704,7 @@ prop_freespace_cursor(xfs_mount_t *mp, xfs_agnumber_t agno,
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
 		libxfs_btree_init_block(mp, lptr->buf_p, btnum, level,
-					0, agno, 0);
+					0, agno);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
 
@@ -783,7 +783,7 @@ build_freespace_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 		lptr->buf_p->b_ops = ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		libxfs_btree_init_block(mp, lptr->buf_p, btnum, i, 0, agno, 0);
+		libxfs_btree_init_block(mp, lptr->buf_p, btnum, i, 0, agno);
 	}
 	/*
 	 * run along leaf, setting up records.  as we have to switch
@@ -810,7 +810,7 @@ build_freespace_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 		lptr->buf_p->b_ops = ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		libxfs_btree_init_block(mp, lptr->buf_p, btnum, 0, 0, agno, 0);
+		libxfs_btree_init_block(mp, lptr->buf_p, btnum, 0, 0, agno);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
 		bt_hdr->bb_numrecs = cpu_to_be16(lptr->num_recs_pb +
@@ -1069,7 +1069,7 @@ prop_ino_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
 		libxfs_btree_init_block(mp, lptr->buf_p, btnum,
-					level, 0, agno, 0);
+					level, 0, agno);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
 
@@ -1191,7 +1191,7 @@ build_ino_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 		lptr->buf_p->b_ops = ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		libxfs_btree_init_block(mp, lptr->buf_p, btnum, i, 0, agno, 0);
+		libxfs_btree_init_block(mp, lptr->buf_p, btnum, i, 0, agno);
 	}
 
 	/*
@@ -1219,7 +1219,7 @@ build_ino_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 		lptr->buf_p->b_ops = ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		libxfs_btree_init_block(mp, lptr->buf_p, btnum, 0, 0, agno, 0);
+		libxfs_btree_init_block(mp, lptr->buf_p, btnum, 0, 0, agno);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
 		bt_hdr->bb_numrecs = cpu_to_be16(lptr->num_recs_pb +
@@ -1474,7 +1474,7 @@ prop_rmap_cursor(
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
 		libxfs_btree_init_block(mp, lptr->buf_p, XFS_BTNUM_RMAP,
-					level, 0, agno, 0);
+					level, 0, agno);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
 
@@ -1587,7 +1587,7 @@ build_rmap_tree(
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
 		libxfs_btree_init_block(mp, lptr->buf_p, XFS_BTNUM_RMAP,
-					i, 0, agno, 0);
+					i, 0, agno);
 	}
 
 	/*
@@ -1614,7 +1614,7 @@ _("Insufficient memory to construct reverse-map cursor."));
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
 		libxfs_btree_init_block(mp, lptr->buf_p, XFS_BTNUM_RMAP,
-					0, 0, agno, 0);
+					0, 0, agno);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
 		bt_hdr->bb_numrecs = cpu_to_be16(numrecs);
@@ -1824,7 +1824,7 @@ prop_refc_cursor(
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
 		libxfs_btree_init_block(mp, lptr->buf_p, XFS_BTNUM_REFC,
-					level, 0, agno, 0);
+					level, 0, agno);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
 
@@ -1892,7 +1892,7 @@ build_refcount_tree(
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
 		libxfs_btree_init_block(mp, lptr->buf_p, XFS_BTNUM_REFC,
-					i, 0, agno, 0);
+					i, 0, agno);
 	}
 
 	/*
@@ -1919,7 +1919,7 @@ _("Insufficient memory to construct refcount cursor."));
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
 		libxfs_btree_init_block(mp, lptr->buf_p, XFS_BTNUM_REFC,
-					0, 0, agno, 0);
+					0, 0, agno);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
 		bt_hdr->bb_numrecs = cpu_to_be16(numrecs);
