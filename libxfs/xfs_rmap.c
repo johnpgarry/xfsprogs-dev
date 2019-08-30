@@ -259,7 +259,7 @@ xfs_rmap_find_left_neighbor_helper(
 
 	*info->irec = *rec;
 	*info->stat = 1;
-	return XFS_BTREE_QUERY_RANGE_ABORT;
+	return -ECANCELED;
 }
 
 /*
@@ -302,7 +302,7 @@ xfs_rmap_find_left_neighbor(
 
 	error = xfs_rmap_query_range(cur, &info.high, &info.high,
 			xfs_rmap_find_left_neighbor_helper, &info);
-	if (error == XFS_BTREE_QUERY_RANGE_ABORT)
+	if (error == -ECANCELED)
 		error = 0;
 	if (*stat)
 		trace_xfs_rmap_find_left_neighbor_result(cur->bc_mp,
@@ -336,7 +336,7 @@ xfs_rmap_lookup_le_range_helper(
 
 	*info->irec = *rec;
 	*info->stat = 1;
-	return XFS_BTREE_QUERY_RANGE_ABORT;
+	return -ECANCELED;
 }
 
 /*
@@ -374,7 +374,7 @@ xfs_rmap_lookup_le_range(
 			cur->bc_private.a.agno, bno, 0, owner, offset, flags);
 	error = xfs_rmap_query_range(cur, &info.high, &info.high,
 			xfs_rmap_lookup_le_range_helper, &info);
-	if (error == XFS_BTREE_QUERY_RANGE_ABORT)
+	if (error == -ECANCELED)
 		error = 0;
 	if (*stat)
 		trace_xfs_rmap_lookup_le_range_result(cur->bc_mp,
@@ -2507,7 +2507,7 @@ xfs_rmap_has_other_keys_helper(
 	    ((rks->flags & rec->rm_flags) & XFS_RMAP_KEY_FLAGS) == rks->flags)
 		return 0;
 	rks->has_rmap = true;
-	return XFS_BTREE_QUERY_RANGE_ABORT;
+	return -ECANCELED;
 }
 
 /*
