@@ -31,6 +31,12 @@ kmem_zone_free(kmem_zone_t *zone, void *ptr)
 extern void	*kmem_alloc(size_t, int);
 extern void	*kmem_zalloc(size_t, int);
 
+static inline void *
+kmem_alloc_large(size_t size, int flags)
+{
+	return kmem_alloc(size, flags);
+}
+
 static inline void
 kmem_free(void *ptr) {
 	free(ptr);
