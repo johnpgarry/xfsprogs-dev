@@ -4,7 +4,7 @@
  */
 #include "libxfs.h"
 #include "fsgeom.h"
-#include "libfrog.h"
+#include "util.h"
 
 void
 xfs_report_geom(

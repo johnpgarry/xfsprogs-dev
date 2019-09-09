@@ -4,7 +4,7 @@
  * All Rights Reserved.
  */
 #include "platform_defs.h"
-#include "libfrog.h"
+#include "util.h"
 
 /*
  * libfrog is a collection of miscellaneous userspace utilities.

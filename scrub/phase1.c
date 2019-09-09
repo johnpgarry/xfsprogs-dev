@@ -13,7 +13,7 @@
 #include <dirent.h>
 #include <stdint.h>
 #include <pthread.h>
-#include "libfrog.h"
+#include "libfrog/util.h"
 #include "libfrog/workqueue.h"
 #include "input.h"
 #include "libfrog/paths.h"

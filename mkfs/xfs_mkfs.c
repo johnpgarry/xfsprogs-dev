@@ -3,7 +3,7 @@
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#include "libfrog.h"
+#include "libfrog/util.h"
 #include "libxfs.h"
 #include <ctype.h>
 #include "xfs_multidisk.h"

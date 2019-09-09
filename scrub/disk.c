@@ -17,7 +17,7 @@
 # include <linux/hdreg.h>
 #endif
 #include "platform_defs.h"
-#include "libfrog.h"
+#include "libfrog/util.h"
 #include "libfrog/paths.h"
 #include "xfs_scrub.h"
 #include "common.h"
