@@ -31,6 +31,7 @@ HFILES = \
 avl64.h \
 bulkstat.h \
 bitmap.h \
+convert.h \
 crc32defs.h \
 crc32table.h \
 topology.h

@@ -3,8 +3,8 @@
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#ifndef __CONVERT_H__
-#define __CONVERT_H__
+#ifndef __LIBFROG_CONVERT_H__
+#define __LIBFROG_CONVERT_H__
 
 extern int64_t	cvt_s64(char *s, int base);
 extern int32_t	cvt_s32(char *s, int base);
@@ -22,4 +22,4 @@ extern uid_t	uid_from_string(char *user);
 extern gid_t	gid_from_string(char *group);
 extern prid_t	prid_from_string(char *project);
 
-#endif	/* __CONVERT_H__ */
+#endif	/* __LIBFROG_CONVERT_H__ */
