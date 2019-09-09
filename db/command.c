@@ -113,6 +113,7 @@ init_commands(void)
 	block_init();
 	bmap_init();
 	btdump_init();
+	btheight_init();
 	check_init();
 	convert_init();
 	crc_init();
