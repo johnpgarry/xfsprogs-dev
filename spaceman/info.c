@@ -7,8 +7,8 @@
 #include "command.h"
 #include "init.h"
 #include "libfrog/paths.h"
-#include "space.h"
 #include "libfrog/fsgeom.h"
+#include "space.h"
 
 static void
 info_help(void)
@@ -28,26 +28,13 @@ info_f(
 	int			argc,
 	char			**argv)
 {
-	struct xfs_fsop_geom	geo;
-	int			error;
-
 	if (fs_table_lookup_mount(file->name) == NULL) {
 		fprintf(stderr, _("%s: Not a XFS mount point.\n"), file->name);
 		return 1;
 	}
 
-	/* get the current filesystem size & geometry */
-	error = xfrog_geometry(file->fd, &geo);
-	if (error) {
-		fprintf(stderr,
-	_("%s: cannot determine geometry of filesystem mounted at %s: %s\n"),
-			progname, file->name, strerror(error));
-		exitcode = 1;
-		return 0;
-	}
-
-	xfs_report_geom(&geo, file->fs_path.fs_name, file->fs_path.fs_log,
-			file->fs_path.fs_rt);
+	xfs_report_geom(&file->xfd.fsgeom, file->fs_path.fs_name,
+			file->fs_path.fs_log, file->fs_path.fs_rt);
 	return 0;
 }
 

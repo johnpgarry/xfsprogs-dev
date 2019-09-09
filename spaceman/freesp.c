@@ -8,6 +8,7 @@
 
 #include "libxfs.h"
 #include <linux/fiemap.h>
+#include "libfrog/fsgeom.h"
 #include "command.h"
 #include "init.h"
 #include "libfrog/paths.h"
@@ -149,7 +150,8 @@ scan_ag(
 	struct fsmap		*extent;
 	struct fsmap		*l, *h;
 	struct fsmap		*p;
-	off64_t			blocksize = file->geom.blocksize;
+	struct xfs_fsop_geom	*fsgeom = &file->xfd.fsgeom;
+	off64_t			blocksize = fsgeom->blocksize;
 	off64_t			bperag;
 	off64_t			aglen;
 	xfs_agblock_t		agbno;
@@ -158,7 +160,7 @@ scan_ag(
 	int			ret;
 	int			i;
 
-	bperag = (off64_t)file->geom.agblocks * blocksize;
+	bperag = (off64_t)fsgeom->agblocks * blocksize;
 
 	fsmap = malloc(fsmap_sizeof(NR_EXTENTS));
 	if (!fsmap) {
@@ -185,7 +187,7 @@ scan_ag(
 	h->fmr_offset = ULLONG_MAX;
 
 	while (true) {
-		ret = ioctl(file->fd, FS_IOC_GETFSMAP, fsmap);
+		ret = ioctl(file->xfd.fd, FS_IOC_GETFSMAP, fsmap);
 		if (ret < 0) {
 			fprintf(stderr, _("%s: FS_IOC_GETFSMAP [\"%s\"]: %s\n"),
 				progname, file->name, strerror(errno));
@@ -248,12 +250,13 @@ aglistadd(
 
 static int
 init(
-	int		argc,
-	char		**argv)
+	int			argc,
+	char			**argv)
 {
-	long long	x;
-	int		c;
-	int		speced = 0;	/* only one of -b -e -h or -m */
+	struct xfs_fsop_geom	*fsgeom = &file->xfd.fsgeom;
+	long long		x;
+	int			c;
+	int			speced = 0;	/* only one of -b -e -h or -m */
 
 	agcount = dumpflag = equalsize = multsize = optind = gflag = 0;
 	histcount = seen1 = summaryflag = 0;
@@ -321,7 +324,7 @@ init(
 		return 0;
 	if (!speced)
 		multsize = 2;
-	histinit(file->geom.agblocks);
+	histinit(fsgeom->agblocks);
 	return 1;
 many_spec:
 	return command_usage(&freesp_cmd);
@@ -332,10 +335,11 @@ many_spec:
  */
 static int
 freesp_f(
-	int		argc,
-	char		**argv)
+	int			argc,
+	char			**argv)
 {
-	xfs_agnumber_t	agno;
+	struct xfs_fsop_geom	*fsgeom = &file->xfd.fsgeom;
+	xfs_agnumber_t		agno;
 
 	if (!init(argc, argv))
 		return 0;
@@ -343,7 +347,7 @@ freesp_f(
 		printf(_("        AG    extents     blocks\n"));
 	if (rtflag)
 		scan_ag(NULLAGNUMBER);
-	for (agno = 0; !rtflag && agno < file->geom.agcount; agno++)  {
+	for (agno = 0; !rtflag && agno < fsgeom->agcount; agno++) {
 		if (inaglist(agno))
 			scan_ag(agno);
 	}

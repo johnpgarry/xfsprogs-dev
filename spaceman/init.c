@@ -5,6 +5,7 @@
  */
 
 #include "libxfs.h"
+#include "libfrog/fsgeom.h"
 #include "command.h"
 #include "input.h"
 #include "init.h"
@@ -60,7 +61,7 @@ init(
 	char		**argv)
 {
 	int		c;
-	struct xfs_fsop_geom geometry = { 0 };
+	struct xfs_fd	xfd = XFS_FD_INIT_EMPTY;
 	struct fs_path	fsp;
 
 	progname = basename(argv[0]);
@@ -88,11 +89,13 @@ init(
 	if (optind != argc - 1)
 		usage();
 
-	if ((c = openfile(argv[optind], &geometry, &fsp)) < 0)
+	c = openfile(argv[optind], &xfd, &fsp);
+	if (c < 0)
 		exit(1);
-	if (!platform_test_xfs_fd(c))
+	if (!platform_test_xfs_fd(xfd.fd))
 		printf(_("Not an XFS filesystem!\n"));
-	if (addfile(argv[optind], c, &geometry, &fsp) < 0)
+	c = addfile(argv[optind], &xfd, &fsp);
+	if (c < 0)
 		exit(1);
 
 	init_commands();

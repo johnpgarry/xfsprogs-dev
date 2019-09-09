@@ -7,18 +7,19 @@
 #define XFS_SPACEMAN_SPACE_H_
 
 struct fileio {
-	struct xfs_fsop_geom geom;		/* XFS filesystem geometry */
+	struct xfs_fd	xfd;		/* XFS runtime support context */
 	struct fs_path	fs_path;	/* XFS path information */
 	char		*name;		/* file name at time of open */
-	int		fd;		/* open file descriptor */
 };
 
 extern struct fileio	*filetable;	/* open file table */
 extern int		filecount;	/* number of open files */
 extern struct fileio	*file;		/* active file in file table */
 
-extern int	openfile(char *, struct xfs_fsop_geom *, struct fs_path *);
-extern int	addfile(char *, int , struct xfs_fsop_geom *, struct fs_path *);
+extern int	openfile(char *path, struct xfs_fd *xfd,
+			 struct fs_path *fs_path);
+extern int	addfile(char *path, struct xfs_fd *xfd,
+			struct fs_path *fs_path);
 
 extern void	print_init(void);
 extern void	help_init(void);
