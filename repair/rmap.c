@@ -1171,6 +1171,36 @@ record_inode_reflink_flag(
 }
 
 /*
+ * Inform the user that we're clearing the reflink flag on an inode that
+ * doesn't actually share any blocks.  This is an optimization (the kernel
+ * skips refcount checks for non-reflink files) and not a corruption repair,
+ * so we don't need to log every time we clear a flag unless verbose mode is
+ * enabled.
+ */
+static void
+warn_clearing_reflink(
+	xfs_ino_t		ino)
+{
+	static bool		warned = false;
+	static pthread_mutex_t	lock = PTHREAD_MUTEX_INITIALIZER;
+
+	if (verbose) {
+		do_warn(_("clearing reflink flag on inode %"PRIu64"\n"), ino);
+		return;
+	}
+
+	if (warned)
+		return;
+
+	pthread_mutex_lock(&lock);
+	if (!warned) {
+		do_warn(_("clearing reflink flag on inodes when possible\n"));
+		warned = true;
+	}
+	pthread_mutex_unlock(&lock);
+}
+
+/*
  * Fix an inode's reflink flag.
  */
 static int
@@ -1188,9 +1218,7 @@ fix_inode_reflink_flag(
 _("setting reflink flag on inode %"PRIu64"\n"),
 			XFS_AGINO_TO_INO(mp, agno, agino));
 	else if (!no_modify) /* && !set */
-		do_warn(
-_("clearing reflink flag on inode %"PRIu64"\n"),
-			XFS_AGINO_TO_INO(mp, agno, agino));
+		warn_clearing_reflink(XFS_AGINO_TO_INO(mp, agno, agino));
 	if (no_modify)
 		return 0;
 
