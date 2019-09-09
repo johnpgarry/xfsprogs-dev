@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <sys/statvfs.h>
 #include "path.h"
-#include "ptvar.h"
+#include "libfrog/ptvar.h"
 #include "xfs_scrub.h"
 #include "common.h"
 #include "fscounters.h"

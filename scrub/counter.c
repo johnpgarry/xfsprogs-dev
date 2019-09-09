@@ -9,7 +9,7 @@
 #include <string.h>
 #include <assert.h>
 #include <pthread.h>
-#include "ptvar.h"
+#include "libfrog/ptvar.h"
 #include "counter.h"
 
 /*

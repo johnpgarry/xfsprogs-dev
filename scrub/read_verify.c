@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/statvfs.h>
-#include "ptvar.h"
+#include "libfrog/ptvar.h"
 #include "workqueue.h"
 #include "path.h"
 #include "xfs_scrub.h"

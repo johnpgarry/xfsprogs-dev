@@ -3,8 +3,8 @@
  * Copyright (C) 2018 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#ifndef LIBFROG_PERCPU_H_
-#define LIBFROG_PERCPU_H_
+#ifndef __LIBFROG_PTVAR_H__
+#define __LIBFROG_PTVAR_H__
 
 struct ptvar;
 
@@ -15,4 +15,4 @@ void ptvar_free(struct ptvar *ptv);
 void *ptvar_get(struct ptvar *ptv);
 bool ptvar_foreach(struct ptvar *ptv, ptvar_iter_fn fn, void *foreach_arg);
 
-#endif /* LIBFROG_PERCPU_H_ */
+#endif /* __LIBFROG_PTVAR_H__ */
