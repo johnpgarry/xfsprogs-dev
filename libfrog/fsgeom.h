@@ -2,8 +2,8 @@
 /*
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.  All Rights Reserved.
  */
-#ifndef _LIBFROG_FSGEOM_H_
-#define _LIBFROG_FSGEOM_H_
+#ifndef __LIBFROG_FSGEOM_H__
+#define __LIBFROG_FSGEOM_H__
 
 void xfs_report_geom(struct xfs_fsop_geom *geo, const char *mntpoint,
 		const char *logname, const char *rtname);
@@ -99,4 +99,4 @@ cvt_b_to_off_fsbt(
 	return bytes >> xfd->blocklog;
 }
 
-#endif /* _LIBFROG_FSGEOM_H_ */
+#endif /* __LIBFROG_FSGEOM_H__ */

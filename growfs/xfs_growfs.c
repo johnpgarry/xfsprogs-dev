@@ -6,7 +6,7 @@
 
 #include "libxfs.h"
 #include "path.h"
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 
 static void
 usage(void)

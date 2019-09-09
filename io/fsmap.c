@@ -9,7 +9,7 @@
 #include "path.h"
 #include "io.h"
 #include "input.h"
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 
 static cmdinfo_t	fsmap_cmd;
 static dev_t		xfs_data_dev;

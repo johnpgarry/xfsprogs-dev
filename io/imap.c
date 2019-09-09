@@ -8,7 +8,7 @@
 #include "input.h"
 #include "init.h"
 #include "io.h"
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 #include "libfrog/bulkstat.h"
 
 static cmdinfo_t imap_cmd;

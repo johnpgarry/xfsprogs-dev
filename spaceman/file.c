@@ -12,7 +12,7 @@
 #include "init.h"
 #include "path.h"
 #include "space.h"
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 
 static cmdinfo_t print_cmd;
 

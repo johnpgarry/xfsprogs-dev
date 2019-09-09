@@ -22,7 +22,7 @@
 #include "dinode.h"
 #include "slab.h"
 #include "rmap.h"
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 
 /*
  * option tables for getsubopt calls

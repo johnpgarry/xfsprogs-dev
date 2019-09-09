@@ -5,7 +5,7 @@
  */
 
 #include "libxfs.h"
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 
 int rtcp(char *, char *, int);
 int xfsrtextsize(char *path);

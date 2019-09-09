@@ -11,7 +11,7 @@
 #include <grp.h>
 #include "init.h"
 #include "quota.h"
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 #include "libfrog/bulkstat.h"
 
 typedef struct du {

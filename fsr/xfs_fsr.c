@@ -11,7 +11,7 @@
 #include "xfs_bmap_btree.h"
 #include "xfs_attr_sf.h"
 #include "path.h"
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 #include "libfrog/bulkstat.h"
 
 #include <fcntl.h>

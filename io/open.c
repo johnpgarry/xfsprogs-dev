@@ -9,7 +9,7 @@
 #include "init.h"
 #include "io.h"
 #include "libxfs.h"
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 #include "libfrog/bulkstat.h"
 
 #ifndef __O_TMPFILE

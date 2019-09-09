@@ -7,7 +7,7 @@
 #include "command.h"
 #include "init.h"
 #include "output.h"
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 
 static void
 info_help(void)

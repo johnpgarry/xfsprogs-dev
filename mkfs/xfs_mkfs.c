@@ -8,7 +8,7 @@
 #include <ctype.h>
 #include "xfs_multidisk.h"
 #include "libxcmd.h"
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 #include "libfrog/topology.h"
 
 #define TERABYTES(count, blog)	((uint64_t)(count) << (40 - (blog)))

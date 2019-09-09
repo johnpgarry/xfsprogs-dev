@@ -12,7 +12,7 @@
 #include "io.h"
 #include "statx.h"
 #include "libxfs.h"
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 
 #include <fcntl.h>
 

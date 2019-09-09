@@ -34,6 +34,7 @@ bitmap.h \
 convert.h \
 crc32defs.h \
 crc32table.h \
+fsgeom.h \
 topology.h
 
 LSRCFILES += gen_crc32table.c

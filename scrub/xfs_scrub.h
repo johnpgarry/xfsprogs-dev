@@ -6,7 +6,7 @@
 #ifndef XFS_SCRUB_XFS_SCRUB_H_
 #define XFS_SCRUB_XFS_SCRUB_H_
 
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 
 extern char *progname;
 

@@ -26,7 +26,7 @@
 #include "disk.h"
 #include "scrub.h"
 #include "repair.h"
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 
 /* Phase 1: Find filesystem geometry (and clean up after) */
 

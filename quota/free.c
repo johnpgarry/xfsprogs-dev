@@ -8,7 +8,7 @@
 #include "command.h"
 #include "init.h"
 #include "quota.h"
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 
 static cmdinfo_t free_cmd;
 

@@ -17,7 +17,7 @@
 #include "xfs_scrub.h"
 #include "common.h"
 #include "inodes.h"
-#include "fsgeom.h"
+#include "libfrog/fsgeom.h"
 #include "libfrog/bulkstat.h"
 
 /*
