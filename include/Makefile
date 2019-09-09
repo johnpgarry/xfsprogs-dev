@@ -16,7 +16,6 @@ LIBHFILES = libxfs.h \
 	kmem.h \
 	list.h \
 	parent.h \
-	radix-tree.h \
 	xfs_btree_trace.h \
 	xfs_inode.h \
 	xfs_log_recover.h \

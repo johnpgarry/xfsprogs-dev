@@ -3,8 +3,8 @@
  * Copyright (C) 2001 Momchil Velikov
  * Portions Copyright (C) 2001 Christoph Hellwig
  */
-#ifndef __XFS_SUPPORT_RADIX_TREE_H__
-#define __XFS_SUPPORT_RADIX_TREE_H__
+#ifndef __LIBFROG_RADIX_TREE_H__
+#define __LIBFROG_RADIX_TREE_H__
 
 #define RADIX_TREE_TAGS
 
@@ -60,4 +60,4 @@ radix_tree_gang_lookup_tag(struct radix_tree_root *root, void **results,
 int radix_tree_tagged(struct radix_tree_root *root, unsigned int tag);
 #endif
 
-#endif /* __XFS_SUPPORT_RADIX_TREE_H__ */
+#endif /* __LIBFROG_RADIX_TREE_H__ */

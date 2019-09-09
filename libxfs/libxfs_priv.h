@@ -46,7 +46,7 @@
 #include "cache.h"
 #include "bitops.h"
 #include "kmem.h"
-#include "radix-tree.h"
+#include "libfrog/radix-tree.h"
 #include "atomic.h"
 
 #include "xfs_types.h"
