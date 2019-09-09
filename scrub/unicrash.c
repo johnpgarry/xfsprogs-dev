@@ -13,7 +13,7 @@
 #include <unicode/ustring.h>
 #include <unicode/unorm2.h>
 #include <unicode/uspoof.h>
-#include "path.h"
+#include "libfrog/paths.h"
 #include "xfs_scrub.h"
 #include "common.h"
 #include "unicrash.h"

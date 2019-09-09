@@ -28,7 +28,6 @@ LIBHFILES = libxfs.h \
 	xfs_trans.h \
 	command.h \
 	input.h \
-	path.h \
 	project.h \
 	platform_defs.h
 

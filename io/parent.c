@@ -6,7 +6,7 @@
 
 #include "command.h"
 #include "input.h"
-#include "path.h"
+#include "libfrog/paths.h"
 #include "parent.h"
 #include "handle.h"
 #include "jdm.h"

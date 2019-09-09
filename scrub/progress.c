@@ -8,7 +8,7 @@
 #include <pthread.h>
 #include <sys/statvfs.h>
 #include <time.h>
-#include "path.h"
+#include "libfrog/paths.h"
 #include "disk.h"
 #include "read_verify.h"
 #include "xfs_scrub.h"

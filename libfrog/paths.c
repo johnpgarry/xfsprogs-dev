@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "path.h"
+#include "paths.h"
 #include "input.h"
 #include "project.h"
 #include <limits.h>

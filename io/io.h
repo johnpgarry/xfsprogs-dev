@@ -5,7 +5,7 @@
  */
 
 #include "xfs.h"
-#include "path.h"
+#include "libfrog/paths.h"
 
 /*
  * Read/write patterns (default is always "forward")

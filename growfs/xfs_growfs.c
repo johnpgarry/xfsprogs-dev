@@ -5,7 +5,7 @@
  */
 
 #include "libxfs.h"
-#include "path.h"
+#include "libfrog/paths.h"
 #include "libfrog/fsgeom.h"
 
 static void

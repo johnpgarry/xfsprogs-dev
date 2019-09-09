@@ -10,7 +10,7 @@
 #include "jdm.h"
 #include "xfs_bmap_btree.h"
 #include "xfs_attr_sf.h"
-#include "path.h"
+#include "libfrog/paths.h"
 #include "libfrog/fsgeom.h"
 #include "libfrog/bulkstat.h"
 

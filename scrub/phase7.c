@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/statvfs.h>
-#include "path.h"
+#include "libfrog/paths.h"
 #include "libfrog/ptvar.h"
 #include "xfs_scrub.h"
 #include "common.h"

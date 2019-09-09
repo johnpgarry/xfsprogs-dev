@@ -18,7 +18,7 @@
 #endif
 #include "platform_defs.h"
 #include "libfrog.h"
-#include "path.h"
+#include "libfrog/paths.h"
 #include "xfs_scrub.h"
 #include "common.h"
 #include "disk.h"

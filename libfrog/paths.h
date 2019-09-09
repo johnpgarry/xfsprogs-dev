@@ -3,8 +3,8 @@
  * Copyright (c) 2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#ifndef __PATH_H__
-#define __PATH_H__
+#ifndef __LIBFROG_PATH_H__
+#define __LIBFROG_PATH_H__
 
 #include "platform_defs.h"
 
@@ -58,4 +58,4 @@ typedef struct fs_cursor {
 extern void fs_cursor_initialise(char *__dir, uint __flags, fs_cursor_t *__cp);
 extern fs_path_t *fs_cursor_next_entry(fs_cursor_t *__cp);
 
-#endif	/* __PATH_H__ */
+#endif	/* __LIBFROG_PATH_H__ */

@@ -6,7 +6,7 @@
 #include <sys/ioctl.h>
 #include "platform_defs.h"
 #include "libxfs.h"
-#include "path.h"
+#include "libfrog/paths.h"
 #include "command.h"
 #include "init.h"
 #include "io.h"

@@ -8,7 +8,7 @@
 #include <dirent.h>
 #include <sys/statvfs.h>
 #include "handle.h"
-#include "path.h"
+#include "libfrog/paths.h"
 #include "libfrog/workqueue.h"
 #include "xfs_scrub.h"
 #include "common.h"

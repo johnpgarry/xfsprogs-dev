@@ -37,6 +37,7 @@ crc32cselftest.h \
 crc32defs.h \
 crc32table.h \
 fsgeom.h \
+paths.h \
 ptvar.h \
 radix-tree.h \
 topology.h \

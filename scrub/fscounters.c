@@ -10,7 +10,7 @@
 #include "platform_defs.h"
 #include "xfs_arch.h"
 #include "xfs_format.h"
-#include "path.h"
+#include "libfrog/paths.h"
 #include "libfrog/workqueue.h"
 #include "xfs_scrub.h"
 #include "common.h"

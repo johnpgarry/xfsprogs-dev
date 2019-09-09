@@ -16,7 +16,7 @@
 #include "libfrog.h"
 #include "libfrog/workqueue.h"
 #include "input.h"
-#include "path.h"
+#include "libfrog/paths.h"
 #include "handle.h"
 #include "bitops.h"
 #include "libfrog/avl64.h"

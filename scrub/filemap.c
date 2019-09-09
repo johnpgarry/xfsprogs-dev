@@ -10,7 +10,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/statvfs.h>
-#include "path.h"
+#include "libfrog/paths.h"
 #include "xfs_scrub.h"
 #include "common.h"
 #include "filemap.h"

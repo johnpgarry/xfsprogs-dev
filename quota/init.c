@@ -4,7 +4,7 @@
  * All Rights Reserved.
  */
 
-#include "path.h"
+#include "libfrog/paths.h"
 #include "command.h"
 #include "input.h"
 #include "init.h"

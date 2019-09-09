@@ -12,7 +12,7 @@
 #include <sys/statvfs.h>
 #include "platform_defs.h"
 #include "input.h"
-#include "path.h"
+#include "libfrog/paths.h"
 #include "xfs_scrub.h"
 #include "common.h"
 #include "unicrash.h"

@@ -9,7 +9,7 @@
 #include "command.h"
 #include "input.h"
 #include "init.h"
-#include "path.h"
+#include "libfrog/paths.h"
 #include "io.h"
 
 static struct cmdinfo scrub_cmd;

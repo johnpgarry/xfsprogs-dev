@@ -14,7 +14,7 @@
 #include "init.h"
 #include "io.h"
 #include "input.h"
-#include "path.h"
+#include "libfrog/paths.h"
 
 static cmdinfo_t cowextsize_cmd;
 static long cowextsize;
