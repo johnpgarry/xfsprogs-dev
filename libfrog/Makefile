@@ -13,6 +13,7 @@ LT_AGE = 0
 CFILES = \
 avl64.c \
 bitmap.c \
+bulkstat.c \
 convert.c \
 crc32.c \
 fsgeom.c \
@@ -27,6 +28,7 @@ util.c \
 workqueue.c
 
 HFILES = \
+bulkstat.h \
 crc32defs.h \
 crc32table.h
 
