@@ -32,6 +32,9 @@ struct xfs_fd {
 
 	/* log2 of sb_inopblock */
 	unsigned int		inopblog;
+
+	/* bits for agino in inum */
+	unsigned int		aginolog;
 };
 
 /* Static initializers */
@@ -40,5 +43,59 @@ struct xfs_fd {
 
 int xfd_prepare_geometry(struct xfs_fd *xfd);
 int xfd_close(struct xfs_fd *xfd);
+
+/* Convert AG number and AG inode number into fs inode number. */
+static inline uint64_t
+cvt_agino_to_ino(
+	const struct xfs_fd	*xfd,
+	uint32_t		agno,
+	uint32_t		agino)
+{
+	return ((uint64_t)agno << xfd->aginolog) + agino;
+}
+
+/* Convert fs inode number into AG number. */
+static inline uint32_t
+cvt_ino_to_agno(
+	const struct xfs_fd	*xfd,
+	uint64_t		ino)
+{
+	return ino >> xfd->aginolog;
+}
+
+/* Convert fs inode number into AG inode number. */
+static inline uint32_t
+cvt_ino_to_agino(
+	const struct xfs_fd	*xfd,
+	uint64_t		ino)
+{
+	return ino & ((1ULL << xfd->aginolog) - 1);
+}
+
+/*
+ * Convert a linear fs block offset number into bytes.  This is the runtime
+ * equivalent of XFS_FSB_TO_B, which means that it is /not/ for segmented fsbno
+ * format (= agno | agbno) that we use internally for the data device.
+ */
+static inline uint64_t
+cvt_off_fsb_to_b(
+	const struct xfs_fd	*xfd,
+	uint64_t		fsb)
+{
+	return fsb << xfd->blocklog;
+}
+
+/*
+ * Convert bytes into a (rounded down) linear fs block offset number.  This is
+ * the runtime equivalent of XFS_B_TO_FSBT.  It does not produce segmented
+ * fsbno numbers (= agno | agbno).
+ */
+static inline uint64_t
+cvt_b_to_off_fsbt(
+	const struct xfs_fd	*xfd,
+	uint64_t		bytes)
+{
+	return bytes >> xfd->blocklog;
+}
 
 #endif /* _LIBFROG_FSGEOM_H_ */
