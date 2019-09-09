@@ -12,7 +12,7 @@
 #include "dinode.h"
 #include "slab.h"
 #include "rmap.h"
-#include "bitmap.h"
+#include "libfrog/bitmap.h"
 
 #undef RMAP_DEBUG
 

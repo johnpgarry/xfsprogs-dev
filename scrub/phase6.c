@@ -12,7 +12,7 @@
 #include "workqueue.h"
 #include "xfs_scrub.h"
 #include "common.h"
-#include "bitmap.h"
+#include "libfrog/bitmap.h"
 #include "disk.h"
 #include "filemap.h"
 #include "fscounters.h"
