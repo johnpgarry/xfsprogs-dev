@@ -9,6 +9,7 @@
 #include "input.h"
 #include "init.h"
 #include "io.h"
+#include "fsgeom.h"
 
 static cmdinfo_t bmap_cmd;
 
@@ -105,11 +106,11 @@ bmap_f(
 		bmv_iflags &= ~(BMV_IF_PREALLOC|BMV_IF_NO_DMAPI_READ);
 
 	if (vflag) {
-		c = xfsctl(file->name, file->fd, XFS_IOC_FSGEOMETRY_V1, &fsgeo);
-		if (c < 0) {
+		c = xfrog_geometry(file->fd, &fsgeo);
+		if (c) {
 			fprintf(stderr,
 				_("%s: can't get geometry [\"%s\"]: %s\n"),
-				progname, file->name, strerror(errno));
+				progname, file->name, strerror(c));
 			exitcode = 1;
 			return 0;
 		}

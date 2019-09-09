@@ -9,6 +9,7 @@
 #include "init.h"
 #include "io.h"
 #include "libxfs.h"
+#include "fsgeom.h"
 
 #ifndef __O_TMPFILE
 #if defined __alpha__
@@ -118,10 +119,16 @@ openfile(
 	if (flags & IO_PATH) {
 		/* Can't call ioctl() on O_PATH fds */
 		memset(geom, 0, sizeof(*geom));
-	} else if (xfsctl(path, fd, XFS_IOC_FSGEOMETRY, geom) < 0) {
-		perror("XFS_IOC_FSGEOMETRY");
-		close(fd);
-		return -1;
+	} else {
+		int	ret;
+
+		ret = xfrog_geometry(fd, geom);
+		if (ret) {
+			errno = ret;
+			perror("XFS_IOC_FSGEOMETRY");
+			close(fd);
+			return -1;
+		}
 	}
 
 	if (!(flags & (IO_READONLY | IO_PATH)) && (flags & IO_REALTIME)) {

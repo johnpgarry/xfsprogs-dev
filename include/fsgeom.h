@@ -7,5 +7,6 @@
 
 void xfs_report_geom(struct xfs_fsop_geom *geo, const char *mntpoint,
 		const char *logname, const char *rtname);
+int xfrog_geometry(int fd, struct xfs_fsop_geom *fsgeo);
 
 #endif /* _LIBFROG_FSGEOM_H_ */

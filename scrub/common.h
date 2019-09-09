@@ -28,6 +28,8 @@ void __str_out(struct scrub_ctx *ctx, const char *descr, enum error_level level,
 
 #define str_errno(ctx, str) \
 	__str_out(ctx, str, S_ERROR,	errno,	__FILE__, __LINE__, NULL)
+#define str_liberror(ctx, error, str) \
+	__str_out(ctx, str, S_ERROR,	error,	__FILE__, __LINE__, NULL)
 #define str_error(ctx, str, ...) \
 	__str_out(ctx, str, S_ERROR,	0,	__FILE__, __LINE__, __VA_ARGS__)
 #define str_warn(ctx, str, ...) \

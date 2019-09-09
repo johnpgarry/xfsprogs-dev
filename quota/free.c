@@ -8,6 +8,7 @@
 #include "command.h"
 #include "init.h"
 #include "quota.h"
+#include "fsgeom.h"
 
 static cmdinfo_t free_cmd;
 
@@ -51,7 +52,7 @@ mount_free_space_data(
 	struct xfs_fsop_geom	fsgeo;
 	struct statfs		st;
 	uint64_t		logsize, count, free;
-	int			fd;
+	int			fd, ret;
 
 	if ((fd = open(mount->fs_dir, O_RDONLY)) < 0) {
 		exitcode = 1;
@@ -67,9 +68,10 @@ mount_free_space_data(
 	}
 
 	if (!(mount->fs_flags & FS_FOREIGN)) {
-		if ((xfsctl(mount->fs_dir, fd, XFS_IOC_FSGEOMETRY_V1,
-							&fsgeo)) < 0) {
-			perror("XFS_IOC_FSGEOMETRY_V1");
+		ret = xfrog_geometry(fd, &fsgeo);
+		if (ret) {
+			errno = ret;
+			perror("XFS_IOC_FSGEOMETRY");
 			close(fd);
 			return 0;
 		}

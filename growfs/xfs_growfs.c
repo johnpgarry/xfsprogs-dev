@@ -63,6 +63,7 @@ main(int argc, char **argv)
 	fs_path_t		*fs;	/* mount point information */
 	libxfs_init_t		xi;	/* libxfs structure */
 	char			rpath[PATH_MAX];
+	int			ret;
 
 	progname = basename(argv[0]);
 	setlocale(LC_ALL, "");
@@ -165,22 +166,14 @@ main(int argc, char **argv)
 	}
 
 	/* get the current filesystem size & geometry */
-	if (xfsctl(fname, ffd, XFS_IOC_FSGEOMETRY, &geo) < 0) {
-		/*
-		 * OK, new xfsctl barfed - back off and try earlier version
-		 * as we're probably running an older kernel version.
-		 * Only field added in the v2 geometry xfsctl is "logsunit"
-		 * so we'll zero that out for later display (as zero).
-		 */
-		geo.logsunit = 0;
-		if (xfsctl(fname, ffd, XFS_IOC_FSGEOMETRY_V1, &geo) < 0) {
-			fprintf(stderr, _(
-				"%s: cannot determine geometry of filesystem"
-				" mounted at %s: %s\n"),
-				progname, fname, strerror(errno));
-			exit(1);
-		}
+	ret = xfrog_geometry(ffd, &geo);
+	if (ret) {
+		fprintf(stderr,
+	_("%s: cannot determine geometry of filesystem mounted at %s: %s\n"),
+			progname, fname, strerror(ret));
+		exit(1);
 	}
+
 	isint = geo.logstart > 0;
 
 	/*
@@ -359,9 +352,10 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (xfsctl(fname, ffd, XFS_IOC_FSGEOMETRY_V1, &ngeo) < 0) {
+	ret = xfrog_geometry(ffd, &ngeo);
+	if (ret) {
 		fprintf(stderr, _("%s: XFS_IOC_FSGEOMETRY xfsctl failed: %s\n"),
-			progname, strerror(errno));
+			progname, strerror(ret));
 		exit(1);
 	}
 	if (geo.datablocks != ngeo.datablocks)

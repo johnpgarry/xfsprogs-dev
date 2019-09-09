@@ -12,6 +12,7 @@
 #include "init.h"
 #include "path.h"
 #include "space.h"
+#include "fsgeom.h"
 
 static cmdinfo_t print_cmd;
 
@@ -48,7 +49,7 @@ openfile(
 	struct fs_path	*fs_path)
 {
 	struct fs_path	*fsp;
-	int		fd;
+	int		fd, ret;
 
 	fd = open(path, 0);
 	if (fd < 0) {
@@ -56,13 +57,16 @@ openfile(
 		return -1;
 	}
 
-	if (ioctl(fd, XFS_IOC_FSGEOMETRY, geom) < 0) {
-		if (errno == ENOTTY)
+	ret = xfrog_geometry(fd, geom);
+	if (ret) {
+		if (ret == ENOTTY)
 			fprintf(stderr,
 _("%s: Not on a mounted XFS filesystem.\n"),
 					path);
-		else
+		else {
+			errno = ret;
 			perror("XFS_IOC_FSGEOMETRY");
+		}
 		close(fd);
 		return -1;
 	}
