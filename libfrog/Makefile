@@ -37,7 +37,8 @@ crc32table.h \
 fsgeom.h \
 ptvar.h \
 radix-tree.h \
-topology.h
+topology.h \
+workqueue.h
 
 LSRCFILES += gen_crc32table.c
 

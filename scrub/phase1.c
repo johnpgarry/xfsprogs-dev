@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include "libfrog.h"
-#include "workqueue.h"
+#include "libfrog/workqueue.h"
 #include "input.h"
 #include "path.h"
 #include "handle.h"

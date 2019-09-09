@@ -11,7 +11,7 @@
 #include "xfs_arch.h"
 #include "xfs_format.h"
 #include "path.h"
-#include "workqueue.h"
+#include "libfrog/workqueue.h"
 #include "xfs_scrub.h"
 #include "common.h"
 #include "fscounters.h"

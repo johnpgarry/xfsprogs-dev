@@ -8,7 +8,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <sys/statvfs.h>
-#include "workqueue.h"
+#include "libfrog/workqueue.h"
 #include "path.h"
 #include "xfs_scrub.h"
 #include "common.h"

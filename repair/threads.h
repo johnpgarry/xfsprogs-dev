@@ -3,7 +3,7 @@
 #ifndef	_XFS_REPAIR_THREADS_H_
 #define	_XFS_REPAIR_THREADS_H_
 
-#include "workqueue.h"
+#include "libfrog/workqueue.h"
 
 void	thread_init(void);
 

@@ -3,8 +3,8 @@
  * Copyright (C) 2017 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#ifndef	_WORKQUEUE_H_
-#define	_WORKQUEUE_H_
+#ifndef	__LIBFROG_WORKQUEUE_H__
+#define	__LIBFROG_WORKQUEUE_H__
 
 #include <pthread.h>
 
@@ -38,4 +38,4 @@ int workqueue_add(struct workqueue *wq, workqueue_func_t fn,
 		uint32_t index, void *arg);
 void workqueue_destroy(struct workqueue *wq);
 
-#endif	/* _WORKQUEUE_H_ */
+#endif	/* __LIBFROG_WORKQUEUE_H__ */

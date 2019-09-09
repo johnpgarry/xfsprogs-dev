@@ -9,7 +9,7 @@
 #include <sys/statvfs.h>
 #include "list.h"
 #include "path.h"
-#include "workqueue.h"
+#include "libfrog/workqueue.h"
 #include "xfs_scrub.h"
 #include "common.h"
 #include "counter.h"
