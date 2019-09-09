@@ -593,18 +593,10 @@ fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 		return -1;
 	}
 
-	if ((fsxfd.fd = open(mntdir, O_RDONLY)) < 0) {
-		fsrprintf(_("unable to open: %s: %s\n"),
-		          mntdir, strerror( errno ));
-		free(fshandlep);
-		return -1;
-	}
-
-	ret = xfd_prepare_geometry(&fsxfd);
+	ret = xfd_open(&fsxfd, mntdir, O_RDONLY);
 	if (ret) {
-		fsrprintf(_("Skipping %s: could not get XFS geometry\n"),
-			  mntdir);
-		xfd_close(&fsxfd);
+		fsrprintf(_("unable to open XFS file: %s: %s\n"),
+		          mntdir, strerror(ret));
 		free(fshandlep);
 		return -1;
 	}
@@ -726,16 +718,10 @@ fsrfile(
 	 * Need to open something on the same filesystem as the
 	 * file.  Open the parent.
 	 */
-	fsxfd.fd = open(getparent(fname), O_RDONLY);
-	if (fsxfd.fd < 0) {
-		fsrprintf(_("unable to open sys handle for %s: %s\n"),
-			fname, strerror(errno));
-		goto out;
-	}
-
-	error = xfd_prepare_geometry(&fsxfd);
+	error = xfd_open(&fsxfd, getparent(fname), O_RDONLY);
 	if (error) {
-		fsrprintf(_("Unable to get geom on fs for: %s\n"), fname);
+		fsrprintf(_("unable to open sys handle for XFS file %s: %s\n"),
+			fname, strerror(error));
 		goto out;
 	}
 

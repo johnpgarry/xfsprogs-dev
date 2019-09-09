@@ -132,7 +132,7 @@ quot_bulkstat_mount(
 	struct xfs_bstat	*buf;
 	uint64_t		last = 0;
 	uint32_t		count;
-	int			i, sts;
+	int			i, sts, ret;
 	du_t			**dp;
 
 	/*
@@ -147,8 +147,9 @@ quot_bulkstat_mount(
 			*dp = NULL;
 	ndu[0] = ndu[1] = ndu[2] = 0;
 
-	fsxfd.fd = open(fsdir, O_RDONLY);
-	if (fsxfd.fd < 0) {
+	ret = xfd_open(&fsxfd, fsdir, O_RDONLY);
+	if (ret) {
+		errno = ret;
 		perror(fsdir);
 		return;
 	}

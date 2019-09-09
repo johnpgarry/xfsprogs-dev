@@ -84,13 +84,17 @@ xfs_setup_fs(
 	 * CAP_SYS_ADMIN, which we probably need to do anything fancy
 	 * with the (XFS driver) kernel.
 	 */
-	ctx->mnt.fd = open(ctx->mntpoint, O_RDONLY | O_NOATIME | O_DIRECTORY);
-	if (ctx->mnt.fd < 0) {
-		if (errno == EPERM)
+	error = xfd_open(&ctx->mnt, ctx->mntpoint,
+			O_RDONLY | O_NOATIME | O_DIRECTORY);
+	if (error) {
+		if (error == EPERM)
 			str_info(ctx, ctx->mntpoint,
 _("Must be root to run scrub."));
+		else if (error == ENOTTY)
+			str_error(ctx, ctx->mntpoint,
+_("Not an XFS filesystem."));
 		else
-			str_errno(ctx, ctx->mntpoint);
+			str_liberror(ctx, error, ctx->mntpoint);
 		return false;
 	}
 
@@ -110,12 +114,6 @@ _("Must be root to run scrub."));
 		return false;
 	}
 
-	if (!platform_test_xfs_fd(ctx->mnt.fd)) {
-		str_info(ctx, ctx->mntpoint,
-_("Does not appear to be an XFS filesystem!"));
-		return false;
-	}
-
 	/*
 	 * Flush everything out to disk before we start checking.
 	 * This seems to reduce the incidence of stale file handle
@@ -124,13 +122,6 @@ _("Does not appear to be an XFS filesystem!"));
 	error = syncfs(ctx->mnt.fd);
 	if (error) {
 		str_errno(ctx, ctx->mntpoint);
-		return false;
-	}
-
-	/* Retrieve XFS geometry. */
-	error = xfd_prepare_geometry(&ctx->mnt);
-	if (error) {
-		str_liberror(ctx, error, _("Retrieving XFS geometry"));
 		return false;
 	}
 
