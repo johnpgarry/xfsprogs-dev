@@ -30,7 +30,8 @@ workqueue.c
 HFILES = \
 bulkstat.h \
 crc32defs.h \
-crc32table.h
+crc32table.h \
+topology.h
 
 LSRCFILES += gen_crc32table.c
 
