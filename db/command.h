@@ -28,5 +28,6 @@ extern int		command(int argc, char **argv);
 extern const cmdinfo_t	*find_command(const char *cmd);
 extern void		init_commands(void);
 
+extern void		convert_init(void);
 extern void		btdump_init(void);
 extern void		info_init(void);
