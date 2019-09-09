@@ -71,16 +71,15 @@ _("%s: Not on a mounted XFS filesystem.\n"),
 		return -1;
 	}
 
-	if (fs_path) {
-		fsp = fs_table_lookup(path, FS_MOUNT_POINT);
-		if (!fsp) {
-			fprintf(stderr, _("%s: cannot find mount point."),
-				path);
-			close(fd);
-			return -1;
-		}
-		memcpy(fs_path, fsp, sizeof(struct fs_path));
+	fsp = fs_table_lookup(path, FS_MOUNT_POINT);
+	if (!fsp) {
+		fprintf(stderr, _("%s: cannot find mount point."),
+			path);
+		close(fd);
+		return -1;
 	}
+	memcpy(fs_path, fsp, sizeof(struct fs_path));
+
 	return fd;
 }
 
