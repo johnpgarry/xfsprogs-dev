@@ -51,3 +51,29 @@ xfrog_bulkstat(
 		return errno;
 	return 0;
 }
+
+/*
+ * Query inode allocation bitmask information.  Returns zero or a positive
+ * error code.
+ */
+int
+xfrog_inumbers(
+	struct xfs_fd		*xfd,
+	uint64_t		*lastino,
+	uint32_t		icount,
+	struct xfs_inogrp	*ubuffer,
+	uint32_t		*ocount)
+{
+	struct xfs_fsop_bulkreq	bulkreq = {
+		.lastip		= (__u64 *)lastino,
+		.icount		= icount,
+		.ubuffer	= ubuffer,
+		.ocount		= (__s32 *)ocount,
+	};
+	int			ret;
+
+	ret = ioctl(xfd->fd, XFS_IOC_FSINUMBERS, &bulkreq);
+	if (ret)
+		return errno;
+	return 0;
+}
