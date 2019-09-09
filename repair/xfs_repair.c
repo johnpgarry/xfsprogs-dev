@@ -9,7 +9,7 @@
 #include <sys/resource.h>
 #include "xfs_multidisk.h"
 #include "avl.h"
-#include "avl64.h"
+#include "libfrog/avl64.h"
 #include "globals.h"
 #include "versions.h"
 #include "agheader.h"

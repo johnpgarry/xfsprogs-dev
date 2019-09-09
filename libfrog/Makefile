@@ -28,6 +28,7 @@ util.c \
 workqueue.c
 
 HFILES = \
+avl64.h \
 bulkstat.h \
 crc32defs.h \
 crc32table.h \

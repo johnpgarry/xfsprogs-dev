@@ -3,8 +3,8 @@
  * Copyright (c) 2000-2002,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#ifndef __XR_AVL64_H__
-#define __XR_AVL64_H__
+#ifndef __LIBFROG_AVL64_H__
+#define __LIBFROG_AVL64_H__
 
 #include <sys/types.h>
 
@@ -124,4 +124,4 @@ avl64_findranges(
 #define AVL_EXCLUDE_ZEROLEN	0x0001
 #endif
 
-#endif /* __XR_AVL64_H__ */
+#endif /* __LIBFROG_AVL64_H__ */

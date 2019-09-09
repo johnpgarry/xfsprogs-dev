@@ -12,7 +12,7 @@
 #include "agheader.h"
 #include "protos.h"
 #include "err_protos.h"
-#include "avl64.h"
+#include "libfrog/avl64.h"
 #include "threads.h"
 
 /*

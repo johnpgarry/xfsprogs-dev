@@ -19,7 +19,7 @@
 #include "path.h"
 #include "handle.h"
 #include "bitops.h"
-#include "avl64.h"
+#include "libfrog/avl64.h"
 #include "list.h"
 #include "xfs_scrub.h"
 #include "common.h"
