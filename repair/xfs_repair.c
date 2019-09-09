@@ -763,8 +763,6 @@ main(int argc, char **argv)
 
 	chunks_pblock = mp->m_sb.sb_inopblock / XFS_INODES_PER_CHUNK;
 	max_symlink_blocks = libxfs_symlink_blocks(mp, XFS_SYMLINK_MAXLEN);
-	inodes_per_cluster = max(mp->m_sb.sb_inopblock,
-			igeo->inode_cluster_size >> mp->m_sb.sb_inodelog);
 
 	/*
 	 * Automatic striding for high agcount filesystems.

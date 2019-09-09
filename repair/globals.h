@@ -122,7 +122,6 @@ extern xfs_agblock_t	inobt_root;
 /* configuration vars -- fs geometry dependent */
 
 extern int		inodes_per_block;
-extern int		inodes_per_cluster;
 extern unsigned int	glob_agcount;
 extern int		chunks_pblock;	/* # of 64-ino chunks per allocation */
 extern int		max_symlink_blocks;

@@ -710,16 +710,14 @@ pf_queuing_worker(
 	int			num_inos;
 	ino_tree_node_t		*irec;
 	ino_tree_node_t		*cur_irec;
-	int			blks_per_cluster;
 	xfs_agblock_t		bno;
 	int			i;
 	int			err;
 	uint64_t		sparse;
 	struct xfs_ino_geometry	*igeo = M_IGEO(mp);
+	unsigned long long	cluster_mask;
 
-	blks_per_cluster = igeo->inode_cluster_size >> mp->m_sb.sb_blocklog;
-	if (blks_per_cluster == 0)
-		blks_per_cluster = 1;
+	cluster_mask = (1ULL << igeo->inodes_per_cluster) - 1;
 
 	for (i = 0; i < PF_THREAD_COUNT; i++) {
 		err = pthread_create(&args->io_threads[i], NULL,
@@ -786,21 +784,22 @@ pf_queuing_worker(
 			struct xfs_buf_map	map;
 
 			map.bm_bn = XFS_AGB_TO_DADDR(mp, args->agno, bno);
-			map.bm_len = XFS_FSB_TO_BB(mp, blks_per_cluster);
+			map.bm_len = XFS_FSB_TO_BB(mp,
+					igeo->blocks_per_cluster);
 
 			/*
 			 * Queue I/O for each non-sparse cluster. We can check
 			 * sparse state in cluster sized chunks as cluster size
 			 * is the min. granularity of sparse irec regions.
 			 */
-			if ((sparse & ((1ULL << inodes_per_cluster) - 1)) == 0)
+			if ((sparse & cluster_mask) == 0)
 				pf_queue_io(args, &map, 1,
 					    (cur_irec->ino_isa_dir != 0) ?
 					     B_DIR_INODE : B_INODE);
 
-			bno += blks_per_cluster;
-			num_inos += inodes_per_cluster;
-			sparse >>= inodes_per_cluster;
+			bno += igeo->blocks_per_cluster;
+			num_inos += igeo->inodes_per_cluster;
+			sparse >>= igeo->inodes_per_cluster;
 		} while (num_inos < igeo->ialloc_inos);
 	}
 
@@ -903,9 +902,8 @@ start_inode_prefetch(
 
 	max_queue = libxfs_bcache->c_maxcount / thread_count / 8;
 	if (igeo->inode_cluster_size > mp->m_sb.sb_blocksize)
-		max_queue = max_queue *
-			(igeo->inode_cluster_size >> mp->m_sb.sb_blocklog) /
-			igeo->ialloc_blks;
+		max_queue = max_queue * igeo->blocks_per_cluster /
+				igeo->ialloc_blks;
 
 	sem_init(&args->ra_count, 0, max_queue);
 

@@ -755,8 +755,6 @@ get_agino_buf(
 	struct xfs_dinode	**dipp)
 {
 	struct xfs_buf		*bp;
-	int			cluster_size;
-	int			ino_per_cluster;
 	xfs_agino_t		cluster_agino;
 	xfs_daddr_t		cluster_daddr;
 	xfs_daddr_t		cluster_blks;
@@ -768,18 +766,15 @@ get_agino_buf(
 	 * we must find the buffer for its cluster, add the appropriate
 	 * offset, and return that.
 	 */
-	cluster_size = igeo->inode_cluster_size;
-	ino_per_cluster = cluster_size / mp->m_sb.sb_inodesize;
-	cluster_agino = agino & ~(ino_per_cluster - 1);
-	cluster_blks = XFS_FSB_TO_DADDR(mp, max(1,
-			igeo->inode_cluster_size >> mp->m_sb.sb_blocklog));
+	cluster_agino = agino & ~(igeo->inodes_per_cluster - 1);
+	cluster_blks = XFS_FSB_TO_DADDR(mp, igeo->blocks_per_cluster);
 	cluster_daddr = XFS_AGB_TO_DADDR(mp, agno,
 			XFS_AGINO_TO_AGBNO(mp, cluster_agino));
 
 #ifdef XR_INODE_TRACE
 	printf("cluster_size %d ipc %d clusagino %d daddr %lld sectors %lld\n",
-		cluster_size, ino_per_cluster, cluster_agino, cluster_daddr,
-		cluster_blks);
+		M_IGEO(mp)->inode_cluster_size, M_IGEO(mp)->inodes_per_cluster,
+		cluster_agino, cluster_daddr, cluster_blks);
 #endif
 
 	bp = libxfs_readbuf(mp->m_dev, cluster_daddr, cluster_blks,
