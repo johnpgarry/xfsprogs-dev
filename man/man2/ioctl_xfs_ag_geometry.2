@@ -57,6 +57,54 @@ Currently no flags are defined, so this field must be zero.
 .TP
 .IR ag_reserved
 All reserved fields will be set to zero on return.
+.PP
+The fields
+.IR ag_sick " and " ag_checked
+indicate the relative health of various allocation group metadata:
+.IP \[bu] 2
+If a given sick flag is set in
+.IR ag_sick ,
+then that piece of metadata has been observed to be damaged.
+The same bit will be set in
+.IR ag_checked .
+.IP \[bu]
+If a given sick flag is set in
+.I ag_checked
+and is not set in
+.IR ag_sick ,
+then that piece of metadata has been checked and is not faulty.
+.IP \[bu]
+If a given sick flag is not set in
+.IR ag_checked ,
+then no conclusion can be made.
+.PP
+The following flags apply to these fields:
+.RS 0.4i
+.TP
+.B XFS_AG_GEOM_SICK_SB
+Allocation group superblock.
+.TP
+.B XFS_AG_GEOM_SICK_AGF
+Free space header.
+.TP
+.B XFS_AG_GEOM_SICK_AGFL
+Free space reserve list.
+.TP
+.B XFS_AG_GEOM_SICK_AGI
+Inode header.
+.TP
+.BR XFS_AG_GEOM_SICK_BNOBT " or " XFS_AG_GEOM_SICK_CNTBT
+Free space btrees.
+.TP
+.BR XFS_AG_GEOM_SICK_INOBT " or " XFS_AG_GEOM_SICK_FINOBT
+Inode btrees.
+.TP
+.B XFS_AG_GEOM_SICK_RMAPBT
+Reverse mapping btree.
+.TP
+.B XFS_AG_GEOM_SICK_REFCNTBT
+Reference count btree.
+.RE
 .SH RETURN VALUE
 On error, \-1 is returned, and
 .I errno

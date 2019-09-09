@@ -94,7 +94,9 @@ struct xfs_bstat {
 	__u16             bs_projid_lo;
 	__u16             bs_forkoff;
 	__u16             bs_projid_hi;
-	unsigned char     bs_pad[6];
+	uint16_t          bs_sick;
+	uint16_t          bs_checked;
+	unsigned char     bs_pad[2];
 	__u32             bs_cowextsize;
 	__u32             bs_dmevmask;
 	__u16             bs_dmstate;
@@ -184,6 +186,54 @@ is unused on Linux.
 .I bs_aextents
 is the number of storage mappings associated with this file's extended
 attributes.
+.PP
+The fields
+.IR bs_sick " and " bs_checked
+indicate the relative health of various inode metadata:
+.IP \[bu] 2
+If a given sick flag is set in
+.IR bs_sick ,
+then that piece of metadata has been observed to be damaged.
+The same bit should be set in
+.IR bs_checked .
+.IP \[bu]
+If a given sick flag is set in
+.I bs_checked
+but is not set in
+.IR bs_sick ,
+then that piece of metadata has been checked and is not faulty.
+.IP \[bu]
+If a given sick flag is not set in
+.IR bs_checked ,
+then no conclusion can be made.
+.PP
+The following flags apply to these fields:
+.RS 0.4i
+.TP
+.B XFS_BS_SICK_INODE
+The inode's record itself.
+.TP
+.B XFS_BS_SICK_BMBTD
+File data extent mappings.
+.TP
+.B XFS_BS_SICK_BMBTA
+Extended attribute extent mappings.
+.TP
+.B XFS_BS_SICK_BMBTC
+Copy on Write staging extent mappings.
+.TP
+.B XFS_BS_SICK_DIR
+Directory information.
+.TP
+.B XFS_BS_SICK_XATTR
+Extended attribute data.
+.TP
+.B XFS_BS_SICK_SYMLINK
+Symbolic link target.
+.TP
+.B XFS_BS_SICK_PARENT
+Parent pointers.
+.RE
 .SH RETURN VALUE
 On error, \-1 is returned, and
 .I errno
