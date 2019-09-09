@@ -6,6 +6,8 @@
 #ifndef XFS_SCRUB_XFS_SCRUB_H_
 #define XFS_SCRUB_XFS_SCRUB_H_
 
+#include "fsgeom.h"
+
 extern char *progname;
 
 #define _PATH_PROC_MOUNTS	"/proc/mounts"
@@ -53,14 +55,13 @@ struct scrub_ctx {
 	/* How does the user want us to react to errors? */
 	enum error_action	error_action;
 
-	/* fd to filesystem mount point */
-	int			mnt_fd;
+	/* xfrog context for the mount point */
+	struct xfs_fd		mnt;
 
 	/* Number of threads for metadata scrubbing */
 	unsigned int		nr_io_threads;
 
 	/* XFS specific geometry */
-	struct xfs_fsop_geom	geo;
 	struct fs_path		fsinfo;
 	unsigned int		agblklog;
 	unsigned int		blocklog;

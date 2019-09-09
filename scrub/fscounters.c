@@ -57,10 +57,10 @@ xfs_count_inodes_range(
 	igrpreq.ocount  = &igrplen;
 
 	igrp_ino = first_ino;
-	error = ioctl(ctx->mnt_fd, XFS_IOC_FSINUMBERS, &igrpreq);
+	error = ioctl(ctx->mnt.fd, XFS_IOC_FSINUMBERS, &igrpreq);
 	while (!error && igrplen && inogrp.xi_startino < last_ino) {
 		nr += inogrp.xi_alloccount;
-		error = ioctl(ctx->mnt_fd, XFS_IOC_FSINUMBERS, &igrpreq);
+		error = ioctl(ctx->mnt.fd, XFS_IOC_FSINUMBERS, &igrpreq);
 	}
 
 	if (error) {
@@ -113,7 +113,7 @@ xfs_count_all_inodes(
 	int			ret;
 
 	ci = calloc(1, sizeof(struct xfs_count_inodes) +
-			(ctx->geo.agcount * sizeof(uint64_t)));
+			(ctx->mnt.fsgeom.agcount * sizeof(uint64_t)));
 	if (!ci)
 		return false;
 	ci->moveon = true;
@@ -125,7 +125,7 @@ xfs_count_all_inodes(
 		str_info(ctx, ctx->mntpoint, _("Could not create workqueue."));
 		goto out_free;
 	}
-	for (agno = 0; agno < ctx->geo.agcount; agno++) {
+	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++) {
 		ret = workqueue_add(&wq, xfs_count_ag_inodes, agno, ci);
 		if (ret) {
 			moveon = false;
@@ -136,7 +136,7 @@ _("Could not queue AG %u icount work."), agno);
 	}
 	workqueue_destroy(&wq);
 
-	for (agno = 0; agno < ctx->geo.agcount; agno++)
+	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++)
 		*count += ci->counters[agno];
 	moveon = ci->moveon;
 
@@ -162,14 +162,14 @@ xfs_scan_estimate_blocks(
 	int				error;
 
 	/* Grab the fstatvfs counters, since it has to report accurately. */
-	error = fstatvfs(ctx->mnt_fd, &sfs);
+	error = fstatvfs(ctx->mnt.fd, &sfs);
 	if (error) {
 		str_errno(ctx, ctx->mntpoint);
 		return false;
 	}
 
 	/* Fetch the filesystem counters. */
-	error = ioctl(ctx->mnt_fd, XFS_IOC_FSCOUNTS, &fc);
+	error = ioctl(ctx->mnt.fd, XFS_IOC_FSCOUNTS, &fc);
 	if (error) {
 		str_errno(ctx, ctx->mntpoint);
 		return false;
@@ -179,14 +179,16 @@ xfs_scan_estimate_blocks(
 	 * XFS reserves some blocks to prevent hard ENOSPC, so add those
 	 * blocks back to the free data counts.
 	 */
-	error = ioctl(ctx->mnt_fd, XFS_IOC_GET_RESBLKS, &rb);
+	error = ioctl(ctx->mnt.fd, XFS_IOC_GET_RESBLKS, &rb);
 	if (error)
 		str_errno(ctx, ctx->mntpoint);
 	sfs.f_bfree += rb.resblks_avail;
 
-	*d_blocks = sfs.f_blocks + (ctx->geo.logstart ? ctx->geo.logblocks : 0);
+	*d_blocks = sfs.f_blocks;
+	if (ctx->mnt.fsgeom.logstart > 0)
+		*d_blocks += ctx->mnt.fsgeom.logblocks;
 	*d_bfree = sfs.f_bfree;
-	*r_blocks = ctx->geo.rtblocks;
+	*r_blocks = ctx->mnt.fsgeom.rtblocks;
 	*r_bfree = fc.freertx;
 	*f_files = sfs.f_files;
 	*f_free = sfs.f_ffree;

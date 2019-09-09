@@ -92,3 +92,35 @@ xfrog_geometry(
 
 	return errno;
 }
+
+/*
+ * Prepare xfs_fd structure for future ioctl operations by computing the xfs
+ * geometry for @xfd->fd.  Returns zero or a positive error code.
+ */
+int
+xfd_prepare_geometry(
+	struct xfs_fd		*xfd)
+{
+	return xfrog_geometry(xfd->fd, &xfd->fsgeom);
+}
+
+/*
+ * Release any resources associated with this xfs_fd structure.  Returns zero
+ * or a positive error code.
+ */
+int
+xfd_close(
+	struct xfs_fd		*xfd)
+{
+	int			ret = 0;
+
+	if (xfd->fd < 0)
+		return 0;
+
+	ret = close(xfd->fd);
+	xfd->fd = -1;
+	if (ret < 0)
+		return errno;
+
+	return 0;
+}

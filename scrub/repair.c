@@ -262,7 +262,7 @@ xfs_action_list_defer(
 	xfs_agnumber_t			agno,
 	struct xfs_action_list		*alist)
 {
-	ASSERT(agno < ctx->geo.agcount);
+	ASSERT(agno < ctx->mnt.fsgeom.agcount);
 
 	xfs_action_list_splice(&ctx->action_lists[agno], alist);
 }
@@ -276,7 +276,7 @@ xfs_action_list_process_or_defer(
 {
 	bool				moveon;
 
-	moveon = xfs_action_list_process(ctx, ctx->mnt_fd, alist,
+	moveon = xfs_action_list_process(ctx, ctx->mnt.fd, alist,
 			ALP_REPAIR_ONLY | ALP_NOPROGRESS);
 	if (!moveon)
 		return moveon;

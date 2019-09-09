@@ -111,7 +111,7 @@ xfs_scan_summary(
 	int			error;
 
 	/* Flush everything out to disk before we start counting. */
-	error = syncfs(ctx->mnt_fd);
+	error = syncfs(ctx->mnt.fd);
 	if (error) {
 		str_errno(ctx, ctx->mntpoint);
 		return false;
