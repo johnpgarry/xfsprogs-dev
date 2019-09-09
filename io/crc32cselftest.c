@@ -8,8 +8,8 @@
 #include "command.h"
 #include "init.h"
 #include "io.h"
-#include "crc32c.h"
-#include "crc32cselftest.h"
+#include "libfrog/crc32c.h"
+#include "libfrog/crc32cselftest.h"
 
 static int
 crc32cselftest_f(

@@ -31,8 +31,8 @@
 
 /* This is just the crc32 self test bits from crc32.c. */
 
-#ifndef _LIBFROG_CRC32CSELFTEST_H_
-#define _LIBFROG_CRC32CSELFTEST_H_
+#ifndef __LIBFROG_CRC32CSELFTEST_H__
+#define __LIBFROG_CRC32CSELFTEST_H__
 
 /* 4096 random bytes */
 static uint8_t __attribute__((__aligned__(8))) test_buf[] =
@@ -703,4 +703,4 @@ crc32c_test(void)
 	return errors;
 }
 
-#endif /* _LIBFROG_CRC32CSELFTEST_H_ */
+#endif /* __LIBFROG_CRC32CSELFTEST_H__ */
