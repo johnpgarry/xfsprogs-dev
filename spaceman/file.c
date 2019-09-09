@@ -16,13 +16,13 @@
 
 static cmdinfo_t print_cmd;
 
-fileio_t	*filetable;
+struct fileio	*filetable;
 int		filecount;
-fileio_t	*file;
+struct fileio	*file;
 
 static void
 print_fileio(
-	fileio_t	*file,
+	struct fileio	*file,
 	int		index,
 	int		braces)
 {
@@ -101,8 +101,8 @@ addfile(
 	}
 
 	/* Extend the table of currently open files */
-	filetable = (fileio_t *)realloc(filetable,	/* growing */
-					++filecount * sizeof(fileio_t));
+	filetable = (struct fileio *)realloc(filetable,	/* growing */
+					++filecount * sizeof(struct fileio));
 	if (!filetable) {
 		perror("realloc");
 		filecount = 0;

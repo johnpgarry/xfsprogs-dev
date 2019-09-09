@@ -14,17 +14,17 @@
 #include "space.h"
 #include "input.h"
 
-typedef struct histent
+struct histent
 {
 	long long	low;
 	long long	high;
 	long long	count;
 	long long	blocks;
-} histent_t;
+};
 
 static int		agcount;
 static xfs_agnumber_t	*aglist;
-static histent_t	*hist;
+static struct histent	*hist;
 static int		dumpflag;
 static long long	equalsize;
 static long long	multsize;
@@ -82,7 +82,7 @@ hcmp(
 	const void	*a,
 	const void	*b)
 {
-	return ((histent_t *)a)->low - ((histent_t *)b)->low;
+	return ((struct histent *)a)->low - ((struct histent *)b)->low;
 }
 
 static void
