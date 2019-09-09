@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "project.h"
+#include "projects.h"
 
 #define PROJID		"/etc/projid"
 #define PROJECT_PATHS	"/etc/projects"

@@ -3,8 +3,8 @@
  * Copyright (c) 2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#ifndef __PROJECT_H__
-#define __PROJECT_H__
+#ifndef __LIBFROG_PROJECTS_H__
+#define __LIBFROG_PROJECTS_H__
 
 #include "platform_defs.h"
 #include "xfs.h"
@@ -36,4 +36,4 @@ extern void setprfiles(void);
 extern char *projid_file;
 extern char *projects_file;
 
-#endif	/* __PROJECT_H__ */
+#endif	/* __LIBFROG_PROJECTS_H__ */

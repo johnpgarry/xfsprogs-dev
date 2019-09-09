@@ -9,7 +9,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <sys/types.h>
-#include "project.h"
+#include "libfrog/projects.h"
 #include "libfrog/convert.h"
 #include <stdbool.h>
 

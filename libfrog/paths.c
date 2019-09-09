@@ -14,7 +14,7 @@
 #include <sys/stat.h>
 #include "paths.h"
 #include "input.h"
-#include "project.h"
+#include "projects.h"
 #include <limits.h>
 
 extern char *progname;

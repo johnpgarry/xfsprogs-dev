@@ -6,7 +6,7 @@
 
 #include "xqm.h"
 #include "libfrog/paths.h"
-#include "project.h"
+#include "libfrog/projects.h"
 #include <stdbool.h>
 
 /*
