@@ -2233,7 +2233,6 @@ phase5_func(
 #endif
 	xfs_agblock_t	num_extents;
 	struct agi_stat	agi_stat = {0,};
-	int		error;
 
 	if (verbose)
 		do_log(_("        - agno = %d\n"), agno);
@@ -2427,14 +2426,6 @@ phase5_func(
 		finish_cursor(&bcnt_btree_curs);
 
 		/*
-		 * Put the per-AG btree rmap data into the rmapbt
-		 */
-		error = rmap_store_ag_btree_rec(mp, agno);
-		if (error)
-			do_error(
-_("unable to add AG %u reverse-mapping data to btree.\n"), agno);
-
-		/*
 		 * release the incore per-AG bno/bcnt trees so
 		 * the extent nodes can be recycled
 		 */
@@ -2561,6 +2552,21 @@ phase5(xfs_mount_t *mp)
 	 */
 	sync_sb(mp);
 
+	/*
+	 * Put the per-AG btree rmap data into the rmapbt now that we've reset
+	 * the superblock counters.
+	 */
+	for (agno = 0; agno < mp->m_sb.sb_agcount; agno++) {
+		error = rmap_store_ag_btree_rec(mp, agno);
+		if (error)
+			do_error(
+_("unable to add AG %u reverse-mapping data to btree.\n"), agno);
+	}
+
+	/*
+	 * Put blocks that were unnecessarily reserved for btree
+	 * reconstruction back into the filesystem free space data.
+	 */
 	error = inject_lost_blocks(mp, lost_fsb);
 	if (error)
 		do_error(_("Unable to reinsert lost blocks into filesystem.\n"));
