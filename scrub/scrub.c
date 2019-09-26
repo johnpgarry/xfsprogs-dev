@@ -12,6 +12,8 @@
 #include <sys/statvfs.h>
 #include "list.h"
 #include "libfrog/paths.h"
+#include "libfrog/fsgeom.h"
+#include "libfrog/scrub.h"
 #include "xfs_scrub.h"
 #include "common.h"
 #include "progress.h"
@@ -21,93 +23,28 @@
 
 /* Online scrub and repair wrappers. */
 
-/* Type info and names for the scrub types. */
-enum scrub_type {
-	ST_NONE,	/* disabled */
-	ST_AGHEADER,	/* per-AG header */
-	ST_PERAG,	/* per-AG metadata */
-	ST_FS,		/* per-FS metadata */
-	ST_INODE,	/* per-inode metadata */
-};
-struct scrub_descr {
-	const char	*name;
-	enum scrub_type	type;
-};
-
-/* These must correspond to XFS_SCRUB_TYPE_ */
-static const struct scrub_descr scrubbers[XFS_SCRUB_TYPE_NR] = {
-	[XFS_SCRUB_TYPE_PROBE] =
-		{"metadata",				ST_NONE},
-	[XFS_SCRUB_TYPE_SB] =
-		{"superblock",				ST_AGHEADER},
-	[XFS_SCRUB_TYPE_AGF] =
-		{"free space header",			ST_AGHEADER},
-	[XFS_SCRUB_TYPE_AGFL] =
-		{"free list",				ST_AGHEADER},
-	[XFS_SCRUB_TYPE_AGI] =
-		{"inode header",			ST_AGHEADER},
-	[XFS_SCRUB_TYPE_BNOBT] =
-		{"freesp by block btree",		ST_PERAG},
-	[XFS_SCRUB_TYPE_CNTBT] =
-		{"freesp by length btree",		ST_PERAG},
-	[XFS_SCRUB_TYPE_INOBT] =
-		{"inode btree",				ST_PERAG},
-	[XFS_SCRUB_TYPE_FINOBT] =
-		{"free inode btree",			ST_PERAG},
-	[XFS_SCRUB_TYPE_RMAPBT] =
-		{"reverse mapping btree",		ST_PERAG},
-	[XFS_SCRUB_TYPE_REFCNTBT] =
-		{"reference count btree",		ST_PERAG},
-	[XFS_SCRUB_TYPE_INODE] =
-		{"inode record",			ST_INODE},
-	[XFS_SCRUB_TYPE_BMBTD] =
-		{"data block map",			ST_INODE},
-	[XFS_SCRUB_TYPE_BMBTA] =
-		{"attr block map",			ST_INODE},
-	[XFS_SCRUB_TYPE_BMBTC] =
-		{"CoW block map",			ST_INODE},
-	[XFS_SCRUB_TYPE_DIR] =
-		{"directory entries",			ST_INODE},
-	[XFS_SCRUB_TYPE_XATTR] =
-		{"extended attributes",			ST_INODE},
-	[XFS_SCRUB_TYPE_SYMLINK] =
-		{"symbolic link",			ST_INODE},
-	[XFS_SCRUB_TYPE_PARENT] =
-		{"parent pointer",			ST_INODE},
-	[XFS_SCRUB_TYPE_RTBITMAP] =
-		{"realtime bitmap",			ST_FS},
-	[XFS_SCRUB_TYPE_RTSUM] =
-		{"realtime summary",			ST_FS},
-	[XFS_SCRUB_TYPE_UQUOTA] =
-		{"user quotas",				ST_FS},
-	[XFS_SCRUB_TYPE_GQUOTA] =
-		{"group quotas",			ST_FS},
-	[XFS_SCRUB_TYPE_PQUOTA] =
-		{"project quotas",			ST_FS},
-};
-
 /* Format a scrub description. */
 static void
 format_scrub_descr(
 	char				*buf,
 	size_t				buflen,
 	struct xfs_scrub_metadata	*meta,
-	const struct scrub_descr	*sc)
+	const struct xfrog_scrub_descr	*sc)
 {
 	switch (sc->type) {
-	case ST_AGHEADER:
-	case ST_PERAG:
+	case XFROG_SCRUB_TYPE_AGHEADER:
+	case XFROG_SCRUB_TYPE_PERAG:
 		snprintf(buf, buflen, _("AG %u %s"), meta->sm_agno,
-				_(sc->name));
+				_(sc->descr));
 		break;
-	case ST_INODE:
+	case XFROG_SCRUB_TYPE_INODE:
 		snprintf(buf, buflen, _("Inode %"PRIu64" %s"),
-				(uint64_t)meta->sm_ino, _(sc->name));
+				(uint64_t)meta->sm_ino, _(sc->descr));
 		break;
-	case ST_FS:
-		snprintf(buf, buflen, _("%s"), _(sc->name));
+	case XFROG_SCRUB_TYPE_FS:
+		snprintf(buf, buflen, _("%s"), _(sc->descr));
 		break;
-	case ST_NONE:
+	case XFROG_SCRUB_TYPE_NONE:
 		assert(0);
 		break;
 	}
@@ -186,11 +123,12 @@ xfs_check_metadata(
 
 	assert(!debug_tweak_on("XFS_SCRUB_NO_KERNEL"));
 	assert(meta->sm_type < XFS_SCRUB_TYPE_NR);
-	format_scrub_descr(buf, DESCR_BUFSZ, meta, &scrubbers[meta->sm_type]);
+	format_scrub_descr(buf, DESCR_BUFSZ, meta,
+			&xfrog_scrubbers[meta->sm_type]);
 
 	dbg_printf("check %s flags %xh\n", buf, meta->sm_flags);
 retry:
-	error = ioctl(ctx->mnt.fd, XFS_IOC_SCRUB_METADATA, meta);
+	error = xfrog_scrub_metadata(&ctx->mnt, meta);
 	if (debug_tweak_on("XFS_SCRUB_FORCE_REPAIR") && !error)
 		meta->sm_flags |= XFS_SCRUB_OFLAG_CORRUPT;
 	if (error) {
@@ -296,7 +234,7 @@ xfs_scrub_report_preen_triggers(
 			ctx->preen_triggers[i] = false;
 			pthread_mutex_unlock(&ctx->lock);
 			str_info(ctx, ctx->mntpoint,
-_("Optimizations of %s are possible."), scrubbers[i].name);
+_("Optimizations of %s are possible."), _(xfrog_scrubbers[i].descr));
 		} else {
 			pthread_mutex_unlock(&ctx->lock);
 		}
@@ -321,12 +259,12 @@ xfs_scrub_save_repair(
 	memset(aitem, 0, sizeof(*aitem));
 	aitem->type = meta->sm_type;
 	aitem->flags = meta->sm_flags;
-	switch (scrubbers[meta->sm_type].type) {
-	case ST_AGHEADER:
-	case ST_PERAG:
+	switch (xfrog_scrubbers[meta->sm_type].type) {
+	case XFROG_SCRUB_TYPE_AGHEADER:
+	case XFROG_SCRUB_TYPE_PERAG:
 		aitem->agno = meta->sm_agno;
 		break;
-	case ST_INODE:
+	case XFROG_SCRUB_TYPE_INODE:
 		aitem->ino = meta->sm_ino;
 		aitem->gen = meta->sm_gen;
 		break;
@@ -342,16 +280,16 @@ xfs_scrub_save_repair(
 static bool
 xfs_scrub_metadata(
 	struct scrub_ctx		*ctx,
-	enum scrub_type			scrub_type,
+	enum xfrog_scrub_type		scrub_type,
 	xfs_agnumber_t			agno,
 	struct xfs_action_list		*alist)
 {
 	struct xfs_scrub_metadata	meta = {0};
-	const struct scrub_descr	*sc;
+	const struct xfrog_scrub_descr	*sc;
 	enum check_outcome		fix;
 	int				type;
 
-	sc = scrubbers;
+	sc = xfrog_scrubbers;
 	for (type = 0; type < XFS_SCRUB_TYPE_NR; type++, sc++) {
 		if (sc->type != scrub_type)
 			continue;
@@ -423,7 +361,7 @@ xfs_scrub_ag_headers(
 	xfs_agnumber_t			agno,
 	struct xfs_action_list		*alist)
 {
-	return xfs_scrub_metadata(ctx, ST_AGHEADER, agno, alist);
+	return xfs_scrub_metadata(ctx, XFROG_SCRUB_TYPE_AGHEADER, agno, alist);
 }
 
 /* Scrub each AG's metadata btrees. */
@@ -433,7 +371,7 @@ xfs_scrub_ag_metadata(
 	xfs_agnumber_t			agno,
 	struct xfs_action_list		*alist)
 {
-	return xfs_scrub_metadata(ctx, ST_PERAG, agno, alist);
+	return xfs_scrub_metadata(ctx, XFROG_SCRUB_TYPE_PERAG, agno, alist);
 }
 
 /* Scrub whole-FS metadata btrees. */
@@ -442,7 +380,7 @@ xfs_scrub_fs_metadata(
 	struct scrub_ctx		*ctx,
 	struct xfs_action_list		*alist)
 {
-	return xfs_scrub_metadata(ctx, ST_FS, 0, alist);
+	return xfs_scrub_metadata(ctx, XFROG_SCRUB_TYPE_FS, 0, alist);
 }
 
 /* How many items do we have to check? */
@@ -450,18 +388,18 @@ unsigned int
 xfs_scrub_estimate_ag_work(
 	struct scrub_ctx		*ctx)
 {
-	const struct scrub_descr	*sc;
+	const struct xfrog_scrub_descr	*sc;
 	int				type;
 	unsigned int			estimate = 0;
 
-	sc = scrubbers;
+	sc = xfrog_scrubbers;
 	for (type = 0; type < XFS_SCRUB_TYPE_NR; type++, sc++) {
 		switch (sc->type) {
-		case ST_AGHEADER:
-		case ST_PERAG:
+		case XFROG_SCRUB_TYPE_AGHEADER:
+		case XFROG_SCRUB_TYPE_PERAG:
 			estimate += ctx->mnt.fsgeom.agcount;
 			break;
-		case ST_FS:
+		case XFROG_SCRUB_TYPE_FS:
 			estimate++;
 			break;
 		default:
@@ -484,7 +422,7 @@ __xfs_scrub_file(
 	enum check_outcome		fix;
 
 	assert(type < XFS_SCRUB_TYPE_NR);
-	assert(scrubbers[type].type == ST_INODE);
+	assert(xfrog_scrubbers[type].type == XFROG_SCRUB_TYPE_INODE);
 
 	meta.sm_type = type;
 	meta.sm_ino = ino;
@@ -605,7 +543,7 @@ __xfs_scrub_test(
 	meta.sm_type = type;
 	if (repair)
 		meta.sm_flags |= XFS_SCRUB_IFLAG_REPAIR;
-	error = ioctl(ctx->mnt.fd, XFS_IOC_SCRUB_METADATA, &meta);
+	error = xfrog_scrub_metadata(&ctx->mnt, &meta);
 	if (!error)
 		return true;
 	switch (errno) {
@@ -622,7 +560,7 @@ _("Filesystem is mounted norecovery; cannot proceed."));
 		if (debug || verbose)
 			str_info(ctx, ctx->mntpoint,
 _("Kernel %s %s facility not detected."),
-					_(scrubbers[type].name),
+					_(xfrog_scrubbers[type].descr),
 					repair ? _("repair") : _("scrub"));
 		return false;
 	case ENOENT:
@@ -709,12 +647,12 @@ xfs_repair_metadata(
 	assert(!debug_tweak_on("XFS_SCRUB_NO_KERNEL"));
 	meta.sm_type = aitem->type;
 	meta.sm_flags = aitem->flags | XFS_SCRUB_IFLAG_REPAIR;
-	switch (scrubbers[aitem->type].type) {
-	case ST_AGHEADER:
-	case ST_PERAG:
+	switch (xfrog_scrubbers[aitem->type].type) {
+	case XFROG_SCRUB_TYPE_AGHEADER:
+	case XFROG_SCRUB_TYPE_PERAG:
 		meta.sm_agno = aitem->agno;
 		break;
-	case ST_INODE:
+	case XFROG_SCRUB_TYPE_INODE:
 		meta.sm_ino = aitem->ino;
 		meta.sm_gen = aitem->gen;
 		break;
@@ -726,14 +664,15 @@ xfs_repair_metadata(
 		return CHECK_RETRY;
 
 	memcpy(&oldm, &meta, sizeof(oldm));
-	format_scrub_descr(buf, DESCR_BUFSZ, &meta, &scrubbers[meta.sm_type]);
+	format_scrub_descr(buf, DESCR_BUFSZ, &meta,
+			&xfrog_scrubbers[meta.sm_type]);
 
 	if (needs_repair(&meta))
 		str_info(ctx, buf, _("Attempting repair."));
 	else if (debug || verbose)
 		str_info(ctx, buf, _("Attempting optimization."));
 
-	error = ioctl(fd, XFS_IOC_SCRUB_METADATA, &meta);
+	error = xfrog_scrub_metadata(&ctx->mnt, &meta);
 	if (error) {
 		switch (errno) {
 		case EDEADLOCK:

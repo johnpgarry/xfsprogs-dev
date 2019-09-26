@@ -23,6 +23,7 @@ paths.c \
 projects.c \
 ptvar.c \
 radix-tree.c \
+scrub.c \
 topology.c \
 util.c \
 workqueue.c
@@ -41,6 +42,7 @@ paths.h \
 projects.h \
 ptvar.h \
 radix-tree.h \
+scrub.h \
 topology.h \
 workqueue.h
 

@@ -10,55 +10,17 @@
 #include "input.h"
 #include "init.h"
 #include "libfrog/paths.h"
+#include "libfrog/fsgeom.h"
+#include "libfrog/scrub.h"
 #include "io.h"
 
 static struct cmdinfo scrub_cmd;
 static struct cmdinfo repair_cmd;
 
-/* Type info and names for the scrub types. */
-enum scrub_type {
-	ST_NONE,	/* disabled */
-	ST_PERAG,	/* per-AG metadata */
-	ST_FS,		/* per-FS metadata */
-	ST_INODE,	/* per-inode metadata */
-};
-
-struct scrub_descr {
-	const char	*name;
-	enum scrub_type	type;
-};
-
-static const struct scrub_descr scrubbers[XFS_SCRUB_TYPE_NR] = {
-	[XFS_SCRUB_TYPE_PROBE]		= {"probe",		ST_NONE},
-	[XFS_SCRUB_TYPE_SB]		= {"sb",		ST_PERAG},
-	[XFS_SCRUB_TYPE_AGF]		= {"agf",		ST_PERAG},
-	[XFS_SCRUB_TYPE_AGFL]		= {"agfl",		ST_PERAG},
-	[XFS_SCRUB_TYPE_AGI]		= {"agi",		ST_PERAG},
-	[XFS_SCRUB_TYPE_BNOBT]		= {"bnobt",		ST_PERAG},
-	[XFS_SCRUB_TYPE_CNTBT]		= {"cntbt",		ST_PERAG},
-	[XFS_SCRUB_TYPE_INOBT]		= {"inobt",		ST_PERAG},
-	[XFS_SCRUB_TYPE_FINOBT]		= {"finobt",		ST_PERAG},
-	[XFS_SCRUB_TYPE_RMAPBT]		= {"rmapbt",		ST_PERAG},
-	[XFS_SCRUB_TYPE_REFCNTBT]	= {"refcountbt",	ST_PERAG},
-	[XFS_SCRUB_TYPE_INODE]		= {"inode",		ST_INODE},
-	[XFS_SCRUB_TYPE_BMBTD]		= {"bmapbtd",		ST_INODE},
-	[XFS_SCRUB_TYPE_BMBTA]		= {"bmapbta",		ST_INODE},
-	[XFS_SCRUB_TYPE_BMBTC]		= {"bmapbtc",		ST_INODE},
-	[XFS_SCRUB_TYPE_DIR]		= {"directory",		ST_INODE},
-	[XFS_SCRUB_TYPE_XATTR]		= {"xattr",		ST_INODE},
-	[XFS_SCRUB_TYPE_SYMLINK]	= {"symlink",		ST_INODE},
-	[XFS_SCRUB_TYPE_PARENT]		= {"parent",		ST_INODE},
-	[XFS_SCRUB_TYPE_RTBITMAP]	= {"rtbitmap",		ST_FS},
-	[XFS_SCRUB_TYPE_RTSUM]		= {"rtsummary",		ST_FS},
-	[XFS_SCRUB_TYPE_UQUOTA]		= {"usrquota",		ST_FS},
-	[XFS_SCRUB_TYPE_GQUOTA]		= {"grpquota",		ST_FS},
-	[XFS_SCRUB_TYPE_PQUOTA]		= {"prjquota",		ST_FS},
-};
-
 static void
 scrub_help(void)
 {
-	const struct scrub_descr	*d;
+	const struct xfrog_scrub_descr	*d;
 	int				i;
 
 	printf(_(
@@ -74,7 +36,7 @@ scrub_help(void)
 " 'scrub bmapbtd 128 13525' - scrubs the extent map of inode 128 gen 13525.\n"
 "\n"
 " Known metadata scrub types are:"));
-	for (i = 0, d = scrubbers; i < XFS_SCRUB_TYPE_NR; i++, d++)
+	for (i = 0, d = xfrog_scrubbers; i < XFS_SCRUB_TYPE_NR; i++, d++)
 		printf(" %s", d->name);
 	printf("\n");
 }
@@ -87,22 +49,23 @@ scrub_ioctl(
 	uint32_t			control2)
 {
 	struct xfs_scrub_metadata	meta;
-	const struct scrub_descr	*sc;
+	const struct xfrog_scrub_descr	*sc;
 	int				error;
 
-	sc = &scrubbers[type];
+	sc = &xfrog_scrubbers[type];
 	memset(&meta, 0, sizeof(meta));
 	meta.sm_type = type;
 	switch (sc->type) {
-	case ST_PERAG:
+	case XFROG_SCRUB_TYPE_AGHEADER:
+	case XFROG_SCRUB_TYPE_PERAG:
 		meta.sm_agno = control;
 		break;
-	case ST_INODE:
+	case XFROG_SCRUB_TYPE_INODE:
 		meta.sm_ino = control;
 		meta.sm_gen = control2;
 		break;
-	case ST_NONE:
-	case ST_FS:
+	case XFROG_SCRUB_TYPE_NONE:
+	case XFROG_SCRUB_TYPE_FS:
 		/* no control parameters */
 		break;
 	}
@@ -135,7 +98,7 @@ parse_args(
 	int				i, c;
 	uint64_t			control = 0;
 	uint32_t			control2 = 0;
-	const struct scrub_descr	*d = NULL;
+	const struct xfrog_scrub_descr	*d = NULL;
 
 	while ((c = getopt(argc, argv, "")) != EOF) {
 		switch (c) {
@@ -146,7 +109,7 @@ parse_args(
 	if (optind > argc - 1)
 		return command_usage(cmdinfo);
 
-	for (i = 0, d = scrubbers; i < XFS_SCRUB_TYPE_NR; i++, d++) {
+	for (i = 0, d = xfrog_scrubbers; i < XFS_SCRUB_TYPE_NR; i++, d++) {
 		if (strcmp(d->name, argv[optind]) == 0) {
 			type = i;
 			break;
@@ -159,7 +122,7 @@ parse_args(
 	optind++;
 
 	switch (d->type) {
-	case ST_INODE:
+	case XFROG_SCRUB_TYPE_INODE:
 		if (optind == argc) {
 			control = 0;
 			control2 = 0;
@@ -184,7 +147,8 @@ parse_args(
 			return 0;
 		}
 		break;
-	case ST_PERAG:
+	case XFROG_SCRUB_TYPE_AGHEADER:
+	case XFROG_SCRUB_TYPE_PERAG:
 		if (optind != argc - 1) {
 			fprintf(stderr,
 				_("Must specify one AG number.\n"));
@@ -197,8 +161,8 @@ parse_args(
 			return 0;
 		}
 		break;
-	case ST_FS:
-	case ST_NONE:
+	case XFROG_SCRUB_TYPE_FS:
+	case XFROG_SCRUB_TYPE_NONE:
 		if (optind != argc) {
 			fprintf(stderr,
 				_("No parameters allowed.\n"));
@@ -241,7 +205,7 @@ scrub_init(void)
 static void
 repair_help(void)
 {
-	const struct scrub_descr	*d;
+	const struct xfrog_scrub_descr	*d;
 	int				i;
 
 	printf(_(
@@ -257,7 +221,7 @@ repair_help(void)
 " 'repair bmapbtd 128 13525' - repairs the extent map of inode 128 gen 13525.\n"
 "\n"
 " Known metadata repairs types are:"));
-	for (i = 0, d = scrubbers; i < XFS_SCRUB_TYPE_NR; i++, d++)
+	for (i = 0, d = xfrog_scrubbers; i < XFS_SCRUB_TYPE_NR; i++, d++)
 		printf(" %s", d->name);
 	printf("\n");
 }
@@ -270,22 +234,23 @@ repair_ioctl(
 	uint32_t			control2)
 {
 	struct xfs_scrub_metadata	meta;
-	const struct scrub_descr	*sc;
+	const struct xfrog_scrub_descr	*sc;
 	int				error;
 
-	sc = &scrubbers[type];
+	sc = &xfrog_scrubbers[type];
 	memset(&meta, 0, sizeof(meta));
 	meta.sm_type = type;
 	switch (sc->type) {
-	case ST_PERAG:
+	case XFROG_SCRUB_TYPE_AGHEADER:
+	case XFROG_SCRUB_TYPE_PERAG:
 		meta.sm_agno = control;
 		break;
-	case ST_INODE:
+	case XFROG_SCRUB_TYPE_INODE:
 		meta.sm_ino = control;
 		meta.sm_gen = control2;
 		break;
-	case ST_NONE:
-	case ST_FS:
+	case XFROG_SCRUB_TYPE_NONE:
+	case XFROG_SCRUB_TYPE_FS:
 		/* no control parameters */
 		break;
 	}
