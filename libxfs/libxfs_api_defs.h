@@ -154,4 +154,7 @@
 #define LIBXFS_ATTR_CREATE		ATTR_CREATE
 #define LIBXFS_ATTR_REPLACE		ATTR_REPLACE
 
+#define xfs_ag_init_headers		libxfs_ag_init_headers
+#define xfs_buf_delwri_submit		libxfs_buf_delwri_submit
+
 #endif /* __LIBXFS_API_DEFS_H__ */
