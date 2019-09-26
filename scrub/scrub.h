@@ -36,21 +36,21 @@ bool xfs_can_scrub_parent(struct scrub_ctx *ctx);
 bool xfs_can_repair(struct scrub_ctx *ctx);
 
 bool xfs_scrub_inode_fields(struct scrub_ctx *ctx, uint64_t ino, uint32_t gen,
-		int fd, struct xfs_action_list *alist);
+		struct xfs_action_list *alist);
 bool xfs_scrub_data_fork(struct scrub_ctx *ctx, uint64_t ino, uint32_t gen,
-		int fd, struct xfs_action_list *alist);
+		struct xfs_action_list *alist);
 bool xfs_scrub_attr_fork(struct scrub_ctx *ctx, uint64_t ino, uint32_t gen,
-		int fd, struct xfs_action_list *alist);
+		struct xfs_action_list *alist);
 bool xfs_scrub_cow_fork(struct scrub_ctx *ctx, uint64_t ino, uint32_t gen,
-		int fd, struct xfs_action_list *alist);
+		struct xfs_action_list *alist);
 bool xfs_scrub_dir(struct scrub_ctx *ctx, uint64_t ino, uint32_t gen,
-		int fd, struct xfs_action_list *alist);
+		struct xfs_action_list *alist);
 bool xfs_scrub_attr(struct scrub_ctx *ctx, uint64_t ino, uint32_t gen,
-		int fd, struct xfs_action_list *alist);
+		struct xfs_action_list *alist);
 bool xfs_scrub_symlink(struct scrub_ctx *ctx, uint64_t ino, uint32_t gen,
-		int fd, struct xfs_action_list *alist);
+		struct xfs_action_list *alist);
 bool xfs_scrub_parent(struct scrub_ctx *ctx, uint64_t ino, uint32_t gen,
-		int fd, struct xfs_action_list *alist);
+		struct xfs_action_list *alist);
 
 /* Repair parameters are the scrub inputs and retry count. */
 struct action_item {

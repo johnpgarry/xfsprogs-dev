@@ -176,7 +176,6 @@ xfs_scrub_warn_incomplete_scrub(
 static enum check_outcome
 xfs_check_metadata(
 	struct scrub_ctx		*ctx,
-	int				fd,
 	struct xfs_scrub_metadata	*meta,
 	bool				is_inode)
 {
@@ -191,7 +190,7 @@ xfs_check_metadata(
 
 	dbg_printf("check %s flags %xh\n", buf, meta->sm_flags);
 retry:
-	error = ioctl(fd, XFS_IOC_SCRUB_METADATA, meta);
+	error = ioctl(ctx->mnt.fd, XFS_IOC_SCRUB_METADATA, meta);
 	if (debug_tweak_on("XFS_SCRUB_FORCE_REPAIR") && !error)
 		meta->sm_flags |= XFS_SCRUB_OFLAG_CORRUPT;
 	if (error) {
@@ -363,7 +362,7 @@ xfs_scrub_metadata(
 		background_sleep();
 
 		/* Check the item. */
-		fix = xfs_check_metadata(ctx, ctx->mnt.fd, &meta, false);
+		fix = xfs_check_metadata(ctx, &meta, false);
 		progress_add(1);
 		switch (fix) {
 		case CHECK_ABORT:
@@ -399,7 +398,7 @@ xfs_scrub_primary_super(
 	enum check_outcome		fix;
 
 	/* Check the item. */
-	fix = xfs_check_metadata(ctx, ctx->mnt.fd, &meta, false);
+	fix = xfs_check_metadata(ctx, &meta, false);
 	switch (fix) {
 	case CHECK_ABORT:
 		return false;
@@ -478,7 +477,6 @@ __xfs_scrub_file(
 	struct scrub_ctx		*ctx,
 	uint64_t			ino,
 	uint32_t			gen,
-	int				fd,
 	unsigned int			type,
 	struct xfs_action_list		*alist)
 {
@@ -493,7 +491,7 @@ __xfs_scrub_file(
 	meta.sm_gen = gen;
 
 	/* Scrub the piece of metadata. */
-	fix = xfs_check_metadata(ctx, fd, &meta, true);
+	fix = xfs_check_metadata(ctx, &meta, true);
 	if (fix == CHECK_ABORT)
 		return false;
 	if (fix == CHECK_DONE)
@@ -507,10 +505,9 @@ xfs_scrub_inode_fields(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
-	int			fd,
 	struct xfs_action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, fd, XFS_SCRUB_TYPE_INODE, alist);
+	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_INODE, alist);
 }
 
 bool
@@ -518,10 +515,9 @@ xfs_scrub_data_fork(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
-	int			fd,
 	struct xfs_action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, fd, XFS_SCRUB_TYPE_BMBTD, alist);
+	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_BMBTD, alist);
 }
 
 bool
@@ -529,10 +525,9 @@ xfs_scrub_attr_fork(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
-	int			fd,
 	struct xfs_action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, fd, XFS_SCRUB_TYPE_BMBTA, alist);
+	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_BMBTA, alist);
 }
 
 bool
@@ -540,10 +535,9 @@ xfs_scrub_cow_fork(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
-	int			fd,
 	struct xfs_action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, fd, XFS_SCRUB_TYPE_BMBTC, alist);
+	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_BMBTC, alist);
 }
 
 bool
@@ -551,10 +545,9 @@ xfs_scrub_dir(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
-	int			fd,
 	struct xfs_action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, fd, XFS_SCRUB_TYPE_DIR, alist);
+	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_DIR, alist);
 }
 
 bool
@@ -562,10 +555,9 @@ xfs_scrub_attr(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
-	int			fd,
 	struct xfs_action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, fd, XFS_SCRUB_TYPE_XATTR, alist);
+	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_XATTR, alist);
 }
 
 bool
@@ -573,10 +565,9 @@ xfs_scrub_symlink(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
-	int			fd,
 	struct xfs_action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, fd, XFS_SCRUB_TYPE_SYMLINK, alist);
+	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_SYMLINK, alist);
 }
 
 bool
@@ -584,10 +575,9 @@ xfs_scrub_parent(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
-	int			fd,
 	struct xfs_action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, fd, XFS_SCRUB_TYPE_PARENT, alist);
+	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_PARENT, alist);
 }
 
 /* Test the availability of a kernel scrub command. */

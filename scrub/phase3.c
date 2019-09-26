@@ -28,12 +28,12 @@
 static bool
 xfs_scrub_fd(
 	struct scrub_ctx	*ctx,
-	bool			(*fn)(struct scrub_ctx *, uint64_t,
-				      uint32_t, int, struct xfs_action_list *),
+	bool			(*fn)(struct scrub_ctx *ctx, uint64_t ino,
+				      uint32_t gen, struct xfs_action_list *a),
 	struct xfs_bstat	*bs,
 	struct xfs_action_list	*alist)
 {
-	return fn(ctx, bs->bs_ino, bs->bs_gen, ctx->mnt.fd, alist);
+	return fn(ctx, bs->bs_ino, bs->bs_gen, alist);
 }
 
 struct scrub_inode_ctx {
@@ -114,8 +114,8 @@ xfs_scrub_inode(
 
 	if (S_ISLNK(bstat->bs_mode)) {
 		/* Check symlink contents. */
-		moveon = xfs_scrub_symlink(ctx, bstat->bs_ino,
-				bstat->bs_gen, ctx->mnt.fd, &alist);
+		moveon = xfs_scrub_symlink(ctx, bstat->bs_ino, bstat->bs_gen,
+				&alist);
 	} else if (S_ISDIR(bstat->bs_mode)) {
 		/* Check the directory entries. */
 		moveon = xfs_scrub_fd(ctx, xfs_scrub_dir, bstat, &alist);
