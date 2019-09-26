@@ -9,10 +9,13 @@
 #include <sys/statvfs.h>
 #include "libfrog/paths.h"
 #include "libfrog/ptvar.h"
+#include "list.h"
 #include "xfs_scrub.h"
 #include "common.h"
+#include "scrub.h"
 #include "fscounters.h"
 #include "spacemap.h"
+#include "repair.h"
 
 /* Phase 7: Check summary counters. */
 
@@ -91,6 +94,7 @@ xfs_scan_summary(
 	struct scrub_ctx	*ctx)
 {
 	struct summary_counts	totalcount = {0};
+	struct xfs_action_list	alist;
 	struct ptvar		*ptvar;
 	unsigned long long	used_data;
 	unsigned long long	used_rt;
@@ -109,6 +113,16 @@ xfs_scan_summary(
 	bool			complain;
 	int			ip;
 	int			error;
+
+	/* Check and fix the fs summary counters. */
+	xfs_action_list_init(&alist);
+	moveon = xfs_scrub_fs_summary(ctx, &alist);
+	if (!moveon)
+		return false;
+	moveon = xfs_action_list_process(ctx, ctx->mnt.fd, &alist,
+			ALP_COMPLAIN_IF_UNFIXED | ALP_NOPROGRESS);
+	if (!moveon)
+		return moveon;
 
 	/* Flush everything out to disk before we start counting. */
 	error = syncfs(ctx->mnt.fd);

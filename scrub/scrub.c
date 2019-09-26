@@ -388,6 +388,18 @@ xfs_scrub_fs_metadata(
 	return xfs_scrub_all_types(ctx, XFROG_SCRUB_TYPE_FS, 0, alist);
 }
 
+/* Scrub FS summary metadata. */
+bool
+xfs_scrub_fs_summary(
+	struct scrub_ctx		*ctx,
+	struct xfs_action_list		*alist)
+{
+	int				ret;
+
+	ret = xfs_scrub_meta_type(ctx, XFS_SCRUB_TYPE_FSCOUNTERS, 0, alist);
+	return ret == 0;
+}
+
 /* How many items do we have to check? */
 unsigned int
 xfs_scrub_estimate_ag_work(
