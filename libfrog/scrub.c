@@ -129,6 +129,12 @@ const struct xfrog_scrub_descr xfrog_scrubbers[XFS_SCRUB_TYPE_NR] = {
 		.descr	= "project quotas",
 		.type	= XFROG_SCRUB_TYPE_FS,
 	},
+	[XFS_SCRUB_TYPE_FSCOUNTERS] = {
+		.name	= "fscounters",
+		.descr	= "filesystem summary counters",
+		.type	= XFROG_SCRUB_TYPE_FS,
+		.flags	= XFROG_SCRUB_DESCR_SUMMARY,
+	},
 };
 
 int

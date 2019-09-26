@@ -293,6 +293,8 @@ xfs_scrub_metadata(
 	for (type = 0; type < XFS_SCRUB_TYPE_NR; type++, sc++) {
 		if (sc->type != scrub_type)
 			continue;
+		if (sc->flags & XFROG_SCRUB_DESCR_SUMMARY)
+			continue;
 
 		meta.sm_type = type;
 		meta.sm_flags = 0;
