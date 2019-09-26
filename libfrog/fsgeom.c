@@ -159,3 +159,19 @@ xfd_close(
 
 	return 0;
 }
+
+/* Try to obtain an AG's geometry.  Returns zero or a positive error code. */
+int
+xfrog_ag_geometry(
+	int			fd,
+	unsigned int		agno,
+	struct xfs_ag_geometry	*ageo)
+{
+	int			ret;
+
+	ageo->ag_number = agno;
+	ret = ioctl(fd, XFS_IOC_AG_GEOMETRY, ageo);
+	if (ret)
+		return errno;
+	return 0;
+}

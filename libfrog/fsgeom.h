@@ -8,6 +8,7 @@
 void xfs_report_geom(struct xfs_fsop_geom *geo, const char *mntpoint,
 		const char *logname, const char *rtname);
 int xfrog_geometry(int fd, struct xfs_fsop_geom *fsgeo);
+int xfrog_ag_geometry(int fd, unsigned int agno, struct xfs_ag_geometry *ageo);
 
 /*
  * Structure for recording whatever observations we want about the level of

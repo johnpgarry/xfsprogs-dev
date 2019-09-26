@@ -34,6 +34,7 @@ init_commands(void)
 	quit_init();
 	trim_init();
 	freesp_init();
+	health_init();
 }
 
 static int
