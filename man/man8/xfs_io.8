@@ -669,13 +669,13 @@ The source must be specified either by path
 or as another open file
 .RB ( \-f ).
 If
-.I src_file
-.IR src_offset ,
-.IR dst_offset ,
-and
 .I length
-are omitted the contents of src_file will be copied to the beginning of the
-open file, overwriting any data already there.
+is not specified, this command copies data from
+.I src_offset
+to the end of
+.BI src_file
+into the dst_file at
+.IR dst_offset .
 .RS 1.0i
 .PD 0
 .TP 0.4i

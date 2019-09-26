@@ -36,13 +36,13 @@ copy_range_help(void)
  * glibc buffered copy fallback.
  */
 static loff_t
-copy_file_range_cmd(int fd, long long *src, long long *dst, size_t len)
+copy_file_range_cmd(int fd, long long *src_off, long long *dst_off, size_t len)
 {
 	loff_t ret;
 
 	do {
-		ret = syscall(__NR_copy_file_range, fd, src, file->fd, dst,
-				len, 0);
+		ret = syscall(__NR_copy_file_range, fd, src_off,
+				file->fd, dst_off, len, 0);
 		if (ret == -1) {
 			perror("copy_range");
 			return errno;
@@ -67,20 +67,12 @@ copy_src_filesize(int fd)
 }
 
 static int
-copy_dst_truncate(void)
-{
-	int ret = ftruncate(file->fd, 0);
-	if (ret < 0)
-		perror("ftruncate");
-	return ret;
-}
-
-static int
 copy_range_f(int argc, char **argv)
 {
-	long long src = 0;
-	long long dst = 0;
+	long long src_off = 0;
+	long long dst_off = 0;
 	size_t len = 0;
+	bool len_specified = false;
 	int opt;
 	int ret;
 	int fd;
@@ -93,15 +85,15 @@ copy_range_f(int argc, char **argv)
 	while ((opt = getopt(argc, argv, "s:d:l:f:")) != -1) {
 		switch (opt) {
 		case 's':
-			src = cvtnum(fsblocksize, fssectsize, optarg);
-			if (src < 0) {
+			src_off = cvtnum(fsblocksize, fssectsize, optarg);
+			if (src_off < 0) {
 				printf(_("invalid source offset -- %s\n"), optarg);
 				return 0;
 			}
 			break;
 		case 'd':
-			dst = cvtnum(fsblocksize, fssectsize, optarg);
-			if (dst < 0) {
+			dst_off = cvtnum(fsblocksize, fssectsize, optarg);
+			if (dst_off < 0) {
 				printf(_("invalid destination offset -- %s\n"), optarg);
 				return 0;
 			}
@@ -112,6 +104,7 @@ copy_range_f(int argc, char **argv)
 				printf(_("invalid length -- %s\n"), optarg);
 				return 0;
 			}
+			len_specified = true;
 			break;
 		case 'f':
 			src_file_nr = atoi(argv[1]);
@@ -137,7 +130,7 @@ copy_range_f(int argc, char **argv)
 		fd = filetable[src_file_nr].fd;
 	}
 
-	if (src == 0 && dst == 0 && len == 0) {
+	if (!len_specified) {
 		off64_t	sz;
 
 		sz = copy_src_filesize(fd);
@@ -145,16 +138,11 @@ copy_range_f(int argc, char **argv)
 			ret = 1;
 			goto out;
 		}
-		len = sz;
-
-		ret = copy_dst_truncate();
-		if (ret < 0) {
-			ret = 1;
-			goto out;
-		}
+		if (sz > src_off)
+			len = sz - src_off;
 	}
 
-	ret = copy_file_range_cmd(fd, &src, &dst, len);
+	ret = copy_file_range_cmd(fd, &src_off, &dst_off, len);
 out:
 	close(fd);
 	return ret;
