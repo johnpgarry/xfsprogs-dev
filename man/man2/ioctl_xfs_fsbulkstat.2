@@ -15,6 +15,12 @@ ioctl_xfs_fsbulkstat \- query information for a batch of XFS inodes
 .BI "int ioctl(int " fd ", XFS_IOC_FSBULKSTAT_SINGLE, struct xfs_fsop_bulkreq *" arg );
 .SH DESCRIPTION
 Query stat information for a group of XFS inodes.
+.PP
+NOTE: This ioctl has been superseded.
+Please see the
+.BR ioctl_xfs_bulkstat (2)
+manpage for information about its replacement.
+.PP
 These ioctls use
 .B struct xfs_fsop_bulkreq
 to set up a bulk transfer with the kernel:
