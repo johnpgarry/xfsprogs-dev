@@ -35,29 +35,25 @@ struct xfs_count_inodes {
  * exist in the filesystem, assuming we've already scrubbed that.
  */
 static bool
-xfs_count_inodes_range(
+xfs_count_inodes_ag(
 	struct scrub_ctx	*ctx,
 	const char		*descr,
-	uint64_t		first_ino,
-	uint64_t		last_ino,
+	uint32_t		agno,
 	uint64_t		*count)
 {
 	struct xfs_inumbers_req	*ireq;
 	uint64_t		nr = 0;
 	int			error;
 
-	ASSERT(!(first_ino & (XFS_INODES_PER_CHUNK - 1)));
-	ASSERT((last_ino & (XFS_INODES_PER_CHUNK - 1)));
-
-	ireq = xfrog_inumbers_alloc_req(1, first_ino);
+	ireq = xfrog_inumbers_alloc_req(1, 0);
 	if (!ireq) {
 		str_info(ctx, descr, _("Insufficient memory; giving up."));
 		return false;
 	}
+	xfrog_inumbers_set_ag(ireq, agno);
 
 	while (!(error = xfrog_inumbers(&ctx->mnt, ireq))) {
-		if (ireq->hdr.ocount == 0 ||
-		    ireq->inumbers[0].xi_startino >= last_ino)
+		if (ireq->hdr.ocount == 0)
 			break;
 		nr += ireq->inumbers[0].xi_alloccount;
 	}
@@ -83,8 +79,6 @@ xfs_count_ag_inodes(
 	struct xfs_count_inodes	*ci = arg;
 	struct scrub_ctx	*ctx = (struct scrub_ctx *)wq->wq_ctx;
 	char			descr[DESCR_BUFSZ];
-	uint64_t		ag_ino;
-	uint64_t		next_ag_ino;
 	bool			moveon;
 
 	snprintf(descr, DESCR_BUFSZ, _("dev %d:%d AG %u inodes"),
@@ -92,11 +86,7 @@ xfs_count_ag_inodes(
 				minor(ctx->fsinfo.fs_datadev),
 				agno);
 
-	ag_ino = cvt_agino_to_ino(&ctx->mnt, agno, 0);
-	next_ag_ino = cvt_agino_to_ino(&ctx->mnt, agno + 1, 0);
-
-	moveon = xfs_count_inodes_range(ctx, descr, ag_ino, next_ag_ino - 1,
-			&ci->counters[agno]);
+	moveon = xfs_count_inodes_ag(ctx, descr, agno, &ci->counters[agno]);
 	if (!moveon)
 		ci->moveon = false;
 }
