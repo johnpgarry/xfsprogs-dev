@@ -20,7 +20,13 @@ void xfrog_bulkstat_v1_to_v5(struct xfs_fd *xfd, struct xfs_bulkstat *bstat,
 		const struct xfs_bstat *bs1);
 
 struct xfs_inogrp;
-int xfrog_inumbers(struct xfs_fd *xfd, uint64_t *lastino, uint32_t icount,
-		struct xfs_inogrp *ubuffer, uint32_t *ocount);
+int xfrog_inumbers(struct xfs_fd *xfd, struct xfs_inumbers_req *req);
+
+struct xfs_inumbers_req *xfrog_inumbers_alloc_req(uint32_t nr,
+		uint64_t startino);
+void xfrog_inumbers_v5_to_v1(struct xfs_inogrp *ig1,
+		const struct xfs_inumbers *ig);
+void xfrog_inumbers_v1_to_v5(struct xfs_inumbers *ig,
+		const struct xfs_inogrp *ig1);
 
 #endif	/* __LIBFROG_BULKSTAT_H__ */

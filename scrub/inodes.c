@@ -49,7 +49,7 @@
 static void
 xfs_iterate_inodes_range_check(
 	struct scrub_ctx	*ctx,
-	struct xfs_inogrp	*inogrp,
+	struct xfs_inumbers	*inumbers,
 	struct xfs_bulkstat	*bstat)
 {
 	struct xfs_bulkstat	*bs;
@@ -57,19 +57,19 @@ xfs_iterate_inodes_range_check(
 	int			error;
 
 	for (i = 0, bs = bstat; i < XFS_INODES_PER_CHUNK; i++) {
-		if (!(inogrp->xi_allocmask & (1ULL << i)))
+		if (!(inumbers->xi_allocmask & (1ULL << i)))
 			continue;
-		if (bs->bs_ino == inogrp->xi_startino + i) {
+		if (bs->bs_ino == inumbers->xi_startino + i) {
 			bs++;
 			continue;
 		}
 
 		/* Load the one inode. */
 		error = xfrog_bulkstat_single(&ctx->mnt,
-				inogrp->xi_startino + i, 0, bs);
-		if (error || bs->bs_ino != inogrp->xi_startino + i) {
+				inumbers->xi_startino + i, 0, bs);
+		if (error || bs->bs_ino != inumbers->xi_startino + i) {
 			memset(bs, 0, sizeof(struct xfs_bulkstat));
-			bs->bs_ino = inogrp->xi_startino + i;
+			bs->bs_ino = inumbers->xi_startino + i;
 			bs->bs_blksize = ctx->mnt_sv.f_frsize;
 		}
 		bs++;
@@ -92,12 +92,11 @@ xfs_iterate_inodes_range(
 	void			*arg)
 {
 	struct xfs_handle	handle;
-	struct xfs_inogrp	inogrp;
+	struct xfs_inumbers_req	*ireq;
 	struct xfs_bulkstat_req	*breq;
 	char			idescr[DESCR_BUFSZ];
 	struct xfs_bulkstat	*bs;
-	uint64_t		igrp_ino;
-	uint32_t		igrplen = 0;
+	struct xfs_inumbers	*inumbers;
 	bool			moveon = true;
 	int			i;
 	int			error;
@@ -114,19 +113,26 @@ xfs_iterate_inodes_range(
 		return false;
 	}
 
+	ireq = xfrog_inumbers_alloc_req(1, first_ino);
+	if (!ireq) {
+		str_info(ctx, descr, _("Insufficient memory; giving up."));
+		free(breq);
+		return false;
+	}
+	inumbers = &ireq->inumbers[0];
+
 	/* Find the inode chunk & alloc mask */
-	igrp_ino = first_ino;
-	error = xfrog_inumbers(&ctx->mnt, &igrp_ino, 1, &inogrp, &igrplen);
-	while (!error && igrplen) {
+	error = xfrog_inumbers(&ctx->mnt, ireq);
+	while (!error && ireq->hdr.ocount > 0) {
 		/*
 		 * We can have totally empty inode chunks on filesystems where
 		 * there are more than 64 inodes per block.  Skip these.
 		 */
-		if (inogrp.xi_alloccount == 0)
+		if (inumbers->xi_alloccount == 0)
 			goto igrp_retry;
 
-		breq->hdr.ino = inogrp.xi_startino;
-		breq->hdr.icount = inogrp.xi_alloccount;
+		breq->hdr.ino = inumbers->xi_startino;
+		breq->hdr.icount = inumbers->xi_alloccount;
 		error = xfrog_bulkstat(&ctx->mnt, breq);
 		if (error) {
 			char	errbuf[DESCR_BUFSZ];
@@ -135,11 +141,11 @@ xfs_iterate_inodes_range(
 						errbuf, DESCR_BUFSZ));
 		}
 
-		xfs_iterate_inodes_range_check(ctx, &inogrp, breq->bulkstat);
+		xfs_iterate_inodes_range_check(ctx, inumbers, breq->bulkstat);
 
 		/* Iterate all the inodes. */
 		for (i = 0, bs = breq->bulkstat;
-		     i < inogrp.xi_alloccount;
+		     i < inumbers->xi_alloccount;
 		     i++, bs++) {
 			if (bs->bs_ino > last_ino)
 				goto out;
@@ -153,7 +159,7 @@ xfs_iterate_inodes_range(
 			case ESTALE:
 				stale_count++;
 				if (stale_count < 30) {
-					igrp_ino = inogrp.xi_startino;
+					ireq->hdr.ino = inumbers->xi_startino;
 					goto igrp_retry;
 				}
 				snprintf(idescr, DESCR_BUFSZ, "inode %"PRIu64,
@@ -177,8 +183,7 @@ _("Changed too many times during scan; giving up."));
 
 		stale_count = 0;
 igrp_retry:
-		error = xfrog_inumbers(&ctx->mnt, &igrp_ino, 1, &inogrp,
-				&igrplen);
+		error = xfrog_inumbers(&ctx->mnt, ireq);
 	}
 
 err:
@@ -187,6 +192,7 @@ err:
 		moveon = false;
 	}
 out:
+	free(ireq);
 	free(breq);
 	return moveon;
 }

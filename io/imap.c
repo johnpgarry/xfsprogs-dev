@@ -17,9 +17,7 @@ static int
 imap_f(int argc, char **argv)
 {
 	struct xfs_fd		xfd = XFS_FD_INIT(file->fd);
-	struct xfs_inogrp	*t;
-	uint64_t		last = 0;
-	uint32_t		count;
+	struct xfs_inumbers_req	*ireq;
 	uint32_t		nent;
 	int			i;
 	int			error;
@@ -29,17 +27,19 @@ imap_f(int argc, char **argv)
 	else
 		nent = atoi(argv[1]);
 
-	t = malloc(nent * sizeof(*t));
-	if (!t)
+	ireq = xfrog_inumbers_alloc_req(nent, 0);
+	if (!ireq) {
+		perror("alloc req");
 		return 0;
+	}
 
-	while ((error = xfrog_inumbers(&xfd, &last, nent, t, &count)) == 0 &&
-	       count > 0) {
-		for (i = 0; i < count; i++) {
-			printf(_("ino %10llu count %2d mask %016llx\n"),
-				(unsigned long long)t[i].xi_startino,
-				t[i].xi_alloccount,
-				(unsigned long long)t[i].xi_allocmask);
+	while ((error = xfrog_inumbers(&xfd, ireq)) == 0 &&
+	       ireq->hdr.ocount > 0) {
+		for (i = 0; i < ireq->hdr.ocount; i++) {
+			printf(_("ino %10"PRIu64" count %2d mask %016"PRIx64"\n"),
+				ireq->inumbers[i].xi_startino,
+				ireq->inumbers[i].xi_alloccount,
+				ireq->inumbers[i].xi_allocmask);
 		}
 	}
 
@@ -48,7 +48,7 @@ imap_f(int argc, char **argv)
 		perror("xfsctl(XFS_IOC_FSINUMBERS)");
 		exitcode = 1;
 	}
-	free(t);
+	free(ireq);
 	return 0;
 }
 

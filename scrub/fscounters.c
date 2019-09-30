@@ -42,22 +42,27 @@ xfs_count_inodes_range(
 	uint64_t		last_ino,
 	uint64_t		*count)
 {
-	struct xfs_inogrp	inogrp;
-	uint64_t		igrp_ino;
+	struct xfs_inumbers_req	*ireq;
 	uint64_t		nr = 0;
-	uint32_t		igrplen = 0;
 	int			error;
 
 	ASSERT(!(first_ino & (XFS_INODES_PER_CHUNK - 1)));
 	ASSERT((last_ino & (XFS_INODES_PER_CHUNK - 1)));
 
-	igrp_ino = first_ino;
-	while (!(error = xfrog_inumbers(&ctx->mnt, &igrp_ino, 1, &inogrp,
-			&igrplen))) {
-		if (igrplen == 0 || inogrp.xi_startino >= last_ino)
-			break;
-		nr += inogrp.xi_alloccount;
+	ireq = xfrog_inumbers_alloc_req(1, first_ino);
+	if (!ireq) {
+		str_info(ctx, descr, _("Insufficient memory; giving up."));
+		return false;
 	}
+
+	while (!(error = xfrog_inumbers(&ctx->mnt, ireq))) {
+		if (ireq->hdr.ocount == 0 ||
+		    ireq->inumbers[0].xi_startino >= last_ino)
+			break;
+		nr += ireq->inumbers[0].xi_alloccount;
+	}
+
+	free(ireq);
 
 	if (error) {
 		str_liberror(ctx, error, descr);

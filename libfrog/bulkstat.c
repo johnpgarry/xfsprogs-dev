@@ -435,6 +435,86 @@ xfrog_bulkstat_alloc_req(
 	return breq;
 }
 
+/* Convert a inumbers data from v5 format to v1 format. */
+void
+xfrog_inumbers_v5_to_v1(
+	struct xfs_inogrp		*ig1,
+	const struct xfs_inumbers	*ig5)
+{
+	ig1->xi_startino = ig5->xi_startino;
+	ig1->xi_alloccount = ig5->xi_alloccount;
+	ig1->xi_allocmask = ig5->xi_allocmask;
+}
+
+/* Convert a inumbers data from v1 format to v5 format. */
+void
+xfrog_inumbers_v1_to_v5(
+	struct xfs_inumbers		*ig5,
+	const struct xfs_inogrp		*ig1)
+{
+	memset(ig5, 0, sizeof(*ig5));
+	ig5->xi_version = XFS_INUMBERS_VERSION_V1;
+
+	ig5->xi_startino = ig1->xi_startino;
+	ig5->xi_alloccount = ig1->xi_alloccount;
+	ig5->xi_allocmask = ig1->xi_allocmask;
+}
+
+static uint64_t xfrog_inum_ino(void *v1_rec)
+{
+	return ((struct xfs_inogrp *)v1_rec)->xi_startino;
+}
+
+static void xfrog_inum_cvt(struct xfs_fd *xfd, void *v5, void *v1)
+{
+	xfrog_inumbers_v1_to_v5(v5, v1);
+}
+
+/* Query inode allocation bitmask information using v5 ioctl. */
+static int
+xfrog_inumbers5(
+	struct xfs_fd		*xfd,
+	struct xfs_inumbers_req	*req)
+{
+	int			ret;
+
+	ret = ioctl(xfd->fd, XFS_IOC_INUMBERS, req);
+	if (ret)
+		return errno;
+	return 0;
+}
+
+/* Query inode allocation bitmask information using v1 ioctl. */
+static int
+xfrog_inumbers1(
+	struct xfs_fd		*xfd,
+	struct xfs_inumbers_req	*req)
+{
+	struct xfs_fsop_bulkreq	bulkreq = { 0 };
+	int			error;
+
+	error = xfrog_bulkstat_prep_v1_emulation(xfd);
+	if (error)
+		return error;
+
+	error = xfrog_bulk_req_v1_setup(xfd, &req->hdr, &bulkreq,
+			sizeof(struct xfs_inogrp));
+	if (error == ECANCELED)
+		goto out_teardown;
+	if (error)
+		return error;
+
+	error = ioctl(xfd->fd, XFS_IOC_FSINUMBERS, &bulkreq);
+	if (error)
+		error = errno;
+
+out_teardown:
+	return xfrog_bulk_req_v1_cleanup(xfd, &req->hdr, &bulkreq,
+			sizeof(struct xfs_inogrp), xfrog_inum_ino,
+			&req->inumbers, sizeof(struct xfs_inumbers),
+			xfrog_inum_cvt, 64, error);
+}
+
 /*
  * Query inode allocation bitmask information.  Returns zero or a positive
  * error code.
@@ -442,21 +522,43 @@ xfrog_bulkstat_alloc_req(
 int
 xfrog_inumbers(
 	struct xfs_fd		*xfd,
-	uint64_t		*lastino,
-	uint32_t		icount,
-	struct xfs_inogrp	*ubuffer,
-	uint32_t		*ocount)
+	struct xfs_inumbers_req	*req)
 {
-	struct xfs_fsop_bulkreq	bulkreq = {
-		.lastip		= (__u64 *)lastino,
-		.icount		= icount,
-		.ubuffer	= ubuffer,
-		.ocount		= (__s32 *)ocount,
-	};
-	int			ret;
+	int			error;
 
-	ret = ioctl(xfd->fd, XFS_IOC_FSINUMBERS, &bulkreq);
-	if (ret)
-		return errno;
-	return 0;
+	if (xfd->flags & XFROG_FLAG_BULKSTAT_FORCE_V1)
+		goto try_v1;
+
+	error = xfrog_inumbers5(xfd, req);
+	if (error == 0 || (xfd->flags & XFROG_FLAG_BULKSTAT_FORCE_V5))
+		return error;
+
+	/* If the v5 ioctl wasn't found, we punt to v1. */
+	switch (error) {
+	case EOPNOTSUPP:
+	case ENOTTY:
+		xfd->flags |= XFROG_FLAG_BULKSTAT_FORCE_V1;
+		break;
+	}
+
+try_v1:
+	return xfrog_inumbers1(xfd, req);
+}
+
+/* Allocate a inumbers request.  On error returns NULL and sets errno. */
+struct xfs_inumbers_req *
+xfrog_inumbers_alloc_req(
+	uint32_t		nr,
+	uint64_t		startino)
+{
+	struct xfs_inumbers_req	*ireq;
+
+	ireq = calloc(1, XFS_INUMBERS_REQ_SIZE(nr));
+	if (!ireq)
+		return NULL;
+
+	ireq->hdr.icount = nr;
+	ireq->hdr.ino = startino;
+
+	return ireq;
 }
