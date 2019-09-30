@@ -435,6 +435,16 @@ xfrog_bulkstat_alloc_req(
 	return breq;
 }
 
+/* Set a bulkstat cursor to iterate only a particular AG. */
+void
+xfrog_bulkstat_set_ag(
+	struct xfs_bulkstat_req	*req,
+	uint32_t		agno)
+{
+	req->hdr.agno = agno;
+	req->hdr.flags |= XFS_BULK_IREQ_AGNO;
+}
+
 /* Convert a inumbers data from v5 format to v1 format. */
 void
 xfrog_inumbers_v5_to_v1(
@@ -561,4 +571,14 @@ xfrog_inumbers_alloc_req(
 	ireq->hdr.ino = startino;
 
 	return ireq;
+}
+
+/* Set an inumbers cursor to iterate only a particular AG. */
+void
+xfrog_inumbers_set_ag(
+	struct xfs_inumbers_req	*req,
+	uint32_t		agno)
+{
+	req->hdr.agno = agno;
+	req->hdr.flags |= XFS_BULK_IREQ_AGNO;
 }

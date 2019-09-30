@@ -1052,6 +1052,57 @@ for the current memory mapping.
 
 .SH FILESYSTEM COMMANDS
 .TP
+.BI "bulkstat [ \-a " agno " ] [ \-d ] [ \-e " endino " ] [ \-n " batchsize " ] [ \-s " startino " ] [ \-v " version" ]
+Display raw stat information about a bunch of inodes in an XFS filesystem.
+Options are as follows:
+.RS 1.0i
+.PD 0
+.TP
+.BI \-a " agno"
+Display only results from the given allocation group.
+If not specified, all results returned will be displayed.
+.TP
+.BI \-d
+Print debugging information about call results.
+.TP
+.BI \-e " endino"
+Stop displaying records when this inode number is reached.
+Defaults to stopping when the system call stops returning results.
+.TP
+.BI \-n " batchsize"
+Retrieve at most this many records per call.
+Defaults to 4,096.
+.TP
+.BI \-s " startino"
+Display inode allocation records starting with this inode.
+Defaults to the first inode in the filesystem.
+If the given inode is not allocated, results will begin with the next allocated
+inode in the filesystem.
+.TP
+.BI \-v " version"
+Use a particular version of the kernel interface.
+Currently supported versions are 1 and 5.
+.RE
+.PD
+.TP
+.BI "bulkstat_single [ \-d ] [ \-v " version " ] [ " inum... " | " special... " ]
+Display raw stat information about individual inodes in an XFS filesystem.
+The
+.B \-d
+and
+.B \-v
+options are the same as the
+.B bulkstat
+command.
+Arguments must be inode numbers or any of the special values:
+.RS 1.0i
+.PD 0
+.TP
+.B root
+Display information about the root directory inode.
+.RE
+.PD
+.TP
 .B freeze
 Suspend all write I/O requests to the filesystem of the current file.
 Only available in expert mode and requires privileges.
@@ -1121,6 +1172,40 @@ printed in the result; if no inode
 .I number
 was specified on the command line, the maximum possible inode number in
 the system will be printed along with its size.
+.PD
+.TP
+.BI "inumbers [ \-a " agno " ] [ \-d ] [ \-e " endino " ] [ \-n " batchsize " ] [ \-s " startino " ] [ \-v " version " ]
+Prints allocation information about groups of inodes in an XFS filesystem.
+Callers can use this information to figure out which inodes are allocated.
+Options are as follows:
+.RS 1.0i
+.PD 0
+.TP
+.BI \-a " agno"
+Display only results from the given allocation group.
+If not specified, all results returned will be displayed.
+.TP
+.BI \-d
+Print debugging information about call results.
+.TP
+.BI \-e " endino"
+Stop displaying records when this inode number is reached.
+Defaults to stopping when the system call stops returning results.
+.TP
+.BI \-n " batchsize"
+Retrieve at most this many records per call.
+Defaults to 4,096.
+.TP
+.BI \-s " startino"
+Display inode allocation records starting with this inode.
+Defaults to the first inode in the filesystem.
+If the given inode is not allocated, results will begin with the next allocated
+inode in the filesystem.
+.TP
+.BI \-v " version"
+Use a particular version of the kernel interface.
+Currently supported versions are 1 and 5.
+.RE
 .PD
 .TP
 .BI "scrub " type " [ " agnumber " | " "ino" " " "gen" " ]"
