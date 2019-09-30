@@ -172,7 +172,7 @@ static int
 xfs_report_verify_inode(
 	struct scrub_ctx		*ctx,
 	struct xfs_handle		*handle,
-	struct xfs_bstat		*bstat,
+	struct xfs_bulkstat		*bstat,
 	void				*arg)
 {
 	char				descr[DESCR_BUFSZ];

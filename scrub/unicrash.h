@@ -14,9 +14,9 @@ struct unicrash;
 struct dirent;
 
 bool unicrash_dir_init(struct unicrash **ucp, struct scrub_ctx *ctx,
-		struct xfs_bstat *bstat);
+		struct xfs_bulkstat *bstat);
 bool unicrash_xattr_init(struct unicrash **ucp, struct scrub_ctx *ctx,
-		struct xfs_bstat *bstat);
+		struct xfs_bulkstat *bstat);
 bool unicrash_fs_label_init(struct unicrash **ucp, struct scrub_ctx *ctx);
 void unicrash_free(struct unicrash *uc);
 bool unicrash_check_dir_name(struct unicrash *uc, const char *descr,

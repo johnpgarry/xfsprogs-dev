@@ -7,7 +7,7 @@
 #define XFS_SCRUB_INODES_H_
 
 typedef int (*xfs_inode_iter_fn)(struct scrub_ctx *ctx,
-		struct xfs_handle *handle, struct xfs_bstat *bs, void *arg);
+		struct xfs_handle *handle, struct xfs_bulkstat *bs, void *arg);
 
 #define XFS_ITERATE_INODES_ABORT	(-1)
 bool xfs_scan_all_inodes(struct scrub_ctx *ctx, xfs_inode_iter_fn fn,

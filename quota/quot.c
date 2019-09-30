@@ -69,7 +69,7 @@ quot_help(void)
 
 static void
 quot_bulkstat_add(
-	struct xfs_bstat *p,
+	struct xfs_bulkstat	*p,
 	uint		flags)
 {
 	du_t		*dp;
@@ -93,7 +93,7 @@ quot_bulkstat_add(
 	}
 	for (i = 0; i < 3; i++) {
 		id = (i == 0) ? p->bs_uid : ((i == 1) ?
-			p->bs_gid : bstat_get_projid(p));
+			p->bs_gid : p->bs_projectid);
 		hp = &duhash[i][id % DUHASH];
 		for (dp = *hp; dp; dp = dp->next)
 			if (dp->id == id)
@@ -113,11 +113,11 @@ quot_bulkstat_add(
 		}
 		dp->blocks += size;
 
-		if (now - p->bs_atime.tv_sec > 30 * (60*60*24))
+		if (now - p->bs_atime > 30 * (60*60*24))
 			dp->blocks30 += size;
-		if (now - p->bs_atime.tv_sec > 60 * (60*60*24))
+		if (now - p->bs_atime > 60 * (60*60*24))
 			dp->blocks60 += size;
-		if (now - p->bs_atime.tv_sec > 90 * (60*60*24))
+		if (now - p->bs_atime > 90 * (60*60*24))
 			dp->blocks90 += size;
 		dp->nfiles++;
 	}
@@ -129,9 +129,7 @@ quot_bulkstat_mount(
 	unsigned int		flags)
 {
 	struct xfs_fd		fsxfd = XFS_FD_INIT_EMPTY;
-	struct xfs_bstat	*buf;
-	uint64_t		last = 0;
-	uint32_t		count;
+	struct xfs_bulkstat_req	*breq;
 	int			i, sts, ret;
 	du_t			**dp;
 
@@ -154,25 +152,24 @@ quot_bulkstat_mount(
 		return;
 	}
 
-	buf = (struct xfs_bstat *)calloc(NBSTAT, sizeof(struct xfs_bstat));
-	if (!buf) {
+	breq = xfrog_bulkstat_alloc_req(NBSTAT, 0);
+	if (!breq) {
 		perror("calloc");
 		xfd_close(&fsxfd);
 		return;
 	}
 
-	while ((sts = xfrog_bulkstat(&fsxfd, &last, NBSTAT, buf,
-				&count)) == 0) {
-		if (count == 0)
+	while ((sts = xfrog_bulkstat(&fsxfd, breq)) == 0) {
+		if (breq->hdr.ocount == 0)
 			break;
-		for (i = 0; i < count; i++)
-			quot_bulkstat_add(&buf[i], flags);
+		for (i = 0; i < breq->hdr.ocount; i++)
+			quot_bulkstat_add(&breq->bulkstat[i], flags);
 	}
 	if (sts < 0) {
 		errno = sts;
 		perror("XFS_IOC_FSBULKSTAT");
 	}
-	free(buf);
+	free(breq);
 	xfd_close(&fsxfd);
 }
 

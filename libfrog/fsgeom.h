@@ -39,7 +39,16 @@ struct xfs_fd {
 
 	/* log2 of sb_blocksize / sb_sectsize */
 	unsigned int		blkbb_log;
+
+	/* XFROG_FLAG_* state flags */
+	unsigned int		flags;
 };
+
+/* Only use v1 bulkstat/inumbers ioctls. */
+#define XFROG_FLAG_BULKSTAT_FORCE_V1	(1 << 0)
+
+/* Only use v5 bulkstat/inumbers ioctls. */
+#define XFROG_FLAG_BULKSTAT_FORCE_V5	(1 << 1)
 
 /* Static initializers */
 #define XFS_FD_INIT(_fd)	{ .fd = (_fd), }

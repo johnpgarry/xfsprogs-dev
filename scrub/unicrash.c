@@ -432,7 +432,7 @@ out_free:
  */
 static bool
 is_only_root_writable(
-	struct xfs_bstat	*bstat)
+	struct xfs_bulkstat	*bstat)
 {
 	if (bstat->bs_uid != 0 || bstat->bs_gid != 0)
 		return false;
@@ -444,7 +444,7 @@ bool
 unicrash_dir_init(
 	struct unicrash		**ucp,
 	struct scrub_ctx	*ctx,
-	struct xfs_bstat	*bstat)
+	struct xfs_bulkstat	*bstat)
 {
 	/*
 	 * Assume 64 bytes per dentry, clamp buckets between 16 and 64k.
@@ -459,7 +459,7 @@ bool
 unicrash_xattr_init(
 	struct unicrash		**ucp,
 	struct scrub_ctx	*ctx,
-	struct xfs_bstat	*bstat)
+	struct xfs_bulkstat	*bstat)
 {
 	/* Assume 16 attributes per extent for lack of a better idea. */
 	return unicrash_init(ucp, ctx, false, 16 * (1 + bstat->bs_aextents),

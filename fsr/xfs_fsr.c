@@ -466,6 +466,17 @@ fsrallfs(char *mtab, int howlong, char *leftofffile)
 				ptr = strchr(ptr, ' ');
 				if (ptr) {
 					startino = strtoull(++ptr, NULL, 10);
+					/*
+					 * NOTE: The inode number read in from
+					 * the leftoff file is the last inode
+					 * to have been fsr'd.  Since the v5
+					 * xfrog_bulkstat function wants to be
+					 * passed the first inode that we want
+					 * to examine, increment the value that
+					 * we read in.  The debug message below
+					 * prints the lastoff value.
+					 */
+					startino++;
 				}
 			}
 			if (startpass < 0)
@@ -484,7 +495,7 @@ fsrallfs(char *mtab, int howlong, char *leftofffile)
 
 	if (vflag) {
 		fsrprintf(_("START: pass=%d ino=%llu %s %s\n"),
-			  fs->npass, (unsigned long long)startino,
+			  fs->npass, (unsigned long long)startino - 1,
 			  fs->dev, fs->mnt);
 	}
 
@@ -576,12 +587,10 @@ fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 	int	fd;
 	int	count = 0;
 	int	ret;
-	uint32_t buflenout;
-	struct xfs_bstat buf[GRABSZ];
 	char	fname[64];
 	char	*tname;
 	jdm_fshandle_t	*fshandlep;
-	xfs_ino_t	lastino = startino;
+	struct xfs_bulkstat_req	*breq;
 
 	fsrprintf(_("%s start inode=%llu\n"), mntdir,
 		(unsigned long long)startino);
@@ -604,10 +613,21 @@ fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 
 	tmp_init(mntdir);
 
-	while ((ret = xfrog_bulkstat(&fsxfd, &lastino, GRABSZ, &buf[0],
-				&buflenout)) == 0) {
-		struct xfs_bstat *p;
-		struct xfs_bstat *endp;
+	breq = xfrog_bulkstat_alloc_req(GRABSZ, startino);
+	if (!breq) {
+		fsrprintf(_("Skipping %s: not enough memory\n"),
+			  mntdir);
+		xfd_close(&fsxfd);
+		free(fshandlep);
+		return -1;
+	}
+
+	while ((ret = xfrog_bulkstat(&fsxfd, breq) == 0)) {
+		struct xfs_bstat	bs1;
+		struct xfs_bulkstat	*buf = breq->bulkstat;
+		struct xfs_bulkstat	*p;
+		struct xfs_bulkstat	*endp;
+		uint32_t		buflenout = breq->hdr.ocount;
 
 		if (buflenout == 0)
 			goto out0;
@@ -615,7 +635,7 @@ fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 		/* Each loop through, defrag targetrange percent of the files */
 		count = (buflenout * targetrange) / 100;
 
-		qsort((char *)buf, buflenout, sizeof(struct xfs_bstat), cmp);
+		qsort((char *)buf, buflenout, sizeof(struct xfs_bulkstat), cmp);
 
 		for (p = buf, endp = (buf + buflenout); p < endp ; p++) {
 			/* Do some obvious checks now */
@@ -623,7 +643,14 @@ fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 			     (p->bs_extents < 2))
 				continue;
 
-			fd = jdm_open(fshandlep, p, O_RDWR|O_DIRECT);
+			ret = xfrog_bulkstat_v5_to_v1(&fsxfd, &bs1, p);
+			if (ret) {
+				fsrprintf(_("bstat conversion error: %s\n"),
+						strerror(ret));
+				continue;
+			}
+
+			fd = jdm_open(fshandlep, &bs1, O_RDWR | O_DIRECT);
 			if (fd < 0) {
 				/* This probably means the file was
 				 * removed while in progress of handling
@@ -641,7 +668,7 @@ fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 			/* Get a tmp file name */
 			tname = tmp_next(mntdir);
 
-			ret = fsrfile_common(fname, tname, mntdir, fd, p);
+			ret = fsrfile_common(fname, tname, mntdir, fd, &bs1);
 
 			leftoffino = p->bs_ino;
 
@@ -653,6 +680,7 @@ fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 			}
 		}
 		if (endtime && endtime < time(NULL)) {
+			free(breq);
 			tmp_close(mntdir);
 			xfd_close(&fsxfd);
 			fsrall_cleanup(1);
@@ -662,6 +690,7 @@ fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 	if (ret)
 		fsrprintf(_("%s: bulkstat: %s\n"), progname, strerror(ret));
 out0:
+	free(breq);
 	tmp_close(mntdir);
 	xfd_close(&fsxfd);
 	free(fshandlep);
@@ -701,6 +730,7 @@ fsrfile(
 	xfs_ino_t		ino)
 {
 	struct xfs_fd		fsxfd = XFS_FD_INIT_EMPTY;
+	struct xfs_bulkstat	bulkstat;
 	struct xfs_bstat	statbuf;
 	jdm_fshandle_t		*fshandlep;
 	int			fd = -1;
@@ -725,9 +755,15 @@ fsrfile(
 		goto out;
 	}
 
-	error = xfrog_bulkstat_single(&fsxfd, ino, &statbuf);
+	error = xfrog_bulkstat_single(&fsxfd, ino, 0, &bulkstat);
 	if (error) {
 		fsrprintf(_("unable to get bstat on %s: %s\n"),
+			fname, strerror(error));
+		goto out;
+	}
+	error = xfrog_bulkstat_v5_to_v1(&fsxfd, &statbuf, &bulkstat);
+	if (error) {
+		fsrprintf(_("bstat conversion error on %s: %s\n"),
 			fname, strerror(error));
 		goto out;
 	}
@@ -951,7 +987,7 @@ fsr_setup_attr_fork(
 
 	i = 0;
 	do {
-		struct xfs_bstat tbstat;
+		struct xfs_bulkstat	tbstat;
 		char		name[64];
 		int		ret;
 
@@ -960,7 +996,7 @@ fsr_setup_attr_fork(
 		 * this to compare against the target and determine what we
 		 * need to do.
 		 */
-		ret = xfrog_bulkstat_single(&txfd, tstatbuf.st_ino, &tbstat);
+		ret = xfrog_bulkstat_single(&txfd, tstatbuf.st_ino, 0, &tbstat);
 		if (ret) {
 			fsrprintf(_("unable to get bstat on temp file: %s\n"),
 						strerror(ret));
