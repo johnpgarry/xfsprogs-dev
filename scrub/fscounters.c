@@ -43,9 +43,10 @@ xfs_count_inodes_ag(
 {
 	struct xfs_inumbers_req	*ireq;
 	uint64_t		nr = 0;
+	unsigned int		i;
 	int			error;
 
-	ireq = xfrog_inumbers_alloc_req(1, 0);
+	ireq = xfrog_inumbers_alloc_req(64, 0);
 	if (!ireq) {
 		str_info(ctx, descr, _("Insufficient memory; giving up."));
 		return false;
@@ -55,7 +56,8 @@ xfs_count_inodes_ag(
 	while (!(error = xfrog_inumbers(&ctx->mnt, ireq))) {
 		if (ireq->hdr.ocount == 0)
 			break;
-		nr += ireq->inumbers[0].xi_alloccount;
+		for (i = 0; i < ireq->hdr.ocount; i++)
+			nr += ireq->inumbers[i].xi_alloccount;
 	}
 
 	free(ireq);
