@@ -136,12 +136,22 @@ struct fscrypt_get_key_status_arg {
 
 #endif /* !FS_IOC_GET_ENCRYPTION_POLICY_EX */
 
+static const struct {
+	__u8 mode;
+	const char *name;
+} available_modes[] = {
+	{FSCRYPT_MODE_AES_256_XTS, "AES-256-XTS"},
+	{FSCRYPT_MODE_AES_256_CTS, "AES-256-CTS"},
+};
+
 static cmdinfo_t get_encpolicy_cmd;
 static cmdinfo_t set_encpolicy_cmd;
 
 static void
 set_encpolicy_help(void)
 {
+	int i;
+
 	printf(_(
 "\n"
 " assign an encryption policy to the currently open file\n"
@@ -155,22 +165,21 @@ set_encpolicy_help(void)
 " -f FLAGS -- policy flags\n"
 " -v VERSION -- version of policy structure\n"
 "\n"
-" MODE can be numeric or one of the following predefined values:\n"
-"    AES-256-XTS, AES-256-CTS\n"
+" MODE can be numeric or one of the following predefined values:\n"));
+	printf("    ");
+	for (i = 0; i < ARRAY_SIZE(available_modes); i++) {
+		printf("%s", available_modes[i].name);
+		if (i != ARRAY_SIZE(available_modes) - 1)
+			printf(", ");
+	}
+	printf("\n");
+	printf(_(
 " FLAGS and VERSION must be numeric.\n"
 "\n"
 " Note that it's only possible to set an encryption policy on an empty\n"
 " directory.  It's then inherited by new files and subdirectories.\n"
 "\n"));
 }
-
-static const struct {
-	__u8 mode;
-	const char *name;
-} available_modes[] = {
-	{FSCRYPT_MODE_AES_256_XTS, "AES-256-XTS"},
-	{FSCRYPT_MODE_AES_256_CTS, "AES-256-CTS"},
-};
 
 static bool
 parse_byte_value(const char *arg, __u8 *value_ret)
