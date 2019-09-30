@@ -701,12 +701,17 @@ Swaps extent forks between files. The current open file is the target. The donor
 file is specified by path. Note that file data is not copied (file content moves
 with the fork(s)).
 .TP
-.BI "set_encpolicy [ \-c " mode " ] [ \-n " mode " ] [ \-f " flags " ] [ \-v " version " ] [ " keydesc " ]"
+.BI "set_encpolicy [ \-c " mode " ] [ \-n " mode " ] [ \-f " flags " ] [ \-v " version " ] [ " keyspec " ]"
 On filesystems that support encryption, assign an encryption policy to the
 current file.
-.I keydesc
-is a 16-byte hex string which identifies the encryption key to use.
-If not specified, a "default" key descriptor of all 0's will be used.
+.I keyspec
+is a hex string which specifies the encryption key to use.  For v1 encryption
+policies,
+.I keyspec
+must be a 16-character hex string (8 bytes).  For v2 policies,
+.I keyspec
+must be a 32-character hex string (16 bytes).  If unspecified, an all-zeroes
+value is used.
 .RS 1.0i
 .PD 0
 .TP 0.4i
@@ -720,7 +725,11 @@ filenames encryption mode (e.g. AES-256-CTS)
 policy flags (numeric)
 .TP
 .BI \-v " version"
-version of policy structure (numeric)
+policy version.  Defaults to 1 or 2 depending on the length of
+.IR keyspec ;
+or to 1 if
+.I keyspec
+is unspecified.
 .RE
 .PD
 .TP

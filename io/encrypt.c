@@ -174,13 +174,18 @@ set_encpolicy_help(void)
 " assign an encryption policy to the currently open file\n"
 "\n"
 " Examples:\n"
-" 'set_encpolicy' - assign policy with default key [0000000000000000]\n"
-" 'set_encpolicy 0000111122223333' - assign policy with specified key\n"
+" 'set_encpolicy' - assign v1 policy with default key descriptor\n"
+"                   (0000000000000000)\n"
+" 'set_encpolicy -v 2' - assign v2 policy with default key identifier\n"
+"                        (00000000000000000000000000000000)\n"
+" 'set_encpolicy 0000111122223333' - assign v1 policy with given key descriptor\n"
+" 'set_encpolicy 00001111222233334444555566667777' - assign v2 policy with given\n"
+"                                                    key identifier\n"
 "\n"
 " -c MODE -- contents encryption mode\n"
 " -n MODE -- filenames encryption mode\n"
 " -f FLAGS -- policy flags\n"
-" -v VERSION -- version of policy structure\n"
+" -v VERSION -- policy version\n"
 "\n"
 " MODE can be numeric or one of the following predefined values:\n"));
 	printf("    ");
@@ -240,6 +245,35 @@ mode2str(__u8 mode)
 	return buf;
 }
 
+static int
+hexchar2bin(char c)
+{
+	if (c >= '0' && c <= '9')
+		return c - '0';
+	if (c >= 'a' && c <= 'f')
+		return 10 + (c - 'a');
+	if (c >= 'A' && c <= 'F')
+		return 10 + (c - 'A');
+	return -1;
+}
+
+static bool
+hex2bin(const char *hex, __u8 *bin, size_t bin_len)
+{
+	if (strlen(hex) != 2 * bin_len)
+		return false;
+
+	while (bin_len--) {
+		int hi = hexchar2bin(*hex++);
+		int lo = hexchar2bin(*hex++);
+
+		if (hi < 0 || lo < 0)
+			return false;
+		*bin++ = (hi << 4) | lo;
+	}
+	return true;
+}
+
 static const char *
 keydesc2str(const __u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE])
 {
@@ -262,6 +296,92 @@ keyid2str(const __u8 master_key_identifier[FSCRYPT_KEY_IDENTIFIER_SIZE])
 		sprintf(&buf[2 * i], "%02x", master_key_identifier[i]);
 
 	return buf;
+}
+
+static const char *
+keyspectype(const struct fscrypt_key_specifier *key_spec)
+{
+	switch (key_spec->type) {
+	case FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR:
+		return _("descriptor");
+	case FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER:
+		return _("identifier");
+	}
+	return _("[unknown]");
+}
+
+static const char *
+keyspec2str(const struct fscrypt_key_specifier *key_spec)
+{
+	switch (key_spec->type) {
+	case FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR:
+		return keydesc2str(key_spec->u.descriptor);
+	case FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER:
+		return keyid2str(key_spec->u.identifier);
+	}
+	return _("[unknown]");
+}
+
+static bool
+str2keydesc(const char *str,
+	    __u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE])
+{
+	if (!hex2bin(str, master_key_descriptor, FSCRYPT_KEY_DESCRIPTOR_SIZE)) {
+		fprintf(stderr, _("invalid key descriptor: %s\n"), str);
+		return false;
+	}
+	return true;
+}
+
+static bool
+str2keyid(const char *str,
+	  __u8 master_key_identifier[FSCRYPT_KEY_IDENTIFIER_SIZE])
+{
+	if (!hex2bin(str, master_key_identifier, FSCRYPT_KEY_IDENTIFIER_SIZE)) {
+		fprintf(stderr, _("invalid key identifier: %s\n"), str);
+		return false;
+	}
+	return true;
+}
+
+/*
+ * Parse a key specifier (descriptor or identifier) given as a hex string.
+ *
+ *  8 bytes (16 hex chars) == key descriptor == v1 encryption policy.
+ * 16 bytes (32 hex chars) == key identifier == v2 encryption policy.
+ *
+ * If a policy_version is given (>= 0), then the corresponding type of key
+ * specifier is required.  Otherwise the specifier type and policy_version are
+ * determined based on the length of the given hex string.
+ *
+ * Returns the policy version, or -1 on error.
+ */
+static int
+str2keyspec(const char *str, int policy_version,
+	    struct fscrypt_key_specifier *key_spec)
+{
+	if (policy_version < 0) { /* version unspecified? */
+		size_t len = strlen(str);
+
+		if (len == 2 * FSCRYPT_KEY_DESCRIPTOR_SIZE) {
+			policy_version = FSCRYPT_POLICY_V1;
+		} else if (len == 2 * FSCRYPT_KEY_IDENTIFIER_SIZE) {
+			policy_version = FSCRYPT_POLICY_V2;
+		} else {
+			fprintf(stderr, _("invalid key specifier: %s\n"), str);
+			return -1;
+		}
+	}
+	if (policy_version == FSCRYPT_POLICY_V2) {
+		if (!str2keyid(str, key_spec->u.identifier))
+			return -1;
+		key_spec->type = FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER;
+	} else {
+		if (!str2keydesc(str, key_spec->u.descriptor))
+			return -1;
+		key_spec->type = FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR;
+	}
+	return policy_version;
 }
 
 static void
@@ -385,46 +505,56 @@ static int
 set_encpolicy_f(int argc, char **argv)
 {
 	int c;
-	struct fscrypt_policy policy;
+	__u8 contents_encryption_mode = FSCRYPT_MODE_AES_256_XTS;
+	__u8 filenames_encryption_mode = FSCRYPT_MODE_AES_256_CTS;
+	__u8 flags = FSCRYPT_POLICY_FLAGS_PAD_16;
+	int version = -1; /* unspecified */
+	struct fscrypt_key_specifier key_spec;
+	union {
+		__u8 version;
+		struct fscrypt_policy_v1 v1;
+		struct fscrypt_policy_v2 v2;
+	} policy;
 
-	/* Initialize the policy structure with default values */
-	memset(&policy, 0, sizeof(policy));
-	policy.contents_encryption_mode = FSCRYPT_MODE_AES_256_XTS;
-	policy.filenames_encryption_mode = FSCRYPT_MODE_AES_256_CTS;
-	policy.flags = FSCRYPT_POLICY_FLAGS_PAD_16;
-
-	/* Parse options */
 	while ((c = getopt(argc, argv, "c:n:f:v:")) != EOF) {
 		switch (c) {
 		case 'c':
-			if (!parse_mode(optarg,
-					&policy.contents_encryption_mode)) {
-				fprintf(stderr, "invalid contents encryption "
-					"mode: %s\n", optarg);
-				return 0;
-			}
-			break;
-		case 'n':
-			if (!parse_mode(optarg,
-					&policy.filenames_encryption_mode)) {
-				fprintf(stderr, "invalid filenames encryption "
-					"mode: %s\n", optarg);
-				return 0;
-			}
-			break;
-		case 'f':
-			if (!parse_byte_value(optarg, &policy.flags)) {
-				fprintf(stderr, "invalid flags: %s\n", optarg);
-				return 0;
-			}
-			break;
-		case 'v':
-			if (!parse_byte_value(optarg, &policy.version)) {
-				fprintf(stderr, "invalid policy version: %s\n",
+			if (!parse_mode(optarg, &contents_encryption_mode)) {
+				fprintf(stderr,
+					_("invalid contents encryption mode: %s\n"),
 					optarg);
 				return 0;
 			}
 			break;
+		case 'n':
+			if (!parse_mode(optarg, &filenames_encryption_mode)) {
+				fprintf(stderr,
+					_("invalid filenames encryption mode: %s\n"),
+					optarg);
+				return 0;
+			}
+			break;
+		case 'f':
+			if (!parse_byte_value(optarg, &flags)) {
+				fprintf(stderr, _("invalid flags: %s\n"),
+					optarg);
+				return 0;
+			}
+			break;
+		case 'v': {
+			__u8 val;
+
+			if (!parse_byte_value(optarg, &val)) {
+				fprintf(stderr,
+					_("invalid policy version: %s\n"),
+					optarg);
+				return 0;
+			}
+			if (val == 1) /* Just to avoid annoying people... */
+				val = FSCRYPT_POLICY_V1;
+			version = val;
+			break;
+		}
 		default:
 			return command_usage(&set_encpolicy_cmd);
 		}
@@ -435,40 +565,44 @@ set_encpolicy_f(int argc, char **argv)
 	if (argc > 1)
 		return command_usage(&set_encpolicy_cmd);
 
-	/* Parse key descriptor if specified */
+	/*
+	 * If unspecified, the key descriptor or identifier defaults to all 0's.
+	 * If the policy version is additionally unspecified, it defaults to v1.
+	 */
+	memset(&key_spec, 0, sizeof(key_spec));
 	if (argc > 0) {
-		const char *keydesc = argv[0];
-		char *tmp;
-		unsigned long long x;
-		int i;
-
-		if (strlen(keydesc) != FSCRYPT_KEY_DESCRIPTOR_SIZE * 2) {
-			fprintf(stderr, "invalid key descriptor: %s\n",
-				keydesc);
+		version = str2keyspec(argv[0], version, &key_spec);
+		if (version < 0)
 			return 0;
-		}
+	}
+	if (version < 0) /* version unspecified? */
+		version = FSCRYPT_POLICY_V1;
 
-		x = strtoull(keydesc, &tmp, 16);
-		if (tmp == keydesc || *tmp != '\0') {
-			fprintf(stderr, "invalid key descriptor: %s\n",
-				keydesc);
-			return 0;
-		}
-
-		for (i = 0; i < FSCRYPT_KEY_DESCRIPTOR_SIZE; i++) {
-			policy.master_key_descriptor[i] = x >> 56;
-			x <<= 8;
-		}
+	memset(&policy, 0, sizeof(policy));
+	policy.version = version;
+	if (version == FSCRYPT_POLICY_V2) {
+		policy.v2.contents_encryption_mode = contents_encryption_mode;
+		policy.v2.filenames_encryption_mode = filenames_encryption_mode;
+		policy.v2.flags = flags;
+		memcpy(policy.v2.master_key_identifier, key_spec.u.identifier,
+		       FSCRYPT_KEY_IDENTIFIER_SIZE);
+	} else {
+		/*
+		 * xfstests passes .version = 255 for testing.  Just use
+		 * 'struct fscrypt_policy_v1' for both v1 and unknown versions.
+		 */
+		policy.v1.contents_encryption_mode = contents_encryption_mode;
+		policy.v1.filenames_encryption_mode = filenames_encryption_mode;
+		policy.v1.flags = flags;
+		memcpy(policy.v1.master_key_descriptor, key_spec.u.descriptor,
+		       FSCRYPT_KEY_DESCRIPTOR_SIZE);
 	}
 
-	/* Set the encryption policy */
-	if (ioctl(file->fd, FS_IOC_SET_ENCRYPTION_POLICY, &policy) < 0) {
-		fprintf(stderr, "%s: failed to set encryption policy: %s\n",
+	if (ioctl(file->fd, FS_IOC_SET_ENCRYPTION_POLICY, &policy) != 0) {
+		fprintf(stderr, _("%s: failed to set encryption policy: %s\n"),
 			file->name, strerror(errno));
 		exitcode = 1;
-		return 0;
 	}
-
 	return 0;
 }
 
@@ -488,7 +622,7 @@ encrypt_init(void)
 	set_encpolicy_cmd.name = "set_encpolicy";
 	set_encpolicy_cmd.cfunc = set_encpolicy_f;
 	set_encpolicy_cmd.args =
-		_("[-c mode] [-n mode] [-f flags] [-v version] [keydesc]");
+		_("[-c mode] [-n mode] [-f flags] [-v version] [keyspec]");
 	set_encpolicy_cmd.argmin = 0;
 	set_encpolicy_cmd.argmax = -1;
 	set_encpolicy_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
