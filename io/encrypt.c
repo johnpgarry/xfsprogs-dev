@@ -149,6 +149,7 @@ static const struct {
 
 static cmdinfo_t get_encpolicy_cmd;
 static cmdinfo_t set_encpolicy_cmd;
+static cmdinfo_t add_enckey_cmd;
 
 static void
 get_encpolicy_help(void)
@@ -200,6 +201,22 @@ set_encpolicy_help(void)
 "\n"
 " Note that it's only possible to set an encryption policy on an empty\n"
 " directory.  It's then inherited by new files and subdirectories.\n"
+"\n"));
+}
+
+static void
+add_enckey_help(void)
+{
+	printf(_(
+"\n"
+" add an encryption key to the filesystem\n"
+"\n"
+" Examples:\n"
+" 'add_enckey' - add key for v2 policies\n"
+" 'add_enckey -d 0000111122223333' - add key for v1 policies w/ given descriptor\n"
+"\n"
+"The key in binary is read from standard input.\n"
+" -d DESCRIPTOR -- master_key_descriptor\n"
 "\n"));
 }
 
@@ -606,6 +623,88 @@ set_encpolicy_f(int argc, char **argv)
 	return 0;
 }
 
+static ssize_t
+read_until_limit_or_eof(int fd, void *buf, size_t limit)
+{
+	size_t bytes_read = 0;
+	ssize_t res;
+
+	while (limit) {
+		res = read(fd, buf, limit);
+		if (res < 0)
+			return res;
+		if (res == 0)
+			break;
+		buf += res;
+		bytes_read += res;
+		limit -= res;
+	}
+	return bytes_read;
+}
+
+static int
+add_enckey_f(int argc, char **argv)
+{
+	int c;
+	struct fscrypt_add_key_arg *arg;
+	ssize_t raw_size;
+
+	arg = calloc(1, sizeof(*arg) + FSCRYPT_MAX_KEY_SIZE + 1);
+	if (!arg) {
+		perror("calloc");
+		exitcode = 1;
+		return 0;
+	}
+
+	arg->key_spec.type = FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER;
+
+	while ((c = getopt(argc, argv, "d:")) != EOF) {
+		switch (c) {
+		case 'd':
+			arg->key_spec.type = FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR;
+			if (!str2keydesc(optarg, arg->key_spec.u.descriptor))
+				goto out;
+			break;
+		default:
+			return command_usage(&add_enckey_cmd);
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 0)
+		return command_usage(&add_enckey_cmd);
+
+	raw_size = read_until_limit_or_eof(STDIN_FILENO, arg->raw,
+					   FSCRYPT_MAX_KEY_SIZE + 1);
+	if (raw_size < 0) {
+		fprintf(stderr, _("Error reading key from stdin: %s\n"),
+			strerror(errno));
+		exitcode = 1;
+		goto out;
+	}
+	if (raw_size > FSCRYPT_MAX_KEY_SIZE) {
+		fprintf(stderr,
+			_("Invalid key; got > FSCRYPT_MAX_KEY_SIZE (%d) bytes on stdin!\n"),
+			FSCRYPT_MAX_KEY_SIZE);
+		goto out;
+	}
+	arg->raw_size = raw_size;
+
+	if (ioctl(file->fd, FS_IOC_ADD_ENCRYPTION_KEY, arg) != 0) {
+		fprintf(stderr, _("Error adding encryption key: %s\n"),
+			strerror(errno));
+		exitcode = 1;
+		goto out;
+	}
+	printf(_("Added encryption key with %s %s\n"),
+	       keyspectype(&arg->key_spec), keyspec2str(&arg->key_spec));
+out:
+	memset(arg->raw, 0, FSCRYPT_MAX_KEY_SIZE + 1);
+	free(arg);
+	return 0;
+}
+
 void
 encrypt_init(void)
 {
@@ -630,6 +729,16 @@ encrypt_init(void)
 		_("assign an encryption policy to the current file");
 	set_encpolicy_cmd.help = set_encpolicy_help;
 
+	add_enckey_cmd.name = "add_enckey";
+	add_enckey_cmd.cfunc = add_enckey_f;
+	add_enckey_cmd.args = _("[-d descriptor]");
+	add_enckey_cmd.argmin = 0;
+	add_enckey_cmd.argmax = -1;
+	add_enckey_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
+	add_enckey_cmd.oneline = _("add an encryption key to the filesystem");
+	add_enckey_cmd.help = add_enckey_help;
+
 	add_command(&get_encpolicy_cmd);
 	add_command(&set_encpolicy_cmd);
+	add_command(&add_enckey_cmd);
 }

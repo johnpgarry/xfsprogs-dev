@@ -749,6 +749,21 @@ Test whether v2 encryption policies are supported.  Prints "supported",
 .RE
 .PD
 .TP
+.BI "add_enckey [ \-d " descriptor " ]"
+On filesystems that support encryption, add an encryption key to the filesystem
+containing the currently open file.  The key in binary (typically 64 bytes long)
+is read from standard input.
+.RS 1.0i
+.PD 0
+.TP 0.4i
+.BI \-d " descriptor"
+key descriptor, as a 16-character hex string (8 bytes).  If given, the key will
+be available for use by v1 encryption policies that use this descriptor.
+Otherwise, the key is added as a v2 policy key, and on success the resulting
+"key identifier" will be printed.
+.RE
+.PD
+.TP
 .BR lsattr " [ " \-R " | " \-D " | " \-a " | " \-v " ]"
 List extended inode flags on the currently open file. If the
 .B \-R
