@@ -151,6 +151,7 @@ static cmdinfo_t get_encpolicy_cmd;
 static cmdinfo_t set_encpolicy_cmd;
 static cmdinfo_t add_enckey_cmd;
 static cmdinfo_t rm_enckey_cmd;
+static cmdinfo_t enckey_status_cmd;
 
 static void
 get_encpolicy_help(void)
@@ -233,6 +234,19 @@ rm_enckey_help(void)
 " 'rm_enckey 00001111222233334444555566667777' - remove key for v2 policies w/ given identifier\n"
 "\n"
 " -a -- remove key for all users who have added it (privileged operation)\n"
+"\n"));
+}
+
+static void
+enckey_status_help(void)
+{
+	printf(_(
+"\n"
+" get the status of a filesystem encryption key\n"
+"\n"
+" Examples:\n"
+" 'enckey_status 0000111122223333' - get status of v1 policy key\n"
+" 'enckey_status 00001111222233334444555566667777' - get status of v2 policy key\n"
 "\n"));
 }
 
@@ -769,6 +783,52 @@ rm_enckey_f(int argc, char **argv)
 	return 0;
 }
 
+static int
+enckey_status_f(int argc, char **argv)
+{
+	struct fscrypt_get_key_status_arg arg;
+
+	memset(&arg, 0, sizeof(arg));
+
+	if (str2keyspec(argv[1], -1, &arg.key_spec) < 0)
+		return 0;
+
+	if (ioctl(file->fd, FS_IOC_GET_ENCRYPTION_KEY_STATUS, &arg) != 0) {
+		fprintf(stderr, _("Error getting encryption key status: %s\n"),
+			strerror(errno));
+		exitcode = 1;
+		return 0;
+	}
+
+	switch (arg.status) {
+	case FSCRYPT_KEY_STATUS_PRESENT:
+		printf(_("Present"));
+		if (arg.user_count || arg.status_flags) {
+			printf(" (user_count=%u", arg.user_count);
+			if (arg.status_flags &
+			    FSCRYPT_KEY_STATUS_FLAG_ADDED_BY_SELF)
+				printf(", added_by_self");
+			arg.status_flags &=
+				~FSCRYPT_KEY_STATUS_FLAG_ADDED_BY_SELF;
+			if (arg.status_flags)
+				printf(", unknown_flags=0x%08x",
+				       arg.status_flags);
+			printf(")");
+		}
+		printf("\n");
+		return 0;
+	case FSCRYPT_KEY_STATUS_ABSENT:
+		printf(_("Absent\n"));
+		return 0;
+	case FSCRYPT_KEY_STATUS_INCOMPLETELY_REMOVED:
+		printf(_("Incompletely removed\n"));
+		return 0;
+	default:
+		printf(_("Unknown status (%u)\n"), arg.status);
+		return 0;
+	}
+}
+
 void
 encrypt_init(void)
 {
@@ -812,8 +872,19 @@ encrypt_init(void)
 		_("remove an encryption key from the filesystem");
 	rm_enckey_cmd.help = rm_enckey_help;
 
+	enckey_status_cmd.name = "enckey_status";
+	enckey_status_cmd.cfunc = enckey_status_f;
+	enckey_status_cmd.args = _("keyspec");
+	enckey_status_cmd.argmin = 1;
+	enckey_status_cmd.argmax = 1;
+	enckey_status_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
+	enckey_status_cmd.oneline =
+		_("get the status of a filesystem encryption key");
+	enckey_status_cmd.help = enckey_status_help;
+
 	add_command(&get_encpolicy_cmd);
 	add_command(&set_encpolicy_cmd);
 	add_command(&add_enckey_cmd);
 	add_command(&rm_enckey_cmd);
+	add_command(&enckey_status_cmd);
 }
