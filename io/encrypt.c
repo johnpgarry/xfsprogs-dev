@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (c) 2016 Google, Inc.  All Rights Reserved.
+ * Copyright 2016, 2019 Google LLC
  * Author: Eric Biggers <ebiggers@google.com>
  */
 
@@ -151,6 +151,20 @@ static cmdinfo_t get_encpolicy_cmd;
 static cmdinfo_t set_encpolicy_cmd;
 
 static void
+get_encpolicy_help(void)
+{
+	printf(_(
+"\n"
+" display the encryption policy of the current file\n"
+"\n"
+" -1 -- Use only the old ioctl to get the encryption policy.\n"
+"       This only works if the file has a v1 encryption policy.\n"
+" -t -- Test whether v2 encryption policies are supported.\n"
+"       Prints \"supported\", \"unsupported\", or an error message.\n"
+"\n"));
+}
+
+static void
 set_encpolicy_help(void)
 {
 	int i;
@@ -227,7 +241,7 @@ mode2str(__u8 mode)
 }
 
 static const char *
-keydesc2str(__u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE])
+keydesc2str(const __u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE])
 {
 	static char buf[2 * FSCRYPT_KEY_DESCRIPTOR_SIZE + 1];
 	int i;
@@ -238,29 +252,132 @@ keydesc2str(__u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE])
 	return buf;
 }
 
+static const char *
+keyid2str(const __u8 master_key_identifier[FSCRYPT_KEY_IDENTIFIER_SIZE])
+{
+	static char buf[2 * FSCRYPT_KEY_IDENTIFIER_SIZE + 1];
+	int i;
+
+	for (i = 0; i < FSCRYPT_KEY_IDENTIFIER_SIZE; i++)
+		sprintf(&buf[2 * i], "%02x", master_key_identifier[i]);
+
+	return buf;
+}
+
+static void
+test_for_v2_policy_support(void)
+{
+	struct fscrypt_get_policy_ex_arg arg;
+
+	arg.policy_size = sizeof(arg.policy);
+
+	if (ioctl(file->fd, FS_IOC_GET_ENCRYPTION_POLICY_EX, &arg) == 0 ||
+	    errno == ENODATA /* file unencrypted */) {
+		printf(_("supported\n"));
+		return;
+	}
+	if (errno == ENOTTY) {
+		printf(_("unsupported\n"));
+		return;
+	}
+	fprintf(stderr,
+		_("%s: unexpected error checking for FS_IOC_GET_ENCRYPTION_POLICY_EX support: %s\n"),
+		file->name, strerror(errno));
+	exitcode = 1;
+}
+
+static void
+show_v1_encryption_policy(const struct fscrypt_policy_v1 *policy)
+{
+	printf(_("Encryption policy for %s:\n"), file->name);
+	printf(_("\tPolicy version: %u\n"), policy->version);
+	printf(_("\tMaster key descriptor: %s\n"),
+	       keydesc2str(policy->master_key_descriptor));
+	printf(_("\tContents encryption mode: %u (%s)\n"),
+	       policy->contents_encryption_mode,
+	       mode2str(policy->contents_encryption_mode));
+	printf(_("\tFilenames encryption mode: %u (%s)\n"),
+	       policy->filenames_encryption_mode,
+	       mode2str(policy->filenames_encryption_mode));
+	printf(_("\tFlags: 0x%02x\n"), policy->flags);
+}
+
+static void
+show_v2_encryption_policy(const struct fscrypt_policy_v2 *policy)
+{
+	printf(_("Encryption policy for %s:\n"), file->name);
+	printf(_("\tPolicy version: %u\n"), policy->version);
+	printf(_("\tMaster key identifier: %s\n"),
+	       keyid2str(policy->master_key_identifier));
+	printf(_("\tContents encryption mode: %u (%s)\n"),
+	       policy->contents_encryption_mode,
+	       mode2str(policy->contents_encryption_mode));
+	printf(_("\tFilenames encryption mode: %u (%s)\n"),
+	       policy->filenames_encryption_mode,
+	       mode2str(policy->filenames_encryption_mode));
+	printf(_("\tFlags: 0x%02x\n"), policy->flags);
+}
+
 static int
 get_encpolicy_f(int argc, char **argv)
 {
-	struct fscrypt_policy policy;
+	int c;
+	struct fscrypt_get_policy_ex_arg arg;
+	bool only_use_v1_ioctl = false;
+	int res;
 
-	if (ioctl(file->fd, FS_IOC_GET_ENCRYPTION_POLICY, &policy) < 0) {
-		fprintf(stderr, "%s: failed to get encryption policy: %s\n",
+	while ((c = getopt(argc, argv, "1t")) != EOF) {
+		switch (c) {
+		case '1':
+			only_use_v1_ioctl = true;
+			break;
+		case 't':
+			test_for_v2_policy_support();
+			return 0;
+		default:
+			return command_usage(&get_encpolicy_cmd);
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 0)
+		return command_usage(&get_encpolicy_cmd);
+
+	/* first try the new ioctl */
+	if (only_use_v1_ioctl) {
+		res = -1;
+		errno = ENOTTY;
+	} else {
+		arg.policy_size = sizeof(arg.policy);
+		res = ioctl(file->fd, FS_IOC_GET_ENCRYPTION_POLICY_EX, &arg);
+	}
+
+	/* fall back to the old ioctl */
+	if (res != 0 && errno == ENOTTY)
+		res = ioctl(file->fd, FS_IOC_GET_ENCRYPTION_POLICY,
+			    &arg.policy.v1);
+
+	if (res != 0) {
+		fprintf(stderr, _("%s: failed to get encryption policy: %s\n"),
 			file->name, strerror(errno));
 		exitcode = 1;
 		return 0;
 	}
 
-	printf("Encryption policy for %s:\n", file->name);
-	printf("\tPolicy version: %u\n", policy.version);
-	printf("\tMaster key descriptor: %s\n",
-	       keydesc2str(policy.master_key_descriptor));
-	printf("\tContents encryption mode: %u (%s)\n",
-	       policy.contents_encryption_mode,
-	       mode2str(policy.contents_encryption_mode));
-	printf("\tFilenames encryption mode: %u (%s)\n",
-	       policy.filenames_encryption_mode,
-	       mode2str(policy.filenames_encryption_mode));
-	printf("\tFlags: 0x%02x\n", policy.flags);
+	switch (arg.policy.version) {
+	case FSCRYPT_POLICY_V1:
+		show_v1_encryption_policy(&arg.policy.v1);
+		break;
+	case FSCRYPT_POLICY_V2:
+		show_v2_encryption_policy(&arg.policy.v2);
+		break;
+	default:
+		printf(_("Encryption policy for %s:\n"), file->name);
+		printf(_("\tPolicy version: %u (unknown)\n"),
+		       arg.policy.version);
+		break;
+	}
 	return 0;
 }
 
@@ -360,11 +477,13 @@ encrypt_init(void)
 {
 	get_encpolicy_cmd.name = "get_encpolicy";
 	get_encpolicy_cmd.cfunc = get_encpolicy_f;
+	get_encpolicy_cmd.args = _("[-1] [-t]");
 	get_encpolicy_cmd.argmin = 0;
-	get_encpolicy_cmd.argmax = 0;
+	get_encpolicy_cmd.argmax = -1;
 	get_encpolicy_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
 	get_encpolicy_cmd.oneline =
 		_("display the encryption policy of the current file");
+	get_encpolicy_cmd.help = get_encpolicy_help;
 
 	set_encpolicy_cmd.name = "set_encpolicy";
 	set_encpolicy_cmd.cfunc = set_encpolicy_f;

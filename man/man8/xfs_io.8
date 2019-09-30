@@ -724,10 +724,21 @@ version of policy structure (numeric)
 .RE
 .PD
 .TP
-.BR get_encpolicy
+.BI "get_encpolicy [ \-1 ] [ \-t ]"
 On filesystems that support encryption, display the encryption policy of the
 current file.
-
+.RS 1.0i
+.PD 0
+.TP 0.4i
+.BI \-1
+Use only the old ioctl to get the encryption policy.  This only works if the
+file has a v1 encryption policy.
+.TP
+.BI \-t
+Test whether v2 encryption policies are supported.  Prints "supported",
+"unsupported", or an error message.
+.RE
+.PD
 .TP
 .BR lsattr " [ " \-R " | " \-D " | " \-a " | " \-v " ]"
 List extended inode flags on the currently open file. If the
