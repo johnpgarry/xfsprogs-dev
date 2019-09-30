@@ -150,6 +150,7 @@ static const struct {
 static cmdinfo_t get_encpolicy_cmd;
 static cmdinfo_t set_encpolicy_cmd;
 static cmdinfo_t add_enckey_cmd;
+static cmdinfo_t rm_enckey_cmd;
 
 static void
 get_encpolicy_help(void)
@@ -217,6 +218,21 @@ add_enckey_help(void)
 "\n"
 "The key in binary is read from standard input.\n"
 " -d DESCRIPTOR -- master_key_descriptor\n"
+"\n"));
+}
+
+static void
+rm_enckey_help(void)
+{
+	printf(_(
+"\n"
+" remove an encryption key from the filesystem\n"
+"\n"
+" Examples:\n"
+" 'rm_enckey 0000111122223333' - remove key for v1 policies w/ given descriptor\n"
+" 'rm_enckey 00001111222233334444555566667777' - remove key for v2 policies w/ given identifier\n"
+"\n"
+" -a -- remove key for all users who have added it (privileged operation)\n"
 "\n"));
 }
 
@@ -705,6 +721,54 @@ out:
 	return 0;
 }
 
+static int
+rm_enckey_f(int argc, char **argv)
+{
+	int c;
+	struct fscrypt_remove_key_arg arg;
+	int ioc = FS_IOC_REMOVE_ENCRYPTION_KEY;
+
+	memset(&arg, 0, sizeof(arg));
+
+	while ((c = getopt(argc, argv, "a")) != EOF) {
+		switch (c) {
+		case 'a':
+			ioc = FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS;
+			break;
+		default:
+			return command_usage(&rm_enckey_cmd);
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
+		return command_usage(&rm_enckey_cmd);
+
+	if (str2keyspec(argv[0], -1, &arg.key_spec) < 0)
+		return 0;
+
+	if (ioctl(file->fd, ioc, &arg) != 0) {
+		fprintf(stderr, _("Error removing encryption key: %s\n"),
+			strerror(errno));
+		exitcode = 1;
+		return 0;
+	}
+	if (arg.removal_status_flags &
+	    FSCRYPT_KEY_REMOVAL_STATUS_FLAG_OTHER_USERS) {
+		printf(_("Removed user's claim to encryption key with %s %s\n"),
+		       keyspectype(&arg.key_spec), keyspec2str(&arg.key_spec));
+	} else if (arg.removal_status_flags &
+		   FSCRYPT_KEY_REMOVAL_STATUS_FLAG_FILES_BUSY) {
+		printf(_("Removed encryption key with %s %s, but files still busy\n"),
+		       keyspectype(&arg.key_spec), keyspec2str(&arg.key_spec));
+	} else {
+		printf(_("Removed encryption key with %s %s\n"),
+		       keyspectype(&arg.key_spec), keyspec2str(&arg.key_spec));
+	}
+	return 0;
+}
+
 void
 encrypt_init(void)
 {
@@ -738,7 +802,18 @@ encrypt_init(void)
 	add_enckey_cmd.oneline = _("add an encryption key to the filesystem");
 	add_enckey_cmd.help = add_enckey_help;
 
+	rm_enckey_cmd.name = "rm_enckey";
+	rm_enckey_cmd.cfunc = rm_enckey_f;
+	rm_enckey_cmd.args = _("[-a] keyspec");
+	rm_enckey_cmd.argmin = 0;
+	rm_enckey_cmd.argmax = -1;
+	rm_enckey_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
+	rm_enckey_cmd.oneline =
+		_("remove an encryption key from the filesystem");
+	rm_enckey_cmd.help = rm_enckey_help;
+
 	add_command(&get_encpolicy_cmd);
 	add_command(&set_encpolicy_cmd);
 	add_command(&add_enckey_cmd);
+	add_command(&rm_enckey_cmd);
 }
