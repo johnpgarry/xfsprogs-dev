@@ -268,30 +268,24 @@ report_bulkstat_health(
 {
 	struct xfs_bulkstat_req	*breq;
 	char			descr[256];
-	uint64_t		startino = 0;
-	uint64_t		lastino = -1ULL;
 	uint32_t		i;
 	int			error;
 
-	if (agno != NULLAGNUMBER) {
-		startino = cvt_agino_to_ino(&file->xfd, agno, 0);
-		lastino = cvt_agino_to_ino(&file->xfd, agno + 1, 0) - 1;
-	}
-
-	breq = xfrog_bulkstat_alloc_req(BULKSTAT_NR, startino);
+	breq = xfrog_bulkstat_alloc_req(BULKSTAT_NR, 0);
 	if (!breq) {
 		perror("bulk alloc req");
 		exitcode = 1;
 		return 1;
 	}
 
+	if (agno != NULLAGNUMBER)
+		xfrog_bulkstat_set_ag(breq, agno);
+
 	do {
 		error = xfrog_bulkstat(&file->xfd, breq);
 		if (error)
 			break;
 		for (i = 0; i < breq->hdr.ocount; i++) {
-			if (breq->bulkstat[i].bs_ino > lastino)
-				goto out;
 			snprintf(descr, sizeof(descr) - 1, _("inode %"PRIu64),
 					breq->bulkstat[i].bs_ino);
 			report_sick(descr, inode_flags,
@@ -304,7 +298,7 @@ report_bulkstat_health(
 		errno = error;
 		perror("bulkstat");
 	}
-out:
+
 	free(breq);
 	return error;
 }
