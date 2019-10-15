@@ -106,8 +106,8 @@ workqueue_add(
 	}
 
 	wi = malloc(sizeof(struct workqueue_item));
-	if (wi == NULL)
-		return ENOMEM;
+	if (!wi)
+		return errno;
 
 	wi->function = func;
 	wi->index = index;

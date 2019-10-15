@@ -74,7 +74,7 @@ xfs_process_action_items(
 	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
-		str_error(ctx, ctx->mntpoint, _("Could not create workqueue."));
+		str_liberror(ctx, ret, _("creating repair workqueue"));
 		return false;
 	}
 	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++) {
@@ -82,8 +82,8 @@ xfs_process_action_items(
 			ret = workqueue_add(&wq, xfs_repair_ag, agno, &moveon);
 			if (ret) {
 				moveon = false;
-				str_error(ctx, ctx->mntpoint,
-_("Could not queue repair work."));
+				str_liberror(ctx, ret,
+						_("queueing repair work"));
 				break;
 			}
 		}

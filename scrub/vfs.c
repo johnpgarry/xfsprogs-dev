@@ -102,8 +102,7 @@ queue_subdir(
 	error = workqueue_add(wq, scan_fs_dir, 0, new_sftd);
 	if (error) {
 		dec_nr_dirs(sft);
-		str_info(ctx, ctx->mntpoint,
-_("Could not queue subdirectory scan work."));
+		str_liberror(ctx, error, _("queueing directory scan work"));
 		goto out_path;
 	}
 

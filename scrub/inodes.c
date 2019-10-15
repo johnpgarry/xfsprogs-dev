@@ -243,7 +243,7 @@ xfs_scan_all_inodes(
 	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
-		str_info(ctx, ctx->mntpoint, _("Could not create workqueue."));
+		str_liberror(ctx, ret, _("creating bulkstat workqueue"));
 		return false;
 	}
 
@@ -251,8 +251,7 @@ xfs_scan_all_inodes(
 		ret = workqueue_add(&wq, xfs_scan_ag_inodes, agno, &si);
 		if (ret) {
 			si.moveon = false;
-			str_info(ctx, ctx->mntpoint,
-_("Could not queue AG %u bulkstat work."), agno);
+			str_liberror(ctx, ret, _("queueing bulkstat work"));
 			break;
 		}
 	}
