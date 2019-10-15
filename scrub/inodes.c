@@ -256,6 +256,11 @@ xfs_scan_all_inodes(
 		}
 	}
 
+	ret = workqueue_terminate(&wq);
+	if (ret) {
+		si.moveon = false;
+		str_liberror(ctx, ret, _("finishing bulkstat work"));
+	}
 	workqueue_destroy(&wq);
 
 	return si.moveon;

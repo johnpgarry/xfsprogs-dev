@@ -120,6 +120,7 @@ void
 read_verify_pool_flush(
 	struct read_verify_pool		*rvp)
 {
+	workqueue_terminate(&rvp->wq);
 	workqueue_destroy(&rvp->wq);
 }
 

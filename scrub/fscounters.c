@@ -102,7 +102,7 @@ xfs_count_all_inodes(
 	struct xfs_count_inodes	*ci;
 	xfs_agnumber_t		agno;
 	struct workqueue	wq;
-	bool			moveon;
+	bool			moveon = true;
 	int			ret;
 
 	ci = calloc(1, sizeof(struct xfs_count_inodes) +
@@ -126,7 +126,16 @@ xfs_count_all_inodes(
 			break;
 		}
 	}
+
+	ret = workqueue_terminate(&wq);
+	if (ret) {
+		moveon = false;
+		str_liberror(ctx, ret, _("finishing icount work"));
+	}
 	workqueue_destroy(&wq);
+
+	if (!moveon)
+		goto out_free;
 
 	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++)
 		*count += ci->counters[agno];

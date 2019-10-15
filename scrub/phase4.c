@@ -90,6 +90,12 @@ xfs_process_action_items(
 		if (!moveon)
 			break;
 	}
+
+	ret = workqueue_terminate(&wq);
+	if (ret) {
+		moveon = false;
+		str_liberror(ctx, ret, _("finishing repair work"));
+	}
 	workqueue_destroy(&wq);
 
 	pthread_mutex_lock(&ctx->lock);
