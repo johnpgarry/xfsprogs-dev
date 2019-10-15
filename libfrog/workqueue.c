@@ -67,12 +67,20 @@ workqueue_create(
 	int			err = 0;
 
 	memset(wq, 0, sizeof(*wq));
-	pthread_cond_init(&wq->wakeup, NULL);
-	pthread_mutex_init(&wq->lock, NULL);
+	err = pthread_cond_init(&wq->wakeup, NULL);
+	if (err)
+		return err;
+	err = pthread_mutex_init(&wq->lock, NULL);
+	if (err)
+		goto out_cond;
 
 	wq->wq_ctx = wq_ctx;
 	wq->thread_count = nr_workers;
 	wq->threads = malloc(nr_workers * sizeof(pthread_t));
+	if (!wq->threads) {
+		err = errno;
+		goto out_mutex;
+	}
 	wq->terminate = false;
 
 	for (i = 0; i < nr_workers; i++) {
@@ -82,8 +90,18 @@ workqueue_create(
 			break;
 	}
 
+	/*
+	 * If we encounter errors here, we have to signal and then wait for all
+	 * the threads that may have been started running before we can destroy
+	 * the workqueue.
+	 */
 	if (err)
 		workqueue_destroy(wq);
+	return err;
+out_mutex:
+	pthread_mutex_destroy(&wq->lock);
+out_cond:
+	pthread_cond_destroy(&wq->wakeup);
 	return err;
 }
 
@@ -99,6 +117,7 @@ workqueue_add(
 	void			*arg)
 {
 	struct workqueue_item	*wi;
+	int			ret;
 
 	if (wq->thread_count == 0) {
 		func(wq, index, arg);
@@ -118,9 +137,11 @@ workqueue_add(
 	/* Now queue the new work structure to the work queue. */
 	pthread_mutex_lock(&wq->lock);
 	if (wq->next_item == NULL) {
-		wq->next_item = wi;
 		assert(wq->item_count == 0);
-		pthread_cond_signal(&wq->wakeup);
+		ret = pthread_cond_signal(&wq->wakeup);
+		if (ret)
+			goto out_item;
+		wq->next_item = wi;
 	} else {
 		wq->last_item->next = wi;
 	}
@@ -129,6 +150,9 @@ workqueue_add(
 	pthread_mutex_unlock(&wq->lock);
 
 	return 0;
+out_item:
+	free(wi);
+	return ret;
 }
 
 /*
