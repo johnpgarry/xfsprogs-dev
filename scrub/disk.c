@@ -193,7 +193,6 @@ disk_open(
 #endif
 	struct disk		*disk;
 	bool			suspicious_disk = false;
-	int			lba_sz;
 	int			error;
 
 	disk = calloc(1, sizeof(struct disk));
@@ -205,10 +204,10 @@ disk_open(
 		goto out_free;
 
 	/* Try to get LBA size. */
-	error = ioctl(disk->d_fd, BLKSSZGET, &lba_sz);
+	error = ioctl(disk->d_fd, BLKSSZGET, &disk->d_lbasize);
 	if (error)
-		lba_sz = 512;
-	disk->d_lbalog = log2_roundup(lba_sz);
+		disk->d_lbasize = 512;
+	disk->d_lbalog = log2_roundup(disk->d_lbasize);
 
 	/* Obtain disk's stat info. */
 	error = fstat(disk->d_fd, &disk->d_sb);
