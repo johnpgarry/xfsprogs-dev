@@ -36,8 +36,13 @@ xfs_record_block_summary(
 {
 	struct summary_counts	*counts;
 	unsigned long long	len;
+	int			ret;
 
-	counts = ptvar_get((struct ptvar *)arg);
+	counts = ptvar_get((struct ptvar *)arg, &ret);
+	if (ret) {
+		str_liberror(ctx, ret, _("retrieving summary counts"));
+		return false;
+	}
 	if (fsmap->fmr_device == ctx->fsinfo.fs_logdev)
 		return true;
 	if ((fsmap->fmr_flags & FMR_OF_SPECIAL_OWNER) &&
@@ -68,7 +73,7 @@ xfs_record_block_summary(
 }
 
 /* Add all the summaries in the per-thread counter */
-static bool
+static int
 xfs_add_summaries(
 	struct ptvar		*ptv,
 	void			*data,
@@ -80,7 +85,7 @@ xfs_add_summaries(
 	total->dbytes += item->dbytes;
 	total->rbytes += item->rbytes;
 	total->agbytes += item->agbytes;
-	return true;
+	return 0;
 }
 
 /*
@@ -131,9 +136,10 @@ xfs_scan_summary(
 		return false;
 	}
 
-	ptvar = ptvar_init(scrub_nproc(ctx), sizeof(struct summary_counts));
-	if (!ptvar) {
-		str_errno(ctx, ctx->mntpoint);
+	error = ptvar_alloc(scrub_nproc(ctx), sizeof(struct summary_counts),
+			&ptvar);
+	if (error) {
+		str_liberror(ctx, error, _("setting up block counter"));
 		return false;
 	}
 
@@ -141,9 +147,11 @@ xfs_scan_summary(
 	moveon = xfs_scan_all_spacemaps(ctx, xfs_record_block_summary, ptvar);
 	if (!moveon)
 		goto out_free;
-	moveon = ptvar_foreach(ptvar, xfs_add_summaries, &totalcount);
-	if (!moveon)
+	error = ptvar_foreach(ptvar, xfs_add_summaries, &totalcount);
+	if (error) {
+		str_liberror(ctx, error, _("counting blocks"));
 		goto out_free;
+	}
 	ptvar_free(ptvar);
 
 	/* Scan the whole fs. */

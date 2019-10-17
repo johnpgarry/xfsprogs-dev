@@ -32,12 +32,13 @@ ptcounter_init(
 	size_t			nr)
 {
 	struct ptcounter	*p;
+	int			ret;
 
 	p = malloc(sizeof(struct ptcounter));
 	if (!p)
 		return NULL;
-	p->var = ptvar_init(nr, sizeof(uint64_t));
-	if (!p->var) {
+	ret = ptvar_alloc(nr, sizeof(uint64_t), &p->var);
+	if (ret) {
 		free(p);
 		return NULL;
 	}
@@ -60,12 +61,14 @@ ptcounter_add(
 	int64_t			nr)
 {
 	uint64_t		*p;
+	int			ret;
 
-	p = ptvar_get(ptc->var);
+	p = ptvar_get(ptc->var, &ret);
+	assert(ret == 0);
 	*p += nr;
 }
 
-static bool
+static int
 ptcounter_val_helper(
 	struct ptvar		*ptv,
 	void			*data,
@@ -75,7 +78,7 @@ ptcounter_val_helper(
 	uint64_t		*count = data;
 
 	*sum += *count;
-	return true;
+	return 0;
 }
 
 /* Return the approximate value of this counter. */

@@ -33,11 +33,12 @@ struct ptvar {
 };
 #define PTVAR_SIZE(nr, sz) (sizeof(struct ptvar) + ((nr) * (size)))
 
-/* Initialize per-thread counter. */
-struct ptvar *
-ptvar_init(
+/* Allocate a new per-thread counter. */
+int
+ptvar_alloc(
 	size_t		nr,
-	size_t		size)
+	size_t		size,
+	struct ptvar	**pptv)
 {
 	struct ptvar	*ptv;
 	int		ret;
@@ -49,7 +50,7 @@ ptvar_init(
 
 	ptv = malloc(PTVAR_SIZE(nr, size));
 	if (!ptv)
-		return NULL;
+		return errno;
 	ptv->data_size = size;
 	ptv->nr_counters = nr;
 	ptv->nr_used = 0;
@@ -60,13 +61,14 @@ ptvar_init(
 	ret = pthread_key_create(&ptv->key, NULL);
 	if (ret)
 		goto out_mutex;
-	return ptv;
 
+	*pptv = ptv;
+	return 0;
 out_mutex:
 	pthread_mutex_destroy(&ptv->lock);
 out:
 	free(ptv);
-	return NULL;
+	return ret;
 }
 
 /* Free per-thread counter. */
@@ -82,7 +84,8 @@ ptvar_free(
 /* Get a reference to this thread's variable. */
 void *
 ptvar_get(
-	struct ptvar	*ptv)
+	struct ptvar	*ptv,
+	int		*retp)
 {
 	void		*p;
 
@@ -94,23 +97,24 @@ ptvar_get(
 		pthread_setspecific(ptv->key, p);
 		pthread_mutex_unlock(&ptv->lock);
 	}
+	*retp = 0;
 	return p;
 }
 
 /* Iterate all of the per-thread variables. */
-bool
+int
 ptvar_foreach(
 	struct ptvar	*ptv,
 	ptvar_iter_fn	fn,
 	void		*foreach_arg)
 {
 	size_t		i;
-	bool		ret = true;
+	int		ret = 0;
 
 	pthread_mutex_lock(&ptv->lock);
 	for (i = 0; i < ptv->nr_used; i++) {
 		ret = fn(ptv, &ptv->data[i * ptv->data_size], foreach_arg);
-		if (!ret)
+		if (ret)
 			break;
 	}
 	pthread_mutex_unlock(&ptv->lock);
