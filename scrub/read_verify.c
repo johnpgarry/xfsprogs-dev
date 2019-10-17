@@ -269,8 +269,13 @@ read_verify_schedule_io(
 		rv->io_length = max(req_end, rv_end) - rv->io_start;
 	} else  {
 		/* Otherwise, issue the stashed IO (if there is one) */
-		if (rv->io_length > 0)
-			return read_verify_queue(rvp, rv);
+		if (rv->io_length > 0) {
+			int	res;
+
+			res = read_verify_queue(rvp, rv);
+			if (res)
+				return res;
+		}
 
 		/* Stash the new IO. */
 		rv->io_start = start;
