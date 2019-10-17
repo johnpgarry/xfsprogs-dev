@@ -130,7 +130,9 @@ progress_report_thread(void *arg)
 			abstime.tv_sec++;
 			abstime.tv_nsec -= NSEC_PER_SEC;
 		}
-		pthread_cond_timedwait(&pt.wakeup, &pt.lock, &abstime);
+		ret = pthread_cond_timedwait(&pt.wakeup, &pt.lock, &abstime);
+		if (ret && ret != ETIMEDOUT)
+			break;
 		if (pt.terminate)
 			break;
 		ret = ptcounter_value(pt.ptc, &progress_val);
