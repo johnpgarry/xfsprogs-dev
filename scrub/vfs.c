@@ -72,7 +72,7 @@ dec_nr_dirs(
 }
 
 /* Queue a directory for scanning. */
-static bool
+static int
 queue_subdir(
 	struct scrub_ctx	*ctx,
 	struct scan_fs_tree	*sft,
@@ -84,14 +84,12 @@ queue_subdir(
 	int			error;
 
 	new_sftd = malloc(sizeof(struct scan_fs_tree_dir));
-	if (!new_sftd) {
-		str_errno(ctx, _("creating directory scan context"));
-		return false;
-	}
+	if (!new_sftd)
+		return errno;
 
 	new_sftd->path = strdup(path);
 	if (!new_sftd->path) {
-		str_errno(ctx, _("creating directory scan path"));
+		error = errno;
 		goto out_sftd;
 	}
 
@@ -106,12 +104,12 @@ queue_subdir(
 		goto out_path;
 	}
 
-	return true;
+	return 0;
 out_path:
 	free(new_sftd->path);
 out_sftd:
 	free(new_sftd);
-	return false;
+	return error;
 }
 
 /* Scan a directory sub tree. */
@@ -187,10 +185,13 @@ scan_fs_dir(
 		/* If directory, call ourselves recursively. */
 		if (S_ISDIR(sb.st_mode) && strcmp(".", dirent->d_name) &&
 		    strcmp("..", dirent->d_name)) {
-			sft->moveon = queue_subdir(ctx, sft, wq, newpath,
-					false);
-			if (!sft->moveon)
+			error = queue_subdir(ctx, sft, wq, newpath, false);
+			if (error) {
+				str_liberror(ctx, error,
+_("queueing subdirectory scan"));
+				sft->moveon = false;
 				break;
+			}
 		}
 	}
 
@@ -233,9 +234,11 @@ scan_fs_tree(
 		return false;
 	}
 
-	sft.moveon = queue_subdir(ctx, &sft, &wq, ctx->mntpoint, true);
-	if (!sft.moveon)
+	ret = queue_subdir(ctx, &sft, &wq, ctx->mntpoint, true);
+	if (ret) {
+		str_liberror(ctx, ret, _("queueing directory scan"));
 		goto out_wq;
+	}
 
 	/*
 	 * Wait for the wakeup to trigger, which should only happen when the
