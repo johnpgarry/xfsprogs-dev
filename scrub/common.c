@@ -354,3 +354,38 @@ within_range(
 
 	return true;
 }
+
+/*
+ * Render an inode number into a buffer in a format suitable for use in
+ * log messages. The buffer will be filled with:
+ * 	"inode <inode number> (<ag number>/<ag inode number>)"
+ * If the @format argument is non-NULL, it will be rendered into the buffer
+ * after the inode representation and a single space.
+ */
+int
+scrub_render_ino_descr(
+	const struct scrub_ctx	*ctx,
+	char			*buf,
+	size_t			buflen,
+	uint64_t		ino,
+	uint32_t		gen,
+	const char		*format,
+	...)
+{
+	va_list			args;
+	uint32_t		agno;
+	uint32_t		agino;
+	int			ret;
+
+	agno = cvt_ino_to_agno(&ctx->mnt, ino);
+	agino = cvt_ino_to_agino(&ctx->mnt, ino);
+	ret = snprintf(buf, buflen, _("inode %"PRIu64" (%"PRIu32"/%"PRIu32")%s"),
+			ino, agno, agino, format ? " " : "");
+	if (ret < 0 || ret >= buflen || format == NULL)
+		return ret;
+
+	va_start(args, format);
+	ret += vsnprintf(buf + ret, buflen - ret, format, args);
+	va_end(args);
+	return ret;
+}

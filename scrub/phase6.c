@@ -180,14 +180,14 @@ xfs_report_verify_inode(
 	int				fd;
 	int				error;
 
-	snprintf(descr, DESCR_BUFSZ, _("inode %"PRIu64" (unlinked)"),
-			(uint64_t)bstat->bs_ino);
-
 	/* Ignore linked files and things we can't open. */
 	if (bstat->bs_nlink != 0)
 		return 0;
 	if (!S_ISREG(bstat->bs_mode) && !S_ISDIR(bstat->bs_mode))
 		return 0;
+
+	scrub_render_ino_descr(ctx, descr, DESCR_BUFSZ,
+			bstat->bs_ino, bstat->bs_gen, _("(unlinked)"));
 
 	/* Try to open the inode. */
 	fd = xfs_open_handle(handle);

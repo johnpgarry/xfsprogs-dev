@@ -26,11 +26,13 @@
 /* Format a scrub description. */
 static void
 format_scrub_descr(
+	struct scrub_ctx		*ctx,
 	char				*buf,
 	size_t				buflen,
-	struct xfs_scrub_metadata	*meta,
-	const struct xfrog_scrub_descr	*sc)
+	struct xfs_scrub_metadata	*meta)
 {
+	const struct xfrog_scrub_descr	*sc = &xfrog_scrubbers[meta->sm_type];
+
 	switch (sc->type) {
 	case XFROG_SCRUB_TYPE_AGHEADER:
 	case XFROG_SCRUB_TYPE_PERAG:
@@ -38,8 +40,9 @@ format_scrub_descr(
 				_(sc->descr));
 		break;
 	case XFROG_SCRUB_TYPE_INODE:
-		snprintf(buf, buflen, _("Inode %"PRIu64" %s"),
-				(uint64_t)meta->sm_ino, _(sc->descr));
+		scrub_render_ino_descr(ctx, buf, buflen,
+				meta->sm_ino, meta->sm_gen, "%s",
+				_(sc->descr));
 		break;
 	case XFROG_SCRUB_TYPE_FS:
 		snprintf(buf, buflen, _("%s"), _(sc->descr));
@@ -123,8 +126,7 @@ xfs_check_metadata(
 
 	assert(!debug_tweak_on("XFS_SCRUB_NO_KERNEL"));
 	assert(meta->sm_type < XFS_SCRUB_TYPE_NR);
-	format_scrub_descr(buf, DESCR_BUFSZ, meta,
-			&xfrog_scrubbers[meta->sm_type]);
+	format_scrub_descr(ctx, buf, DESCR_BUFSZ, meta);
 
 	dbg_printf("check %s flags %xh\n", buf, meta->sm_flags);
 retry:
@@ -681,8 +683,7 @@ xfs_repair_metadata(
 		return CHECK_RETRY;
 
 	memcpy(&oldm, &meta, sizeof(oldm));
-	format_scrub_descr(buf, DESCR_BUFSZ, &meta,
-			&xfrog_scrubbers[meta.sm_type]);
+	format_scrub_descr(ctx, buf, DESCR_BUFSZ, &meta);
 
 	if (needs_repair(&meta))
 		str_info(ctx, buf, _("Attempting repair."));
