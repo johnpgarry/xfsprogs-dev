@@ -514,16 +514,16 @@ _("Could not create data device media verifier."));
 
 out_rtpool:
 	if (vs.rvp_realtime) {
-		read_verify_pool_flush(vs.rvp_realtime);
+		read_verify_pool_abort(vs.rvp_realtime);
 		read_verify_pool_destroy(vs.rvp_realtime);
 	}
 out_logpool:
 	if (vs.rvp_log) {
-		read_verify_pool_flush(vs.rvp_log);
+		read_verify_pool_abort(vs.rvp_log);
 		read_verify_pool_destroy(vs.rvp_log);
 	}
 out_datapool:
-	read_verify_pool_flush(vs.rvp_data);
+	read_verify_pool_abort(vs.rvp_data);
 	read_verify_pool_destroy(vs.rvp_data);
 out_rbad:
 	bitmap_free(&vs.r_bad);
