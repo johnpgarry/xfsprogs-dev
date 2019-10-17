@@ -276,6 +276,59 @@ disk_close(
 #define LBASIZE(d)		(1ULL << (d)->d_lbalog)
 #define BTOLBA(d, bytes)	(((uint64_t)(bytes) + LBASIZE(d) - 1) >> (d)->d_lbalog)
 
+/* Simulate disk errors. */
+static int
+disk_simulate_read_error(
+	struct disk		*disk,
+	uint64_t		start,
+	uint64_t		*length)
+{
+	static int64_t		interval;
+	uint64_t		start_interval;
+
+	/* Simulated disk errors are disabled. */
+	if (interval < 0)
+		return 0;
+
+	/* Figure out the disk read error interval. */
+	if (interval == 0) {
+		char		*p;
+
+		/* Pretend there's bad media every so often, in bytes. */
+		p = getenv("XFS_SCRUB_DISK_ERROR_INTERVAL");
+		if (p == NULL) {
+			interval = -1;
+			return 0;
+		}
+		interval = strtoull(p, NULL, 10);
+		interval &= ~((1U << disk->d_lbalog) - 1);
+	}
+
+	/*
+	 * We simulate disk errors by pretending that there are media errors at
+	 * predetermined intervals across the disk.  If a read verify request
+	 * crosses one of those intervals we shorten it so that the next read
+	 * will start on an interval threshold.  If the read verify request
+	 * starts on an interval threshold, we send back EIO as if it had
+	 * failed.
+	 */
+	if ((start % interval) == 0) {
+		dbg_printf("fd %d: simulating disk error at %"PRIu64".\n",
+				disk->d_fd, start);
+		return EIO;
+	}
+
+	start_interval = start / interval;
+	if (start_interval != (start + *length) / interval) {
+		*length = ((start_interval + 1) * interval) - start;
+		dbg_printf(
+"fd %d: simulating short read at %"PRIu64" to length %"PRIu64".\n",
+				disk->d_fd, start, *length);
+	}
+
+	return 0;
+}
+
 /* Read-verify an extent of a disk device. */
 ssize_t
 disk_read_verify(
@@ -284,6 +337,20 @@ disk_read_verify(
 	uint64_t		start,
 	uint64_t		length)
 {
+	if (debug) {
+		int		ret;
+
+		ret = disk_simulate_read_error(disk, start, &length);
+		if (ret) {
+			errno = ret;
+			return -1;
+		}
+
+		/* Don't actually issue the IO */
+		if (getenv("XFS_SCRUB_DISK_VERIFY_SKIP"))
+			return length;
+	}
+
 	/* Convert to logical block size. */
 	if (disk->d_flags & DISK_FLAG_SCSI_VERIFY)
 		return disk_scsi_verify(disk, BTOLBAT(disk, start),
