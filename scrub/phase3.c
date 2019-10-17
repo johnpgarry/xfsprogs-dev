@@ -139,7 +139,12 @@ xfs_scrub_inode(
 		goto out;
 
 out:
-	ptcounter_add(icount, 1);
+	error = ptcounter_add(icount, 1);
+	if (error) {
+		str_liberror(ctx, error,
+				_("incrementing scanned inode counter"));
+		return false;
+	}
 	progress_add(1);
 	xfs_action_list_defer(ctx, agno, &alist);
 	if (fd >= 0) {
@@ -158,12 +163,14 @@ xfs_scan_inodes(
 	struct scrub_ctx	*ctx)
 {
 	struct scrub_inode_ctx	ictx;
+	uint64_t		val;
+	int			err;
 	bool			ret;
 
 	ictx.moveon = true;
-	ictx.icount = ptcounter_init(scrub_nproc(ctx));
-	if (!ictx.icount) {
-		str_info(ctx, ctx->mntpoint, _("Could not create counter."));
+	err = ptcounter_alloc(scrub_nproc(ctx), &ictx.icount);
+	if (err) {
+		str_liberror(ctx, err, _("creating scanned inode counter"));
 		return false;
 	}
 
@@ -173,8 +180,12 @@ xfs_scan_inodes(
 	if (!ictx.moveon)
 		goto free;
 	xfs_scrub_report_preen_triggers(ctx);
-	ctx->inodes_checked = ptcounter_value(ictx.icount);
-
+	err = ptcounter_value(ictx.icount, &val);
+	if (err) {
+		str_liberror(ctx, err, _("summing scanned inode counter"));
+		return false;
+	}
+	ctx->inodes_checked = val;
 free:
 	ptcounter_free(ictx.icount);
 	return ictx.moveon;
