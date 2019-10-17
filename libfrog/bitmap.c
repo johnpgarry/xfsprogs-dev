@@ -23,7 +23,8 @@
  */
 
 #define avl_for_each_range_safe(pos, n, l, first, last) \
-	for (pos = (first), n = pos->avl_nextino, l = (last)->avl_nextino; pos != (l); \
+	for (pos = (first), n = pos->avl_nextino, l = (last)->avl_nextino; \
+			pos != (l); \
 			pos = n, n = pos ? pos->avl_nextino : NULL)
 
 #define avl_for_each_safe(tree, pos, n) \
@@ -67,18 +68,18 @@ static struct avl64ops bitmap_ops = {
 
 /* Initialize a bitmap. */
 int
-bitmap_init(
+bitmap_alloc(
 	struct bitmap		**bmapp)
 {
 	struct bitmap		*bmap;
 
 	bmap = calloc(1, sizeof(struct bitmap));
 	if (!bmap)
-		return -ENOMEM;
+		return errno;
 	bmap->bt_tree = malloc(sizeof(struct avl64tree_desc));
 	if (!bmap->bt_tree) {
 		free(bmap);
-		return -ENOMEM;
+		return errno;
 	}
 
 	pthread_mutex_init(&bmap->bt_lock, NULL);
@@ -139,12 +140,12 @@ __bitmap_insert(
 
 	ext = bitmap_node_init(start, length);
 	if (!ext)
-		return -ENOMEM;
+		return errno;
 
 	node = avl64_insert(bmap->bt_tree, &ext->btn_node);
 	if (node == NULL) {
 		free(ext);
-		return -EEXIST;
+		return EEXIST;
 	}
 
 	return 0;

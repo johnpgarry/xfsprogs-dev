@@ -341,6 +341,7 @@ xfs_check_rmap_ioerr(
 	struct media_verify_state	*vs = arg;
 	struct bitmap			*tree;
 	dev_t				dev;
+	int				ret;
 
 	dev = xfs_disk_to_dev(ctx, disk);
 
@@ -355,9 +356,9 @@ xfs_check_rmap_ioerr(
 	else
 		tree = NULL;
 	if (tree) {
-		errno = -bitmap_set(tree, start, length);
-		if (errno)
-			str_errno(ctx, ctx->mntpoint);
+		ret = bitmap_set(tree, start, length);
+		if (ret)
+			str_liberror(ctx, ret, _("setting bad block bitmap"));
 	}
 
 	snprintf(descr, DESCR_BUFSZ, _("dev %d:%d ioerr @ %"PRIu64":%"PRIu64" "),
@@ -454,16 +455,17 @@ xfs_scan_blocks(
 {
 	struct media_verify_state	vs = { NULL };
 	bool				moveon = false;
+	int				ret;
 
-	errno = -bitmap_init(&vs.d_bad);
-	if (errno) {
-		str_errno(ctx, ctx->mntpoint);
+	ret = bitmap_alloc(&vs.d_bad);
+	if (ret) {
+		str_liberror(ctx, ret, _("creating datadev badblock bitmap"));
 		goto out;
 	}
 
-	errno = -bitmap_init(&vs.r_bad);
-	if (errno) {
-		str_errno(ctx, ctx->mntpoint);
+	ret = bitmap_alloc(&vs.r_bad);
+	if (ret) {
+		str_liberror(ctx, ret, _("creating realtime badblock bitmap"));
 		goto out_dbad;
 	}
 
