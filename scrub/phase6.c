@@ -372,6 +372,10 @@ xfs_check_rmap_error_report(
 	uint64_t		err_physical = *(uint64_t *)arg;
 	uint64_t		err_off;
 
+	/* Don't care about unwritten extents. */
+	if (map->fmr_flags & FMR_OF_PREALLOC)
+		return true;
+
 	if (err_physical > map->fmr_physical)
 		err_off = err_physical - map->fmr_physical;
 	else
