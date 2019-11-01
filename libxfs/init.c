@@ -21,6 +21,7 @@
 #include "xfs_trans.h"
 #include "xfs_rmap_btree.h"
 #include "xfs_refcount_btree.h"
+#include "libfrog/platform.h"
 
 #include "libxfs.h"		/* for now */
 

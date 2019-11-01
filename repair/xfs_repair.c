@@ -23,6 +23,7 @@
 #include "slab.h"
 #include "rmap.h"
 #include "libfrog/fsgeom.h"
+#include "libfrog/platform.h"
 
 /*
  * option tables for getsubopt calls
