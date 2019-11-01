@@ -18,8 +18,8 @@ bool xfs_scrub_excessive_errors(struct scrub_ctx *ctx);
 enum error_level {
 	S_ERROR	= 0,
 	S_WARN,
-	S_REPAIR,
 	S_INFO,
+	S_REPAIR,
 	S_PREEN,
 };
 

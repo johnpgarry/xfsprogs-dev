@@ -48,8 +48,8 @@ static struct {
 } err_levels[] = {
 	[S_ERROR]  = { .string = "Error",	.loglevel = LOG_ERR },
 	[S_WARN]   = { .string = "Warning",	.loglevel = LOG_WARNING },
-	[S_REPAIR] = { .string = "Repaired",	.loglevel = LOG_WARNING },
 	[S_INFO]   = { .string = "Info",	.loglevel = LOG_INFO },
+	[S_REPAIR] = { .string = "Repaired",	.loglevel = LOG_INFO },
 	[S_PREEN]  = { .string = "Optimized",	.loglevel = LOG_INFO }
 };
 
