@@ -314,7 +314,6 @@ bitmap_clear(
 }
 #endif
 
-#ifdef DEBUG
 /* Iterate the set regions of this bitmap. */
 int
 bitmap_iterate(
@@ -337,7 +336,6 @@ bitmap_iterate(
 
 	return error;
 }
-#endif
 
 /* Iterate the set regions of part of this bitmap. */
 int

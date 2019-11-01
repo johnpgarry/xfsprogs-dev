@@ -74,6 +74,27 @@ xfs_disk_to_dev(
 	abort();
 }
 
+/* Find the incore bad blocks bitmap for a given disk. */
+static struct bitmap *
+bitmap_for_disk(
+	struct scrub_ctx		*ctx,
+	struct disk			*disk,
+	struct media_verify_state	*vs)
+{
+	dev_t				dev = xfs_disk_to_dev(ctx, disk);
+
+	if (dev == ctx->fsinfo.fs_datadev)
+		return vs->d_bad;
+	else if (dev == ctx->fsinfo.fs_rtdev)
+		return vs->r_bad;
+	return NULL;
+}
+
+struct disk_ioerr_report {
+	struct scrub_ctx	*ctx;
+	struct disk		*disk;
+};
+
 struct owner_decode {
 	uint64_t		owner;
 	const char		*descr;
@@ -341,27 +362,9 @@ out:
 	return moveon;
 }
 
-/* Given bad extent lists for the data & rtdev, find bad files. */
+/* Use a fsmap to report metadata lost to a media error. */
 static bool
-xfs_report_verify_errors(
-	struct scrub_ctx		*ctx,
-	struct media_verify_state	*vs)
-{
-	bool				moveon;
-
-	/* Scan the directory tree to get file paths. */
-	moveon = scan_fs_tree(ctx, xfs_report_verify_dir,
-			xfs_report_verify_dirent, vs);
-	if (!moveon)
-		return false;
-
-	/* Scan for unlinked files. */
-	return xfs_scan_all_inodes(ctx, xfs_report_verify_inode, vs);
-}
-
-/* Report an IO error resulting from read-verify based off getfsmap. */
-static bool
-xfs_check_rmap_error_report(
+report_ioerr_fsmap(
 	struct scrub_ctx	*ctx,
 	const char		*descr,
 	struct fsmap		*map,
@@ -410,44 +413,24 @@ xfs_check_rmap_error_report(
 }
 
 /*
- * Remember a read error for later, and see if rmap will tell us about the
- * owner ahead of time.
+ * For a range of bad blocks, visit each space mapping that overlaps the bad
+ * range so that we can report lost metadata.
  */
-static void
-xfs_check_rmap_ioerr(
-	struct scrub_ctx		*ctx,
-	struct disk			*disk,
+static int
+report_ioerr(
 	uint64_t			start,
 	uint64_t			length,
-	int				error,
 	void				*arg)
 {
 	struct fsmap			keys[2];
 	char				descr[DESCR_BUFSZ];
-	struct media_verify_state	*vs = arg;
-	struct bitmap			*tree;
+	struct disk_ioerr_report	*dioerr = arg;
 	dev_t				dev;
-	int				ret;
 
-	dev = xfs_disk_to_dev(ctx, disk);
+	dev = xfs_disk_to_dev(dioerr->ctx, dioerr->disk);
 
-	/*
-	 * If we don't have parent pointers, save the bad extent for
-	 * later rescanning.
-	 */
-	if (dev == ctx->fsinfo.fs_datadev)
-		tree = vs->d_bad;
-	else if (dev == ctx->fsinfo.fs_rtdev)
-		tree = vs->r_bad;
-	else
-		tree = NULL;
-	if (tree) {
-		ret = bitmap_set(tree, start, length);
-		if (ret)
-			str_liberror(ctx, ret, _("setting bad block bitmap"));
-	}
-
-	snprintf(descr, DESCR_BUFSZ, _("dev %d:%d ioerr @ %"PRIu64":%"PRIu64" "),
+	snprintf(descr, DESCR_BUFSZ,
+_("dev %d:%d ioerr @ %"PRIu64":%"PRIu64" "),
 			major(dev), minor(dev), start, length);
 
 	/* Go figure out which blocks are bad from the fsmap. */
@@ -459,8 +442,61 @@ xfs_check_rmap_ioerr(
 	(keys + 1)->fmr_owner = ULLONG_MAX;
 	(keys + 1)->fmr_offset = ULLONG_MAX;
 	(keys + 1)->fmr_flags = UINT_MAX;
-	xfs_iterate_fsmap(ctx, descr, keys, xfs_check_rmap_error_report,
+	xfs_iterate_fsmap(dioerr->ctx, descr, keys, report_ioerr_fsmap,
 			&start);
+	return 0;
+}
+
+/* Report all the media errors found on a disk. */
+static int
+report_disk_ioerrs(
+	struct scrub_ctx		*ctx,
+	struct disk			*disk,
+	struct media_verify_state	*vs)
+{
+	struct disk_ioerr_report	dioerr = {
+		.ctx			= ctx,
+		.disk			= disk,
+	};
+	struct bitmap			*tree;
+
+	if (!disk)
+		return 0;
+	tree = bitmap_for_disk(ctx, disk, vs);
+	if (!tree)
+		return 0;
+	return bitmap_iterate(tree, report_ioerr, &dioerr);
+}
+
+/* Given bad extent lists for the data & rtdev, find bad files. */
+static bool
+report_all_media_errors(
+	struct scrub_ctx		*ctx,
+	struct media_verify_state	*vs)
+{
+	bool				moveon;
+	int				ret;
+
+	ret = report_disk_ioerrs(ctx, ctx->datadev, vs);
+	if (ret) {
+		str_liberror(ctx, ret, _("walking datadev io errors"));
+		return false;
+	}
+
+	ret = report_disk_ioerrs(ctx, ctx->rtdev, vs);
+	if (ret) {
+		str_liberror(ctx, ret, _("walking rtdev io errors"));
+		return false;
+	}
+
+	/* Scan the directory tree to get file paths. */
+	moveon = scan_fs_tree(ctx, xfs_report_verify_dir,
+			xfs_report_verify_dirent, vs);
+	if (!moveon)
+		return false;
+
+	/* Scan for unlinked files. */
+	return xfs_scan_all_inodes(ctx, xfs_report_verify_inode, vs);
 }
 
 /* Schedule a read-verify of a (data block) extent. */
@@ -542,6 +578,31 @@ out_destroy:
 	return ret;
 }
 
+/* Remember a media error for later. */
+static void
+remember_ioerr(
+	struct scrub_ctx		*ctx,
+	struct disk			*disk,
+	uint64_t			start,
+	uint64_t			length,
+	int				error,
+	void				*arg)
+{
+	struct media_verify_state	*vs = arg;
+	struct bitmap			*tree;
+	int				ret;
+
+	tree = bitmap_for_disk(ctx, disk, vs);
+	if (!tree) {
+		str_liberror(ctx, ENOENT, _("finding bad block bitmap"));
+		return;
+	}
+
+	ret = bitmap_set(tree, start, length);
+	if (ret)
+		str_liberror(ctx, ret, _("setting bad block bitmap"));
+}
+
 /*
  * Read verify all the file data blocks in a filesystem.  Since XFS doesn't
  * do data checksums, we trust that the underlying storage will pass back
@@ -571,7 +632,7 @@ xfs_scan_blocks(
 	}
 
 	ret = read_verify_pool_alloc(ctx, ctx->datadev,
-			ctx->mnt.fsgeom.blocksize, xfs_check_rmap_ioerr,
+			ctx->mnt.fsgeom.blocksize, remember_ioerr,
 			scrub_nproc(ctx), &vs.rvp_data);
 	if (ret) {
 		str_liberror(ctx, ret, _("creating datadev media verifier"));
@@ -579,7 +640,7 @@ xfs_scan_blocks(
 	}
 	if (ctx->logdev) {
 		ret = read_verify_pool_alloc(ctx, ctx->logdev,
-				ctx->mnt.fsgeom.blocksize, xfs_check_rmap_ioerr,
+				ctx->mnt.fsgeom.blocksize, remember_ioerr,
 				scrub_nproc(ctx), &vs.rvp_log);
 		if (ret) {
 			str_liberror(ctx, ret,
@@ -589,7 +650,7 @@ xfs_scan_blocks(
 	}
 	if (ctx->rtdev) {
 		ret = read_verify_pool_alloc(ctx, ctx->rtdev,
-				ctx->mnt.fsgeom.blocksize, xfs_check_rmap_ioerr,
+				ctx->mnt.fsgeom.blocksize, remember_ioerr,
 				scrub_nproc(ctx), &vs.rvp_realtime);
 		if (ret) {
 			str_liberror(ctx, ret,
@@ -621,7 +682,7 @@ xfs_scan_blocks(
 
 	/* Scan the whole dir tree to see what matches the bad extents. */
 	if (moveon && (!bitmap_empty(vs.d_bad) || !bitmap_empty(vs.r_bad)))
-		moveon = xfs_report_verify_errors(ctx, &vs);
+		moveon = report_all_media_errors(ctx, &vs);
 
 	bitmap_free(&vs.r_bad);
 	bitmap_free(&vs.d_bad);
