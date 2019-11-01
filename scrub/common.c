@@ -33,13 +33,20 @@ bool
 xfs_scrub_excessive_errors(
 	struct scrub_ctx	*ctx)
 {
-	bool			ret;
+	unsigned long long	errors_seen;
+
+	/*
+	 * We only set max_errors at the start of the program, so it's safe to
+	 * access it locklessly.
+	 */
+	if (ctx->max_errors == 0)
+		return false;
 
 	pthread_mutex_lock(&ctx->lock);
-	ret = ctx->max_errors > 0 && ctx->corruptions_found >= ctx->max_errors;
+	errors_seen = ctx->corruptions_found;
 	pthread_mutex_unlock(&ctx->lock);
 
-	return ret;
+	return errors_seen >= ctx->max_errors;
 }
 
 static struct {
