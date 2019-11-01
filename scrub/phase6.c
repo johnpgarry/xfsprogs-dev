@@ -111,6 +111,41 @@ xfs_decode_special_owner(
 
 /* Routines to translate bad physical extents into file paths and offsets. */
 
+struct badfile_report {
+	struct scrub_ctx	*ctx;
+	const char		*descr;
+	struct xfs_bmap		*bmap;
+};
+
+/* Report on bad extents found during a media scan. */
+static int
+report_badfile(
+	uint64_t		start,
+	uint64_t		length,
+	void			*arg)
+{
+	struct badfile_report	*br = arg;
+	unsigned long long	bad_offset;
+	unsigned long long	bad_length;
+
+	/* Clamp the bad region to the file mapping. */
+	if (start < br->bmap->bm_physical) {
+		length -= br->bmap->bm_physical - start;
+		start = br->bmap->bm_physical;
+	}
+	length = min(length, br->bmap->bm_length);
+
+	/* Figure out how far into the bmap is the bad mapping and report it. */
+	bad_offset = start - br->bmap->bm_physical;
+	bad_length = min(start + length,
+			 br->bmap->bm_physical + br->bmap->bm_length) - start;
+
+	str_error(br->ctx, br->descr,
+_("media error at data offset %llu length %llu."),
+			br->bmap->bm_offset + bad_offset, bad_length);
+	return 0;
+}
+
 /* Report if this extent overlaps a bad region. */
 static bool
 report_data_loss(
@@ -122,8 +157,14 @@ report_data_loss(
 	struct xfs_bmap			*bmap,
 	void				*arg)
 {
+	struct badfile_report		br = {
+		.ctx			= ctx,
+		.descr			= descr,
+		.bmap			= bmap,
+	};
 	struct media_verify_state	*vs = arg;
 	struct bitmap			*bmp;
+	int				ret;
 
 	/* Only report errors for real extents. */
 	if (bmap->bm_flags & (BMV_OF_PREALLOC | BMV_OF_DELALLOC))
@@ -134,11 +175,12 @@ report_data_loss(
 	else
 		bmp = vs->d_bad;
 
-	if (!bitmap_test(bmp, bmap->bm_physical, bmap->bm_length))
-		return true;
-
-	str_error(ctx, descr,
-_("offset %llu failed read verification."), bmap->bm_offset);
+	ret = bitmap_iterate_range(bmp, bmap->bm_physical, bmap->bm_length,
+			report_badfile, &br);
+	if (ret) {
+		str_liberror(ctx, ret, descr);
+		return false;
+	}
 	return true;
 }
 
