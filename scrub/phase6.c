@@ -113,7 +113,7 @@ xfs_decode_special_owner(
 
 /* Report if this extent overlaps a bad region. */
 static bool
-xfs_report_verify_inode_bmap(
+report_data_loss(
 	struct scrub_ctx		*ctx,
 	const char			*descr,
 	int				fd,
@@ -142,6 +142,40 @@ _("offset %llu failed read verification."), bmap->bm_offset);
 	return true;
 }
 
+/* Report if the extended attribute data overlaps a bad region. */
+static bool
+report_attr_loss(
+	struct scrub_ctx		*ctx,
+	const char			*descr,
+	int				fd,
+	int				whichfork,
+	struct fsxattr			*fsx,
+	struct xfs_bmap			*bmap,
+	void				*arg)
+{
+	struct media_verify_state	*vs = arg;
+	struct bitmap			*bmp = vs->d_bad;
+
+	/* Complain about attr fork extents that don't look right. */
+	if (bmap->bm_flags & (BMV_OF_PREALLOC | BMV_OF_DELALLOC)) {
+		str_info(ctx, descr,
+_("found unexpected unwritten/delalloc attr fork extent."));
+		return true;
+	}
+
+	if (fsx->fsx_xflags & FS_XFLAG_REALTIME) {
+		str_info(ctx, descr,
+_("found unexpected realtime attr fork extent."));
+		return true;
+	}
+
+	if (bitmap_test(bmp, bmap->bm_physical, bmap->bm_length))
+		str_error(ctx, descr,
+_("media error in extended attribute data."));
+
+	return true;
+}
+
 /* Iterate the extent mappings of a file to report errors. */
 static bool
 xfs_report_verify_fd(
@@ -155,16 +189,13 @@ xfs_report_verify_fd(
 
 	/* data fork */
 	moveon = xfs_iterate_filemaps(ctx, descr, fd, XFS_DATA_FORK, &key,
-			xfs_report_verify_inode_bmap, arg);
+			report_data_loss, arg);
 	if (!moveon)
 		return false;
 
 	/* attr fork */
-	moveon = xfs_iterate_filemaps(ctx, descr, fd, XFS_ATTR_FORK, &key,
-			xfs_report_verify_inode_bmap, arg);
-	if (!moveon)
-		return false;
-	return true;
+	return xfs_iterate_filemaps(ctx, descr, fd, XFS_ATTR_FORK, &key,
+			report_attr_loss, arg);
 }
 
 /* Report read verify errors in unlinked (but still open) files. */
