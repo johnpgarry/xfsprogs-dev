@@ -141,7 +141,7 @@ retry:
 			return CHECK_DONE;
 		case ESHUTDOWN:
 			/* FS already crashed, give up. */
-			str_info(ctx, buf,
+			str_error(ctx, buf,
 _("Filesystem is shut down, aborting."));
 			return CHECK_ABORT;
 		case EIO:
@@ -157,8 +157,7 @@ _("Filesystem is shut down, aborting."));
 			 * The first two should never escape the kernel,
 			 * and the other two should be reported via sm_flags.
 			 */
-			str_info(ctx, buf,
-_("Kernel bug!  errno=%d"), code);
+			str_liberror(ctx, code, _("Kernel bug"));
 			/* fall through */
 		default:
 			/* Operational error. */
@@ -702,7 +701,7 @@ _("Filesystem is busy, deferring repair."));
 			return CHECK_RETRY;
 		case ESHUTDOWN:
 			/* Filesystem is already shut down, abort. */
-			str_info(ctx, buf,
+			str_error(ctx, buf,
 _("Filesystem is shut down, aborting."));
 			return CHECK_ABORT;
 		case ENOTTY:
@@ -733,9 +732,9 @@ _("Don't know how to fix; offline repair required."));
 		case EROFS:
 			/* Read-only filesystem, can't fix. */
 			if (verbose || debug || needs_repair(&oldm))
-				str_info(ctx, buf,
+				str_error(ctx, buf,
 _("Read-only filesystem; cannot make changes."));
-			return CHECK_DONE;
+			return CHECK_ABORT;
 		case ENOENT:
 			/* Metadata not present, just skip it. */
 			return CHECK_DONE;

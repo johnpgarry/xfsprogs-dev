@@ -88,7 +88,7 @@ xfs_setup_fs(
 			O_RDONLY | O_NOATIME | O_DIRECTORY);
 	if (error) {
 		if (error == EPERM)
-			str_info(ctx, ctx->mntpoint,
+			str_error(ctx, ctx->mntpoint,
 _("Must be root to run scrub."));
 		else if (error == ENOTTY)
 			str_error(ctx, ctx->mntpoint,
@@ -143,26 +143,26 @@ _("Not an XFS filesystem."));
 	    !xfs_can_scrub_bmap(ctx) || !xfs_can_scrub_dir(ctx) ||
 	    !xfs_can_scrub_attr(ctx) || !xfs_can_scrub_symlink(ctx) ||
 	    !xfs_can_scrub_parent(ctx)) {
-		str_info(ctx, ctx->mntpoint,
+		str_error(ctx, ctx->mntpoint,
 _("Kernel metadata scrubbing facility is not available."));
 		return false;
 	}
 
 	/* Do we need kernel-assisted metadata repair? */
 	if (ctx->mode != SCRUB_MODE_DRY_RUN && !xfs_can_repair(ctx)) {
-		str_info(ctx, ctx->mntpoint,
+		str_error(ctx, ctx->mntpoint,
 _("Kernel metadata repair facility is not available.  Use -n to scrub."));
 		return false;
 	}
 
 	/* Did we find the log and rt devices, if they're present? */
 	if (ctx->mnt.fsgeom.logstart == 0 && ctx->fsinfo.fs_log == NULL) {
-		str_info(ctx, ctx->mntpoint,
+		str_error(ctx, ctx->mntpoint,
 _("Unable to find log device path."));
 		return false;
 	}
 	if (ctx->mnt.fsgeom.rtblocks && ctx->fsinfo.fs_rt == NULL) {
-		str_info(ctx, ctx->mntpoint,
+		str_error(ctx, ctx->mntpoint,
 _("Unable to find realtime device path."));
 		return false;
 	}
