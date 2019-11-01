@@ -138,6 +138,10 @@ construct_records_per_block(
 		perror(p);
 		goto out;
 	}
+	if (record_size == 0) {
+		fprintf(stderr, _("%s: record size cannot be zero.\n"), tag);
+		goto out;
+	}
 
 	p = strtok(NULL, ":");
 	if (!p) {
@@ -149,6 +153,10 @@ construct_records_per_block(
 		perror(p);
 		goto out;
 	}
+	if (key_size == 0) {
+		fprintf(stderr, _("%s: key size cannot be zero.\n"), tag);
+		goto out;
+	}
 
 	p = strtok(NULL, ":");
 	if (!p) {
@@ -158,6 +166,10 @@ construct_records_per_block(
 	ptr_size = cvt_u16(p, 0);
 	if (errno) {
 		perror(p);
+		goto out;
+	}
+	if (ptr_size == 0) {
+		fprintf(stderr, _("%s: pointer size cannot be zero.\n"), tag);
 		goto out;
 	}
 
@@ -177,6 +189,27 @@ construct_records_per_block(
 	else {
 		fprintf(stderr, _("%s: unrecognized btree header type."),
 				p);
+		goto out;
+	}
+
+	if (record_size > blocksize) {
+		fprintf(stderr,
+_("%s: record size must be less than selected block size (%u bytes).\n"),
+			tag, blocksize);
+		goto out;
+	}
+
+	if (key_size > blocksize) {
+		fprintf(stderr,
+_("%s: key size must be less than selected block size (%u bytes).\n"),
+			tag, blocksize);
+		goto out;
+	}
+
+	if (ptr_size > blocksize) {
+		fprintf(stderr,
+_("%s: pointer size must be less than selected block size (%u bytes).\n"),
+			tag, blocksize);
 		goto out;
 	}
 
@@ -211,13 +244,24 @@ report(
 	int			ret;
 
 	ret = construct_records_per_block(tag, blocksize, records_per_block);
-	if (ret) {
-		printf(_("%s: Unable to determine records per block.\n"),
-				tag);
+	if (ret)
 		return;
-	}
 
 	if (report_what & REPORT_MAX) {
+		if (records_per_block[0] < 2) {
+			fprintf(stderr,
+_("%s: cannot calculate best case scenario due to leaf geometry underflow.\n"),
+				tag);
+			return;
+		}
+
+		if (records_per_block[1] < 4) {
+			fprintf(stderr,
+_("%s: cannot calculate best case scenario due to node geometry underflow.\n"),
+				tag);
+			return;
+		}
+
 		printf(
 _("%s: best case per %u-byte block: %u records (leaf) / %u keyptrs (node)\n"),
 				tag, blocksize, records_per_block[0],
@@ -229,6 +273,20 @@ _("%s: best case per %u-byte block: %u records (leaf) / %u keyptrs (node)\n"),
 	if (report_what & REPORT_MIN) {
 		records_per_block[0] /= 2;
 		records_per_block[1] /= 2;
+
+		if (records_per_block[0] < 1) {
+			fprintf(stderr,
+_("%s: cannot calculate worst case scenario due to leaf geometry underflow.\n"),
+				tag);
+			return;
+		}
+
+		if (records_per_block[1] < 2) {
+			fprintf(stderr,
+_("%s: cannot calculate worst case scenario due to node geometry underflow.\n"),
+				tag);
+			return;
+		}
 
 		printf(
 _("%s: worst case per %u-byte block: %u records (leaf) / %u keyptrs (node)\n"),
@@ -284,8 +342,26 @@ btheight_f(
 		}
 	}
 
-	if (argc == optind || blocksize <= 0 || blocksize > INT_MAX ||
-	    nr_records == 0) {
+	if (nr_records == 0) {
+		fprintf(stderr,
+_("Number of records must be greater than zero.\n"));
+		return 0;
+	}
+
+	if (blocksize > INT_MAX) {
+		fprintf(stderr,
+_("The largest block size this command will consider is %u bytes.\n"),
+			INT_MAX);
+		return 0;
+	}
+
+	if (blocksize < 128) {
+		fprintf(stderr,
+_("The smallest block size this command will consider is 128 bytes.\n"));
+		return 0;
+	}
+
+	if (argc == optind) {
 		btheight_help();
 		return 0;
 	}
