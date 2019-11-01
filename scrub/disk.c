@@ -22,6 +22,7 @@
 #include "xfs_scrub.h"
 #include "common.h"
 #include "disk.h"
+#include "platform_defs.h"
 
 #ifndef BLKROTATIONAL
 # define BLKROTATIONAL	_IO(0x12, 126)
@@ -42,6 +43,7 @@ __disk_heads(
 {
 	int			iomin;
 	int			ioopt;
+	int			nproc = platform_nproc();
 	unsigned short		rot;
 	int			error;
 
