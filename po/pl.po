@@ -7466,7 +7466,7 @@ msgstr "%s: błąd - wykonano pwrite tylko %d z %d bajtów\n"
 
 #: .././libxfs/rdwr.c:1138
 #, c-format
-msgid "%s: write verifer failed on %s bno 0x%llx/0x%x\n"
+msgid "%s: write verifier failed on %s bno 0x%llx/0x%x\n"
 msgstr "%s: weryfikacja zapisu nie powiodła się na %s bno 0x%llx/0x%x\n"
 
 #: .././libxfs/trans.c:733

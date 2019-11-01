@@ -1117,7 +1117,7 @@ libxfs_writebufr(xfs_buf_t *bp)
 		bp->b_ops->verify_write(bp);
 		if (bp->b_error) {
 			fprintf(stderr,
-	_("%s: write verifer failed on %s bno 0x%llx/0x%x\n"),
+	_("%s: write verifier failed on %s bno 0x%llx/0x%x\n"),
 				__func__, bp->b_ops->name,
 				(long long)bp->b_bn, bp->b_bcount);
 			return bp->b_error;
