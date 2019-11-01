@@ -3481,8 +3481,11 @@ initialise_ag_freespace(
 	libxfs_alloc_fix_freelist(&args, 0);
 	libxfs_perag_put(args.pag);
 	c = -libxfs_trans_commit(tp);
-	if (c)
-		res_failed(c);
+	if (c) {
+		errno = c;
+		perror(_("initializing AG free space list"));
+		exit(1);
+	}
 }
 
 /*
