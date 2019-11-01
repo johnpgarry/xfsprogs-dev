@@ -80,6 +80,7 @@ read_verify_pool_alloc(
 	struct read_verify_pool		**prvp)
 {
 	struct read_verify_pool		*rvp;
+	unsigned int			verifier_threads = disk_heads(disk);
 	int				ret;
 
 	/*
@@ -99,7 +100,7 @@ read_verify_pool_alloc(
 			RVP_IO_MAX_SIZE);
 	if (ret)
 		goto out_free;
-	ret = ptcounter_alloc(nproc, &rvp->verified_bytes);
+	ret = ptcounter_alloc(verifier_threads, &rvp->verified_bytes);
 	if (ret)
 		goto out_buf;
 	rvp->miniosz = miniosz;
@@ -110,11 +111,8 @@ read_verify_pool_alloc(
 			&rvp->rvstate);
 	if (ret)
 		goto out_counter;
-	/* Run in the main thread if we only want one thread. */
-	if (nproc == 1)
-		nproc = 0;
 	ret = workqueue_create(&rvp->wq, (struct xfs_mount *)rvp,
-			disk_heads(disk));
+			verifier_threads == 1 ? 0 : verifier_threads);
 	if (ret)
 		goto out_rvstate;
 	*prvp = rvp;
