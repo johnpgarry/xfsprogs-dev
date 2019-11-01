@@ -171,10 +171,10 @@ report_sick(
 	for (f = maps; f->mask != 0; f++) {
 		if (f->has_fn && !f->has_fn(&file->xfd.fsgeom))
 			continue;
-		if (!(checked & f->mask))
+		bad = sick & f->mask;
+		if (!bad && !(checked & f->mask))
 			continue;
 		reported++;
-		bad = sick & f->mask;
 		if (!bad && quiet)
 			continue;
 		printf("%s %s: %s\n", descr, _(f->descr),
