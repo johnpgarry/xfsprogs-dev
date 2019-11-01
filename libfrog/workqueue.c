@@ -142,8 +142,11 @@ workqueue_add(
 	if (wq->next_item == NULL) {
 		assert(wq->item_count == 0);
 		ret = pthread_cond_signal(&wq->wakeup);
-		if (ret)
-			goto out_item;
+		if (ret) {
+			pthread_mutex_unlock(&wq->lock);
+			free(wi);
+			return ret;
+		}
 		wq->next_item = wi;
 	} else {
 		wq->last_item->next = wi;
@@ -153,9 +156,6 @@ workqueue_add(
 	pthread_mutex_unlock(&wq->lock);
 
 	return 0;
-out_item:
-	free(wi);
-	return ret;
 }
 
 /*
