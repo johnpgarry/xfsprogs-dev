@@ -303,6 +303,10 @@ disk_simulate_read_error(
 		interval = strtoull(p, NULL, 10);
 		interval &= ~((1U << disk->d_lbalog) - 1);
 	}
+	if (interval <= 0) {
+		interval = -1;
+		return 0;
+	}
 
 	/*
 	 * We simulate disk errors by pretending that there are media errors at
