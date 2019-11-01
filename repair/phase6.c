@@ -1354,7 +1354,8 @@ longform_dir2_rebuild(
 
 	error = dir_binval(tp, ip, XFS_DATA_FORK);
 	if (error)
-		res_failed(error);
+		do_error(_("error %d invalidating directory %llu blocks\n"),
+				error, (unsigned long long)ip->i_ino);
 
 	if ((error = -libxfs_bmap_last_offset(ip, &lastblock, XFS_DATA_FORK)))
 		do_error(_("xfs_bmap_last_offset failed -- error - %d\n"),
@@ -2972,7 +2973,10 @@ process_dir_inode(
 					XFS_ILOG_CORE | XFS_ILOG_DDATA);
 				error = -libxfs_trans_commit(tp);
 				if (error)
-					res_failed(error);
+					do_error(
+_("error %d fixing shortform directory %llu\n"),
+						error,
+						(unsigned long long)ip->i_ino);
 			} else  {
 				libxfs_trans_cancel(tp);
 			}
