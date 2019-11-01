@@ -6,6 +6,12 @@
 #ifndef XFS_SCRUB_INODES_H_
 #define XFS_SCRUB_INODES_H_
 
+/*
+ * Visit each space mapping of an inode fork.  Return 0 to continue iteration
+ * or a positive error code to interrupt iteraton.  If ESTALE is returned,
+ * iteration will be restarted from the beginning of the inode allocation
+ * group.  Any other non zero value will stop iteration.
+ */
 typedef int (*xfs_inode_iter_fn)(struct scrub_ctx *ctx,
 		struct xfs_handle *handle, struct xfs_bulkstat *bs, void *arg);
 

@@ -14,6 +14,10 @@ struct xfs_bmap {
 	uint32_t	bm_flags;	/* output flags */
 };
 
+/*
+ * Visit each inode fork mapping.  Return true to continue iteration or false
+ * to stop iterating and return to the caller.
+ */
 typedef bool (*xfs_bmap_iter_fn)(struct scrub_ctx *ctx, const char *descr,
 		int fd, int whichfork, struct fsxattr *fsx,
 		struct xfs_bmap *bmap, void *arg);

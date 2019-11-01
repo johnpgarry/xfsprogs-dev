@@ -6,8 +6,18 @@
 #ifndef XFS_SCRUB_VFS_H_
 #define XFS_SCRUB_VFS_H_
 
+/*
+ * Visit a subdirectory prior to iterating entries in that subdirectory.
+ * Return true to continue iteration or false to stop iterating and return to
+ * the caller.
+ */
 typedef bool (*scan_fs_tree_dir_fn)(struct scrub_ctx *, const char *,
 		int, void *);
+
+/*
+ * Visit each directory entry in a directory.  Return true to continue
+ * iteration or false to stop iterating and return to the caller.
+ */
 typedef bool (*scan_fs_tree_dirent_fn)(struct scrub_ctx *, const char *,
 		int, struct dirent *, struct stat *, void *);
 

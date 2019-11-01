@@ -6,6 +6,10 @@
 #ifndef XFS_SCRUB_SPACEMAP_H_
 #define XFS_SCRUB_SPACEMAP_H_
 
+/*
+ * Visit each space mapping in the filesystem.  Return true to continue
+ * iteration or false to stop iterating and return to the caller.
+ */
 typedef bool (*xfs_fsmap_iter_fn)(struct scrub_ctx *ctx, const char *descr,
 		struct fsmap *fsr, void *arg);
 
