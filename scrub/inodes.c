@@ -43,19 +43,37 @@
  */
 
 /*
- * Did we get exactly the inodes we expected?  If not, load them one at a
- * time (or fake it) into the bulkstat data.
+ * Run bulkstat on an entire inode allocation group, then check that we got
+ * exactly the inodes we expected.  If not, load them one at a time (or fake
+ * it) into the bulkstat data.
  */
 static void
-xfs_iterate_inodes_range_check(
+bulkstat_for_inumbers(
 	struct scrub_ctx	*ctx,
-	struct xfs_inumbers	*inumbers,
-	struct xfs_bulkstat	*bstat)
+	const char		*descr,
+	const struct xfs_inumbers *inumbers,
+	struct xfs_bulkstat_req	*breq)
 {
+	struct xfs_bulkstat	*bstat = breq->bulkstat;
 	struct xfs_bulkstat	*bs;
 	int			i;
 	int			error;
 
+	/* First we try regular bulkstat, for speed. */
+	breq->hdr.ino = inumbers->xi_startino;
+	breq->hdr.icount = inumbers->xi_alloccount;
+	error = xfrog_bulkstat(&ctx->mnt, breq);
+	if (error) {
+		char	errbuf[DESCR_BUFSZ];
+
+		str_info(ctx, descr, "%s",
+			 strerror_r(error, errbuf, DESCR_BUFSZ));
+	}
+
+	/*
+	 * Check each of the stats we got back to make sure we got the inodes
+	 * we asked for.
+	 */
 	for (i = 0, bs = bstat; i < XFS_INODES_PER_CHUNK; i++) {
 		if (!(inumbers->xi_allocmask & (1ULL << i)))
 			continue;
@@ -131,17 +149,7 @@ xfs_iterate_inodes_ag(
 		if (inumbers->xi_alloccount == 0)
 			goto igrp_retry;
 
-		breq->hdr.ino = inumbers->xi_startino;
-		breq->hdr.icount = inumbers->xi_alloccount;
-		error = xfrog_bulkstat(&ctx->mnt, breq);
-		if (error) {
-			char	errbuf[DESCR_BUFSZ];
-
-			str_info(ctx, descr, "%s", strerror_r(error,
-						errbuf, DESCR_BUFSZ));
-		}
-
-		xfs_iterate_inodes_range_check(ctx, inumbers, breq->bulkstat);
+		bulkstat_for_inumbers(ctx, descr, inumbers, breq);
 
 		/* Iterate all the inodes. */
 		for (i = 0, bs = breq->bulkstat;
