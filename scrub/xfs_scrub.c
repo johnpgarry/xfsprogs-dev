@@ -511,13 +511,22 @@ static void
 report_outcome(
 	struct scrub_ctx	*ctx)
 {
-	unsigned long long	total_errors;
+	unsigned long long	actionable_errors;
 
-	total_errors = ctx->corruptions_found + ctx->runtime_errors;
+	actionable_errors = ctx->corruptions_found + ctx->runtime_errors;
 
-	if (total_errors == 0 && ctx->warnings_found == 0) {
+	if (actionable_errors == 0 &&
+	    ctx->unfixable_errors == 0 &&
+	    ctx->warnings_found == 0) {
 		log_info(ctx, _("No problems found."));
 		return;
+	}
+
+	if (ctx->unfixable_errors) {
+		fprintf(stderr, _("%s: unfixable errors found: %llu\n"),
+				ctx->mntpoint, ctx->unfixable_errors);
+		log_err(ctx, _("unfixable errors found: %llu"),
+				ctx->unfixable_errors);
 	}
 
 	if (ctx->corruptions_found > 0) {
@@ -545,7 +554,7 @@ report_outcome(
 	 * setting up the scrub and we actually saw corruptions.  Warnings
 	 * are not corruptions.
 	 */
-	if (ctx->scrub_setup_succeeded && total_errors > 0) {
+	if (ctx->scrub_setup_succeeded && actionable_errors > 0) {
 		char		*msg;
 
 		if (ctx->mode == SCRUB_MODE_DRY_RUN)

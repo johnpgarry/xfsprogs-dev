@@ -43,7 +43,7 @@ xfs_scrub_excessive_errors(
 		return false;
 
 	pthread_mutex_lock(&ctx->lock);
-	errors_seen = ctx->corruptions_found;
+	errors_seen = ctx->corruptions_found + ctx->unfixable_errors;
 	pthread_mutex_unlock(&ctx->lock);
 
 	return errors_seen >= ctx->max_errors;
@@ -59,6 +59,10 @@ static struct {
 	},
 	[S_CORRUPT] = {
 		.string = "Corruption",
+		.loglevel = LOG_ERR,
+	},
+	[S_UNFIXABLE] = {
+		.string = "Unfixable Error",
 		.loglevel = LOG_ERR,
 	},
 	[S_WARN]   = {
@@ -136,6 +140,8 @@ out_record:
 		ctx->runtime_errors++;
 	else if (level == S_CORRUPT)
 		ctx->corruptions_found++;
+	else if (level == S_UNFIXABLE)
+		ctx->unfixable_errors++;
 	else if (level == S_WARN)
 		ctx->warnings_found++;
 	else if (level == S_REPAIR)
