@@ -48,7 +48,7 @@ xfs_count_inodes_ag(
 
 	ireq = xfrog_inumbers_alloc_req(64, 0);
 	if (!ireq) {
-		str_info(ctx, descr, _("Insufficient memory; giving up."));
+		str_liberror(ctx, ENOMEM, _("allocating inumbers request"));
 		return false;
 	}
 	xfrog_inumbers_set_ag(ireq, agno);

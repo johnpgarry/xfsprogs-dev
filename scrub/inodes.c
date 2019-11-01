@@ -126,13 +126,13 @@ xfs_iterate_inodes_ag(
 
 	breq = xfrog_bulkstat_alloc_req(XFS_INODES_PER_CHUNK, 0);
 	if (!breq) {
-		str_info(ctx, descr, _("Insufficient memory; giving up."));
+		str_liberror(ctx, ENOMEM, _("allocating bulkstat request"));
 		return false;
 	}
 
 	ireq = xfrog_inumbers_alloc_req(1, 0);
 	if (!ireq) {
-		str_info(ctx, descr, _("Insufficient memory; giving up."));
+		str_liberror(ctx, ENOMEM, _("allocating inumbers request"));
 		free(breq);
 		return false;
 	}

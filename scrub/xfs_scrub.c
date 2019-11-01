@@ -738,7 +738,7 @@ main(
 		str_info(&ctx, ctx.mntpoint, _("Too many errors; aborting."));
 
 	if (debug_tweak_on("XFS_SCRUB_FORCE_ERROR"))
-		str_error(&ctx, ctx.mntpoint, _("Injecting error."));
+		str_info(&ctx, ctx.mntpoint, _("Injecting error."));
 
 	/* Clean up scan data. */
 	moveon = xfs_cleanup_fs(&ctx);

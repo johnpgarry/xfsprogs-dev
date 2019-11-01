@@ -127,7 +127,7 @@ _("Not an XFS filesystem."));
 
 	if (!xfs_action_lists_alloc(ctx->mnt.fsgeom.agcount,
 				&ctx->action_lists)) {
-		str_error(ctx, ctx->mntpoint, _("Not enough memory."));
+		str_liberror(ctx, ENOMEM, _("allocating action lists"));
 		return false;
 	}
 
