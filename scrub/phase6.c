@@ -368,7 +368,7 @@ xfs_check_rmap_error_report(
 	void			*arg)
 {
 	const char		*type;
-	char			buf[32];
+	char			buf[DESCR_BUFSZ];
 	uint64_t		err_physical = *(uint64_t *)arg;
 	uint64_t		err_off;
 
@@ -377,14 +377,12 @@ xfs_check_rmap_error_report(
 	else
 		err_off = 0;
 
-	snprintf(buf, 32, _("disk offset %"PRIu64),
-			(uint64_t)BTOBB(map->fmr_physical + err_off));
-
+	/* Report special owners */
 	if (map->fmr_flags & FMR_OF_SPECIAL_OWNER) {
+		snprintf(buf, DESCR_BUFSZ, _("disk offset %"PRIu64),
+				(uint64_t)map->fmr_physical + err_off);
 		type = xfs_decode_special_owner(map->fmr_owner);
-		str_error(ctx, buf,
-_("%s failed read verification."),
-				type);
+		str_error(ctx, buf, _("media error in %s."), type);
 	}
 
 	/*

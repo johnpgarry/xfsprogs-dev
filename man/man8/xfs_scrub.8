@@ -101,6 +101,10 @@ Read all file data extents to look for disk errors.
 will issue O_DIRECT reads to the block device directly.
 If the block device is a SCSI disk, it will instead issue READ VERIFY commands
 directly to the disk.
+If media errors are found, the error report will include the disk offset, in
+bytes.
+If the media errors affect a file, the report will also include the inode
+number and file offset, in bytes.
 These actions will confirm that all file data blocks can be read from storage.
 .SH OPTIMIZATIONS
 Optimizations supported by this program include, but are not limited to:
