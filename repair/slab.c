@@ -234,7 +234,7 @@ qsort_slab(
 		return;
 	}
 
-	create_work_queue(&wq, NULL, libxfs_nproc());
+	create_work_queue(&wq, NULL, platform_nproc());
 	hdr = slab->s_first;
 	while (hdr) {
 		qs = malloc(sizeof(struct qsort_slab));

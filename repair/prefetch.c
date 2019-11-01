@@ -1015,7 +1015,7 @@ do_inode_prefetch(
 	 */
 	if (check_cache && !libxfs_bcache_overflowed()) {
 		queue.wq_ctx = mp;
-		create_work_queue(&queue, mp, libxfs_nproc());
+		create_work_queue(&queue, mp, platform_nproc());
 		for (i = 0; i < mp->m_sb.sb_agcount; i++)
 			queue_work(&queue, func, i, NULL);
 		destroy_work_queue(&queue);

@@ -235,7 +235,7 @@ process_rmap_data(
 	if (!rmap_needs_work(mp))
 		return;
 
-	create_work_queue(&wq, mp, libxfs_nproc());
+	create_work_queue(&wq, mp, platform_nproc());
 	for (i = 0; i < mp->m_sb.sb_agcount; i++)
 		queue_work(&wq, check_rmap_btrees, i, NULL);
 	destroy_work_queue(&wq);
@@ -243,12 +243,12 @@ process_rmap_data(
 	if (!xfs_sb_version_hasreflink(&mp->m_sb))
 		return;
 
-	create_work_queue(&wq, mp, libxfs_nproc());
+	create_work_queue(&wq, mp, platform_nproc());
 	for (i = 0; i < mp->m_sb.sb_agcount; i++)
 		queue_work(&wq, compute_ag_refcounts, i, NULL);
 	destroy_work_queue(&wq);
 
-	create_work_queue(&wq, mp, libxfs_nproc());
+	create_work_queue(&wq, mp, platform_nproc());
 	for (i = 0; i < mp->m_sb.sb_agcount; i++) {
 		queue_work(&wq, process_inode_reflink_flags, i, NULL);
 		queue_work(&wq, check_refcount_btrees, i, NULL);

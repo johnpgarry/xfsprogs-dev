@@ -853,17 +853,6 @@ libxfs_report(FILE *fp)
 	fprintf(fp, "%s", c);
 }
 
-int
-libxfs_nproc(void)
-{
-	int	nr;
-
-	nr = platform_nproc();
-	if (nr < 1)
-		nr = 1;
-	return nr;
-}
-
 unsigned long
 libxfs_physmem(void)
 {
