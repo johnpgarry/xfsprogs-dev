@@ -46,11 +46,26 @@ static struct {
 	const char *string;
 	int loglevel;
 } err_levels[] = {
-	[S_ERROR]  = { .string = "Error",	.loglevel = LOG_ERR },
-	[S_WARN]   = { .string = "Warning",	.loglevel = LOG_WARNING },
-	[S_INFO]   = { .string = "Info",	.loglevel = LOG_INFO },
-	[S_REPAIR] = { .string = "Repaired",	.loglevel = LOG_INFO },
-	[S_PREEN]  = { .string = "Optimized",	.loglevel = LOG_INFO }
+	[S_ERROR]  = {
+		.string = "Error",
+		.loglevel = LOG_ERR,
+	},
+	[S_WARN]   = {
+		.string = "Warning",
+		.loglevel = LOG_WARNING,
+	},
+	[S_INFO]   = {
+		.string = "Info",
+		.loglevel = LOG_INFO,
+	},
+	[S_REPAIR] = {
+		.string = "Repaired",
+		.loglevel = LOG_INFO,
+	},
+	[S_PREEN]  = {
+		.string = "Optimized",
+		.loglevel = LOG_INFO,
+	},
 };
 
 /* If stream is a tty, clear to end of line to clean up progress bar. */
