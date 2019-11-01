@@ -852,9 +852,3 @@ libxfs_report(FILE *fp)
 	c = asctime(localtime(&t));
 	fprintf(fp, "%s", c);
 }
-
-unsigned long
-libxfs_physmem(void)
-{
-	return platform_physmem();
-}

@@ -852,7 +852,7 @@ main(int argc, char **argv)
 					(mp->m_sb.sb_dblocks >> (10 + 1)) +
 					50000;	/* rough estimate of 50MB overhead */
 		max_mem = max_mem_specified ? max_mem_specified * 1024 :
-						libxfs_physmem() * 3 / 4;
+					      platform_physmem() * 3 / 4;
 
 		if (getrlimit(RLIMIT_AS, &rlim) != -1 &&
 					rlim.rlim_cur != RLIM_INFINITY) {

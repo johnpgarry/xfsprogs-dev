@@ -160,9 +160,6 @@ extern void cmn_err(int, char *, ...);
 enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 #endif
 
-
-extern unsigned long	libxfs_physmem(void);	/* in kilobytes */
-
 #include "xfs_ialloc.h"
 
 #include "xfs_attr_leaf.h"
