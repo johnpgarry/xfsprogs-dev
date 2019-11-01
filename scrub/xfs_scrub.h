@@ -73,7 +73,7 @@ struct scrub_ctx {
 	struct xfs_action_list	*action_lists;
 	unsigned long long	max_errors;
 	unsigned long long	runtime_errors;
-	unsigned long long	errors_found;
+	unsigned long long	corruptions_found;
 	unsigned long long	warnings_found;
 	unsigned long long	inodes_checked;
 	unsigned long long	bytes_checked;

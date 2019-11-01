@@ -233,7 +233,7 @@ _("found unexpected realtime attr fork extent."));
 	}
 
 	if (bitmap_test(bmp, bmap->bm_physical, bmap->bm_length))
-		str_error(ctx, descr,
+		str_corrupt(ctx, descr,
 _("media error in extended attribute data."));
 
 	return true;
@@ -389,7 +389,7 @@ report_ioerr_fsmap(
 		snprintf(buf, DESCR_BUFSZ, _("disk offset %"PRIu64),
 				(uint64_t)map->fmr_physical + err_off);
 		type = xfs_decode_special_owner(map->fmr_owner);
-		str_error(ctx, buf, _("media error in %s."), type);
+		str_corrupt(ctx, buf, _("media error in %s."), type);
 	}
 
 	/* Report extent maps */
@@ -400,7 +400,7 @@ report_ioerr_fsmap(
 				map->fmr_owner, 0, " %s",
 				attr ? _("extended attribute") :
 				       _("file data"));
-		str_error(ctx, buf, _("media error in extent map"));
+		str_corrupt(ctx, buf, _("media error in extent map"));
 	}
 
 	/*

@@ -188,7 +188,7 @@ _("Kernel bug!  errno=%d"), code);
 	 */
 	if (is_corrupt(meta) || xref_disagrees(meta)) {
 		if (ctx->mode < SCRUB_MODE_REPAIR) {
-			str_error(ctx, buf,
+			str_corrupt(ctx, buf,
 _("Repairs are required."));
 			return CHECK_DONE;
 		}
@@ -727,7 +727,7 @@ _("Filesystem is shut down, aborting."));
 			/* fall through */
 		case EINVAL:
 			/* Kernel doesn't know how to repair this? */
-			str_error(ctx, buf,
+			str_corrupt(ctx, buf,
 _("Don't know how to fix; offline repair required."));
 			return CHECK_DONE;
 		case EROFS:
@@ -768,7 +768,7 @@ _("Read-only filesystem; cannot make changes."));
 		 */
 		if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED))
 			return CHECK_RETRY;
-		str_error(ctx, buf,
+		str_corrupt(ctx, buf,
 _("Repair unsuccessful; offline repair required."));
 	} else {
 		/* Clean operation, no corruption detected. */

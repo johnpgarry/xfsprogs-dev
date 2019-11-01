@@ -513,17 +513,25 @@ report_outcome(
 {
 	unsigned long long	total_errors;
 
-	total_errors = ctx->errors_found + ctx->runtime_errors;
+	total_errors = ctx->corruptions_found + ctx->runtime_errors;
 
 	if (total_errors == 0 && ctx->warnings_found == 0) {
 		log_info(ctx, _("No problems found."));
 		return;
 	}
 
-	if (total_errors > 0) {
-		fprintf(stderr, _("%s: errors found: %llu\n"), ctx->mntpoint,
-				total_errors);
-		log_err(ctx, _("errors found: %llu"), total_errors);
+	if (ctx->corruptions_found > 0) {
+		fprintf(stderr, _("%s: corruptions found: %llu\n"),
+				ctx->mntpoint, ctx->corruptions_found);
+		log_err(ctx, _("corruptions found: %llu"),
+				ctx->corruptions_found);
+	}
+
+	if (ctx->runtime_errors > 0) {
+		fprintf(stderr, _("%s: operational errors found: %llu\n"),
+				ctx->mntpoint, ctx->runtime_errors);
+		log_err(ctx, _("operational errors found: %llu"),
+				ctx->runtime_errors);
 	}
 
 	if (ctx->warnings_found > 0) {
@@ -745,7 +753,7 @@ out:
 	report_modifications(&ctx);
 	report_outcome(&ctx);
 
-	if (ctx.errors_found) {
+	if (ctx.corruptions_found) {
 		if (ctx.error_action == ERRORS_SHUTDOWN)
 			xfs_shutdown_fs(&ctx);
 		ret |= SCRUB_RET_CORRUPT;

@@ -36,7 +36,7 @@ xfs_scrub_excessive_errors(
 	bool			ret;
 
 	pthread_mutex_lock(&ctx->lock);
-	ret = ctx->max_errors > 0 && ctx->errors_found >= ctx->max_errors;
+	ret = ctx->max_errors > 0 && ctx->corruptions_found >= ctx->max_errors;
 	pthread_mutex_unlock(&ctx->lock);
 
 	return ret;
@@ -48,6 +48,10 @@ static struct {
 } err_levels[] = {
 	[S_ERROR]  = {
 		.string = "Error",
+		.loglevel = LOG_ERR,
+	},
+	[S_CORRUPT] = {
+		.string = "Corruption",
 		.loglevel = LOG_ERR,
 	},
 	[S_WARN]   = {
@@ -121,10 +125,10 @@ __str_out(
 		fflush(stream);
 
 out_record:
-	if (error)      /* A syscall failed */
+	if (error || level == S_ERROR)      /* A syscall failed */
 		ctx->runtime_errors++;
-	else if (level == S_ERROR)
-		ctx->errors_found++;
+	else if (level == S_CORRUPT)
+		ctx->corruptions_found++;
 	else if (level == S_WARN)
 		ctx->warnings_found++;
 	else if (level == S_REPAIR)
