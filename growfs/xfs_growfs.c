@@ -141,6 +141,9 @@ main(int argc, char **argv)
 	}
 
 	fs = fs_table_lookup_mount(rpath);
+	if (!fs)
+		fs = fs_table_lookup_blkdev(rpath);
+
 	if (!fs) {
 		fprintf(stderr, _("%s: %s is not a mounted XFS filesystem\n"),
 			progname, argv[optind]);

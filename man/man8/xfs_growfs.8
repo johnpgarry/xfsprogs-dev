@@ -35,7 +35,12 @@ xfs_growfs \- expand an XFS filesystem
 .B \-R
 .I size
 ]
+[
 .I mount-point
+|
+.I block-device
+]
+
 .br
 .B xfs_growfs \-V
 .SH DESCRIPTION
@@ -45,7 +50,10 @@ expands an existing XFS filesystem (see
 The
 .I mount-point
 argument is the pathname of the directory where the filesystem
-is mounted. The filesystem must be mounted to be grown (see
+is mounted. The
+.I block-device
+argument is the device name of a mounted XFS filesystem.
+The filesystem must be mounted to be grown (see
 .BR mount (8)).
 The existing contents of the filesystem are undisturbed, and the added space
 becomes available for additional file storage.
