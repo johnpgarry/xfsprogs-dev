@@ -8,6 +8,7 @@
 #include "input.h"
 #include "init.h"
 #include "io.h"
+#include "libfrog/logging.h"
 #include "libfrog/fsgeom.h"
 #include "libfrog/bulkstat.h"
 
@@ -44,8 +45,7 @@ imap_f(int argc, char **argv)
 	}
 
 	if (error) {
-		errno = error;
-		perror("xfsctl(XFS_IOC_FSINUMBERS)");
+		xfrog_perror(error, "xfsctl(XFS_IOC_FSINUMBERS)");
 		exitcode = 1;
 	}
 	free(ireq);

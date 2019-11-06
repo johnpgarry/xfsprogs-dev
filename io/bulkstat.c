@@ -7,6 +7,7 @@
 #include "platform_defs.h"
 #include "command.h"
 #include "init.h"
+#include "libfrog/logging.h"
 #include "libfrog/fsgeom.h"
 #include "libfrog/bulkstat.h"
 #include "libfrog/paths.h"
@@ -164,8 +165,7 @@ bulkstat_f(
 
 	ret = xfd_prepare_geometry(&xfd);
 	if (ret) {
-		errno = ret;
-		perror("xfd_prepare_geometry");
+		xfrog_perror(ret, "xfd_prepare_geometry");
 		exitcode = 1;
 		return 0;
 	}
@@ -202,8 +202,7 @@ _("bulkstat: startino=%lld flags=0x%x agno=%u ret=%d icount=%u ocount=%u\n"),
 		}
 	}
 	if (ret) {
-		errno = ret;
-		perror("xfrog_bulkstat");
+		xfrog_perror(ret, "xfrog_bulkstat");
 		exitcode = 1;
 	}
 
@@ -274,8 +273,7 @@ bulkstat_single_f(
 
 	ret = xfd_prepare_geometry(&xfd);
 	if (ret) {
-		errno = ret;
-		perror("xfd_prepare_geometry");
+		xfrog_perror(ret, "xfd_prepare_geometry");
 		exitcode = 1;
 		return 0;
 	}
@@ -309,8 +307,7 @@ bulkstat_single_f(
 
 		ret = xfrog_bulkstat_single(&xfd, ino, flags, &bulkstat);
 		if (ret) {
-			errno = ret;
-			perror("xfrog_bulkstat_single");
+			xfrog_perror(ret, "xfrog_bulkstat_single");
 			continue;
 		}
 
@@ -424,8 +421,7 @@ inumbers_f(
 
 	ret = xfd_prepare_geometry(&xfd);
 	if (ret) {
-		errno = ret;
-		perror("xfd_prepare_geometry");
+		xfrog_perror(ret, "xfd_prepare_geometry");
 		exitcode = 1;
 		return 0;
 	}
@@ -462,8 +458,7 @@ _("bulkstat: startino=%"PRIu64" flags=0x%"PRIx32" agno=%"PRIu32" ret=%d icount=%
 		}
 	}
 	if (ret) {
-		errno = ret;
-		perror("xfrog_inumbers");
+		xfrog_perror(ret, "xfrog_inumbers");
 		exitcode = 1;
 	}
 

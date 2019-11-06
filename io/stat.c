@@ -12,6 +12,7 @@
 #include "io.h"
 #include "statx.h"
 #include "libxfs.h"
+#include "libfrog/logging.h"
 #include "libfrog/fsgeom.h"
 
 #include <fcntl.h>
@@ -198,8 +199,7 @@ statfs_f(
 		return 0;
 	ret = xfrog_geometry(file->fd, &fsgeo);
 	if (ret) {
-		errno = ret;
-		perror("XFS_IOC_FSGEOMETRY");
+		xfrog_perror(ret, "XFS_IOC_FSGEOMETRY");
 	} else {
 		printf(_("geom.bsize = %u\n"), fsgeo.blocksize);
 		printf(_("geom.agcount = %u\n"), fsgeo.agcount);

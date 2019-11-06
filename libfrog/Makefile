@@ -19,6 +19,7 @@ crc32.c \
 fsgeom.c \
 list_sort.c \
 linux.c \
+logging.c \
 paths.c \
 projects.c \
 ptvar.c \
@@ -38,6 +39,7 @@ crc32cselftest.h \
 crc32defs.h \
 crc32table.h \
 fsgeom.h \
+logging.h \
 paths.h \
 projects.h \
 ptvar.h \

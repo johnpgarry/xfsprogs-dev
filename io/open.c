@@ -9,6 +9,7 @@
 #include "init.h"
 #include "io.h"
 #include "libxfs.h"
+#include "libfrog/logging.h"
 #include "libfrog/fsgeom.h"
 #include "libfrog/bulkstat.h"
 
@@ -125,8 +126,7 @@ openfile(
 
 		ret = xfrog_geometry(fd, geom);
 		if (ret) {
-			errno = ret;
-			perror("XFS_IOC_FSGEOMETRY");
+			xfrog_perror(ret, "XFS_IOC_FSGEOMETRY");
 			close(fd);
 			return -1;
 		}
@@ -696,8 +696,7 @@ get_last_inode(void)
 
 		ret = xfrog_inumbers(&xfd, ireq);
 		if (ret) {
-			errno = ret;
-			perror("XFS_IOC_FSINUMBERS");
+			xfrog_perror(ret, "XFS_IOC_FSINUMBERS");
 			goto out;
 		}
 
@@ -795,8 +794,7 @@ inode_f(
 		/* get next inode */
 		ret = xfrog_bulkstat(&xfd, breq);
 		if (ret) {
-			errno = ret;
-			perror("bulkstat");
+			xfrog_perror(ret, "bulkstat");
 			free(breq);
 			exitcode = 1;
 			return 0;
@@ -817,8 +815,7 @@ inode_f(
 			/* Not in use */
 			result_ino = 0;
 		} else if (ret) {
-			errno = ret;
-			perror("bulkstat_single");
+			xfrog_perror(ret, "bulkstat_single");
 			exitcode = 1;
 			return 0;
 		} else {

@@ -11,6 +11,7 @@
 #include <grp.h>
 #include "init.h"
 #include "quota.h"
+#include "libfrog/logging.h"
 #include "libfrog/fsgeom.h"
 #include "libfrog/bulkstat.h"
 
@@ -147,8 +148,7 @@ quot_bulkstat_mount(
 
 	ret = xfd_open(&fsxfd, fsdir, O_RDONLY);
 	if (ret) {
-		errno = ret;
-		perror(fsdir);
+		xfrog_perror(ret, fsdir);
 		return;
 	}
 
@@ -165,10 +165,8 @@ quot_bulkstat_mount(
 		for (i = 0; i < breq->hdr.ocount; i++)
 			quot_bulkstat_add(&breq->bulkstat[i], flags);
 	}
-	if (sts < 0) {
-		errno = sts;
-		perror("XFS_IOC_FSBULKSTAT");
-	}
+	if (sts < 0)
+		xfrog_perror(sts, "XFS_IOC_FSBULKSTAT");
 	free(breq);
 	xfd_close(&fsxfd);
 }

@@ -8,6 +8,7 @@
 #include "command.h"
 #include "init.h"
 #include "input.h"
+#include "libfrog/logging.h"
 #include "libfrog/paths.h"
 #include "libfrog/fsgeom.h"
 #include "libfrog/bulkstat.h"
@@ -193,8 +194,7 @@ report_ag_sick(
 
 	ret = xfrog_ag_geometry(file->xfd.fd, agno, &ageo);
 	if (ret) {
-		errno = ret;
-		perror("ag_geometry");
+		xfrog_perror(ret, "ag_geometry");
 		return 1;
 	}
 	snprintf(descr, sizeof(descr) - 1, _("AG %u"), agno);
@@ -219,8 +219,7 @@ report_inode_health(
 
 	ret = xfrog_bulkstat_single(&file->xfd, ino, 0, &bs);
 	if (ret) {
-		errno = ret;
-		perror(descr);
+		xfrog_perror(ret, descr);
 		return 1;
 	}
 
@@ -294,10 +293,8 @@ report_bulkstat_health(
 		}
 	} while (breq->hdr.ocount > 0);
 
-	if (error) {
-		errno = error;
-		perror("bulkstat");
-	}
+	if (error)
+		xfrog_perror(error, "bulkstat");
 
 	free(breq);
 	return error;

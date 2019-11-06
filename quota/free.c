@@ -8,6 +8,7 @@
 #include "command.h"
 #include "init.h"
 #include "quota.h"
+#include "libfrog/logging.h"
 #include "libfrog/fsgeom.h"
 
 static cmdinfo_t free_cmd;
@@ -70,8 +71,7 @@ mount_free_space_data(
 	if (!(mount->fs_flags & FS_FOREIGN)) {
 		ret = xfrog_geometry(fd, &fsgeo);
 		if (ret) {
-			errno = ret;
-			perror("XFS_IOC_FSGEOMETRY");
+			xfrog_perror(ret, "XFS_IOC_FSGEOMETRY");
 			close(fd);
 			return 0;
 		}

@@ -10,6 +10,7 @@
 #include "command.h"
 #include "input.h"
 #include "init.h"
+#include "libfrog/logging.h"
 #include "libfrog/paths.h"
 #include "libfrog/fsgeom.h"
 #include "space.h"
@@ -57,10 +58,8 @@ openfile(
 			fprintf(stderr,
 _("%s: Not on a mounted XFS filesystem.\n"),
 					path);
-		else {
-			errno = ret;
-			perror(path);
-		}
+		else
+			xfrog_perror(ret, path);
 		return -1;
 	}
 
