@@ -73,7 +73,7 @@ count_block_summary(
 
 /* Add all the summaries in the per-thread counter */
 static int
-xfs_add_summaries(
+add_summaries(
 	struct ptvar		*ptv,
 	void			*data,
 	void			*arg)
@@ -93,8 +93,8 @@ xfs_add_summaries(
  * filesystem we'll be content if the summary counts are within 10% of
  * what we observed.
  */
-bool
-xfs_scan_summary(
+int
+phase7_func(
 	struct scrub_ctx	*ctx)
 {
 	struct summary_counts	totalcount = {0};
@@ -113,7 +113,6 @@ xfs_scan_summary(
 	unsigned long long	r_bfree;
 	unsigned long long	f_files;
 	unsigned long long	f_free;
-	bool			moveon;
 	bool			complain;
 	int			ip;
 	int			error;
@@ -122,33 +121,31 @@ xfs_scan_summary(
 	action_list_init(&alist);
 	error = xfs_scrub_fs_summary(ctx, &alist);
 	if (error)
-		return false;
+		return error;
 	error = action_list_process(ctx, ctx->mnt.fd, &alist,
 			ALP_COMPLAIN_IF_UNFIXED | ALP_NOPROGRESS);
 	if (error)
-		return false;
+		return error;
 
 	/* Flush everything out to disk before we start counting. */
 	error = syncfs(ctx->mnt.fd);
 	if (error) {
 		str_errno(ctx, ctx->mntpoint);
-		return false;
+		return error;
 	}
 
 	error = ptvar_alloc(scrub_nproc(ctx), sizeof(struct summary_counts),
 			&ptvar);
 	if (error) {
 		str_liberror(ctx, error, _("setting up block counter"));
-		return false;
+		return error;
 	}
 
 	/* Use fsmap to count blocks. */
 	error = scrub_scan_all_spacemaps(ctx, count_block_summary, ptvar);
-	if (error) {
-		moveon = false;
+	if (error)
 		goto out_free;
-	}
-	error = ptvar_foreach(ptvar, xfs_add_summaries, &totalcount);
+	error = ptvar_foreach(ptvar, add_summaries, &totalcount);
 	if (error) {
 		str_liberror(ctx, error, _("counting blocks"));
 		goto out_free;
@@ -159,15 +156,14 @@ xfs_scan_summary(
 	error = scrub_count_all_inodes(ctx, &counted_inodes);
 	if (error) {
 		str_liberror(ctx, error, _("counting inodes"));
-		moveon = false;
-		goto out;
+		return error;
 	}
 
 	error = scrub_scan_estimate_blocks(ctx, &d_blocks, &d_bfree, &r_blocks,
 			&r_bfree, &f_files, &f_free);
 	if (error) {
 		str_liberror(ctx, error, _("estimating verify work"));
-		return false;
+		return error;
 	}
 
 	/*
@@ -269,11 +265,15 @@ _("%.1f%s data counted; %.1f%s data verified.\n"),
 		fflush(stdout);
 	}
 
-	moveon = true;
-
-out:
-	return moveon;
+	return 0;
 out_free:
 	ptvar_free(ptvar);
-	return moveon;
+	return error;
+}
+
+bool
+xfs_scan_summary(
+	struct scrub_ctx	*ctx)
+{
+	return phase7_func(ctx) == 0;
 }
