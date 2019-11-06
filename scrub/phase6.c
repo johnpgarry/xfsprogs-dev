@@ -133,9 +133,10 @@ xfs_decode_special_owner(
 /* Routines to translate bad physical extents into file paths and offsets. */
 
 struct badfile_report {
-	struct scrub_ctx	*ctx;
-	const char		*descr;
-	struct xfs_bmap		*bmap;
+	struct scrub_ctx		*ctx;
+	const char			*descr;
+	struct media_verify_state	*vs;
+	struct file_bmap		*bmap;
 };
 
 /* Report on bad extents found during a media scan. */
@@ -168,75 +169,66 @@ _("media error at data offset %llu length %llu."),
 }
 
 /* Report if this extent overlaps a bad region. */
-static bool
+static int
 report_data_loss(
 	struct scrub_ctx		*ctx,
-	const char			*descr,
 	int				fd,
 	int				whichfork,
 	struct fsxattr			*fsx,
-	struct xfs_bmap			*bmap,
+	struct file_bmap		*bmap,
 	void				*arg)
 {
-	struct badfile_report		br = {
-		.ctx			= ctx,
-		.descr			= descr,
-		.bmap			= bmap,
-	};
-	struct media_verify_state	*vs = arg;
+	struct badfile_report		*br = arg;
+	struct media_verify_state	*vs = br->vs;
 	struct bitmap			*bmp;
-	int				ret;
+
+	br->bmap = bmap;
 
 	/* Only report errors for real extents. */
 	if (bmap->bm_flags & (BMV_OF_PREALLOC | BMV_OF_DELALLOC))
-		return true;
+		return 0;
 
 	if (fsx->fsx_xflags & FS_XFLAG_REALTIME)
 		bmp = vs->r_bad;
 	else
 		bmp = vs->d_bad;
 
-	ret = bitmap_iterate_range(bmp, bmap->bm_physical, bmap->bm_length,
-			report_badfile, &br);
-	if (ret) {
-		str_liberror(ctx, ret, descr);
-		return false;
-	}
-	return true;
+	return bitmap_iterate_range(bmp, bmap->bm_physical, bmap->bm_length,
+			report_badfile, br);
 }
 
 /* Report if the extended attribute data overlaps a bad region. */
-static bool
+static int
 report_attr_loss(
 	struct scrub_ctx		*ctx,
-	const char			*descr,
 	int				fd,
 	int				whichfork,
 	struct fsxattr			*fsx,
-	struct xfs_bmap			*bmap,
+	struct file_bmap		*bmap,
 	void				*arg)
 {
-	struct media_verify_state	*vs = arg;
+	struct badfile_report		*br = arg;
+	struct media_verify_state	*vs = br->vs;
 	struct bitmap			*bmp = vs->d_bad;
 
 	/* Complain about attr fork extents that don't look right. */
 	if (bmap->bm_flags & (BMV_OF_PREALLOC | BMV_OF_DELALLOC)) {
-		str_info(ctx, descr,
+		str_info(ctx, br->descr,
 _("found unexpected unwritten/delalloc attr fork extent."));
-		return true;
+		return 0;
 	}
 
 	if (fsx->fsx_xflags & FS_XFLAG_REALTIME) {
-		str_info(ctx, descr,
+		str_info(ctx, br->descr,
 _("found unexpected realtime attr fork extent."));
-		return true;
+		return 0;
 	}
 
 	if (bitmap_test(bmp, bmap->bm_physical, bmap->bm_length))
-		str_corrupt(ctx, descr,
+		str_corrupt(ctx, br->descr,
 _("media error in extended attribute data."));
 
-	return true;
+	return 0;
 }
 
 /* Iterate the extent mappings of a file to report errors. */
@@ -247,18 +239,30 @@ xfs_report_verify_fd(
 	int				fd,
 	void				*arg)
 {
-	struct xfs_bmap			key = {0};
-	bool				moveon;
+	struct badfile_report		br = {
+		.ctx			= ctx,
+		.vs			= arg,
+		.descr			= descr,
+	};
+	struct file_bmap		key = {0};
+	int				ret;
 
 	/* data fork */
-	moveon = xfs_iterate_filemaps(ctx, descr, fd, XFS_DATA_FORK, &key,
-			report_data_loss, arg);
-	if (!moveon)
+	ret = scrub_iterate_filemaps(ctx, fd, XFS_DATA_FORK, &key,
+			report_data_loss, &br);
+	if (ret) {
+		str_liberror(ctx, ret, descr);
 		return false;
+	}
 
 	/* attr fork */
-	return xfs_iterate_filemaps(ctx, descr, fd, XFS_ATTR_FORK, &key,
-			report_attr_loss, arg);
+	ret = scrub_iterate_filemaps(ctx, fd, XFS_ATTR_FORK, &key,
+			report_attr_loss, &br);
+	if (ret) {
+		str_liberror(ctx, ret, descr);
+		return false;
+	}
+	return true;
 }
 
 /* Report read verify errors in unlinked (but still open) files. */

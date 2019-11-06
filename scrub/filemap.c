@@ -23,47 +23,31 @@
 
 #define BMAP_NR		2048
 
-/* Iterate all the extent block mappings between the key and fork end. */
-bool
-xfs_iterate_filemaps(
+/*
+ * Iterate all the extent block mappings between the key and fork end.
+ * Returns 0 or a positive error number.
+ */
+int
+scrub_iterate_filemaps(
 	struct scrub_ctx	*ctx,
-	const char		*descr,
 	int			fd,
 	int			whichfork,
-	struct xfs_bmap		*key,
-	xfs_bmap_iter_fn	fn,
+	struct file_bmap	*key,
+	scrub_bmap_iter_fn	fn,
 	void			*arg)
 {
 	struct fsxattr		fsx;
 	struct getbmapx		*map;
 	struct getbmapx		*p;
-	struct xfs_bmap		bmap;
-	char			bmap_descr[DESCR_BUFSZ];
-	bool			moveon = true;
+	struct file_bmap	bmap;
 	xfs_off_t		new_off;
 	int			getxattr_type;
 	int			i;
-	int			error;
-
-	switch (whichfork) {
-	case XFS_ATTR_FORK:
-		snprintf(bmap_descr, DESCR_BUFSZ, _("%s attr"), descr);
-		break;
-	case XFS_COW_FORK:
-		snprintf(bmap_descr, DESCR_BUFSZ, _("%s CoW"), descr);
-		break;
-	case XFS_DATA_FORK:
-		snprintf(bmap_descr, DESCR_BUFSZ, _("%s data"), descr);
-		break;
-	default:
-		abort();
-	}
+	int			ret;
 
 	map = calloc(BMAP_NR, sizeof(struct getbmapx));
-	if (!map) {
-		str_errno(ctx, bmap_descr);
-		return false;
-	}
+	if (!map)
+		return errno;
 
 	map->bmv_offset = BTOBB(key->bm_offset);
 	map->bmv_block = BTOBB(key->bm_physical);
@@ -89,34 +73,28 @@ xfs_iterate_filemaps(
 		abort();
 	}
 
-	error = ioctl(fd, getxattr_type, &fsx);
-	if (error < 0) {
-		str_errno(ctx, bmap_descr);
-		moveon = false;
+	ret = ioctl(fd, getxattr_type, &fsx);
+	if (ret < 0) {
+		ret = errno;
 		goto out;
 	}
 
-	if (fsx.fsx_nextents == 0) {
-		moveon = true;
+	if (fsx.fsx_nextents == 0)
 		goto out;
-	}
 
 	map->bmv_count = min(fsx.fsx_nextents + 1, BMAP_NR);
 
-	while ((error = ioctl(fd, XFS_IOC_GETBMAPX, map)) == 0) {
+	while ((ret = ioctl(fd, XFS_IOC_GETBMAPX, map)) == 0) {
 		for (i = 0, p = &map[i + 1]; i < map->bmv_entries; i++, p++) {
 			bmap.bm_offset = BBTOB(p->bmv_offset);
 			bmap.bm_physical = BBTOB(p->bmv_block);
 			bmap.bm_length = BBTOB(p->bmv_length);
 			bmap.bm_flags = p->bmv_oflags;
-			moveon = fn(ctx, bmap_descr, fd, whichfork, &fsx,
-					&bmap, arg);
-			if (!moveon)
+			ret = fn(ctx, fd, whichfork, &fsx, &bmap, arg);
+			if (ret)
 				goto out;
-			if (xfs_scrub_excessive_errors(ctx)) {
-				moveon = false;
+			if (xfs_scrub_excessive_errors(ctx))
 				goto out;
-			}
 		}
 
 		if (map->bmv_entries == 0)
@@ -129,17 +107,16 @@ xfs_iterate_filemaps(
 		map->bmv_length -= new_off - map->bmv_offset;
 		map->bmv_offset = new_off;
 	}
+	if (ret < 0)
+		ret = errno;
 
 	/*
 	 * Pre-reflink filesystems don't know about CoW forks, so don't
 	 * be too surprised if it fails.
 	 */
-	if (whichfork == XFS_COW_FORK && error && errno == EINVAL)
-		error = 0;
-
-	if (error)
-		str_errno(ctx, bmap_descr);
+	if (whichfork == XFS_COW_FORK && ret == EINVAL)
+		ret = 0;
 out:
 	free(map);
-	return moveon;
+	return ret;
 }

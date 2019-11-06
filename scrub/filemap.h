@@ -7,7 +7,7 @@
 #define XFS_SCRUB_FILEMAP_H_
 
 /* inode fork block mapping */
-struct xfs_bmap {
+struct file_bmap {
 	uint64_t	bm_offset;	/* file offset of segment in bytes */
 	uint64_t	bm_physical;	/* physical starting byte  */
 	uint64_t	bm_length;	/* length of segment, bytes */
@@ -15,15 +15,13 @@ struct xfs_bmap {
 };
 
 /*
- * Visit each inode fork mapping.  Return true to continue iteration or false
- * to stop iterating and return to the caller.
+ * Visit each inode fork mapping.  Return 0 to continue iteration or a positive
+ * error code to stop iterating and return to the caller.
  */
-typedef bool (*xfs_bmap_iter_fn)(struct scrub_ctx *ctx, const char *descr,
-		int fd, int whichfork, struct fsxattr *fsx,
-		struct xfs_bmap *bmap, void *arg);
+typedef int (*scrub_bmap_iter_fn)(struct scrub_ctx *ctx, int fd, int whichfork,
+		struct fsxattr *fsx, struct file_bmap *bmap, void *arg);
 
-bool xfs_iterate_filemaps(struct scrub_ctx *ctx, const char *descr, int fd,
-		int whichfork, struct xfs_bmap *key, xfs_bmap_iter_fn fn,
-		void *arg);
+int scrub_iterate_filemaps(struct scrub_ctx *ctx, int fd, int whichfork,
+		struct file_bmap *key, scrub_bmap_iter_fn fn, void *arg);
 
 #endif /* XFS_SCRUB_FILEMAP_H_ */
