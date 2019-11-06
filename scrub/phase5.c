@@ -21,6 +21,7 @@
 #include "inodes.h"
 #include "progress.h"
 #include "scrub.h"
+#include "descr.h"
 #include "unicrash.h"
 
 /* Phase 5: Check directory connectivity. */
@@ -34,7 +35,7 @@
 static bool
 xfs_scrub_check_name(
 	struct scrub_ctx	*ctx,
-	const char		*descr,
+	struct descr		*dsc,
 	const char		*namedescr,
 	const char		*name)
 {
@@ -44,7 +45,7 @@ xfs_scrub_check_name(
 
 	/* Complain about zero length names. */
 	if (*name == '\0' && should_warn_about_name(ctx)) {
-		str_warn(ctx, descr, _("Zero length name found."));
+		str_warn(ctx, descr_render(dsc), _("Zero length name found."));
 		return true;
 	}
 
@@ -59,10 +60,10 @@ xfs_scrub_check_name(
 	if (bad && should_warn_about_name(ctx)) {
 		errname = string_escape(name);
 		if (!errname) {
-			str_errno(ctx, descr);
+			str_errno(ctx, descr_render(dsc));
 			return false;
 		}
-		str_info(ctx, descr,
+		str_info(ctx, descr_render(dsc),
 _("Control character found in %s name \"%s\"."),
 				namedescr, errname);
 		free(errname);
@@ -78,7 +79,7 @@ _("Control character found in %s name \"%s\"."),
 static bool
 xfs_scrub_scan_dirents(
 	struct scrub_ctx	*ctx,
-	const char		*descr,
+	struct descr		*dsc,
 	int			*fd,
 	struct xfs_bulkstat	*bstat)
 {
@@ -89,7 +90,7 @@ xfs_scrub_scan_dirents(
 
 	dir = fdopendir(*fd);
 	if (!dir) {
-		str_errno(ctx, descr);
+		str_errno(ctx, descr_render(dsc));
 		goto out;
 	}
 	*fd = -1; /* closedir will close *fd for us */
@@ -101,9 +102,9 @@ xfs_scrub_scan_dirents(
 	dentry = readdir(dir);
 	while (dentry) {
 		if (uc)
-			moveon = unicrash_check_dir_name(uc, descr, dentry);
+			moveon = unicrash_check_dir_name(uc, dsc, dentry);
 		else
-			moveon = xfs_scrub_check_name(ctx, descr,
+			moveon = xfs_scrub_check_name(ctx, dsc,
 					_("directory"), dentry->d_name);
 		if (!moveon)
 			break;
@@ -138,7 +139,7 @@ static const struct attrns_decode attr_ns[] = {
 static bool
 xfs_scrub_scan_fhandle_namespace_xattrs(
 	struct scrub_ctx		*ctx,
-	const char			*descr,
+	struct descr			*dsc,
 	struct xfs_handle		*handle,
 	struct xfs_bulkstat		*bstat,
 	const struct attrns_decode	*attr_ns)
@@ -169,10 +170,10 @@ xfs_scrub_scan_fhandle_namespace_xattrs(
 			snprintf(keybuf, XATTR_NAME_MAX, "%s.%s", attr_ns->name,
 					ent->a_name);
 			if (uc)
-				moveon = unicrash_check_xattr_name(uc, descr,
+				moveon = unicrash_check_xattr_name(uc, dsc,
 						keybuf);
 			else
-				moveon = xfs_scrub_check_name(ctx, descr,
+				moveon = xfs_scrub_check_name(ctx, dsc,
 						_("extended attribute"),
 						keybuf);
 			if (!moveon)
@@ -185,7 +186,7 @@ xfs_scrub_scan_fhandle_namespace_xattrs(
 				XFS_XATTR_LIST_MAX, attr_ns->flags, &cur);
 	}
 	if (error && errno != ESTALE)
-		str_errno(ctx, descr);
+		str_errno(ctx, descr_render(dsc));
 out:
 	unicrash_free(uc);
 	return moveon;
@@ -198,7 +199,7 @@ out:
 static bool
 xfs_scrub_scan_fhandle_xattrs(
 	struct scrub_ctx		*ctx,
-	const char			*descr,
+	struct descr			*dsc,
 	struct xfs_handle		*handle,
 	struct xfs_bulkstat		*bstat)
 {
@@ -206,7 +207,7 @@ xfs_scrub_scan_fhandle_xattrs(
 	bool				moveon = true;
 
 	for (ns = attr_ns; ns->name; ns++) {
-		moveon = xfs_scrub_scan_fhandle_namespace_xattrs(ctx, descr,
+		moveon = xfs_scrub_scan_fhandle_namespace_xattrs(ctx, dsc,
 				handle, bstat, ns);
 		if (!moveon)
 			break;
@@ -216,6 +217,19 @@ xfs_scrub_scan_fhandle_xattrs(
 #else
 # define xfs_scrub_scan_fhandle_xattrs(c, d, h, b)	(true)
 #endif /* HAVE_LIBATTR */
+
+static int
+render_ino_from_handle(
+	struct scrub_ctx	*ctx,
+	char			*buf,
+	size_t			buflen,
+	void			*data)
+{
+	struct xfs_bstat	*bstat = data;
+
+	return scrub_render_ino_descr(ctx, buf, buflen, bstat->bs_ino,
+			bstat->bs_gen, NULL);
+}
 
 /*
  * Verify the connectivity of the directory tree.
@@ -232,18 +246,17 @@ xfs_scrub_connections(
 	void			*arg)
 {
 	bool			*pmoveon = arg;
-	char			descr[DESCR_BUFSZ];
+	DEFINE_DESCR(dsc, ctx, render_ino_from_handle);
 	bool			moveon = true;
 	int			fd = -1;
 	int			error;
 
-	scrub_render_ino_descr(ctx, descr, DESCR_BUFSZ, bstat->bs_ino,
-			bstat->bs_gen, NULL);
+	descr_set(&dsc, bstat);
 	background_sleep();
 
 	/* Warn about naming problems in xattrs. */
 	if (bstat->bs_xflags & FS_XFLAG_HASATTR) {
-		moveon = xfs_scrub_scan_fhandle_xattrs(ctx, descr, handle,
+		moveon = xfs_scrub_scan_fhandle_xattrs(ctx, &dsc, handle,
 				bstat);
 		if (!moveon)
 			goto out;
@@ -255,14 +268,14 @@ xfs_scrub_connections(
 		if (fd < 0) {
 			if (errno == ESTALE)
 				return ESTALE;
-			str_errno(ctx, descr);
+			str_errno(ctx, descr_render(&dsc));
 			goto out;
 		}
 	}
 
 	/* Warn about naming problems in the directory entries. */
 	if (fd >= 0 && S_ISDIR(bstat->bs_mode)) {
-		moveon = xfs_scrub_scan_dirents(ctx, descr, &fd, bstat);
+		moveon = xfs_scrub_scan_dirents(ctx, &dsc, &fd, bstat);
 		if (!moveon)
 			goto out;
 	}
@@ -272,7 +285,7 @@ out:
 	if (fd >= 0) {
 		error = close(fd);
 		if (error)
-			str_errno(ctx, descr);
+			str_errno(ctx, descr_render(&dsc));
 	}
 	if (!moveon)
 		*pmoveon = false;
@@ -284,6 +297,16 @@ out:
 # define FS_IOC_GETFSLABEL	_IOR(0x94, 49, char[FSLABEL_MAX])
 #endif /* FS_IOC_GETFSLABEL */
 
+static int
+scrub_render_mountpoint(
+	struct scrub_ctx	*ctx,
+	char			*buf,
+	size_t			buflen,
+	void			*data)
+{
+	return snprintf(buf, buflen, _("%s"), ctx->mntpoint);
+}
+
 /*
  * Check the filesystem label for Unicode normalization problems or misleading
  * sequences.
@@ -292,6 +315,7 @@ static bool
 xfs_scrub_fs_label(
 	struct scrub_ctx		*ctx)
 {
+	DEFINE_DESCR(dsc, ctx, scrub_render_mountpoint);
 	char				label[FSLABEL_MAX];
 	struct unicrash			*uc = NULL;
 	bool				moveon = true;
@@ -300,6 +324,8 @@ xfs_scrub_fs_label(
 	moveon = unicrash_fs_label_init(&uc, ctx);
 	if (!moveon)
 		return false;
+
+	descr_set(&dsc, NULL);
 
 	/* Retrieve label; quietly bail if we don't support that. */
 	error = ioctl(ctx->mnt.fd, FS_IOC_GETFSLABEL, &label);
@@ -317,10 +343,10 @@ xfs_scrub_fs_label(
 
 	/* Otherwise check for weirdness. */
 	if (uc)
-		moveon = unicrash_check_fs_label(uc, ctx->mntpoint, label);
+		moveon = unicrash_check_fs_label(uc, &dsc, label);
 	else
-		moveon = xfs_scrub_check_name(ctx, ctx->mntpoint,
-				_("filesystem label"), label);
+		moveon = xfs_scrub_check_name(ctx, &dsc, _("filesystem label"),
+				label);
 	if (!moveon)
 		goto out;
 out:
