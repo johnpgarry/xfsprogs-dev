@@ -38,7 +38,7 @@ ptcounter_alloc(
 	p = malloc(sizeof(struct ptcounter));
 	if (!p)
 		return errno;
-	ret = ptvar_alloc(nr, sizeof(uint64_t), &p->var);
+	ret = -ptvar_alloc(nr, sizeof(uint64_t), &p->var);
 	if (ret) {
 		free(p);
 		return ret;
@@ -67,7 +67,7 @@ ptcounter_add(
 
 	p = ptvar_get(ptc->var, &ret);
 	if (ret)
-		return ret;
+		return -ret;
 	*p += nr;
 	return 0;
 }
@@ -92,5 +92,5 @@ ptcounter_value(
 	uint64_t		*sum)
 {
 	*sum = 0;
-	return ptvar_foreach(ptc->var, ptcounter_val_helper, sum);
+	return -ptvar_foreach(ptc->var, ptcounter_val_helper, sum);
 }

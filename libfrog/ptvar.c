@@ -54,15 +54,15 @@ ptvar_alloc(
 
 	ptv = malloc(PTVAR_SIZE(nr, size));
 	if (!ptv)
-		return errno;
+		return -errno;
 	ptv->data_size = size;
 	ptv->nr_counters = nr;
 	ptv->nr_used = 0;
 	memset(ptv->data, 0, nr * size);
-	ret = pthread_mutex_init(&ptv->lock, NULL);
+	ret = -pthread_mutex_init(&ptv->lock, NULL);
 	if (ret)
 		goto out;
-	ret = pthread_key_create(&ptv->key, NULL);
+	ret = -pthread_key_create(&ptv->key, NULL);
 	if (ret)
 		goto out_mutex;
 
@@ -99,7 +99,7 @@ ptvar_get(
 		pthread_mutex_lock(&ptv->lock);
 		assert(ptv->nr_used < ptv->nr_counters);
 		p = &ptv->data[(ptv->nr_used++) * ptv->data_size];
-		ret = pthread_setspecific(ptv->key, p);
+		ret = -pthread_setspecific(ptv->key, p);
 		if (ret)
 			goto out_unlock;
 		pthread_mutex_unlock(&ptv->lock);
