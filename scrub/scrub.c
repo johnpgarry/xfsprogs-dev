@@ -127,7 +127,6 @@ xfs_check_metadata(
 {
 	DEFINE_DESCR(dsc, ctx, format_scrub_descr);
 	unsigned int			tries = 0;
-	int				code;
 	int				error;
 
 	assert(!debug_tweak_on("XFS_SCRUB_NO_KERNEL"));
@@ -136,40 +135,40 @@ xfs_check_metadata(
 
 	dbg_printf("check %s flags %xh\n", descr_render(&dsc), meta->sm_flags);
 retry:
-	error = xfrog_scrub_metadata(&ctx->mnt, meta);
+	error = -xfrog_scrub_metadata(&ctx->mnt, meta);
 	if (debug_tweak_on("XFS_SCRUB_FORCE_REPAIR") && !error)
 		meta->sm_flags |= XFS_SCRUB_OFLAG_CORRUPT;
-	if (error) {
-		code = errno;
-		switch (code) {
-		case ENOENT:
-			/* Metadata not present, just skip it. */
-			return CHECK_DONE;
-		case ESHUTDOWN:
-			/* FS already crashed, give up. */
-			str_error(ctx, descr_render(&dsc),
+	switch (error) {
+	case 0:
+		/* No operational errors encountered. */
+		break;
+	case ENOENT:
+		/* Metadata not present, just skip it. */
+		return CHECK_DONE;
+	case ESHUTDOWN:
+		/* FS already crashed, give up. */
+		str_error(ctx, descr_render(&dsc),
 _("Filesystem is shut down, aborting."));
-			return CHECK_ABORT;
-		case EIO:
-		case ENOMEM:
-			/* Abort on I/O errors or insufficient memory. */
-			str_errno(ctx, descr_render(&dsc));
-			return CHECK_ABORT;
-		case EDEADLOCK:
-		case EBUSY:
-		case EFSBADCRC:
-		case EFSCORRUPTED:
-			/*
-			 * The first two should never escape the kernel,
-			 * and the other two should be reported via sm_flags.
-			 */
-			str_liberror(ctx, code, _("Kernel bug"));
-			/* fall through */
-		default:
-			/* Operational error. */
-			str_errno(ctx, descr_render(&dsc));
-			return CHECK_DONE;
-		}
+		return CHECK_ABORT;
+	case EIO:
+	case ENOMEM:
+		/* Abort on I/O errors or insufficient memory. */
+		str_errno(ctx, descr_render(&dsc));
+		return CHECK_ABORT;
+	case EDEADLOCK:
+	case EBUSY:
+	case EFSBADCRC:
+	case EFSCORRUPTED:
+		/*
+		 * The first two should never escape the kernel,
+		 * and the other two should be reported via sm_flags.
+		 */
+		str_liberror(ctx, error, _("Kernel bug"));
+		/* fall through */
+	default:
+		/* Operational error. */
+		str_errno(ctx, descr_render(&dsc));
+		return CHECK_DONE;
 	}
 
 	/*
@@ -577,10 +576,10 @@ __xfs_scrub_test(
 	meta.sm_type = type;
 	if (repair)
 		meta.sm_flags |= XFS_SCRUB_IFLAG_REPAIR;
-	error = xfrog_scrub_metadata(&ctx->mnt, &meta);
-	if (!error)
+	error = -xfrog_scrub_metadata(&ctx->mnt, &meta);
+	switch (error) {
+	case 0:
 		return true;
-	switch (errno) {
 	case EROFS:
 		str_info(ctx, ctx->mntpoint,
 _("Filesystem is mounted read-only; cannot proceed."));
@@ -706,74 +705,77 @@ xfs_repair_metadata(
 		str_info(ctx, descr_render(&dsc),
 				_("Attempting optimization."));
 
-	error = xfrog_scrub_metadata(&ctx->mnt, &meta);
-	if (error) {
-		switch (errno) {
-		case EDEADLOCK:
-		case EBUSY:
-			/* Filesystem is busy, try again later. */
-			if (debug || verbose)
-				str_info(ctx, descr_render(&dsc),
+	error = -xfrog_scrub_metadata(&ctx->mnt, &meta);
+	switch (error) {
+	case 0:
+		/* No operational errors encountered. */
+		break;
+	case EDEADLOCK:
+	case EBUSY:
+		/* Filesystem is busy, try again later. */
+		if (debug || verbose)
+			str_info(ctx, descr_render(&dsc),
 _("Filesystem is busy, deferring repair."));
-			return CHECK_RETRY;
-		case ESHUTDOWN:
-			/* Filesystem is already shut down, abort. */
-			str_error(ctx, descr_render(&dsc),
+		return CHECK_RETRY;
+	case ESHUTDOWN:
+		/* Filesystem is already shut down, abort. */
+		str_error(ctx, descr_render(&dsc),
 _("Filesystem is shut down, aborting."));
-			return CHECK_ABORT;
-		case ENOTTY:
-		case EOPNOTSUPP:
-			/*
-			 * If we're in no-complain mode, requeue the check for
-			 * later.  It's possible that an error in another
-			 * component caused us to flag an error in this
-			 * component.  Even if the kernel didn't think it
-			 * could fix this, it's at least worth trying the scan
-			 * again to see if another repair fixed it.
-			 */
-			if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED))
-				return CHECK_RETRY;
-			/*
-			 * If we forced repairs or this is a preen, don't
-			 * error out if the kernel doesn't know how to fix.
-			 */
-			if (is_unoptimized(&oldm) ||
-			    debug_tweak_on("XFS_SCRUB_FORCE_REPAIR"))
-				return CHECK_DONE;
-			/* fall through */
-		case EINVAL:
-			/* Kernel doesn't know how to repair this? */
-			str_corrupt(ctx, descr_render(&dsc),
-_("Don't know how to fix; offline repair required."));
+		return CHECK_ABORT;
+	case ENOTTY:
+	case EOPNOTSUPP:
+		/*
+		 * If we're in no-complain mode, requeue the check for
+		 * later.  It's possible that an error in another
+		 * component caused us to flag an error in this
+		 * component.  Even if the kernel didn't think it
+		 * could fix this, it's at least worth trying the scan
+		 * again to see if another repair fixed it.
+		 */
+		if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED))
+			return CHECK_RETRY;
+		/*
+		 * If we forced repairs or this is a preen, don't
+		 * error out if the kernel doesn't know how to fix.
+		 */
+		if (is_unoptimized(&oldm) ||
+		    debug_tweak_on("XFS_SCRUB_FORCE_REPAIR"))
 			return CHECK_DONE;
-		case EROFS:
-			/* Read-only filesystem, can't fix. */
-			if (verbose || debug || needs_repair(&oldm))
-				str_error(ctx, descr_render(&dsc),
+		/* fall through */
+	case EINVAL:
+		/* Kernel doesn't know how to repair this? */
+		str_corrupt(ctx,
+_("%s: Don't know how to fix; offline repair required."),
+				descr_render(&dsc));
+		return CHECK_DONE;
+	case EROFS:
+		/* Read-only filesystem, can't fix. */
+		if (verbose || debug || needs_repair(&oldm))
+			str_error(ctx, descr_render(&dsc),
 _("Read-only filesystem; cannot make changes."));
-			return CHECK_ABORT;
-		case ENOENT:
-			/* Metadata not present, just skip it. */
+		return CHECK_ABORT;
+	case ENOENT:
+		/* Metadata not present, just skip it. */
+		return CHECK_DONE;
+	case ENOMEM:
+	case ENOSPC:
+		/* Don't care if preen fails due to low resources. */
+		if (is_unoptimized(&oldm) && !needs_repair(&oldm))
 			return CHECK_DONE;
-		case ENOMEM:
-		case ENOSPC:
-			/* Don't care if preen fails due to low resources. */
-			if (is_unoptimized(&oldm) && !needs_repair(&oldm))
-				return CHECK_DONE;
-			/* fall through */
-		default:
-			/*
-			 * Operational error.  If the caller doesn't want us
-			 * to complain about repair failures, tell the caller
-			 * to requeue the repair for later and don't say a
-			 * thing.  Otherwise, print error and bail out.
-			 */
-			if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED))
-				return CHECK_RETRY;
-			str_errno(ctx, descr_render(&dsc));
-			return CHECK_DONE;
-		}
+		/* fall through */
+	default:
+		/*
+		 * Operational error.  If the caller doesn't want us
+		 * to complain about repair failures, tell the caller
+		 * to requeue the repair for later and don't say a
+		 * thing.  Otherwise, print error and bail out.
+		 */
+		if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED))
+			return CHECK_RETRY;
+		str_liberror(ctx, error, descr_render(&dsc));
+		return CHECK_DONE;
 	}
+
 	if (repair_flags & XRM_COMPLAIN_IF_UNFIXED)
 		xfs_scrub_warn_incomplete_scrub(ctx, &dsc, &meta);
 	if (needs_repair(&meta)) {

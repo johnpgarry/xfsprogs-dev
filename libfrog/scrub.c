@@ -137,10 +137,17 @@ const struct xfrog_scrub_descr xfrog_scrubbers[XFS_SCRUB_TYPE_NR] = {
 	},
 };
 
+/* Invoke the scrub ioctl.  Returns zero or negative error code. */
 int
 xfrog_scrub_metadata(
 	struct xfs_fd			*xfd,
 	struct xfs_scrub_metadata	*meta)
 {
-	return ioctl(xfd->fd, XFS_IOC_SCRUB_METADATA, meta);
+	int				ret;
+
+	ret = ioctl(xfd->fd, XFS_IOC_SCRUB_METADATA, meta);
+	if (ret)
+		return -errno;
+
+	return 0;
 }
