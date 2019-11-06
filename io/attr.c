@@ -37,9 +37,10 @@ static struct xflags {
 	{ FS_XFLAG_FILESTREAM,		"S", "filestream"	},
 	{ FS_XFLAG_DAX,			"x", "dax"		},
 	{ FS_XFLAG_COWEXTSIZE,		"C", "cowextsize"	},
+	{ FS_XFLAG_HASATTR,		"X", "has-xattr"	},
 	{ 0, NULL, NULL }
 };
-#define CHATTR_XFLAG_LIST	"r"/*p*/"iasAdtPneEfSxC"
+#define CHATTR_XFLAG_LIST	"r"/*p*/"iasAdtPneEfSxC"/*X*/
 
 static void
 lsattr_help(void)
@@ -65,6 +66,7 @@ lsattr_help(void)
 " S -- enable filestreams allocator for this directory\n"
 " x -- Use direct access (DAX) for data in this file\n"
 " C -- for files with shared blocks, observe the inode CoW extent size value\n"
+" X -- file has extended attributes (cannot be changed using chattr)\n"
 "\n"
 " Options:\n"
 " -R -- recursively descend (useful when current file is a directory)\n"
