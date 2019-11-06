@@ -87,7 +87,7 @@ struct scrub_ctx {
 
 /* Phase helper functions */
 void xfs_shutdown_fs(struct scrub_ctx *ctx);
-bool xfs_cleanup_fs(struct scrub_ctx *ctx);
+int scrub_cleanup(struct scrub_ctx *ctx);
 bool xfs_setup_fs(struct scrub_ctx *ctx);
 bool xfs_scan_metadata(struct scrub_ctx *ctx);
 bool xfs_scan_inodes(struct scrub_ctx *ctx);

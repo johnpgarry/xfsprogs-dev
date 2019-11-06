@@ -600,6 +600,7 @@ main(
 	int			c;
 	int			fd;
 	int			ret = SCRUB_RET_SUCCESS;
+	int			error;
 
 	fprintf(stdout, "EXPERIMENTAL xfs_scrub program in use! Use at your own risk!\n");
 
@@ -774,8 +775,8 @@ main(
 		str_info(&ctx, ctx.mntpoint, _("Injecting error."));
 
 	/* Clean up scan data. */
-	moveon = xfs_cleanup_fs(&ctx);
-	if (!moveon && ctx.runtime_errors == 0)
+	error = scrub_cleanup(&ctx);
+	if (error && ctx.runtime_errors == 0)
 		ctx.runtime_errors++;
 
 out:

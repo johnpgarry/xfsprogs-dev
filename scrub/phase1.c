@@ -44,8 +44,8 @@ xfs_shutdown_fs(
 }
 
 /* Clean up the XFS-specific state data. */
-bool
-xfs_cleanup_fs(
+int
+scrub_cleanup(
 	struct scrub_ctx	*ctx)
 {
 	int			error;
@@ -65,15 +65,15 @@ xfs_cleanup_fs(
 		str_liberror(ctx, error, _("closing mountpoint fd"));
 	fs_table_destroy();
 
-	return true;
+	return error;
 }
 
 /*
  * Bind to the mountpoint, read the XFS geometry, bind to the block devices.
- * Anything we've already built will be cleaned up by xfs_cleanup_fs.
+ * Anything we've already built will be cleaned up by scrub_cleanup.
  */
-bool
-xfs_setup_fs(
+int
+phase1_func(
 	struct scrub_ctx		*ctx)
 {
 	int				error;
@@ -95,23 +95,23 @@ _("Must be root to run scrub."));
 _("Not an XFS filesystem."));
 		else
 			str_liberror(ctx, error, ctx->mntpoint);
-		return false;
+		return error;
 	}
 
 	error = fstat(ctx->mnt.fd, &ctx->mnt_sb);
 	if (error) {
 		str_errno(ctx, ctx->mntpoint);
-		return false;
+		return error;
 	}
 	error = fstatvfs(ctx->mnt.fd, &ctx->mnt_sv);
 	if (error) {
 		str_errno(ctx, ctx->mntpoint);
-		return false;
+		return error;
 	}
 	error = fstatfs(ctx->mnt.fd, &ctx->mnt_sf);
 	if (error) {
 		str_errno(ctx, ctx->mntpoint);
-		return false;
+		return error;
 	}
 
 	/*
@@ -122,21 +122,21 @@ _("Not an XFS filesystem."));
 	error = syncfs(ctx->mnt.fd);
 	if (error) {
 		str_errno(ctx, ctx->mntpoint);
-		return false;
+		return error;
 	}
 
 	error = action_lists_alloc(ctx->mnt.fsgeom.agcount,
 			&ctx->action_lists);
 	if (error) {
 		str_liberror(ctx, error, _("allocating action lists"));
-		return false;
+		return error;
 	}
 
 	error = path_to_fshandle(ctx->mntpoint, &ctx->fshandle,
 			&ctx->fshandle_len);
 	if (error) {
 		str_errno(ctx, _("getting fshandle"));
-		return false;
+		return error;
 	}
 
 	/* Do we have kernel-assisted metadata scrubbing? */
@@ -146,33 +146,33 @@ _("Not an XFS filesystem."));
 	    !xfs_can_scrub_parent(ctx)) {
 		str_error(ctx, ctx->mntpoint,
 _("Kernel metadata scrubbing facility is not available."));
-		return false;
+		return ECANCELED;
 	}
 
 	/* Do we need kernel-assisted metadata repair? */
 	if (ctx->mode != SCRUB_MODE_DRY_RUN && !xfs_can_repair(ctx)) {
 		str_error(ctx, ctx->mntpoint,
 _("Kernel metadata repair facility is not available.  Use -n to scrub."));
-		return false;
+		return ECANCELED;
 	}
 
 	/* Did we find the log and rt devices, if they're present? */
 	if (ctx->mnt.fsgeom.logstart == 0 && ctx->fsinfo.fs_log == NULL) {
 		str_error(ctx, ctx->mntpoint,
 _("Unable to find log device path."));
-		return false;
+		return ECANCELED;
 	}
 	if (ctx->mnt.fsgeom.rtblocks && ctx->fsinfo.fs_rt == NULL) {
 		str_error(ctx, ctx->mntpoint,
 _("Unable to find realtime device path."));
-		return false;
+		return ECANCELED;
 	}
 
 	/* Open the raw devices. */
 	ctx->datadev = disk_open(ctx->fsinfo.fs_name);
 	if (error) {
 		str_errno(ctx, ctx->fsinfo.fs_name);
-		return false;
+		return error;
 	}
 
 	ctx->nr_io_threads = disk_heads(ctx->datadev);
@@ -186,14 +186,14 @@ _("Unable to find realtime device path."));
 		ctx->logdev = disk_open(ctx->fsinfo.fs_log);
 		if (error) {
 			str_errno(ctx, ctx->fsinfo.fs_name);
-			return false;
+			return error;
 		}
 	}
 	if (ctx->fsinfo.fs_rt) {
 		ctx->rtdev = disk_open(ctx->fsinfo.fs_rt);
 		if (error) {
 			str_errno(ctx, ctx->fsinfo.fs_name);
-			return false;
+			return error;
 		}
 	}
 
@@ -204,5 +204,12 @@ _("Unable to find realtime device path."));
 	 */
 	log_info(ctx, _("Invoking online scrub."), ctx);
 	ctx->scrub_setup_succeeded = true;
-	return true;
+	return 0;
+}
+
+bool
+xfs_setup_fs(
+	struct scrub_ctx		*ctx)
+{
+	return phase1_func(ctx) == 0;
 }
