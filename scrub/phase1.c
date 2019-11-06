@@ -60,7 +60,7 @@ scrub_cleanup(
 	if (ctx->datadev)
 		disk_close(ctx->datadev);
 	fshandle_destroy();
-	error = xfd_close(&ctx->mnt);
+	error = -xfd_close(&ctx->mnt);
 	if (error)
 		str_liberror(ctx, error, _("closing mountpoint fd"));
 	fs_table_destroy();
@@ -84,7 +84,7 @@ phase1_func(
 	 * CAP_SYS_ADMIN, which we probably need to do anything fancy
 	 * with the (XFS driver) kernel.
 	 */
-	error = xfd_open(&ctx->mnt, ctx->mntpoint,
+	error = -xfd_open(&ctx->mnt, ctx->mntpoint,
 			O_RDONLY | O_NOATIME | O_DIRECTORY);
 	if (error) {
 		if (error == EPERM)

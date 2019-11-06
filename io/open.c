@@ -124,7 +124,7 @@ openfile(
 	} else {
 		int	ret;
 
-		ret = xfrog_geometry(fd, geom);
+		ret = -xfrog_geometry(fd, geom);
 		if (ret) {
 			xfrog_perror(ret, "XFS_IOC_FSGEOMETRY");
 			close(fd);

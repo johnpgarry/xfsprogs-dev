@@ -192,7 +192,7 @@ report_ag_sick(
 	char			descr[256];
 	int			ret;
 
-	ret = xfrog_ag_geometry(file->xfd.fd, agno, &ageo);
+	ret = -xfrog_ag_geometry(file->xfd.fd, agno, &ageo);
 	if (ret) {
 		xfrog_perror(ret, "ag_geometry");
 		return 1;

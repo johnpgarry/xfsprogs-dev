@@ -378,7 +378,7 @@ xfsrtextsize( char *path)
 			progname, path, strerror(errno));
 		return -1;
 	}
-	rval = xfrog_geometry(fd, &geo);
+	rval = -xfrog_geometry(fd, &geo);
 	close(fd);
 	if (rval)
 		return -1;

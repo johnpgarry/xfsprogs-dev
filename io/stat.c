@@ -197,7 +197,7 @@ statfs_f(
 	}
 	if (file->flags & IO_FOREIGN)
 		return 0;
-	ret = xfrog_geometry(file->fd, &fsgeo);
+	ret = -xfrog_geometry(file->fd, &fsgeo);
 	if (ret) {
 		xfrog_perror(ret, "XFS_IOC_FSGEOMETRY");
 	} else {

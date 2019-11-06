@@ -69,7 +69,7 @@ xfs_report_geom(
 			(unsigned long long)geo->rtextents);
 }
 
-/* Try to obtain the xfs geometry.  On error returns a positive error code. */
+/* Try to obtain the xfs geometry.  On error returns a negative error code. */
 int
 xfrog_geometry(
 	int			fd,
@@ -91,12 +91,12 @@ xfrog_geometry(
 	if (!ret)
 		return 0;
 
-	return errno;
+	return -errno;
 }
 
 /*
  * Prepare xfs_fd structure for future ioctl operations by computing the xfs
- * geometry for @xfd->fd.  Returns zero or a positive error code.
+ * geometry for @xfd->fd.  Returns zero or a negative error code.
  */
 int
 xfd_prepare_geometry(
@@ -117,7 +117,7 @@ xfd_prepare_geometry(
 	return 0;
 }
 
-/* Open a file on an XFS filesystem.  Returns zero or a positive error code. */
+/* Open a file on an XFS filesystem.  Returns zero or a negative error code. */
 int
 xfd_open(
 	struct xfs_fd		*xfd,
@@ -128,7 +128,7 @@ xfd_open(
 
 	xfd->fd = open(pathname, flags);
 	if (xfd->fd < 0)
-		return errno;
+		return -errno;
 
 	ret = xfd_prepare_geometry(xfd);
 	if (ret) {
@@ -141,7 +141,7 @@ xfd_open(
 
 /*
  * Release any resources associated with this xfs_fd structure.  Returns zero
- * or a positive error code.
+ * or a negative error code.
  */
 int
 xfd_close(
@@ -155,12 +155,12 @@ xfd_close(
 	ret = close(xfd->fd);
 	xfd->fd = -1;
 	if (ret < 0)
-		return errno;
+		return -errno;
 
 	return 0;
 }
 
-/* Try to obtain an AG's geometry.  Returns zero or a positive error code. */
+/* Try to obtain an AG's geometry.  Returns zero or a negative error code. */
 int
 xfrog_ag_geometry(
 	int			fd,
@@ -172,6 +172,6 @@ xfrog_ag_geometry(
 	ageo->ag_number = agno;
 	ret = ioctl(fd, XFS_IOC_AG_GEOMETRY, ageo);
 	if (ret)
-		return errno;
+		return -errno;
 	return 0;
 }

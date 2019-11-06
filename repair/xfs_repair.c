@@ -642,7 +642,7 @@ check_fs_vs_host_sectsize(
 
 	fd = libxfs_device_to_fd(x.ddev);
 
-	ret = xfrog_geometry(fd, &geom);
+	ret = -xfrog_geometry(fd, &geom);
 	if (ret) {
 		do_log(_("Cannot get host filesystem geometry.\n"
 	"Repair may fail if there is a sector size mismatch between\n"

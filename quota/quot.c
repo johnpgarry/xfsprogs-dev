@@ -146,7 +146,7 @@ quot_bulkstat_mount(
 			*dp = NULL;
 	ndu[0] = ndu[1] = ndu[2] = 0;
 
-	ret = xfd_open(&fsxfd, fsdir, O_RDONLY);
+	ret = -xfd_open(&fsxfd, fsdir, O_RDONLY);
 	if (ret) {
 		xfrog_perror(ret, fsdir);
 		return;

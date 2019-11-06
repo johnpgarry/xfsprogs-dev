@@ -448,11 +448,11 @@ fsmap_f(
 	}
 
 	if (vflag) {
-		c = xfrog_geometry(file->fd, &fsgeo);
+		c = -xfrog_geometry(file->fd, &fsgeo);
 		if (c) {
 			fprintf(stderr,
 				_("%s: can't get geometry [\"%s\"]: %s\n"),
-				progname, file->name, strerror(errno));
+				progname, file->name, strerror(c));
 			exitcode = 1;
 			return 0;
 		}

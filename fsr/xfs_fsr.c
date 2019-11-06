@@ -602,7 +602,7 @@ fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 		return -1;
 	}
 
-	ret = xfd_open(&fsxfd, mntdir, O_RDONLY);
+	ret = -xfd_open(&fsxfd, mntdir, O_RDONLY);
 	if (ret) {
 		fsrprintf(_("unable to open XFS file: %s: %s\n"),
 		          mntdir, strerror(ret));
@@ -748,7 +748,7 @@ fsrfile(
 	 * Need to open something on the same filesystem as the
 	 * file.  Open the parent.
 	 */
-	error = xfd_open(&fsxfd, getparent(fname), O_RDONLY);
+	error = -xfd_open(&fsxfd, getparent(fname), O_RDONLY);
 	if (error) {
 		fsrprintf(_("unable to open sys handle for XFS file %s: %s\n"),
 			fname, strerror(error));

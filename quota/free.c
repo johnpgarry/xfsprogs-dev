@@ -69,7 +69,7 @@ mount_free_space_data(
 	}
 
 	if (!(mount->fs_flags & FS_FOREIGN)) {
-		ret = xfrog_geometry(fd, &fsgeo);
+		ret = -xfrog_geometry(fd, &fsgeo);
 		if (ret) {
 			xfrog_perror(ret, "XFS_IOC_FSGEOMETRY");
 			close(fd);

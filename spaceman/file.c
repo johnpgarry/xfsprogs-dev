@@ -52,7 +52,7 @@ openfile(
 	struct fs_path	*fsp;
 	int		ret;
 
-	ret = xfd_open(xfd, path, O_RDONLY);
+	ret = -xfd_open(xfd, path, O_RDONLY);
 	if (ret) {
 		if (ret == ENOTTY)
 			fprintf(stderr,

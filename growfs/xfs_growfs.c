@@ -169,7 +169,7 @@ main(int argc, char **argv)
 	}
 
 	/* get the current filesystem size & geometry */
-	ret = xfrog_geometry(ffd, &geo);
+	ret = -xfrog_geometry(ffd, &geo);
 	if (ret) {
 		fprintf(stderr,
 	_("%s: cannot determine geometry of filesystem mounted at %s: %s\n"),
@@ -355,7 +355,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	ret = xfrog_geometry(ffd, &ngeo);
+	ret = -xfrog_geometry(ffd, &ngeo);
 	if (ret) {
 		fprintf(stderr, _("%s: XFS_IOC_FSGEOMETRY xfsctl failed: %s\n"),
 			progname, strerror(ret));
