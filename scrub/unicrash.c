@@ -145,8 +145,8 @@ is_utf8_locale(void)
 }
 
 /*
- * Generate normalized form and skeleton of the name.
- * If this fails, just forget everything; this is an advisory checker.
+ * Generate normalized form and skeleton of the name.  If this fails, just
+ * forget everything and return false; this is an advisory checker.
  */
 static bool
 name_entry_compute_checknames(
@@ -379,7 +379,7 @@ name_entry_examine(
 }
 
 /* Initialize the collision detector. */
-static bool
+static int
 unicrash_init(
 	struct unicrash		**ucp,
 	struct scrub_ctx	*ctx,
@@ -392,7 +392,7 @@ unicrash_init(
 
 	if (!is_utf8_locale()) {
 		*ucp = NULL;
-		return true;
+		return 0;
 	}
 
 	if (nr_buckets > 65536)
@@ -402,7 +402,7 @@ unicrash_init(
 
 	p = calloc(1, UNICRASH_SZ(nr_buckets));
 	if (!p)
-		return false;
+		return errno;
 	p->ctx = ctx;
 	p->nr_buckets = nr_buckets;
 	p->compare_ino = compare_ino;
@@ -418,12 +418,12 @@ unicrash_init(
 	p->is_only_root_writeable = is_only_root_writeable;
 	*ucp = p;
 
-	return true;
+	return 0;
 out_spoof:
 	uspoof_close(p->spoof);
 out_free:
 	free(p);
-	return false;
+	return ENOMEM;
 }
 
 /*
@@ -441,7 +441,7 @@ is_only_root_writable(
 }
 
 /* Initialize the collision detector for a directory. */
-bool
+int
 unicrash_dir_init(
 	struct unicrash		**ucp,
 	struct scrub_ctx	*ctx,
@@ -456,7 +456,7 @@ unicrash_dir_init(
 }
 
 /* Initialize the collision detector for an extended attribute. */
-bool
+int
 unicrash_xattr_init(
 	struct unicrash		**ucp,
 	struct scrub_ctx	*ctx,
@@ -468,7 +468,7 @@ unicrash_xattr_init(
 }
 
 /* Initialize the collision detector for a filesystem label. */
-bool
+int
 unicrash_fs_label_init(
 	struct unicrash		**ucp,
 	struct scrub_ctx	*ctx)
@@ -608,7 +608,7 @@ out:
  * must be skeletonized according to Unicode TR39 to detect names that
  * could be visually confused with each other.
  */
-static bool
+static void
 unicrash_add(
 	struct unicrash		*uc,
 	struct name_entry	*new_entry,
@@ -633,7 +633,7 @@ unicrash_add(
 		    (uc->compare_ino ? entry->ino != new_entry->ino : true)) {
 			*badflags |= UNICRASH_NOT_UNIQUE;
 			*existing_entry = entry;
-			return true;
+			return;
 		}
 
 		/* Confusable? */
@@ -642,16 +642,14 @@ unicrash_add(
 		    (uc->compare_ino ? entry->ino != new_entry->ino : true)) {
 			*badflags |= UNICRASH_CONFUSABLE;
 			*existing_entry = entry;
-			return true;
+			return;
 		}
 		entry = entry->next;
 	}
-
-	return true;
 }
 
 /* Check a name for unicode normalization problems or collisions. */
-static bool
+static int
 __unicrash_check_name(
 	struct unicrash		*uc,
 	struct descr		*dsc,
@@ -660,67 +658,67 @@ __unicrash_check_name(
 	xfs_ino_t		ino)
 {
 	struct name_entry	*dup_entry = NULL;
-	struct name_entry	*new_entry;
+	struct name_entry	*new_entry = NULL;
 	unsigned int		badflags = 0;
-	bool			moveon;
 
 	/* If we can't create entry data, just skip it. */
 	if (!name_entry_create(uc, name, ino, &new_entry))
-		return true;
+		return 0;
 
 	name_entry_examine(new_entry, &badflags);
-
-	moveon = unicrash_add(uc, new_entry, &badflags, &dup_entry);
-	if (!moveon)
-		return false;
-
+	unicrash_add(uc, new_entry, &badflags, &dup_entry);
 	if (badflags)
 		unicrash_complain(uc, dsc, namedescr, new_entry, badflags,
 				dup_entry);
 
-	return true;
+	return 0;
 }
 
-/* Check a directory entry for unicode normalization problems or collisions. */
-bool
+/*
+ * Check a directory entry for unicode normalization problems or collisions.
+ * If errors occur, this function will log them and return nonzero.
+ */
+int
 unicrash_check_dir_name(
 	struct unicrash		*uc,
 	struct descr		*dsc,
 	struct dirent		*dentry)
 {
 	if (!uc)
-		return true;
+		return 0;
 	return __unicrash_check_name(uc, dsc, _("directory"),
 			dentry->d_name, dentry->d_ino);
 }
 
 /*
  * Check an extended attribute name for unicode normalization problems
- * or collisions.
+ * or collisions.  If errors occur, this function will log them and return
+ * nonzero.
  */
-bool
+int
 unicrash_check_xattr_name(
 	struct unicrash		*uc,
 	struct descr		*dsc,
 	const char		*attrname)
 {
 	if (!uc)
-		return true;
+		return 0;
 	return __unicrash_check_name(uc, dsc, _("extended attribute"),
 			attrname, 0);
 }
 
 /*
  * Check the fs label for unicode normalization problems or misleading bits.
+ * If errors occur, this function will log them and return nonzero.
  */
-bool
+int
 unicrash_check_fs_label(
 	struct unicrash		*uc,
 	struct descr		*dsc,
 	const char		*label)
 {
 	if (!uc)
-		return true;
+		return 0;
 	return __unicrash_check_name(uc, dsc, _("filesystem label"),
 			label, 0);
 }

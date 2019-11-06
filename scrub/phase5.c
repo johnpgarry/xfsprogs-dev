@@ -87,23 +87,32 @@ xfs_scrub_scan_dirents(
 	DIR			*dir;
 	struct dirent		*dentry;
 	bool			moveon = true;
+	int			ret;
 
 	dir = fdopendir(*fd);
 	if (!dir) {
 		str_errno(ctx, descr_render(dsc));
+		moveon = false;
 		goto out;
 	}
 	*fd = -1; /* closedir will close *fd for us */
 
-	moveon = unicrash_dir_init(&uc, ctx, bstat);
-	if (!moveon)
+	ret = unicrash_dir_init(&uc, ctx, bstat);
+	if (ret) {
+		str_liberror(ctx, ret, descr_render(dsc));
+		moveon = false;
 		goto out_unicrash;
+	}
 
 	dentry = readdir(dir);
 	while (dentry) {
-		if (uc)
-			moveon = unicrash_check_dir_name(uc, dsc, dentry);
-		else
+		if (uc) {
+			ret = unicrash_check_dir_name(uc, dsc, dentry);
+			if (ret) {
+				str_liberror(ctx, ret, descr_render(dsc));
+				moveon = false;
+			}
+		} else
 			moveon = xfs_scrub_check_name(ctx, dsc,
 					_("directory"), dentry->d_name);
 		if (!moveon)
@@ -154,9 +163,11 @@ xfs_scrub_scan_fhandle_namespace_xattrs(
 	int				i;
 	int				error;
 
-	moveon = unicrash_xattr_init(&uc, ctx, bstat);
-	if (!moveon)
+	error = unicrash_xattr_init(&uc, ctx, bstat);
+	if (error) {
+		str_liberror(ctx, error, descr_render(dsc));
 		return false;
+	}
 
 	memset(attrbuf, 0, XFS_XATTR_LIST_MAX);
 	memset(&cur, 0, sizeof(cur));
@@ -169,10 +180,15 @@ xfs_scrub_scan_fhandle_namespace_xattrs(
 			ent = ATTR_ENTRY(attrlist, i);
 			snprintf(keybuf, XATTR_NAME_MAX, "%s.%s", attr_ns->name,
 					ent->a_name);
-			if (uc)
-				moveon = unicrash_check_xattr_name(uc, dsc,
+			if (uc) {
+				error = unicrash_check_xattr_name(uc, dsc,
 						keybuf);
-			else
+				if (error) {
+					str_liberror(ctx, error,
+							descr_render(dsc));
+					moveon = false;
+				}
+			} else
 				moveon = xfs_scrub_check_name(ctx, dsc,
 						_("extended attribute"),
 						keybuf);
@@ -321,9 +337,11 @@ xfs_scrub_fs_label(
 	bool				moveon = true;
 	int				error;
 
-	moveon = unicrash_fs_label_init(&uc, ctx);
-	if (!moveon)
+	error = unicrash_fs_label_init(&uc, ctx);
+	if (error) {
+		str_liberror(ctx, error, descr_render(&dsc));
 		return false;
+	}
 
 	descr_set(&dsc, NULL);
 
@@ -342,9 +360,13 @@ xfs_scrub_fs_label(
 		goto out;
 
 	/* Otherwise check for weirdness. */
-	if (uc)
-		moveon = unicrash_check_fs_label(uc, &dsc, label);
-	else
+	if (uc) {
+		error = unicrash_check_fs_label(uc, &dsc, label);
+		if (error) {
+			str_liberror(ctx, error, descr_render(&dsc));
+			moveon = false;
+		}
+	} else
 		moveon = xfs_scrub_check_name(ctx, &dsc, _("filesystem label"),
 				label);
 	if (!moveon)
