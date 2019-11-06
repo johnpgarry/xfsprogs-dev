@@ -30,7 +30,7 @@ struct scan_fs_tree {
 	pthread_mutex_t		lock;
 	pthread_cond_t		wakeup;
 	struct stat		root_sb;
-	bool			moveon;
+	bool			aborted;
 	scan_fs_tree_dir_fn	dir_fn;
 	scan_fs_tree_dirent_fn	dirent_fn;
 	void			*arg;
@@ -138,8 +138,9 @@ scan_fs_dir(
 	}
 
 	/* Caller-specific directory checks. */
-	if (!sft->dir_fn(ctx, sftd->path, dir_fd, sft->arg)) {
-		sft->moveon = false;
+	error = sft->dir_fn(ctx, sftd->path, dir_fd, sft->arg);
+	if (error) {
+		sft->aborted = true;
 		error = close(dir_fd);
 		if (error)
 			str_errno(ctx, sftd->path);
@@ -150,11 +151,14 @@ scan_fs_dir(
 	dir = fdopendir(dir_fd);
 	if (!dir) {
 		str_errno(ctx, sftd->path);
+		sft->aborted = true;
 		close(dir_fd);
 		goto out;
 	}
 	rewinddir(dir);
-	for (dirent = readdir(dir); dirent != NULL; dirent = readdir(dir)) {
+	for (dirent = readdir(dir);
+	     !sft->aborted && dirent != NULL;
+	     dirent = readdir(dir)) {
 		snprintf(newpath, PATH_MAX, "%s/%s", sftd->path,
 				dirent->d_name);
 
@@ -171,14 +175,15 @@ scan_fs_dir(
 			continue;
 
 		/* Caller-specific directory entry function. */
-		if (!sft->dirent_fn(ctx, newpath, dir_fd, dirent, &sb,
-				sft->arg)) {
-			sft->moveon = false;
+		error = sft->dirent_fn(ctx, newpath, dir_fd, dirent, &sb,
+				sft->arg);
+		if (error) {
+			sft->aborted = true;
 			break;
 		}
 
 		if (xfs_scrub_excessive_errors(ctx)) {
-			sft->moveon = false;
+			sft->aborted = true;
 			break;
 		}
 
@@ -189,7 +194,7 @@ scan_fs_dir(
 			if (error) {
 				str_liberror(ctx, error,
 _("queueing subdirectory scan"));
-				sft->moveon = false;
+				sft->aborted = true;
 				break;
 			}
 		}
@@ -206,8 +211,11 @@ out:
 	free(sftd);
 }
 
-/* Scan the entire filesystem. */
-bool
+/*
+ * Scan the entire filesystem.  This function returns 0 on success; if there
+ * are errors, this function will log them and returns nonzero.
+ */
+int
 scan_fs_tree(
 	struct scrub_ctx	*ctx,
 	scan_fs_tree_dir_fn	dir_fn,
@@ -215,20 +223,18 @@ scan_fs_tree(
 	void			*arg)
 {
 	struct workqueue	wq;
-	struct scan_fs_tree	sft;
-	bool			moveon = false;
+	struct scan_fs_tree	sft = {
+		.root_sb	= ctx->mnt_sb,
+		.dir_fn		= dir_fn,
+		.dirent_fn	= dirent_fn,
+		.arg		= arg,
+	};
 	int			ret;
 
-	sft.moveon = true;
-	sft.nr_dirs = 0;
-	sft.root_sb = ctx->mnt_sb;
-	sft.dir_fn = dir_fn;
-	sft.dirent_fn = dirent_fn;
-	sft.arg = arg;
 	ret = pthread_mutex_init(&sft.lock, NULL);
 	if (ret) {
 		str_liberror(ctx, ret, _("creating directory scan lock"));
-		return false;
+		return ret;
 	}
 	ret = pthread_cond_init(&sft.wakeup, NULL);
 	if (ret) {
@@ -268,14 +274,16 @@ scan_fs_tree(
 		goto out_wq;
 	}
 
-	moveon = sft.moveon;
+	if (!ret && sft.aborted)
+		ret = -1;
+
 out_wq:
 	workqueue_destroy(&wq);
 out_cond:
 	pthread_cond_destroy(&sft.wakeup);
 out_mutex:
 	pthread_mutex_destroy(&sft.lock);
-	return moveon;
+	return ret;
 }
 
 #ifndef FITRIM

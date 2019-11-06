@@ -309,21 +309,24 @@ _("Disappeared during read error reporting."));
 }
 
 /* Scan a directory for matches in the read verify error list. */
-static bool
+static int
 xfs_report_verify_dir(
 	struct scrub_ctx	*ctx,
 	const char		*path,
 	int			dir_fd,
 	void			*arg)
 {
-	return xfs_report_verify_fd(ctx, path, dir_fd, arg);
+	bool			moveon;
+
+	moveon = xfs_report_verify_fd(ctx, path, dir_fd, arg);
+	return moveon ? 0 : -1;
 }
 
 /*
  * Scan the inode associated with a directory entry for matches with
  * the read verify error list.
  */
-static bool
+static int
 xfs_report_verify_dirent(
 	struct scrub_ctx	*ctx,
 	const char		*path,
@@ -338,11 +341,11 @@ xfs_report_verify_dirent(
 
 	/* Ignore things we can't open. */
 	if (!S_ISREG(sb->st_mode) && !S_ISDIR(sb->st_mode))
-		return true;
+		return 0;
 
 	/* Ignore . and .. */
 	if (!strcmp(".", dirent->d_name) || !strcmp("..", dirent->d_name))
-		return true;
+		return 0;
 
 	/*
 	 * If we were given a dirent, open the associated file under
@@ -351,8 +354,12 @@ xfs_report_verify_dirent(
 	 */
 	fd = openat(dir_fd, dirent->d_name,
 			O_RDONLY | O_NOATIME | O_NOFOLLOW | O_NOCTTY);
-	if (fd < 0)
-		return true;
+	if (fd < 0) {
+		if (errno == ENOENT)
+			return 0;
+		str_errno(ctx, path);
+		return errno;
+	}
 
 	/* Go find the badness. */
 	moveon = xfs_report_verify_fd(ctx, path, fd, arg);
@@ -363,7 +370,7 @@ out:
 	error = close(fd);
 	if (error)
 		str_errno(ctx, path);
-	return moveon;
+	return moveon ? 0 : -1;
 }
 
 /* Use a fsmap to report metadata lost to a media error. */
@@ -478,7 +485,6 @@ report_all_media_errors(
 	struct scrub_ctx		*ctx,
 	struct media_verify_state	*vs)
 {
-	bool				moveon;
 	int				ret;
 
 	ret = report_disk_ioerrs(ctx, ctx->datadev, vs);
@@ -494,9 +500,9 @@ report_all_media_errors(
 	}
 
 	/* Scan the directory tree to get file paths. */
-	moveon = scan_fs_tree(ctx, xfs_report_verify_dir,
+	ret = scan_fs_tree(ctx, xfs_report_verify_dir,
 			xfs_report_verify_dirent, vs);
-	if (!moveon)
+	if (ret)
 		return false;
 
 	/* Scan for unlinked files. */

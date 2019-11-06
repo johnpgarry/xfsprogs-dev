@@ -8,20 +8,20 @@
 
 /*
  * Visit a subdirectory prior to iterating entries in that subdirectory.
- * Return true to continue iteration or false to stop iterating and return to
- * the caller.
+ * Return 0 to continue iteration or a positive error code to stop iterating
+ * and return to the caller.
  */
-typedef bool (*scan_fs_tree_dir_fn)(struct scrub_ctx *, const char *,
+typedef int (*scan_fs_tree_dir_fn)(struct scrub_ctx *, const char *,
 		int, void *);
 
 /*
- * Visit each directory entry in a directory.  Return true to continue
- * iteration or false to stop iterating and return to the caller.
+ * Visit each directory entry in a directory.  Return 0 to continue iteration
+ * or a positive error code to stop iterating and return to the caller.
  */
-typedef bool (*scan_fs_tree_dirent_fn)(struct scrub_ctx *, const char *,
+typedef int (*scan_fs_tree_dirent_fn)(struct scrub_ctx *, const char *,
 		int, struct dirent *, struct stat *, void *);
 
-bool scan_fs_tree(struct scrub_ctx *ctx, scan_fs_tree_dir_fn dir_fn,
+int scan_fs_tree(struct scrub_ctx *ctx, scan_fs_tree_dir_fn dir_fn,
 		scan_fs_tree_dirent_fn dirent_fn, void *arg);
 
 void fstrim(struct scrub_ctx *ctx);
