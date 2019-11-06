@@ -27,10 +27,9 @@ struct summary_counts {
 };
 
 /* Record block usage. */
-static bool
-xfs_record_block_summary(
+static int
+count_block_summary(
 	struct scrub_ctx	*ctx,
-	const char		*descr,
 	struct fsmap		*fsmap,
 	void			*arg)
 {
@@ -41,13 +40,13 @@ xfs_record_block_summary(
 	counts = ptvar_get((struct ptvar *)arg, &ret);
 	if (ret) {
 		str_liberror(ctx, ret, _("retrieving summary counts"));
-		return false;
+		return ret;
 	}
 	if (fsmap->fmr_device == ctx->fsinfo.fs_logdev)
-		return true;
+		return 0;
 	if ((fsmap->fmr_flags & FMR_OF_SPECIAL_OWNER) &&
 	    fsmap->fmr_owner == XFS_FMR_OWN_FREE)
-		return true;
+		return 0;
 
 	len = fsmap->fmr_length;
 
@@ -62,14 +61,14 @@ xfs_record_block_summary(
 	} else {
 		/* Count datadev extents. */
 		if (counts->next_phys >= fsmap->fmr_physical + len)
-			return true;
+			return 0;
 		else if (counts->next_phys > fsmap->fmr_physical)
 			len = counts->next_phys - fsmap->fmr_physical;
 		counts->dbytes += len;
 		counts->next_phys = fsmap->fmr_physical + fsmap->fmr_length;
 	}
 
-	return true;
+	return 0;
 }
 
 /* Add all the summaries in the per-thread counter */
@@ -144,9 +143,11 @@ xfs_scan_summary(
 	}
 
 	/* Use fsmap to count blocks. */
-	moveon = xfs_scan_all_spacemaps(ctx, xfs_record_block_summary, ptvar);
-	if (!moveon)
+	error = scrub_scan_all_spacemaps(ctx, count_block_summary, ptvar);
+	if (error) {
+		moveon = false;
 		goto out_free;
+	}
 	error = ptvar_foreach(ptvar, xfs_add_summaries, &totalcount);
 	if (error) {
 		str_liberror(ctx, error, _("counting blocks"));

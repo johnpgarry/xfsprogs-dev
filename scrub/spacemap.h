@@ -7,15 +7,15 @@
 #define XFS_SCRUB_SPACEMAP_H_
 
 /*
- * Visit each space mapping in the filesystem.  Return true to continue
- * iteration or false to stop iterating and return to the caller.
+ * Visit each space mapping in the filesystem.  Return 0 to continue iteration
+ * or a positive error code to stop iterating and return to the caller.
  */
-typedef bool (*xfs_fsmap_iter_fn)(struct scrub_ctx *ctx, const char *descr,
+typedef int (*scrub_fsmap_iter_fn)(struct scrub_ctx *ctx,
 		struct fsmap *fsr, void *arg);
 
-bool xfs_iterate_fsmap(struct scrub_ctx *ctx, const char *descr,
-		struct fsmap *keys, xfs_fsmap_iter_fn fn, void *arg);
-bool xfs_scan_all_spacemaps(struct scrub_ctx *ctx, xfs_fsmap_iter_fn fn,
+int scrub_iterate_fsmap(struct scrub_ctx *ctx, struct fsmap *keys,
+		scrub_fsmap_iter_fn fn, void *arg);
+int scrub_scan_all_spacemaps(struct scrub_ctx *ctx, scrub_fsmap_iter_fn fn,
 		void *arg);
 
 #endif /* XFS_SCRUB_SPACEMAP_H_ */

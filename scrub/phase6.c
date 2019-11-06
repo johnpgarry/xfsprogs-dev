@@ -374,10 +374,9 @@ out:
 }
 
 /* Use a fsmap to report metadata lost to a media error. */
-static bool
+static int
 report_ioerr_fsmap(
 	struct scrub_ctx	*ctx,
-	const char		*descr,
 	struct fsmap		*map,
 	void			*arg)
 {
@@ -388,7 +387,7 @@ report_ioerr_fsmap(
 
 	/* Don't care about unwritten extents. */
 	if (map->fmr_flags & FMR_OF_PREALLOC)
-		return true;
+		return 0;
 
 	if (err_physical > map->fmr_physical)
 		err_off = err_physical - map->fmr_physical;
@@ -420,7 +419,7 @@ report_ioerr_fsmap(
 	 * to find the bad file's pathname.
 	 */
 
-	return true;
+	return 0;
 }
 
 /*
@@ -434,15 +433,10 @@ report_ioerr(
 	void				*arg)
 {
 	struct fsmap			keys[2];
-	char				descr[DESCR_BUFSZ];
 	struct disk_ioerr_report	*dioerr = arg;
 	dev_t				dev;
 
 	dev = xfs_disk_to_dev(dioerr->ctx, dioerr->disk);
-
-	snprintf(descr, DESCR_BUFSZ,
-_("dev %d:%d ioerr @ %"PRIu64":%"PRIu64" "),
-			major(dev), minor(dev), start, length);
 
 	/* Go figure out which blocks are bad from the fsmap. */
 	memset(keys, 0, sizeof(struct fsmap) * 2);
@@ -453,9 +447,8 @@ _("dev %d:%d ioerr @ %"PRIu64":%"PRIu64" "),
 	(keys + 1)->fmr_owner = ULLONG_MAX;
 	(keys + 1)->fmr_offset = ULLONG_MAX;
 	(keys + 1)->fmr_flags = UINT_MAX;
-	xfs_iterate_fsmap(dioerr->ctx, descr, keys, report_ioerr_fsmap,
+	return scrub_iterate_fsmap(dioerr->ctx, keys, report_ioerr_fsmap,
 			&start);
-	return 0;
 }
 
 /* Report all the media errors found on a disk. */
@@ -511,10 +504,9 @@ report_all_media_errors(
 }
 
 /* Schedule a read-verify of a (data block) extent. */
-static bool
-xfs_check_rmap(
+static int
+check_rmap(
 	struct scrub_ctx		*ctx,
-	const char			*descr,
 	struct fsmap			*map,
 	void				*arg)
 {
@@ -544,7 +536,7 @@ xfs_check_rmap(
 	 */
 	if (map->fmr_flags & (FMR_OF_PREALLOC | FMR_OF_ATTR_FORK |
 			      FMR_OF_EXTENT_MAP | FMR_OF_SPECIAL_OWNER))
-		return true;
+		return 0;
 
 	/* XXX: Filter out directory data blocks. */
 
@@ -552,11 +544,11 @@ xfs_check_rmap(
 	ret = read_verify_schedule_io(rvp, map->fmr_physical, map->fmr_length,
 			vs);
 	if (ret) {
-		str_liberror(ctx, ret, descr);
-		return false;
+		str_liberror(ctx, ret, _("scheduling media verify command"));
+		return ret;
 	}
 
-	return true;
+	return 0;
 }
 
 /* Wait for read/verify actions to finish, then return # bytes checked. */
@@ -669,9 +661,11 @@ xfs_scan_blocks(
 			goto out_logpool;
 		}
 	}
-	moveon = xfs_scan_all_spacemaps(ctx, xfs_check_rmap, &vs);
-	if (!moveon)
+	ret = scrub_scan_all_spacemaps(ctx, check_rmap, &vs);
+	if (ret) {
+		moveon = false;
 		goto out_rtpool;
+	}
 
 	ret = clean_pool(vs.rvp_data, &ctx->bytes_checked);
 	if (ret) {

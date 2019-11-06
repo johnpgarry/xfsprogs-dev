@@ -31,26 +31,25 @@
 
 #define FSMAP_NR	65536
 
-/* Iterate all the fs block mappings between the two keys. */
-bool
-xfs_iterate_fsmap(
+/*
+ * Iterate all the fs block mappings between the two keys.  Returns 0 or a
+ * positive error number.
+ */
+int
+scrub_iterate_fsmap(
 	struct scrub_ctx	*ctx,
-	const char		*descr,
 	struct fsmap		*keys,
-	xfs_fsmap_iter_fn	fn,
+	scrub_fsmap_iter_fn	fn,
 	void			*arg)
 {
 	struct fsmap_head	*head;
 	struct fsmap		*p;
-	bool			moveon = true;
 	int			i;
 	int			error;
 
 	head = malloc(fsmap_sizeof(FSMAP_NR));
-	if (!head) {
-		str_errno(ctx, descr);
-		return false;
-	}
+	if (!head)
+		return errno;
 
 	memset(head, 0, sizeof(*head));
 	memcpy(head->fmh_keys, keys, sizeof(struct fsmap) * 2);
@@ -60,13 +59,11 @@ xfs_iterate_fsmap(
 		for (i = 0, p = head->fmh_recs;
 		     i < head->fmh_entries;
 		     i++, p++) {
-			moveon = fn(ctx, descr, p, arg);
-			if (!moveon)
+			error = fn(ctx, p, arg);
+			if (error)
 				goto out;
-			if (xfs_scrub_excessive_errors(ctx)) {
-				moveon = false;
+			if (xfs_scrub_excessive_errors(ctx))
 				goto out;
-			}
 		}
 
 		if (head->fmh_entries == 0)
@@ -76,44 +73,35 @@ xfs_iterate_fsmap(
 			break;
 		fsmap_advance(head);
 	}
-
-	if (error) {
-		str_errno(ctx, descr);
-		moveon = false;
-	}
+	if (error)
+		error = errno;
 out:
 	free(head);
-	return moveon;
+	return error;
 }
 
 /* GETFSMAP wrappers routines. */
-struct xfs_scan_blocks {
-	xfs_fsmap_iter_fn	fn;
+struct scan_blocks {
+	scrub_fsmap_iter_fn	fn;
 	void			*arg;
-	bool			moveon;
+	bool			aborted;
 };
 
 /* Iterate all the reverse mappings of an AG. */
 static void
-xfs_scan_ag_blocks(
+scan_ag_rmaps(
 	struct workqueue	*wq,
 	xfs_agnumber_t		agno,
 	void			*arg)
 {
 	struct scrub_ctx	*ctx = (struct scrub_ctx *)wq->wq_ctx;
-	struct xfs_scan_blocks	*sbx = arg;
-	char			descr[DESCR_BUFSZ];
+	struct scan_blocks	*sbx = arg;
 	struct fsmap		keys[2];
 	off64_t			bperag;
-	bool			moveon;
+	int			ret;
 
 	bperag = (off64_t)ctx->mnt.fsgeom.agblocks *
 		 (off64_t)ctx->mnt.fsgeom.blocksize;
-
-	snprintf(descr, DESCR_BUFSZ, _("dev %d:%d AG %u fsmap"),
-				major(ctx->fsinfo.fs_datadev),
-				minor(ctx->fsinfo.fs_datadev),
-				agno);
 
 	memset(keys, 0, sizeof(struct fsmap) * 2);
 	keys->fmr_device = ctx->fsinfo.fs_datadev;
@@ -124,25 +112,32 @@ xfs_scan_ag_blocks(
 	(keys + 1)->fmr_offset = ULLONG_MAX;
 	(keys + 1)->fmr_flags = UINT_MAX;
 
-	moveon = xfs_iterate_fsmap(ctx, descr, keys, sbx->fn, sbx->arg);
-	if (!moveon)
-		sbx->moveon = false;
+	if (sbx->aborted)
+		return;
+
+	ret = scrub_iterate_fsmap(ctx, keys, sbx->fn, sbx->arg);
+	if (ret) {
+		char		descr[DESCR_BUFSZ];
+
+		snprintf(descr, DESCR_BUFSZ, _("dev %d:%d AG %u fsmap"),
+					major(ctx->fsinfo.fs_datadev),
+					minor(ctx->fsinfo.fs_datadev),
+					agno);
+		str_liberror(ctx, ret, descr);
+		sbx->aborted = true;
+	}
 }
 
 /* Iterate all the reverse mappings of a standalone device. */
 static void
-xfs_scan_dev_blocks(
+scan_dev_rmaps(
 	struct scrub_ctx	*ctx,
 	int			idx,
 	dev_t			dev,
-	struct xfs_scan_blocks	*sbx)
+	struct scan_blocks	*sbx)
 {
 	struct fsmap		keys[2];
-	char			descr[DESCR_BUFSZ];
-	bool			moveon;
-
-	snprintf(descr, DESCR_BUFSZ, _("dev %d:%d fsmap"),
-			major(dev), minor(dev));
+	int			ret;
 
 	memset(keys, 0, sizeof(struct fsmap) * 2);
 	keys->fmr_device = dev;
@@ -152,79 +147,90 @@ xfs_scan_dev_blocks(
 	(keys + 1)->fmr_offset = ULLONG_MAX;
 	(keys + 1)->fmr_flags = UINT_MAX;
 
-	moveon = xfs_iterate_fsmap(ctx, descr, keys, sbx->fn, sbx->arg);
-	if (!moveon)
-		sbx->moveon = false;
+	if (sbx->aborted)
+		return;
+
+	ret = scrub_iterate_fsmap(ctx, keys, sbx->fn, sbx->arg);
+	if (ret) {
+		char		descr[DESCR_BUFSZ];
+
+		snprintf(descr, DESCR_BUFSZ, _("dev %d:%d fsmap"),
+				major(dev), minor(dev));
+		str_liberror(ctx, ret, descr);
+		sbx->aborted = true;
+	}
 }
 
 /* Iterate all the reverse mappings of the realtime device. */
 static void
-xfs_scan_rt_blocks(
+scan_rt_rmaps(
 	struct workqueue	*wq,
 	xfs_agnumber_t		agno,
 	void			*arg)
 {
 	struct scrub_ctx	*ctx = (struct scrub_ctx *)wq->wq_ctx;
 
-	xfs_scan_dev_blocks(ctx, agno, ctx->fsinfo.fs_rtdev, arg);
+	scan_dev_rmaps(ctx, agno, ctx->fsinfo.fs_rtdev, arg);
 }
 
 /* Iterate all the reverse mappings of the log device. */
 static void
-xfs_scan_log_blocks(
+scan_log_rmaps(
 	struct workqueue	*wq,
 	xfs_agnumber_t		agno,
 	void			*arg)
 {
 	struct scrub_ctx	*ctx = (struct scrub_ctx *)wq->wq_ctx;
 
-	xfs_scan_dev_blocks(ctx, agno, ctx->fsinfo.fs_logdev, arg);
+	scan_dev_rmaps(ctx, agno, ctx->fsinfo.fs_logdev, arg);
 }
 
-/* Scan all the blocks in a filesystem. */
-bool
-xfs_scan_all_spacemaps(
+/*
+ * Scan all the blocks in a filesystem.  If errors occur, this function will
+ * log them and return nonzero.
+ */
+int
+scrub_scan_all_spacemaps(
 	struct scrub_ctx	*ctx,
-	xfs_fsmap_iter_fn	fn,
+	scrub_fsmap_iter_fn	fn,
 	void			*arg)
 {
 	struct workqueue	wq;
-	struct xfs_scan_blocks	sbx;
+	struct scan_blocks	sbx = {
+		.fn		= fn,
+		.arg		= arg,
+	};
 	xfs_agnumber_t		agno;
 	int			ret;
-
-	sbx.moveon = true;
-	sbx.fn = fn;
-	sbx.arg = arg;
 
 	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
 		str_liberror(ctx, ret, _("creating fsmap workqueue"));
-		return false;
+		return ret;
 	}
 	if (ctx->fsinfo.fs_rt) {
-		ret = workqueue_add(&wq, xfs_scan_rt_blocks,
+		ret = workqueue_add(&wq, scan_rt_rmaps,
 				ctx->mnt.fsgeom.agcount + 1, &sbx);
 		if (ret) {
-			sbx.moveon = false;
+			sbx.aborted = true;
 			str_liberror(ctx, ret, _("queueing rtdev fsmap work"));
 			goto out;
 		}
 	}
 	if (ctx->fsinfo.fs_log) {
-		ret = workqueue_add(&wq, xfs_scan_log_blocks,
+		ret = workqueue_add(&wq, scan_log_rmaps,
 				ctx->mnt.fsgeom.agcount + 2, &sbx);
 		if (ret) {
-			sbx.moveon = false;
+			sbx.aborted = true;
 			str_liberror(ctx, ret, _("queueing logdev fsmap work"));
 			goto out;
 		}
 	}
 	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++) {
-		ret = workqueue_add(&wq, xfs_scan_ag_blocks, agno, &sbx);
+		ret = workqueue_add(&wq, scan_ag_rmaps, agno, &sbx);
 		if (ret) {
-			sbx.moveon = false;
+			sbx.aborted = true;
 			str_liberror(ctx, ret, _("queueing per-AG fsmap work"));
 			break;
 		}
@@ -232,10 +238,13 @@ xfs_scan_all_spacemaps(
 out:
 	ret = workqueue_terminate(&wq);
 	if (ret) {
-		sbx.moveon = false;
+		sbx.aborted = true;
 		str_liberror(ctx, ret, _("finishing fsmap work"));
 	}
 	workqueue_destroy(&wq);
 
-	return sbx.moveon;
+	if (!ret && sbx.aborted)
+		ret = -1;
+
+	return ret;
 }
