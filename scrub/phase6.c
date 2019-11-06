@@ -45,7 +45,7 @@ struct media_verify_state {
 
 /* Find the fd for a given device identifier. */
 static struct read_verify_pool *
-xfs_dev_to_pool(
+dev_to_pool(
 	struct scrub_ctx		*ctx,
 	struct media_verify_state	*vs,
 	dev_t				dev)
@@ -61,7 +61,7 @@ xfs_dev_to_pool(
 
 /* Find the device major/minor for a given file descriptor. */
 static dev_t
-xfs_disk_to_dev(
+disk_to_dev(
 	struct scrub_ctx	*ctx,
 	struct disk		*disk)
 {
@@ -81,7 +81,7 @@ bitmap_for_disk(
 	struct disk			*disk,
 	struct media_verify_state	*vs)
 {
-	dev_t				dev = xfs_disk_to_dev(ctx, disk);
+	dev_t				dev = disk_to_dev(ctx, disk);
 
 	if (dev == ctx->fsinfo.fs_datadev)
 		return vs->d_bad;
@@ -116,7 +116,7 @@ static const struct owner_decode special_owners[] = {
 
 /* Decode a special owner. */
 static const char *
-xfs_decode_special_owner(
+decode_special_owner(
 	uint64_t			owner)
 {
 	const struct owner_decode	*od = special_owners;
@@ -232,8 +232,8 @@ _("media error in extended attribute data."));
 }
 
 /* Iterate the extent mappings of a file to report errors. */
-static bool
-xfs_report_verify_fd(
+static int
+report_fd_loss(
 	struct scrub_ctx		*ctx,
 	const char			*descr,
 	int				fd,
@@ -252,7 +252,7 @@ xfs_report_verify_fd(
 			report_data_loss, &br);
 	if (ret) {
 		str_liberror(ctx, ret, descr);
-		return false;
+		return ret;
 	}
 
 	/* attr fork */
@@ -260,23 +260,23 @@ xfs_report_verify_fd(
 			report_attr_loss, &br);
 	if (ret) {
 		str_liberror(ctx, ret, descr);
-		return false;
+		return ret;
 	}
-	return true;
+
+	return 0;
 }
 
 /* Report read verify errors in unlinked (but still open) files. */
 static int
-xfs_report_verify_inode(
+report_inode_loss(
 	struct scrub_ctx		*ctx,
 	struct xfs_handle		*handle,
 	struct xfs_bulkstat		*bstat,
 	void				*arg)
 {
 	char				descr[DESCR_BUFSZ];
-	bool				moveon;
 	int				fd;
-	int				error;
+	int				error, err2;
 
 	/* Ignore linked files and things we can't open. */
 	if (bstat->bs_nlink != 0)
@@ -300,26 +300,24 @@ _("Disappeared during read error reporting."));
 	}
 
 	/* Go find the badness. */
-	moveon = xfs_report_verify_fd(ctx, descr, fd, arg);
-	error = close(fd);
-	if (error)
+	error = report_fd_loss(ctx, descr, fd, arg);
+
+	err2 = close(fd);
+	if (err2)
 		str_errno(ctx, descr);
 
-	return moveon ? 0 : XFS_ITERATE_INODES_ABORT;
+	return error;
 }
 
 /* Scan a directory for matches in the read verify error list. */
 static int
-xfs_report_verify_dir(
+report_dir_loss(
 	struct scrub_ctx	*ctx,
 	const char		*path,
 	int			dir_fd,
 	void			*arg)
 {
-	bool			moveon;
-
-	moveon = xfs_report_verify_fd(ctx, path, dir_fd, arg);
-	return moveon ? 0 : -1;
+	return report_fd_loss(ctx, path, dir_fd, arg);
 }
 
 /*
@@ -327,7 +325,7 @@ xfs_report_verify_dir(
  * the read verify error list.
  */
 static int
-xfs_report_verify_dirent(
+report_dirent_loss(
 	struct scrub_ctx	*ctx,
 	const char		*path,
 	int			dir_fd,
@@ -335,9 +333,8 @@ xfs_report_verify_dirent(
 	struct stat		*sb,
 	void			*arg)
 {
-	bool			moveon;
 	int			fd;
-	int			error;
+	int			error, err2;
 
 	/* Ignore things we can't open. */
 	if (!S_ISREG(sb->st_mode) && !S_ISDIR(sb->st_mode))
@@ -362,15 +359,15 @@ xfs_report_verify_dirent(
 	}
 
 	/* Go find the badness. */
-	moveon = xfs_report_verify_fd(ctx, path, fd, arg);
-	if (moveon)
-		goto out;
+	error = report_fd_loss(ctx, path, fd, arg);
 
-out:
-	error = close(fd);
-	if (error)
+	err2 = close(fd);
+	if (err2)
 		str_errno(ctx, path);
-	return moveon ? 0 : -1;
+	if (!error && err2)
+		error = err2;
+
+	return error;
 }
 
 /* Use a fsmap to report metadata lost to a media error. */
@@ -398,7 +395,7 @@ report_ioerr_fsmap(
 	if (map->fmr_flags & FMR_OF_SPECIAL_OWNER) {
 		snprintf(buf, DESCR_BUFSZ, _("disk offset %"PRIu64),
 				(uint64_t)map->fmr_physical + err_off);
-		type = xfs_decode_special_owner(map->fmr_owner);
+		type = decode_special_owner(map->fmr_owner);
 		str_corrupt(ctx, buf, _("media error in %s."), type);
 	}
 
@@ -436,7 +433,7 @@ report_ioerr(
 	struct disk_ioerr_report	*dioerr = arg;
 	dev_t				dev;
 
-	dev = xfs_disk_to_dev(dioerr->ctx, dioerr->disk);
+	dev = disk_to_dev(dioerr->ctx, dioerr->disk);
 
 	/* Go figure out which blocks are bad from the fsmap. */
 	memset(keys, 0, sizeof(struct fsmap) * 2);
@@ -473,7 +470,7 @@ report_disk_ioerrs(
 }
 
 /* Given bad extent lists for the data & rtdev, find bad files. */
-static bool
+static int
 report_all_media_errors(
 	struct scrub_ctx		*ctx,
 	struct media_verify_state	*vs)
@@ -483,24 +480,22 @@ report_all_media_errors(
 	ret = report_disk_ioerrs(ctx, ctx->datadev, vs);
 	if (ret) {
 		str_liberror(ctx, ret, _("walking datadev io errors"));
-		return false;
+		return ret;
 	}
 
 	ret = report_disk_ioerrs(ctx, ctx->rtdev, vs);
 	if (ret) {
 		str_liberror(ctx, ret, _("walking rtdev io errors"));
-		return false;
+		return ret;
 	}
 
 	/* Scan the directory tree to get file paths. */
-	ret = scan_fs_tree(ctx, xfs_report_verify_dir,
-			xfs_report_verify_dirent, vs);
+	ret = scan_fs_tree(ctx, report_dir_loss, report_dirent_loss, vs);
 	if (ret)
-		return false;
+		return ret;
 
 	/* Scan for unlinked files. */
-	ret = scrub_scan_all_inodes(ctx, xfs_report_verify_inode, vs);
-	return ret == 0;
+	return scrub_scan_all_inodes(ctx, report_inode_loss, vs);
 }
 
 /* Schedule a read-verify of a (data block) extent. */
@@ -514,7 +509,7 @@ check_rmap(
 	struct read_verify_pool		*rvp;
 	int				ret;
 
-	rvp = xfs_dev_to_pool(ctx, vs, map->fmr_device);
+	rvp = dev_to_pool(ctx, vs, map->fmr_device);
 
 	dbg_printf("rmap dev %d:%d phys %"PRIu64" owner %"PRId64
 			" offset %"PRIu64" len %"PRIu64" flags 0x%x\n",
@@ -614,18 +609,17 @@ remember_ioerr(
  * scan the extent maps of the entire fs tree to figure (and the unlinked
  * inodes) out which files are now broken.
  */
-bool
-xfs_scan_blocks(
+int
+phase6_func(
 	struct scrub_ctx		*ctx)
 {
 	struct media_verify_state	vs = { NULL };
-	bool				moveon = false;
-	int				ret;
+	int				ret, ret2, ret3;
 
 	ret = bitmap_alloc(&vs.d_bad);
 	if (ret) {
 		str_liberror(ctx, ret, _("creating datadev badblock bitmap"));
-		goto out;
+		return ret;
 	}
 
 	ret = bitmap_alloc(&vs.r_bad);
@@ -662,36 +656,36 @@ xfs_scan_blocks(
 		}
 	}
 	ret = scrub_scan_all_spacemaps(ctx, check_rmap, &vs);
-	if (ret) {
-		moveon = false;
+	if (ret)
 		goto out_rtpool;
-	}
 
 	ret = clean_pool(vs.rvp_data, &ctx->bytes_checked);
-	if (ret) {
+	if (ret)
 		str_liberror(ctx, ret, _("flushing datadev verify pool"));
-		moveon = false;
-	}
 
-	ret = clean_pool(vs.rvp_log, &ctx->bytes_checked);
-	if (ret) {
-		str_liberror(ctx, ret, _("flushing logdev verify pool"));
-		moveon = false;
-	}
+	ret2 = clean_pool(vs.rvp_log, &ctx->bytes_checked);
+	if (ret2)
+		str_liberror(ctx, ret2, _("flushing logdev verify pool"));
 
-	ret = clean_pool(vs.rvp_realtime, &ctx->bytes_checked);
-	if (ret) {
-		str_liberror(ctx, ret, _("flushing rtdev verify pool"));
-		moveon = false;
-	}
+	ret3 = clean_pool(vs.rvp_realtime, &ctx->bytes_checked);
+	if (ret3)
+		str_liberror(ctx, ret3, _("flushing rtdev verify pool"));
+
+	/*
+	 * If the verify flush didn't work or we found no bad blocks, we're
+	 * done!  No errors detected.
+	 */
+	if (ret || ret2 || ret3)
+		goto out_rbad;
+	if (bitmap_empty(vs.d_bad) && bitmap_empty(vs.r_bad))
+		goto out_rbad;
 
 	/* Scan the whole dir tree to see what matches the bad extents. */
-	if (moveon && (!bitmap_empty(vs.d_bad) || !bitmap_empty(vs.r_bad)))
-		moveon = report_all_media_errors(ctx, &vs);
+	ret = report_all_media_errors(ctx, &vs);
 
 	bitmap_free(&vs.r_bad);
 	bitmap_free(&vs.d_bad);
-	return moveon;
+	return ret;
 
 out_rtpool:
 	if (vs.rvp_realtime) {
@@ -710,13 +704,19 @@ out_rbad:
 	bitmap_free(&vs.r_bad);
 out_dbad:
 	bitmap_free(&vs.d_bad);
-out:
-	return moveon;
+	return ret;
+}
+
+bool
+xfs_scan_blocks(
+	struct scrub_ctx		*ctx)
+{
+	return phase6_func(ctx) == 0;
 }
 
 /* Estimate how much work we're going to do. */
-bool
-xfs_estimate_verify_work(
+int
+phase6_estimate(
 	struct scrub_ctx	*ctx,
 	uint64_t		*items,
 	unsigned int		*nr_threads,
@@ -734,12 +734,22 @@ xfs_estimate_verify_work(
 				&r_blocks, &r_bfree, &f_files, &f_free);
 	if (ret) {
 		str_liberror(ctx, ret, _("estimating verify work"));
-		return false;
+		return ret;
 	}
 
 	*items = cvt_off_fsb_to_b(&ctx->mnt,
 			(d_blocks - d_bfree) + (r_blocks - r_bfree));
 	*nr_threads = disk_heads(ctx->datadev);
 	*rshift = 20;
-	return true;
+	return 0;
+}
+
+bool
+xfs_estimate_verify_work(
+	struct scrub_ctx	*ctx,
+	uint64_t		*items,
+	unsigned int		*nr_threads,
+	int			*rshift)
+{
+	return phase6_estimate(ctx, items, nr_threads, rshift) == 0;
 }
