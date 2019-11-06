@@ -47,14 +47,14 @@ count_ag_inodes(
 	unsigned int		i;
 	int			error;
 
-	ireq = xfrog_inumbers_alloc_req(64, 0);
-	if (!ireq) {
-		ci->error = errno;
+	error = -xfrog_inumbers_alloc_req(64, 0, &ireq);
+	if (error) {
+		ci->error = error;
 		return;
 	}
 	xfrog_inumbers_set_ag(ireq, agno);
 
-	while (!ci->error && (error = xfrog_inumbers(&ctx->mnt, ireq)) == 0) {
+	while (!ci->error && (error = -xfrog_inumbers(&ctx->mnt, ireq)) == 0) {
 		if (ireq->hdr.ocount == 0)
 			break;
 		for (i = 0; i < ireq->hdr.ocount; i++)

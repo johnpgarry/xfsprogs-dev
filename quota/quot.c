@@ -152,14 +152,14 @@ quot_bulkstat_mount(
 		return;
 	}
 
-	breq = xfrog_bulkstat_alloc_req(NBSTAT, 0);
-	if (!breq) {
-		perror("calloc");
+	ret = -xfrog_bulkstat_alloc_req(NBSTAT, 0, &breq);
+	if (ret) {
+		xfrog_perror(ret, "calloc");
 		xfd_close(&fsxfd);
 		return;
 	}
 
-	while ((sts = xfrog_bulkstat(&fsxfd, breq)) == 0) {
+	while ((sts = -xfrog_bulkstat(&fsxfd, breq)) == 0) {
 		if (breq->hdr.ocount == 0)
 			break;
 		for (i = 0; i < breq->hdr.ocount; i++)

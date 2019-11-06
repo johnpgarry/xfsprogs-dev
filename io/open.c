@@ -684,17 +684,16 @@ get_last_inode(void)
 	struct xfs_inumbers_req	*ireq;
 	uint32_t		lastgrp = 0;
 	__u64			last_ino = 0;
+	int			ret;
 
-	ireq = xfrog_inumbers_alloc_req(IGROUP_NR, 0);
-	if (!ireq) {
-		perror("alloc req");
+	ret = -xfrog_inumbers_alloc_req(IGROUP_NR, 0, &ireq);
+	if (ret) {
+		xfrog_perror(ret, "alloc req");
 		return 0;
 	}
 
 	for (;;) {
-		int		ret;
-
-		ret = xfrog_inumbers(&xfd, ireq);
+		ret = -xfrog_inumbers(&xfd, ireq);
 		if (ret) {
 			xfrog_perror(ret, "XFS_IOC_FSINUMBERS");
 			goto out;
@@ -784,15 +783,15 @@ inode_f(
 		 * The -n option means that the caller wants to know the number
 		 * of the next allocated inode, so we need to increment here.
 		 */
-		breq = xfrog_bulkstat_alloc_req(1, userino + 1);
-		if (!breq) {
-			perror("alloc bulkstat");
+		ret = -xfrog_bulkstat_alloc_req(1, userino + 1, &breq);
+		if (ret) {
+			xfrog_perror(ret, "alloc bulkstat");
 			exitcode = 1;
 			return 0;
 		}
 
 		/* get next inode */
-		ret = xfrog_bulkstat(&xfd, breq);
+		ret = -xfrog_bulkstat(&xfd, breq);
 		if (ret) {
 			xfrog_perror(ret, "bulkstat");
 			free(breq);
@@ -810,7 +809,7 @@ inode_f(
 		struct xfs_fd	xfd = XFS_FD_INIT(file->fd);
 
 		/* get this inode */
-		ret = xfrog_bulkstat_single(&xfd, userino, 0, &bulkstat);
+		ret = -xfrog_bulkstat_single(&xfd, userino, 0, &bulkstat);
 		if (ret == EINVAL) {
 			/* Not in use */
 			result_ino = 0;

@@ -28,13 +28,13 @@ imap_f(int argc, char **argv)
 	else
 		nent = atoi(argv[1]);
 
-	ireq = xfrog_inumbers_alloc_req(nent, 0);
-	if (!ireq) {
-		perror("alloc req");
+	error = -xfrog_inumbers_alloc_req(nent, 0, &ireq);
+	if (error) {
+		xfrog_perror(error, "alloc req");
 		return 0;
 	}
 
-	while ((error = xfrog_inumbers(&xfd, ireq)) == 0 &&
+	while ((error = -xfrog_inumbers(&xfd, ireq)) == 0 &&
 	       ireq->hdr.ocount > 0) {
 		for (i = 0; i < ireq->hdr.ocount; i++) {
 			printf(_("ino %10"PRIu64" count %2d mask %016"PRIx64"\n"),

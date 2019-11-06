@@ -39,7 +39,7 @@ xfrog_bulkstat_prep_v1_emulation(
 	if (xfd->fsgeom.blocksize > 0)
 		return 0;
 
-	return -xfd_prepare_geometry(xfd);
+	return xfd_prepare_geometry(xfd);
 }
 
 /* Bulkstat a single inode using v5 ioctl. */
@@ -54,21 +54,21 @@ xfrog_bulkstat_single5(
 	int				ret;
 
 	if (flags & ~(XFS_BULK_IREQ_SPECIAL))
-		return EINVAL;
+		return -EINVAL;
 
-	req = xfrog_bulkstat_alloc_req(1, ino);
-	if (!req)
-		return ENOMEM;
+	ret = xfrog_bulkstat_alloc_req(1, ino, &req);
+	if (ret)
+		return ret;
 
 	req->hdr.flags = flags;
 	ret = ioctl(xfd->fd, XFS_IOC_BULKSTAT, req);
 	if (ret) {
-		ret = errno;
+		ret = -errno;
 		goto free;
 	}
 
 	if (req->hdr.ocount == 0) {
-		ret = ENOENT;
+		ret = -ENOENT;
 		goto free;
 	}
 
@@ -91,7 +91,7 @@ xfrog_bulkstat_single1(
 	int				error;
 
 	if (flags)
-		return EINVAL;
+		return -EINVAL;
 
 	error = xfrog_bulkstat_prep_v1_emulation(xfd);
 	if (error)
@@ -102,13 +102,13 @@ xfrog_bulkstat_single1(
 	bulkreq.ubuffer = &bstat;
 	error = ioctl(xfd->fd, XFS_IOC_FSBULKSTAT_SINGLE, &bulkreq);
 	if (error)
-		return errno;
+		return -errno;
 
 	xfrog_bulkstat_v1_to_v5(xfd, bulkstat, &bstat);
 	return 0;
 }
 
-/* Bulkstat a single inode.  Returns zero or a positive error code. */
+/* Bulkstat a single inode.  Returns zero or a negative error code. */
 int
 xfrog_bulkstat_single(
 	struct xfs_fd			*xfd,
@@ -127,8 +127,8 @@ xfrog_bulkstat_single(
 
 	/* If the v5 ioctl wasn't found, we punt to v1. */
 	switch (error) {
-	case EOPNOTSUPP:
-	case ENOTTY:
+	case -EOPNOTSUPP:
+	case -ENOTTY:
 		xfd->flags |= XFROG_FLAG_BULKSTAT_FORCE_V1;
 		break;
 	}
@@ -143,7 +143,7 @@ try_v1:
  * kernels.
  *
  * Returns 0 if the emulation should proceed; ECANCELED if there are no
- * records; or a positive error code.
+ * records; or a negative error code.
  */
 static int
 xfrog_bulk_req_v1_setup(
@@ -160,7 +160,7 @@ xfrog_bulk_req_v1_setup(
 		if (hdr->ino == 0)
 			hdr->ino = cvt_agino_to_ino(xfd, hdr->agno, 0);
 		else if (agno < hdr->agno)
-			return EINVAL;
+			return -EINVAL;
 		else if (agno > hdr->agno)
 			goto no_results;
 	}
@@ -170,7 +170,7 @@ xfrog_bulk_req_v1_setup(
 
 	buf = malloc(hdr->icount * rec_size);
 	if (!buf)
-		return errno;
+		return -errno;
 
 	if (hdr->ino)
 		hdr->ino--;
@@ -182,7 +182,7 @@ xfrog_bulk_req_v1_setup(
 
 no_results:
 	hdr->ocount = 0;
-	return ECANCELED;
+	return -ECANCELED;
 }
 
 /*
@@ -210,7 +210,7 @@ xfrog_bulk_req_v1_cleanup(
 	void			*v5_rec = v5_records;
 	unsigned int		i;
 
-	if (error == ECANCELED) {
+	if (error == -ECANCELED) {
 		error = 0;
 		goto free;
 	}
@@ -262,7 +262,7 @@ xfrog_bulkstat5(
 
 	ret = ioctl(xfd->fd, XFS_IOC_BULKSTAT, req);
 	if (ret)
-		return errno;
+		return -errno;
 	return 0;
 }
 
@@ -281,14 +281,14 @@ xfrog_bulkstat1(
 
 	error = xfrog_bulk_req_v1_setup(xfd, &req->hdr, &bulkreq,
 			sizeof(struct xfs_bstat));
-	if (error == ECANCELED)
+	if (error == -ECANCELED)
 		goto out_teardown;
 	if (error)
 		return error;
 
 	error = ioctl(xfd->fd, XFS_IOC_FSBULKSTAT, &bulkreq);
 	if (error)
-		error = errno;
+		error = -errno;
 
 out_teardown:
 	return xfrog_bulk_req_v1_cleanup(xfd, &req->hdr, &bulkreq,
@@ -314,8 +314,8 @@ xfrog_bulkstat(
 
 	/* If the v5 ioctl wasn't found, we punt to v1. */
 	switch (error) {
-	case EOPNOTSUPP:
-	case ENOTTY:
+	case -EOPNOTSUPP:
+	case -ENOTTY:
 		xfd->flags |= XFROG_FLAG_BULKSTAT_FORCE_V1;
 		break;
 	}
@@ -347,7 +347,7 @@ xfrog_bulkstat_v5_to_v1(
 	    time_too_big(bs5->bs_atime) ||
 	    time_too_big(bs5->bs_ctime) ||
 	    time_too_big(bs5->bs_mtime))
-		return ERANGE;
+		return -ERANGE;
 
 	bs1->bs_ino = bs5->bs_ino;
 	bs1->bs_mode = bs5->bs_mode;
@@ -417,22 +417,24 @@ xfrog_bulkstat_v1_to_v5(
 	bs5->bs_aextents = bs1->bs_aextents;
 }
 
-/* Allocate a bulkstat request.  On error returns NULL and sets errno. */
-struct xfs_bulkstat_req *
+/* Allocate a bulkstat request.  Returns zero or a negative error code. */
+int
 xfrog_bulkstat_alloc_req(
 	uint32_t		nr,
-	uint64_t		startino)
+	uint64_t		startino,
+	struct xfs_bulkstat_req **preq)
 {
 	struct xfs_bulkstat_req	*breq;
 
 	breq = calloc(1, XFS_BULKSTAT_REQ_SIZE(nr));
 	if (!breq)
-		return NULL;
+		return -errno;
 
 	breq->hdr.icount = nr;
 	breq->hdr.ino = startino;
 
-	return breq;
+	*preq = breq;
+	return 0;
 }
 
 /* Set a bulkstat cursor to iterate only a particular AG. */
@@ -490,7 +492,7 @@ xfrog_inumbers5(
 
 	ret = ioctl(xfd->fd, XFS_IOC_INUMBERS, req);
 	if (ret)
-		return errno;
+		return -errno;
 	return 0;
 }
 
@@ -509,14 +511,14 @@ xfrog_inumbers1(
 
 	error = xfrog_bulk_req_v1_setup(xfd, &req->hdr, &bulkreq,
 			sizeof(struct xfs_inogrp));
-	if (error == ECANCELED)
+	if (error == -ECANCELED)
 		goto out_teardown;
 	if (error)
 		return error;
 
 	error = ioctl(xfd->fd, XFS_IOC_FSINUMBERS, &bulkreq);
 	if (error)
-		error = errno;
+		error = -errno;
 
 out_teardown:
 	return xfrog_bulk_req_v1_cleanup(xfd, &req->hdr, &bulkreq,
@@ -526,7 +528,7 @@ out_teardown:
 }
 
 /*
- * Query inode allocation bitmask information.  Returns zero or a positive
+ * Query inode allocation bitmask information.  Returns zero or a negative
  * error code.
  */
 int
@@ -545,8 +547,8 @@ xfrog_inumbers(
 
 	/* If the v5 ioctl wasn't found, we punt to v1. */
 	switch (error) {
-	case EOPNOTSUPP:
-	case ENOTTY:
+	case -EOPNOTSUPP:
+	case -ENOTTY:
 		xfd->flags |= XFROG_FLAG_BULKSTAT_FORCE_V1;
 		break;
 	}
@@ -555,22 +557,24 @@ try_v1:
 	return xfrog_inumbers1(xfd, req);
 }
 
-/* Allocate a inumbers request.  On error returns NULL and sets errno. */
-struct xfs_inumbers_req *
+/* Allocate a inumbers request.  Returns zero or a negative error code. */
+int
 xfrog_inumbers_alloc_req(
 	uint32_t		nr,
-	uint64_t		startino)
+	uint64_t		startino,
+	struct xfs_inumbers_req **preq)
 {
 	struct xfs_inumbers_req	*ireq;
 
 	ireq = calloc(1, XFS_INUMBERS_REQ_SIZE(nr));
 	if (!ireq)
-		return NULL;
+		return -errno;
 
 	ireq->hdr.icount = nr;
 	ireq->hdr.ino = startino;
 
-	return ireq;
+	*preq = ireq;
+	return 0;
 }
 
 /* Set an inumbers cursor to iterate only a particular AG. */

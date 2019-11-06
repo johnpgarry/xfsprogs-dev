@@ -613,16 +613,15 @@ fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 
 	tmp_init(mntdir);
 
-	breq = xfrog_bulkstat_alloc_req(GRABSZ, startino);
-	if (!breq) {
-		fsrprintf(_("Skipping %s: not enough memory\n"),
-			  mntdir);
+	ret = -xfrog_bulkstat_alloc_req(GRABSZ, startino, &breq);
+	if (ret) {
+		fsrprintf(_("Skipping %s: %s\n"), mntdir, strerror(ret));
 		xfd_close(&fsxfd);
 		free(fshandlep);
 		return -1;
 	}
 
-	while ((ret = xfrog_bulkstat(&fsxfd, breq) == 0)) {
+	while ((ret = -xfrog_bulkstat(&fsxfd, breq) == 0)) {
 		struct xfs_bstat	bs1;
 		struct xfs_bulkstat	*buf = breq->bulkstat;
 		struct xfs_bulkstat	*p;
@@ -643,7 +642,7 @@ fsrfs(char *mntdir, xfs_ino_t startino, int targetrange)
 			     (p->bs_extents < 2))
 				continue;
 
-			ret = xfrog_bulkstat_v5_to_v1(&fsxfd, &bs1, p);
+			ret = -xfrog_bulkstat_v5_to_v1(&fsxfd, &bs1, p);
 			if (ret) {
 				fsrprintf(_("bstat conversion error: %s\n"),
 						strerror(ret));
@@ -755,13 +754,13 @@ fsrfile(
 		goto out;
 	}
 
-	error = xfrog_bulkstat_single(&fsxfd, ino, 0, &bulkstat);
+	error = -xfrog_bulkstat_single(&fsxfd, ino, 0, &bulkstat);
 	if (error) {
 		fsrprintf(_("unable to get bstat on %s: %s\n"),
 			fname, strerror(error));
 		goto out;
 	}
-	error = xfrog_bulkstat_v5_to_v1(&fsxfd, &statbuf, &bulkstat);
+	error = -xfrog_bulkstat_v5_to_v1(&fsxfd, &statbuf, &bulkstat);
 	if (error) {
 		fsrprintf(_("bstat conversion error on %s: %s\n"),
 			fname, strerror(error));
@@ -996,7 +995,8 @@ fsr_setup_attr_fork(
 		 * this to compare against the target and determine what we
 		 * need to do.
 		 */
-		ret = xfrog_bulkstat_single(&txfd, tstatbuf.st_ino, 0, &tbstat);
+		ret = -xfrog_bulkstat_single(&txfd, tstatbuf.st_ino, 0,
+				&tbstat);
 		if (ret) {
 			fsrprintf(_("unable to get bstat on temp file: %s\n"),
 						strerror(ret));

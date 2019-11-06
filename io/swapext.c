@@ -50,12 +50,12 @@ swapext_f(
 		goto out;
 	}
 
-	error = xfrog_bulkstat_single(&fxfd, stat.st_ino, 0, &bulkstat);
+	error = -xfrog_bulkstat_single(&fxfd, stat.st_ino, 0, &bulkstat);
 	if (error) {
 		xfrog_perror(error, "bulkstat");
 		goto out;
 	}
-	error = xfrog_bulkstat_v5_to_v1(&fxfd, &sx.sx_stat, &bulkstat);
+	error = -xfrog_bulkstat_v5_to_v1(&fxfd, &sx.sx_stat, &bulkstat);
 	if (error) {
 		xfrog_perror(error, "bulkstat conversion");
 		goto out;

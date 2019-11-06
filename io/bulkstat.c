@@ -170,9 +170,9 @@ bulkstat_f(
 		return 0;
 	}
 
-	breq = xfrog_bulkstat_alloc_req(batch_size, startino);
-	if (!breq) {
-		perror("alloc bulkreq");
+	ret = -xfrog_bulkstat_alloc_req(batch_size, startino, &breq);
+	if (ret) {
+		xfrog_perror(ret, "alloc bulkreq");
 		exitcode = 1;
 		return 0;
 	}
@@ -182,7 +182,7 @@ bulkstat_f(
 
 	set_xfd_flags(&xfd, ver);
 
-	while ((ret = xfrog_bulkstat(&xfd, breq)) == 0) {
+	while ((ret = -xfrog_bulkstat(&xfd, breq)) == 0) {
 		if (debug)
 			printf(
 _("bulkstat: startino=%lld flags=0x%x agno=%u ret=%d icount=%u ocount=%u\n"),
@@ -305,7 +305,7 @@ bulkstat_single_f(
 			}
 		}
 
-		ret = xfrog_bulkstat_single(&xfd, ino, flags, &bulkstat);
+		ret = -xfrog_bulkstat_single(&xfd, ino, flags, &bulkstat);
 		if (ret) {
 			xfrog_perror(ret, "xfrog_bulkstat_single");
 			continue;
@@ -426,9 +426,9 @@ inumbers_f(
 		return 0;
 	}
 
-	ireq = xfrog_inumbers_alloc_req(batch_size, startino);
-	if (!ireq) {
-		perror("alloc inumbersreq");
+	ret = -xfrog_inumbers_alloc_req(batch_size, startino, &ireq);
+	if (ret) {
+		xfrog_perror(ret, "alloc inumbersreq");
 		exitcode = 1;
 		return 0;
 	}
@@ -438,7 +438,7 @@ inumbers_f(
 
 	set_xfd_flags(&xfd, ver);
 
-	while ((ret = xfrog_inumbers(&xfd, ireq)) == 0) {
+	while ((ret = -xfrog_inumbers(&xfd, ireq)) == 0) {
 		if (debug)
 			printf(
 _("bulkstat: startino=%"PRIu64" flags=0x%"PRIx32" agno=%"PRIu32" ret=%d icount=%"PRIu32" ocount=%"PRIu32"\n"),

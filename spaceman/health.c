@@ -217,7 +217,7 @@ report_inode_health(
 		descr = d;
 	}
 
-	ret = xfrog_bulkstat_single(&file->xfd, ino, 0, &bs);
+	ret = -xfrog_bulkstat_single(&file->xfd, ino, 0, &bs);
 	if (ret) {
 		xfrog_perror(ret, descr);
 		return 1;
@@ -270,9 +270,9 @@ report_bulkstat_health(
 	uint32_t		i;
 	int			error;
 
-	breq = xfrog_bulkstat_alloc_req(BULKSTAT_NR, 0);
-	if (!breq) {
-		perror("bulk alloc req");
+	error = -xfrog_bulkstat_alloc_req(BULKSTAT_NR, 0, &breq);
+	if (error) {
+		xfrog_perror(error, "bulk alloc req");
 		exitcode = 1;
 		return 1;
 	}
@@ -281,7 +281,7 @@ report_bulkstat_health(
 		xfrog_bulkstat_set_ag(breq, agno);
 
 	do {
-		error = xfrog_bulkstat(&file->xfd, breq);
+		error = -xfrog_bulkstat(&file->xfd, breq);
 		if (error)
 			break;
 		for (i = 0; i < breq->hdr.ocount; i++) {
