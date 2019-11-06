@@ -15,6 +15,7 @@
 #include "libfrog/paths.h"
 #include "xfs_scrub.h"
 #include "common.h"
+#include "descr.h"
 #include "unicrash.h"
 #include "progress.h"
 
@@ -467,8 +468,14 @@ run_scrub_phases(
 			work_threads++;
 			moveon = progress_init_phase(ctx, progress_fp, phase,
 					max_work, rshift, work_threads);
+			if (!moveon)
+				break;
+			moveon = descr_init_phase(ctx, work_threads) == 0;
 		} else {
 			moveon = progress_init_phase(ctx, NULL, phase, 0, 0, 0);
+			if (!moveon)
+				break;
+			moveon = descr_init_phase(ctx, 1) == 0;
 		}
 		if (!moveon)
 			break;
@@ -480,6 +487,7 @@ _("Scrub aborted after phase %d."),
 			break;
 		}
 		progress_end_phase();
+		descr_end_phase();
 		moveon = phase_end(&pi, phase);
 		if (!moveon)
 			break;

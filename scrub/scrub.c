@@ -20,37 +20,40 @@
 #include "scrub.h"
 #include "xfs_errortag.h"
 #include "repair.h"
+#include "descr.h"
 
 /* Online scrub and repair wrappers. */
 
 /* Format a scrub description. */
-static void
+static int
 format_scrub_descr(
 	struct scrub_ctx		*ctx,
 	char				*buf,
 	size_t				buflen,
-	struct xfs_scrub_metadata	*meta)
+	void				*where)
 {
+	struct xfs_scrub_metadata	*meta = where;
 	const struct xfrog_scrub_descr	*sc = &xfrog_scrubbers[meta->sm_type];
 
 	switch (sc->type) {
 	case XFROG_SCRUB_TYPE_AGHEADER:
 	case XFROG_SCRUB_TYPE_PERAG:
-		snprintf(buf, buflen, _("AG %u %s"), meta->sm_agno,
+		return snprintf(buf, buflen, _("AG %u %s"), meta->sm_agno,
 				_(sc->descr));
 		break;
 	case XFROG_SCRUB_TYPE_INODE:
-		scrub_render_ino_descr(ctx, buf, buflen,
+		return scrub_render_ino_descr(ctx, buf, buflen,
 				meta->sm_ino, meta->sm_gen, "%s",
 				_(sc->descr));
 		break;
 	case XFROG_SCRUB_TYPE_FS:
-		snprintf(buf, buflen, _("%s"), _(sc->descr));
+		return snprintf(buf, buflen, _("%s"), _(sc->descr));
 		break;
 	case XFROG_SCRUB_TYPE_NONE:
 		assert(0);
 		break;
 	}
+	return -1;
 }
 
 /* Predicates for scrub flag state. */
@@ -95,21 +98,24 @@ static inline bool needs_repair(struct xfs_scrub_metadata *sm)
 static inline void
 xfs_scrub_warn_incomplete_scrub(
 	struct scrub_ctx		*ctx,
-	const char			*descr,
+	struct descr			*dsc,
 	struct xfs_scrub_metadata	*meta)
 {
 	if (is_incomplete(meta))
-		str_info(ctx, descr, _("Check incomplete."));
+		str_info(ctx, descr_render(dsc), _("Check incomplete."));
 
 	if (is_suspicious(meta)) {
 		if (debug)
-			str_info(ctx, descr, _("Possibly suspect metadata."));
+			str_info(ctx, descr_render(dsc),
+					_("Possibly suspect metadata."));
 		else
-			str_warn(ctx, descr, _("Possibly suspect metadata."));
+			str_warn(ctx, descr_render(dsc),
+					_("Possibly suspect metadata."));
 	}
 
 	if (xref_failed(meta))
-		str_info(ctx, descr, _("Cross-referencing failed."));
+		str_info(ctx, descr_render(dsc),
+				_("Cross-referencing failed."));
 }
 
 /* Do a read-only check of some metadata. */
@@ -119,16 +125,16 @@ xfs_check_metadata(
 	struct xfs_scrub_metadata	*meta,
 	bool				is_inode)
 {
-	char				buf[DESCR_BUFSZ];
+	DEFINE_DESCR(dsc, ctx, format_scrub_descr);
 	unsigned int			tries = 0;
 	int				code;
 	int				error;
 
 	assert(!debug_tweak_on("XFS_SCRUB_NO_KERNEL"));
 	assert(meta->sm_type < XFS_SCRUB_TYPE_NR);
-	format_scrub_descr(ctx, buf, DESCR_BUFSZ, meta);
+	descr_set(&dsc, meta);
 
-	dbg_printf("check %s flags %xh\n", buf, meta->sm_flags);
+	dbg_printf("check %s flags %xh\n", descr_render(&dsc), meta->sm_flags);
 retry:
 	error = xfrog_scrub_metadata(&ctx->mnt, meta);
 	if (debug_tweak_on("XFS_SCRUB_FORCE_REPAIR") && !error)
@@ -141,13 +147,13 @@ retry:
 			return CHECK_DONE;
 		case ESHUTDOWN:
 			/* FS already crashed, give up. */
-			str_error(ctx, buf,
+			str_error(ctx, descr_render(&dsc),
 _("Filesystem is shut down, aborting."));
 			return CHECK_ABORT;
 		case EIO:
 		case ENOMEM:
 			/* Abort on I/O errors or insufficient memory. */
-			str_errno(ctx, buf);
+			str_errno(ctx, descr_render(&dsc));
 			return CHECK_ABORT;
 		case EDEADLOCK:
 		case EBUSY:
@@ -161,7 +167,7 @@ _("Filesystem is shut down, aborting."));
 			/* fall through */
 		default:
 			/* Operational error. */
-			str_errno(ctx, buf);
+			str_errno(ctx, descr_render(&dsc));
 			return CHECK_DONE;
 		}
 	}
@@ -179,7 +185,7 @@ _("Filesystem is shut down, aborting."));
 	}
 
 	/* Complain about incomplete or suspicious metadata. */
-	xfs_scrub_warn_incomplete_scrub(ctx, buf, meta);
+	xfs_scrub_warn_incomplete_scrub(ctx, &dsc, meta);
 
 	/*
 	 * If we need repairs or there were discrepancies, schedule a
@@ -187,7 +193,7 @@ _("Filesystem is shut down, aborting."));
 	 */
 	if (is_corrupt(meta) || xref_disagrees(meta)) {
 		if (ctx->mode < SCRUB_MODE_REPAIR) {
-			str_corrupt(ctx, buf,
+			str_corrupt(ctx, descr_render(&dsc),
 _("Repairs are required."));
 			return CHECK_DONE;
 		}
@@ -203,7 +209,7 @@ _("Repairs are required."));
 		if (ctx->mode != SCRUB_MODE_REPAIR) {
 			if (!is_inode) {
 				/* AG or FS metadata, always warn. */
-				str_info(ctx, buf,
+				str_info(ctx, descr_render(&dsc),
 _("Optimization is possible."));
 			} else if (!ctx->preen_triggers[meta->sm_type]) {
 				/* File metadata, only warn once per type. */
@@ -656,9 +662,9 @@ xfs_repair_metadata(
 	struct action_item		*aitem,
 	unsigned int			repair_flags)
 {
-	char				buf[DESCR_BUFSZ];
 	struct xfs_scrub_metadata	meta = { 0 };
 	struct xfs_scrub_metadata	oldm;
+	DEFINE_DESCR(dsc, ctx, format_scrub_descr);
 	int				error;
 
 	assert(aitem->type < XFS_SCRUB_TYPE_NR);
@@ -682,12 +688,13 @@ xfs_repair_metadata(
 		return CHECK_RETRY;
 
 	memcpy(&oldm, &meta, sizeof(oldm));
-	format_scrub_descr(ctx, buf, DESCR_BUFSZ, &meta);
+	descr_set(&dsc, &oldm);
 
 	if (needs_repair(&meta))
-		str_info(ctx, buf, _("Attempting repair."));
+		str_info(ctx, descr_render(&dsc), _("Attempting repair."));
 	else if (debug || verbose)
-		str_info(ctx, buf, _("Attempting optimization."));
+		str_info(ctx, descr_render(&dsc),
+				_("Attempting optimization."));
 
 	error = xfrog_scrub_metadata(&ctx->mnt, &meta);
 	if (error) {
@@ -696,12 +703,12 @@ xfs_repair_metadata(
 		case EBUSY:
 			/* Filesystem is busy, try again later. */
 			if (debug || verbose)
-				str_info(ctx, buf,
+				str_info(ctx, descr_render(&dsc),
 _("Filesystem is busy, deferring repair."));
 			return CHECK_RETRY;
 		case ESHUTDOWN:
 			/* Filesystem is already shut down, abort. */
-			str_error(ctx, buf,
+			str_error(ctx, descr_render(&dsc),
 _("Filesystem is shut down, aborting."));
 			return CHECK_ABORT;
 		case ENOTTY:
@@ -726,13 +733,13 @@ _("Filesystem is shut down, aborting."));
 			/* fall through */
 		case EINVAL:
 			/* Kernel doesn't know how to repair this? */
-			str_corrupt(ctx, buf,
+			str_corrupt(ctx, descr_render(&dsc),
 _("Don't know how to fix; offline repair required."));
 			return CHECK_DONE;
 		case EROFS:
 			/* Read-only filesystem, can't fix. */
 			if (verbose || debug || needs_repair(&oldm))
-				str_error(ctx, buf,
+				str_error(ctx, descr_render(&dsc),
 _("Read-only filesystem; cannot make changes."));
 			return CHECK_ABORT;
 		case ENOENT:
@@ -753,12 +760,12 @@ _("Read-only filesystem; cannot make changes."));
 			 */
 			if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED))
 				return CHECK_RETRY;
-			str_errno(ctx, buf);
+			str_errno(ctx, descr_render(&dsc));
 			return CHECK_DONE;
 		}
 	}
 	if (repair_flags & XRM_COMPLAIN_IF_UNFIXED)
-		xfs_scrub_warn_incomplete_scrub(ctx, buf, &meta);
+		xfs_scrub_warn_incomplete_scrub(ctx, &dsc, &meta);
 	if (needs_repair(&meta)) {
 		/*
 		 * Still broken; if we've been told not to complain then we
@@ -767,14 +774,16 @@ _("Read-only filesystem; cannot make changes."));
 		 */
 		if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED))
 			return CHECK_RETRY;
-		str_corrupt(ctx, buf,
+		str_corrupt(ctx, descr_render(&dsc),
 _("Repair unsuccessful; offline repair required."));
 	} else {
 		/* Clean operation, no corruption detected. */
 		if (needs_repair(&oldm))
-			record_repair(ctx, buf, _("Repairs successful."));
+			record_repair(ctx, descr_render(&dsc),
+					_("Repairs successful."));
 		else
-			record_preen(ctx, buf, _("Optimization successful."));
+			record_preen(ctx, descr_render(&dsc),
+					_("Optimization successful."));
 	}
 	return CHECK_DONE;
 }
