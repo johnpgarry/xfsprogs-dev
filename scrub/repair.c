@@ -112,9 +112,9 @@ xfs_action_item_compare(
  * to the inode scan.
  */
 void
-xfs_action_list_find_mustfix(
-	struct xfs_action_list		*alist,
-	struct xfs_action_list		*immediate_alist,
+action_list_find_mustfix(
+	struct action_list		*alist,
+	struct action_list		*immediate_alist,
 	unsigned long long		*broken_primaries,
 	unsigned long long		*broken_secondaries)
 {
@@ -146,30 +146,33 @@ xfs_action_list_find_mustfix(
 	}
 }
 
-/* Allocate a certain number of repair lists for the scrub context. */
-bool
-xfs_action_lists_alloc(
+/*
+ * Allocate a certain number of repair lists for the scrub context.  Returns
+ * zero or a positive error number.
+ */
+int
+action_lists_alloc(
 	size_t				nr,
-	struct xfs_action_list		**listsp)
+	struct action_list		**listsp)
 {
-	struct xfs_action_list		*lists;
+	struct action_list		*lists;
 	xfs_agnumber_t			agno;
 
-	lists = calloc(nr, sizeof(struct xfs_action_list));
+	lists = calloc(nr, sizeof(struct action_list));
 	if (!lists)
-		return false;
+		return errno;
 
 	for (agno = 0; agno < nr; agno++)
-		xfs_action_list_init(&lists[agno]);
+		action_list_init(&lists[agno]);
 	*listsp = lists;
 
-	return true;
+	return 0;
 }
 
 /* Free the repair lists. */
 void
-xfs_action_lists_free(
-	struct xfs_action_list		**listsp)
+action_lists_free(
+	struct action_list		**listsp)
 {
 	free(*listsp);
 	*listsp = NULL;
@@ -177,8 +180,8 @@ xfs_action_lists_free(
 
 /* Initialize repair list */
 void
-xfs_action_list_init(
-	struct xfs_action_list		*alist)
+action_list_init(
+	struct action_list		*alist)
 {
 	INIT_LIST_HEAD(&alist->list);
 	alist->nr = 0;
@@ -187,16 +190,16 @@ xfs_action_list_init(
 
 /* Number of repairs in this list. */
 size_t
-xfs_action_list_length(
-	struct xfs_action_list		*alist)
+action_list_length(
+	struct action_list		*alist)
 {
 	return alist->nr;
 };
 
 /* Add to the list of repairs. */
 void
-xfs_action_list_add(
-	struct xfs_action_list		*alist,
+action_list_add(
+	struct action_list		*alist,
 	struct action_item		*aitem)
 {
 	list_add_tail(&aitem->list, &alist->list);
@@ -206,9 +209,9 @@ xfs_action_list_add(
 
 /* Splice two repair lists. */
 void
-xfs_action_list_splice(
-	struct xfs_action_list		*dest,
-	struct xfs_action_list		*src)
+action_list_splice(
+	struct action_list		*dest,
+	struct action_list		*src)
 {
 	if (src->nr == 0)
 		return;
@@ -220,11 +223,11 @@ xfs_action_list_splice(
 }
 
 /* Repair everything on this list. */
-bool
-xfs_action_list_process(
+int
+action_list_process(
 	struct scrub_ctx		*ctx,
 	int				fd,
-	struct xfs_action_list		*alist,
+	struct action_list		*alist,
 	unsigned int			repair_flags)
 {
 	struct action_item		*aitem;
@@ -247,7 +250,7 @@ xfs_action_list_process(
 			free(aitem);
 			continue;
 		case CHECK_ABORT:
-			return false;
+			return ECANCELED;
 		case CHECK_RETRY:
 			continue;
 		case CHECK_REPAIR:
@@ -255,35 +258,37 @@ xfs_action_list_process(
 		}
 	}
 
-	return !xfs_scrub_excessive_errors(ctx);
+	if (xfs_scrub_excessive_errors(ctx))
+		return ECANCELED;
+	return 0;
 }
 
 /* Defer all the repairs until phase 4. */
 void
-xfs_action_list_defer(
+action_list_defer(
 	struct scrub_ctx		*ctx,
 	xfs_agnumber_t			agno,
-	struct xfs_action_list		*alist)
+	struct action_list		*alist)
 {
 	ASSERT(agno < ctx->mnt.fsgeom.agcount);
 
-	xfs_action_list_splice(&ctx->action_lists[agno], alist);
+	action_list_splice(&ctx->action_lists[agno], alist);
 }
 
 /* Run actions now and defer unfinished items for later. */
-bool
-xfs_action_list_process_or_defer(
+int
+action_list_process_or_defer(
 	struct scrub_ctx		*ctx,
 	xfs_agnumber_t			agno,
-	struct xfs_action_list		*alist)
+	struct action_list		*alist)
 {
-	bool				moveon;
+	int				ret;
 
-	moveon = xfs_action_list_process(ctx, ctx->mnt.fd, alist,
+	ret = action_list_process(ctx, ctx->mnt.fd, alist,
 			ALP_REPAIR_ONLY | ALP_NOPROGRESS);
-	if (!moveon)
-		return moveon;
+	if (ret)
+		return ret;
 
-	xfs_action_list_defer(ctx, agno, alist);
-	return true;
+	action_list_defer(ctx, agno, alist);
+	return 0;
 }

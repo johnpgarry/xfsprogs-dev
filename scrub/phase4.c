@@ -29,23 +29,23 @@ xfs_repair_ag(
 {
 	struct scrub_ctx		*ctx = (struct scrub_ctx *)wq->wq_ctx;
 	bool				*pmoveon = priv;
-	struct xfs_action_list		*alist;
+	struct action_list		*alist;
 	size_t				unfixed;
 	size_t				new_unfixed;
 	unsigned int			flags = 0;
-	bool				moveon;
+	int				ret;
 
 	alist = &ctx->action_lists[agno];
-	unfixed = xfs_action_list_length(alist);
+	unfixed = action_list_length(alist);
 
 	/* Repair anything broken until we fail to make progress. */
 	do {
-		moveon = xfs_action_list_process(ctx, ctx->mnt.fd, alist, flags);
-		if (!moveon) {
+		ret = action_list_process(ctx, ctx->mnt.fd, alist, flags);
+		if (ret) {
 			*pmoveon = false;
 			return;
 		}
-		new_unfixed = xfs_action_list_length(alist);
+		new_unfixed = action_list_length(alist);
 		if (new_unfixed == unfixed)
 			break;
 		unfixed = new_unfixed;
@@ -56,8 +56,8 @@ xfs_repair_ag(
 
 	/* Try once more, but this time complain if we can't fix things. */
 	flags |= ALP_COMPLAIN_IF_UNFIXED;
-	moveon = xfs_action_list_process(ctx, ctx->mnt.fd, alist, flags);
-	if (!moveon)
+	ret = action_list_process(ctx, ctx->mnt.fd, alist, flags);
+	if (ret)
 		*pmoveon = false;
 }
 
@@ -78,7 +78,7 @@ xfs_process_action_items(
 		return false;
 	}
 	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++) {
-		if (xfs_action_list_length(&ctx->action_lists[agno]) > 0) {
+		if (action_list_length(&ctx->action_lists[agno]) > 0) {
 			ret = workqueue_add(&wq, xfs_repair_ag, agno, &moveon);
 			if (ret) {
 				moveon = false;
@@ -143,7 +143,7 @@ xfs_estimate_repair_work(
 	size_t			need_fixing = 0;
 
 	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++)
-		need_fixing += xfs_action_list_length(&ctx->action_lists[agno]);
+		need_fixing += action_list_length(&ctx->action_lists[agno]);
 	need_fixing++;
 	*items = need_fixing;
 	*nr_threads = scrub_nproc(ctx) + 1;

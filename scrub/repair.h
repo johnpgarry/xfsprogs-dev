@@ -6,24 +6,22 @@
 #ifndef XFS_SCRUB_REPAIR_H_
 #define XFS_SCRUB_REPAIR_H_
 
-struct xfs_action_list {
+struct action_list {
 	struct list_head	list;
 	size_t			nr;
 	bool			sorted;
 };
 
-bool xfs_action_lists_alloc(size_t nr, struct xfs_action_list **listsp);
-void xfs_action_lists_free(struct xfs_action_list **listsp);
+int action_lists_alloc(size_t nr, struct action_list **listsp);
+void action_lists_free(struct action_list **listsp);
 
-void xfs_action_list_init(struct xfs_action_list *alist);
-size_t xfs_action_list_length(struct xfs_action_list *alist);
-void xfs_action_list_add(struct xfs_action_list *dest,
-		struct action_item *item);
-void xfs_action_list_splice(struct xfs_action_list *dest,
-		struct xfs_action_list *src);
+void action_list_init(struct action_list *alist);
+size_t action_list_length(struct action_list *alist);
+void action_list_add(struct action_list *dest, struct action_item *item);
+void action_list_splice(struct action_list *dest, struct action_list *src);
 
-void xfs_action_list_find_mustfix(struct xfs_action_list *actions,
-		struct xfs_action_list *immediate_alist,
+void action_list_find_mustfix(struct action_list *actions,
+		struct action_list *immediate_alist,
 		unsigned long long *broken_primaries,
 		unsigned long long *broken_secondaries);
 
@@ -32,11 +30,11 @@ void xfs_action_list_find_mustfix(struct xfs_action_list *actions,
 #define ALP_COMPLAIN_IF_UNFIXED	(XRM_COMPLAIN_IF_UNFIXED)
 #define ALP_NOPROGRESS		(1U << 31)
 
-bool xfs_action_list_process(struct scrub_ctx *ctx, int fd,
-		struct xfs_action_list *alist, unsigned int repair_flags);
-void xfs_action_list_defer(struct scrub_ctx *ctx, xfs_agnumber_t agno,
-		struct xfs_action_list *alist);
-bool xfs_action_list_process_or_defer(struct scrub_ctx *ctx, xfs_agnumber_t agno,
-		struct xfs_action_list *alist);
+int action_list_process(struct scrub_ctx *ctx, int fd,
+		struct action_list *alist, unsigned int repair_flags);
+void action_list_defer(struct scrub_ctx *ctx, xfs_agnumber_t agno,
+		struct action_list *alist);
+int action_list_process_or_defer(struct scrub_ctx *ctx, xfs_agnumber_t agno,
+		struct action_list *alist);
 
 #endif /* XFS_SCRUB_REPAIR_H_ */

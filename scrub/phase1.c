@@ -50,7 +50,7 @@ xfs_cleanup_fs(
 {
 	int			error;
 
-	xfs_action_lists_free(&ctx->action_lists);
+	action_lists_free(&ctx->action_lists);
 	if (ctx->fshandle)
 		free_handle(ctx->fshandle, ctx->fshandle_len);
 	if (ctx->rtdev)
@@ -125,9 +125,10 @@ _("Not an XFS filesystem."));
 		return false;
 	}
 
-	if (!xfs_action_lists_alloc(ctx->mnt.fsgeom.agcount,
-				&ctx->action_lists)) {
-		str_liberror(ctx, ENOMEM, _("allocating action lists"));
+	error = action_lists_alloc(ctx->mnt.fsgeom.agcount,
+			&ctx->action_lists);
+	if (error) {
+		str_liberror(ctx, error, _("allocating action lists"));
 		return false;
 	}
 

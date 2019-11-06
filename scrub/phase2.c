@@ -26,16 +26,15 @@ xfs_scan_ag_metadata(
 {
 	struct scrub_ctx		*ctx = (struct scrub_ctx *)wq->wq_ctx;
 	bool				*pmoveon = arg;
-	struct xfs_action_list		alist;
-	struct xfs_action_list		immediate_alist;
+	struct action_list		alist;
+	struct action_list		immediate_alist;
 	unsigned long long		broken_primaries;
 	unsigned long long		broken_secondaries;
-	bool				moveon;
 	char				descr[DESCR_BUFSZ];
 	int				ret;
 
-	xfs_action_list_init(&alist);
-	xfs_action_list_init(&immediate_alist);
+	action_list_init(&alist);
+	action_list_init(&immediate_alist);
 	snprintf(descr, DESCR_BUFSZ, _("AG %u"), agno);
 
 	/*
@@ -47,8 +46,8 @@ xfs_scan_ag_metadata(
 		goto err;
 
 	/* Repair header damage. */
-	moveon = xfs_action_list_process_or_defer(ctx, agno, &alist);
-	if (!moveon)
+	ret = action_list_process_or_defer(ctx, agno, &alist);
+	if (ret)
 		goto err;
 
 	/* Now scrub the AG btrees. */
@@ -65,7 +64,7 @@ xfs_scan_ag_metadata(
 	 */
 	broken_secondaries = 0;
 	broken_primaries = 0;
-	xfs_action_list_find_mustfix(&alist, &immediate_alist,
+	action_list_find_mustfix(&alist, &immediate_alist,
 			&broken_primaries, &broken_secondaries);
 	if (broken_secondaries && !debug_tweak_on("XFS_SCRUB_FORCE_REPAIR")) {
 		if (broken_primaries)
@@ -79,12 +78,12 @@ _("Filesystem might not be repairable."));
 	}
 
 	/* Repair (inode) btree damage. */
-	moveon = xfs_action_list_process_or_defer(ctx, agno, &immediate_alist);
-	if (!moveon)
+	ret = action_list_process_or_defer(ctx, agno, &immediate_alist);
+	if (ret)
 		goto err;
 
 	/* Everything else gets fixed during phase 4. */
-	xfs_action_list_defer(ctx, agno, &alist);
+	action_list_defer(ctx, agno, &alist);
 
 	return;
 err:
@@ -100,15 +99,15 @@ xfs_scan_fs_metadata(
 {
 	struct scrub_ctx		*ctx = (struct scrub_ctx *)wq->wq_ctx;
 	bool				*pmoveon = arg;
-	struct xfs_action_list		alist;
+	struct action_list		alist;
 	int				ret;
 
-	xfs_action_list_init(&alist);
+	action_list_init(&alist);
 	ret = xfs_scrub_fs_metadata(ctx, &alist);
 	if (ret)
 		*pmoveon = false;
 
-	xfs_action_list_defer(ctx, agno, &alist);
+	action_list_defer(ctx, agno, &alist);
 }
 
 /* Scan all filesystem metadata. */
@@ -116,7 +115,7 @@ bool
 xfs_scan_metadata(
 	struct scrub_ctx	*ctx)
 {
-	struct xfs_action_list	alist;
+	struct action_list	alist;
 	struct workqueue	wq;
 	xfs_agnumber_t		agno;
 	bool			moveon = true;
@@ -134,15 +133,17 @@ xfs_scan_metadata(
 	 * upgrades (followed by a full scrub), do that before we launch
 	 * anything else.
 	 */
-	xfs_action_list_init(&alist);
+	action_list_init(&alist);
 	ret = xfs_scrub_primary_super(ctx, &alist);
 	if (ret) {
 		moveon = false;
 		goto out;
 	}
-	moveon = xfs_action_list_process_or_defer(ctx, 0, &alist);
-	if (!moveon)
+	ret = action_list_process_or_defer(ctx, 0, &alist);
+	if (ret) {
+		moveon = false;
 		goto out;
+	}
 
 	for (agno = 0; moveon && agno < ctx->mnt.fsgeom.agcount; agno++) {
 		ret = workqueue_add(&wq, xfs_scan_ag_metadata, agno, &moveon);

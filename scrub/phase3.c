@@ -29,9 +29,9 @@ static int
 scrub_fd(
 	struct scrub_ctx	*ctx,
 	int			(*fn)(struct scrub_ctx *ctx, uint64_t ino,
-				      uint32_t gen, struct xfs_action_list *a),
+				      uint32_t gen, struct action_list *a),
 	struct xfs_bulkstat	*bs,
-	struct xfs_action_list	*alist)
+	struct action_list	*alist)
 {
 	return fn(ctx, bs->bs_ino, bs->bs_gen, alist);
 }
@@ -64,7 +64,7 @@ xfs_scrub_inode(
 	struct xfs_bulkstat	*bstat,
 	void			*arg)
 {
-	struct xfs_action_list	alist;
+	struct action_list	alist;
 	struct scrub_inode_ctx	*ictx = arg;
 	struct ptcounter	*icount = ictx->icount;
 	xfs_agnumber_t		agno;
@@ -72,7 +72,7 @@ xfs_scrub_inode(
 	int			fd = -1;
 	int			error;
 
-	xfs_action_list_init(&alist);
+	action_list_init(&alist);
 	agno = cvt_ino_to_agno(&ctx->mnt, bstat->bs_ino);
 	background_sleep();
 
@@ -89,8 +89,8 @@ xfs_scrub_inode(
 	if (error)
 		goto out;
 
-	moveon = xfs_action_list_process_or_defer(ctx, agno, &alist);
-	if (!moveon)
+	error = action_list_process_or_defer(ctx, agno, &alist);
+	if (error)
 		goto out;
 
 	/* Scrub all block mappings. */
@@ -104,8 +104,8 @@ xfs_scrub_inode(
 	if (error)
 		goto out;
 
-	moveon = xfs_action_list_process_or_defer(ctx, agno, &alist);
-	if (!moveon)
+	error = action_list_process_or_defer(ctx, agno, &alist);
+	if (error)
 		goto out;
 
 	if (S_ISLNK(bstat->bs_mode)) {
@@ -130,8 +130,8 @@ xfs_scrub_inode(
 		goto out;
 
 	/* Try to repair the file while it's open. */
-	moveon = xfs_action_list_process_or_defer(ctx, agno, &alist);
-	if (!moveon)
+	error = action_list_process_or_defer(ctx, agno, &alist);
+	if (error)
 		goto out;
 
 out:
@@ -144,7 +144,7 @@ out:
 		return false;
 	}
 	progress_add(1);
-	xfs_action_list_defer(ctx, agno, &alist);
+	action_list_defer(ctx, agno, &alist);
 	if (fd >= 0) {
 		error = close(fd);
 		if (error)
