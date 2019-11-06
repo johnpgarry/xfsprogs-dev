@@ -38,12 +38,12 @@ scrub_fd(
 
 struct scrub_inode_ctx {
 	struct ptcounter	*icount;
-	bool			moveon;
+	bool			aborted;
 };
 
 /* Report a filesystem error that the vfs fed us on close. */
 static void
-xfs_scrub_inode_vfs_error(
+report_close_error(
 	struct scrub_ctx	*ctx,
 	struct xfs_bulkstat	*bstat)
 {
@@ -58,7 +58,7 @@ xfs_scrub_inode_vfs_error(
 
 /* Verify the contents, xattrs, and extent maps of an inode. */
 static int
-xfs_scrub_inode(
+scrub_inode(
 	struct scrub_ctx	*ctx,
 	struct xfs_handle	*handle,
 	struct xfs_bulkstat	*bstat,
@@ -68,7 +68,6 @@ xfs_scrub_inode(
 	struct scrub_inode_ctx	*ictx = arg;
 	struct ptcounter	*icount = ictx->icount;
 	xfs_agnumber_t		agno;
-	bool			moveon = true;
 	int			fd = -1;
 	int			error;
 
@@ -136,61 +135,75 @@ xfs_scrub_inode(
 
 out:
 	if (error)
-		moveon = false;
+		ictx->aborted = true;
+
 	error = ptcounter_add(icount, 1);
 	if (error) {
 		str_liberror(ctx, error,
 				_("incrementing scanned inode counter"));
-		return false;
+		ictx->aborted = true;
 	}
 	progress_add(1);
 	action_list_defer(ctx, agno, &alist);
 	if (fd >= 0) {
-		error = close(fd);
-		if (error)
-			xfs_scrub_inode_vfs_error(ctx, bstat);
+		int	err2;
+
+		err2 = close(fd);
+		if (err2) {
+			report_close_error(ctx, bstat);
+			ictx->aborted = true;
+		}
 	}
-	if (!moveon)
-		ictx->moveon = false;
-	return ictx->moveon ? 0 : XFS_ITERATE_INODES_ABORT;
+
+	if (!error && ictx->aborted)
+		error = ECANCELED;
+	return error;
 }
 
 /* Verify all the inodes in a filesystem. */
-bool
-xfs_scan_inodes(
+int
+phase3_func(
 	struct scrub_ctx	*ctx)
 {
-	struct scrub_inode_ctx	ictx;
+	struct scrub_inode_ctx	ictx = { NULL };
 	uint64_t		val;
 	int			err;
 
-	ictx.moveon = true;
 	err = ptcounter_alloc(scrub_nproc(ctx), &ictx.icount);
 	if (err) {
 		str_liberror(ctx, err, _("creating scanned inode counter"));
-		return false;
+		return err;
 	}
 
-	err = scrub_scan_all_inodes(ctx, xfs_scrub_inode, &ictx);
+	err = scrub_scan_all_inodes(ctx, scrub_inode, &ictx);
+	if (!err && ictx.aborted)
+		err = ECANCELED;
 	if (err)
-		ictx.moveon = false;
-	if (!ictx.moveon)
 		goto free;
+
 	xfs_scrub_report_preen_triggers(ctx);
 	err = ptcounter_value(ictx.icount, &val);
 	if (err) {
 		str_liberror(ctx, err, _("summing scanned inode counter"));
-		return false;
+		return err;
 	}
+
 	ctx->inodes_checked = val;
 free:
 	ptcounter_free(ictx.icount);
-	return ictx.moveon;
+	return err;
+}
+
+bool
+xfs_scan_inodes(
+	struct scrub_ctx	*ctx)
+{
+	return phase3_func(ctx) == 0;
 }
 
 /* Estimate how much work we're going to do. */
-bool
-xfs_estimate_inodes_work(
+int
+phase3_estimate(
 	struct scrub_ctx	*ctx,
 	uint64_t		*items,
 	unsigned int		*nr_threads,
@@ -199,5 +212,15 @@ xfs_estimate_inodes_work(
 	*items = ctx->mnt_sv.f_files - ctx->mnt_sv.f_ffree;
 	*nr_threads = scrub_nproc(ctx);
 	*rshift = 0;
-	return true;
+	return 0;
+}
+
+bool
+xfs_estimate_inodes_work(
+	struct scrub_ctx	*ctx,
+	uint64_t		*items,
+	unsigned int		*nr_threads,
+	int			*rshift)
+{
+	return phase3_estimate(ctx, items, nr_threads, rshift) == 0;
 }
