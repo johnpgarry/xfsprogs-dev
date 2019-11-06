@@ -19,19 +19,22 @@
 
 /* Scrub each AG's metadata btrees. */
 static void
-xfs_scan_ag_metadata(
+scan_ag_metadata(
 	struct workqueue		*wq,
 	xfs_agnumber_t			agno,
 	void				*arg)
 {
 	struct scrub_ctx		*ctx = (struct scrub_ctx *)wq->wq_ctx;
-	bool				*pmoveon = arg;
+	bool				*aborted = arg;
 	struct action_list		alist;
 	struct action_list		immediate_alist;
 	unsigned long long		broken_primaries;
 	unsigned long long		broken_secondaries;
 	char				descr[DESCR_BUFSZ];
 	int				ret;
+
+	if (*aborted)
+		return;
 
 	action_list_init(&alist);
 	action_list_init(&immediate_alist);
@@ -84,48 +87,52 @@ _("Filesystem might not be repairable."));
 
 	/* Everything else gets fixed during phase 4. */
 	action_list_defer(ctx, agno, &alist);
-
 	return;
 err:
-	*pmoveon = false;
+	*aborted = true;
 }
 
 /* Scrub whole-FS metadata btrees. */
 static void
-xfs_scan_fs_metadata(
+scan_fs_metadata(
 	struct workqueue		*wq,
 	xfs_agnumber_t			agno,
 	void				*arg)
 {
 	struct scrub_ctx		*ctx = (struct scrub_ctx *)wq->wq_ctx;
-	bool				*pmoveon = arg;
+	bool				*aborted = arg;
 	struct action_list		alist;
 	int				ret;
 
+	if (*aborted)
+		return;
+
 	action_list_init(&alist);
 	ret = xfs_scrub_fs_metadata(ctx, &alist);
-	if (ret)
-		*pmoveon = false;
+	if (ret) {
+		*aborted = true;
+		return;
+	}
 
 	action_list_defer(ctx, agno, &alist);
 }
 
 /* Scan all filesystem metadata. */
-bool
-xfs_scan_metadata(
+int
+phase2_func(
 	struct scrub_ctx	*ctx)
 {
 	struct action_list	alist;
 	struct workqueue	wq;
 	xfs_agnumber_t		agno;
-	bool			moveon = true;
-	int			ret;
+	bool			aborted = false;
+	int			ret, ret2;
 
 	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
 		str_liberror(ctx, ret, _("creating scrub workqueue"));
-		return false;
+		return ret;
 	}
 
 	/*
@@ -135,48 +142,53 @@ xfs_scan_metadata(
 	 */
 	action_list_init(&alist);
 	ret = xfs_scrub_primary_super(ctx, &alist);
-	if (ret) {
-		moveon = false;
+	if (ret)
 		goto out;
-	}
 	ret = action_list_process_or_defer(ctx, 0, &alist);
-	if (ret) {
-		moveon = false;
+	if (ret)
 		goto out;
-	}
 
-	for (agno = 0; moveon && agno < ctx->mnt.fsgeom.agcount; agno++) {
-		ret = workqueue_add(&wq, xfs_scan_ag_metadata, agno, &moveon);
+	for (agno = 0; !aborted && agno < ctx->mnt.fsgeom.agcount; agno++) {
+		ret = workqueue_add(&wq, scan_ag_metadata, agno, &aborted);
 		if (ret) {
-			moveon = false;
 			str_liberror(ctx, ret, _("queueing per-AG scrub work"));
 			goto out;
 		}
 	}
 
-	if (!moveon)
+	if (aborted)
 		goto out;
 
-	ret = workqueue_add(&wq, xfs_scan_fs_metadata, 0, &moveon);
+	ret = workqueue_add(&wq, scan_fs_metadata, 0, &aborted);
 	if (ret) {
-		moveon = false;
 		str_liberror(ctx, ret, _("queueing per-FS scrub work"));
 		goto out;
 	}
 
 out:
-	ret = workqueue_terminate(&wq);
-	if (ret) {
-		moveon = false;
-		str_liberror(ctx, ret, _("finishing scrub work"));
+	ret2 = workqueue_terminate(&wq);
+	if (ret2) {
+		str_liberror(ctx, ret2, _("finishing scrub work"));
+		if (!ret && ret2)
+			ret = ret2;
 	}
 	workqueue_destroy(&wq);
-	return moveon;
+
+	if (!ret && aborted)
+		ret = ECANCELED;
+	return ret;
+}
+
+bool
+xfs_scan_metadata(
+	struct scrub_ctx	*ctx)
+{
+	return phase2_func(ctx) == 0;
 }
 
 /* Estimate how much work we're going to do. */
-bool
-xfs_estimate_metadata_work(
+int
+phase2_estimate(
 	struct scrub_ctx	*ctx,
 	uint64_t		*items,
 	unsigned int		*nr_threads,
@@ -185,5 +197,15 @@ xfs_estimate_metadata_work(
 	*items = scrub_estimate_ag_work(ctx);
 	*nr_threads = scrub_nproc(ctx);
 	*rshift = 0;
-	return true;
+	return 0;
+}
+
+bool
+xfs_estimate_metadata_work(
+	struct scrub_ctx	*ctx,
+	uint64_t		*items,
+	unsigned int		*nr_threads,
+	int			*rshift)
+{
+	return phase2_estimate(ctx, items, nr_threads, rshift) == 0;
 }
