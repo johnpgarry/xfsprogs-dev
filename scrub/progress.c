@@ -167,8 +167,11 @@ progress_end_phase(void)
 	pt.fp = NULL;
 }
 
-/* Set ourselves up to report progress. */
-bool
+/*
+ * Set ourselves up to report progress.  If errors are encountered, this
+ * function will log them and return nonzero.
+ */
+int
 progress_init_phase(
 	struct scrub_ctx	*ctx,
 	FILE			*fp,
@@ -182,7 +185,7 @@ progress_init_phase(
 	assert(pt.fp == NULL);
 	if (fp == NULL || max == 0) {
 		pt.fp = NULL;
-		return true;
+		return 0;
 	}
 	pt.fp = fp;
 	pt.isatty = isatty(fileno(fp));
@@ -205,7 +208,7 @@ progress_init_phase(
 		goto out_ptcounter;
 	}
 
-	return true;
+	return 0;
 
 out_ptcounter:
 	ptcounter_free(pt.ptc);
@@ -213,5 +216,5 @@ out_ptcounter:
 out_max:
 	pt.max = 0;
 	pt.fp = NULL;
-	return false;
+	return ret;
 }

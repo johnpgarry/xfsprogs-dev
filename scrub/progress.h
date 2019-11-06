@@ -10,7 +10,7 @@
 #define START_IGNORE	'\001'
 #define END_IGNORE	'\002'
 
-bool progress_init_phase(struct scrub_ctx *ctx, FILE *progress_fp,
+int progress_init_phase(struct scrub_ctx *ctx, FILE *progress_fp,
 			 unsigned int phase, uint64_t max, int rshift,
 			 unsigned int nr_threads);
 void progress_end_phase(void);

@@ -423,6 +423,7 @@ run_scrub_phases(
 	unsigned int		debug_phase = 0;
 	unsigned int		phase;
 	int			rshift;
+	int			ret;
 
 	if (debug_tweak_on("XFS_SCRUB_PHASE"))
 		debug_phase = atoi(getenv("XFS_SCRUB_PHASE"));
@@ -466,15 +467,19 @@ run_scrub_phases(
 			 * whatever other per-thread data we need to allocate.
 			 */
 			work_threads++;
-			moveon = progress_init_phase(ctx, progress_fp, phase,
+			ret = progress_init_phase(ctx, progress_fp, phase,
 					max_work, rshift, work_threads);
-			if (!moveon)
+			if (ret) {
+				moveon = false;
 				break;
+			}
 			moveon = descr_init_phase(ctx, work_threads) == 0;
 		} else {
-			moveon = progress_init_phase(ctx, NULL, phase, 0, 0, 0);
-			if (!moveon)
+			ret = progress_init_phase(ctx, NULL, phase, 0, 0, 0);
+			if (ret) {
+				moveon = false;
 				break;
+			}
 			moveon = descr_init_phase(ctx, 1) == 0;
 		}
 		if (!moveon)
