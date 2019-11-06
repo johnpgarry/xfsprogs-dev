@@ -25,10 +25,10 @@
  * ensure that the inode we're checking matches what the inode scan
  * told us to look at.
  */
-static bool
-xfs_scrub_fd(
+static int
+scrub_fd(
 	struct scrub_ctx	*ctx,
-	bool			(*fn)(struct scrub_ctx *ctx, uint64_t ino,
+	int			(*fn)(struct scrub_ctx *ctx, uint64_t ino,
 				      uint32_t gen, struct xfs_action_list *a),
 	struct xfs_bulkstat	*bs,
 	struct xfs_action_list	*alist)
@@ -85,8 +85,8 @@ xfs_scrub_inode(
 	}
 
 	/* Scrub the inode. */
-	moveon = xfs_scrub_fd(ctx, xfs_scrub_inode_fields, bstat, &alist);
-	if (!moveon)
+	error = scrub_fd(ctx, xfs_scrub_inode_fields, bstat, &alist);
+	if (error)
 		goto out;
 
 	moveon = xfs_action_list_process_or_defer(ctx, agno, &alist);
@@ -94,14 +94,14 @@ xfs_scrub_inode(
 		goto out;
 
 	/* Scrub all block mappings. */
-	moveon = xfs_scrub_fd(ctx, xfs_scrub_data_fork, bstat, &alist);
-	if (!moveon)
+	error = scrub_fd(ctx, xfs_scrub_data_fork, bstat, &alist);
+	if (error)
 		goto out;
-	moveon = xfs_scrub_fd(ctx, xfs_scrub_attr_fork, bstat, &alist);
-	if (!moveon)
+	error = scrub_fd(ctx, xfs_scrub_attr_fork, bstat, &alist);
+	if (error)
 		goto out;
-	moveon = xfs_scrub_fd(ctx, xfs_scrub_cow_fork, bstat, &alist);
-	if (!moveon)
+	error = scrub_fd(ctx, xfs_scrub_cow_fork, bstat, &alist);
+	if (error)
 		goto out;
 
 	moveon = xfs_action_list_process_or_defer(ctx, agno, &alist);
@@ -110,23 +110,23 @@ xfs_scrub_inode(
 
 	if (S_ISLNK(bstat->bs_mode)) {
 		/* Check symlink contents. */
-		moveon = xfs_scrub_symlink(ctx, bstat->bs_ino, bstat->bs_gen,
+		error = xfs_scrub_symlink(ctx, bstat->bs_ino, bstat->bs_gen,
 				&alist);
 	} else if (S_ISDIR(bstat->bs_mode)) {
 		/* Check the directory entries. */
-		moveon = xfs_scrub_fd(ctx, xfs_scrub_dir, bstat, &alist);
+		error = scrub_fd(ctx, xfs_scrub_dir, bstat, &alist);
 	}
-	if (!moveon)
+	if (error)
 		goto out;
 
 	/* Check all the extended attributes. */
-	moveon = xfs_scrub_fd(ctx, xfs_scrub_attr, bstat, &alist);
-	if (!moveon)
+	error = scrub_fd(ctx, xfs_scrub_attr, bstat, &alist);
+	if (error)
 		goto out;
 
 	/* Check parent pointers. */
-	moveon = xfs_scrub_fd(ctx, xfs_scrub_parent, bstat, &alist);
-	if (!moveon)
+	error = scrub_fd(ctx, xfs_scrub_parent, bstat, &alist);
+	if (error)
 		goto out;
 
 	/* Try to repair the file while it's open. */
@@ -135,6 +135,8 @@ xfs_scrub_inode(
 		goto out;
 
 out:
+	if (error)
+		moveon = false;
 	error = ptcounter_add(icount, 1);
 	if (error) {
 		str_liberror(ctx, error,

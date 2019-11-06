@@ -98,7 +98,7 @@ bool xfs_repair_fs(struct scrub_ctx *ctx);
 
 /* Progress estimator functions */
 uint64_t xfs_estimate_inodes(struct scrub_ctx *ctx);
-unsigned int xfs_scrub_estimate_ag_work(struct scrub_ctx *ctx);
+unsigned int scrub_estimate_ag_work(struct scrub_ctx *ctx);
 bool xfs_estimate_metadata_work(struct scrub_ctx *ctx, uint64_t *items,
 				unsigned int *nr_threads, int *rshift);
 bool xfs_estimate_inodes_work(struct scrub_ctx *ctx, uint64_t *items,

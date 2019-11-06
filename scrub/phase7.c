@@ -120,8 +120,8 @@ xfs_scan_summary(
 
 	/* Check and fix the fs summary counters. */
 	xfs_action_list_init(&alist);
-	moveon = xfs_scrub_fs_summary(ctx, &alist);
-	if (!moveon)
+	error = xfs_scrub_fs_summary(ctx, &alist);
+	if (error)
 		return false;
 	moveon = xfs_action_list_process(ctx, ctx->mnt.fd, &alist,
 			ALP_COMPLAIN_IF_UNFIXED | ALP_NOPROGRESS);

@@ -390,8 +390,8 @@ _("Filesystem has errors, skipping connectivity checks."));
 		return true;
 	}
 
-	moveon = xfs_scrub_fs_label(ctx);
-	if (!moveon)
+	ret = xfs_scrub_fs_label(ctx);
+	if (ret)
 		return false;
 
 	ret = scrub_scan_all_inodes(ctx, xfs_scrub_connections, &moveon);

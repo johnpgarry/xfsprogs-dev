@@ -114,9 +114,9 @@ xfs_process_action_items(
 /* Fix everything that needs fixing. */
 bool
 xfs_repair_fs(
-	struct scrub_ctx		*ctx)
+	struct scrub_ctx	*ctx)
 {
-	bool				moveon;
+	int			ret;
 
 	/*
 	 * Check the summary counters early.  Normally we do this during phase
@@ -124,8 +124,8 @@ xfs_repair_fs(
 	 * counters, so counter repairs have to be put on the list now so that
 	 * they get fixed before we stop retrying unfixed metadata repairs.
 	 */
-	moveon = xfs_scrub_fs_summary(ctx, &ctx->action_lists[0]);
-	if (!moveon)
+	ret = xfs_scrub_fs_summary(ctx, &ctx->action_lists[0]);
+	if (ret)
 		return false;
 
 	return xfs_process_action_items(ctx);

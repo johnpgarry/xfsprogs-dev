@@ -32,6 +32,7 @@ xfs_scan_ag_metadata(
 	unsigned long long		broken_secondaries;
 	bool				moveon;
 	char				descr[DESCR_BUFSZ];
+	int				ret;
 
 	xfs_action_list_init(&alist);
 	xfs_action_list_init(&immediate_alist);
@@ -41,8 +42,8 @@ xfs_scan_ag_metadata(
 	 * First we scrub and fix the AG headers, because we need
 	 * them to work well enough to check the AG btrees.
 	 */
-	moveon = xfs_scrub_ag_headers(ctx, agno, &alist);
-	if (!moveon)
+	ret = xfs_scrub_ag_headers(ctx, agno, &alist);
+	if (ret)
 		goto err;
 
 	/* Repair header damage. */
@@ -51,8 +52,8 @@ xfs_scan_ag_metadata(
 		goto err;
 
 	/* Now scrub the AG btrees. */
-	moveon = xfs_scrub_ag_metadata(ctx, agno, &alist);
-	if (!moveon)
+	ret = xfs_scrub_ag_metadata(ctx, agno, &alist);
+	if (ret)
 		goto err;
 
 	/*
@@ -100,11 +101,11 @@ xfs_scan_fs_metadata(
 	struct scrub_ctx		*ctx = (struct scrub_ctx *)wq->wq_ctx;
 	bool				*pmoveon = arg;
 	struct xfs_action_list		alist;
-	bool				moveon;
+	int				ret;
 
 	xfs_action_list_init(&alist);
-	moveon = xfs_scrub_fs_metadata(ctx, &alist);
-	if (!moveon)
+	ret = xfs_scrub_fs_metadata(ctx, &alist);
+	if (ret)
 		*pmoveon = false;
 
 	xfs_action_list_defer(ctx, agno, &alist);
@@ -134,9 +135,11 @@ xfs_scan_metadata(
 	 * anything else.
 	 */
 	xfs_action_list_init(&alist);
-	moveon = xfs_scrub_primary_super(ctx, &alist);
-	if (!moveon)
+	ret = xfs_scrub_primary_super(ctx, &alist);
+	if (ret) {
+		moveon = false;
 		goto out;
+	}
 	moveon = xfs_action_list_process_or_defer(ctx, 0, &alist);
 	if (!moveon)
 		goto out;
@@ -178,7 +181,7 @@ xfs_estimate_metadata_work(
 	unsigned int		*nr_threads,
 	int			*rshift)
 {
-	*items = xfs_scrub_estimate_ag_work(ctx);
+	*items = scrub_estimate_ag_work(ctx);
 	*nr_threads = scrub_nproc(ctx);
 	*rshift = 0;
 	return true;
