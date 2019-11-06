@@ -86,18 +86,18 @@ scrub_count_all_inodes(
 	if (!ci)
 		return errno;
 
-	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
+	ret = -workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret)
 		goto out_free;
 
 	for (agno = 0; agno < ctx->mnt.fsgeom.agcount && !ci->error; agno++) {
-		ret = workqueue_add(&wq, count_ag_inodes, agno, ci);
+		ret = -workqueue_add(&wq, count_ag_inodes, agno, ci);
 		if (ret)
 			break;
 	}
 
-	ret2 = workqueue_terminate(&wq);
+	ret2 = -workqueue_terminate(&wq);
 	if (!ret && ret2)
 		ret = ret2;
 	workqueue_destroy(&wq);

@@ -97,7 +97,7 @@ queue_subdir(
 	new_sftd->rootdir = is_rootdir;
 
 	inc_nr_dirs(sft);
-	error = workqueue_add(wq, scan_fs_dir, 0, new_sftd);
+	error = -workqueue_add(wq, scan_fs_dir, 0, new_sftd);
 	if (error) {
 		dec_nr_dirs(sft);
 		str_liberror(ctx, error, _("queueing directory scan work"));
@@ -242,7 +242,7 @@ scan_fs_tree(
 		goto out_mutex;
 	}
 
-	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
+	ret = -workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
 		str_liberror(ctx, ret, _("creating directory scan workqueue"));
@@ -268,7 +268,7 @@ scan_fs_tree(
 	assert(sft.nr_dirs == 0);
 	pthread_mutex_unlock(&sft.lock);
 
-	ret = workqueue_terminate(&wq);
+	ret = -workqueue_terminate(&wq);
 	if (ret) {
 		str_liberror(ctx, ret, _("finishing directory scan work"));
 		goto out_wq;

@@ -232,7 +232,7 @@ scrub_scan_all_inodes(
 	struct workqueue	wq;
 	int			ret;
 
-	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
+	ret = -workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
 		str_liberror(ctx, ret, _("creating bulkstat workqueue"));
@@ -240,7 +240,7 @@ scrub_scan_all_inodes(
 	}
 
 	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++) {
-		ret = workqueue_add(&wq, scan_ag_inodes, agno, &si);
+		ret = -workqueue_add(&wq, scan_ag_inodes, agno, &si);
 		if (ret) {
 			si.aborted = true;
 			str_liberror(ctx, ret, _("queueing bulkstat work"));
@@ -248,7 +248,7 @@ scrub_scan_all_inodes(
 		}
 	}
 
-	ret = workqueue_terminate(&wq);
+	ret = -workqueue_terminate(&wq);
 	if (ret) {
 		si.aborted = true;
 		str_liberror(ctx, ret, _("finishing bulkstat work"));

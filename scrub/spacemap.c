@@ -203,14 +203,14 @@ scrub_scan_all_spacemaps(
 	xfs_agnumber_t		agno;
 	int			ret;
 
-	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
+	ret = -workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
 		str_liberror(ctx, ret, _("creating fsmap workqueue"));
 		return ret;
 	}
 	if (ctx->fsinfo.fs_rt) {
-		ret = workqueue_add(&wq, scan_rt_rmaps,
+		ret = -workqueue_add(&wq, scan_rt_rmaps,
 				ctx->mnt.fsgeom.agcount + 1, &sbx);
 		if (ret) {
 			sbx.aborted = true;
@@ -219,7 +219,7 @@ scrub_scan_all_spacemaps(
 		}
 	}
 	if (ctx->fsinfo.fs_log) {
-		ret = workqueue_add(&wq, scan_log_rmaps,
+		ret = -workqueue_add(&wq, scan_log_rmaps,
 				ctx->mnt.fsgeom.agcount + 2, &sbx);
 		if (ret) {
 			sbx.aborted = true;
@@ -228,7 +228,7 @@ scrub_scan_all_spacemaps(
 		}
 	}
 	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++) {
-		ret = workqueue_add(&wq, scan_ag_rmaps, agno, &sbx);
+		ret = -workqueue_add(&wq, scan_ag_rmaps, agno, &sbx);
 		if (ret) {
 			sbx.aborted = true;
 			str_liberror(ctx, ret, _("queueing per-AG fsmap work"));
@@ -236,7 +236,7 @@ scrub_scan_all_spacemaps(
 		}
 	}
 out:
-	ret = workqueue_terminate(&wq);
+	ret = -workqueue_terminate(&wq);
 	if (ret) {
 		sbx.aborted = true;
 		str_liberror(ctx, ret, _("finishing fsmap work"));

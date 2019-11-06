@@ -70,7 +70,7 @@ repair_everything(
 	bool				aborted = false;
 	int				ret;
 
-	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
+	ret = -workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
 		str_liberror(ctx, ret, _("creating repair workqueue"));
@@ -80,14 +80,14 @@ repair_everything(
 		if (action_list_length(&ctx->action_lists[agno]) == 0)
 			continue;
 
-		ret = workqueue_add(&wq, repair_ag, agno, &aborted);
+		ret = -workqueue_add(&wq, repair_ag, agno, &aborted);
 		if (ret) {
 			str_liberror(ctx, ret, _("queueing repair work"));
 			break;
 		}
 	}
 
-	ret = workqueue_terminate(&wq);
+	ret = -workqueue_terminate(&wq);
 	if (ret)
 		str_liberror(ctx, ret, _("finishing repair work"));
 	workqueue_destroy(&wq);

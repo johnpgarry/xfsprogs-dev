@@ -123,7 +123,7 @@ read_verify_pool_alloc(
 			&rvp->rvstate);
 	if (ret)
 		goto out_counter;
-	ret = workqueue_create(&rvp->wq, (struct xfs_mount *)rvp,
+	ret = -workqueue_create(&rvp->wq, (struct xfs_mount *)rvp,
 			verifier_threads == 1 ? 0 : verifier_threads);
 	if (ret)
 		goto out_rvstate;
@@ -156,7 +156,7 @@ int
 read_verify_pool_flush(
 	struct read_verify_pool		*rvp)
 {
-	return workqueue_terminate(&rvp->wq);
+	return -workqueue_terminate(&rvp->wq);
 }
 
 /* Finish up any read verification work and tear it down. */
@@ -303,7 +303,7 @@ read_verify_queue(
 
 	memcpy(tmp, rv, sizeof(*tmp));
 
-	ret = workqueue_add(&rvp->wq, read_verify, 0, tmp);
+	ret = -workqueue_add(&rvp->wq, read_verify, 0, tmp);
 	if (ret) {
 		free(tmp);
 		rvp->runtime_error = ret;

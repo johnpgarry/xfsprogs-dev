@@ -128,7 +128,7 @@ phase2_func(
 	bool			aborted = false;
 	int			ret, ret2;
 
-	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
+	ret = -workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
 		str_liberror(ctx, ret, _("creating scrub workqueue"));
@@ -149,7 +149,7 @@ phase2_func(
 		goto out;
 
 	for (agno = 0; !aborted && agno < ctx->mnt.fsgeom.agcount; agno++) {
-		ret = workqueue_add(&wq, scan_ag_metadata, agno, &aborted);
+		ret = -workqueue_add(&wq, scan_ag_metadata, agno, &aborted);
 		if (ret) {
 			str_liberror(ctx, ret, _("queueing per-AG scrub work"));
 			goto out;
@@ -159,14 +159,14 @@ phase2_func(
 	if (aborted)
 		goto out;
 
-	ret = workqueue_add(&wq, scan_fs_metadata, 0, &aborted);
+	ret = -workqueue_add(&wq, scan_fs_metadata, 0, &aborted);
 	if (ret) {
 		str_liberror(ctx, ret, _("queueing per-FS scrub work"));
 		goto out;
 	}
 
 out:
-	ret2 = workqueue_terminate(&wq);
+	ret2 = -workqueue_terminate(&wq);
 	if (ret2) {
 		str_liberror(ctx, ret2, _("finishing scrub work"));
 		if (!ret && ret2)

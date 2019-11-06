@@ -56,7 +56,7 @@ workqueue_thread(void *arg)
 	return NULL;
 }
 
-/* Allocate a work queue and threads. */
+/* Allocate a work queue and threads.  Returns zero or negative error code. */
 int
 workqueue_create(
 	struct workqueue	*wq,
@@ -67,10 +67,10 @@ workqueue_create(
 	int			err = 0;
 
 	memset(wq, 0, sizeof(*wq));
-	err = pthread_cond_init(&wq->wakeup, NULL);
+	err = -pthread_cond_init(&wq->wakeup, NULL);
 	if (err)
 		return err;
-	err = pthread_mutex_init(&wq->lock, NULL);
+	err = -pthread_mutex_init(&wq->lock, NULL);
 	if (err)
 		goto out_cond;
 
@@ -78,14 +78,14 @@ workqueue_create(
 	wq->thread_count = nr_workers;
 	wq->threads = malloc(nr_workers * sizeof(pthread_t));
 	if (!wq->threads) {
-		err = errno;
+		err = -errno;
 		goto out_mutex;
 	}
 	wq->terminate = false;
 	wq->terminated = false;
 
 	for (i = 0; i < nr_workers; i++) {
-		err = pthread_create(&wq->threads[i], NULL, workqueue_thread,
+		err = -pthread_create(&wq->threads[i], NULL, workqueue_thread,
 				wq);
 		if (err)
 			break;
@@ -107,8 +107,9 @@ out_cond:
 }
 
 /*
- * Create a work item consisting of a function and some arguments and
- * schedule the work item to be run via the thread pool.
+ * Create a work item consisting of a function and some arguments and schedule
+ * the work item to be run via the thread pool.  Returns zero or a negative
+ * error code.
  */
 int
 workqueue_add(
@@ -129,7 +130,7 @@ workqueue_add(
 
 	wi = malloc(sizeof(struct workqueue_item));
 	if (!wi)
-		return errno;
+		return -errno;
 
 	wi->function = func;
 	wi->index = index;
@@ -141,7 +142,7 @@ workqueue_add(
 	pthread_mutex_lock(&wq->lock);
 	if (wq->next_item == NULL) {
 		assert(wq->item_count == 0);
-		ret = pthread_cond_signal(&wq->wakeup);
+		ret = -pthread_cond_signal(&wq->wakeup);
 		if (ret) {
 			pthread_mutex_unlock(&wq->lock);
 			free(wi);
@@ -160,7 +161,7 @@ workqueue_add(
 
 /*
  * Wait for all pending work items to be processed and tear down the
- * workqueue thread pool.
+ * workqueue thread pool.  Returns zero or a negative error code.
  */
 int
 workqueue_terminate(
@@ -173,12 +174,12 @@ workqueue_terminate(
 	wq->terminate = true;
 	pthread_mutex_unlock(&wq->lock);
 
-	ret = pthread_cond_broadcast(&wq->wakeup);
+	ret = -pthread_cond_broadcast(&wq->wakeup);
 	if (ret)
 		return ret;
 
 	for (i = 0; i < wq->thread_count; i++) {
-		ret = pthread_join(wq->threads[i], NULL);
+		ret = -pthread_join(wq->threads[i], NULL);
 		if (ret)
 			return ret;
 	}
