@@ -206,10 +206,3 @@ _("Unable to find realtime device path."));
 	ctx->scrub_setup_succeeded = true;
 	return 0;
 }
-
-bool
-xfs_setup_fs(
-	struct scrub_ctx		*ctx)
-{
-	return phase1_func(ctx) == 0;
-}

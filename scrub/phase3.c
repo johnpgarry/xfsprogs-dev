@@ -194,13 +194,6 @@ free:
 	return err;
 }
 
-bool
-xfs_scan_inodes(
-	struct scrub_ctx	*ctx)
-{
-	return phase3_func(ctx) == 0;
-}
-
 /* Estimate how much work we're going to do. */
 int
 phase3_estimate(
@@ -213,14 +206,4 @@ phase3_estimate(
 	*nr_threads = scrub_nproc(ctx);
 	*rshift = 0;
 	return 0;
-}
-
-bool
-xfs_estimate_inodes_work(
-	struct scrub_ctx	*ctx,
-	uint64_t		*items,
-	unsigned int		*nr_threads,
-	int			*rshift)
-{
-	return phase3_estimate(ctx, items, nr_threads, rshift) == 0;
 }

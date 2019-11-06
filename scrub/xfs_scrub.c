@@ -245,14 +245,14 @@ struct phase_rusage {
 #define REPAIR_DUMMY_FN		((void *)2)
 struct phase_ops {
 	char		*descr;
-	bool		(*fn)(struct scrub_ctx *);
-	bool		(*estimate_work)(struct scrub_ctx *, uint64_t *,
-					 unsigned int *, int *);
+	int		(*fn)(struct scrub_ctx *ctx);
+	int		(*estimate_work)(struct scrub_ctx *ctx, uint64_t *items,
+					 unsigned int *threads, int *rshift);
 	bool		must_run;
 };
 
 /* Start tracking resource usage for a phase. */
-static bool
+static int
 phase_start(
 	struct phase_rusage	*pi,
 	unsigned int		phase,
@@ -264,14 +264,14 @@ phase_start(
 	error = scrub_getrusage(&pi->ruse);
 	if (error) {
 		perror(_("getrusage"));
-		return false;
+		return error;
 	}
 	pi->brk_start = sbrk(0);
 
 	error = gettimeofday(&pi->time, NULL);
 	if (error) {
 		perror(_("gettimeofday"));
-		return false;
+		return error;
 	}
 
 	pi->descr = descr;
@@ -279,11 +279,11 @@ phase_start(
 		fprintf(stdout, _("Phase %u: %s\n"), phase, descr);
 		fflush(stdout);
 	}
-	return true;
+	return error;
 }
 
 /* Report usage stats. */
-static bool
+static int
 phase_end(
 	struct phase_rusage	*pi,
 	unsigned int		phase)
@@ -303,19 +303,19 @@ phase_end(
 	int			error;
 
 	if (!display_rusage)
-		return true;
+		return 0;
 
 	error = gettimeofday(&time_now, NULL);
 	if (error) {
 		perror(_("gettimeofday"));
-		return false;
+		return error;
 	}
 	dt = timeval_subtract(&time_now, &pi->time);
 
 	error = scrub_getrusage(&ruse_now);
 	if (error) {
 		perror(_("getrusage"));
-		return false;
+		return error;
 	}
 
 	if (phase)
@@ -366,7 +366,7 @@ _("%sI/O rate: %.1f%s/s in, %.1f%s/s out, %.1f%s/s tot\n"),
 	}
 	fflush(stdout);
 
-	return true;
+	return 0;
 }
 
 /* Run all the phases of the scrubber. */
@@ -379,37 +379,37 @@ run_scrub_phases(
 	{
 		{
 			.descr = _("Find filesystem geometry."),
-			.fn = xfs_setup_fs,
+			.fn = phase1_func,
 			.must_run = true,
 		},
 		{
 			.descr = _("Check internal metadata."),
-			.fn = xfs_scan_metadata,
-			.estimate_work = xfs_estimate_metadata_work,
+			.fn = phase2_func,
+			.estimate_work = phase2_estimate,
 		},
 		{
 			.descr = _("Scan all inodes."),
-			.fn = xfs_scan_inodes,
-			.estimate_work = xfs_estimate_inodes_work,
+			.fn = phase3_func,
+			.estimate_work = phase3_estimate,
 		},
 		{
 			.descr = _("Defer filesystem repairs."),
 			.fn = REPAIR_DUMMY_FN,
-			.estimate_work = xfs_estimate_repair_work,
+			.estimate_work = phase4_estimate,
 		},
 		{
 			.descr = _("Check directory tree."),
-			.fn = xfs_scan_connections,
-			.estimate_work = xfs_estimate_inodes_work,
+			.fn = phase5_func,
+			.estimate_work = phase5_estimate,
 		},
 		{
 			.descr = _("Verify data file integrity."),
 			.fn = DATASCAN_DUMMY_FN,
-			.estimate_work = xfs_estimate_verify_work,
+			.estimate_work = phase6_estimate,
 		},
 		{
 			.descr = _("Check summary counters."),
-			.fn = xfs_scan_summary,
+			.fn = phase7_func,
 			.must_run = true,
 		},
 		{
@@ -419,7 +419,6 @@ run_scrub_phases(
 	struct phase_rusage	pi;
 	struct phase_ops	*sp;
 	uint64_t		max_work;
-	bool			moveon = true;
 	unsigned int		debug_phase = 0;
 	unsigned int		phase;
 	int			rshift;
@@ -432,11 +431,11 @@ run_scrub_phases(
 	for (phase = 1, sp = phases; sp->fn; sp++, phase++) {
 		/* Turn on certain phases if user said to. */
 		if (sp->fn == DATASCAN_DUMMY_FN && scrub_data) {
-			sp->fn = xfs_scan_blocks;
+			sp->fn = phase6_func;
 		} else if (sp->fn == REPAIR_DUMMY_FN &&
 			   ctx->mode == SCRUB_MODE_REPAIR) {
 			sp->descr = _("Repair filesystem.");
-			sp->fn = xfs_repair_fs;
+			sp->fn = phase4_func;
 			sp->must_run = true;
 		}
 
@@ -450,15 +449,15 @@ run_scrub_phases(
 			continue;
 
 		/* Run this phase. */
-		moveon = phase_start(&pi, phase, sp->descr);
-		if (!moveon)
+		ret = phase_start(&pi, phase, sp->descr);
+		if (ret)
 			break;
 		if (sp->estimate_work) {
 			unsigned int		work_threads;
 
-			moveon = sp->estimate_work(ctx, &max_work,
+			ret = sp->estimate_work(ctx, &max_work,
 					&work_threads, &rshift);
-			if (!moveon)
+			if (ret)
 				break;
 
 			/*
@@ -469,23 +468,19 @@ run_scrub_phases(
 			work_threads++;
 			ret = progress_init_phase(ctx, progress_fp, phase,
 					max_work, rshift, work_threads);
-			if (ret) {
-				moveon = false;
+			if (ret)
 				break;
-			}
-			moveon = descr_init_phase(ctx, work_threads) == 0;
+			ret = descr_init_phase(ctx, work_threads);
 		} else {
 			ret = progress_init_phase(ctx, NULL, phase, 0, 0, 0);
-			if (ret) {
-				moveon = false;
+			if (ret)
 				break;
-			}
-			moveon = descr_init_phase(ctx, 1) == 0;
+			ret = descr_init_phase(ctx, 1);
 		}
-		if (!moveon)
+		if (ret)
 			break;
-		moveon = sp->fn(ctx);
-		if (!moveon) {
+		ret = sp->fn(ctx);
+		if (ret) {
 			str_info(ctx, ctx->mntpoint,
 _("Scrub aborted after phase %d."),
 					phase);
@@ -493,17 +488,18 @@ _("Scrub aborted after phase %d."),
 		}
 		progress_end_phase();
 		descr_end_phase();
-		moveon = phase_end(&pi, phase);
-		if (!moveon)
+		ret = phase_end(&pi, phase);
+		if (ret)
 			break;
 
 		/* Too many errors? */
-		moveon = !xfs_scrub_excessive_errors(ctx);
-		if (!moveon)
+		if (xfs_scrub_excessive_errors(ctx)) {
+			ret = ECANCELED;
 			break;
+		}
 	}
 
-	return moveon;
+	return ret;
 }
 
 static void
@@ -596,7 +592,6 @@ main(
 	char			*mtab = NULL;
 	FILE			*progress_fp = NULL;
 	struct fs_path		*fsp;
-	bool			moveon = true;
 	int			c;
 	int			fd;
 	int			ret = SCRUB_RET_SUCCESS;
@@ -711,8 +706,8 @@ main(
 		is_service = true;
 
 	/* Initialize overall phase stats. */
-	moveon = phase_start(&all_pi, 0, NULL);
-	if (!moveon)
+	error = phase_start(&all_pi, 0, NULL);
+	if (error)
 		return SCRUB_RET_OPERROR;
 
 	/* Find the mount record for the passed-in argument. */
@@ -759,8 +754,8 @@ main(
 		ctx.mode = SCRUB_MODE_REPAIR;
 
 	/* Scrub a filesystem. */
-	moveon = run_scrub_phases(&ctx, progress_fp);
-	if (!moveon && ctx.runtime_errors == 0)
+	error = run_scrub_phases(&ctx, progress_fp);
+	if (error && ctx.runtime_errors == 0)
 		ctx.runtime_errors++;
 
 	/*

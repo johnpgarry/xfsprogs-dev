@@ -707,13 +707,6 @@ out_dbad:
 	return ret;
 }
 
-bool
-xfs_scan_blocks(
-	struct scrub_ctx		*ctx)
-{
-	return phase6_func(ctx) == 0;
-}
-
 /* Estimate how much work we're going to do. */
 int
 phase6_estimate(
@@ -742,14 +735,4 @@ phase6_estimate(
 	*nr_threads = disk_heads(ctx->datadev);
 	*rshift = 20;
 	return 0;
-}
-
-bool
-xfs_estimate_verify_work(
-	struct scrub_ctx	*ctx,
-	uint64_t		*items,
-	unsigned int		*nr_threads,
-	int			*rshift)
-{
-	return phase6_estimate(ctx, items, nr_threads, rshift) == 0;
 }

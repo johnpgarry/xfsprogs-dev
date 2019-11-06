@@ -88,24 +88,25 @@ struct scrub_ctx {
 /* Phase helper functions */
 void xfs_shutdown_fs(struct scrub_ctx *ctx);
 int scrub_cleanup(struct scrub_ctx *ctx);
-bool xfs_setup_fs(struct scrub_ctx *ctx);
-bool xfs_scan_metadata(struct scrub_ctx *ctx);
-bool xfs_scan_inodes(struct scrub_ctx *ctx);
-bool xfs_scan_connections(struct scrub_ctx *ctx);
-bool xfs_scan_blocks(struct scrub_ctx *ctx);
-bool xfs_scan_summary(struct scrub_ctx *ctx);
-bool xfs_repair_fs(struct scrub_ctx *ctx);
+int phase1_func(struct scrub_ctx *ctx);
+int phase2_func(struct scrub_ctx *ctx);
+int phase3_func(struct scrub_ctx *ctx);
+int phase4_func(struct scrub_ctx *ctx);
+int phase5_func(struct scrub_ctx *ctx);
+int phase6_func(struct scrub_ctx *ctx);
+int phase7_func(struct scrub_ctx *ctx);
 
 /* Progress estimator functions */
-uint64_t xfs_estimate_inodes(struct scrub_ctx *ctx);
 unsigned int scrub_estimate_ag_work(struct scrub_ctx *ctx);
-bool xfs_estimate_metadata_work(struct scrub_ctx *ctx, uint64_t *items,
-				unsigned int *nr_threads, int *rshift);
-bool xfs_estimate_inodes_work(struct scrub_ctx *ctx, uint64_t *items,
-			      unsigned int *nr_threads, int *rshift);
-bool xfs_estimate_repair_work(struct scrub_ctx *ctx, uint64_t *items,
-			      unsigned int *nr_threads, int *rshift);
-bool xfs_estimate_verify_work(struct scrub_ctx *ctx, uint64_t *items,
-			      unsigned int *nr_threads, int *rshift);
+int phase2_estimate(struct scrub_ctx *ctx, uint64_t *items,
+		    unsigned int *nr_threads, int *rshift);
+int phase3_estimate(struct scrub_ctx *ctx, uint64_t *items,
+		    unsigned int *nr_threads, int *rshift);
+int phase4_estimate(struct scrub_ctx *ctx, uint64_t *items,
+		    unsigned int *nr_threads, int *rshift);
+int phase5_estimate(struct scrub_ctx *ctx, uint64_t *items,
+		    unsigned int *nr_threads, int *rshift);
+int phase6_estimate(struct scrub_ctx *ctx, uint64_t *items,
+		    unsigned int *nr_threads, int *rshift);
 
 #endif /* XFS_SCRUB_XFS_SCRUB_H_ */

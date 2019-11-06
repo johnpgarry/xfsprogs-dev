@@ -179,13 +179,6 @@ out:
 	return ret;
 }
 
-bool
-xfs_scan_metadata(
-	struct scrub_ctx	*ctx)
-{
-	return phase2_func(ctx) == 0;
-}
-
 /* Estimate how much work we're going to do. */
 int
 phase2_estimate(
@@ -198,14 +191,4 @@ phase2_estimate(
 	*nr_threads = scrub_nproc(ctx);
 	*rshift = 0;
 	return 0;
-}
-
-bool
-xfs_estimate_metadata_work(
-	struct scrub_ctx	*ctx,
-	uint64_t		*items,
-	unsigned int		*nr_threads,
-	int			*rshift)
-{
-	return phase2_estimate(ctx, items, nr_threads, rshift) == 0;
 }

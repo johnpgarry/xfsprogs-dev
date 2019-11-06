@@ -406,9 +406,16 @@ _("Filesystem has errors, skipping connectivity checks."));
 	return 0;
 }
 
-bool
-xfs_scan_connections(
-	struct scrub_ctx	*ctx)
+/* Estimate how much work we're going to do. */
+int
+phase5_estimate(
+	struct scrub_ctx	*ctx,
+	uint64_t		*items,
+	unsigned int		*nr_threads,
+	int			*rshift)
 {
-	return phase5_func(ctx) == 0;
+	*items = ctx->mnt_sv.f_files - ctx->mnt_sv.f_ffree;
+	*nr_threads = scrub_nproc(ctx);
+	*rshift = 0;
+	return 0;
 }
