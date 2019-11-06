@@ -187,7 +187,7 @@ scan_ag_inodes(
 _("Changed too many times during scan; giving up."));
 				break;
 			}
-			case XFS_ITERATE_INODES_ABORT:
+			case ECANCELED:
 				error = 0;
 				/* fall thru */
 			default:
