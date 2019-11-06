@@ -12,13 +12,13 @@
  * iteration will be restarted from the beginning of the inode allocation
  * group.  Any other non zero value will stop iteration.
  */
-typedef int (*xfs_inode_iter_fn)(struct scrub_ctx *ctx,
+typedef int (*scrub_inode_iter_fn)(struct scrub_ctx *ctx,
 		struct xfs_handle *handle, struct xfs_bulkstat *bs, void *arg);
 
 #define XFS_ITERATE_INODES_ABORT	(-1)
-bool xfs_scan_all_inodes(struct scrub_ctx *ctx, xfs_inode_iter_fn fn,
+int scrub_scan_all_inodes(struct scrub_ctx *ctx, scrub_inode_iter_fn fn,
 		void *arg);
 
-int xfs_open_handle(struct xfs_handle *handle);
+int scrub_open_handle(struct xfs_handle *handle);
 
 #endif /* XFS_SCRUB_INODES_H_ */

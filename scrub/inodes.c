@@ -94,54 +94,66 @@ bulkstat_for_inumbers(
 	}
 }
 
+/* BULKSTAT wrapper routines. */
+struct scan_inodes {
+	scrub_inode_iter_fn	fn;
+	void			*arg;
+	bool			aborted;
+};
+
 /*
  * Call into the filesystem for inode/bulkstat information and call our
  * iterator function.  We'll try to fill the bulkstat information in batches,
  * but we also can detect iget failures.
  */
-static bool
-xfs_iterate_inodes_ag(
-	struct scrub_ctx	*ctx,
-	const char		*descr,
-	void			*fshandle,
-	uint32_t		agno,
-	xfs_inode_iter_fn	fn,
+static void
+scan_ag_inodes(
+	struct workqueue	*wq,
+	xfs_agnumber_t		agno,
 	void			*arg)
 {
 	struct xfs_handle	handle;
+	char			descr[DESCR_BUFSZ];
 	struct xfs_inumbers_req	*ireq;
 	struct xfs_bulkstat_req	*breq;
-	char			idescr[DESCR_BUFSZ];
+	struct scan_inodes	*si = arg;
+	struct scrub_ctx	*ctx = (struct scrub_ctx *)wq->wq_ctx;
 	struct xfs_bulkstat	*bs;
 	struct xfs_inumbers	*inumbers;
-	bool			moveon = true;
 	int			i;
 	int			error;
 	int			stale_count = 0;
 
-	memcpy(&handle.ha_fsid, fshandle, sizeof(handle.ha_fsid));
+	snprintf(descr, DESCR_BUFSZ, _("dev %d:%d AG %u inodes"),
+				major(ctx->fsinfo.fs_datadev),
+				minor(ctx->fsinfo.fs_datadev),
+				agno);
+
+	memcpy(&handle.ha_fsid, ctx->fshandle, sizeof(handle.ha_fsid));
 	handle.ha_fid.fid_len = sizeof(xfs_fid_t) -
 			sizeof(handle.ha_fid.fid_len);
 	handle.ha_fid.fid_pad = 0;
 
 	breq = xfrog_bulkstat_alloc_req(XFS_INODES_PER_CHUNK, 0);
 	if (!breq) {
-		str_liberror(ctx, ENOMEM, _("allocating bulkstat request"));
-		return false;
+		str_errno(ctx, descr);
+		si->aborted = true;
+		return;
 	}
 
 	ireq = xfrog_inumbers_alloc_req(1, 0);
 	if (!ireq) {
-		str_liberror(ctx, ENOMEM, _("allocating inumbers request"));
+		str_errno(ctx, descr);
 		free(breq);
-		return false;
+		si->aborted = true;
+		return;
 	}
 	inumbers = &ireq->inumbers[0];
 	xfrog_inumbers_set_ag(ireq, agno);
 
 	/* Find the inode chunk & alloc mask */
 	error = xfrog_inumbers(&ctx->mnt, ireq);
-	while (!error && ireq->hdr.ocount > 0) {
+	while (!error && !si->aborted && ireq->hdr.ocount > 0) {
 		/*
 		 * We can have totally empty inode chunks on filesystems where
 		 * there are more than 64 inodes per block.  Skip these.
@@ -153,15 +165,17 @@ xfs_iterate_inodes_ag(
 
 		/* Iterate all the inodes. */
 		for (i = 0, bs = breq->bulkstat;
-		     i < inumbers->xi_alloccount;
+		     !si->aborted && i < inumbers->xi_alloccount;
 		     i++, bs++) {
 			handle.ha_fid.fid_ino = bs->bs_ino;
 			handle.ha_fid.fid_gen = bs->bs_gen;
-			error = fn(ctx, &handle, bs, arg);
+			error = si->fn(ctx, &handle, bs, si->arg);
 			switch (error) {
 			case 0:
 				break;
-			case ESTALE:
+			case ESTALE: {
+				char	idescr[DESCR_BUFSZ];
+
 				stale_count++;
 				if (stale_count < 30) {
 					ireq->hdr.ino = inumbers->xi_startino;
@@ -172,16 +186,15 @@ xfs_iterate_inodes_ag(
 				str_info(ctx, idescr,
 _("Changed too many times during scan; giving up."));
 				break;
+			}
 			case XFS_ITERATE_INODES_ABORT:
 				error = 0;
 				/* fall thru */
 			default:
-				moveon = false;
-				errno = error;
 				goto err;
 			}
 			if (xfs_scrub_excessive_errors(ctx)) {
-				moveon = false;
+				si->aborted = true;
 				goto out;
 			}
 		}
@@ -194,71 +207,42 @@ igrp_retry:
 err:
 	if (error) {
 		str_liberror(ctx, error, descr);
-		moveon = false;
+		si->aborted = true;
 	}
 out:
 	free(ireq);
 	free(breq);
-	return moveon;
 }
 
-/* BULKSTAT wrapper routines. */
-struct xfs_scan_inodes {
-	xfs_inode_iter_fn	fn;
-	void			*arg;
-	bool			moveon;
-};
-
-/* Scan all the inodes in an AG. */
-static void
-xfs_scan_ag_inodes(
-	struct workqueue	*wq,
-	xfs_agnumber_t		agno,
-	void			*arg)
-{
-	struct xfs_scan_inodes	*si = arg;
-	struct scrub_ctx	*ctx = (struct scrub_ctx *)wq->wq_ctx;
-	char			descr[DESCR_BUFSZ];
-	bool			moveon;
-
-	snprintf(descr, DESCR_BUFSZ, _("dev %d:%d AG %u inodes"),
-				major(ctx->fsinfo.fs_datadev),
-				minor(ctx->fsinfo.fs_datadev),
-				agno);
-
-	moveon = xfs_iterate_inodes_ag(ctx, descr, ctx->fshandle, agno,
-			si->fn, si->arg);
-	if (!moveon)
-		si->moveon = false;
-}
-
-/* Scan all the inodes in a filesystem. */
-bool
-xfs_scan_all_inodes(
+/*
+ * Scan all the inodes in a filesystem.  On error, this function will log
+ * an error message and return -1.
+ */
+int
+scrub_scan_all_inodes(
 	struct scrub_ctx	*ctx,
-	xfs_inode_iter_fn	fn,
+	scrub_inode_iter_fn	fn,
 	void			*arg)
 {
-	struct xfs_scan_inodes	si;
+	struct scan_inodes	si = {
+		.fn		= fn,
+		.arg		= arg,
+	};
 	xfs_agnumber_t		agno;
 	struct workqueue	wq;
 	int			ret;
-
-	si.moveon = true;
-	si.fn = fn;
-	si.arg = arg;
 
 	ret = workqueue_create(&wq, (struct xfs_mount *)ctx,
 			scrub_nproc_workqueue(ctx));
 	if (ret) {
 		str_liberror(ctx, ret, _("creating bulkstat workqueue"));
-		return false;
+		return -1;
 	}
 
 	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++) {
-		ret = workqueue_add(&wq, xfs_scan_ag_inodes, agno, &si);
+		ret = workqueue_add(&wq, scan_ag_inodes, agno, &si);
 		if (ret) {
-			si.moveon = false;
+			si.aborted = true;
 			str_liberror(ctx, ret, _("queueing bulkstat work"));
 			break;
 		}
@@ -266,19 +250,17 @@ xfs_scan_all_inodes(
 
 	ret = workqueue_terminate(&wq);
 	if (ret) {
-		si.moveon = false;
+		si.aborted = true;
 		str_liberror(ctx, ret, _("finishing bulkstat work"));
 	}
 	workqueue_destroy(&wq);
 
-	return si.moveon;
+	return si.aborted ? -1 : 0;
 }
 
-/*
- * Open a file by handle, or return a negative error code.
- */
+/* Open a file by handle, returning either the fd or -1 on error. */
 int
-xfs_open_handle(
+scrub_open_handle(
 	struct xfs_handle	*handle)
 {
 	return open_by_fshandle(handle, sizeof(*handle),

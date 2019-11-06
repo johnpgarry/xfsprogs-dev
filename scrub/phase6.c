@@ -288,7 +288,7 @@ xfs_report_verify_inode(
 			bstat->bs_ino, bstat->bs_gen, _("(unlinked)"));
 
 	/* Try to open the inode. */
-	fd = xfs_open_handle(handle);
+	fd = scrub_open_handle(handle);
 	if (fd < 0) {
 		error = errno;
 		if (error == ESTALE)
@@ -500,7 +500,8 @@ report_all_media_errors(
 		return false;
 
 	/* Scan for unlinked files. */
-	return xfs_scan_all_inodes(ctx, xfs_report_verify_inode, vs);
+	ret = scrub_scan_all_inodes(ctx, xfs_report_verify_inode, vs);
+	return ret == 0;
 }
 
 /* Schedule a read-verify of a (data block) extent. */

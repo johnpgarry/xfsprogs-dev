@@ -264,7 +264,7 @@ xfs_scrub_connections(
 
 	/* Open the dir, let the kernel try to reconnect it to the root. */
 	if (S_ISDIR(bstat->bs_mode)) {
-		fd = xfs_open_handle(handle);
+		fd = scrub_open_handle(handle);
 		if (fd < 0) {
 			if (errno == ESTALE)
 				return ESTALE;
@@ -360,7 +360,7 @@ xfs_scan_connections(
 	struct scrub_ctx	*ctx)
 {
 	bool			moveon = true;
-	bool			ret;
+	int			ret;
 
 	if (ctx->corruptions_found || ctx->unfixable_errors) {
 		str_info(ctx, ctx->mntpoint,
@@ -372,9 +372,9 @@ _("Filesystem has errors, skipping connectivity checks."));
 	if (!moveon)
 		return false;
 
-	ret = xfs_scan_all_inodes(ctx, xfs_scrub_connections, &moveon);
-	if (!ret)
-		moveon = false;
+	ret = scrub_scan_all_inodes(ctx, xfs_scrub_connections, &moveon);
+	if (ret)
+		return false;
 	if (!moveon)
 		return false;
 	xfs_scrub_report_preen_triggers(ctx);

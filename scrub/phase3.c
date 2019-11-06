@@ -78,7 +78,7 @@ xfs_scrub_inode(
 
 	/* Try to open the inode to pin it. */
 	if (S_ISREG(bstat->bs_mode)) {
-		fd = xfs_open_handle(handle);
+		fd = scrub_open_handle(handle);
 		/* Stale inode means we scan the whole cluster again. */
 		if (fd < 0 && errno == ESTALE)
 			return ESTALE;
@@ -161,7 +161,6 @@ xfs_scan_inodes(
 	struct scrub_inode_ctx	ictx;
 	uint64_t		val;
 	int			err;
-	bool			ret;
 
 	ictx.moveon = true;
 	err = ptcounter_alloc(scrub_nproc(ctx), &ictx.icount);
@@ -170,8 +169,8 @@ xfs_scan_inodes(
 		return false;
 	}
 
-	ret = xfs_scan_all_inodes(ctx, xfs_scrub_inode, &ictx);
-	if (!ret)
+	err = scrub_scan_all_inodes(ctx, xfs_scrub_inode, &ictx);
+	if (err)
 		ictx.moveon = false;
 	if (!ictx.moveon)
 		goto free;
