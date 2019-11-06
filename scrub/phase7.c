@@ -155,14 +155,19 @@ xfs_scan_summary(
 	ptvar_free(ptvar);
 
 	/* Scan the whole fs. */
-	moveon = xfs_count_all_inodes(ctx, &counted_inodes);
-	if (!moveon)
+	error = scrub_count_all_inodes(ctx, &counted_inodes);
+	if (error) {
+		str_liberror(ctx, error, _("counting inodes"));
+		moveon = false;
 		goto out;
+	}
 
-	moveon = xfs_scan_estimate_blocks(ctx, &d_blocks, &d_bfree, &r_blocks,
+	error = scrub_scan_estimate_blocks(ctx, &d_blocks, &d_bfree, &r_blocks,
 			&r_bfree, &f_files, &f_free);
-	if (!moveon)
-		return moveon;
+	if (error) {
+		str_liberror(ctx, error, _("estimating verify work"));
+		return false;
+	}
 
 	/*
 	 * If we counted blocks with fsmap, then dblocks includes

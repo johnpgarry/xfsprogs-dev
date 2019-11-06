@@ -727,16 +727,18 @@ xfs_estimate_verify_work(
 	unsigned long long	r_bfree;
 	unsigned long long	f_files;
 	unsigned long long	f_free;
-	bool			moveon;
+	int			ret;
 
-	moveon = xfs_scan_estimate_blocks(ctx, &d_blocks, &d_bfree,
+	ret = scrub_scan_estimate_blocks(ctx, &d_blocks, &d_bfree,
 				&r_blocks, &r_bfree, &f_files, &f_free);
-	if (!moveon)
-		return moveon;
+	if (ret) {
+		str_liberror(ctx, ret, _("estimating verify work"));
+		return false;
+	}
 
 	*items = cvt_off_fsb_to_b(&ctx->mnt,
 			(d_blocks - d_bfree) + (r_blocks - r_bfree));
 	*nr_threads = disk_heads(ctx->datadev);
 	*rshift = 20;
-	return moveon;
+	return true;
 }
