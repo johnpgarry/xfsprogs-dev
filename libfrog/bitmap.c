@@ -76,14 +76,14 @@ bitmap_alloc(
 
 	bmap = calloc(1, sizeof(struct bitmap));
 	if (!bmap)
-		return errno;
+		return -errno;
 	bmap->bt_tree = malloc(sizeof(struct avl64tree_desc));
 	if (!bmap->bt_tree) {
-		ret = errno;
+		ret = -errno;
 		goto out;
 	}
 
-	ret = pthread_mutex_init(&bmap->bt_lock, NULL);
+	ret = -pthread_mutex_init(&bmap->bt_lock, NULL);
 	if (ret)
 		goto out_tree;
 
@@ -149,12 +149,12 @@ __bitmap_insert(
 
 	ext = bitmap_node_init(start, length);
 	if (!ext)
-		return errno;
+		return -errno;
 
 	node = avl64_insert(bmap->bt_tree, &ext->btn_node);
 	if (node == NULL) {
 		free(ext);
-		return EEXIST;
+		return -EEXIST;
 	}
 
 	return 0;
@@ -235,7 +235,7 @@ bitmap_set(
 
 #if 0	/* Unused, provided for completeness. */
 /* Clear a region of bits. */
-bool
+int
 bitmap_clear(
 	struct bitmap		*bmap,
 	uint64_t		start,
@@ -259,7 +259,7 @@ bitmap_clear(
 	/* Nothing, we're done. */
 	if (firstn == NULL && lastn == NULL) {
 		pthread_mutex_unlock(&bmap->bt_lock);
-		return true;
+		return 0;
 	}
 
 	assert(firstn != NULL && lastn != NULL);
@@ -297,20 +297,23 @@ bitmap_clear(
 					new_start;
 
 			ext = bitmap_node_init(new_start, new_length);
-			if (!ext)
-				return false;
+			if (!ext) {
+				ret = -errno;
+				goto out;
+			}
 
 			node = avl64_insert(bmap->bt_tree, &ext->btn_node);
 			if (node == NULL) {
-				errno = EEXIST;
-				return false;
+				ret = -EEXIST;
+				goto out;
 			}
 			break;
 		}
 	}
 
+out:
 	pthread_mutex_unlock(&bmap->bt_lock);
-	return true;
+	return ret;
 }
 #endif
 
