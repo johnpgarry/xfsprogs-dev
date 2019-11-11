@@ -422,7 +422,7 @@ run_scrub_phases(
 	unsigned int		debug_phase = 0;
 	unsigned int		phase;
 	int			rshift;
-	int			ret;
+	int			ret = 0;
 
 	if (debug_tweak_on("XFS_SCRUB_PHASE"))
 		debug_phase = atoi(getenv("XFS_SCRUB_PHASE"));
