@@ -678,6 +678,7 @@ add_enckey_f(int argc, char **argv)
 	int c;
 	struct fscrypt_add_key_arg *arg;
 	ssize_t raw_size;
+	int retval = 0;
 
 	arg = calloc(1, sizeof(*arg) + FSCRYPT_MAX_KEY_SIZE + 1);
 	if (!arg) {
@@ -696,14 +697,17 @@ add_enckey_f(int argc, char **argv)
 				goto out;
 			break;
 		default:
-			return command_usage(&add_enckey_cmd);
+			retval = command_usage(&add_enckey_cmd);
+			goto out;
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 0)
-		return command_usage(&add_enckey_cmd);
+	if (argc != 0) {
+		retval = command_usage(&add_enckey_cmd);
+		goto out;
+	}
 
 	raw_size = read_until_limit_or_eof(STDIN_FILENO, arg->raw,
 					   FSCRYPT_MAX_KEY_SIZE + 1);
@@ -732,7 +736,7 @@ add_enckey_f(int argc, char **argv)
 out:
 	memset(arg->raw, 0, FSCRYPT_MAX_KEY_SIZE + 1);
 	free(arg);
-	return 0;
+	return retval;
 }
 
 static int
