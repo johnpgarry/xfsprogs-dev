@@ -1,4 +1,19 @@
-xfsprogs-5.3.0-rc0 (28 Aug 2019)
+xfsprogs-5.3.0-rc2 (07 Nov 2019)
+	- mkfs.xfs: use libxfs to write out AGs vs. open-coding (Darrick Wong)
+	- mkfs.xfs: fix incorrect error message during AG init (Darrick Wong)
+	- xfs_repair: better info when metadata updates fail (Darrick Wong)
+	- xfs_growfs: allow mounted device node as argument (Eric Sandeen)
+	- xfs_spaceman: always report sick metadata (Darrick Wong)
+	- xfs_io: add a bulkstat command (Darrick Wong)
+	- xfs_io: encrypt command enhancements (Eric Biggers)
+	- xfs_io: expose FS_XFLAG_HASATTR flag (Amir Goldstein)
+	- xfs_io: copy_file_range fixes (Jianhong Yin)
+	- man: document several new ioctls (Darrick Wong)
+	- xfs_scrub: copious rewriting (Darrick Wong)
+	- libfrog: header moves, refactoring, updates (Darrick Wong)
+	- libxfs: fix buffer refcounting (Darrick Wong)
+
+xfsprogs-5.3.0-rc1 (28 Aug 2019)
 	- rebase 5.3 branch on top of 5.2.1
 
 xfsprogs-5.3.0-rc0 (16 Aug 2019)
