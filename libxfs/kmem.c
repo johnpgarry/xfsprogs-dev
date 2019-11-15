@@ -76,6 +76,12 @@ kmem_alloc(size_t size, int flags)
 }
 
 void *
+kmem_alloc_large(size_t size, int flags)
+{
+	return kmem_alloc(size, flags);
+}
+
+void *
 kmem_zalloc(size_t size, int flags)
 {
 	void	*ptr = kmem_alloc(size, flags);
