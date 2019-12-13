@@ -755,6 +755,7 @@ struct xfs_scrub_metadata {
 #  define XFS_XATTR_LIST_MAX 65536
 #endif
 
+
 /*
  * ioctl commands that are used by Linux filesystems
  */
@@ -825,7 +826,6 @@ struct xfs_scrub_metadata {
 #define XFS_IOC_FSGEOMETRY	     _IOR ('X', 126, struct xfs_fsop_geom)
 #define XFS_IOC_BULKSTAT	     _IOR ('X', 127, struct xfs_bulkstat_req)
 #define XFS_IOC_INUMBERS	     _IOR ('X', 128, struct xfs_inumbers_req)
-
 /*	XFS_IOC_GETFSUUID ---------- deprecated 140	 */
 
 /* reflink ioctls; these MUST match the btrfs ioctl definitions */
