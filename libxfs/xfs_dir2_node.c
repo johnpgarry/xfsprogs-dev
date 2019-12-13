@@ -1742,10 +1742,11 @@ xfs_dir2_node_find_freeblk(
 	struct xfs_inode	*dp = args->dp;
 	struct xfs_trans	*tp = args->trans;
 	struct xfs_buf		*fbp = NULL;
+	xfs_dir2_db_t		firstfbno;
 	xfs_dir2_db_t		lastfbno;
 	xfs_dir2_db_t		ifbno = -1;
 	xfs_dir2_db_t		dbno = -1;
-	xfs_dir2_db_t		fbno = -1;
+	xfs_dir2_db_t		fbno;
 	xfs_fileoff_t		fo;
 	__be16			*bests = NULL;
 	int			findex = 0;
@@ -1777,7 +1778,6 @@ xfs_dir2_node_find_freeblk(
 		 * We'll start at the beginning of the freespace entries.
 		 */
 		ifbno = fblk->blkno;
-		fbno = ifbno;
 		xfs_trans_brelse(tp, fbp);
 		fbp = NULL;
 		fblk->bp = NULL;
@@ -1791,12 +1791,9 @@ xfs_dir2_node_find_freeblk(
 	if (error)
 		return error;
 	lastfbno = xfs_dir2_da_to_db(args->geo, (xfs_dablk_t)fo);
+	firstfbno = xfs_dir2_byte_to_db(args->geo, XFS_DIR2_FREE_OFFSET);
 
-	/* If we haven't get a search start block, set it now */
-	if (fbno == -1)
-		fbno = xfs_dir2_byte_to_db(args->geo, XFS_DIR2_FREE_OFFSET);
-
-	for ( ; fbno < lastfbno; fbno++) {
+	for (fbno = lastfbno - 1; fbno >= firstfbno; fbno--) {
 		/* If it's ifbno we already looked at it. */
 		if (fbno == ifbno)
 			continue;
@@ -1819,7 +1816,7 @@ xfs_dir2_node_find_freeblk(
 		dp->d_ops->free_hdr_from_disk(&freehdr, free);
 
 		/* Scan the free entry array for a large enough free space. */
-		for (findex = 0; findex < freehdr.nvalid; findex++) {
+		for (findex = freehdr.nvalid - 1; findex >= 0; findex--) {
 			if (be16_to_cpu(bests[findex]) != NULLDATAOFF &&
 			    be16_to_cpu(bests[findex]) >= length) {
 				dbno = freehdr.firstdb + findex;
