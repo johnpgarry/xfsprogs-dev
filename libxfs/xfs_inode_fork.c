@@ -92,7 +92,7 @@ xfs_iformat_fork(
 		return 0;
 
 	ASSERT(ip->i_afp == NULL);
-	ip->i_afp = kmem_zone_zalloc(xfs_ifork_zone, KM_SLEEP | KM_NOFS);
+	ip->i_afp = kmem_zone_zalloc(xfs_ifork_zone, KM_NOFS);
 
 	switch (dip->di_aformat) {
 	case XFS_DINODE_FMT_LOCAL:
@@ -145,7 +145,7 @@ xfs_init_local_fork(
 
 	if (size) {
 		real_size = roundup(mem_size, 4);
-		ifp->if_u1.if_data = kmem_alloc(real_size, KM_SLEEP | KM_NOFS);
+		ifp->if_u1.if_data = kmem_alloc(real_size, KM_NOFS);
 		memcpy(ifp->if_u1.if_data, data, size);
 		if (zero_terminate)
 			ifp->if_u1.if_data[size] = '\0';
@@ -300,7 +300,7 @@ xfs_iformat_btree(
 	}
 
 	ifp->if_broot_bytes = size;
-	ifp->if_broot = kmem_alloc(size, KM_SLEEP | KM_NOFS);
+	ifp->if_broot = kmem_alloc(size, KM_NOFS);
 	ASSERT(ifp->if_broot != NULL);
 	/*
 	 * Copy and convert from the on-disk structure
@@ -365,7 +365,7 @@ xfs_iroot_realloc(
 		 */
 		if (ifp->if_broot_bytes == 0) {
 			new_size = XFS_BMAP_BROOT_SPACE_CALC(mp, rec_diff);
-			ifp->if_broot = kmem_alloc(new_size, KM_SLEEP | KM_NOFS);
+			ifp->if_broot = kmem_alloc(new_size, KM_NOFS);
 			ifp->if_broot_bytes = (int)new_size;
 			return;
 		}
@@ -380,7 +380,7 @@ xfs_iroot_realloc(
 		new_max = cur_max + rec_diff;
 		new_size = XFS_BMAP_BROOT_SPACE_CALC(mp, new_max);
 		ifp->if_broot = kmem_realloc(ifp->if_broot, new_size,
-				KM_SLEEP | KM_NOFS);
+				KM_NOFS);
 		op = (char *)XFS_BMAP_BROOT_PTR_ADDR(mp, ifp->if_broot, 1,
 						     ifp->if_broot_bytes);
 		np = (char *)XFS_BMAP_BROOT_PTR_ADDR(mp, ifp->if_broot, 1,
@@ -406,7 +406,7 @@ xfs_iroot_realloc(
 	else
 		new_size = 0;
 	if (new_size > 0) {
-		new_broot = kmem_alloc(new_size, KM_SLEEP | KM_NOFS);
+		new_broot = kmem_alloc(new_size, KM_NOFS);
 		/*
 		 * First copy over the btree block header.
 		 */
@@ -490,7 +490,7 @@ xfs_idata_realloc(
 	 * We enforce that here.
 	 */
 	ifp->if_u1.if_data = kmem_realloc(ifp->if_u1.if_data,
-			roundup(new_size, 4), KM_SLEEP | KM_NOFS);
+			roundup(new_size, 4), KM_NOFS);
 	ifp->if_bytes = new_size;
 }
 
@@ -681,7 +681,7 @@ xfs_ifork_init_cow(
 		return;
 
 	ip->i_cowfp = kmem_zone_zalloc(xfs_ifork_zone,
-				       KM_SLEEP | KM_NOFS);
+				       KM_NOFS);
 	ip->i_cowfp->if_flags = XFS_IFEXTENTS;
 	ip->i_cformat = XFS_DINODE_FMT_EXTENTS;
 	ip->i_cnextents = 0;

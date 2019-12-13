@@ -141,7 +141,7 @@ xfs_trans_dup(
 {
 	struct xfs_trans	*ntp;
 
-	ntp = kmem_zone_zalloc(xfs_trans_zone, KM_SLEEP);
+	ntp = kmem_zone_zalloc(xfs_trans_zone, 0);
 
 	/*
 	 * Initialize the new transaction structure.
@@ -258,7 +258,7 @@ libxfs_trans_alloc(
 	struct xfs_trans	*tp;
 	int			error;
 
-	tp = kmem_zone_zalloc(xfs_trans_zone, KM_SLEEP);
+	tp = kmem_zone_zalloc(xfs_trans_zone, 0);
 	tp->t_mountp = mp;
 	INIT_LIST_HEAD(&tp->t_items);
 	INIT_LIST_HEAD(&tp->t_dfops);

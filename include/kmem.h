@@ -6,8 +6,6 @@
 #ifndef __KMEM_H__
 #define __KMEM_H__
 
-#define KM_SLEEP	0x0001u
-#define KM_NOSLEEP	0x0002u
 #define KM_NOFS		0x0004u
 #define KM_MAYFAIL	0x0008u
 #define KM_LARGE	0x0010u
