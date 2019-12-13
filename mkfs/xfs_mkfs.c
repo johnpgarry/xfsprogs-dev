@@ -1240,17 +1240,40 @@ done:
 }
 
 static void
-discard_blocks(dev_t dev, uint64_t nsectors)
+discard_blocks(dev_t dev, uint64_t nsectors, int quiet)
 {
-	int fd;
+	int		fd;
+	uint64_t	offset = 0;
+	/* Discard the device 2G at a time */
+	const uint64_t	step = 2ULL << 30;
+	const uint64_t	count = BBTOB(nsectors);
 
-	/*
-	 * We intentionally ignore errors from the discard ioctl.  It is
-	 * not necessary for the mkfs functionality but just an optimization.
-	 */
 	fd = libxfs_device_to_fd(dev);
-	if (fd > 0)
-		platform_discard_blocks(fd, 0, nsectors << 9);
+	if (fd <= 0)
+		return;
+	if (!quiet) {
+		printf("Discarding blocks...");
+		fflush(stdout);
+	}
+
+	/* The block discarding happens in smaller batches so it can be
+	 * interrupted prematurely
+	 */
+	while (offset < count) {
+		uint64_t	tmp_step = min(step, count - offset);
+
+		/*
+		 * We intentionally ignore errors from the discard ioctl. It is
+		 * not necessary for the mkfs functionality but just an
+		 * optimization. However we should stop on error.
+		 */
+		if (platform_discard_blocks(fd, offset, tmp_step))
+			return;
+
+		offset += tmp_step;
+	}
+	if (!quiet)
+		printf("Done.\n");
 }
 
 static __attribute__((noreturn)) void
@@ -2507,18 +2530,19 @@ open_devices(
 
 static void
 discard_devices(
-	struct libxfs_xinit	*xi)
+	struct libxfs_xinit	*xi,
+	int			quiet)
 {
 	/*
 	 * This function has to be called after libxfs has been initialized.
 	 */
 
 	if (!xi->disfile)
-		discard_blocks(xi->ddev, xi->dsize);
+		discard_blocks(xi->ddev, xi->dsize, quiet);
 	if (xi->rtdev && !xi->risfile)
-		discard_blocks(xi->rtdev, xi->rtsize);
+		discard_blocks(xi->rtdev, xi->rtsize, quiet);
 	if (xi->logdev && xi->logdev != xi->ddev && !xi->lisfile)
-		discard_blocks(xi->logdev, xi->logBBsize);
+		discard_blocks(xi->logdev, xi->logBBsize, quiet);
 }
 
 static void
@@ -3749,7 +3773,7 @@ main(
 	 * All values have been validated, discard the old device layout.
 	 */
 	if (discard && !dry_run)
-		discard_devices(&xi);
+		discard_devices(&xi, quiet);
 
 	/*
 	 * we need the libxfs buffer cache from here on in.
