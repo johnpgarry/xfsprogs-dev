@@ -109,14 +109,6 @@ typedef struct xfs_mount {
 
 #define M_IGEO(mp)		(&(mp)->m_ino_geo)
 
-/* per-AG block reservation data structures*/
-enum xfs_ag_resv_type {
-	XFS_AG_RESV_NONE = 0,
-	XFS_AG_RESV_AGFL,
-	XFS_AG_RESV_METADATA,
-	XFS_AG_RESV_RMAPBT,
-};
-
 struct xfs_ag_resv {
 	/* number of blocks originally reserved here */
 	xfs_extlen_t	ar_orig_reserved;
