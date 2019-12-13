@@ -651,7 +651,7 @@ __libxfs_getbufr(int blen)
 	pthread_mutex_unlock(&xfs_buf_freelist.cm_mutex);
 	bp->b_ops = NULL;
 	if (bp->b_flags & LIBXFS_B_DIRTY)
-		fprintf(stderr, "found dirty buffer (bulk) on free list!");
+		fprintf(stderr, "found dirty buffer (bulk) on free list!\n");
 
 	return bp;
 }
@@ -1224,7 +1224,7 @@ libxfs_brelse(
 		return;
 	if (bp->b_flags & LIBXFS_B_DIRTY)
 		fprintf(stderr,
-			"releasing dirty buffer to free list!");
+			"releasing dirty buffer to free list!\n");
 
 	pthread_mutex_lock(&xfs_buf_freelist.cm_mutex);
 	list_add(&bp->b_node.cn_mru, &xfs_buf_freelist.cm_list);
@@ -1245,7 +1245,7 @@ libxfs_bulkrelse(
 	list_for_each_entry(bp, list, b_node.cn_mru) {
 		if (bp->b_flags & LIBXFS_B_DIRTY)
 			fprintf(stderr,
-				"releasing dirty buffer (bulk) to free list!");
+				"releasing dirty buffer (bulk) to free list!\n");
 		count++;
 	}
 
