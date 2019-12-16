@@ -529,6 +529,7 @@ void xfs_verifier_error(struct xfs_buf *bp, int error,
 void xfs_inode_verifier_error(struct xfs_inode *ip, int error,
 			const char *name, void *buf, size_t bufsz,
 			xfs_failaddr_t failaddr);
+void xfs_buf_corruption_error(struct xfs_buf *bp);
 
 #define xfs_buf_verifier_error(bp,e,n,bu,bus,fa) \
 	xfs_verifier_error(bp, e, fa)
