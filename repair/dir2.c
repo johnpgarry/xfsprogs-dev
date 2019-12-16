@@ -117,7 +117,7 @@ process_sf_dir2_fixoff(
 
 	sfp = (struct xfs_dir2_sf_hdr *)XFS_DFORK_DPTR(dip);
 	sfep = xfs_dir2_sf_firstentry(sfp);
-	offset = M_DIROPS(mp)->data_first_offset;
+	offset = mp->m_dir_geo->data_first_offset;
 
 	for (i = 0; i < sfp->count; i++) {
 		xfs_dir2_sf_put_offset(sfep, offset);
@@ -171,7 +171,7 @@ process_sf_dir2(
 	max_size = XFS_DFORK_DSIZE(dip, mp);
 	num_entries = sfp->count;
 	ino_dir_size = be64_to_cpu(dip->di_size);
-	offset = M_DIROPS(mp)->data_first_offset;
+	offset = mp->m_dir_geo->data_first_offset;
 	bad_offset = *repair = 0;
 
 	ASSERT(ino_dir_size <= max_size);
@@ -580,7 +580,7 @@ process_dir2_data(
 
 	d = bp->b_addr;
 	bf = M_DIROPS(mp)->data_bestfree_p(d);
-	ptr = bp->b_addr + mp->m_dir_inode_ops->data_entry_offset;
+	ptr = bp->b_addr + mp->m_dir_geo->data_entry_offset;
 	badbest = lastfree = freeseen = 0;
 	if (be16_to_cpu(bf[0].length) == 0) {
 		badbest |= be16_to_cpu(bf[0].offset) != 0;
@@ -646,7 +646,7 @@ process_dir2_data(
 			do_warn(_("\twould junk block\n"));
 		return 1;
 	}
-	ptr = bp->b_addr + mp->m_dir_inode_ops->data_entry_offset;
+	ptr = bp->b_addr + mp->m_dir_geo->data_entry_offset;
 	/*
 	 * Process the entries now.
 	 */

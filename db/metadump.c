@@ -1554,7 +1554,7 @@ process_dir_data_block(
 		return;
 	}
 
-	dir_offset = M_DIROPS(mp)->data_entry_offset;
+	dir_offset = mp->m_dir_geo->data_entry_offset;
 	ptr = block + dir_offset;
 	endptr = block + mp->m_dir_geo->blksize;
 

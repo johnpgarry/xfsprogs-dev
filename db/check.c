@@ -2316,7 +2316,7 @@ process_data_dir_v2(
 	}
 	db = xfs_dir2_da_to_db(mp->m_dir_geo, dabno);
 	bf = M_DIROPS(mp)->data_bestfree_p(data);
-	ptr = iocur_top->data + mp->m_dir_inode_ops->data_entry_offset;
+	ptr = iocur_top->data + mp->m_dir_geo->data_entry_offset;
 	if (be32_to_cpu(block->magic) == XFS_DIR2_BLOCK_MAGIC ||
 	    be32_to_cpu(block->magic) == XFS_DIR3_BLOCK_MAGIC) {
 		btp = xfs_dir2_block_tail_p(mp->m_dir_geo, block);
@@ -3624,7 +3624,7 @@ process_sf_dir_v2(
 		dbprintf(_("dir %lld entry . %lld\n"), id->ino, id->ino);
 	(*dot)++;
 	sfe = xfs_dir2_sf_firstentry(sf);
-	offset = M_DIROPS(mp)->data_first_offset;
+	offset = mp->m_dir_geo->data_first_offset;
 	for (i = sf->count - 1, i8 = 0; i >= 0; i--) {
 		if ((intptr_t)sfe + libxfs_dir2_sf_entsize(mp, sf, sfe->namelen) -
 		    (intptr_t)sf > be64_to_cpu(dip->di_size)) {
