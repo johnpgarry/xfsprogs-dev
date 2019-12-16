@@ -2316,7 +2316,7 @@ process_data_dir_v2(
 	}
 	db = xfs_dir2_da_to_db(mp->m_dir_geo, dabno);
 	bf = M_DIROPS(mp)->data_bestfree_p(data);
-	ptr = (char *)M_DIROPS(mp)->data_unused_p(data);
+	ptr = iocur_top->data + mp->m_dir_inode_ops->data_entry_offset;
 	if (be32_to_cpu(block->magic) == XFS_DIR2_BLOCK_MAGIC ||
 	    be32_to_cpu(block->magic) == XFS_DIR3_BLOCK_MAGIC) {
 		btp = xfs_dir2_block_tail_p(mp->m_dir_geo, block);
