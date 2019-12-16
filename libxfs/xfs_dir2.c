@@ -50,7 +50,7 @@ xfs_mode_to_ftype(
  * ASCII case-insensitive (ie. A-Z) support for directories that was
  * used in IRIX.
  */
-STATIC xfs_dahash_t
+xfs_dahash_t
 xfs_ascii_ci_hashname(
 	struct xfs_name	*name)
 {
@@ -63,14 +63,14 @@ xfs_ascii_ci_hashname(
 	return hash;
 }
 
-STATIC enum xfs_dacmp
+enum xfs_dacmp
 xfs_ascii_ci_compname(
-	struct xfs_da_args *args,
-	const unsigned char *name,
-	int		len)
+	struct xfs_da_args	*args,
+	const unsigned char	*name,
+	int			len)
 {
-	enum xfs_dacmp	result;
-	int		i;
+	enum xfs_dacmp		result;
+	int			i;
 
 	if (args->namelen != len)
 		return XFS_CMP_DIFFERENT;
@@ -86,11 +86,6 @@ xfs_ascii_ci_compname(
 
 	return result;
 }
-
-static const struct xfs_nameops xfs_ascii_ci_nameops = {
-	.hashname	= xfs_ascii_ci_hashname,
-	.compname	= xfs_ascii_ci_compname,
-};
 
 int
 xfs_da_mount(
@@ -161,12 +156,6 @@ xfs_da_mount(
 	dageo->node_ents = (dageo->blksize - dageo->node_hdr_size) /
 				(uint)sizeof(xfs_da_node_entry_t);
 	dageo->magicpct = (dageo->blksize * 37) / 100;
-
-	if (xfs_sb_version_hasasciici(&mp->m_sb))
-		mp->m_dirnameops = &xfs_ascii_ci_nameops;
-	else
-		mp->m_dirnameops = &xfs_default_nameops;
-
 	return 0;
 }
 
@@ -277,7 +266,7 @@ xfs_dir_createname(
 	args->name = name->name;
 	args->namelen = name->len;
 	args->filetype = name->type;
-	args->hashval = dp->i_mount->m_dirnameops->hashname(name);
+	args->hashval = xfs_dir2_hashname(dp->i_mount, name);
 	args->inumber = inum;
 	args->dp = dp;
 	args->total = total;
@@ -373,7 +362,7 @@ xfs_dir_lookup(
 	args->name = name->name;
 	args->namelen = name->len;
 	args->filetype = name->type;
-	args->hashval = dp->i_mount->m_dirnameops->hashname(name);
+	args->hashval = xfs_dir2_hashname(dp->i_mount, name);
 	args->dp = dp;
 	args->whichfork = XFS_DATA_FORK;
 	args->trans = tp;
@@ -445,7 +434,7 @@ xfs_dir_removename(
 	args->name = name->name;
 	args->namelen = name->len;
 	args->filetype = name->type;
-	args->hashval = dp->i_mount->m_dirnameops->hashname(name);
+	args->hashval = xfs_dir2_hashname(dp->i_mount, name);
 	args->inumber = ino;
 	args->dp = dp;
 	args->total = total;
@@ -506,7 +495,7 @@ xfs_dir_replace(
 	args->name = name->name;
 	args->namelen = name->len;
 	args->filetype = name->type;
-	args->hashval = dp->i_mount->m_dirnameops->hashname(name);
+	args->hashval = xfs_dir2_hashname(dp->i_mount, name);
 	args->inumber = inum;
 	args->dp = dp;
 	args->total = total;
@@ -732,4 +721,25 @@ xfs_dir2_namecheck(
 
 	/* There shouldn't be any slashes or nulls here */
 	return !memchr(name, '/', length) && !memchr(name, 0, length);
+}
+
+xfs_dahash_t
+xfs_dir2_hashname(
+	struct xfs_mount	*mp,
+	struct xfs_name		*name)
+{
+	if (unlikely(xfs_sb_version_hasasciici(&mp->m_sb)))
+		return xfs_ascii_ci_hashname(name);
+	return xfs_da_hashname(name->name, name->len);
+}
+
+enum xfs_dacmp
+xfs_dir2_compname(
+	struct xfs_da_args	*args,
+	const unsigned char	*name,
+	int			len)
+{
+	if (unlikely(xfs_sb_version_hasasciici(&args->dp->i_mount->m_sb)))
+		return xfs_ascii_ci_compname(args, name, len);
+	return xfs_da_compname(args, name, len);
 }

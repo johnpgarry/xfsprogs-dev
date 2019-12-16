@@ -68,6 +68,7 @@
 #define xfs_defer_cancel		libxfs_defer_cancel
 
 #define xfs_da_hashname			libxfs_da_hashname
+#define xfs_dir2_hashname		libxfs_dir2_hashname
 #define xfs_da_shrink_inode		libxfs_da_shrink_inode
 #define xfs_da_read_buf			libxfs_da_read_buf
 #define xfs_dir_createname		libxfs_dir_createname
