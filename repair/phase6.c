@@ -2701,7 +2701,7 @@ shortform_dir2_entry_check(xfs_mount_t	*mp,
 		if (!dir_hash_add(mp, hashtab, (xfs_dir2_dataptr_t)
 				(sfep - xfs_dir2_sf_firstentry(sfp)),
 				lino, sfep->namelen, sfep->name,
-				M_DIROPS(mp)->sf_get_ftype(sfep))) {
+				libxfs_dir2_sf_get_ftype(mp, sfep))) {
 			do_warn(
 _("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name"),
 				fname, lino, ino);
@@ -2766,7 +2766,7 @@ _("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name"),
 			uint8_t dir_ftype;
 			uint8_t ino_ftype;
 
-			dir_ftype = M_DIROPS(mp)->sf_get_ftype(sfep);
+			dir_ftype = libxfs_dir2_sf_get_ftype(mp, sfep);
 			ino_ftype = get_inode_ftype(irec, ino_offset);
 
 			if (dir_ftype != ino_ftype) {
@@ -2780,7 +2780,7 @@ _("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name"),
 	_("fixing ftype mismatch (%d/%d) in directory/child inode %" PRIu64 "/%" PRIu64 "\n"),
 						dir_ftype, ino_ftype,
 						ino, lino);
-					M_DIROPS(mp)->sf_put_ftype(sfep,
+					libxfs_dir2_sf_put_ftype(mp, sfep,
 								ino_ftype);
 					dir_hash_update_ftype(hashtab,
 			(xfs_dir2_dataptr_t)(sfep - xfs_dir2_sf_firstentry(sfp)),
