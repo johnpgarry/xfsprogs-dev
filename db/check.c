@@ -3682,7 +3682,7 @@ process_sf_dir_v2(
 			dbprintf(_("dir %llu offsets too high\n"), id->ino);
 		error++;
 	}
-	lino = M_DIROPS(mp)->sf_get_parent_ino(sf);
+	lino = libxfs_dir2_sf_get_parent_ino(sf);
 	if (lino > XFS_DIR2_MAX_SHORT_INUM)
 		i8++;
 	cid = find_inode(lino, 1);

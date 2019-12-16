@@ -159,5 +159,7 @@
 #define xfs_da3_node_hdr_from_disk	libxfs_da3_node_hdr_from_disk
 #define xfs_dir2_leaf_hdr_from_disk	libxfs_dir2_leaf_hdr_from_disk
 #define xfs_dir2_free_hdr_from_disk	libxfs_dir2_free_hdr_from_disk
+#define xfs_dir2_sf_get_parent_ino	libxfs_dir2_sf_get_parent_ino
+#define xfs_dir2_sf_put_parent_ino	libxfs_dir2_sf_put_parent_ino
 
 #endif /* __LIBXFS_API_DEFS_H__ */

@@ -84,8 +84,8 @@ process_sf_dir2_fixi8(
 	memmove(oldsfp, newsfp, oldsize);
 	newsfp->count = oldsfp->count;
 	newsfp->i8count = 0;
-	ino = M_DIROPS(mp)->sf_get_parent_ino(sfp);
-	M_DIROPS(mp)->sf_put_parent_ino(newsfp, ino);
+	ino = libxfs_dir2_sf_get_parent_ino(sfp);
+	libxfs_dir2_sf_put_parent_ino(newsfp, ino);
 	oldsfep = xfs_dir2_sf_firstentry(oldsfp);
 	newsfep = xfs_dir2_sf_firstentry(newsfp);
 	while ((int)((char *)oldsfep - (char *)oldsfp) < oldsize) {
@@ -179,7 +179,7 @@ process_sf_dir2(
 	/*
 	 * Initialize i8 based on size of parent inode number.
 	 */
-	i8 = (M_DIROPS(mp)->sf_get_parent_ino(sfp) > XFS_DIR2_MAX_SHORT_INUM);
+	i8 = (libxfs_dir2_sf_get_parent_ino(sfp) > XFS_DIR2_MAX_SHORT_INUM);
 
 	/*
 	 * check for bad entry count
@@ -479,7 +479,7 @@ _("corrected entry offsets in directory %" PRIu64 "\n"),
 	/*
 	 * check parent (..) entry
 	 */
-	*parent = M_DIROPS(mp)->sf_get_parent_ino(sfp);
+	*parent = libxfs_dir2_sf_get_parent_ino(sfp);
 
 	/*
 	 * if parent entry is bogus, null it out.  we'll fix it later .
@@ -495,7 +495,7 @@ _("bogus .. inode number (%" PRIu64 ") in directory inode %" PRIu64 ", "),
 		if (!no_modify)  {
 			do_warn(_("clearing inode number\n"));
 
-			M_DIROPS(mp)->sf_put_parent_ino(sfp, zero);
+			libxfs_dir2_sf_put_parent_ino(sfp, zero);
 			*dino_dirty = 1;
 			*repair = 1;
 		} else  {
@@ -510,7 +510,7 @@ _("bogus .. inode number (%" PRIu64 ") in directory inode %" PRIu64 ", "),
 _("corrected root directory %" PRIu64 " .. entry, was %" PRIu64 ", now %" PRIu64 "\n"),
 				ino, *parent, ino);
 			*parent = ino;
-			M_DIROPS(mp)->sf_put_parent_ino(sfp, ino);
+			libxfs_dir2_sf_put_parent_ino(sfp, ino);
 			*dino_dirty = 1;
 			*repair = 1;
 		} else  {
@@ -530,7 +530,7 @@ _("bad .. entry in directory inode %" PRIu64 ", points to self, "),
 		if (!no_modify)  {
 			do_warn(_("clearing inode number\n"));
 
-			M_DIROPS(mp)->sf_put_parent_ino(sfp, zero);
+			libxfs_dir2_sf_put_parent_ino(sfp, zero);
 			*dino_dirty = 1;
 			*repair = 1;
 		} else  {
