@@ -211,7 +211,7 @@ __dir2_data_entries_count(
 			ptr += be16_to_cpu(dup->length);
 		else {
 			dep = (xfs_dir2_data_entry_t *)ptr;
-			ptr += M_DIROPS(mp)->data_entsize(dep->namelen);
+			ptr += libxfs_dir2_data_entsize(mp, dep->namelen);
 		}
 	}
 	return i;
@@ -235,7 +235,7 @@ __dir2_data_entry_offset(
 			ptr += be16_to_cpu(dup->length);
 		else {
 			dep = (xfs_dir2_data_entry_t *)ptr;
-			ptr += M_DIROPS(mp)->data_entsize(dep->namelen);
+			ptr += libxfs_dir2_data_entsize(mp, dep->namelen);
 		}
 	}
 	return ptr;
@@ -585,7 +585,7 @@ dir2_data_union_size(
 		return bitize(be16_to_cpu(dup->length));
 	else {
 		dep = (xfs_dir2_data_entry_t *)dup;
-		return bitize(M_DIROPS(mp)->data_entsize(dep->namelen));
+		return bitize(libxfs_dir2_data_entsize(mp, dep->namelen));
 	}
 }
 

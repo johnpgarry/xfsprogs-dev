@@ -2416,7 +2416,7 @@ process_data_dir_v2(
 		xname.name = dep->name;
 		xname.len = dep->namelen;
 		dir_hash_add(mp->m_dirnameops->hashname(&xname), addr);
-		ptr += M_DIROPS(mp)->data_entsize(dep->namelen);
+		ptr += libxfs_dir2_data_entsize(mp, dep->namelen);
 		count++;
 		lastfree = 0;
 		lino = be64_to_cpu(dep->inumber);

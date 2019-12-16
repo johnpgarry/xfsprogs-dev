@@ -167,5 +167,6 @@
 #define xfs_dir2_sf_put_ino		libxfs_dir2_sf_put_ino
 #define xfs_dir2_sf_get_ftype		libxfs_dir2_sf_get_ftype
 #define xfs_dir2_sf_put_ftype		libxfs_dir2_sf_put_ftype
+#define xfs_dir2_data_entsize		libxfs_dir2_data_entsize
 
 #endif /* __LIBXFS_API_DEFS_H__ */
