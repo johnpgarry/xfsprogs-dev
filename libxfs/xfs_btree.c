@@ -4285,6 +4285,7 @@ int
 xfs_btree_visit_blocks(
 	struct xfs_btree_cur		*cur,
 	xfs_btree_visit_blocks_fn	fn,
+	unsigned int			flags,
 	void				*data)
 {
 	union xfs_btree_ptr		lptr;
@@ -4310,6 +4311,11 @@ xfs_btree_visit_blocks(
 
 			/* save for the next iteration of the loop */
 			xfs_btree_copy_ptrs(cur, &lptr, ptr, 1);
+
+			if (!(flags & XFS_BTREE_VISIT_LEAVES))
+				continue;
+		} else if (!(flags & XFS_BTREE_VISIT_RECORDS)) {
+			continue;
 		}
 
 		/* for each buffer in the level */
@@ -4412,7 +4418,7 @@ xfs_btree_change_owner(
 	bbcoi.buffer_list = buffer_list;
 
 	return xfs_btree_visit_blocks(cur, xfs_btree_block_change_owner,
-			&bbcoi);
+			XFS_BTREE_VISIT_ALL, &bbcoi);
 }
 
 /* Verify the v5 fields of a long-format btree block. */
@@ -4864,7 +4870,7 @@ xfs_btree_count_blocks(
 {
 	*blocks = 0;
 	return xfs_btree_visit_blocks(cur, xfs_btree_count_blocks_helper,
-			blocks);
+			XFS_BTREE_VISIT_ALL, blocks);
 }
 
 /* Compare two btree pointers. */
