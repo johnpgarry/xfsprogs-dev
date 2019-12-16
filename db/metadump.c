@@ -1881,7 +1881,7 @@ process_single_fsb_objects(
 				struct xfs_da3_icnode_hdr hdr;
 				int used;
 
-				M_DIROPS(mp)->node_hdr_from_disk(&hdr, node);
+				libxfs_da3_node_hdr_from_disk(mp, &hdr, node);
 				used = M_DIROPS(mp)->node_hdr_size;
 
 				used += hdr.count

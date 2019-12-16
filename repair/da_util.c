@@ -135,7 +135,7 @@ _("can't read %s block %u for inode %" PRIu64 "\n"),
 		}
 
 		node = bp->b_addr;
-		M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
+		libxfs_da3_node_hdr_from_disk(mp, &nodehdr, node);
 
 		if (whichfork == XFS_DATA_FORK &&
 		    (nodehdr.magic == XFS_DIR2_LEAFN_MAGIC ||
@@ -316,7 +316,7 @@ verify_final_da_path(
 	entry = cursor->level[this_level].index;
 	node = cursor->level[this_level].bp->b_addr;
 	btree = M_DIROPS(mp)->node_tree_p(node);
-	M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
+	libxfs_da3_node_hdr_from_disk(mp, &nodehdr, node);
 
 	/*
 	 * check internal block consistency on this level -- ensure
@@ -505,7 +505,7 @@ verify_da_path(
 	entry = cursor->level[this_level].index;
 	node = cursor->level[this_level].bp->b_addr;
 	btree = M_DIROPS(mp)->node_tree_p(node);
-	M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
+	libxfs_da3_node_hdr_from_disk(mp, &nodehdr, node);
 
 	/* No entries in this node?  Tree is corrupt. */
 	if (nodehdr.count == 0)
@@ -565,7 +565,7 @@ _("can't read %s block %u for inode %" PRIu64 "\n"),
 
 		newnode = bp->b_addr;
 		btree = M_DIROPS(mp)->node_tree_p(newnode);
-		M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, newnode);
+		libxfs_da3_node_hdr_from_disk(mp, &nodehdr, newnode);
 
 		/*
 		 * verify magic number and back pointer, sanity-check

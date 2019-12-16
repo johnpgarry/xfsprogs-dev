@@ -156,5 +156,6 @@
 
 #define xfs_ag_init_headers		libxfs_ag_init_headers
 #define xfs_buf_delwri_submit		libxfs_buf_delwri_submit
+#define xfs_da3_node_hdr_from_disk	libxfs_da3_node_hdr_from_disk
 
 #endif /* __LIBXFS_API_DEFS_H__ */
