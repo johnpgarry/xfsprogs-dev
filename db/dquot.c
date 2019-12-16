@@ -44,7 +44,7 @@ const field_t	dqblk_flds[] = {
 	{ NULL }
 };
 
-#define	DOFF(f)		bitize(offsetof(xfs_disk_dquot_t, d_ ## f))
+#define	DOFF(f)		bitize(offsetof(struct xfs_disk_dquot, d_ ## f))
 const field_t	disk_dquot_flds[] = {
 	{ "magic", FLDT_UINT16X, OI(DOFF(magic)), C1, 0, TYP_NONE },
 	{ "version", FLDT_UINT8X, OI(DOFF(version)), C1, 0, TYP_NONE },

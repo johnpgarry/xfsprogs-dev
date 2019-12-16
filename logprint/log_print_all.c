@@ -76,7 +76,7 @@ xlog_recover_print_buffer(
 	char			*p;
 	int			len, num, i;
 	xfs_daddr_t		blkno;
-	xfs_disk_dquot_t	*ddq;
+	struct xfs_disk_dquot	*ddq;
 
 	f = (xfs_buf_log_format_t *)item->ri_buf[0].i_addr;
 	printf("	");
@@ -165,7 +165,7 @@ xlog_recover_print_buffer(
 				be32_to_cpu(agf->agf_freeblks),
 				be32_to_cpu(agf->agf_longest));
 		} else if (*(uint *)p == XFS_DQUOT_MAGIC) {
-			ddq = (xfs_disk_dquot_t *)p;
+			ddq = (struct xfs_disk_dquot *)p;
 			printf(_("	DQUOT Buffer:\n"));
 			if (!print_buffer)
 				continue;
@@ -205,12 +205,12 @@ xlog_recover_print_dquot(
 	xlog_recover_item_t	*item)
 {
 	xfs_dq_logformat_t	*f;
-	xfs_disk_dquot_t	*d;
+	struct xfs_disk_dquot	*d;
 
 	f = (xfs_dq_logformat_t *)item->ri_buf[0].i_addr;
 	ASSERT(f);
 	ASSERT(f->qlf_len == 1);
-	d = (xfs_disk_dquot_t *)item->ri_buf[1].i_addr;
+	d = (struct xfs_disk_dquot *)item->ri_buf[1].i_addr;
 	printf(_("\tDQUOT: #regs:%d  blkno:%lld  boffset:%u id: %d\n"),
 	       f->qlf_size, (long long)f->qlf_blkno, f->qlf_boffset, f->qlf_id);
 	if (!print_quota)
