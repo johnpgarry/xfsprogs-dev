@@ -243,6 +243,7 @@ div_u64_rem(uint64_t dividend, uint32_t divisor, uint32_t *remainder)
 	({ type __x = (x); type __y = (y); __x < __y ? __x: __y; })
 #define max_t(type,x,y) \
 	({ type __x = (x); type __y = (y); __x > __y ? __x: __y; })
+#define max3(x, y, z)	max((typeof(x))max(x, y), z)
 
 /**
  * swap - swap values of @a and @b
