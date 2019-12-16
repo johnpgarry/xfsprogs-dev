@@ -1471,7 +1471,7 @@ process_dir_leaf_block(
 
 	/* Yes, this works for dir2 & dir3.  Difference is padding. */
 	leaf = (struct xfs_dir2_leaf *)block;
-	M_DIROPS(mp)->leaf_hdr_from_disk(&leafhdr, leaf);
+	libxfs_dir2_leaf_hdr_from_disk(mp, &leafhdr, leaf);
 
 	switch (leafhdr.magic) {
 	case XFS_DIR2_LEAF1_MAGIC:

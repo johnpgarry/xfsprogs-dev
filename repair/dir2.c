@@ -1038,7 +1038,7 @@ process_leaf_block_dir2(
 	struct xfs_dir2_leaf_entry *ents;
 	struct xfs_dir3_icleaf_hdr leafhdr;
 
-	M_DIROPS(mp)->leaf_hdr_from_disk(&leafhdr, leaf);
+	libxfs_dir2_leaf_hdr_from_disk(mp, &leafhdr, leaf);
 	ents = M_DIROPS(mp)->leaf_ents_p(leaf);
 
 	for (i = stale = 0; i < leafhdr.count; i++) {
@@ -1124,7 +1124,7 @@ _("can't read file block %u for directory inode %" PRIu64 "\n"),
 			goto error_out;
 		}
 		leaf = bp->b_addr;
-		M_DIROPS(mp)->leaf_hdr_from_disk(&leafhdr, leaf);
+		libxfs_dir2_leaf_hdr_from_disk(mp, &leafhdr, leaf);
 		/*
 		 * Check magic number for leaf directory btree block.
 		 */
