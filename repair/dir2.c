@@ -928,7 +928,7 @@ _("bad bestfree table in block %u in directory inode %" PRIu64 ": "),
 			da_bno, ino);
 		if (!no_modify) {
 			do_warn(_("repairing table\n"));
-			libxfs_dir2_data_freescan_int(mp, d, &i);
+			libxfs_dir2_data_freescan(mp, d, &i);
 			*dirty = 1;
 		} else {
 			do_warn(_("would repair table\n"));

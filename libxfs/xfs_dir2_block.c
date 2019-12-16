@@ -308,7 +308,7 @@ xfs_dir2_block_compact(
 	 * This needs to happen before the next call to use_free.
 	 */
 	if (needscan)
-		xfs_dir2_data_freescan(args->dp, hdr, needlog);
+		xfs_dir2_data_freescan(args->dp->i_mount, hdr, needlog);
 }
 
 /*
@@ -455,7 +455,7 @@ xfs_dir2_block_addname(
 		 * This needs to happen before the next call to use_free.
 		 */
 		if (needscan) {
-			xfs_dir2_data_freescan(dp, hdr, &needlog);
+			xfs_dir2_data_freescan(dp->i_mount, hdr, &needlog);
 			needscan = 0;
 		}
 		/*
@@ -545,7 +545,7 @@ xfs_dir2_block_addname(
 	 * Clean up the bestfree array and log the header, tail, and entry.
 	 */
 	if (needscan)
-		xfs_dir2_data_freescan(dp, hdr, &needlog);
+		xfs_dir2_data_freescan(dp->i_mount, hdr, &needlog);
 	if (needlog)
 		xfs_dir2_data_log_header(args, bp);
 	xfs_dir2_block_log_tail(tp, bp);
@@ -804,7 +804,7 @@ xfs_dir2_block_removename(
 	 * Fix up bestfree, log the header if necessary.
 	 */
 	if (needscan)
-		xfs_dir2_data_freescan(dp, hdr, &needlog);
+		xfs_dir2_data_freescan(dp->i_mount, hdr, &needlog);
 	if (needlog)
 		xfs_dir2_data_log_header(args, bp);
 	xfs_dir3_data_check(dp, bp);
@@ -1011,7 +1011,7 @@ xfs_dir2_leaf_to_block(
 	 * Scan the bestfree if we need it and log the data block header.
 	 */
 	if (needscan)
-		xfs_dir2_data_freescan(dp, hdr, &needlog);
+		xfs_dir2_data_freescan(dp->i_mount, hdr, &needlog);
 	if (needlog)
 		xfs_dir2_data_log_header(args, dbp);
 	/*
