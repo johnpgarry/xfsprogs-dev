@@ -2315,7 +2315,7 @@ process_data_dir_v2(
 		return NULLFSINO;
 	}
 	db = xfs_dir2_da_to_db(mp->m_dir_geo, dabno);
-	bf = M_DIROPS(mp)->data_bestfree_p(data);
+	bf = libxfs_dir2_data_bestfree_p(mp, data);
 	ptr = iocur_top->data + mp->m_dir_geo->data_entry_offset;
 	if (be32_to_cpu(block->magic) == XFS_DIR2_BLOCK_MAGIC ||
 	    be32_to_cpu(block->magic) == XFS_DIR3_BLOCK_MAGIC) {
@@ -2541,7 +2541,7 @@ process_data_dir_v2_freefind(
 	xfs_dir2_data_aoff_t	off;
 
 	off = (xfs_dir2_data_aoff_t)((char *)dup - (char *)data);
-	bf = M_DIROPS(mp)->data_bestfree_p(data);
+	bf = libxfs_dir2_data_bestfree_p(mp, data);
 	if (be16_to_cpu(dup->length) <
 			be16_to_cpu(bf[XFS_DIR2_DATA_FD_COUNT - 1].length))
 		return NULL;

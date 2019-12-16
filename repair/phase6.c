@@ -1942,7 +1942,7 @@ _("entry \"%s\" in dir inode %" PRIu64 " inconsistent with .. value (%" PRIu64 "
 	}
 	*num_illegal += nbad;
 	if (needscan)
-		libxfs_dir2_data_freescan_int(mp, M_DIROPS(mp), d, &i);
+		libxfs_dir2_data_freescan_int(mp, d, &i);
 	if (needlog)
 		libxfs_dir2_data_log_header(&da, bp);
 	error = -libxfs_trans_commit(tp);
@@ -1951,7 +1951,7 @@ _("entry \"%s\" in dir inode %" PRIu64 " inconsistent with .. value (%" PRIu64 "
 _("directory block fixing failed (%d)\n"), error);
 
 	/* record the largest free space in the freetab for later checking */
-	bf = M_DIROPS(mp)->data_bestfree_p(d);
+	bf = libxfs_dir2_data_bestfree_p(mp, d);
 	freetab->ents[db].v = be16_to_cpu(bf[0].length);
 	freetab->ents[db].s = 0;
 }
