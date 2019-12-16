@@ -297,6 +297,7 @@
 #define trace_xfs_alloc_cur_check(...)		((void) 0)
 #define trace_xfs_alloc_cur_left(...)		((void) 0)
 #define trace_xfs_alloc_cur_right(...)		((void) 0)
+#define trace_xfs_alloc_cur(...)		((void) 0)
 
 #define trace_xfs_fs_mark_healthy(a,b)		((void) 0)
 
