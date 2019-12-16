@@ -119,27 +119,6 @@ static inline void inc_nlink(struct inode *inode)
 	inode->i_nlink++;
 }
 
-/*
- * Project quota id helpers (previously projid was 16bit only and using two
- * 16bit values to hold new 32bit projid was chosen to retain compatibility with
- * "old" filesystems).
- *
- * Copied here from xfs_inode.h because it has to be defined after the struct
- * xfs_inode...
- */
-static inline prid_t
-xfs_get_projid(struct xfs_icdinode *id)
-{
-	return (prid_t)id->di_projid_hi << 16 | id->di_projid_lo;
-}
-
-static inline void
-xfs_set_projid(struct xfs_icdinode *id, prid_t projid)
-{
-	id->di_projid_hi = (uint16_t) (projid >> 16);
-	id->di_projid_lo = (uint16_t) (projid & 0xffff);
-}
-
 static inline bool xfs_is_reflink_inode(struct xfs_inode *ip)
 {
 	return ip->i_d.di_flags2 & XFS_DIFLAG2_REFLINK;
