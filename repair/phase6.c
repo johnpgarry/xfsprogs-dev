@@ -2122,7 +2122,6 @@ longform_dir2_check_node(
 	int			used;
 	struct xfs_dir3_icleaf_hdr leafhdr;
 	struct xfs_dir3_icfree_hdr freehdr;
-	__be16			*bests;
 	int			error;
 	int			fixit = 0;
 
@@ -2217,7 +2216,6 @@ longform_dir2_check_node(
 		}
 		free = bp->b_addr;
 		libxfs_dir2_free_hdr_from_disk(mp, &freehdr, free);
-		bests = M_DIROPS(mp)->free_bests_p(free);
 		fdb = xfs_dir2_da_to_db(mp->m_dir_geo, da_bno);
 		if (!(freehdr.magic == XFS_DIR2_FREE_MAGIC ||
 		      freehdr.magic == XFS_DIR3_FREE_MAGIC) ||
@@ -2242,14 +2240,14 @@ longform_dir2_check_node(
 		for (i = used = 0; i < freehdr.nvalid; i++) {
 			if (i + freehdr.firstdb >= freetab->nents ||
 					freetab->ents[i + freehdr.firstdb].v !=
-						be16_to_cpu(bests[i])) {
+						be16_to_cpu(freehdr.bests[i])) {
 				do_warn(
 	_("free block %u entry %i for directory ino %" PRIu64 " bad\n"),
 					da_bno, i, ip->i_ino);
 				libxfs_putbuf(bp);
 				return 1;
 			}
-			used += be16_to_cpu(bests[i]) != NULLDATAOFF;
+			used += be16_to_cpu(freehdr.bests[i]) != NULLDATAOFF;
 			freetab->ents[i + freehdr.firstdb].s = 1;
 		}
 		if (used != freehdr.nused) {

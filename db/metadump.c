@@ -1438,13 +1438,11 @@ process_dir_free_block(
 	switch (freehdr.magic) {
 	case XFS_DIR2_FREE_MAGIC:
 	case XFS_DIR3_FREE_MAGIC: {
-		__be16			*bests;
 		char			*high;
 		int			used;
 
 		/* Zero out space from end of bests[] to end of block */
-		bests = M_DIROPS(mp)->free_bests_p(free);
-		high = (char *)&bests[freehdr.nvalid];
+		high = (char *)&freehdr.bests[freehdr.nvalid];
 		used = high - (char*)free;
 		memset(high, 0, mp->m_dir_geo->blksize - used);
 		iocur_top->need_crc = 1;
