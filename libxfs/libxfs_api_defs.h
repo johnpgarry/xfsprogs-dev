@@ -163,5 +163,7 @@
 #define xfs_dir2_sf_put_parent_ino	libxfs_dir2_sf_put_parent_ino
 #define xfs_dir2_sf_entsize		libxfs_dir2_sf_entsize
 #define xfs_dir2_sf_nextentry		libxfs_dir2_sf_nextentry
+#define xfs_dir2_sf_get_ino		libxfs_dir2_sf_get_ino
+#define xfs_dir2_sf_put_ino		libxfs_dir2_sf_put_ino
 
 #endif /* __LIBXFS_API_DEFS_H__ */

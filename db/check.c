@@ -3635,7 +3635,7 @@ process_sf_dir_v2(
 			error++;
 			break;
 		}
-		lino = M_DIROPS(mp)->sf_get_ino(sf, sfe);
+		lino = libxfs_dir2_sf_get_ino(mp, sf, sfe);
 		if (lino > XFS_DIR2_MAX_SHORT_INUM)
 			i8++;
 		cid = find_inode(lino, 1);

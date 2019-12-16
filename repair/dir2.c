@@ -93,8 +93,8 @@ process_sf_dir2_fixi8(
 		xfs_dir2_sf_put_offset(newsfep,
 			xfs_dir2_sf_get_offset(oldsfep));
 		memmove(newsfep->name, oldsfep->name, newsfep->namelen);
-		ino = M_DIROPS(mp)->sf_get_ino(oldsfp, oldsfep);
-		M_DIROPS(mp)->sf_put_ino(newsfp, newsfep, ino);
+		ino = libxfs_dir2_sf_get_ino(mp, oldsfp, oldsfep);
+		libxfs_dir2_sf_put_ino(mp, newsfp, newsfep, ino);
 		oldsfep = libxfs_dir2_sf_nextentry(mp, oldsfp, oldsfep);
 		newsfep = libxfs_dir2_sf_nextentry(mp, newsfp, newsfep);
 	}
@@ -200,7 +200,7 @@ process_sf_dir2(
 		sfep = next_sfep;
 		junkit = 0;
 		bad_sfnamelen = 0;
-		lino = M_DIROPS(mp)->sf_get_ino(sfp, sfep);
+		lino = libxfs_dir2_sf_get_ino(mp, sfp, sfep);
 		/*
 		 * if entry points to self, junk it since only '.' or '..'
 		 * should do that and shortform dirs don't contain either

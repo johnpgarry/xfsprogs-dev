@@ -2581,7 +2581,7 @@ shortform_dir2_entry_check(xfs_mount_t	*mp,
 			sfep = next_sfep, i++)  {
 		bad_sfnamelen = 0;
 
-		lino = M_DIROPS(mp)->sf_get_ino(sfp, sfep);
+		lino = libxfs_dir2_sf_get_ino(mp, sfp, sfep);
 
 		namelen = sfep->namelen;
 
