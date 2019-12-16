@@ -41,7 +41,7 @@ bmap(
 	xfs_dinode_t		*dip;
 	xfs_fileoff_t		eoffset;
 	xfs_bmbt_rec_t		*ep;
-	xfs_dinode_fmt_t	fmt;
+	enum xfs_dinode_fmt	fmt;
 	int			fsize;
 	xfs_bmbt_key_t		*kp;
 	int			n;
@@ -62,7 +62,7 @@ bmap(
 	n = 0;
 	eoffset = offset + len - 1;
 	curoffset = offset;
-	fmt = (xfs_dinode_fmt_t)XFS_DFORK_FORMAT(dip, whichfork);
+	fmt = (enum xfs_dinode_fmt)XFS_DFORK_FORMAT(dip, whichfork);
 	typ = whichfork == XFS_DATA_FORK ? TYP_BMAPBTD : TYP_BMAPBTA;
 	ASSERT(typtab[typ].typnm == typ);
 	ASSERT(fmt == XFS_DINODE_FMT_LOCAL || fmt == XFS_DINODE_FMT_EXTENTS ||

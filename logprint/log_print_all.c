@@ -496,7 +496,7 @@ xlog_recover_print_item(
 
 void
 xlog_recover_print_trans(
-	xlog_recover_t		*trans,
+	struct xlog_recover		*trans,
 	struct list_head	*itemq,
 	int			print)
 {

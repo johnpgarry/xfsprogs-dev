@@ -980,12 +980,12 @@ bp_err:
 	return -1;
 }
 
-STATIC xlog_recover_t *
+STATIC struct xlog_recover *
 xlog_recover_find_tid(
 	struct hlist_head	*head,
 	xlog_tid_t		tid)
 {
-	xlog_recover_t		*trans;
+	struct xlog_recover		*trans;
 	struct hlist_node	*n;
 
 	hlist_for_each_entry(trans, n, head, r_list) {
@@ -1001,9 +1001,9 @@ xlog_recover_new_tid(
 	xlog_tid_t		tid,
 	xfs_lsn_t		lsn)
 {
-	xlog_recover_t		*trans;
+	struct xlog_recover		*trans;
 
-	trans = kmem_zalloc(sizeof(xlog_recover_t), 0);
+	trans = kmem_zalloc(sizeof(struct xlog_recover), 0);
 	trans->r_log_tid   = tid;
 	trans->r_lsn	   = lsn;
 	INIT_LIST_HEAD(&trans->r_itemq);
@@ -1184,7 +1184,7 @@ xlog_recover_commit_trans(
 
 STATIC int
 xlog_recover_unmount_trans(
-	xlog_recover_t		*trans)
+	struct xlog_recover		*trans)
 {
 	/* Do nothing now */
 	xfs_warn(log->l_mp, "%s: Unmount LR", __func__);
@@ -1211,7 +1211,7 @@ xlog_recover_process_data(
 	char			*lp;
 	int			num_logops;
 	xlog_op_header_t	*ohead;
-	xlog_recover_t		*trans;
+	struct xlog_recover		*trans;
 	xlog_tid_t		tid;
 	int			error;
 	unsigned long		hash;

@@ -91,16 +91,16 @@ extern int	xlog_find_tail(struct xlog *log, xfs_daddr_t *head_blk,
 extern int	xlog_recover(struct xlog *log, int readonly);
 extern void	xlog_recover_print_data(char *p, int len);
 extern void	xlog_recover_print_logitem(xlog_recover_item_t *item);
-extern void	xlog_recover_print_trans_head(xlog_recover_t *tr);
+extern void	xlog_recover_print_trans_head(struct xlog_recover *tr);
 extern int	xlog_print_find_oldest(struct xlog *log, xfs_daddr_t *last_blk);
 
 /* for transactional view */
-extern void	xlog_recover_print_trans_head(xlog_recover_t *tr);
-extern void	xlog_recover_print_trans(xlog_recover_t *trans,
+extern void	xlog_recover_print_trans_head(struct xlog_recover *tr);
+extern void	xlog_recover_print_trans(struct xlog_recover *trans,
 				struct list_head *itemq, int print);
 extern int	xlog_do_recovery_pass(struct xlog *log, xfs_daddr_t head_blk,
 				xfs_daddr_t tail_blk, int pass);
-extern int	xlog_recover_do_trans(struct xlog *log, xlog_recover_t *trans,
+extern int	xlog_recover_do_trans(struct xlog *log, struct xlog_recover *trans,
 				int pass);
 extern int	xlog_header_check_recover(xfs_mount_t *mp,
 				xlog_rec_header_t *head);

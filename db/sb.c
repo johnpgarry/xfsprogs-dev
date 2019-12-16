@@ -209,7 +209,7 @@ get_sb(xfs_agnumber_t agno, xfs_sb_t *sb)
 }
 
 /* workaround craziness in the xlog routines */
-int xlog_recover_do_trans(struct xlog *log, xlog_recover_t *t, int p)
+int xlog_recover_do_trans(struct xlog *log, struct xlog_recover *t, int p)
 {
 	return 0;
 }

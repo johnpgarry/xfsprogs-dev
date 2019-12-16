@@ -10,7 +10,7 @@
 
 void
 xlog_recover_print_trans_head(
-	xlog_recover_t	*tr)
+	struct xlog_recover	*tr)
 {
 	printf(_("TRANS: tid:0x%x  #items:%d  trans:0x%x  q:0x%lx\n"),
 	       tr->r_log_tid,
@@ -21,7 +21,7 @@ xlog_recover_print_trans_head(
 int
 xlog_recover_do_trans(
 	struct xlog	*log,
-	xlog_recover_t	*trans,
+	struct xlog_recover	*trans,
 	int		pass)
 {
 	xlog_recover_print_trans(trans, &trans->r_itemq, 3);
