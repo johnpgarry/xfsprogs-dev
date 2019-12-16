@@ -1610,7 +1610,7 @@ process_dir_data_block(
 					(long long)cur_ino);
 			return;
 		}
-		if (be16_to_cpu(*M_DIROPS(mp)->data_entry_tag_p(dep)) !=
+		if (be16_to_cpu(*libxfs_dir2_data_entry_tag_p(mp, dep)) !=
 				dir_offset)
 			return;
 
@@ -1623,7 +1623,7 @@ process_dir_data_block(
 		if (zero_stale_data) {
 			/* 1 byte for ftype; don't bother with conditional */
 			int zlen =
-				(char *)M_DIROPS(mp)->data_entry_tag_p(dep) -
+				(char *)libxfs_dir2_data_entry_tag_p(mp, dep) -
 				(char *)&dep->name[dep->namelen] - 1;
 			if (zlen > 0) {
 				memset(&dep->name[dep->namelen] + 1, 0, zlen);

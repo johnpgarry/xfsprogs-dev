@@ -2401,7 +2401,7 @@ process_data_dir_v2(
 					(int)((char *)dep - (char *)data));
 			error++;
 		}
-		tagp = M_DIROPS(mp)->data_entry_tag_p(dep);
+		tagp = libxfs_dir2_data_entry_tag_p(mp, dep);
 		if ((char *)tagp >= endptr) {
 			if (!sflag || v)
 				dbprintf(_("dir %lld block %d bad entry at %d\n"),

@@ -168,5 +168,6 @@
 #define xfs_dir2_sf_get_ftype		libxfs_dir2_sf_get_ftype
 #define xfs_dir2_sf_put_ftype		libxfs_dir2_sf_put_ftype
 #define xfs_dir2_data_entsize		libxfs_dir2_data_entsize
+#define xfs_dir2_data_entry_tag_p	libxfs_dir2_data_entry_tag_p
 
 #endif /* __LIBXFS_API_DEFS_H__ */
