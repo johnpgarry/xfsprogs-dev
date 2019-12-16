@@ -3626,7 +3626,7 @@ process_sf_dir_v2(
 	sfe = xfs_dir2_sf_firstentry(sf);
 	offset = M_DIROPS(mp)->data_first_offset;
 	for (i = sf->count - 1, i8 = 0; i >= 0; i--) {
-		if ((intptr_t)sfe + M_DIROPS(mp)->sf_entsize(sf, sfe->namelen) -
+		if ((intptr_t)sfe + libxfs_dir2_sf_entsize(mp, sf, sfe->namelen) -
 		    (intptr_t)sf > be64_to_cpu(dip->di_size)) {
 			if (!sflag)
 				dbprintf(_("dir %llu bad size in entry at %d\n"),
@@ -3665,8 +3665,8 @@ process_sf_dir_v2(
 		}
 		offset =
 			xfs_dir2_sf_get_offset(sfe) +
-			M_DIROPS(mp)->sf_entsize(sf, sfe->namelen);
-		sfe = M_DIROPS(mp)->sf_nextentry(sf, sfe);
+			libxfs_dir2_sf_entsize(mp, sf, sfe->namelen);
+		sfe = libxfs_dir2_sf_nextentry(mp, sf, sfe);
 	}
 	if (i < 0 && (intptr_t)sfe - (intptr_t)sf !=
 					be64_to_cpu(dip->di_size)) {

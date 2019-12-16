@@ -494,7 +494,7 @@ xlog_print_dir2_sf(
 		namebuf[sfep->namelen] = '\0';
 		printf(_("%s ino 0x%llx namelen %d\n"),
 		       namebuf, (unsigned long long)ino, sfep->namelen);
-		sfep = M_DIROPS(log->l_mp)->sf_nextentry(sfp, sfep);
+		sfep = libxfs_dir2_sf_nextentry(log->l_mp, sfp, sfep);
 	}
 }
 
