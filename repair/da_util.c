@@ -93,7 +93,6 @@ traverse_int_dablock(
 	xfs_da_intnode_t	*node;
 	bmap_ext_t		lbmp;
 	struct xfs_da_geometry	*geo;
-	struct xfs_da_node_entry *btree;
 	struct xfs_da3_icnode_hdr nodehdr;
 
 	if (whichfork == XFS_DATA_FORK) {
@@ -169,7 +168,6 @@ _("corrupt %s tree block %u for inode %" PRIu64 "\n"),
 			goto error_out;
 		}
 
-		btree = M_DIROPS(mp)->node_tree_p(node);
 		if (nodehdr.count > geo->node_ents) {
 			do_warn(
 _("bad %s record count in inode %" PRIu64 ", count = %d, max = %d\n"),
@@ -204,7 +202,7 @@ _("bad %s btree for inode %" PRIu64 "\n"),
 			}
 		}
 
-		da_cursor->level[i].hashval = be32_to_cpu(btree[0].hashval);
+		da_cursor->level[i].hashval = be32_to_cpu(nodehdr.btree[0].hashval);
 		da_cursor->level[i].bp = bp;
 		da_cursor->level[i].bno = bno;
 		da_cursor->level[i].index = 0;
@@ -212,7 +210,7 @@ _("bad %s btree for inode %" PRIu64 "\n"),
 		/*
 		 * set up new bno for next level down
 		 */
-		bno = be32_to_cpu(btree[0].before);
+		bno = be32_to_cpu(nodehdr.btree[0].before);
 	} while (node != NULL && i > 1);
 
 	/*
@@ -301,7 +299,6 @@ verify_final_da_path(
 	int			bad = 0;
 	int			entry;
 	int			this_level = p_level + 1;
-	struct xfs_da_node_entry *btree;
 	struct xfs_da3_icnode_hdr nodehdr;
 
 #ifdef XR_DIR_TRACE
@@ -315,7 +312,6 @@ verify_final_da_path(
 	 */
 	entry = cursor->level[this_level].index;
 	node = cursor->level[this_level].bp->b_addr;
-	btree = M_DIROPS(mp)->node_tree_p(node);
 	libxfs_da3_node_hdr_from_disk(mp, &nodehdr, node);
 
 	/*
@@ -333,12 +329,12 @@ _("%s block used/count inconsistency - %d/%hu\n"),
 	 * hash values monotonically increasing ???
 	 */
 	if (cursor->level[this_level].hashval >=
-				be32_to_cpu(btree[entry].hashval)) {
+				be32_to_cpu(nodehdr.btree[entry].hashval)) {
 		do_warn(
 _("%s block hashvalue inconsistency, expected > %u / saw %u\n"),
 			FORKNAME(whichfork),
 			cursor->level[this_level].hashval,
-			be32_to_cpu(btree[entry].hashval));
+			be32_to_cpu(nodehdr.btree[entry].hashval));
 		bad++;
 	}
 	if (nodehdr.forw != 0) {
@@ -362,11 +358,11 @@ _("bad %s forward block pointer, expected 0, saw %u\n"),
 	/*
 	 * ok, now check descendant block number against this level
 	 */
-	if (cursor->level[p_level].bno != be32_to_cpu(btree[entry].before)) {
+	if (cursor->level[p_level].bno != be32_to_cpu(nodehdr.btree[entry].before)) {
 #ifdef XR_DIR_TRACE
 		fprintf(stderr, "bad %s btree pointer, child bno should "
 				"be %d, block bno is %d, hashval is %u\n",
-			FORKNAME(whichfork), be16_to_cpu(btree[entry].before),
+			FORKNAME(whichfork), be16_to_cpu(nodehdr.btree[entry].before),
 			cursor->level[p_level].bno,
 			cursor->level[p_level].hashval);
 		fprintf(stderr, "verify_final_da_path returns 1 (bad) #1a\n");
@@ -375,13 +371,13 @@ _("bad %s forward block pointer, expected 0, saw %u\n"),
 	}
 
 	if (cursor->level[p_level].hashval !=
-				be32_to_cpu(btree[entry].hashval)) {
+				be32_to_cpu(nodehdr.btree[entry].hashval)) {
 		if (!no_modify) {
 			do_warn(
 _("correcting bad hashval in non-leaf %s block\n"
  "\tin (level %d) in inode %" PRIu64 ".\n"),
 				FORKNAME(whichfork), this_level, cursor->ino);
-			btree[entry].hashval = cpu_to_be32(
+			nodehdr.btree[entry].hashval = cpu_to_be32(
 						cursor->level[p_level].hashval);
 			cursor->level[this_level].dirty++;
 		} else {
@@ -396,7 +392,7 @@ _("would correct bad hashval in non-leaf %s block\n"
 	 * Note: squirrel hashval away _before_ releasing the
 	 * buffer, preventing a use-after-free problem.
 	 */
-	hashval = be32_to_cpu(btree[entry].hashval);
+	hashval = be32_to_cpu(nodehdr.btree[entry].hashval);
 
 	/*
 	 * release/write buffer
@@ -486,7 +482,6 @@ verify_da_path(
 	int			nex;
 	bmap_ext_t		lbmp;
 	struct xfs_da_geometry	*geo;
-	struct xfs_da_node_entry *btree;
 	struct xfs_da3_icnode_hdr nodehdr;
 
 	if (whichfork == XFS_DATA_FORK)
@@ -504,7 +499,6 @@ verify_da_path(
 	 */
 	entry = cursor->level[this_level].index;
 	node = cursor->level[this_level].bp->b_addr;
-	btree = M_DIROPS(mp)->node_tree_p(node);
 	libxfs_da3_node_hdr_from_disk(mp, &nodehdr, node);
 
 	/* No entries in this node?  Tree is corrupt. */
@@ -523,7 +517,7 @@ verify_da_path(
 		 * it was set when the block was first read in.
 		 */
 		cursor->level[this_level].hashval =
-				be32_to_cpu(btree[entry - 1].hashval);
+				be32_to_cpu(nodehdr.btree[entry - 1].hashval);
 
 		/*
 		 * keep track of greatest block # -- that gets
@@ -564,7 +558,6 @@ _("can't read %s block %u for inode %" PRIu64 "\n"),
 		}
 
 		newnode = bp->b_addr;
-		btree = M_DIROPS(mp)->node_tree_p(newnode);
 		libxfs_da3_node_hdr_from_disk(mp, &nodehdr, newnode);
 
 		/*
@@ -633,18 +626,18 @@ _("bad level %d in %s block %u for inode %" PRIu64 "\n"),
 		cursor->level[this_level].dirty = 0;
 		cursor->level[this_level].bno = dabno;
 		cursor->level[this_level].hashval =
-					be32_to_cpu(btree[0].hashval);
+					be32_to_cpu(nodehdr.btree[0].hashval);
 
 		entry = cursor->level[this_level].index = 0;
 	}
 	/*
 	 * ditto for block numbers
 	 */
-	if (cursor->level[p_level].bno != be32_to_cpu(btree[entry].before)) {
+	if (cursor->level[p_level].bno != be32_to_cpu(nodehdr.btree[entry].before)) {
 #ifdef XR_DIR_TRACE
 		fprintf(stderr, "bad %s btree pointer, child bno "
 			"should be %d, block bno is %d, hashval is %u\n",
-			FORKNAME(whichfork), be32_to_cpu(btree[entry].before),
+			FORKNAME(whichfork), be32_to_cpu(nodehdr.btree[entry].before),
 			cursor->level[p_level].bno,
 			cursor->level[p_level].hashval);
 		fprintf(stderr, "verify_da_path returns 1 (bad) #1a\n");
@@ -656,13 +649,13 @@ _("bad level %d in %s block %u for inode %" PRIu64 "\n"),
 	 * block against the hashval in the current entry
 	 */
 	if (cursor->level[p_level].hashval !=
-				be32_to_cpu(btree[entry].hashval)) {
+				be32_to_cpu(nodehdr.btree[entry].hashval)) {
 		if (!no_modify) {
 			do_warn(
 _("correcting bad hashval in interior %s block\n"
   "\tin (level %d) in inode %" PRIu64 ".\n"),
 				FORKNAME(whichfork), this_level, cursor->ino);
-			btree[entry].hashval = cpu_to_be32(
+			nodehdr.btree[entry].hashval = cpu_to_be32(
 						cursor->level[p_level].hashval);
 			cursor->level[this_level].dirty++;
 		} else {
