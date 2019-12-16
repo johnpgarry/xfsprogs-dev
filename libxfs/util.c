@@ -294,8 +294,7 @@ libxfs_ialloc(
 		VFS_I(ip)->i_version = 1;
 		ip->i_d.di_flags2 = pip ? 0 : xfs_flags2diflags2(ip,
 				fsx->fsx_xflags);
-		ip->i_d.di_crtime.t_sec = (int32_t)VFS_I(ip)->i_mtime.tv_sec;
-		ip->i_d.di_crtime.t_nsec = (int32_t)VFS_I(ip)->i_mtime.tv_nsec;
+		ip->i_d.di_crtime = VFS_I(ip)->i_mtime;
 		ip->i_d.di_cowextsize = pip ? 0 : fsx->fsx_cowextsize;
 	}
 
