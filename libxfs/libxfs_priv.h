@@ -139,6 +139,14 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 	cmn_err(CE_ALERT, "%s: XFS_ERROR_REPORT", (e));  \
 } while (0)
 
+#define XFS_WARN_CORRUPT(mp, expr) \
+	( ((mp)->m_flags & LIBXFS_MOUNT_WANT_CORRUPTED) ? \
+	   (printf("%s: XFS_WARN_CORRUPT at %s:%d", #expr, \
+		   __func__, __LINE__), true) : true)
+
+#define XFS_IS_CORRUPT(mp, expr)	\
+	(unlikely(expr) ? XFS_WARN_CORRUPT((mp), (expr)) : false)
+
 #define XFS_ERRLEVEL_LOW		1
 #define XFS_FORCED_SHUTDOWN(mp)		0
 #define XFS_ILOCK_EXCL			0
