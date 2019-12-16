@@ -9,8 +9,8 @@
 #include <sys/ioctl.h>
 #include <sys/sysinfo.h>
 
-#include "libxfs_priv.h"
-#include "xfs_fs.h"
+#include "platform_defs.h"
+#include "xfs.h"
 #include "init.h"
 
 extern char *progname;
