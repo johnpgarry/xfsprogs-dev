@@ -158,5 +158,6 @@
 #define xfs_buf_delwri_submit		libxfs_buf_delwri_submit
 #define xfs_da3_node_hdr_from_disk	libxfs_da3_node_hdr_from_disk
 #define xfs_dir2_leaf_hdr_from_disk	libxfs_dir2_leaf_hdr_from_disk
+#define xfs_dir2_free_hdr_from_disk	libxfs_dir2_free_hdr_from_disk
 
 #endif /* __LIBXFS_API_DEFS_H__ */
