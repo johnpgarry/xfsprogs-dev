@@ -1478,12 +1478,10 @@ process_dir_leaf_block(
 	case XFS_DIR3_LEAF1_MAGIC: {
 		struct xfs_dir2_leaf_tail	*ltp;
 		__be16				*lbp;
-		struct xfs_dir2_leaf_entry	*ents;
 		char				*free; /* end of ents */
 
 		/* Zero out space from end of ents[] to bests */
-		ents = M_DIROPS(mp)->leaf_ents_p(leaf);
-		free = (char *)&ents[leafhdr.count];
+		free = (char *)&leafhdr.ents[leafhdr.count];
 		ltp = xfs_dir2_leaf_tail_p(mp->m_dir_geo, leaf);
 		lbp = xfs_dir2_leaf_bests_p(ltp);
 		memset(free, 0, (char *)lbp - free);
@@ -1492,13 +1490,11 @@ process_dir_leaf_block(
 	}
 	case XFS_DIR2_LEAFN_MAGIC:
 	case XFS_DIR3_LEAFN_MAGIC: {
-		struct xfs_dir2_leaf_entry	*ents;
 		char				*free;
 		int				used;
 
 		/* Zero out space from end of ents[] to end of block */
-		ents = M_DIROPS(mp)->leaf_ents_p(leaf);
-		free = (char *)&ents[leafhdr.count];
+		free = (char *)&leafhdr.ents[leafhdr.count];
 		used = free - (char*)leaf;
 		memset(free, 0, mp->m_dir_geo->blksize - used);
 		iocur_top->need_crc = 1;

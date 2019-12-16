@@ -1035,28 +1035,26 @@ process_leaf_block_dir2(
 {
 	int			i;
 	int			stale;
-	struct xfs_dir2_leaf_entry *ents;
 	struct xfs_dir3_icleaf_hdr leafhdr;
 
 	libxfs_dir2_leaf_hdr_from_disk(mp, &leafhdr, leaf);
-	ents = M_DIROPS(mp)->leaf_ents_p(leaf);
 
 	for (i = stale = 0; i < leafhdr.count; i++) {
-		if ((char *)&ents[i] >= (char *)leaf + mp->m_dir_geo->blksize) {
+		if ((char *)&leafhdr.ents[i] >= (char *)leaf + mp->m_dir_geo->blksize) {
 			do_warn(
 _("bad entry count in block %u of directory inode %" PRIu64 "\n"),
 				da_bno, ino);
 			return 1;
 		}
-		if (be32_to_cpu(ents[i].address) == XFS_DIR2_NULL_DATAPTR)
+		if (be32_to_cpu(leafhdr.ents[i].address) == XFS_DIR2_NULL_DATAPTR)
 			stale++;
-		else if (be32_to_cpu(ents[i].hashval) < last_hashval) {
+		else if (be32_to_cpu(leafhdr.ents[i].hashval) < last_hashval) {
 			do_warn(
 _("bad hash ordering in block %u of directory inode %" PRIu64 "\n"),
 				da_bno, ino);
 			return 1;
 		}
-		*next_hashval = last_hashval = be32_to_cpu(ents[i].hashval);
+		*next_hashval = last_hashval = be32_to_cpu(leafhdr.ents[i].hashval);
 	}
 	if (stale != leafhdr.stale) {
 		do_warn(

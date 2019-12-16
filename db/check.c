@@ -3256,11 +3256,11 @@ process_leaf_node_dir_v2_int(
 	__be16			*lbp;
 	xfs_dir2_leaf_t		*leaf;
 	struct xfs_dir3_leaf	*leaf3 = NULL;
-	xfs_dir2_leaf_entry_t	*lep;
 	xfs_dir2_leaf_tail_t	*ltp;
 	xfs_da_intnode_t	*node;
 	int			stale;
 	struct xfs_da3_icnode_hdr nodehdr;
+	struct xfs_dir3_icleaf_hdr leafhdr;
 
 	leaf = iocur_top->data;
 	switch (be16_to_cpu(leaf->hdr.info.magic)) {
@@ -3338,17 +3338,18 @@ process_leaf_node_dir_v2_int(
 		error++;
 		return;
 	}
-	lep = M_DIROPS(mp)->leaf_ents_p(leaf);
+
+	libxfs_dir2_leaf_hdr_from_disk(mp, &leafhdr, leaf);
 	for (i = stale = 0; i < xfs_dir3_leaf_ents_count(leaf); i++) {
-		if (be32_to_cpu(lep[i].address) == XFS_DIR2_NULL_DATAPTR)
+		if (be32_to_cpu(leafhdr.ents[i].address) == XFS_DIR2_NULL_DATAPTR)
 			stale++;
-		else if (dir_hash_see(be32_to_cpu(lep[i].hashval),
-						be32_to_cpu(lep[i].address))) {
+		else if (dir_hash_see(be32_to_cpu(leafhdr.ents[i].hashval),
+						be32_to_cpu(leafhdr.ents[i].address))) {
 			if (!sflag || v)
 				dbprintf(_("dir %lld block %d extra leaf entry "
 					 "%x %x\n"), id->ino, dabno,
-					be32_to_cpu(lep[i].hashval),
-					be32_to_cpu(lep[i].address));
+					be32_to_cpu(leafhdr.ents[i].hashval),
+					be32_to_cpu(leafhdr.ents[i].address));
 			error++;
 		}
 	}

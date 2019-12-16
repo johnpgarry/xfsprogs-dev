@@ -2034,7 +2034,6 @@ longform_dir2_check_leaf(
 	xfs_dir2_leaf_t		*leaf;
 	xfs_dir2_leaf_tail_t	*ltp;
 	int			seeval;
-	struct xfs_dir2_leaf_entry *ents;
 	struct xfs_dir3_icleaf_hdr leafhdr;
 	int			error;
 	int			fixit = 0;
@@ -2056,7 +2055,6 @@ longform_dir2_check_leaf(
 
 	leaf = bp->b_addr;
 	libxfs_dir2_leaf_hdr_from_disk(mp, &leafhdr, leaf);
-	ents = M_DIROPS(mp)->leaf_ents_p(leaf);
 	ltp = xfs_dir2_leaf_tail_p(mp->m_dir_geo, leaf);
 	bestsp = xfs_dir2_leaf_bests_p(ltp);
 	if (!(leafhdr.magic == XFS_DIR2_LEAF1_MAGIC ||
@@ -2065,7 +2063,7 @@ longform_dir2_check_leaf(
 				leafhdr.count < leafhdr.stale ||
 				leafhdr.count >
 					M_DIROPS(mp)->leaf_max_ents(mp->m_dir_geo) ||
-				(char *)&ents[leafhdr.count] > (char *)bestsp) {
+				(char *)&leafhdr.ents[leafhdr.count] > (char *)bestsp) {
 		do_warn(
 	_("leaf block %u for directory inode %" PRIu64 " bad header\n"),
 			da_bno, ip->i_ino);
@@ -2081,7 +2079,8 @@ longform_dir2_check_leaf(
 		}
 	}
 
-	seeval = dir_hash_see_all(hashtab, ents, leafhdr.count, leafhdr.stale);
+	seeval = dir_hash_see_all(hashtab, leafhdr.ents, leafhdr.count,
+			leafhdr.stale);
 	if (dir_hash_check(hashtab, ip, seeval)) {
 		libxfs_putbuf(bp);
 		return 1;
@@ -2122,7 +2121,6 @@ longform_dir2_check_node(
 	xfs_fileoff_t		next_da_bno;
 	int			seeval = 0;
 	int			used;
-	struct xfs_dir2_leaf_entry *ents;
 	struct xfs_dir3_icleaf_hdr leafhdr;
 	struct xfs_dir3_icfree_hdr freehdr;
 	__be16			*bests;
@@ -2153,7 +2151,6 @@ longform_dir2_check_node(
 		}
 		leaf = bp->b_addr;
 		libxfs_dir2_leaf_hdr_from_disk(mp, &leafhdr, leaf);
-		ents = M_DIROPS(mp)->leaf_ents_p(leaf);
 		if (!(leafhdr.magic == XFS_DIR2_LEAFN_MAGIC ||
 		      leafhdr.magic == XFS_DIR3_LEAFN_MAGIC ||
 		      leafhdr.magic == XFS_DA_NODE_MAGIC ||
@@ -2195,7 +2192,7 @@ longform_dir2_check_node(
 			libxfs_putbuf(bp);
 			return 1;
 		}
-		seeval = dir_hash_see_all(hashtab, ents,
+		seeval = dir_hash_see_all(hashtab, leafhdr.ents,
 					leafhdr.count, leafhdr.stale);
 		libxfs_putbuf(bp);
 		if (seeval != DIR_HASH_CK_OK)
