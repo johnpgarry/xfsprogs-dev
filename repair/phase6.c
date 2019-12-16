@@ -1525,7 +1525,7 @@ longform_dir2_entry_check_data(
 
 	bp = *bpp;
 	d = bp->b_addr;
-	ptr = (char *)M_DIROPS(mp)->data_entry_p(d);
+	ptr = bp->b_addr + mp->m_dir_inode_ops->data_entry_offset;
 	nbad = 0;
 	needscan = needlog = 0;
 	junkit = 0;
@@ -1571,6 +1571,7 @@ longform_dir2_entry_check_data(
 		/* check for freespace */
 		dup = (xfs_dir2_data_unused_t *)ptr;
 		if (XFS_DIR2_DATA_FREE_TAG == be16_to_cpu(dup->freetag)) {
+			void	*start;
 
 			/* check for invalid freespace length */
 			if (ptr + be16_to_cpu(dup->length) > endptr ||
@@ -1585,7 +1586,8 @@ longform_dir2_entry_check_data(
 				break;
 
 			/* check for block with no data entries */
-			if ((ptr == (char *)M_DIROPS(mp)->data_entry_p(d)) &&
+			start = bp->b_addr + mp->m_dir_inode_ops->data_entry_offset;
+			if (ptr == start &&
 			    (ptr + be16_to_cpu(dup->length) >= endptr)) {
 				junkit = 1;
 				*num_illegal += 1;
@@ -1654,7 +1656,7 @@ longform_dir2_entry_check_data(
 			do_warn(_("would fix magic # to %#x\n"), wantmagic);
 	}
 	lastfree = 0;
-	ptr = (char *)M_DIROPS(mp)->data_entry_p(d);
+	ptr = bp->b_addr + mp->m_dir_inode_ops->data_entry_offset;
 	/*
 	 * look at each entry.  reference inode pointed to by each
 	 * entry in the incore inode tree.
@@ -1825,11 +1827,13 @@ longform_dir2_entry_check_data(
 		 * of when directory is moved to orphanage.
 		 */
 		if (ip->i_ino == inum)  {
+			void	*start;
+
 			ASSERT(no_modify ||
 			       (dep->name[0] == '.' && dep->namelen == 1));
 			add_inode_ref(current_irec, current_ino_offset);
-			if (da_bno != 0 ||
-			    dep != M_DIROPS(mp)->data_entry_p(d)) {
+			start = bp->b_addr + mp->m_dir_inode_ops->data_entry_offset;
+			if (da_bno != 0 || dep != start) {
 				/* "." should be the first entry */
 				nbad++;
 				if (entry_junked(

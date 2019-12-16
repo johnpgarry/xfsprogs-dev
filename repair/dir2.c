@@ -580,7 +580,7 @@ process_dir2_data(
 
 	d = bp->b_addr;
 	bf = M_DIROPS(mp)->data_bestfree_p(d);
-	ptr = (char *)M_DIROPS(mp)->data_entry_p(d);
+	ptr = bp->b_addr + mp->m_dir_inode_ops->data_entry_offset;
 	badbest = lastfree = freeseen = 0;
 	if (be16_to_cpu(bf[0].length) == 0) {
 		badbest |= be16_to_cpu(bf[0].offset) != 0;
@@ -646,7 +646,7 @@ process_dir2_data(
 			do_warn(_("\twould junk block\n"));
 		return 1;
 	}
-	ptr = (char *)M_DIROPS(mp)->data_entry_p(d);
+	ptr = bp->b_addr + mp->m_dir_inode_ops->data_entry_offset;
 	/*
 	 * Process the entries now.
 	 */
