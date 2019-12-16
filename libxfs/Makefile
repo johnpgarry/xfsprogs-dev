@@ -48,6 +48,7 @@ HFILES = \
 	libxfs_io.h \
 	libxfs_api_defs.h \
 	init.h \
+	topology.h \
 	libxfs_priv.h \
 	xfs_dir2_priv.h
 
@@ -58,6 +59,7 @@ CFILES = cache.c \
 	logitem.c \
 	rdwr.c \
 	trans.c \
+	topology.c \
 	util.c \
 	xfs_ag.c \
 	xfs_ag_resv.c \

@@ -4,8 +4,8 @@
  * All Rights Reserved.
  */
 
-#ifndef __LIBFROG_TOPOLOGY_H__
-#define __LIBFROG_TOPOLOGY_H__
+#ifndef __LIBXFS_TOPOLOGY_H__
+#define __LIBXFS_TOPOLOGY_H__
 
 /*
  * Device topology information.
@@ -36,4 +36,4 @@ extern int
 check_overwrite(
 	const char	*device);
 
-#endif	/* __LIBFROG_TOPOLOGY_H__ */
+#endif	/* __LIBXFS_TOPOLOGY_H__ */
