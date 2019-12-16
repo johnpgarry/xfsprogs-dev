@@ -1270,7 +1270,7 @@ libxfs_bcache_free(void)
 		free(bp->b_addr);
 		if (bp->b_maps != &bp->__b_map)
 			free(bp->b_maps);
-		kmem_zone_free(xfs_buf_zone, bp);
+		kmem_cache_free(xfs_buf_zone, bp);
 	}
 }
 
@@ -1426,7 +1426,7 @@ libxfs_iget(
 	ip->i_mount = mp;
 	error = xfs_iread(mp, tp, ip, 0);
 	if (error) {
-		kmem_zone_free(xfs_inode_zone, ip);
+		kmem_cache_free(xfs_inode_zone, ip);
 		*ipp = NULL;
 		return error;
 	}
@@ -1471,7 +1471,7 @@ libxfs_irele(
 {
 	ASSERT(ip->i_itemp == NULL);
 	libxfs_idestroy(ip);
-	kmem_zone_free(xfs_inode_zone, ip);
+	kmem_cache_free(xfs_inode_zone, ip);
 }
 
 /*
