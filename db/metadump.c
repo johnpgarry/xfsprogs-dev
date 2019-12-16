@@ -1882,7 +1882,18 @@ process_single_fsb_objects(
 				int used;
 
 				libxfs_da3_node_hdr_from_disk(mp, &hdr, node);
-				used = M_DIROPS(mp)->node_hdr_size;
+				switch (btype) {
+				case TYP_DIR2:
+					used = mp->m_dir_geo->node_hdr_size;
+					break;
+				case TYP_ATTR:
+					used = mp->m_attr_geo->node_hdr_size;
+					break;
+				default:
+					/* unknown type, don't zero anything */
+					used = mp->m_sb.sb_blocksize;
+					break;
+				}
 
 				used += hdr.count
 					* sizeof(struct xfs_da_node_entry);
