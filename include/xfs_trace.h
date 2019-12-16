@@ -294,6 +294,7 @@
 #define trace_xfs_rmap_map_done(...)		((void) 0)
 #define trace_xfs_rmap_map_error(...)		((void) 0)
 #define trace_xfs_rmap_delete_error(...)	((void) 0)
+#define trace_xfs_alloc_cur_check(...)		((void) 0)
 
 #define trace_xfs_fs_mark_healthy(a,b)		((void) 0)
 
