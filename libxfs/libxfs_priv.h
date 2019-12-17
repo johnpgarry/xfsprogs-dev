@@ -661,4 +661,9 @@ int xfs_bmap_last_extent(struct xfs_trans *tp, struct xfs_inode *ip,
 			 int whichfork, struct xfs_bmbt_irec *rec,
 			 int *is_empty);
 
+/* Stub out iomap. */
+
+#define xfs_bmbt_to_iomap(ip, iomap, bmap, flags)	((void) 0)
+#define IOMAP_F_SHARED	0
+
 #endif	/* __LIBXFS_INTERNAL_XFS_H__ */

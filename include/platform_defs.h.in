@@ -79,4 +79,6 @@ typedef unsigned short umode_t;
 
 extern int	platform_nproc(void);
 
+struct iomap;
+
 #endif	/* __XFS_PLATFORM_DEFS_H__ */
