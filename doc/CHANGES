@@ -1,3 +1,6 @@
+xfsprogs-5.4.0 (20 Dec 2019)
+	- No further changes
+
 xfsprogs-5.4.0-rc1 (17 Dec 2019)
 	- mkfs.xfs: Notify about discard & make it interruptable (Pavel Reichl)
 	- xfs_admin: support external log devices (Darrick Wong)
