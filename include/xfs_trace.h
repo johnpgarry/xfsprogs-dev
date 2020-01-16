@@ -159,9 +159,9 @@
 #define trace_xfs_bmap_pre_update(a,b,c,d)	((void) 0)
 #define trace_xfs_bmap_post_update(a,b,c,d)	((void) 0)
 #define trace_xfs_bunmap(a,b,c,d,e)		((void) 0)
+#define trace_xfs_read_extent(a,b,c,d)		((void) 0)
 
 /* set c = c to avoid unused var warnings */
-#define trace_xfs_read_extent(a,b,c,d)	((c) = (c))
 #define trace_xfs_write_extent(a,b,c,d)	((c) = (c))
 #define trace_xfs_perag_get(a,b,c,d)	((c) = (c))
 #define trace_xfs_perag_get_tag(a,b,c,d) ((c) = (c))
