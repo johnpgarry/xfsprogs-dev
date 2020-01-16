@@ -34,6 +34,8 @@
 extern uint32_t crc32c_le(uint32_t crc, unsigned char const *p, size_t len);
 #define crc32c(c,p,l)	crc32c_le((c),(unsigned char const *)(p),(l))
 
+/* fake up kernel's iomap, (not) used in xfs_bmap.[ch] */
+struct iomap;
 #include "xfs_cksum.h"
 
 /*

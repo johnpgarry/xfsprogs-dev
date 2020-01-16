@@ -62,8 +62,15 @@ extern kmem_zone_t *xfs_buf_zone;
 extern kmem_zone_t *xfs_inode_zone;
 extern kmem_zone_t *xfs_trans_zone;
 
+/* fake up iomap, (not) used in xfs_bmap.[ch] */
+#define IOMAP_F_SHARED			0x04
+#define xfs_bmbt_to_iomap(a, b, c, d)	((void) 0)
+
 /* CRC stuff, buffer API dependent on it */
 #define crc32c(c,p,l)	crc32c_le((c),(unsigned char const *)(p),(l))
+
+/* fake up kernel's iomap, (not) used in xfs_bmap.[ch] */
+struct iomap;
 
 #include "xfs_cksum.h"
 
