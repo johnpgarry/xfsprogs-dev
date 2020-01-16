@@ -9,6 +9,7 @@
 #define trace_xfs_agfl_reset(a,b,c,d)		((void) 0)
 #define trace_xfs_agfl_free_defer(a,b,c,d,e)	((void) 0)
 #define trace_xfs_alloc_cur_check(a,b,c,d,e,f)	((void) 0)
+#define trace_xfs_alloc_cur(a)			((void) 0)
 #define trace_xfs_alloc_cur_left(a)		((void) 0)
 #define trace_xfs_alloc_cur_right(a)		((void) 0)
 #define trace_xfs_alloc_exact_done(a)		((void) 0)
