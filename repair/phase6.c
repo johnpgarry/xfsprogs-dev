@@ -2065,8 +2065,7 @@ longform_dir2_check_leaf(
 	      leafhdr.magic == XFS_DIR3_LEAF1_MAGIC) ||
 				leafhdr.forw || leafhdr.back ||
 				leafhdr.count < leafhdr.stale ||
-				leafhdr.count >
-					M_DIROPS(mp)->leaf_max_ents(mp->m_dir_geo) ||
+				leafhdr.count > mp->m_dir_geo->leaf_max_ents ||
 				(char *)&ents[leafhdr.count] > (char *)bestsp) {
 		do_warn(
 	_("leaf block %u for directory inode %" PRIu64 " bad header\n"),
@@ -2189,7 +2188,7 @@ longform_dir2_check_node(
 		 * the right ops on the buffer for when we write it back out.
 		 */
 		bp->b_ops = &xfs_dir3_leafn_buf_ops;
-		if (leafhdr.count > M_DIROPS(mp)->leaf_max_ents(mp->m_dir_geo) ||
+		if (leafhdr.count > mp->m_dir_geo->leaf_max_ents ||
 		    leafhdr.count < leafhdr.stale) {
 			do_warn(
 	_("leaf block %u for directory inode %" PRIu64 " bad header\n"),
