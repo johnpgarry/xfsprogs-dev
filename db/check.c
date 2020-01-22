@@ -2679,7 +2679,6 @@ process_inode(
 	xfs_qcnt_t		bc = 0;
 	xfs_qcnt_t		ic = 0;
 	xfs_qcnt_t		rc = 0;
-	xfs_dqid_t		dqprid;
 	int			v = 0;
 	mode_t			mode;
 	static char		okfmts[] = {
@@ -2899,9 +2898,8 @@ process_inode(
 			break;
 		}
 		if (ic) {
-			dqprid = xfs_get_projid(&xino.i_d);	/* dquot ID is u32 */
-			quota_add(&dqprid, &xino.i_d.di_gid, &xino.i_d.di_uid,
-				  0, bc, ic, rc);
+			quota_add(&xino.i_d.di_projid, &xino.i_d.di_gid,
+				  &xino.i_d.di_uid, 0, bc, ic, rc);
 		}
 	}
 	totblocks = totdblocks + totiblocks + atotdblocks + atotiblocks;
