@@ -212,7 +212,7 @@ dir_has_rightsib(
 	struct xfs_da3_icnode_hdr	nhdr;
 
 	if (level > 0) {
-		M_DIROPS(mp)->node_hdr_from_disk(&nhdr, block);
+		libxfs_da3_node_hdr_from_disk(mp, &nhdr, block);
 		return nhdr.forw != 0;
 	}
 	M_DIROPS(mp)->leaf_hdr_from_disk(&lhdr, block);
@@ -232,7 +232,7 @@ dir_level(
 		M_DIROPS(mp)->leaf_hdr_from_disk(&lhdr, block);
 		return 0;
 	case cpu_to_be16(XFS_DA_NODE_MAGIC):
-		M_DIROPS(mp)->node_hdr_from_disk(&nhdr, block);
+		libxfs_da3_node_hdr_from_disk(mp, &nhdr, block);
 		return nhdr.level;
 	default:
 		return -1;
@@ -252,7 +252,7 @@ dir3_level(
 		M_DIROPS(mp)->leaf_hdr_from_disk(&lhdr, block);
 		return 0;
 	case cpu_to_be16(XFS_DA3_NODE_MAGIC):
-		M_DIROPS(mp)->node_hdr_from_disk(&nhdr, block);
+		libxfs_da3_node_hdr_from_disk(mp, &nhdr, block);
 		return nhdr.level;
 	default:
 		return -1;
@@ -268,7 +268,7 @@ attr_has_rightsib(
 	struct xfs_da3_icnode_hdr	nhdr;
 
 	if (level > 0) {
-		M_DIROPS(mp)->node_hdr_from_disk(&nhdr, block);
+		libxfs_da3_node_hdr_from_disk(mp, &nhdr, block);
 		return nhdr.forw != 0;
 	}
 	xfs_attr3_leaf_hdr_to_disk(mp->m_attr_geo, &lhdr, block);
@@ -287,7 +287,7 @@ attr_level(
 		xfs_attr3_leaf_hdr_to_disk(mp->m_attr_geo, &lhdr, block);
 		return 0;
 	case cpu_to_be16(XFS_DA_NODE_MAGIC):
-		M_DIROPS(mp)->node_hdr_from_disk(&nhdr, block);
+		libxfs_da3_node_hdr_from_disk(mp, &nhdr, block);
 		return nhdr.level;
 	default:
 		return -1;
@@ -306,7 +306,7 @@ attr3_level(
 		xfs_attr3_leaf_hdr_to_disk(mp->m_attr_geo, &lhdr, block);
 		return 0;
 	case cpu_to_be16(XFS_DA3_NODE_MAGIC):
-		M_DIROPS(mp)->node_hdr_from_disk(&nhdr, block);
+		libxfs_da3_node_hdr_from_disk(mp, &nhdr, block);
 		return nhdr.level;
 	default:
 		return -1;

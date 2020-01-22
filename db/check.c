@@ -3319,7 +3319,7 @@ process_leaf_node_dir_v2_int(
 	case XFS_DA_NODE_MAGIC:
 	case XFS_DA3_NODE_MAGIC:
 		node = iocur_top->data;
-		M_DIROPS(mp)->node_hdr_from_disk(&nodehdr, node);
+		libxfs_da3_node_hdr_from_disk(mp, &nodehdr, node);
 		if (nodehdr.level < 1 || nodehdr.level > XFS_DA_NODE_MAXDEPTH) {
 			if (!sflag || v)
 				dbprintf(_("bad node block level %d for dir ino "

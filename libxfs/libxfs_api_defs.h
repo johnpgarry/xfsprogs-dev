@@ -70,6 +70,7 @@
 #define xfs_da_hashname			libxfs_da_hashname
 #define xfs_da_shrink_inode		libxfs_da_shrink_inode
 #define xfs_da_read_buf			libxfs_da_read_buf
+#define xfs_da3_node_hdr_from_disk	libxfs_da3_node_hdr_from_disk
 #define xfs_dir_createname		libxfs_dir_createname
 #define xfs_dir_init			libxfs_dir_init
 #define xfs_dir_lookup			libxfs_dir_lookup
