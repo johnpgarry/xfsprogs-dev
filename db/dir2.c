@@ -486,7 +486,7 @@ dir2_data_union_tag_count(
 		end = (char *)&dep->namelen + sizeof(dep->namelen);
 		if (end > (char *)obj + mp->m_dir_geo->blksize)
 			return 0;
-		tagp = M_DIROPS(mp)->data_entry_tag_p(dep);
+		tagp = libxfs_dir2_data_entry_tag_p(mp, dep);
 	}
 	end = (char *)tagp + sizeof(*tagp);
 	return end <= (char *)obj + mp->m_dir_geo->blksize;
@@ -508,7 +508,7 @@ dir2_data_union_tag_offset(
 		return bitize((int)((char *)xfs_dir2_data_unused_tag_p(dup) -
 				    (char *)dup));
 	dep = (xfs_dir2_data_entry_t *)dup;
-	return bitize((int)((char *)M_DIROPS(mp)->data_entry_tag_p(dep) -
+	return bitize((int)((char *)libxfs_dir2_data_entry_tag_p(mp, dep) -
 			    (char *)dep));
 }
 

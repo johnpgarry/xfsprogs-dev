@@ -627,7 +627,7 @@ process_dir2_data(
 		dep = (xfs_dir2_data_entry_t *)ptr;
 		if (ptr + libxfs_dir2_data_entsize(mp, dep->namelen) > endptr)
 			break;
-		if (be16_to_cpu(*M_DIROPS(mp)->data_entry_tag_p(dep)) !=
+		if (be16_to_cpu(*libxfs_dir2_data_entry_tag_p(mp, dep)) !=
 		    				(char *)dep - (char *)d)
 			break;
 		ptr += libxfs_dir2_data_entsize(mp, dep->namelen);
