@@ -1774,7 +1774,7 @@ longform_dir2_entry_check_data(
 		 * check for duplicate names in directory.
 		 */
 		if (!dir_hash_add(mp, hashtab, addr, inum, dep->namelen,
-				dep->name, M_DIROPS(mp)->data_get_ftype(dep))) {
+				dep->name, libxfs_dir2_data_get_ftype(mp, dep))) {
 			nbad++;
 			if (entry_junked(
 	_("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name"),
@@ -1855,7 +1855,7 @@ longform_dir2_entry_check_data(
 			uint8_t dir_ftype;
 			uint8_t ino_ftype;
 
-			dir_ftype = M_DIROPS(mp)->data_get_ftype(dep);
+			dir_ftype = libxfs_dir2_data_get_ftype(mp, dep);
 			ino_ftype = get_inode_ftype(irec, ino_offset);
 
 			if (dir_ftype != ino_ftype) {
@@ -1869,8 +1869,7 @@ longform_dir2_entry_check_data(
 	_("fixing ftype mismatch (%d/%d) in directory/child inode %" PRIu64 "/%" PRIu64 "\n"),
 						dir_ftype, ino_ftype,
 						ip->i_ino, inum);
-					M_DIROPS(mp)->data_put_ftype(dep,
-								ino_ftype);
+					libxfs_dir2_data_put_ftype(mp, dep, ino_ftype);
 					libxfs_dir2_data_log_entry(&da, bp, dep);
 					dir_hash_update_ftype(hashtab, addr,
 							      ino_ftype);
