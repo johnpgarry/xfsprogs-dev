@@ -1939,7 +1939,7 @@ _("entry \"%s\" in dir inode %" PRIu64 " inconsistent with .. value (%" PRIu64 "
 	}
 	*num_illegal += nbad;
 	if (needscan)
-		libxfs_dir2_data_freescan_int(mp, d, &i);
+		libxfs_dir2_data_freescan(mp, d, &i);
 	if (needlog)
 		libxfs_dir2_data_log_header(&da, bp);
 	error = -libxfs_trans_commit(tp);
