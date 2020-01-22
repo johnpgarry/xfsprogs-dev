@@ -350,7 +350,7 @@ dir2_block_u_count(
 
 	btp = xfs_dir2_block_tail_p(mp->m_dir_geo, block);
 	return __dir2_data_entries_count(
-			(char *)M_DIROPS(mp)->data_unused_p(block),
+			(char *)obj + mp->m_dir_inode_ops->data_entry_offset,
 			(char *)xfs_dir2_block_leaf_p(btp));
 }
 
@@ -369,7 +369,7 @@ dir2_block_u_offset(
 	       be32_to_cpu(block->magic) == XFS_DIR3_BLOCK_MAGIC);
 	btp = xfs_dir2_block_tail_p(mp->m_dir_geo, block);
 	ptr = __dir2_data_entry_offset(
-			(char *)M_DIROPS(mp)->data_unused_p(block),
+			(char *)obj + mp->m_dir_inode_ops->data_entry_offset,
 			(char *)xfs_dir2_block_leaf_p(btp), idx);
 	return bitize((int)(ptr - (char *)block));
 }
@@ -547,7 +547,7 @@ dir2_data_u_count(
 		return 0;
 
 	return __dir2_data_entries_count(
-				(char *)M_DIROPS(mp)->data_unused_p(data),
+				(char *)data + mp->m_dir_inode_ops->data_entry_offset,
 				(char *)data + mp->m_dir_geo->blksize);
 }
 
@@ -564,7 +564,7 @@ dir2_data_u_offset(
 	ASSERT(be32_to_cpu(data->magic) == XFS_DIR2_DATA_MAGIC ||
 	       be32_to_cpu(data->magic) == XFS_DIR3_DATA_MAGIC);
 	ptr = __dir2_data_entry_offset(
-				(char *)M_DIROPS(mp)->data_unused_p(data),
+				(char *)data + mp->m_dir_inode_ops->data_entry_offset,
 				(char *)data + mp->m_dir_geo->blksize, idx);
 	return bitize((int)(ptr - (char *)data));
 }
