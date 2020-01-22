@@ -76,6 +76,7 @@
 #define xfs_dir_lookup			libxfs_dir_lookup
 #define xfs_dir_replace			libxfs_dir_replace
 #define xfs_dir2_leaf_hdr_from_disk	libxfs_dir2_leaf_hdr_from_disk
+#define xfs_dir2_free_hdr_from_disk	libxfs_dir2_free_hdr_from_disk
 #define xfs_dir2_isblock		libxfs_dir2_isblock
 #define xfs_dir2_isleaf			libxfs_dir2_isleaf
 #define xfs_dir2_data_freescan_int	libxfs_dir2_data_freescan_int

@@ -1433,7 +1433,7 @@ process_dir_free_block(
 		return;
 
 	free = (struct xfs_dir2_free *)block;
-	M_DIROPS(mp)->free_hdr_from_disk(&freehdr, free);
+	libxfs_dir2_free_hdr_from_disk(mp, &freehdr, free);
 
 	switch (freehdr.magic) {
 	case XFS_DIR2_FREE_MAGIC:
