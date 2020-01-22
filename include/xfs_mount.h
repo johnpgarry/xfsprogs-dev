@@ -89,7 +89,6 @@ typedef struct xfs_mount {
 	struct xfs_da_geometry	*m_attr_geo;	/* attribute block geometry */
 	const struct xfs_dir_ops *m_dir_inode_ops; /* vector of dir inode ops */
 	const struct xfs_dir_ops *m_nondir_inode_ops; /* !dir inode ops */
-#define M_DIROPS(mp)	((mp)->m_dir_inode_ops)
 
 	/*
 	 * anonymous struct to allow xfs_dquot_buf.c to compile.
