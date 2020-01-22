@@ -2473,8 +2473,8 @@ shortform_dir2_junk(
 	if (lino == orphanage_ino)
 		orphanage_ino = 0;
 
-	next_elen = M_DIROPS(mp)->sf_entsize(sfp, sfep->namelen);
-	next_sfep = M_DIROPS(mp)->sf_nextentry(sfp, sfep);
+	next_elen = libxfs_dir2_sf_entsize(mp, sfp, sfep->namelen);
+	next_sfep = libxfs_dir2_sf_nextentry(mp, sfp, sfep);
 
 	/*
 	 * if we are just checking, simply return the pointer to the next entry
@@ -2617,7 +2617,7 @@ shortform_dir2_entry_check(xfs_mount_t	*mp,
 				break;
 			}
 		} else if (no_modify && (intptr_t) sfep - (intptr_t) sfp +
-				+ M_DIROPS(mp)->sf_entsize(sfp, sfep->namelen)
+				+ libxfs_dir2_sf_entsize(mp, sfp, sfep->namelen)
 				> ip->i_d.di_size)  {
 			bad_sfnamelen = 1;
 
@@ -2646,7 +2646,7 @@ shortform_dir2_entry_check(xfs_mount_t	*mp,
 		 */
 
 		if (no_modify && verify_inum(mp, lino))  {
-			next_sfep = M_DIROPS(mp)->sf_nextentry(sfp, sfep);
+			next_sfep = libxfs_dir2_sf_nextentry(mp, sfp, sfep);
 			continue;
 		}
 
@@ -2808,8 +2808,8 @@ _("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name"),
 		ASSERT(no_modify || bad_sfnamelen == 0);
 		next_sfep = (struct xfs_dir2_sf_entry *)((intptr_t)sfep +
 			      (bad_sfnamelen
-				? M_DIROPS(mp)->sf_entsize(sfp, namelen)
-				: M_DIROPS(mp)->sf_entsize(sfp, sfep->namelen)));
+				? libxfs_dir2_sf_entsize(mp, sfp, namelen)
+				: libxfs_dir2_sf_entsize(mp, sfp, sfep->namelen)));
 	}
 
 	if (sfp->i8count != i8) {

@@ -95,8 +95,8 @@ process_sf_dir2_fixi8(
 		memmove(newsfep->name, oldsfep->name, newsfep->namelen);
 		ino = M_DIROPS(mp)->sf_get_ino(oldsfp, oldsfep);
 		M_DIROPS(mp)->sf_put_ino(newsfp, newsfep, ino);
-		oldsfep = M_DIROPS(mp)->sf_nextentry(oldsfp, oldsfep);
-		newsfep = M_DIROPS(mp)->sf_nextentry(newsfp, newsfep);
+		oldsfep = libxfs_dir2_sf_nextentry(mp, oldsfp, oldsfep);
+		newsfep = libxfs_dir2_sf_nextentry(mp, newsfp, newsfep);
 	}
 	*next_sfep = newsfep;
 	free(oldsfp);
@@ -122,7 +122,7 @@ process_sf_dir2_fixoff(
 	for (i = 0; i < sfp->count; i++) {
 		xfs_dir2_sf_put_offset(sfep, offset);
 		offset += M_DIROPS(mp)->data_entsize(sfep->namelen);
-		sfep = M_DIROPS(mp)->sf_nextentry(sfp, sfep);
+		sfep = libxfs_dir2_sf_nextentry(mp, sfp, sfep);
 	}
 }
 
@@ -184,7 +184,7 @@ process_sf_dir2(
 	/*
 	 * check for bad entry count
 	 */
-	if (num_entries * M_DIROPS(mp)->sf_entsize(sfp, 1) +
+	if (num_entries * libxfs_dir2_sf_entsize(mp, sfp, 1) +
 		    xfs_dir2_sf_hdr_size(0) > max_size || num_entries == 0)
 		num_entries = 0xFF;
 
@@ -281,7 +281,7 @@ _("entry \"%*.*s\" in shortform directory %" PRIu64 " references %s inode %" PRI
 			junkreason = _("is zero length");
 			bad_sfnamelen = 1;
 		} else if ((intptr_t) sfep - (intptr_t) sfp +
-				M_DIROPS(mp)->sf_entsize(sfp, sfep->namelen)
+				libxfs_dir2_sf_entsize(mp, sfp, sfep->namelen)
 							> ino_dir_size)  {
 			junkreason = _("extends past end of dir");
 			bad_sfnamelen = 1;
@@ -344,7 +344,7 @@ _("entry contains offset out of order in shortform dir %" PRIu64 "\n"),
 			name[namelen] = '\0';
 
 			if (!no_modify)  {
-				tmp_elen = M_DIROPS(mp)->sf_entsize(sfp,
+				tmp_elen = libxfs_dir2_sf_entsize(mp, sfp,
 								sfep->namelen);
 				be64_add_cpu(&dip->di_size, -tmp_elen);
 				ino_dir_size -= tmp_elen;
@@ -398,8 +398,8 @@ _("would have junked entry \"%s\" in directory inode %" PRIu64 "\n"),
 		next_sfep = (tmp_sfep == NULL)
 			? (xfs_dir2_sf_entry_t *) ((intptr_t) sfep
 							+ ((!bad_sfnamelen)
-				? M_DIROPS(mp)->sf_entsize(sfp, sfep->namelen)
-				: M_DIROPS(mp)->sf_entsize(sfp, namelen)))
+				? libxfs_dir2_sf_entsize(mp, sfp, sfep->namelen)
+				: libxfs_dir2_sf_entsize(mp, sfp, namelen)))
 			: tmp_sfep;
 	}
 

@@ -87,6 +87,8 @@
 #define xfs_dir2_shrink_inode		libxfs_dir2_shrink_inode
 #define xfs_dir2_sf_get_parent_ino	libxfs_dir2_sf_get_parent_ino
 #define xfs_dir2_sf_put_parent_ino	libxfs_dir2_sf_put_parent_ino
+#define xfs_dir2_sf_entsize		libxfs_dir2_sf_entsize
+#define xfs_dir2_sf_nextentry		libxfs_dir2_sf_nextentry
 #define xfs_dir2_namecheck		libxfs_dir2_namecheck
 #define xfs_da_get_buf			libxfs_da_get_buf
 

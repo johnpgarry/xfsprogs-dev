@@ -1269,7 +1269,7 @@ process_sf_dir(
 			namelen = ino_dir_size - ((char *)&sfep->name[0] -
 					 (char *)sfp);
 		} else if ((char *)sfep - (char *)sfp +
-				M_DIROPS(mp)->sf_entsize(sfp, sfep->namelen) >
+				libxfs_dir2_sf_entsize(mp, sfp, sfep->namelen) >
 				ino_dir_size) {
 			if (show_warnings)
 				print_warning("entry length in dir inode %llu "
@@ -1286,7 +1286,7 @@ process_sf_dir(
 					 namelen, &sfep->name[0]);
 
 		sfep = (xfs_dir2_sf_entry_t *)((char *)sfep +
-				M_DIROPS(mp)->sf_entsize(sfp, namelen));
+				libxfs_dir2_sf_entsize(mp, sfp, namelen));
 	}
 
 	/* zero stale data in rest of space in data fork, if any */
