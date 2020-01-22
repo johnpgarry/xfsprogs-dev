@@ -1527,7 +1527,7 @@ longform_dir2_entry_check_data(
 
 	bp = *bpp;
 	d = bp->b_addr;
-	ptr = (char *)M_DIROPS(mp)->data_entry_p(d);
+	ptr = (char *)d + M_DIROPS(mp)->data_entry_offset;
 	nbad = 0;
 	needscan = needlog = 0;
 	junkit = 0;
@@ -1587,7 +1587,7 @@ longform_dir2_entry_check_data(
 				break;
 
 			/* check for block with no data entries */
-			if ((ptr == (char *)M_DIROPS(mp)->data_entry_p(d)) &&
+			if ((ptr == (char *)d + M_DIROPS(mp)->data_entry_offset) &&
 			    (ptr + be16_to_cpu(dup->length) >= endptr)) {
 				junkit = 1;
 				*num_illegal += 1;
@@ -1656,7 +1656,7 @@ longform_dir2_entry_check_data(
 			do_warn(_("would fix magic # to %#x\n"), wantmagic);
 	}
 	lastfree = 0;
-	ptr = (char *)M_DIROPS(mp)->data_entry_p(d);
+	ptr = (char *)d + M_DIROPS(mp)->data_entry_offset;
 	/*
 	 * look at each entry.  reference inode pointed to by each
 	 * entry in the incore inode tree.
@@ -1831,7 +1831,7 @@ longform_dir2_entry_check_data(
 			       (dep->name[0] == '.' && dep->namelen == 1));
 			add_inode_ref(current_irec, current_ino_offset);
 			if (da_bno != 0 ||
-			    dep != M_DIROPS(mp)->data_entry_p(d)) {
+			    dep != (void *)d + M_DIROPS(mp)->data_entry_offset) {
 				/* "." should be the first entry */
 				nbad++;
 				if (entry_junked(
