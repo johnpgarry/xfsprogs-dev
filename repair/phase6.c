@@ -2228,7 +2228,7 @@ longform_dir2_check_node(
 		      freehdr.magic == XFS_DIR3_FREE_MAGIC) ||
 		    freehdr.firstdb !=
 			(fdb - xfs_dir2_byte_to_db(mp->m_dir_geo, XFS_DIR2_FREE_OFFSET)) *
-			M_DIROPS(mp)->free_max_bests(mp->m_dir_geo) ||
+			mp->m_dir_geo->free_max_bests ||
 		    freehdr.nvalid < freehdr.nused) {
 			do_warn(
 	_("free block %u for directory inode %" PRIu64 " bad header\n"),

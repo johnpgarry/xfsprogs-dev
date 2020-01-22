@@ -3101,7 +3101,7 @@ process_leaf_node_dir_v3_free(
 	int			used;
 
 	free = iocur_top->data;
-	maxent = M_DIROPS(mp)->free_max_bests(mp->m_dir_geo);
+	maxent = mp->m_dir_geo->free_max_bests;
 	if (be32_to_cpu(free->hdr.firstdb) != xfs_dir2_da_to_db(mp->m_dir_geo,
 					dabno - mp->m_dir_geo->freeblk) * maxent) {
 		if (!sflag || v)
@@ -3179,7 +3179,7 @@ process_leaf_node_dir_v2_free(
 		process_leaf_node_dir_v3_free(id, v, dabno, freetab);
 		return;
 	}
-	maxent = M_DIROPS(mp)->free_max_bests(mp->m_dir_geo);
+	maxent = mp->m_dir_geo->free_max_bests;
 	if (be32_to_cpu(free->hdr.firstdb) != xfs_dir2_da_to_db(mp->m_dir_geo,
 					dabno - mp->m_dir_geo->freeblk) * maxent) {
 		if (!sflag || v)
