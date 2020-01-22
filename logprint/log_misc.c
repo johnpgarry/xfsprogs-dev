@@ -489,7 +489,7 @@ xlog_print_dir2_sf(
 	count = sfp->count;
 	sfep = xfs_dir2_sf_firstentry(sfp);
 	for (i = 0; i < count; i++) {
-		ino = M_DIROPS(log->l_mp)->sf_get_ino(sfp, sfep);
+		ino = libxfs_dir2_sf_get_ino(log->l_mp, sfp, sfep);
 		memmove(namebuf, (sfep->name), sfep->namelen);
 		namebuf[sfep->namelen] = '\0';
 		printf(_("%s ino 0x%llx namelen %d\n"),

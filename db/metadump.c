@@ -1282,7 +1282,7 @@ process_sf_dir(
 
 		if (obfuscate)
 			generate_obfuscated_name(
-					 M_DIROPS(mp)->sf_get_ino(sfp, sfep),
+					 libxfs_dir2_sf_get_ino(mp, sfp, sfep),
 					 namelen, &sfep->name[0]);
 
 		sfep = (xfs_dir2_sf_entry_t *)((char *)sfep +
