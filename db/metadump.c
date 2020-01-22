@@ -1443,7 +1443,7 @@ process_dir_free_block(
 		int			used;
 
 		/* Zero out space from end of bests[] to end of block */
-		bests = M_DIROPS(mp)->free_bests_p(free);
+		bests = freehdr.bests;
 		high = (char *)&bests[freehdr.nvalid];
 		used = high - (char*)free;
 		memset(high, 0, mp->m_dir_geo->blksize - used);

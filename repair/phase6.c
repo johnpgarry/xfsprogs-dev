@@ -2222,7 +2222,7 @@ longform_dir2_check_node(
 		}
 		free = bp->b_addr;
 		libxfs_dir2_free_hdr_from_disk(mp, &freehdr, free);
-		bests = M_DIROPS(mp)->free_bests_p(free);
+		bests = freehdr.bests;
 		fdb = xfs_dir2_da_to_db(mp->m_dir_geo, da_bno);
 		if (!(freehdr.magic == XFS_DIR2_FREE_MAGIC ||
 		      freehdr.magic == XFS_DIR3_FREE_MAGIC) ||
