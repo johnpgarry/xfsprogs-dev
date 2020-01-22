@@ -65,6 +65,7 @@ typedef unsigned short umode_t;
 #define min(a,b)	(((a)<(b))?(a):(b))
 #define max(a,b)	(((a)>(b))?(a):(b))
 #endif
+#define max3(a,b,c)	max(max(a, b), c)
 
 /* If param.h doesn't provide it, i.e. for Android */
 #ifndef NBBY
