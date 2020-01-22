@@ -637,6 +637,19 @@ xfs_inode_verifier_error(
 }
 
 /*
+ * Complain about the kinds of metadata corruption that we can't detect from a
+ * verifier, such as incorrect inter-block relationship data.  Does not set
+ * bp->b_error.
+ */
+void
+xfs_buf_corruption_error(
+	struct xfs_buf		*bp)
+{
+	xfs_alert(NULL, "Metadata corruption detected at %p, %s block 0x%llx",
+		  __return_address, bp->b_ops->name, bp->b_bn);
+}
+
+/*
  * This is called from I/O verifiers on v5 superblock filesystems. In the
  * kernel, it validates the metadata LSN parameter against the current LSN of
  * the active log. We don't have an active log in userspace so this kind of
