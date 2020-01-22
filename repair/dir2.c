@@ -1039,7 +1039,7 @@ process_leaf_block_dir2(
 	struct xfs_dir3_icleaf_hdr leafhdr;
 
 	libxfs_dir2_leaf_hdr_from_disk(mp, &leafhdr, leaf);
-	ents = M_DIROPS(mp)->leaf_ents_p(leaf);
+	ents = leafhdr.ents;
 
 	for (i = stale = 0; i < leafhdr.count; i++) {
 		if ((char *)&ents[i] >= (char *)leaf + mp->m_dir_geo->blksize) {

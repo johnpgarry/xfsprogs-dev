@@ -3261,8 +3261,11 @@ process_leaf_node_dir_v2_int(
 	xfs_da_intnode_t	*node;
 	int			stale;
 	struct xfs_da3_icnode_hdr nodehdr;
+	struct xfs_dir3_icleaf_hdr leafhdr;
 
 	leaf = iocur_top->data;
+	libxfs_dir2_leaf_hdr_from_disk(mp, &leafhdr, leaf);
+
 	switch (be16_to_cpu(leaf->hdr.info.magic)) {
 	case XFS_DIR3_LEAF1_MAGIC:
 	case XFS_DIR3_LEAFN_MAGIC:
@@ -3338,7 +3341,7 @@ process_leaf_node_dir_v2_int(
 		error++;
 		return;
 	}
-	lep = M_DIROPS(mp)->leaf_ents_p(leaf);
+	lep = leafhdr.ents;
 	for (i = stale = 0; i < xfs_dir3_leaf_ents_count(leaf); i++) {
 		if (be32_to_cpu(lep[i].address) == XFS_DIR2_NULL_DATAPTR)
 			stale++;
