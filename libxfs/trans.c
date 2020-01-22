@@ -124,7 +124,7 @@ static void
 xfs_trans_free(
 	struct xfs_trans	*tp)
 {
-	kmem_zone_free(xfs_trans_zone, tp);
+	kmem_cache_free(xfs_trans_zone, tp);
 }
 
 /*
@@ -336,7 +336,7 @@ xfs_buf_item_put(
 	struct xfs_buf		*bp = bip->bli_buf;
 
 	bp->b_log_item = NULL;
-	kmem_zone_free(xfs_buf_item_zone, bip);
+	kmem_cache_free(xfs_buf_item_zone, bip);
 }
 
 /* from xfs_trans_buf.c */
@@ -791,7 +791,7 @@ xfs_inode_item_put(
 	struct xfs_inode		*ip = iip->ili_inode;
 
 	ip->i_itemp = NULL;
-	kmem_zone_free(xfs_ili_zone, iip);
+	kmem_cache_free(xfs_ili_zone, iip);
 }
 
 

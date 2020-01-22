@@ -22,7 +22,7 @@ extern void	*kmem_zone_zalloc(kmem_zone_t *, int);
 extern int	kmem_zone_destroy(kmem_zone_t *);
 
 static inline void
-kmem_zone_free(kmem_zone_t *zone, void *ptr)
+kmem_cache_free(kmem_zone_t *zone, void *ptr)
 {
 	zone->allocated--;
 	free(ptr);
