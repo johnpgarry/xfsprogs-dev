@@ -579,7 +579,7 @@ process_dir2_data(
 	xfs_ino_t		ent_ino;
 
 	d = bp->b_addr;
-	bf = M_DIROPS(mp)->data_bestfree_p(d);
+	bf = libxfs_dir2_data_bestfree_p(mp, d);
 	ptr = (char *)d + mp->m_dir_geo->data_entry_offset;
 	badbest = lastfree = freeseen = 0;
 	if (be16_to_cpu(bf[0].length) == 0) {
@@ -928,7 +928,7 @@ _("bad bestfree table in block %u in directory inode %" PRIu64 ": "),
 			da_bno, ino);
 		if (!no_modify) {
 			do_warn(_("repairing table\n"));
-			libxfs_dir2_data_freescan_int(mp, M_DIROPS(mp), d, &i);
+			libxfs_dir2_data_freescan_int(mp, d, &i);
 			*dirty = 1;
 		} else {
 			do_warn(_("would repair table\n"));
