@@ -159,18 +159,12 @@ extern int xfs_dir2_free_read(struct xfs_trans *tp, struct xfs_inode *dp,
 /* xfs_dir2_sf.c */
 xfs_ino_t xfs_dir2_sf_get_ino(struct xfs_mount *mp, struct xfs_dir2_sf_hdr *hdr,
 		struct xfs_dir2_sf_entry *sfep);
-void xfs_dir2_sf_put_ino(struct xfs_mount *mp, struct xfs_dir2_sf_hdr *hdr,
-		struct xfs_dir2_sf_entry *sfep, xfs_ino_t ino);
 xfs_ino_t xfs_dir2_sf_get_parent_ino(struct xfs_dir2_sf_hdr *hdr);
 void xfs_dir2_sf_put_parent_ino(struct xfs_dir2_sf_hdr *hdr, xfs_ino_t ino);
 uint8_t xfs_dir2_sf_get_ftype(struct xfs_mount *mp,
 		struct xfs_dir2_sf_entry *sfep);
-void xfs_dir2_sf_put_ftype(struct xfs_mount *mp, struct xfs_dir2_sf_entry *sfep,
-		uint8_t ftype);
 struct xfs_dir2_sf_entry *xfs_dir2_sf_nextentry(struct xfs_mount *mp,
 		struct xfs_dir2_sf_hdr *hdr, struct xfs_dir2_sf_entry *sfep);
-int xfs_dir2_sf_entsize(struct xfs_mount *mp,
-		struct xfs_dir2_sf_hdr *hdr, int len);
 extern int xfs_dir2_block_sfsize(struct xfs_inode *dp,
 		struct xfs_dir2_data_hdr *block, struct xfs_dir2_sf_hdr *sfhp);
 extern int xfs_dir2_block_to_sf(struct xfs_da_args *args, struct xfs_buf *bp,
@@ -181,6 +175,12 @@ extern int xfs_dir2_sf_lookup(struct xfs_da_args *args);
 extern int xfs_dir2_sf_removename(struct xfs_da_args *args);
 extern int xfs_dir2_sf_replace(struct xfs_da_args *args);
 extern xfs_failaddr_t xfs_dir2_sf_verify(struct xfs_inode *ip);
+int xfs_dir2_sf_entsize(struct xfs_mount *mp,
+		struct xfs_dir2_sf_hdr *hdr, int len);
+void xfs_dir2_sf_put_ino(struct xfs_mount *mp, struct xfs_dir2_sf_hdr *hdr,
+		struct xfs_dir2_sf_entry *sfep, xfs_ino_t ino);
+void xfs_dir2_sf_put_ftype(struct xfs_mount *mp,
+		struct xfs_dir2_sf_entry *sfep, uint8_t ftype);
 
 /* xfs_dir2_readdir.c */
 extern int xfs_readdir(struct xfs_trans *tp, struct xfs_inode *dp,
@@ -200,25 +200,8 @@ xfs_dir2_data_entsize(
 	return round_up(len, XFS_DIR2_DATA_ALIGN);
 }
 
-static inline xfs_dahash_t
-xfs_dir2_hashname(
-	struct xfs_mount	*mp,
-	struct xfs_name		*name)
-{
-	if (unlikely(xfs_sb_version_hasasciici(&mp->m_sb)))
-		return xfs_ascii_ci_hashname(name);
-	return xfs_da_hashname(name->name, name->len);
-}
-
-static inline enum xfs_dacmp
-xfs_dir2_compname(
-	struct xfs_da_args	*args,
-	const unsigned char	*name,
-	int			len)
-{
-	if ((xfs_sb_version_hasasciici(&args->dp->i_mount->m_sb)))
-		return xfs_ascii_ci_compname(args, name, len);
-	return xfs_da_compname(args, name, len);
-}
+xfs_dahash_t xfs_dir2_hashname(struct xfs_mount *mp, struct xfs_name *name);
+enum xfs_dacmp xfs_dir2_compname(struct xfs_da_args *args,
+		const unsigned char *name, int len);
 
 #endif /* __XFS_DIR2_PRIV_H__ */
