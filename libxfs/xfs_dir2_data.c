@@ -14,7 +14,6 @@
 #include "xfs_inode.h"
 #include "xfs_dir2.h"
 #include "xfs_dir2_priv.h"
-#include "xfs_dir2_priv.h"
 #include "xfs_trans.h"
 
 static xfs_failaddr_t xfs_dir2_data_freefind_verify(
