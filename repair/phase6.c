@@ -1289,7 +1289,7 @@ dir_binval(
 				rec.br_blockcount);
 		for (; dabno <= end_dabno; dabno += geo->fsbcount) {
 			bp = NULL;
-			error = -libxfs_da_get_buf(tp, ip, dabno, -2, &bp,
+			error = -libxfs_da_get_buf(tp, ip, dabno, &bp,
 					whichfork);
 			if (error)
 				return error;
