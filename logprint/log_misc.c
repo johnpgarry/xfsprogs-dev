@@ -363,7 +363,7 @@ xlog_print_trans_buffer(char **ptr, int len, int *i, int num_ops)
 		memmove(dq, *ptr, sizeof(struct xfs_disk_dquot));
 		printf(_("DQUOT Buffer: DQ  "));
 		if (be32_to_cpu(head->oh_len) <
-				sizeof(xfs_disk_dquot_t)) {
+				sizeof(struct xfs_disk_dquot)) {
 			printf(_("Out of space\n"));
 		}
 		else {
@@ -652,11 +652,11 @@ xlog_print_trans_inode(
 static int
 xlog_print_trans_dquot(char **ptr, int len, int *i, int num_ops)
 {
-    xfs_dq_logformat_t	*f;
-    xfs_dq_logformat_t	lbuf = {0};
-    xfs_disk_dquot_t	ddq;
-    xlog_op_header_t	*head = NULL;
-    int			num, skip;
+    xfs_dq_logformat_t		*f;
+    xfs_dq_logformat_t		lbuf = {0};
+    struct xfs_disk_dquot	ddq;
+    xlog_op_header_t		*head = NULL;
+    int				num, skip;
 
     /*
      * print dquot header region
@@ -692,8 +692,8 @@ xlog_print_trans_dquot(char **ptr, int len, int *i, int num_ops)
     while (num-- > 0) {
 	head = (xlog_op_header_t *)*ptr;
 	xlog_print_op_header(head, *i, ptr);
-	ASSERT(be32_to_cpu(head->oh_len) == sizeof(xfs_disk_dquot_t));
-	memmove(&ddq, *ptr, sizeof(xfs_disk_dquot_t));
+	ASSERT(be32_to_cpu(head->oh_len) == sizeof(struct xfs_disk_dquot));
+	memmove(&ddq, *ptr, sizeof(struct xfs_disk_dquot));
 	printf(_("DQUOT: magic 0x%hx flags 0%ho\n"),
 	       be16_to_cpu(ddq.d_magic), ddq.d_flags);
 	*ptr += be32_to_cpu(head->oh_len);
