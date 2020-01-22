@@ -16,7 +16,7 @@
 #include "scan.h"
 
 /* workaround craziness in the xlog routines */
-int xlog_recover_do_trans(struct xlog *log, xlog_recover_t *t, int p)
+int xlog_recover_do_trans(struct xlog *log, struct xlog_recover *t, int p)
 {
 	return 0;
 }
