@@ -160,7 +160,6 @@ extern void	libxfs_trans_ichgtime(struct xfs_trans *,
 				struct xfs_inode *, int);
 extern int	libxfs_iflush_int (struct xfs_inode *, struct xfs_buf *);
 
-#define timespec64 timespec
 extern struct timespec64 current_time(struct inode *inode);
 
 /* Inode Cache Interfaces */

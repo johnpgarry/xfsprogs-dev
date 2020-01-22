@@ -62,6 +62,8 @@ extern kmem_zone_t *xfs_buf_zone;
 extern kmem_zone_t *xfs_inode_zone;
 extern kmem_zone_t *xfs_trans_zone;
 
+#define timespec64 timespec
+
 /* fake up iomap, (not) used in xfs_bmap.[ch] */
 #define IOMAP_F_SHARED			0x04
 #define xfs_bmbt_to_iomap(a, b, c, d)	((void) 0)

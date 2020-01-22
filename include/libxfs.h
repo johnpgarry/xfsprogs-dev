@@ -41,6 +41,7 @@ struct iomap;
 #define __round_mask(x, y) ((__typeof__(x))((y)-1))
 #define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
 #define unlikely(x) (x)
+#define timespec64 timespec
 
 /*
  * This mirrors the kernel include for xfs_buf.h - it's implicitly included in
