@@ -85,6 +85,9 @@
 #define xfs_dir2_data_make_free		libxfs_dir2_data_make_free
 #define xfs_dir2_data_use_free		libxfs_dir2_data_use_free
 #define xfs_dir2_shrink_inode		libxfs_dir2_shrink_inode
+#define xfs_dir2_sf_get_parent_ino	libxfs_dir2_sf_get_parent_ino
+#define xfs_dir2_sf_put_parent_ino	libxfs_dir2_sf_put_parent_ino
+#define xfs_dir2_namecheck		libxfs_dir2_namecheck
 #define xfs_da_get_buf			libxfs_da_get_buf
 
 #define xfs_inode_from_disk		libxfs_inode_from_disk
@@ -149,7 +152,6 @@
 #define xfs_default_ifork_ops		libxfs_default_ifork_ops
 #define xfs_fs_geometry			libxfs_fs_geometry
 #define xfs_init_local_fork		libxfs_init_local_fork
-#define xfs_dir2_namecheck		libxfs_dir2_namecheck
 #define xfs_attr_namecheck		libxfs_attr_namecheck
 
 #define LIBXFS_ATTR_ROOT		ATTR_ROOT

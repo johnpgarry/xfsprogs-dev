@@ -38,15 +38,12 @@ phase6_verify_dir(
 	struct xfs_inode		*ip)
 {
 	struct xfs_mount		*mp = ip->i_mount;
-	const struct xfs_dir_ops	*dops;
 	struct xfs_ifork		*ifp;
 	struct xfs_dir2_sf_hdr		*sfp;
 	xfs_failaddr_t			fa;
 	xfs_ino_t			old_parent;
 	bool				parent_bypass = false;
 	int				size;
-
-	dops = libxfs_dir_get_ops(mp, NULL);
 
 	ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
 	sfp = (struct xfs_dir2_sf_hdr *)ifp->if_u1.if_data;
@@ -59,9 +56,9 @@ phase6_verify_dir(
 	 */
 	if (size > offsetof(struct xfs_dir2_sf_hdr, parent) &&
 	    size >= xfs_dir2_sf_hdr_size(sfp->i8count)) {
-		old_parent = dops->sf_get_parent_ino(sfp);
+		old_parent = libxfs_dir2_sf_get_parent_ino(sfp);
 		if (old_parent == 0) {
-			dops->sf_put_parent_ino(sfp, mp->m_sb.sb_rootino);
+			libxfs_dir2_sf_put_parent_ino(sfp, mp->m_sb.sb_rootino);
 			parent_bypass = true;
 		}
 	}
@@ -70,7 +67,7 @@ phase6_verify_dir(
 
 	/* Put it back. */
 	if (parent_bypass)
-		dops->sf_put_parent_ino(sfp, old_parent);
+		libxfs_dir2_sf_put_parent_ino(sfp, old_parent);
 
 	return fa;
 }
@@ -2560,7 +2557,7 @@ shortform_dir2_entry_check(xfs_mount_t	*mp,
 			do_warn(
 	_("setting .. in sf dir inode %" PRIu64 " to %" PRIu64 "\n"),
 				ino, parent);
-			M_DIROPS(mp)->sf_put_parent_ino(sfp, parent);
+			libxfs_dir2_sf_put_parent_ino(sfp, parent);
 			*ino_dirty = 1;
 		}
 		return;
@@ -2577,7 +2574,7 @@ shortform_dir2_entry_check(xfs_mount_t	*mp,
 	/*
 	 * Initialise i8 counter -- the parent inode number counts as well.
 	 */
-	i8 = M_DIROPS(mp)->sf_get_parent_ino(sfp) > XFS_DIR2_MAX_SHORT_INUM;
+	i8 = libxfs_dir2_sf_get_parent_ino(sfp) > XFS_DIR2_MAX_SHORT_INUM;
 
 	/*
 	 * now run through entries, stop at first bad entry, don't need
