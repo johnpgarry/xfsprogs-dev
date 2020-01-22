@@ -2057,7 +2057,7 @@ longform_dir2_check_leaf(
 	}
 
 	leaf = bp->b_addr;
-	M_DIROPS(mp)->leaf_hdr_from_disk(&leafhdr, leaf);
+	libxfs_dir2_leaf_hdr_from_disk(mp, &leafhdr, leaf);
 	ents = M_DIROPS(mp)->leaf_ents_p(leaf);
 	ltp = xfs_dir2_leaf_tail_p(mp->m_dir_geo, leaf);
 	bestsp = xfs_dir2_leaf_bests_p(ltp);
@@ -2154,7 +2154,7 @@ longform_dir2_check_node(
 			return 1;
 		}
 		leaf = bp->b_addr;
-		M_DIROPS(mp)->leaf_hdr_from_disk(&leafhdr, leaf);
+		libxfs_dir2_leaf_hdr_from_disk(mp, &leafhdr, leaf);
 		ents = M_DIROPS(mp)->leaf_ents_p(leaf);
 		if (!(leafhdr.magic == XFS_DIR2_LEAFN_MAGIC ||
 		      leafhdr.magic == XFS_DIR3_LEAFN_MAGIC ||

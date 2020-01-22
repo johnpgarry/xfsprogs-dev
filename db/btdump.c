@@ -215,7 +215,7 @@ dir_has_rightsib(
 		libxfs_da3_node_hdr_from_disk(mp, &nhdr, block);
 		return nhdr.forw != 0;
 	}
-	M_DIROPS(mp)->leaf_hdr_from_disk(&lhdr, block);
+	libxfs_dir2_leaf_hdr_from_disk(mp, &lhdr, block);
 	return lhdr.forw != 0;
 }
 
@@ -229,7 +229,7 @@ dir_level(
 	switch (((struct xfs_da_intnode *)block)->hdr.info.magic) {
 	case cpu_to_be16(XFS_DIR2_LEAF1_MAGIC):
 	case cpu_to_be16(XFS_DIR2_LEAFN_MAGIC):
-		M_DIROPS(mp)->leaf_hdr_from_disk(&lhdr, block);
+		libxfs_dir2_leaf_hdr_from_disk(mp, &lhdr, block);
 		return 0;
 	case cpu_to_be16(XFS_DA_NODE_MAGIC):
 		libxfs_da3_node_hdr_from_disk(mp, &nhdr, block);
@@ -249,7 +249,7 @@ dir3_level(
 	switch (((struct xfs_da_intnode *)block)->hdr.info.magic) {
 	case cpu_to_be16(XFS_DIR3_LEAF1_MAGIC):
 	case cpu_to_be16(XFS_DIR3_LEAFN_MAGIC):
-		M_DIROPS(mp)->leaf_hdr_from_disk(&lhdr, block);
+		libxfs_dir2_leaf_hdr_from_disk(mp, &lhdr, block);
 		return 0;
 	case cpu_to_be16(XFS_DA3_NODE_MAGIC):
 		libxfs_da3_node_hdr_from_disk(mp, &nhdr, block);
