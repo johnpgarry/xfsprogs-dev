@@ -121,7 +121,7 @@ process_sf_dir2_fixoff(
 
 	for (i = 0; i < sfp->count; i++) {
 		xfs_dir2_sf_put_offset(sfep, offset);
-		offset += M_DIROPS(mp)->data_entsize(sfep->namelen);
+		offset += libxfs_dir2_data_entsize(mp, sfep->namelen);
 		sfep = libxfs_dir2_sf_nextentry(mp, sfp, sfep);
 	}
 }
@@ -327,7 +327,7 @@ _("entry contains offset out of order in shortform dir %" PRIu64 "\n"),
 			bad_offset = 1;
 		}
 		offset = xfs_dir2_sf_get_offset(sfep) +
-					M_DIROPS(mp)->data_entsize(namelen);
+					libxfs_dir2_data_entsize(mp, namelen);
 
 		/*
 		 * junk the entry by copying up the rest of the
@@ -625,12 +625,12 @@ process_dir2_data(
 			continue;
 		}
 		dep = (xfs_dir2_data_entry_t *)ptr;
-		if (ptr + M_DIROPS(mp)->data_entsize(dep->namelen) > endptr)
+		if (ptr + libxfs_dir2_data_entsize(mp, dep->namelen) > endptr)
 			break;
 		if (be16_to_cpu(*M_DIROPS(mp)->data_entry_tag_p(dep)) !=
 		    				(char *)dep - (char *)d)
 			break;
-		ptr += M_DIROPS(mp)->data_entsize(dep->namelen);
+		ptr += libxfs_dir2_data_entsize(mp, dep->namelen);
 		lastfree = 0;
 	}
 	/*
@@ -917,7 +917,7 @@ _("entry \"%*.*s\" in directory inode %" PRIu64 " points to self: "),
 		/*
 		 * Advance to the next entry.
 		 */
-		ptr += M_DIROPS(mp)->data_entsize(dep->namelen);
+		ptr += libxfs_dir2_data_entsize(mp, dep->namelen);
 	}
 	/*
 	 * Check the bestfree table.
@@ -928,8 +928,7 @@ _("bad bestfree table in block %u in directory inode %" PRIu64 ": "),
 			da_bno, ino);
 		if (!no_modify) {
 			do_warn(_("repairing table\n"));
-			libxfs_dir2_data_freescan_int(mp->m_dir_geo,
-					M_DIROPS(mp), d, &i);
+			libxfs_dir2_data_freescan_int(mp, M_DIROPS(mp), d, &i);
 			*dirty = 1;
 		} else {
 			do_warn(_("would repair table\n"));

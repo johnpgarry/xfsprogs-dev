@@ -1602,7 +1602,7 @@ process_dir_data_block(
 		}
 
 		dep = (xfs_dir2_data_entry_t *)ptr;
-		length = M_DIROPS(mp)->data_entsize(dep->namelen);
+		length = libxfs_dir2_data_entsize(mp, dep->namelen);
 
 		if (dir_offset + length > end_of_data ||
 		    ptr + length > endptr) {

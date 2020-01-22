@@ -1602,12 +1602,12 @@ longform_dir2_entry_check_data(
 
 		/* validate data entry size */
 		dep = (xfs_dir2_data_entry_t *)ptr;
-		if (ptr + M_DIROPS(mp)->data_entsize(dep->namelen) > endptr)
+		if (ptr + libxfs_dir2_data_entsize(mp, dep->namelen) > endptr)
 			break;
 		if (be16_to_cpu(*M_DIROPS(mp)->data_entry_tag_p(dep)) !=
 						(char *)dep - (char *)d)
 			break;
-		ptr += M_DIROPS(mp)->data_entsize(dep->namelen);
+		ptr += libxfs_dir2_data_entsize(mp, dep->namelen);
 	}
 
 	/* did we find an empty or corrupt block? */
@@ -1696,7 +1696,7 @@ longform_dir2_entry_check_data(
 		addr = xfs_dir2_db_off_to_dataptr(mp->m_dir_geo, db,
 						  ptr - (char *)d);
 		dep = (xfs_dir2_data_entry_t *)ptr;
-		ptr += M_DIROPS(mp)->data_entsize(dep->namelen);
+		ptr += libxfs_dir2_data_entsize(mp, dep->namelen);
 		inum = be64_to_cpu(dep->inumber);
 		lastfree = 0;
 		/*
@@ -1940,8 +1940,7 @@ _("entry \"%s\" in dir inode %" PRIu64 " inconsistent with .. value (%" PRIu64 "
 	}
 	*num_illegal += nbad;
 	if (needscan)
-		libxfs_dir2_data_freescan_int(mp->m_dir_geo, M_DIROPS(mp),
-				d, &i);
+		libxfs_dir2_data_freescan_int(mp, M_DIROPS(mp), d, &i);
 	if (needlog)
 		libxfs_dir2_data_log_header(&da, bp);
 	error = -libxfs_trans_commit(tp);

@@ -84,6 +84,7 @@
 #define xfs_dir2_data_log_header	libxfs_dir2_data_log_header
 #define xfs_dir2_data_make_free		libxfs_dir2_data_make_free
 #define xfs_dir2_data_use_free		libxfs_dir2_data_use_free
+#define xfs_dir2_data_entsize		libxfs_dir2_data_entsize
 #define xfs_dir2_shrink_inode		libxfs_dir2_shrink_inode
 #define xfs_dir2_sf_get_parent_ino	libxfs_dir2_sf_get_parent_ino
 #define xfs_dir2_sf_put_parent_ino	libxfs_dir2_sf_put_parent_ino
