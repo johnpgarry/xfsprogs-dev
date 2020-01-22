@@ -235,7 +235,7 @@ dir_hash_add(
 	dup = 0;
 
 	if (!junk) {
-		hash = mp->m_dirnameops->hashname(&xname);
+		hash = libxfs_dir2_hashname(mp, &xname);
 		byhash = DIR_HASH_FUNC(hashtab, hash);
 
 		/*

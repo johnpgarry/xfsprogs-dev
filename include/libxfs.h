@@ -40,6 +40,7 @@ struct iomap;
 
 #define __round_mask(x, y) ((__typeof__(x))((y)-1))
 #define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
+#define unlikely(x) (x)
 
 /*
  * This mirrors the kernel include for xfs_buf.h - it's implicitly included in
@@ -54,6 +55,7 @@ struct iomap;
 #include "xfs_errortag.h"
 #include "xfs_da_format.h"
 #include "xfs_da_btree.h"
+#include "xfs_inode.h"
 #include "xfs_dir2.h"
 #include "xfs_dir2_priv.h"
 #include "xfs_bmap_btree.h"
@@ -62,7 +64,6 @@ struct iomap;
 #include "xfs_attr_sf.h"
 #include "xfs_inode_fork.h"
 #include "xfs_inode_buf.h"
-#include "xfs_inode.h"
 #include "xfs_alloc.h"
 #include "xfs_btree.h"
 #include "xfs_btree_trace.h"
