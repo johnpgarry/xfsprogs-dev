@@ -71,6 +71,7 @@ copy_range_f(int argc, char **argv)
 {
 	long long src_off = 0;
 	long long dst_off = 0;
+	long long llen;
 	size_t len = 0;
 	bool len_specified = false;
 	int opt;
@@ -99,11 +100,21 @@ copy_range_f(int argc, char **argv)
 			}
 			break;
 		case 'l':
-			len = cvtnum(fsblocksize, fssectsize, optarg);
-			if (len == -1LL) {
+			llen = cvtnum(fsblocksize, fssectsize, optarg);
+			if (llen == -1LL) {
 				printf(_("invalid length -- %s\n"), optarg);
 				return 0;
 			}
+			/*
+			 * If size_t can't hold what's in llen, report a
+			 * length overflow.
+			 */
+			if ((size_t)llen != llen) {
+				errno = EOVERFLOW;
+				perror("copy_range");
+				return 0;
+			}
+			len = llen;
 			len_specified = true;
 			break;
 		case 'f':
