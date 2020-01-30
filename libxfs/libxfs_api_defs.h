@@ -176,4 +176,9 @@
 #define xfs_verify_rtbno		libxfs_verify_rtbno
 #define xfs_zero_extent			libxfs_zero_extent
 
+#define xfs_refcountbt_calc_reserves	libxfs_refcountbt_calc_reserves
+#define xfs_finobt_calc_reserves	libxfs_finobt_calc_reserves
+#define xfs_rmapbt_calc_reserves	libxfs_rmapbt_calc_reserves
+#define xfs_read_agf			libxfs_read_agf
+
 #endif /* __LIBXFS_API_DEFS_H__ */

@@ -179,6 +179,11 @@ Set current address to the AGI block for allocation group
 .IR agno .
 If no argument is given, use the current allocation group.
 .TP
+.BI "agresv [" agno ]
+Displays the length, free block count, per-AG reservation size, and per-AG
+reservation usage for a given AG.
+If no argument is given, display information for all AGs.
+.TP
 .BI "attr_remove [\-r|\-u|\-s] [\-n] " name
 Remove the specified extended attribute from the current file.
 .RS 1.0i
