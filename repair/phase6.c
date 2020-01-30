@@ -1273,7 +1273,7 @@ dir_binval(
 	struct xfs_ifork	*ifp;
 	struct xfs_da_geometry	*geo;
 	struct xfs_buf		*bp;
-	xfs_dablk_t		dabno, end_dabno;
+	xfs_dablk_t		dabno;
 	int			error = 0;
 
 	if (ip->i_d.di_format != XFS_DINODE_FMT_EXTENTS &&
@@ -1283,11 +1283,9 @@ dir_binval(
 	geo = tp->t_mountp->m_dir_geo;
 	ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
 	for_each_xfs_iext(ifp, &icur, &rec) {
-		dabno = xfs_dir2_db_to_da(geo, rec.br_startoff +
-				geo->fsbcount - 1);
-		end_dabno = xfs_dir2_db_to_da(geo, rec.br_startoff +
-				rec.br_blockcount);
-		for (; dabno <= end_dabno; dabno += geo->fsbcount) {
+		for (dabno = roundup(rec.br_startoff, geo->fsbcount);
+		     dabno < rec.br_startoff + rec.br_blockcount;
+		     dabno += geo->fsbcount) {
 			bp = NULL;
 			error = -libxfs_da_get_buf(tp, ip, dabno, &bp,
 					whichfork);
