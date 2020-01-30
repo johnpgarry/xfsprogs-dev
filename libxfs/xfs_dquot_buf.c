@@ -8,9 +8,12 @@
 #include "xfs_fs.h"
 #include "xfs_shared.h"
 #include "xfs_format.h"
+#include "xfs_log_format.h"
 #include "xfs_trans_resv.h"
 #include "xfs_mount.h"
 #include "xfs_quota_defs.h"
+#include "xfs_inode.h"
+#include "xfs_trans.h"
 
 int
 xfs_calc_dquots_per_chunk(

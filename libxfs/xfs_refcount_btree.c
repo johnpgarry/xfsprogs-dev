@@ -16,6 +16,7 @@
 #include "xfs_alloc.h"
 #include "xfs_trace.h"
 #include "xfs_trans.h"
+#include "xfs_bit.h"
 #include "xfs_rmap.h"
 
 static struct xfs_btree_cur *

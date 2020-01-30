@@ -17,6 +17,7 @@
 #include "xfs_rmap.h"
 #include "xfs_alloc_btree.h"
 #include "xfs_alloc.h"
+#include "xfs_errortag.h"
 #include "xfs_trace.h"
 #include "xfs_trans.h"
 #include "xfs_ag_resv.h"

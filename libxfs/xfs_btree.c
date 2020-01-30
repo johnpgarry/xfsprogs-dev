@@ -14,7 +14,9 @@
 #include "xfs_inode.h"
 #include "xfs_trans.h"
 #include "xfs_btree.h"
+#include "xfs_errortag.h"
 #include "xfs_trace.h"
+#include "xfs_alloc.h"
 
 /*
  * Cursor allocation zone.

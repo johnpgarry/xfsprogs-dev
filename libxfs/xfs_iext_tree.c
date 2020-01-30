@@ -3,14 +3,14 @@
  * Copyright (c) 2017 Christoph Hellwig.
  */
 
-// #include <linux/cache.h>
-// #include <linux/kernel.h>
-// #include <linux/slab.h>
 #include "libxfs_priv.h"
+#include "xfs_shared.h"
 #include "xfs_format.h"
 #include "xfs_bit.h"
 #include "xfs_log_format.h"
 #include "xfs_inode.h"
+#include "xfs_trans_resv.h"
+#include "xfs_mount.h"
 #include "xfs_trace.h"
 
 /*

@@ -18,6 +18,7 @@
 #include "xfs_rmap.h"
 #include "xfs_rmap_btree.h"
 #include "xfs_trace.h"
+#include "xfs_errortag.h"
 #include "xfs_inode.h"
 
 /*
