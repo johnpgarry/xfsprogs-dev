@@ -183,19 +183,30 @@ timestr(
 
 int
 timespec_from_string(
-	const char	* secs,
-	const char	* nsecs,
-	struct timespec	* ts)
+	const char		*secs,
+	const char		*nsecs,
+	struct timespec		*ts)
 {
-	char* p;
+	char			*p;
+	unsigned long long int	ll;
+
 	if (!secs || !nsecs || !ts)
 		return 1;
-	ts->tv_sec = strtoull(secs, &p, 0);
+
+	ll = strtoull(secs, &p, 0);
 	if (*p)
 		return 1;
-	ts->tv_nsec = strtoull(nsecs, &p, 0);
+	ts->tv_sec = ll;
+	if ((unsigned long long int)ts->tv_sec != ll)
+		return 1;
+
+	ll = strtoull(nsecs, &p, 0);
 	if (*p)
 		return 1;
+	ts->tv_nsec = ll;
+	if ((unsigned long long int)ts->tv_nsec != ll)
+		return 1;
+
 	return 0;
 }
 
