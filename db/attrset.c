@@ -23,11 +23,11 @@ static void		attrset_help(void);
 
 static const cmdinfo_t	attr_set_cmd =
 	{ "attr_set", "aset", attr_set_f, 1, -1, 0,
-	  N_("[-r|-s|-p|-u] [-n] [-R|-C] [-v n] name"),
+	  N_("[-r|-s|-u] [-n] [-R|-C] [-v n] name"),
 	  N_("set the named attribute on the current inode"), attrset_help };
 static const cmdinfo_t	attr_remove_cmd =
 	{ "attr_remove", "aremove", attr_remove_f, 1, -1, 0,
-	  N_("[-r|-s|-p|-u] [-n] name"),
+	  N_("[-r|-s|-u] [-n] name"),
 	  N_("remove the named attribute from the current inode"), attrset_help };
 
 static void

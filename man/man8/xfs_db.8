@@ -179,6 +179,57 @@ Set current address to the AGI block for allocation group
 .IR agno .
 If no argument is given, use the current allocation group.
 .TP
+.BI "attr_remove [\-r|\-u|\-s] [\-n] " name
+Remove the specified extended attribute from the current file.
+.RS 1.0i
+.TP 0.4i
+.B \-r
+Sets the attribute in the root namespace.
+Only one namespace option can be specified.
+.TP
+.B \-u
+Sets the attribute in the user namespace.
+Only one namespace option can be specified.
+.TP
+.B \-s
+Sets the attribute in the secure namespace.
+Only one namespace option can be specified.
+.TP
+.B \-n
+Do not enable 'noattr2' mode on V4 filesystems.
+.RE
+.TP
+.BI "attr_set [\-r|\-u|\-s] [\-n] [\-R|\-C] [\-v " namelen "] " name
+Sets an extended attribute on the current file with the given name.
+.RS 1.0i
+.TP 0.4i
+.B \-r
+Sets the attribute in the root namespace.
+Only one namespace option can be specified.
+.TP
+.B \-u
+Sets the attribute in the user namespace.
+Only one namespace option can be specified.
+.TP
+.B \-s
+Sets the attribute in the secure namespace.
+Only one namespace option can be specified.
+.TP
+.B \-n
+Do not enable 'noattr2' mode on V4 filesystems.
+.TP
+.B \-R
+Replace the attribute.
+The command will fail if the attribute does not already exist.
+.TP
+.B \-C
+Create the attribute.
+The command will fail if the attribute already exists.
+.TP
+.B \-v
+Set the attribute value to a string of this length containing the letter 'v'.
+.RE
+.TP
 .B b
 See the
 .B back
@@ -736,6 +787,13 @@ is given, the current filesystem label is printed.
 Start logging output to
 .IR filename ,
 stop logging, or print the current logging status.
+.TP
+.BI "logformat [\-c " cycle "] [\-s " sunit "]"
+Reformats the log to the specified log cycle and log stripe unit.
+This has the effect of clearing the log destructively.
+If the log cycle is not specified, the log is reformatted to the current cycle.
+If the log stripe unit is not specified, the stripe unit from the filesystem
+superblock is used.
 .TP
 .B logres
 Print transaction reservation size information for each transaction type.
