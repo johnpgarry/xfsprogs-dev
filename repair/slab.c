@@ -3,7 +3,7 @@
  * Copyright (C) 2016 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#include <libxfs.h>
+#include "libxfs.h"
 #include "slab.h"
 
 #undef SLAB_DEBUG

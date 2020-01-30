@@ -3,7 +3,7 @@
  * Copyright (C) 2016 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#include <libxfs.h>
+#include "libxfs.h"
 #include "btree.h"
 #include "err_protos.h"
 #include "libxlog.h"
