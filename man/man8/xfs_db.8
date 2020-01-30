@@ -346,6 +346,45 @@ If the cursor points at an inode, dump the extended attribute block mapping btre
 Dump all keys and pointers in intermediate btree nodes, and all records in leaf btree nodes.
 .RE
 .TP
+.BI "btheight [\-b " blksz "] [\-n " recs "] [\-w " max "|\-w " min "] btree types..."
+For a given number of btree records and a btree type, report the number of
+records and blocks for each level of the btree, and the total number of blocks.
+The btree type must be given after the options.
+
+A raw btree geometry can be provided in the format
+"record_bytes:key_bytes:ptr_bytes:header_type", where header_type is one of
+"short", "long", "shortcrc", or "longcrc".
+
+The supported btree types are:
+.IR bnobt ,
+.IR cntbt ,
+.IR inobt ,
+.IR finobt ,
+.IR bmapbt ,
+.IR refcountbt ,
+and
+.IR rmapbt .
+
+Options are as follows:
+.RS 1.0i
+.TP 0.4i
+.B \-b
+is used to override the btree block size.
+The default is the filesystem block size.
+.TP
+.B \-n
+is used to specify the number of records to store.
+This argument is required.
+.TP
+.B \-w max
+shows only the best case scenario, which is when the btree blocks are
+maximally loaded.
+.TP
+.B \-w min
+shows only the worst case scenario, which is when the btree blocks are
+half full.
+.RE
+.TP
 .B check
 See the
 .B blockget
