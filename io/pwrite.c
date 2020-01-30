@@ -54,8 +54,8 @@ static ssize_t
 do_pwritev(
 	int		fd,
 	off64_t		offset,
-	size_t		count,
-	int 		pwritev2_flags)
+	long long	count,
+	int		pwritev2_flags)
 {
 	int vecs = 0;
 	ssize_t oldlen = 0;
@@ -97,7 +97,7 @@ static ssize_t
 do_pwrite(
 	int		fd,
 	off64_t		offset,
-	size_t		count,
+	long long	count,
 	size_t		buffer_size,
 	int		pwritev2_flags)
 {

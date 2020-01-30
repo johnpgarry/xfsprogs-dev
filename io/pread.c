@@ -164,7 +164,7 @@ static ssize_t
 do_preadv(
 	int		fd,
 	off64_t		offset,
-	size_t		count)
+	long long	count)
 {
 	int		vecs = 0;
 	ssize_t		oldlen = 0;
@@ -199,7 +199,7 @@ static ssize_t
 do_pread(
 	int		fd,
 	off64_t		offset,
-	size_t		count,
+	long long	count,
 	size_t		buffer_size)
 {
 	if (!vectors)
