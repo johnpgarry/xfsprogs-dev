@@ -24,7 +24,6 @@ int	print_buffer;
 int	print_overwrite;
 int     print_no_data;
 int     print_no_print;
-int     print_exit = 1; /* -e is now default. specify -c to override */
 static int	print_operation = OP_PRINT;
 
 static void
@@ -132,6 +131,7 @@ main(int argc, char **argv)
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 	memset(&mount, 0, sizeof(mount));
+	print_exit = 1; /* -e is now default. specify -c to override */
 
 	progname = basename(argv[0]);
 	while ((c = getopt(argc, argv, "bC:cdefl:iqnors:tDVv")) != EOF) {
@@ -152,7 +152,7 @@ main(int argc, char **argv)
 			case 'e':
 			    /* -e is now default
 			     */
-				print_exit++;
+				print_exit = 1;
 				break;
 			case 'C':
 				print_operation = OP_COPY;

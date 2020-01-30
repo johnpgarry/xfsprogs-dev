@@ -27,7 +27,6 @@ static int		force;
 static struct xfs_mount	xmount;
 struct xfs_mount	*mp;
 static struct xlog	xlog;
-libxfs_init_t		x;
 xfs_agnumber_t		cur_agno = NULLAGNUMBER;
 
 static void
