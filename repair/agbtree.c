@@ -513,3 +513,73 @@ _("Error %d while creating finobt btree for AG %u.\n"), error, agno);
 	/* Since we're not writing the AGI yet, no need to commit the cursor */
 	libxfs_btree_del_cursor(btr_fino->cur, 0);
 }
+
+/* rebuild the rmap tree */
+
+/* Grab one rmap record. */
+static int
+get_rmapbt_record(
+	struct xfs_btree_cur		*cur,
+	void				*priv)
+{
+	struct xfs_rmap_irec		*rec;
+	struct bt_rebuild		*btr = priv;
+
+	rec = pop_slab_cursor(btr->slab_cursor);
+	memcpy(&cur->bc_rec.r, rec, sizeof(struct xfs_rmap_irec));
+	return 0;
+}
+
+/* Set up the rmap rebuild parameters. */
+void
+init_rmapbt_cursor(
+	struct repair_ctx	*sc,
+	xfs_agnumber_t		agno,
+	unsigned int		free_space,
+	struct bt_rebuild	*btr)
+{
+	int			error;
+
+	if (!xfs_sb_version_hasrmapbt(&sc->mp->m_sb))
+		return;
+
+	init_rebuild(sc, &XFS_RMAP_OINFO_AG, free_space, btr);
+	btr->cur = libxfs_rmapbt_stage_cursor(sc->mp, &btr->newbt.afake, agno);
+
+	btr->bload.get_record = get_rmapbt_record;
+	btr->bload.claim_block = rebuild_claim_block;
+
+	/* Compute how many blocks we'll need. */
+	error = -libxfs_btree_bload_compute_geometry(btr->cur, &btr->bload,
+			rmap_record_count(sc->mp, agno));
+	if (error)
+		do_error(
+_("Unable to compute rmap btree geometry, error %d.\n"), error);
+
+	reserve_btblocks(sc->mp, agno, btr, btr->bload.nr_blocks);
+}
+
+/* Rebuild a rmap btree. */
+void
+build_rmap_tree(
+	struct repair_ctx	*sc,
+	xfs_agnumber_t		agno,
+	struct bt_rebuild	*btr)
+{
+	int			error;
+
+	error = rmap_init_cursor(agno, &btr->slab_cursor);
+	if (error)
+		do_error(
+_("Insufficient memory to construct rmap cursor.\n"));
+
+	/* Add all observed rmap records. */
+	error = -libxfs_btree_bload(btr->cur, &btr->bload, btr);
+	if (error)
+		do_error(
+_("Error %d while creating rmap btree for AG %u.\n"), error, agno);
+
+	/* Since we're not writing the AGF yet, no need to commit the cursor */
+	libxfs_btree_del_cursor(btr->cur, 0);
+	free_slab_cursor(&btr->slab_cursor);
+}
