@@ -20,10 +20,20 @@ struct bt_rebuild {
 	/* Tree-specific data. */
 	union {
 		struct xfs_slab_cursor	*slab_cursor;
+		struct {
+			struct extent_tree_node	*bno_rec;
+			unsigned int		freeblks;
+		};
 	};
 };
 
 void finish_rebuild(struct xfs_mount *mp, struct bt_rebuild *btr,
 		struct xfs_slab *lost_fsb);
+void init_freespace_cursors(struct repair_ctx *sc, xfs_agnumber_t agno,
+		unsigned int free_space, unsigned int *nr_extents,
+		int *extra_blocks, struct bt_rebuild *btr_bno,
+		struct bt_rebuild *btr_cnt);
+void build_freespace_btrees(struct repair_ctx *sc, xfs_agnumber_t agno,
+		struct bt_rebuild *btr_bno, struct bt_rebuild *btr_cnt);
 
 #endif /* __XFS_REPAIR_AG_BTREE_H__ */
