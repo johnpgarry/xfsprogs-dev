@@ -378,6 +378,8 @@ xfs_buf_incore(
 {
 	return NULL;
 }
+
+#define xfs_buf_ioerror_alert(bp, a)	((void) 0)
 #define xfs_buf_oneshot(bp)		((void) 0)
 
 #define XBRW_READ			LIBXFS_BREAD
