@@ -1486,11 +1486,17 @@ data_opts_parser(
 		break;
 	case D_EXTSZINHERIT:
 		cli->fsx.fsx_extsize = getnum(value, opts, subopt);
-		cli->fsx.fsx_xflags |= FS_XFLAG_EXTSZINHERIT;
+		if (cli->fsx.fsx_extsize)
+			cli->fsx.fsx_xflags |= FS_XFLAG_EXTSZINHERIT;
+		else
+			cli->fsx.fsx_xflags &= ~FS_XFLAG_EXTSZINHERIT;
 		break;
 	case D_COWEXTSIZE:
 		cli->fsx.fsx_cowextsize = getnum(value, opts, subopt);
-		cli->fsx.fsx_xflags |= FS_XFLAG_COWEXTSIZE;
+		if (cli->fsx.fsx_cowextsize)
+			cli->fsx.fsx_xflags |= FS_XFLAG_COWEXTSIZE;
+		else
+			cli->fsx.fsx_xflags &= ~FS_XFLAG_COWEXTSIZE;
 		break;
 	default:
 		return -EINVAL;
