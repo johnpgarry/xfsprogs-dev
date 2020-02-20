@@ -158,9 +158,10 @@ static char *next(
 #undef libxfs_writebuf
 #undef libxfs_buf_get_map
 
-struct xfs_buf	*libxfs_buf_read_map(struct xfs_buftarg *btp,
-			struct xfs_buf_map *map, int nmaps, int flags,
-			const struct xfs_buf_ops *ops);
+int		libxfs_buf_read_map(struct xfs_buftarg *btp,
+				struct xfs_buf_map *maps, int nmaps, int flags,
+				struct xfs_buf **bpp,
+				const struct xfs_buf_ops *ops);
 int		libxfs_writebuf(xfs_buf_t *, int);
 int		libxfs_buf_get_map(struct xfs_buftarg *btp,
 				struct xfs_buf_map *maps, int nmaps, int flags,
@@ -190,9 +191,28 @@ libxfs_trace_readbuf(
 	struct xfs_buf		*bp;
 	DEFINE_SINGLE_BUF_MAP(map, blkno, numblks);
 
-	bp = libxfs_buf_read_map(btp, &map, 1, flags, ops);
+	libxfs_buf_read_map(btp, &map, 1, flags, &bp, ops);
 	__add_trace(bp, func, file, line);
 	return bp;
+}
+
+int
+libxfs_trace_readbuf_map(
+	const char		*func,
+	const char		*file,
+	int			line,
+	struct xfs_buftarg	*btp,
+	struct xfs_buf_map	*map,
+	int			nmaps,
+	int			flags,
+	struct xfs_buf		**bpp,
+	const struct xfs_buf_ops *ops)
+{
+	int			error;
+
+	error = libxfs_buf_read_map(btp, map, nmaps, flags, bpp, ops);
+	__add_trace(*bpp, func, file, line);
+	return error;
 }
 
 void
@@ -775,20 +795,27 @@ libxfs_readbufr_map(struct xfs_buftarg *btp, struct xfs_buf *bp, int flags)
 	return error;
 }
 
-struct xfs_buf *
-libxfs_buf_read_map(struct xfs_buftarg *btp, struct xfs_buf_map *map, int nmaps,
-		int flags, const struct xfs_buf_ops *ops)
+int
+libxfs_buf_read_map(
+	struct xfs_buftarg	*btp,
+	struct xfs_buf_map	*map,
+	int			nmaps,
+	int			flags,
+	struct xfs_buf		**bpp,
+	const struct xfs_buf_ops *ops)
 {
-	struct xfs_buf	*bp;
-	int		error = 0;
+	struct xfs_buf		*bp;
+	bool			salvage = flags & LIBXFS_READBUF_SALVAGE;
+	int			error = 0;
 
+	*bpp = NULL;
 	if (nmaps == 1)
 		error = libxfs_getbuf_flags(btp, map[0].bm_bn, map[0].bm_len,
 				0, &bp);
 	else
 		error = __libxfs_buf_get_map(btp, map, nmaps, 0, &bp);
 	if (error)
-		return NULL;
+		return error;
 
 	/*
 	 * If the buffer was prefetched, it is likely that it was not validated.
@@ -801,12 +828,17 @@ libxfs_buf_read_map(struct xfs_buftarg *btp, struct xfs_buf_map *map, int nmaps,
 	 * should not be dirtying unchecked buffers and therefore failing it
 	 * here because it's dirty and unchecked indicates we've screwed up
 	 * somewhere else.
+	 *
+	 * Note that if the caller passes in LIBXFS_READBUF_SALVAGE, that means
+	 * they want the buffer even if it fails verification.
 	 */
 	bp->b_error = 0;
 	if (bp->b_flags & (LIBXFS_B_UPTODATE | LIBXFS_B_DIRTY)) {
 		if (bp->b_flags & LIBXFS_B_UNCHECKED)
-			libxfs_readbuf_verify(bp, ops);
-		return bp;
+			error = libxfs_readbuf_verify(bp, ops);
+		if (error && !salvage)
+			goto err;
+		goto ok;
 	}
 
 	/*
@@ -821,15 +853,24 @@ libxfs_buf_read_map(struct xfs_buftarg *btp, struct xfs_buf_map *map, int nmaps,
 				flags);
 	else
 		error = libxfs_readbufr_map(btp, bp, flags);
-	if (!error)
-		libxfs_readbuf_verify(bp, ops);
+	if (error)
+		goto err;
 
+	error = libxfs_readbuf_verify(bp, ops);
+	if (error && !salvage)
+		goto err;
+
+ok:
 #ifdef IO_DEBUGX
 	printf("%lx: %s: read %lu bytes, error %d, blkno=%llu(%llu), %p\n",
 		pthread_self(), __FUNCTION__, buf - (char *)bp->b_addr, error,
 		(long long)LIBXFS_BBTOOFF64(bp->b_bn), (long long)bp->b_bn, bp);
 #endif
-	return bp;
+	*bpp = bp;
+	return 0;
+err:
+	libxfs_buf_relse(bp);
+	return error;
 }
 
 /* Allocate a raw uncached buffer. */
