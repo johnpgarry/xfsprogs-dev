@@ -254,8 +254,14 @@ newfile(
 			exit(1);
 		}
 		d = XFS_FSB_TO_DADDR(mp, map.br_startblock);
-		bp = libxfs_trans_get_buf(logit ? tp : NULL, mp->m_dev, d,
-			nb << mp->m_blkbb_log, 0);
+		error = -libxfs_trans_get_buf(logit ? tp : NULL, mp->m_dev, d,
+				nb << mp->m_blkbb_log, 0, &bp);
+		if (error) {
+			fprintf(stderr,
+				_("%s: cannot allocate buffer for file\n"),
+				progname);
+			exit(1);
+		}
 		memmove(bp->b_addr, buf, len);
 		if (len < bp->b_bcount)
 			memset((char *)bp->b_addr + len, 0, bp->b_bcount - len);
