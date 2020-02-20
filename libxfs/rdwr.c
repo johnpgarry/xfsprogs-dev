@@ -485,30 +485,40 @@ struct list_head	lock_buf_list = {&lock_buf_list, &lock_buf_list};
 int			lock_buf_count = 0;
 #endif
 
-static struct xfs_buf *
-__cache_lookup(struct xfs_bufkey *key, unsigned int flags)
+static int
+__cache_lookup(
+	struct xfs_bufkey	*key,
+	unsigned int		flags,
+	struct xfs_buf		**bpp)
 {
-	struct xfs_buf	*bp;
+	struct cache_node	*cn = NULL;
+	struct xfs_buf		*bp;
 
-	cache_node_get(libxfs_bcache, key, (struct cache_node **)&bp);
-	if (!bp)
-		return NULL;
+	*bpp = NULL;
+
+	cache_node_get(libxfs_bcache, key, &cn);
+	if (!cn)
+		return -ENOMEM;
+	bp = container_of(cn, struct xfs_buf, b_node);
 
 	if (use_xfs_buf_lock) {
-		int ret;
+		int		ret;
 
 		ret = pthread_mutex_trylock(&bp->b_lock);
 		if (ret) {
 			ASSERT(ret == EAGAIN);
-			if (flags & LIBXFS_GETBUF_TRYLOCK)
-				goto out_put;
+			if (flags & LIBXFS_GETBUF_TRYLOCK) {
+				cache_node_put(libxfs_bcache, cn);
+				return -EAGAIN;
+			}
 
 			if (pthread_equal(bp->b_holder, pthread_self())) {
 				fprintf(stderr,
 	_("Warning: recursive buffer locking at block %" PRIu64 " detected\n"),
 					key->blkno);
 				bp->b_recur++;
-				return bp;
+				*bpp = bp;
+				return 0;
 			} else {
 				pthread_mutex_lock(&bp->b_lock);
 			}
@@ -517,9 +527,8 @@ __cache_lookup(struct xfs_bufkey *key, unsigned int flags)
 		bp->b_holder = pthread_self();
 	}
 
-	cache_node_set_priority(libxfs_bcache, &bp->b_node,
-			cache_node_get_priority(&bp->b_node) -
-						CACHE_PREFETCH_PRIORITY);
+	cache_node_set_priority(libxfs_bcache, cn,
+			cache_node_get_priority(cn) - CACHE_PREFETCH_PRIORITY);
 #ifdef XFS_BUF_TRACING
 	pthread_mutex_lock(&libxfs_bcache->c_mutex);
 	lock_buf_count++;
@@ -532,10 +541,8 @@ __cache_lookup(struct xfs_bufkey *key, unsigned int flags)
 		bp, bp->b_bn, (long long)LIBXFS_BBTOOFF64(key->blkno));
 #endif
 
-	return bp;
-out_put:
-	cache_node_put(libxfs_bcache, &bp->b_node);
-	return NULL;
+	*bpp = bp;
+	return 0;
 }
 
 static struct xfs_buf *
@@ -545,13 +552,18 @@ libxfs_getbuf_flags(
 	int			len,
 	unsigned int		flags)
 {
-	struct xfs_bufkey key = {NULL};
+	struct xfs_bufkey	key = {NULL};
+	struct xfs_buf		*bp;
+	int			error;
 
 	key.buftarg = btp;
 	key.blkno = blkno;
 	key.bblen = len;
 
-	return __cache_lookup(&key, flags);
+	error = __cache_lookup(&key, flags, &bp);
+	if (error)
+		return NULL;
+	return bp;
 }
 
 /*
@@ -575,11 +587,16 @@ reset_buf_state(
 }
 
 static struct xfs_buf *
-__libxfs_buf_get_map(struct xfs_buftarg *btp, struct xfs_buf_map *map,
-		    int nmaps, int flags)
+__libxfs_buf_get_map(
+	struct xfs_buftarg	*btp,
+	struct xfs_buf_map	*map,
+	int			nmaps,
+	int			flags)
 {
-	struct xfs_bufkey key = {NULL};
-	int i;
+	struct xfs_bufkey	key = {NULL};
+	struct xfs_buf		*bp;
+	int			i;
+	int			error;
 
 	if (nmaps == 1)
 		return libxfs_getbuf_flags(btp, map[0].bm_bn, map[0].bm_len,
@@ -593,7 +610,10 @@ __libxfs_buf_get_map(struct xfs_buftarg *btp, struct xfs_buf_map *map,
 	key.map = map;
 	key.nmaps = nmaps;
 
-	return __cache_lookup(&key, flags);
+	error = __cache_lookup(&key, flags, &bp);
+	if (error)
+		return NULL;
+	return bp;
 }
 
 struct xfs_buf *
