@@ -139,9 +139,9 @@ extern struct cache_operations	libxfs_bcache_operations;
 #define libxfs_buf_get(dev, daddr, len) \
 	libxfs_trace_getbuf(__FUNCTION__, __FILE__, __LINE__, \
 			    (dev), (daddr), (len))
-#define libxfs_buf_get_map(dev, map, nmaps, flags) \
+#define libxfs_buf_get_map(dev, map, nmaps, flags, bpp) \
 	libxfs_trace_getbuf_map(__FUNCTION__, __FILE__, __LINE__, \
-			    (dev), (map), (nmaps), (flags))
+			    (dev), (map), (nmaps), (flags), (bpp))
 #define libxfs_buf_relse(buf) \
 	libxfs_trace_putbuf(__FUNCTION__, __FILE__, __LINE__, (buf))
 
@@ -156,8 +156,9 @@ void libxfs_trace_dirtybuf(const char *func, const char *file, int line,
 struct xfs_buf *libxfs_trace_getbuf(const char *func, const char *file,
 			int line, struct xfs_buftarg *btp, xfs_daddr_t daddr,
 			size_t len);
-extern xfs_buf_t *libxfs_trace_getbuf_map(const char *, const char *, int,
-			struct xfs_buftarg *, struct xfs_buf_map *, int, int);
+int libxfs_trace_getbuf_map(const char *func, const char *file, int line,
+			struct xfs_buftarg *btp, struct xfs_buf_map *map,
+			int nmaps, int flags, struct xfs_buf **bpp);
 extern void	libxfs_trace_putbuf (const char *, const char *, int,
 			xfs_buf_t *);
 
@@ -167,8 +168,8 @@ struct xfs_buf *libxfs_buf_read_map(struct xfs_buftarg *btp,
 			struct xfs_buf_map *map, int nmaps, int flags,
 			const struct xfs_buf_ops *ops);
 void libxfs_buf_mark_dirty(struct xfs_buf *bp);
-struct xfs_buf *libxfs_buf_get_map(struct xfs_buftarg *btp,
-			struct xfs_buf_map *map, int nmaps, int flags);
+int libxfs_buf_get_map(struct xfs_buftarg *btp, struct xfs_buf_map *maps,
+			int nmaps, int flags, struct xfs_buf **bpp);
 void	libxfs_buf_relse(struct xfs_buf *bp);
 
 static inline struct xfs_buf*
@@ -177,9 +178,14 @@ libxfs_buf_get(
 	xfs_daddr_t		blkno,
 	size_t			numblks)
 {
+	struct xfs_buf		*bp;
+	int			error;
 	DEFINE_SINGLE_BUF_MAP(map, blkno, numblks);
 
-	return libxfs_buf_get_map(target, &map, 1, 0);
+	error = libxfs_buf_get_map(target, &map, 1, 0, &bp);
+	if (error)
+		return NULL;
+	return bp;
 }
 
 static inline struct xfs_buf*

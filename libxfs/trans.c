@@ -423,11 +423,16 @@ libxfs_trans_get_buf_map(
 	int			nmaps,
 	xfs_buf_flags_t		flags)
 {
-	xfs_buf_t		*bp;
+	struct xfs_buf		*bp;
 	struct xfs_buf_log_item	*bip;
+	int			error;
 
-	if (!tp)
-		return libxfs_buf_get_map(target, map, nmaps, 0);
+	if (!tp) {
+		error = libxfs_buf_get_map(target, map, nmaps, 0, &bp);
+		if (error)
+			return NULL;
+		return bp;
+	}
 
 	/*
 	 * If we find the buffer in the cache with this transaction
@@ -445,10 +450,9 @@ libxfs_trans_get_buf_map(
 		return bp;
 	}
 
-	bp = libxfs_buf_get_map(target, map, nmaps, 0);
-	if (bp == NULL) {
+	error = libxfs_buf_get_map(target, map, nmaps, 0, &bp);
+	if (error)
 		return NULL;
-	}
 
 	ASSERT(!bp->b_error);
 

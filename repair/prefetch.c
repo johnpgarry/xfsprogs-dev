@@ -113,6 +113,7 @@ pf_queue_io(
 {
 	struct xfs_buf		*bp;
 	xfs_fsblock_t		fsbno = XFS_DADDR_TO_FSB(mp, map[0].bm_bn);
+	int			error;
 
 	/*
 	 * Never block on a buffer lock here, given that the actual repair
@@ -120,8 +121,9 @@ pf_queue_io(
 	 * the lock holder is either reading it from disk himself or
 	 * completely overwriting it this behaviour is perfectly fine.
 	 */
-	bp = libxfs_buf_get_map(mp->m_dev, map, nmaps, LIBXFS_GETBUF_TRYLOCK);
-	if (!bp)
+	error = -libxfs_buf_get_map(mp->m_dev, map, nmaps,
+			LIBXFS_GETBUF_TRYLOCK, &bp);
+	if (error)
 		return;
 
 	if (bp->b_flags & LIBXFS_B_UPTODATE) {
