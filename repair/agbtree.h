@@ -24,6 +24,12 @@ struct bt_rebuild {
 			struct extent_tree_node	*bno_rec;
 			unsigned int		freeblks;
 		};
+		struct {
+			struct ino_tree_node	*ino_rec;
+			xfs_agino_t		first_agino;
+			xfs_agino_t		count;
+			xfs_agino_t		freecount;
+		};
 	};
 };
 
@@ -35,5 +41,12 @@ void init_freespace_cursors(struct repair_ctx *sc, xfs_agnumber_t agno,
 		struct bt_rebuild *btr_cnt);
 void build_freespace_btrees(struct repair_ctx *sc, xfs_agnumber_t agno,
 		struct bt_rebuild *btr_bno, struct bt_rebuild *btr_cnt);
+
+void init_ino_cursors(struct repair_ctx *sc, xfs_agnumber_t agno,
+		unsigned int free_space, uint64_t *num_inos,
+		uint64_t *num_free_inos, struct bt_rebuild *btr_ino,
+		struct bt_rebuild *btr_fino);
+void build_inode_btrees(struct repair_ctx *sc, xfs_agnumber_t agno,
+		struct bt_rebuild *btr_ino, struct bt_rebuild *btr_fino);
 
 #endif /* __XFS_REPAIR_AG_BTREE_H__ */

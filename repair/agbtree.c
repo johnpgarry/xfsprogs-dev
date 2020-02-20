@@ -308,3 +308,208 @@ _("Error %d while creating cntbt btree for AG %u.\n"), error, agno);
 	libxfs_btree_del_cursor(btr_bno->cur, 0);
 	libxfs_btree_del_cursor(btr_cnt->cur, 0);
 }
+
+/* Inode Btrees */
+
+static inline struct ino_tree_node *
+get_ino_rec(
+	struct xfs_btree_cur	*cur,
+	struct ino_tree_node	*prev_value)
+{
+	xfs_agnumber_t		agno = cur->bc_ag.agno;
+
+	if (cur->bc_btnum == XFS_BTNUM_INO) {
+		if (!prev_value)
+			return findfirst_inode_rec(agno);
+		return next_ino_rec(prev_value);
+	}
+
+	/* finobt */
+	if (!prev_value)
+		return findfirst_free_inode_rec(agno);
+	return next_free_ino_rec(prev_value);
+}
+
+/* Grab one inobt record. */
+static int
+get_inobt_record(
+	struct xfs_btree_cur		*cur,
+	void				*priv)
+{
+	struct bt_rebuild		*btr = priv;
+	struct xfs_inobt_rec_incore	*irec = &cur->bc_rec.i;
+	struct ino_tree_node		*ino_rec;
+	int				inocnt = 0;
+	int				finocnt = 0;
+	int				k;
+
+	btr->ino_rec = ino_rec = get_ino_rec(cur, btr->ino_rec);
+
+	/* Transform the incore record into an on-disk record. */
+	irec->ir_startino = ino_rec->ino_startnum;
+	irec->ir_free = ino_rec->ir_free;
+
+	for (k = 0; k < sizeof(xfs_inofree_t) * NBBY; k++)  {
+		ASSERT(is_inode_confirmed(ino_rec, k));
+
+		if (is_inode_sparse(ino_rec, k))
+			continue;
+		if (is_inode_free(ino_rec, k))
+			finocnt++;
+		inocnt++;
+	}
+
+	irec->ir_count = inocnt;
+	irec->ir_freecount = finocnt;
+
+	if (xfs_sb_version_hassparseinodes(&cur->bc_mp->m_sb)) {
+		uint64_t		sparse;
+		int			spmask;
+		uint16_t		holemask;
+
+		/*
+		 * Convert the 64-bit in-core sparse inode state to the
+		 * 16-bit on-disk holemask.
+		 */
+		holemask = 0;
+		spmask = (1 << XFS_INODES_PER_HOLEMASK_BIT) - 1;
+		sparse = ino_rec->ir_sparse;
+		for (k = 0; k < XFS_INOBT_HOLEMASK_BITS; k++) {
+			if (sparse & spmask) {
+				ASSERT((sparse & spmask) == spmask);
+				holemask |= (1 << k);
+			} else
+				ASSERT((sparse & spmask) == 0);
+			sparse >>= XFS_INODES_PER_HOLEMASK_BIT;
+		}
+
+		irec->ir_holemask = holemask;
+	} else {
+		irec->ir_holemask = 0;
+	}
+
+	if (btr->first_agino == NULLAGINO)
+		btr->first_agino = ino_rec->ino_startnum;
+	btr->freecount += finocnt;
+	btr->count += inocnt;
+	return 0;
+}
+
+/* Initialize both inode btree cursors as needed. */
+void
+init_ino_cursors(
+	struct repair_ctx	*sc,
+	xfs_agnumber_t		agno,
+	unsigned int		free_space,
+	uint64_t		*num_inos,
+	uint64_t		*num_free_inos,
+	struct bt_rebuild	*btr_ino,
+	struct bt_rebuild	*btr_fino)
+{
+	struct ino_tree_node	*ino_rec;
+	unsigned int		ino_recs = 0;
+	unsigned int		fino_recs = 0;
+	int			error;
+
+	init_rebuild(sc, &XFS_RMAP_OINFO_INOBT, free_space, btr_ino);
+
+	/* Compute inode statistics. */
+	*num_free_inos = 0;
+	*num_inos = 0;
+	for (ino_rec = findfirst_inode_rec(agno);
+	     ino_rec != NULL;
+	     ino_rec = next_ino_rec(ino_rec))  {
+		unsigned int	rec_ninos = 0;
+		unsigned int	rec_nfinos = 0;
+		int		i;
+
+		for (i = 0; i < XFS_INODES_PER_CHUNK; i++)  {
+			ASSERT(is_inode_confirmed(ino_rec, i));
+			/*
+			 * sparse inodes are not factored into superblock (free)
+			 * inode counts
+			 */
+			if (is_inode_sparse(ino_rec, i))
+				continue;
+			if (is_inode_free(ino_rec, i))
+				rec_nfinos++;
+			rec_ninos++;
+		}
+
+		*num_free_inos += rec_nfinos;
+		*num_inos += rec_ninos;
+		ino_recs++;
+
+		/* finobt only considers records with free inodes */
+		if (rec_nfinos)
+			fino_recs++;
+	}
+
+	btr_ino->cur = libxfs_inobt_stage_cursor(sc->mp, &btr_ino->newbt.afake,
+			agno, XFS_BTNUM_INO);
+
+	btr_ino->bload.get_record = get_inobt_record;
+	btr_ino->bload.claim_block = rebuild_claim_block;
+	btr_ino->first_agino = NULLAGINO;
+
+	/* Compute how many inobt blocks we'll need. */
+	error = -libxfs_btree_bload_compute_geometry(btr_ino->cur,
+			&btr_ino->bload, ino_recs);
+	if (error)
+		do_error(
+_("Unable to compute inode btree geometry, error %d.\n"), error);
+
+	reserve_btblocks(sc->mp, agno, btr_ino, btr_ino->bload.nr_blocks);
+
+	if (!xfs_sb_version_hasfinobt(&sc->mp->m_sb))
+		return;
+
+	init_rebuild(sc, &XFS_RMAP_OINFO_INOBT, free_space, btr_fino);
+	btr_fino->cur = libxfs_inobt_stage_cursor(sc->mp,
+			&btr_fino->newbt.afake, agno, XFS_BTNUM_FINO);
+
+	btr_fino->bload.get_record = get_inobt_record;
+	btr_fino->bload.claim_block = rebuild_claim_block;
+	btr_fino->first_agino = NULLAGINO;
+
+	/* Compute how many finobt blocks we'll need. */
+	error = -libxfs_btree_bload_compute_geometry(btr_fino->cur,
+			&btr_fino->bload, fino_recs);
+	if (error)
+		do_error(
+_("Unable to compute free inode btree geometry, error %d.\n"), error);
+
+	reserve_btblocks(sc->mp, agno, btr_fino, btr_fino->bload.nr_blocks);
+}
+
+/* Rebuild the inode btrees. */
+void
+build_inode_btrees(
+	struct repair_ctx	*sc,
+	xfs_agnumber_t		agno,
+	struct bt_rebuild	*btr_ino,
+	struct bt_rebuild	*btr_fino)
+{
+	int			error;
+
+	/* Add all observed inobt records. */
+	error = -libxfs_btree_bload(btr_ino->cur, &btr_ino->bload, btr_ino);
+	if (error)
+		do_error(
+_("Error %d while creating inobt btree for AG %u.\n"), error, agno);
+
+	/* Since we're not writing the AGI yet, no need to commit the cursor */
+	libxfs_btree_del_cursor(btr_ino->cur, 0);
+
+	if (!xfs_sb_version_hasfinobt(&sc->mp->m_sb))
+		return;
+
+	/* Add all observed finobt records. */
+	error = -libxfs_btree_bload(btr_fino->cur, &btr_fino->bload, btr_fino);
+	if (error)
+		do_error(
+_("Error %d while creating finobt btree for AG %u.\n"), error, agno);
+
+	/* Since we're not writing the AGI yet, no need to commit the cursor */
+	libxfs_btree_del_cursor(btr_fino->cur, 0);
+}
