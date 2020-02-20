@@ -121,6 +121,10 @@ If the size of the block or sector is not specified, the default sizes
 .PP
 Many feature options allow an optional argument of 0 or 1, to explicitly
 disable or enable the functionality.
+.PP
+Normally, options cannot be specified more than once.
+If, however, an option has not yet been specified and its argument ends with
+a question mark ('?'), the option can be specified one additional time.
 .SH OPTIONS
 .TP
 .BI \-b " block_size_options"
@@ -187,6 +191,8 @@ is used, the free inode btree feature is not supported and is disabled.
 .BI uuid= value
 Use the given value as the filesystem UUID for the newly created filesystem.
 The default is to generate a random UUID.
+
+This option does not require '?' to respecify the argument value.
 .TP
 .BI rmapbt= value
 This option enables the creation of a reverse-mapping btree index in each
@@ -835,6 +841,8 @@ in the directory. A scan of the protofile is
 always terminated with the dollar (
 .B $
 ) token.
+
+This option cannot be respecified.
 .TP
 .B \-q
 Quiet option. Normally
@@ -909,6 +917,8 @@ is longer than 12 characters,
 will not proceed with creating the filesystem.  Refer to the
 .BR mount "(8) and " xfs_admin (8)
 manual entries for additional information.
+
+This option does not require '?' to respecify the argument value.
 .TP
 .B \-N
 Causes the file system parameters to be printed out without really

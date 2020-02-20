@@ -157,6 +157,10 @@ enum {
  *     Do not set. It is used internally for respecification, when some options
  *     has to be parsed twice - at first as a string, then later as a number.
  *
+ *   seen_can_respect INTERNAL
+ *     Do not set. It is used internally to indicate that an option has been
+ *     seen but is allowed to be respecified later on in the command line.
+ *
  *   convert OPTIONAL
  *     A flag signalling whether the user-given value can use suffixes.
  *     If you want to allow the use of user-friendly values like 13k, 42G,
@@ -199,6 +203,7 @@ struct opt_params {
 		int		index;
 		bool		seen;
 		bool		str_seen;
+		bool		seen_can_respec;
 		bool		convert;
 		bool		is_power_2;
 		struct _conflict {
@@ -691,6 +696,7 @@ cli_opt_set(
 	int			subopt)
 {
 	return opts->subopt_params[subopt].seen ||
+	       opts->subopt_params[subopt].seen_can_respec ||
 	       opts->subopt_params[subopt].str_seen;
 }
 
@@ -1301,7 +1307,8 @@ static void
 check_opt(
 	struct opt_params	*opts,
 	int			index,
-	bool			str_seen)
+	bool			str_seen,
+	bool			allow_respec)
 {
 	struct subopt_param	*sp = &opts->subopt_params[index];
 	int			i;
@@ -1321,14 +1328,18 @@ check_opt(
 	 * used to track the different uses based on the @str parameter passed
 	 * to us.
 	 */
+	if (allow_respec)
+		sp->seen_can_respec = true;
 	if (!str_seen) {
 		if (sp->seen)
 			respec(opts->name, opts->subopts, index);
-		sp->seen = true;
+		if (!allow_respec)
+			sp->seen = true;
 	} else {
 		if (sp->str_seen)
 			respec(opts->name, opts->subopts, index);
-		sp->str_seen = true;
+		if (!allow_respec)
+			sp->str_seen = true;
 	}
 
 	/* check for conflicts with the option */
@@ -1337,22 +1348,45 @@ check_opt(
 
 		if (con->subopt == LAST_CONFLICT)
 			break;
-		if (con->opts->subopt_params[con->subopt].seen ||
-		    con->opts->subopt_params[con->subopt].str_seen)
+		if (cli_opt_set(con->opts, con->subopt))
 			conflict(opts, index, con->opts, con->subopt);
 	}
 }
 
+/*
+ * If an option value has a '?' at the end, we treat that as an option that
+ * can be respecified later, and truncate the end of @str.
+ */
+static inline bool
+check_allow_respec(
+	char		*str)
+{
+	char		*s_end;
+
+	if (!str)
+		return false;
+
+	s_end = str + strlen(str) - 1;
+	if (*s_end != '?')
+		return false;
+
+	*s_end = 0;
+	return true;
+}
+
 static long long
 getnum(
-	const char		*str,
+	char			*str,
 	struct opt_params	*opts,
 	int			index)
 {
 	struct subopt_param	*sp = &opts->subopt_params[index];
 	long long		c;
+	bool			allow_respec;
 
-	check_opt(opts, index, false);
+	allow_respec = check_allow_respec(str);
+	check_opt(opts, index, false, allow_respec);
+
 	/* empty strings might just return a default value */
 	if (!str || *str == '\0') {
 		if (sp->defaultval == SUBOPT_NEEDS_VAL)
@@ -1410,7 +1444,10 @@ getstr(
 	struct opt_params	*opts,
 	int			index)
 {
-	check_opt(opts, index, true);
+	bool			allow_respec;
+
+	allow_respec = check_allow_respec(str);
+	check_opt(opts, index, true, allow_respec);
 
 	/* empty strings for string options are not valid */
 	if (!str || *str == '\0')
