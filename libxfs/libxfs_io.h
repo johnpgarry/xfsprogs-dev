@@ -252,8 +252,8 @@ xfs_buf_associate_memory(struct xfs_buf *bp, void *mem, size_t len)
 	return 0;
 }
 
-struct xfs_buf *libxfs_buf_get_uncached(struct xfs_buftarg *targ, size_t bblen,
-		int flags);
+int libxfs_buf_get_uncached(struct xfs_buftarg *targ, size_t bblen, int flags,
+		struct xfs_buf **bpp);
 int libxfs_buf_read_uncached(struct xfs_buftarg *targ, xfs_daddr_t daddr,
 		size_t bblen, int flags, struct xfs_buf **bpp,
 		const struct xfs_buf_ops *ops);
