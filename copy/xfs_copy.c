@@ -725,9 +725,14 @@ main(int argc, char **argv)
 	/* Do it again, now with proper length and verifier */
 	libxfs_buf_relse(sbp);
 
-	sbp = libxfs_buf_read(mbuf.m_ddev_targp, XFS_SB_DADDR,
-			     1 << (sb->sb_sectlog - BBSHIFT),
-			     0, &xfs_sb_buf_ops);
+	error = -libxfs_buf_read(mbuf.m_ddev_targp, XFS_SB_DADDR,
+			1 << (sb->sb_sectlog - BBSHIFT), 0, &sbp,
+			&xfs_sb_buf_ops);
+	if (error) {
+		do_log(_("%s: couldn't read superblock, error=%d\n"),
+				progname, error);
+		exit(1);
+	}
 	libxfs_buf_relse(sbp);
 
 	mp = libxfs_mount(&mbuf, sb, xargs.ddev, xargs.logdev, xargs.rtdev, 0);

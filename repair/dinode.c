@@ -730,6 +730,7 @@ get_agino_buf(
 	xfs_daddr_t		cluster_daddr;
 	xfs_daddr_t		cluster_blks;
 	struct xfs_ino_geometry	*igeo = M_IGEO(mp);
+	int			error;
 
 	/*
 	 * Inode buffers have been read into memory in inode_cluster_size
@@ -748,9 +749,9 @@ get_agino_buf(
 		cluster_agino, cluster_daddr, cluster_blks);
 #endif
 
-	bp = libxfs_buf_read(mp->m_dev, cluster_daddr, cluster_blks,
-			0, &xfs_inode_buf_ops);
-	if (!bp) {
+	error = -libxfs_buf_read(mp->m_dev, cluster_daddr, cluster_blks, 0,
+			&bp, &xfs_inode_buf_ops);
+	if (error) {
 		do_warn(_("cannot read inode (%u/%u), disk block %" PRIu64 "\n"),
 			agno, cluster_agino, cluster_daddr);
 		return NULL;
@@ -1149,6 +1150,7 @@ process_quota_inode(
 	xfs_fileoff_t		qbno;
 	int			i;
 	int			t = 0;
+	int			error;
 
 	switch (ino_type) {
 		case XR_INO_UQUOTA:
@@ -1179,9 +1181,11 @@ process_quota_inode(
 		fsbno = blkmap_get(blkmap, qbno);
 		dqid = (xfs_dqid_t)qbno * dqperchunk;
 
-		bp = libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, fsbno),
-				    dqchunklen, 0, &xfs_dquot_buf_ops);
-		if (!bp) {
+		error = -libxfs_buf_read(mp->m_dev,
+				XFS_FSB_TO_DADDR(mp, fsbno), dqchunklen,
+				LIBXFS_READBUF_SALVAGE, &bp,
+				&xfs_dquot_buf_ops);
+		if (error) {
 			do_warn(
 _("cannot read inode %" PRIu64 ", file block %" PRIu64 ", disk block %" PRIu64 "\n"),
 				lino, qbno, fsbno);
@@ -1255,6 +1259,7 @@ process_symlink_remote(
 	int			pathlen;
 	int			offset;
 	int			i;
+	int			error;
 
 	offset = 0;
 	pathlen = be64_to_cpu(dino->di_size);
@@ -1286,9 +1291,11 @@ _("cannot read inode %" PRIu64 ", file block %d, NULL disk block\n"),
 
 		byte_cnt = XFS_FSB_TO_B(mp, blk_cnt);
 
-		bp = libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, fsbno),
-				    BTOBB(byte_cnt), 0, &xfs_symlink_buf_ops);
-		if (!bp) {
+		error = -libxfs_buf_read(mp->m_dev,
+				XFS_FSB_TO_DADDR(mp, fsbno), BTOBB(byte_cnt),
+				LIBXFS_READBUF_SALVAGE, &bp,
+				&xfs_symlink_buf_ops);
+		if (error) {
 			do_warn(
 _("cannot read inode %" PRIu64 ", file block %d, disk block %" PRIu64 "\n"),
 				lino, i, fsbno);

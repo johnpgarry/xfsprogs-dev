@@ -46,6 +46,39 @@ set_mp(xfs_mount_t *mpp)
 	mp = mpp;
 }
 
+/*
+ * Read a buffer into memory, even if it fails verifier checks.
+ * If an IO error happens, return a zeroed buffer.
+ */
+static inline int
+salvage_buffer(
+	struct xfs_buftarg	*target,
+	xfs_daddr_t		blkno,
+	size_t			numblks,
+	struct xfs_buf		**bpp,
+	const struct xfs_buf_ops *ops)
+{
+	int			error;
+
+	error = -libxfs_buf_read(target, blkno, numblks,
+			LIBXFS_READBUF_SALVAGE, bpp, ops);
+	if (error != EIO)
+		return error;
+
+	/*
+	 * If the read produced an IO error, grab the buffer (which will now
+	 * be full of zeroes) and make it look like we read the data from the
+	 * disk but it failed verification.
+	 */
+	error = -libxfs_buf_get(target, blkno, numblks, bpp);
+	if (error)
+		return error;
+
+	(*bpp)->b_error = -EFSCORRUPTED;
+	(*bpp)->b_ops = ops;
+	return 0;
+}
+
 static void
 scan_sbtree(
 	xfs_agblock_t	root,
@@ -66,11 +99,12 @@ scan_sbtree(
 	void		*priv,
 	const struct xfs_buf_ops *ops)
 {
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
+	int		error;
 
-	bp = libxfs_buf_read(mp->m_dev, XFS_AGB_TO_DADDR(mp, agno, root),
-			XFS_FSB_TO_BB(mp, 1), 0, ops);
-	if (!bp) {
+	error = salvage_buffer(mp->m_dev, XFS_AGB_TO_DADDR(mp, agno, root),
+			XFS_FSB_TO_BB(mp, 1), &bp, ops);
+	if (error) {
 		do_error(_("can't read btree block %d/%d\n"), agno, root);
 		return;
 	}
@@ -123,9 +157,9 @@ scan_lbtree(
 	int		dirty = 0;
 	bool		badcrc = false;
 
-	bp = libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, root),
-		      XFS_FSB_TO_BB(mp, 1), 0, ops);
-	if (!bp)  {
+	err = salvage_buffer(mp->m_dev, XFS_FSB_TO_DADDR(mp, root),
+			XFS_FSB_TO_BB(mp, 1), &bp, ops);
+	if (err) {
 		do_error(_("can't read btree block %d/%d\n"),
 			XFS_FSB_TO_AGNO(mp, root),
 			XFS_FSB_TO_AGBNO(mp, root));
@@ -2098,6 +2132,7 @@ scan_freelist(
 	xfs_buf_t		*agflbuf;
 	xfs_agnumber_t		agno;
 	struct agfl_state	state;
+	int			error;
 
 	agno = be32_to_cpu(agf->agf_seqno);
 
@@ -2109,10 +2144,10 @@ scan_freelist(
 	if (be32_to_cpu(agf->agf_flcount) == 0)
 		return;
 
-	agflbuf = libxfs_buf_read(mp->m_dev,
-				 XFS_AG_DADDR(mp, agno, XFS_AGFL_DADDR(mp)),
-				 XFS_FSS_TO_BB(mp, 1), 0, &xfs_agfl_buf_ops);
-	if (!agflbuf)  {
+	error = salvage_buffer(mp->m_dev,
+			XFS_AG_DADDR(mp, agno, XFS_AGFL_DADDR(mp)),
+			XFS_FSS_TO_BB(mp, 1), &agflbuf, &xfs_agfl_buf_ops);
+	if (error) {
 		do_abort(_("can't read agfl block for ag %d\n"), agno);
 		return;
 	}
@@ -2326,6 +2361,7 @@ scan_ag(
 	int		sb_dirty = 0;
 	int		status;
 	char		*objname = NULL;
+	int		error;
 
 	sb = (struct xfs_sb *)calloc(BBTOB(XFS_FSS_TO_BB(mp, 1)), 1);
 	if (!sb) {
@@ -2333,27 +2369,27 @@ scan_ag(
 		return;
 	}
 
-	sbbuf = libxfs_buf_read(mp->m_dev, XFS_AG_DADDR(mp, agno, XFS_SB_DADDR),
-				XFS_FSS_TO_BB(mp, 1), 0, &xfs_sb_buf_ops);
-	if (!sbbuf)  {
+	error = salvage_buffer(mp->m_dev, XFS_AG_DADDR(mp, agno, XFS_SB_DADDR),
+			XFS_FSS_TO_BB(mp, 1), &sbbuf, &xfs_sb_buf_ops);
+	if (error) {
 		objname = _("root superblock");
 		goto out_free_sb;
 	}
 	libxfs_sb_from_disk(sb, XFS_BUF_TO_SBP(sbbuf));
 
-	agfbuf = libxfs_buf_read(mp->m_dev,
+	error = salvage_buffer(mp->m_dev,
 			XFS_AG_DADDR(mp, agno, XFS_AGF_DADDR(mp)),
-			XFS_FSS_TO_BB(mp, 1), 0, &xfs_agf_buf_ops);
-	if (!agfbuf)  {
+			XFS_FSS_TO_BB(mp, 1), &agfbuf, &xfs_agf_buf_ops);
+	if (error) {
 		objname = _("agf block");
 		goto out_free_sbbuf;
 	}
 	agf = XFS_BUF_TO_AGF(agfbuf);
 
-	agibuf = libxfs_buf_read(mp->m_dev,
+	error = salvage_buffer(mp->m_dev,
 			XFS_AG_DADDR(mp, agno, XFS_AGI_DADDR(mp)),
-			XFS_FSS_TO_BB(mp, 1), 0, &xfs_agi_buf_ops);
-	if (!agibuf)  {
+			XFS_FSS_TO_BB(mp, 1), &agibuf, &xfs_agi_buf_ops);
+	if (error) {
 		objname = _("agi block");
 		goto out_free_agfbuf;
 	}
