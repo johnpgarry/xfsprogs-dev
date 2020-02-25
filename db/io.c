@@ -516,6 +516,7 @@ set_cur(
 	xfs_ino_t	ino;
 	uint16_t	mode;
 	const struct xfs_buf_ops *ops = type ? type->bops : NULL;
+	int		error;
 
 	if (iocur_sp < 0) {
 		dbprintf(_("set_cur no stack element to set\n"));
@@ -542,20 +543,21 @@ set_cur(
 		if (!iocur_top->bbmap)
 			return;
 		memcpy(iocur_top->bbmap, bbmap, sizeof(struct bbmap));
-		libxfs_buf_read_map(mp->m_ddev_targp, bbmap->b, bbmap->nmaps,
-				LIBXFS_READBUF_SALVAGE, &bp, ops);
+		error = -libxfs_buf_read_map(mp->m_ddev_targp, bbmap->b,
+				bbmap->nmaps, LIBXFS_READBUF_SALVAGE, &bp,
+				ops);
 	} else {
-		libxfs_buf_read(mp->m_ddev_targp, blknum, len,
+		error = -libxfs_buf_read(mp->m_ddev_targp, blknum, len,
 				LIBXFS_READBUF_SALVAGE, &bp, ops);
 		iocur_top->bbmap = NULL;
 	}
 
 	/*
-	 * Keep the buffer even if the verifier says it is corrupted.
-	 * We're a diagnostic tool, after all.
+	 * Salvage mode means that we still get a buffer even if the verifier
+	 * says the metadata is corrupt.  Therefore, the only errors we should
+	 * get are for IO errors or runtime errors.
 	 */
-	if (!bp || (bp->b_error && bp->b_error != -EFSCORRUPTED &&
-				   bp->b_error != -EFSBADCRC))
+	if (error)
 		return;
 	iocur_top->buf = bp->b_addr;
 	iocur_top->bp = bp;
