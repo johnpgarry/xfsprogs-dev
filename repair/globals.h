@@ -113,11 +113,6 @@ extern int		lost_uquotino;
 extern int		lost_gquotino;
 extern int		lost_pquotino;
 
-extern xfs_agino_t	first_prealloc_ino;
-extern xfs_agblock_t	bnobt_root;
-extern xfs_agblock_t	bcntbt_root;
-extern xfs_agblock_t	inobt_root;
-
 /* configuration vars -- fs geometry dependent */
 
 extern int		inodes_per_block;
