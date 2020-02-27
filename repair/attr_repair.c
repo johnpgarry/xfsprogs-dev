@@ -980,21 +980,21 @@ process_longform_attr(
 	*repair = 0;
 
 	bno = blkmap_get(blkmap, 0);
-
-	if ( bno == NULLFSBLOCK ) {
+	if (bno == NULLFSBLOCK) {
 		if (dip->di_aformat == XFS_DINODE_FMT_EXTENTS &&
 				be16_to_cpu(dip->di_anextents) == 0)
 			return(0); /* the kernel can handle this state */
 		do_warn(
 	_("block 0 of inode %" PRIu64 " attribute fork is missing\n"),
 			ino);
-		return(1);
+		return 1;
 	}
+
 	/* FIX FOR bug 653709 -- EKN */
-	if (mp->m_sb.sb_agcount < XFS_FSB_TO_AGNO(mp, bno)) {
+	if (!xfs_verify_fsbno(mp, bno)) {
 		do_warn(
-	_("agno of attribute fork of inode %" PRIu64 " out of regular partition\n"), ino);
-		return(1);
+	_("block in attribute fork of inode %" PRIu64 " is not valid\n"), ino);
+		return 1;
 	}
 
 	bp = libxfs_readbuf(mp->m_dev, XFS_FSB_TO_DADDR(mp, bno),
