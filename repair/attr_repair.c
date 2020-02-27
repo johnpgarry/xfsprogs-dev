@@ -952,6 +952,106 @@ _("wrong FS UUID, inode %" PRIu64 " attr block %" PRIu64 "\n"),
 	return 0;
 }
 
+static int
+process_longform_leaf_root(
+	struct xfs_mount	*mp,
+	xfs_ino_t		ino,
+	struct xfs_dinode	*dip,
+	struct blkmap		*blkmap,
+	int			*repair,
+	struct xfs_buf		*bp)
+{
+	struct xfs_attr3_icleaf_hdr leafhdr;
+	xfs_dahash_t		next_hashval;
+	int			badness;
+	int			repairlinks = 0;
+
+	/*
+	 * check sibling pointers in leaf block or root block 0 before
+	 * we have to release the btree block
+	 */
+	xfs_attr3_leaf_hdr_from_disk(mp->m_attr_geo, &leafhdr, bp->b_addr);
+	if (leafhdr.forw != 0 || leafhdr.back != 0)  {
+		if (!no_modify)  {
+			do_warn(
+_("clearing forw/back pointers in block 0 for attributes in inode %" PRIu64 "\n"),
+				ino);
+			repairlinks = 1;
+			leafhdr.forw = 0;
+			leafhdr.back = 0;
+			xfs_attr3_leaf_hdr_to_disk(mp->m_attr_geo, bp->b_addr,
+					&leafhdr);
+		} else  {
+			do_warn(
+_("would clear forw/back pointers in block 0 for attributes in inode %" PRIu64 "\n"), ino);
+		}
+	}
+
+	badness = process_leaf_attr_block(mp, bp->b_addr, 0, ino, blkmap, 0,
+			&next_hashval, repair);
+	if (badness) {
+		*repair = 0;
+		/* the block is bad.  lose the attribute fork. */
+		libxfs_putbuf(bp);
+		return 1;
+	}
+
+	*repair = *repair || repairlinks;
+
+	if (*repair && !no_modify)
+		libxfs_writebuf(bp, 0);
+	else
+		libxfs_putbuf(bp);
+
+	return 0;
+}
+
+static int
+process_longform_da_root(
+	struct xfs_mount	*mp,
+	xfs_ino_t		ino,
+	struct xfs_dinode	*dip,
+	struct blkmap		*blkmap,
+	int			*repair,
+	struct xfs_buf		*bp)
+{
+	struct xfs_da3_icnode_hdr	da3_hdr;
+	int			repairlinks = 0;
+	int			error;
+
+	libxfs_da3_node_hdr_from_disk(mp, &da3_hdr, bp->b_addr);
+	/*
+	 * check sibling pointers in leaf block or root block 0 before
+	 * we have to release the btree block
+	 */
+	if (da3_hdr.forw != 0 || da3_hdr.back != 0)  {
+		if (!no_modify)  {
+			do_warn(
+_("clearing forw/back pointers in block 0 for attributes in inode %" PRIu64 "\n"),
+				ino);
+
+			repairlinks = 1;
+			da3_hdr.forw = 0;
+			da3_hdr.back = 0;
+			xfs_da3_node_hdr_to_disk(mp, bp->b_addr, &da3_hdr);
+		} else  {
+			do_warn(
+_("would clear forw/back pointers in block 0 for attributes in inode %" PRIu64 "\n"), ino);
+		}
+	}
+
+	/* must do this now, to release block 0 before the traversal */
+	if ((*repair || repairlinks) && !no_modify) {
+		*repair = 1;
+		libxfs_writebuf(bp, 0);
+	} else
+		libxfs_putbuf(bp);
+	error = process_node_attr(mp, ino, dip, blkmap); /* + repair */
+	if (error)
+		*repair = 0;
+	return error;
+}
+
 /*
  * Start processing for a leaf or fuller btree.
  * A leaf directory is one where the attribute fork is too big for
@@ -963,19 +1063,15 @@ _("wrong FS UUID, inode %" PRIu64 " attr block %" PRIu64 "\n"),
  */
 static int
 process_longform_attr(
-	xfs_mount_t	*mp,
-	xfs_ino_t	ino,
-	xfs_dinode_t	*dip,
-	blkmap_t	*blkmap,
-	int		*repair)	/* out - 1 if something was fixed */
+	struct xfs_mount	*mp,
+	xfs_ino_t		ino,
+	struct xfs_dinode	*dip,
+	struct blkmap		*blkmap,
+	int			*repair) /* out - 1 if something was fixed */
 {
-	xfs_attr_leafblock_t	*leaf;
-	xfs_fsblock_t	bno;
-	xfs_buf_t	*bp;
-	xfs_dahash_t	next_hashval;
-	int		repairlinks = 0;
-	struct xfs_attr3_icleaf_hdr leafhdr;
-	int		error;
+	xfs_fsblock_t		bno;
+	struct xfs_buf		*bp;
+	struct xfs_da_blkinfo	*info;
 
 	*repair = 0;
 
@@ -1015,74 +1111,31 @@ process_longform_attr(
 		return 1;
 	}
 
-	/* verify leaf block */
-	leaf = bp->b_addr;
-	xfs_attr3_leaf_hdr_from_disk(mp->m_attr_geo, &leafhdr, leaf);
-
-	/* check sibling pointers in leaf block or root block 0 before
-	* we have to release the btree block
-	*/
-	if (leafhdr.forw != 0 || leafhdr.back != 0)  {
-		if (!no_modify)  {
-			do_warn(
-	_("clearing forw/back pointers in block 0 for attributes in inode %" PRIu64 "\n"),
-				ino);
-			repairlinks = 1;
-			leafhdr.forw = 0;
-			leafhdr.back = 0;
-			xfs_attr3_leaf_hdr_to_disk(mp->m_attr_geo,
-						   leaf, &leafhdr);
-		} else  {
-			do_warn(
-	_("would clear forw/back pointers in block 0 for attributes in inode %" PRIu64 "\n"), ino);
-		}
-	}
-
 	/*
 	 * use magic number to tell us what type of attribute this is.
 	 * it's possible to have a node or leaf attribute in either an
 	 * extent format or btree format attribute fork.
 	 */
-	switch (leafhdr.magic) {
+	info = bp->b_addr;
+	switch (be16_to_cpu(info->magic)) {
 	case XFS_ATTR_LEAF_MAGIC:	/* leaf-form attribute */
 	case XFS_ATTR3_LEAF_MAGIC:
-		if (process_leaf_attr_block(mp, leaf, 0, ino, blkmap,
-				0, &next_hashval, repair)) {
-			*repair = 0;
-			/* the block is bad.  lose the attribute fork. */
-			libxfs_putbuf(bp);
-			return(1);
-		}
-		*repair = *repair || repairlinks;
-		break;
-
+		return process_longform_leaf_root(mp, ino, dip, blkmap, repair,
+				bp);
 	case XFS_DA_NODE_MAGIC:		/* btree-form attribute */
 	case XFS_DA3_NODE_MAGIC:
-		/* must do this now, to release block 0 before the traversal */
-		if ((*repair || repairlinks) && !no_modify) {
-			*repair = 1;
-			libxfs_writebuf(bp, 0);
-		} else
-			libxfs_putbuf(bp);
-		error = process_node_attr(mp, ino, dip, blkmap); /* + repair */
-		if (error)
-			*repair = 0;
-		return error;
+		return process_longform_da_root(mp, ino, dip, blkmap, repair,
+				bp);
 	default:
 		do_warn(
 	_("bad attribute leaf magic # %#x for dir ino %" PRIu64 "\n"),
-			be16_to_cpu(leaf->hdr.info.magic), ino);
+			be16_to_cpu(info->magic), ino);
 		libxfs_putbuf(bp);
 		*repair = 0;
-		return(1);
+		return 1;
 	}
 
-	if (*repair && !no_modify)
-		libxfs_writebuf(bp, 0);
-	else
-		libxfs_putbuf(bp);
-
-	return(0);  /* repair may be set */
+	return 0; /* should never get here */
 }
 
 
