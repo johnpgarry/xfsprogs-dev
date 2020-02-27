@@ -1106,12 +1106,7 @@ _("Note - stripe unit (%d) and width (%d) were copied from a backup superblock.\
 	format_log_max_lsn(mp);
 	libxfs_umount(mp);
 
-	if (x.rtdev)
-		libxfs_device_close(x.rtdev);
-	if (x.logdev && x.logdev != x.ddev)
-		libxfs_device_close(x.logdev);
-	libxfs_device_close(x.ddev);
-	libxfs_destroy();
+	libxfs_destroy(&x);
 
 	if (verbose)
 		summary_report();

@@ -136,7 +136,7 @@ typedef struct libxfs_xinit {
 extern char	*progname;
 extern xfs_lsn_t libxfs_max_lsn;
 extern int	libxfs_init (libxfs_init_t *);
-extern void	libxfs_destroy (void);
+void		libxfs_destroy(struct libxfs_xinit *li);
 extern int	libxfs_device_to_fd (dev_t);
 extern dev_t	libxfs_device_open (char *, int, int, int);
 extern void	libxfs_device_close (dev_t);

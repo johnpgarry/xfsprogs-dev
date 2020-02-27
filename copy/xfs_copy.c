@@ -1200,7 +1200,7 @@ main(int argc, char **argv)
 
 	check_errors();
 	libxfs_umount(mp);
-	libxfs_destroy();
+	libxfs_destroy(&xargs);
 
 	return 0;
 }

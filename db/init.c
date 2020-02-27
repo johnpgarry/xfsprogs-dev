@@ -217,13 +217,7 @@ close_devices:
 	while (iocur_sp > start_iocur_sp)
 		pop_cur();
 	libxfs_umount(mp);
-	if (x.ddev)
-		libxfs_device_close(x.ddev);
-	if (x.logdev && x.logdev != x.ddev)
-		libxfs_device_close(x.logdev);
-	if (x.rtdev)
-		libxfs_device_close(x.rtdev);
-	libxfs_destroy();
+	libxfs_destroy(&x);
 
 	return exitcode;
 }

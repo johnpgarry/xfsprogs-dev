@@ -259,6 +259,21 @@ destroy_zones(void)
 	return leaked;
 }
 
+static void
+libxfs_close_devices(
+	struct libxfs_xinit	*li)
+{
+	if (li->ddev)
+		libxfs_device_close(li->ddev);
+	if (li->logdev && li->logdev != li->ddev)
+		libxfs_device_close(li->logdev);
+	if (li->rtdev)
+		libxfs_device_close(li->rtdev);
+
+	li->ddev = li->logdev = li->rtdev = 0;
+	li->dfd = li->logfd = li->rtfd = -1;
+}
+
 /*
  * libxfs initialization.
  * Caller gets a 0 on failure (and we print a message), 1 on success.
@@ -385,12 +400,9 @@ done:
 		unlink(rtpath);
 	if (fd >= 0)
 		close(fd);
-	if (!rval && a->ddev)
-		libxfs_device_close(a->ddev);
-	if (!rval && a->logdev)
-		libxfs_device_close(a->logdev);
-	if (!rval && a->rtdev)
-		libxfs_device_close(a->rtdev);
+	if (!rval)
+		libxfs_close_devices(a);
+
 	return rval;
 }
 
@@ -822,9 +834,12 @@ libxfs_umount(xfs_mount_t *mp)
  * Release any global resources used by libxfs.
  */
 void
-libxfs_destroy(void)
+libxfs_destroy(
+	struct libxfs_xinit	*li)
 {
-	int	leaked;
+	int			leaked;
+
+	libxfs_close_devices(li);
 
 	/* Free everything from the buffer cache before freeing buffer zone */
 	libxfs_bcache_purge();

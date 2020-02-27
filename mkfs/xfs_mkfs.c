@@ -3892,12 +3892,7 @@ main(
 	libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 
 	libxfs_umount(mp);
-	if (xi.rtdev)
-		libxfs_device_close(xi.rtdev);
-	if (xi.logdev && xi.logdev != xi.ddev)
-		libxfs_device_close(xi.logdev);
-	libxfs_device_close(xi.ddev);
-	libxfs_destroy();
+	libxfs_destroy(&xi);
 
 	return 0;
 }
