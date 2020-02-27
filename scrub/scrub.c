@@ -744,9 +744,8 @@ _("Filesystem is shut down, aborting."));
 		/* fall through */
 	case EINVAL:
 		/* Kernel doesn't know how to repair this? */
-		str_corrupt(ctx,
-_("%s: Don't know how to fix; offline repair required."),
-				descr_render(&dsc));
+		str_corrupt(ctx, descr_render(&dsc),
+_("Don't know how to fix; offline repair required."));
 		return CHECK_DONE;
 	case EROFS:
 		/* Read-only filesystem, can't fix. */
