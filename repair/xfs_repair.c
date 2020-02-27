@@ -458,6 +458,84 @@ out:
 }
 
 /*
+ * If any of the secondary SBs contain a *correct* value for sunit, write that
+ * back to the primary superblock.
+ */
+static void
+guess_correct_sunit(
+	struct xfs_mount	*mp)
+{
+	struct xfs_sb		sb;
+	struct xfs_buf		*bp;
+	xfs_ino_t		calc_rootino = NULLFSINO;
+	xfs_agnumber_t		agno;
+	unsigned int		new_sunit;
+	unsigned int		sunit_guess;
+	int			error;
+
+	/* Try reading secondary supers to see if we find a good sb_unit. */
+	for (agno = 1; agno < mp->m_sb.sb_agcount; agno++) {
+		error = -libxfs_sb_read_secondary(mp, NULL, agno, &bp);
+		if (error)
+			continue;
+		libxfs_sb_from_disk(&sb, XFS_BUF_TO_SBP(bp));
+		libxfs_putbuf(bp);
+
+		calc_rootino = libxfs_ialloc_calc_rootino(mp, sb.sb_unit);
+		if (calc_rootino == mp->m_sb.sb_rootino)
+			break;
+	}
+
+	/* If we found a reasonable value, log where we found it. */
+	if (calc_rootino == mp->m_sb.sb_rootino) {
+		do_warn(_("AG %u superblock contains plausible sb_unit value\n"),
+				agno);
+		new_sunit = sb.sb_unit;
+		goto fix;
+	}
+
+	/* Try successive powers of two. */
+	for (sunit_guess = 1;
+	     sunit_guess <= XFS_AG_MAX_BLOCKS(mp->m_sb.sb_blocklog);
+	     sunit_guess *= 2) {
+		calc_rootino = libxfs_ialloc_calc_rootino(mp, sunit_guess);
+		if (calc_rootino == mp->m_sb.sb_rootino)
+			break;
+	}
+
+	/* If we found a reasonable value, log where we found it. */
+	if (calc_rootino == mp->m_sb.sb_rootino) {
+		do_warn(_("Found an sb_unit value that looks plausible\n"));
+		new_sunit = sunit_guess;
+		goto fix;
+	}
+
+	do_warn(_("Could not estimate a plausible sb_unit value\n"));
+	return;
+
+fix:
+	if (!no_modify)
+		do_warn(_("Resetting sb_unit to %u\n"), new_sunit);
+	else
+		do_warn(_("Would reset sb_unit to %u\n"), new_sunit);
+
+	/*
+	 * Just set the value -- safe since the superblock doesn't get flushed
+	 * out if no_modify is set.
+	 */
+	mp->m_sb.sb_unit = new_sunit;
+
+	/* Make sure that swidth is still a multiple of sunit. */
+	if (mp->m_sb.sb_width % mp->m_sb.sb_unit == 0)
+		return;
+
+	if (!no_modify)
+		do_warn(_("Resetting sb_width to %u\n"), new_sunit);
+	else
+		do_warn(_("Would reset sb_width to %u\n"), new_sunit);
+}
+
+/*
  * Make sure that the first 3 inodes in the filesystem are the root directory,
  * the realtime bitmap, and the realtime summary, in that order.
  */
@@ -480,6 +558,7 @@ calc_mkfs(
 		do_warn(
 _("sb root inode value %" PRIu64 " valid but in unaligned location (expected %"PRIu64") possibly due to sunit change\n"),
 			mp->m_sb.sb_rootino, rootino);
+		guess_correct_sunit(mp);
 		rootino = mp->m_sb.sb_rootino;
 	}
 
