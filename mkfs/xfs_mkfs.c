@@ -3549,6 +3549,38 @@ rewrite_secondary_superblocks(
 	libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 }
 
+static void
+check_root_ino(
+	struct xfs_mount	*mp)
+{
+	xfs_ino_t		ino;
+
+	if (XFS_INO_TO_AGNO(mp, mp->m_sb.sb_rootino) != 0) {
+		fprintf(stderr,
+			_("%s: root inode created in AG %u, not AG 0\n"),
+			progname, XFS_INO_TO_AGNO(mp, mp->m_sb.sb_rootino));
+		exit(1);
+	}
+
+	/*
+	 * The superblock points to the root directory inode, but xfs_repair
+	 * expects to find the root inode in a very specific location computed
+	 * from the filesystem geometry for an extra level of verification.
+	 *
+	 * Fail the format immediately if those assumptions ever break, because
+	 * repair will toss the root directory.
+	 */
+	ino = libxfs_ialloc_calc_rootino(mp, mp->m_sb.sb_unit);
+	if (mp->m_sb.sb_rootino != ino) {
+		fprintf(stderr,
+	_("%s: root inode (%llu) not allocated in expected location (%llu)\n"),
+			progname,
+			(unsigned long long)mp->m_sb.sb_rootino,
+			(unsigned long long)ino);
+		exit(1);
+	}
+}
+
 int
 main(
 	int			argc,
@@ -3835,12 +3867,7 @@ main(
 	/*
 	 * Protect ourselves against possible stupidity
 	 */
-	if (XFS_INO_TO_AGNO(mp, mp->m_sb.sb_rootino) != 0) {
-		fprintf(stderr,
-			_("%s: root inode created in AG %u, not AG 0\n"),
-			progname, XFS_INO_TO_AGNO(mp, mp->m_sb.sb_rootino));
-		exit(1);
-	}
+	check_root_ino(mp);
 
 	/*
 	 * Re-write multiple secondary superblocks with rootinode field set
