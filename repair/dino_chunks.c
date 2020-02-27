@@ -65,7 +65,7 @@ check_aginode_block(xfs_mount_t	*mp,
  * inode chunk.  returns number of new inodes if things are good
  * and 0 if bad.  start is the start of the discovered inode chunk.
  * routine assumes that ino is a legal inode number
- * (verified by verify_inum()).  If the inode chunk turns out
+ * (verified by libxfs_verify_ino()).  If the inode chunk turns out
  * to be good, this routine will put the inode chunk into
  * the good inode chunk tree if required.
  *

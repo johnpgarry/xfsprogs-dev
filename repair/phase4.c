@@ -36,7 +36,7 @@ quotino_check(xfs_mount_t *mp)
 	ino_tree_node_t *irec;
 
 	if (mp->m_sb.sb_uquotino != NULLFSINO && mp->m_sb.sb_uquotino != 0)  {
-		if (verify_inum(mp, mp->m_sb.sb_uquotino))
+		if (!libxfs_verify_ino(mp, mp->m_sb.sb_uquotino))
 			irec = NULL;
 		else
 			irec = find_inode_rec(mp,
@@ -52,7 +52,7 @@ quotino_check(xfs_mount_t *mp)
 	}
 
 	if (mp->m_sb.sb_gquotino != NULLFSINO && mp->m_sb.sb_gquotino != 0)  {
-		if (verify_inum(mp, mp->m_sb.sb_gquotino))
+		if (!libxfs_verify_ino(mp, mp->m_sb.sb_gquotino))
 			irec = NULL;
 		else
 			irec = find_inode_rec(mp,
@@ -68,7 +68,7 @@ quotino_check(xfs_mount_t *mp)
 	}
 
 	if (mp->m_sb.sb_pquotino != NULLFSINO && mp->m_sb.sb_pquotino != 0)  {
-		if (verify_inum(mp, mp->m_sb.sb_pquotino))
+		if (!libxfs_verify_ino(mp, mp->m_sb.sb_pquotino))
 			irec = NULL;
 		else
 			irec = find_inode_rec(mp,
@@ -112,9 +112,9 @@ quota_sb_check(xfs_mount_t *mp)
 	    (mp->m_sb.sb_pquotino == NULLFSINO || mp->m_sb.sb_pquotino == 0))  {
 		lost_quotas = 1;
 		fs_quotas = 0;
-	} else if (!verify_inum(mp, mp->m_sb.sb_uquotino) &&
-			!verify_inum(mp, mp->m_sb.sb_gquotino) &&
-			!verify_inum(mp, mp->m_sb.sb_pquotino)) {
+	} else if (libxfs_verify_ino(mp, mp->m_sb.sb_uquotino) &&
+		   libxfs_verify_ino(mp, mp->m_sb.sb_gquotino) &&
+		   libxfs_verify_ino(mp, mp->m_sb.sb_pquotino)) {
 		fs_quotas = 1;
 	}
 }

@@ -176,6 +176,7 @@
 #define xfs_trans_roll			libxfs_trans_roll
 
 #define xfs_verify_cksum		libxfs_verify_cksum
+#define xfs_verify_dir_ino		libxfs_verify_dir_ino
 #define xfs_verify_ino			libxfs_verify_ino
 #define xfs_verify_rtbno		libxfs_verify_rtbno
 #define xfs_zero_extent			libxfs_zero_extent

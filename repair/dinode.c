@@ -172,35 +172,6 @@ verify_ag_bno(xfs_sb_t *sbp,
 }
 
 /*
- * returns 0 if inode number is valid, 1 if bogus
- */
-int
-verify_inum(xfs_mount_t		*mp,
-		xfs_ino_t	ino)
-{
-	xfs_agnumber_t	agno;
-	xfs_agino_t	agino;
-	xfs_agblock_t	agbno;
-	xfs_sb_t	*sbp = &mp->m_sb;;
-
-	/* range check ag #, ag block.  range-checking offset is pointless */
-
-	agno = XFS_INO_TO_AGNO(mp, ino);
-	agino = XFS_INO_TO_AGINO(mp, ino);
-	agbno = XFS_AGINO_TO_AGBNO(mp, agino);
-	if (agbno == 0)
-		return 1;
-
-	if (ino == 0 || ino == NULLFSINO)
-		return(1);
-
-	if (ino != XFS_AGINO_TO_INO(mp, agno, agino))
-		return(1);
-
-	return verify_ag_bno(sbp, agno, agbno);
-}
-
-/*
  * have a separate routine to ensure that we don't accidentally
  * lose illegally set bits in the agino by turning it into an FSINO
  * to feed to the above routine

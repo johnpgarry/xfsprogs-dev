@@ -215,7 +215,7 @@ process_sf_dir2(
 		if (lino == ino) {
 			junkit = 1;
 			junkreason = _("current");
-		} else if (verify_inum(mp, lino)) {
+		} else if (!libxfs_verify_dir_ino(mp, lino)) {
 			junkit = 1;
 			junkreason = _("invalid");
 		} else if (lino == mp->m_sb.sb_rbmino)  {
@@ -486,8 +486,7 @@ _("corrected entry offsets in directory %" PRIu64 "\n"),
 	 * If the validation fails for the root inode we fix it in
 	 * the next else case.
 	 */
-	if (verify_inum(mp, *parent) && ino != mp->m_sb.sb_rootino)  {
-
+	if (!libxfs_verify_dir_ino(mp, *parent) && ino != mp->m_sb.sb_rootino) {
 		do_warn(
 _("bogus .. inode number (%" PRIu64 ") in directory inode %" PRIu64 ", "),
 				*parent, ino);
@@ -674,7 +673,7 @@ process_dir2_data(
 			 * (or did it ourselves) during phase 3.
 			 */
 			clearino = 0;
-		} else if (verify_inum(mp, ent_ino)) {
+		} else if (!libxfs_verify_dir_ino(mp, ent_ino)) {
 			/*
 			 * Bad inode number.  Clear the inode number and the
 			 * entry will get removed later.  We don't trash the

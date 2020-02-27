@@ -78,10 +78,6 @@ verify_uncertain_dinode(xfs_mount_t *mp,
 		xfs_agino_t ino);
 
 int
-verify_inum(xfs_mount_t		*mp,
-		xfs_ino_t	ino);
-
-int
 verify_aginum(xfs_mount_t	*mp,
 		xfs_agnumber_t	agno,
 		xfs_agino_t	agino);

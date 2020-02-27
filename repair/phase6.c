@@ -1814,7 +1814,7 @@ longform_dir2_entry_check_data(
 			}
 			continue;
 		}
-		ASSERT(no_modify || !verify_inum(mp, inum));
+		ASSERT(no_modify || libxfs_verify_dir_ino(mp, inum));
 		/*
 		 * special case the . entry.  we know there's only one
 		 * '.' and only '.' points to itself because bogus entries
@@ -1845,7 +1845,7 @@ longform_dir2_entry_check_data(
 		/*
 		 * skip entries with bogus inumbers if we're in no modify mode
 		 */
-		if (no_modify && verify_inum(mp, inum))
+		if (no_modify && !libxfs_verify_dir_ino(mp, inum))
 			continue;
 
 		/* validate ftype field if supported */
@@ -2634,14 +2634,14 @@ shortform_dir2_entry_check(xfs_mount_t	*mp,
 		fname[sfep->namelen] = '\0';
 
 		ASSERT(no_modify || (lino != NULLFSINO && lino != 0));
-		ASSERT(no_modify || !verify_inum(mp, lino));
+		ASSERT(no_modify || libxfs_verify_dir_ino(mp, lino));
 
 		/*
 		 * Also skip entries with bogus inode numbers if we're
 		 * in no modify mode.
 		 */
 
-		if (no_modify && verify_inum(mp, lino))  {
+		if (no_modify && !libxfs_verify_dir_ino(mp, lino))  {
 			next_sfep = libxfs_dir2_sf_nextentry(mp, sfp, sfep);
 			continue;
 		}
