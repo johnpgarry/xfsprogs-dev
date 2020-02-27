@@ -93,6 +93,7 @@
 #define xfs_dqblk_repair		libxfs_dqblk_repair
 #define xfs_dquot_verify		libxfs_dquot_verify
 
+#define xfs_finobt_calc_reserves	libxfs_finobt_calc_reserves
 #define xfs_free_extent			libxfs_free_extent
 #define xfs_fs_geometry			libxfs_fs_geometry
 #define xfs_highbit32			libxfs_highbit32
@@ -118,13 +119,16 @@
 #define xfs_perag_put			libxfs_perag_put
 #define xfs_prealloc_blocks		libxfs_prealloc_blocks
 
+#define xfs_read_agf			libxfs_read_agf
 #define xfs_refc_block			libxfs_refc_block
+#define xfs_refcountbt_calc_reserves	libxfs_refcountbt_calc_reserves
 #define xfs_refcountbt_init_cursor	libxfs_refcountbt_init_cursor
 #define xfs_refcountbt_maxrecs		libxfs_refcountbt_maxrecs
 #define xfs_refcount_get_rec		libxfs_refcount_get_rec
 #define xfs_refcount_lookup_le		libxfs_refcount_lookup_le
 
 #define xfs_rmap_alloc			libxfs_rmap_alloc
+#define xfs_rmapbt_calc_reserves	libxfs_rmapbt_calc_reserves
 #define xfs_rmapbt_init_cursor		libxfs_rmapbt_init_cursor
 #define xfs_rmapbt_maxrecs		libxfs_rmapbt_maxrecs
 #define xfs_rmap_compare		libxfs_rmap_compare
@@ -176,9 +180,6 @@
 #define xfs_verify_rtbno		libxfs_verify_rtbno
 #define xfs_zero_extent			libxfs_zero_extent
 
-#define xfs_refcountbt_calc_reserves	libxfs_refcountbt_calc_reserves
-#define xfs_finobt_calc_reserves	libxfs_finobt_calc_reserves
-#define xfs_rmapbt_calc_reserves	libxfs_rmapbt_calc_reserves
-#define xfs_read_agf			libxfs_read_agf
+/* Please keep this list alphabetized. */
 
 #endif /* __LIBXFS_API_DEFS_H__ */
