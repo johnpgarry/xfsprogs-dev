@@ -395,6 +395,37 @@ do_log(char const *msg, ...)
 	va_end(args);
 }
 
+/* Make sure a fixed-location inode is where it should be. */
+static void
+validate_sb_ino(
+	xfs_ino_t	*ino,
+	xfs_ino_t	expected_ino,
+	const char	*tag)
+{
+	if (*ino == expected_ino)
+		return;
+
+	do_warn(
+_("sb %s inode value %" PRIu64 " %sinconsistent with calculated value %"PRIu64"\n"),
+		tag, *ino, *ino == NULLFSINO ? "(NULLFSINO) " : "",
+		expected_ino);
+
+	if (!no_modify)
+		do_warn(
+_("resetting superblock %s inode pointer to %"PRIu64"\n"),
+			tag, expected_ino);
+	else
+		do_warn(
+_("would reset superblock %s inode pointer to %"PRIu64"\n"),
+			tag, expected_ino);
+
+	/*
+	 * Just set the value -- safe since the superblock doesn't get flushed
+	 * out if no_modify is set.
+	 */
+	*ino = expected_ino;
+}
+
 static void
 calc_mkfs(xfs_mount_t *mp)
 {
@@ -463,75 +494,12 @@ calc_mkfs(xfs_mount_t *mp)
 	/*
 	 * now the first 3 inodes in the system
 	 */
-	if (mp->m_sb.sb_rootino != first_prealloc_ino)  {
-		do_warn(
-_("sb root inode value %" PRIu64 " %sinconsistent with calculated value %u\n"),
-			mp->m_sb.sb_rootino,
-			(mp->m_sb.sb_rootino == NULLFSINO ? "(NULLFSINO) ":""),
-			first_prealloc_ino);
-
-		if (!no_modify)
-			do_warn(
-		_("resetting superblock root inode pointer to %u\n"),
-				first_prealloc_ino);
-		else
-			do_warn(
-		_("would reset superblock root inode pointer to %u\n"),
-				first_prealloc_ino);
-
-		/*
-		 * just set the value -- safe since the superblock
-		 * doesn't get flushed out if no_modify is set
-		 */
-		mp->m_sb.sb_rootino = first_prealloc_ino;
-	}
-
-	if (mp->m_sb.sb_rbmino != first_prealloc_ino + 1)  {
-		do_warn(
-_("sb realtime bitmap inode %" PRIu64 " %sinconsistent with calculated value %u\n"),
-			mp->m_sb.sb_rbmino,
-			(mp->m_sb.sb_rbmino == NULLFSINO ? "(NULLFSINO) ":""),
-			first_prealloc_ino + 1);
-
-		if (!no_modify)
-			do_warn(
-		_("resetting superblock realtime bitmap ino pointer to %u\n"),
-				first_prealloc_ino + 1);
-		else
-			do_warn(
-		_("would reset superblock realtime bitmap ino pointer to %u\n"),
-				first_prealloc_ino + 1);
-
-		/*
-		 * just set the value -- safe since the superblock
-		 * doesn't get flushed out if no_modify is set
-		 */
-		mp->m_sb.sb_rbmino = first_prealloc_ino + 1;
-	}
-
-	if (mp->m_sb.sb_rsumino != first_prealloc_ino + 2)  {
-		do_warn(
-_("sb realtime summary inode %" PRIu64 " %sinconsistent with calculated value %u\n"),
-			mp->m_sb.sb_rsumino,
-			(mp->m_sb.sb_rsumino == NULLFSINO ? "(NULLFSINO) ":""),
-			first_prealloc_ino + 2);
-
-		if (!no_modify)
-			do_warn(
-		_("resetting superblock realtime summary ino pointer to %u\n"),
-				first_prealloc_ino + 2);
-		else
-			do_warn(
-		_("would reset superblock realtime summary ino pointer to %u\n"),
-				first_prealloc_ino + 2);
-
-		/*
-		 * just set the value -- safe since the superblock
-		 * doesn't get flushed out if no_modify is set
-		 */
-		mp->m_sb.sb_rsumino = first_prealloc_ino + 2;
-	}
-
+	validate_sb_ino(&mp->m_sb.sb_rootino, first_prealloc_ino,
+			_("root"));
+	validate_sb_ino(&mp->m_sb.sb_rbmino, first_prealloc_ino + 1,
+			_("realtime bitmap"));
+	validate_sb_ino(&mp->m_sb.sb_rsumino, first_prealloc_ino + 2,
+			_("realtime summary"));
 }
 
 /*
