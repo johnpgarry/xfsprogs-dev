@@ -2272,6 +2272,7 @@ process_dinode_int(xfs_mount_t *mp,
 	const int		is_free = 0;
 	const int		is_used = 1;
 	blkmap_t		*dblkmap = NULL;
+	xfs_agino_t		unlinked_ino;
 
 	*dirty = *isa_dir = 0;
 	*used = is_used;
@@ -2348,6 +2349,23 @@ process_dinode_int(xfs_mount_t *mp,
 				*dirty = 1;
 			} else
 				do_warn(_(" would reset version number\n"));
+		}
+	}
+
+	unlinked_ino = be32_to_cpu(dino->di_next_unlinked);
+	if (!xfs_verify_agino_or_null(mp, agno, unlinked_ino)) {
+		retval = 1;
+		if (!uncertain)
+			do_warn(_("bad next_unlinked 0x%x on inode %" PRIu64 "%c"),
+				be32_to_cpu(dino->di_next_unlinked), lino,
+				verify_mode ? '\n' : ',');
+		if (!verify_mode) {
+			if (!no_modify) {
+				do_warn(_(" resetting next_unlinked\n"));
+				clear_dinode_unlinked(mp, dino);
+				*dirty = 1;
+			} else
+				do_warn(_(" would reset next_unlinked\n"));
 		}
 	}
 
