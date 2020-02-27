@@ -426,6 +426,37 @@ _("would reset superblock %s inode pointer to %"PRIu64"\n"),
 	*ino = expected_ino;
 }
 
+/* Does the root directory inode look like a plausible root directory? */
+static bool
+has_plausible_rootdir(
+	struct xfs_mount	*mp)
+{
+	struct xfs_inode	*ip;
+	xfs_ino_t		ino;
+	int			error;
+	bool			ret = false;
+
+	error = -libxfs_iget(mp, NULL, mp->m_sb.sb_rootino, 0, &ip,
+			&xfs_default_ifork_ops);
+	if (error)
+		goto out;
+	if (!S_ISDIR(VFS_I(ip)->i_mode))
+		goto out_rele;
+
+	error = -libxfs_dir_lookup(NULL, ip, &xfs_name_dotdot, &ino, NULL);
+	if (error)
+		goto out_rele;
+
+	/* The root directory '..' entry points to the directory. */
+	if (ino == mp->m_sb.sb_rootino)
+		ret = true;
+
+out_rele:
+	libxfs_irele(ip);
+out:
+	return ret;
+}
+
 /*
  * Make sure that the first 3 inodes in the filesystem are the root directory,
  * the realtime bitmap, and the realtime summary, in that order.
@@ -437,6 +468,20 @@ calc_mkfs(
 	xfs_ino_t		rootino;
 
 	rootino = libxfs_ialloc_calc_rootino(mp, mp->m_sb.sb_unit);
+
+	/*
+	 * If the root inode isn't where we think it is, check its plausibility
+	 * as a root directory.  It's possible that somebody changed sunit
+	 * since the filesystem was created, which can change the value of the
+	 * above computation.  Don't blow up the root directory if this is the
+	 * case.
+	 */
+	if (mp->m_sb.sb_rootino != rootino && has_plausible_rootdir(mp)) {
+		do_warn(
+_("sb root inode value %" PRIu64 " valid but in unaligned location (expected %"PRIu64") possibly due to sunit change\n"),
+			mp->m_sb.sb_rootino, rootino);
+		rootino = mp->m_sb.sb_rootino;
+	}
 
 	validate_sb_ino(&mp->m_sb.sb_rootino, rootino,
 			_("root"));
