@@ -61,8 +61,18 @@ libxfs_device_zero(struct xfs_buftarg *btp, xfs_daddr_t start, uint len)
 {
 	xfs_off_t	start_offset, end_offset, offset;
 	ssize_t		zsize, bytes;
+	size_t		len_bytes;
 	char		*z;
-	int		fd;
+	int		error, fd;
+
+	fd = libxfs_device_to_fd(btp->dev);
+	start_offset = LIBXFS_BBTOOFF64(start);
+
+	/* try to use special zeroing methods, fall back to writes if needed */
+	len_bytes = LIBXFS_BBTOOFF64(len);
+	error = platform_zero_range(fd, start_offset, len_bytes);
+	if (!error)
+		return 0;
 
 	zsize = min(BDSTRAT_SIZE, BBTOB(len));
 	if ((z = memalign(libxfs_device_alignment(), zsize)) == NULL) {
@@ -72,9 +82,6 @@ libxfs_device_zero(struct xfs_buftarg *btp, xfs_daddr_t start, uint len)
 		exit(1);
 	}
 	memset(z, 0, zsize);
-
-	fd = libxfs_device_to_fd(btp->dev);
-	start_offset = LIBXFS_BBTOOFF64(start);
 
 	if ((lseek(fd, start_offset, SEEK_SET)) < 0) {
 		fprintf(stderr, _("%s: %s seek to offset %llu failed: %s\n"),

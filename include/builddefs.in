@@ -144,6 +144,9 @@ endif
 ifeq ($(HAVE_GETFSMAP),yes)
 PCFLAGS+= -DHAVE_GETFSMAP
 endif
+ifeq ($(HAVE_FALLOCATE),yes)
+PCFLAGS += -DHAVE_FALLOCATE
+endif
 
 LIBICU_LIBS = @libicu_LIBS@
 LIBICU_CFLAGS = @libicu_CFLAGS@

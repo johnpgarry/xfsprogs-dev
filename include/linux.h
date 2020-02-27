@@ -20,6 +20,10 @@
 #include <stdio.h>
 #include <asm/types.h>
 #include <mntent.h>
+#include <fcntl.h>
+#if defined(HAVE_FALLOCATE)
+#include <linux/falloc.h>
+#endif
 #ifdef OVERRIDE_SYSTEM_FSXATTR
 # define fsxattr sys_fsxattr
 #endif
@@ -163,6 +167,24 @@ static inline void platform_mntent_close(struct mntent_cursor * cursor)
 {
 	endmntent(cursor->mtabp);
 }
+
+#if defined(FALLOC_FL_ZERO_RANGE)
+static inline int
+platform_zero_range(
+	int		fd,
+	xfs_off_t	start,
+	size_t		len)
+{
+	int ret;
+
+	ret = fallocate(fd, FALLOC_FL_ZERO_RANGE, start, len);
+	if (!ret)
+		return 0;
+	return -errno;
+}
+#else
+#define platform_zero_range(fd, s, l)	(-EOPNOTSUPP)
+#endif
 
 /*
  * Check whether we have to define FS_IOC_FS[GS]ETXATTR ourselves. These
