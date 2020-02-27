@@ -1643,15 +1643,6 @@ scan_single_ino_chunk(
 			case XR_E_INO1:	/* seen by rmap */
 				set_bmap(agno, agbno, XR_E_INO);
 				break;
-			case XR_E_INUSE_FS:
-			case XR_E_INUSE_FS1:
-				if (agno == 0 &&
-				    ino + j >= first_prealloc_ino &&
-				    ino + j < last_prealloc_ino) {
-					set_bmap(agno, agbno, XR_E_INO);
-					break;
-				}
-				/* fall through */
 			default:
 				/* XXX - maybe should mark block a duplicate */
 				do_warn(
@@ -1780,20 +1771,6 @@ _("inode chunk claims untracked block, finobt block - agno %d, bno %d, inopb %d\
 				set_bmap(agno, agbno, XR_E_INO);
 				suspect++;
 				break;
-			case XR_E_INUSE_FS:
-			case XR_E_INUSE_FS1:
-				if (agno == 0 &&
-				    ino + j >= first_prealloc_ino &&
-				    ino + j < last_prealloc_ino) {
-					do_warn(
-_("inode chunk claims untracked block, finobt block - agno %d, bno %d, inopb %d\n"),
-						agno, agbno, mp->m_sb.sb_inopblock);
-
-					set_bmap(agno, agbno, XR_E_INO);
-					suspect++;
-					break;
-				}
-				/* fall through */
 			default:
 				do_warn(
 _("inode chunk claims used block, finobt block - agno %d, bno %d, inopb %d\n"),

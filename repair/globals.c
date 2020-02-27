@@ -73,7 +73,6 @@ int	lost_gquotino;
 int	lost_pquotino;
 
 xfs_agino_t	first_prealloc_ino;
-xfs_agino_t	last_prealloc_ino;
 xfs_agblock_t	bnobt_root;
 xfs_agblock_t	bcntbt_root;
 xfs_agblock_t	inobt_root;

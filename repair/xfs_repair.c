@@ -460,13 +460,6 @@ calc_mkfs(xfs_mount_t *mp)
 		first_prealloc_ino = XFS_AGB_TO_AGINO(mp, fino_bno);
 	}
 
-	ASSERT(M_IGEO(mp)->ialloc_blks > 0);
-
-	if (M_IGEO(mp)->ialloc_blks > 1)
-		last_prealloc_ino = first_prealloc_ino + XFS_INODES_PER_CHUNK;
-	else
-		last_prealloc_ino = XFS_AGB_TO_AGINO(mp, fino_bno + 1);
-
 	/*
 	 * now the first 3 inodes in the system
 	 */
