@@ -2,7 +2,9 @@
 /*
  * Copyright (c) 2000-2005 Silicon Graphics, Inc. All Rights Reserved.
  */
-#include "libxfs.h"
+#include "platform_defs.h"
+#include "xfs.h"
+#include "bitops.h"
 #include "fsgeom.h"
 #include "util.h"
 
