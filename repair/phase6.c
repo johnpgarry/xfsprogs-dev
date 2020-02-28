@@ -645,7 +645,6 @@ fill_rbmino(xfs_mount_t *mp)
 		/*
 		 * fill the file one block at a time
 		 */
-		libxfs_trans_ijoin(tp, ip, 0);
 		nmap = 1;
 		error = -libxfs_bmapi_write(tp, ip, bno, 1, 0, 1, &map, &nmap);
 		if (error || nmap != 1) {
@@ -676,6 +675,7 @@ _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime bitmap inode %
 		bno++;
 	}
 
+	libxfs_trans_ijoin(tp, ip, 0);
 	error = -libxfs_trans_commit(tp);
 	if (error)
 		do_error(_("%s: commit failed, error %d\n"), __func__, error);
@@ -716,7 +716,6 @@ fill_rsumino(xfs_mount_t *mp)
 		/*
 		 * fill the file one block at a time
 		 */
-		libxfs_trans_ijoin(tp, ip, 0);
 		nmap = 1;
 		error = -libxfs_bmapi_write(tp, ip, bno, 1, 0, 1, &map, &nmap);
 		if (error || nmap != 1) {
@@ -748,6 +747,7 @@ _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime summary inode 
 		bno++;
 	}
 
+	libxfs_trans_ijoin(tp, ip, 0);
 	error = -libxfs_trans_commit(tp);
 	if (error)
 		do_error(_("%s: commit failed, error %d\n"), __func__, error);
