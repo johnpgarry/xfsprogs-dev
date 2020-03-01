@@ -3531,8 +3531,12 @@ rewrite_secondary_superblocks(
 	buf = libxfs_readbuf(mp->m_dev,
 			XFS_AGB_TO_DADDR(mp, mp->m_sb.sb_agcount - 1,
 				XFS_SB_DADDR),
-			XFS_FSS_TO_BB(mp, 1),
-			LIBXFS_EXIT_ON_FAILURE, &xfs_sb_buf_ops);
+			XFS_FSS_TO_BB(mp, 1), 0, &xfs_sb_buf_ops);
+	if (!buf) {
+		fprintf(stderr, _("%s: could not re-read AG %u superblock\n"),
+				progname, mp->m_sb.sb_agcount - 1);
+		exit(1);
+	}
 	XFS_BUF_TO_SBP(buf)->sb_rootino = cpu_to_be64(mp->m_sb.sb_rootino);
 	libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 
@@ -3543,8 +3547,12 @@ rewrite_secondary_superblocks(
 	buf = libxfs_readbuf(mp->m_dev,
 			XFS_AGB_TO_DADDR(mp, (mp->m_sb.sb_agcount - 1) / 2,
 				XFS_SB_DADDR),
-			XFS_FSS_TO_BB(mp, 1),
-			LIBXFS_EXIT_ON_FAILURE, &xfs_sb_buf_ops);
+			XFS_FSS_TO_BB(mp, 1), 0, &xfs_sb_buf_ops);
+	if (!buf) {
+		fprintf(stderr, _("%s: could not re-read AG %u superblock\n"),
+				progname, (mp->m_sb.sb_agcount - 1) / 2);
+		exit(1);
+	}
 	XFS_BUF_TO_SBP(buf)->sb_rootino = cpu_to_be64(mp->m_sb.sb_rootino);
 	libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 }

@@ -639,19 +639,20 @@ libxfs_buftarg_init(
  * such that the numerous XFS_* macros can be used.  If dev is zero,
  * no IO will be performed (no size checks, read root inodes).
  */
-xfs_mount_t *
+struct xfs_mount *
 libxfs_mount(
-	xfs_mount_t	*mp,
-	xfs_sb_t	*sb,
-	dev_t		dev,
-	dev_t		logdev,
-	dev_t		rtdev,
-	int		flags)
+	struct xfs_mount	*mp,
+	struct xfs_sb		*sb,
+	dev_t			dev,
+	dev_t			logdev,
+	dev_t			rtdev,
+	int			flags)
 {
-	xfs_daddr_t	d;
-	xfs_buf_t	*bp;
-	xfs_sb_t	*sbp;
-	int		error;
+	struct xfs_buf		*bp;
+	struct xfs_sb		*sbp;
+	xfs_daddr_t		d;
+	bool			debugger = (flags & LIBXFS_MOUNT_DEBUGGER);
+	int			error;
 
 	libxfs_buftarg_init(mp, dev, logdev, rtdev);
 
@@ -728,12 +729,12 @@ libxfs_mount(
 	if (dev == 0)	/* maxtrres, we have no device so leave now */
 		return mp;
 
-	bp = libxfs_readbuf(mp->m_dev,
-			d - XFS_FSS_TO_BB(mp, 1), XFS_FSS_TO_BB(mp, 1),
-			!(flags & LIBXFS_MOUNT_DEBUGGER), NULL);
+	/* device size checks must pass unless we're a debugger. */
+	bp = libxfs_readbuf(mp->m_dev, d - XFS_FSS_TO_BB(mp, 1),
+			XFS_FSS_TO_BB(mp, 1), 0, NULL);
 	if (!bp) {
 		fprintf(stderr, _("%s: data size check failed\n"), progname);
-		if (!(flags & LIBXFS_MOUNT_DEBUGGER))
+		if (!debugger)
 			return NULL;
 	} else
 		libxfs_putbuf(bp);
@@ -744,11 +745,10 @@ libxfs_mount(
 		if ( (XFS_BB_TO_FSB(mp, d) != mp->m_sb.sb_logblocks) ||
 		     (!(bp = libxfs_readbuf(mp->m_logdev_targp,
 					d - XFS_FSB_TO_BB(mp, 1),
-					XFS_FSB_TO_BB(mp, 1),
-					!(flags & LIBXFS_MOUNT_DEBUGGER), NULL))) ) {
+					XFS_FSB_TO_BB(mp, 1), 0, NULL)))) {
 			fprintf(stderr, _("%s: log size checks failed\n"),
 					progname);
-			if (!(flags & LIBXFS_MOUNT_DEBUGGER))
+			if (!debugger)
 				return NULL;
 		}
 		if (bp)
@@ -772,11 +772,11 @@ libxfs_mount(
 	if (sbp->sb_agcount > 1000000) {
 		bp = libxfs_readbuf(mp->m_dev,
 				XFS_AG_DADDR(mp, sbp->sb_agcount - 1, 0), 1,
-				!(flags & LIBXFS_MOUNT_DEBUGGER), NULL);
+				0, NULL);
 		if (bp->b_error) {
 			fprintf(stderr, _("%s: read of AG %u failed\n"),
 						progname, sbp->sb_agcount);
-			if (!(flags & LIBXFS_MOUNT_DEBUGGER))
+			if (!debugger)
 				return NULL;
 			fprintf(stderr, _("%s: limiting reads to AG 0\n"),
 								progname);
