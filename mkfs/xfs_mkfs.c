@@ -3417,7 +3417,7 @@ prepare_devices(
 	buf = alloc_write_buf(mp->m_ddev_targp, (xi->dsize - whack_blks),
 			whack_blks);
 	memset(buf->b_addr, 0, WHACK_SIZE);
-	libxfs_buf_mark_dirty(buf, 0);
+	libxfs_buf_mark_dirty(buf);
 	libxfs_buf_relse(buf);
 
 	/*
@@ -3428,7 +3428,7 @@ prepare_devices(
 	 */
 	buf = alloc_write_buf(mp->m_ddev_targp, 0, whack_blks);
 	memset(buf->b_addr, 0, WHACK_SIZE);
-	libxfs_buf_mark_dirty(buf, 0);
+	libxfs_buf_mark_dirty(buf);
 	libxfs_buf_relse(buf);
 
 	/* OK, now write the superblock... */
@@ -3437,7 +3437,7 @@ prepare_devices(
 	buf->b_ops = &xfs_sb_buf_ops;
 	memset(buf->b_addr, 0, cfg->sectorsize);
 	libxfs_sb_to_disk(buf->b_addr, sbp);
-	libxfs_buf_mark_dirty(buf, 0);
+	libxfs_buf_mark_dirty(buf);
 	libxfs_buf_relse(buf);
 
 	/* ...and zero the log.... */
@@ -3457,7 +3457,7 @@ prepare_devices(
 				XFS_FSB_TO_BB(mp, cfg->rtblocks - 1LL),
 				BTOBB(cfg->blocksize));
 		memset(buf->b_addr, 0, cfg->blocksize);
-		libxfs_buf_mark_dirty(buf, 0);
+		libxfs_buf_mark_dirty(buf);
 		libxfs_buf_relse(buf);
 	}
 
@@ -3554,7 +3554,7 @@ rewrite_secondary_superblocks(
 		exit(1);
 	}
 	XFS_BUF_TO_SBP(buf)->sb_rootino = cpu_to_be64(mp->m_sb.sb_rootino);
-	libxfs_buf_mark_dirty(buf, 0);
+	libxfs_buf_mark_dirty(buf);
 	libxfs_buf_relse(buf);
 
 	/* and one in the middle for luck if there's enough AGs for that */
@@ -3571,7 +3571,7 @@ rewrite_secondary_superblocks(
 		exit(1);
 	}
 	XFS_BUF_TO_SBP(buf)->sb_rootino = cpu_to_be64(mp->m_sb.sb_rootino);
-	libxfs_buf_mark_dirty(buf, 0);
+	libxfs_buf_mark_dirty(buf);
 	libxfs_buf_relse(buf);
 }
 
@@ -3919,7 +3919,7 @@ main(
 	if (!buf || buf->b_error)
 		exit(1);
 	(XFS_BUF_TO_SBP(buf))->sb_inprogress = 0;
-	libxfs_buf_mark_dirty(buf, 0);
+	libxfs_buf_mark_dirty(buf);
 	libxfs_buf_relse(buf);
 
 	/* Exit w/ failure if anything failed to get written to our new fs. */

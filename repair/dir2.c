@@ -1010,7 +1010,7 @@ _("bad directory block magic # %#x in block %u for directory inode %" PRIu64 "\n
 		dirty = 1;
 	if (dirty && !no_modify) {
 		*repair = 1;
-		libxfs_buf_mark_dirty(bp, 0);
+		libxfs_buf_mark_dirty(bp);
 		libxfs_buf_relse(bp);
 	} else
 		libxfs_buf_relse(bp);
@@ -1181,7 +1181,7 @@ _("bad sibling back pointer for block %u in directory inode %" PRIu64 "\n"),
 		ASSERT(buf_dirty == 0 || (buf_dirty && !no_modify));
 		if (buf_dirty && !no_modify) {
 			*repair = 1;
-			libxfs_buf_mark_dirty(bp, 0);
+			libxfs_buf_mark_dirty(bp);
 			libxfs_buf_relse(bp);
 		} else
 			libxfs_buf_relse(bp);
@@ -1341,7 +1341,7 @@ _("bad directory block magic # %#x in block %" PRIu64 " for directory inode %" P
 		}
 		if (dirty && !no_modify) {
 			*repair = 1;
-			libxfs_buf_mark_dirty(bp, 0);
+			libxfs_buf_mark_dirty(bp);
 			libxfs_buf_relse(bp);
 		} else
 			libxfs_buf_relse(bp);

@@ -843,7 +843,7 @@ inode_item_done(
 		goto free;
 	}
 
-	libxfs_buf_mark_dirty(bp, 0);
+	libxfs_buf_mark_dirty(bp);
 	libxfs_buf_relse(bp);
 free:
 	xfs_inode_item_put(iip);

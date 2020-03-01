@@ -1232,7 +1232,7 @@ bad:
 		}
 
 		if (writebuf && !no_modify) {
-			libxfs_buf_mark_dirty(bp, 0);
+			libxfs_buf_mark_dirty(bp);
 			libxfs_buf_relse(bp);
 		}
 		else
@@ -1331,7 +1331,7 @@ _("bad symlink header ino %" PRIu64 ", file block %d, disk block %" PRIu64 "\n")
 		i++;
 
 		if (badcrc && !no_modify) {
-			libxfs_buf_mark_dirty(bp, 0);
+			libxfs_buf_mark_dirty(bp);
 			libxfs_buf_relse(bp);
 		}
 		else

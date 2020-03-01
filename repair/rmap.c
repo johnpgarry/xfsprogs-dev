@@ -1231,7 +1231,7 @@ _("setting reflink flag on inode %"PRIu64"\n"),
 	else
 		dino->di_flags2 &= cpu_to_be64(~XFS_DIFLAG2_REFLINK);
 	libxfs_dinode_calc_crc(mp, dino);
-	libxfs_buf_mark_dirty(buf, 0);
+	libxfs_buf_mark_dirty(buf);
 	libxfs_buf_relse(buf);
 
 	return 0;

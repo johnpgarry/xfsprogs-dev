@@ -321,10 +321,10 @@ write_cursor(bt_status_t *curs)
 			fprintf(stderr, "writing bt prev block %u\n",
 						curs->level[i].prev_agbno);
 #endif
-			libxfs_buf_mark_dirty(curs->level[i].prev_buf_p, 0);
+			libxfs_buf_mark_dirty(curs->level[i].prev_buf_p);
 			libxfs_buf_relse(curs->level[i].prev_buf_p);
 		}
-		libxfs_buf_mark_dirty(curs->level[i].buf_p, 0);
+		libxfs_buf_mark_dirty(curs->level[i].buf_p);
 		libxfs_buf_relse(curs->level[i].buf_p);
 	}
 }
@@ -683,7 +683,7 @@ prop_freespace_cursor(xfs_mount_t *mp, xfs_agnumber_t agno,
 #endif
 		if (lptr->prev_agbno != NULLAGBLOCK) {
 			ASSERT(lptr->prev_buf_p != NULL);
-			libxfs_buf_mark_dirty(lptr->prev_buf_p, 0);
+			libxfs_buf_mark_dirty(lptr->prev_buf_p);
 			libxfs_buf_relse(lptr->prev_buf_p);
 		}
 		lptr->prev_agbno = lptr->agbno;;
@@ -873,7 +873,7 @@ build_freespace_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 					lptr->prev_agbno);
 #endif
 				ASSERT(lptr->prev_agbno != NULLAGBLOCK);
-				libxfs_buf_mark_dirty(lptr->prev_buf_p, 0);
+				libxfs_buf_mark_dirty(lptr->prev_buf_p);
 				libxfs_buf_relse(lptr->prev_buf_p);
 			}
 			lptr->prev_buf_p = lptr->buf_p;
@@ -1050,7 +1050,7 @@ prop_ino_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 #endif
 		if (lptr->prev_agbno != NULLAGBLOCK)  {
 			ASSERT(lptr->prev_buf_p != NULL);
-			libxfs_buf_mark_dirty(lptr->prev_buf_p, 0);
+			libxfs_buf_mark_dirty(lptr->prev_buf_p);
 			libxfs_buf_relse(lptr->prev_buf_p);
 		}
 		lptr->prev_agbno = lptr->agbno;;
@@ -1142,7 +1142,7 @@ build_agi(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 		agi->agi_free_level = cpu_to_be32(finobt_curs->num_levels);
 	}
 
-	libxfs_buf_mark_dirty(agi_buf, 0);
+	libxfs_buf_mark_dirty(agi_buf);
 	libxfs_buf_relse(agi_buf);
 }
 
@@ -1305,7 +1305,7 @@ nextrec:
 					lptr->prev_agbno);
 #endif
 				ASSERT(lptr->prev_agbno != NULLAGBLOCK);
-				libxfs_buf_mark_dirty(lptr->prev_buf_p, 0);
+				libxfs_buf_mark_dirty(lptr->prev_buf_p);
 				libxfs_buf_relse(lptr->prev_buf_p);
 			}
 			lptr->prev_buf_p = lptr->buf_p;
@@ -1458,7 +1458,7 @@ prop_rmap_cursor(
 #endif
 		if (lptr->prev_agbno != NULLAGBLOCK)  {
 			ASSERT(lptr->prev_buf_p != NULL);
-			libxfs_buf_mark_dirty(lptr->prev_buf_p, 0);
+			libxfs_buf_mark_dirty(lptr->prev_buf_p);
 			libxfs_buf_relse(lptr->prev_buf_p);
 		}
 		lptr->prev_agbno = lptr->agbno;
@@ -1669,7 +1669,7 @@ _("Insufficient memory to construct reverse-map cursor."));
 					lptr->prev_agbno);
 #endif
 				ASSERT(lptr->prev_agbno != NULLAGBLOCK);
-				libxfs_buf_mark_dirty(lptr->prev_buf_p, 0);
+				libxfs_buf_mark_dirty(lptr->prev_buf_p);
 				libxfs_buf_relse(lptr->prev_buf_p);
 			}
 			lptr->prev_buf_p = lptr->buf_p;
@@ -1810,7 +1810,7 @@ prop_refc_cursor(
 #endif
 		if (lptr->prev_agbno != NULLAGBLOCK)  {
 			ASSERT(lptr->prev_buf_p != NULL);
-			libxfs_buf_mark_dirty(lptr->prev_buf_p, 0);
+			libxfs_buf_mark_dirty(lptr->prev_buf_p);
 			libxfs_buf_relse(lptr->prev_buf_p);
 		}
 		lptr->prev_agbno = lptr->agbno;
@@ -1964,7 +1964,7 @@ _("Insufficient memory to construct refcount cursor."));
 					lptr->prev_agbno);
 #endif
 				ASSERT(lptr->prev_agbno != NULLAGBLOCK);
-				libxfs_buf_mark_dirty(lptr->prev_buf_p, 0);
+				libxfs_buf_mark_dirty(lptr->prev_buf_p);
 				libxfs_buf_relse(lptr->prev_buf_p);
 			}
 			lptr->prev_buf_p = lptr->buf_p;
@@ -2153,7 +2153,7 @@ _("Insufficient memory saving lost blocks.\n"));
 		agf->agf_flcount = 0;
 	}
 
-	libxfs_buf_mark_dirty(agfl_buf, 0);
+	libxfs_buf_mark_dirty(agfl_buf);
 	libxfs_buf_relse(agfl_buf);
 
 	ext_ptr = findbiggest_bcnt_extent(agno);
@@ -2167,7 +2167,7 @@ _("Insufficient memory saving lost blocks.\n"));
 	ASSERT(be32_to_cpu(agf->agf_refcount_root) !=
 		be32_to_cpu(agf->agf_roots[XFS_BTNUM_CNTi]));
 
-	libxfs_buf_mark_dirty(agf_buf, 0);
+	libxfs_buf_mark_dirty(agf_buf);
 	libxfs_buf_relse(agf_buf);
 
 	/*
@@ -2202,7 +2202,7 @@ sync_sb(xfs_mount_t *mp)
 	update_sb_version(mp);
 
 	libxfs_sb_to_disk(XFS_BUF_TO_SBP(bp), &mp->m_sb);
-	libxfs_buf_mark_dirty(bp, 0);
+	libxfs_buf_mark_dirty(bp);
 	libxfs_buf_relse(bp);
 }
 

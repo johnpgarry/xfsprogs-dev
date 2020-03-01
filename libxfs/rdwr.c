@@ -201,11 +201,10 @@ libxfs_trace_dirtybuf(
 	const char		*func,
 	const char		*file,
 	int			line,
-	struct xfs_buf		*bp,
-	int			flags)
+	struct xfs_buf		*bp)
 {
 	__add_trace(bp, func, file, line);
-	libxfs_buf_mark_dirty(bp, flags);
+	libxfs_buf_mark_dirty(bp);
 }
 
 struct xfs_buf *
@@ -1006,8 +1005,7 @@ libxfs_writebuf_int(xfs_buf_t *bp, int flags)
  */
 void
 libxfs_buf_mark_dirty(
-	struct xfs_buf	*bp,
-	int		flags)
+	struct xfs_buf	*bp)
 {
 #ifdef IO_DEBUG
 	printf("%lx: %s: dirty blkno=%llu(%llu)\n",
@@ -1021,7 +1019,7 @@ libxfs_buf_mark_dirty(
 	 */
 	bp->b_error = 0;
 	bp->b_flags &= ~LIBXFS_B_STALE;
-	bp->b_flags |= (LIBXFS_B_DIRTY | flags);
+	bp->b_flags |= LIBXFS_B_DIRTY;
 }
 
 void
@@ -1423,7 +1421,7 @@ libxfs_log_clear(
 	libxfs_log_header(ptr, fs_uuid, version, sunit, fmt, lsn, tail_lsn,
 			  next, bp);
 	if (bp) {
-		libxfs_buf_mark_dirty(bp, 0);
+		libxfs_buf_mark_dirty(bp);
 		libxfs_buf_relse(bp);
 	}
 
@@ -1475,7 +1473,7 @@ libxfs_log_clear(
 		libxfs_log_header(ptr, fs_uuid, version, BBTOB(len), fmt, lsn,
 				  tail_lsn, next, bp);
 		if (bp) {
-			libxfs_buf_mark_dirty(bp, 0);
+			libxfs_buf_mark_dirty(bp);
 			libxfs_buf_relse(bp);
 		}
 

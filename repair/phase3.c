@@ -47,7 +47,7 @@ process_agi_unlinked(
 	}
 
 	if (agi_dirty) {
-		libxfs_buf_mark_dirty(bp, 0);
+		libxfs_buf_mark_dirty(bp);
 		libxfs_buf_relse(bp);
 	}
 	else

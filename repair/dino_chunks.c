@@ -940,8 +940,7 @@ process_next:
 					XFS_BUF_ADDR(bplist[bp_index]), agno);
 
 				if (dirty && !no_modify) {
-					libxfs_buf_mark_dirty(bplist[bp_index],
-							0);
+					libxfs_buf_mark_dirty(bplist[bp_index]);
 					libxfs_buf_relse(bplist[bp_index]);
 				}
 				else
