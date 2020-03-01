@@ -155,14 +155,18 @@ platform_flush_device(
 	if (major(device) == RAMDISK_MAJOR)
 		return 0;
 
+	ret = fsync(fd);
+	if (ret)
+		return ret;
+
 	ret = fstat(fd, &st);
 	if (ret)
 		return ret;
 
-	if (S_ISREG(st.st_mode))
-		return fsync(fd);
+	if (S_ISBLK(st.st_mode))
+		return ioctl(fd, BLKFLSBUF, 0);
 
-	return ioctl(fd, BLKFLSBUF, 0);
+	return 0;
 }
 
 void
