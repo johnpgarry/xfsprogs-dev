@@ -863,7 +863,7 @@ buf_item_done(
 
 	hold = (bip->bli_flags & XFS_BLI_HOLD);
 	if (bip->bli_flags & XFS_BLI_DIRTY)
-		libxfs_writebuf_int(bp, 0);
+		libxfs_buf_mark_dirty(bp);
 
 	bip->bli_flags &= ~XFS_BLI_HOLD;
 	xfs_buf_item_put(bip);

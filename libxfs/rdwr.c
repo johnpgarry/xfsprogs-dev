@@ -986,19 +986,6 @@ libxfs_bwrite(
 	return bp->b_error;
 }
 
-int
-libxfs_writebuf_int(xfs_buf_t *bp, int flags)
-{
-	/*
-	 * Clear any error hanging over from reading the buffer. This prevents
-	 * subsequent reads after this write from seeing stale errors.
-	 */
-	bp->b_error = 0;
-	bp->b_flags &= ~LIBXFS_B_STALE;
-	bp->b_flags |= (LIBXFS_B_DIRTY | flags);
-	return 0;
-}
-
 /*
  * Mark a buffer dirty.  The dirty data will be written out when the cache
  * is flushed (or at release time if the buffer is uncached).
