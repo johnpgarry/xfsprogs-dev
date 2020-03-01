@@ -525,8 +525,8 @@ __cache_lookup(struct xfs_bufkey *key, unsigned int flags)
 		bp->b_holder = pthread_self();
 	}
 
-	cache_node_set_priority(libxfs_bcache, (struct cache_node *)bp,
-		cache_node_get_priority((struct cache_node *)bp) -
+	cache_node_set_priority(libxfs_bcache, &bp->b_node,
+			cache_node_get_priority(&bp->b_node) -
 						CACHE_PREFETCH_PRIORITY);
 #ifdef XFS_BUF_TRACING
 	pthread_mutex_lock(&libxfs_bcache->c_mutex);
@@ -542,7 +542,7 @@ __cache_lookup(struct xfs_bufkey *key, unsigned int flags)
 
 	return bp;
 out_put:
-	cache_node_put(libxfs_bcache, (struct cache_node *)bp);
+	cache_node_put(libxfs_bcache, &bp->b_node);
 	return NULL;
 }
 
@@ -639,23 +639,25 @@ libxfs_buf_relse(
 	}
 
 	if (!list_empty(&bp->b_node.cn_hash))
-		cache_node_put(libxfs_bcache, (struct cache_node *)bp);
+		cache_node_put(libxfs_bcache, &bp->b_node);
 	else if (--bp->b_node.cn_count == 0)
 		libxfs_putbufr(bp);
 }
 
 static struct cache_node *
-libxfs_balloc(cache_key_t key)
+libxfs_balloc(
+	cache_key_t		key)
 {
-	struct xfs_bufkey *bufkey = (struct xfs_bufkey *)key;
+	struct xfs_bufkey	*bufkey = (struct xfs_bufkey *)key;
+	struct xfs_buf		*bp;
 
 	if (bufkey->map)
-		return (struct cache_node *)
-		       libxfs_getbufr_map(bufkey->buftarg,
-					  bufkey->blkno, bufkey->bblen,
-					  bufkey->map, bufkey->nmaps);
-	return (struct cache_node *)libxfs_getbufr(bufkey->buftarg,
-					  bufkey->blkno, bufkey->bblen);
+		bp = libxfs_getbufr_map(bufkey->buftarg, bufkey->blkno,
+				bufkey->bblen, bufkey->map, bufkey->nmaps);
+	else
+		bp = libxfs_getbufr(bufkey->buftarg, bufkey->blkno,
+				bufkey->bblen);
+	return &bp->b_node;
 }
 
 
@@ -1127,7 +1129,7 @@ libxfs_putbufr(xfs_buf_t *bp)
 {
 	if (bp->b_flags & LIBXFS_B_DIRTY)
 		libxfs_bwrite(bp);
-	libxfs_brelse((struct cache_node *)bp);
+	libxfs_brelse(&bp->b_node);
 }
 
 

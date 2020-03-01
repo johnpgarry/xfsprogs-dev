@@ -109,10 +109,9 @@ typedef unsigned int xfs_buf_flags_t;
 
 #define XFS_BUF_SET_PRIORITY(bp,pri)	cache_node_set_priority( \
 						libxfs_bcache, \
-						(struct cache_node *)(bp), \
+						&(bp)->b_node, \
 						(pri))
-#define XFS_BUF_PRIORITY(bp)		(cache_node_get_priority( \
-						(struct cache_node *)(bp)))
+#define XFS_BUF_PRIORITY(bp)		(cache_node_get_priority(&(bp)->b_node))
 #define xfs_buf_set_ref(bp,ref)		((void) 0)
 #define xfs_buf_ioerror(bp,err)		((bp)->b_error = (err))
 
