@@ -1096,7 +1096,8 @@ _("Note - stripe unit (%d) and width (%d) were copied from a backup superblock.\
 			be32_to_cpu(dsb->sb_unit), be32_to_cpu(dsb->sb_width));
 	}
 
-	libxfs_writebuf(sbp, 0);
+	libxfs_buf_mark_dirty(sbp, 0);
+	libxfs_buf_relse(sbp);
 
 	/*
 	 * Done. Flush all cached buffers and inodes first to ensure all

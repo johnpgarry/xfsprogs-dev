@@ -151,8 +151,10 @@ scan_lbtree(
 
 	ASSERT(dirty == 0 || (dirty && !no_modify));
 
-	if ((dirty || badcrc) && !no_modify)
-		libxfs_writebuf(bp, 0);
+	if ((dirty || badcrc) && !no_modify) {
+		libxfs_buf_mark_dirty(bp, 0);
+		libxfs_buf_relse(bp);
+	}
 	else
 		libxfs_buf_relse(bp);
 
@@ -2425,13 +2427,17 @@ scan_ag(
 		sb_dirty += (sbbuf->b_error == -EFSBADCRC);
 	}
 
-	if (agi_dirty && !no_modify)
-		libxfs_writebuf(agibuf, 0);
+	if (agi_dirty && !no_modify) {
+		libxfs_buf_mark_dirty(agibuf, 0);
+		libxfs_buf_relse(agibuf);
+	}
 	else
 		libxfs_buf_relse(agibuf);
 
-	if (agf_dirty && !no_modify)
-		libxfs_writebuf(agfbuf, 0);
+	if (agf_dirty && !no_modify) {
+		libxfs_buf_mark_dirty(agfbuf, 0);
+		libxfs_buf_relse(agfbuf);
+	}
 	else
 		libxfs_buf_relse(agfbuf);
 
@@ -2439,7 +2445,8 @@ scan_ag(
 		if (agno == 0)
 			memcpy(&mp->m_sb, sb, sizeof(xfs_sb_t));
 		libxfs_sb_to_disk(XFS_BUF_TO_SBP(sbbuf), sb);
-		libxfs_writebuf(sbbuf, 0);
+		libxfs_buf_mark_dirty(sbbuf, 0);
+		libxfs_buf_relse(sbbuf);
 	} else
 		libxfs_buf_relse(sbbuf);
 	free(sb);

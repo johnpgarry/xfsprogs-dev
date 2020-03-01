@@ -403,8 +403,10 @@ _("would correct bad hashval in non-leaf %s block\n"
 	ASSERT(cursor->level[this_level].dirty == 0 ||
 		(cursor->level[this_level].dirty && !no_modify));
 
-	if (cursor->level[this_level].dirty && !no_modify)
-		libxfs_writebuf(cursor->level[this_level].bp, 0);
+	if (cursor->level[this_level].dirty && !no_modify) {
+		libxfs_buf_mark_dirty(cursor->level[this_level].bp, 0);
+		libxfs_buf_relse(cursor->level[this_level].bp);
+	}
 	else
 		libxfs_buf_relse(cursor->level[this_level].bp);
 
@@ -619,8 +621,10 @@ _("bad level %d in %s block %u for inode %" PRIu64 "\n"),
 		    cursor->level[this_level].bp->b_error == -EFSBADCRC)
 			cursor->level[this_level].dirty = 1;
 
-		if (cursor->level[this_level].dirty && !no_modify)
-			libxfs_writebuf(cursor->level[this_level].bp, 0);
+		if (cursor->level[this_level].dirty && !no_modify) {
+			libxfs_buf_mark_dirty(cursor->level[this_level].bp, 0);
+			libxfs_buf_relse(cursor->level[this_level].bp);
+		}
 		else
 			libxfs_buf_relse(cursor->level[this_level].bp);
 

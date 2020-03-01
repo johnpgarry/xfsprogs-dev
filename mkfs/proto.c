@@ -261,8 +261,10 @@ newfile(
 			memset((char *)bp->b_addr + len, 0, bp->b_bcount - len);
 		if (logit)
 			libxfs_trans_log_buf(tp, bp, 0, bp->b_bcount - 1);
-		else
-			libxfs_writebuf(bp, 0);
+		else {
+			libxfs_buf_mark_dirty(bp, 0);
+			libxfs_buf_relse(bp);
+		}
 	}
 	ip->i_d.di_size = len;
 	return flags;

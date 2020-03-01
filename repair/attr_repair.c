@@ -835,8 +835,10 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 		if (!no_modify && bp->b_error == -EFSBADCRC)
 			repair++;
 
-		if (repair && !no_modify)
-			libxfs_writebuf(bp, 0);
+		if (repair && !no_modify) {
+			libxfs_buf_mark_dirty(bp, 0);
+			libxfs_buf_relse(bp);
+		}
 		else
 			libxfs_buf_relse(bp);
 	} while (da_bno != 0);
@@ -999,9 +1001,8 @@ _("would clear forw/back pointers in block 0 for attributes in inode %" PRIu64 "
 	*repair = *repair || repairlinks;
 
 	if (*repair && !no_modify)
-		libxfs_writebuf(bp, 0);
-	else
-		libxfs_buf_relse(bp);
+		libxfs_buf_mark_dirty(bp, 0);
+	libxfs_buf_relse(bp);
 
 	return 0;
 }
@@ -1043,9 +1044,9 @@ _("would clear forw/back pointers in block 0 for attributes in inode %" PRIu64 "
 	/* must do this now, to release block 0 before the traversal */
 	if ((*repair || repairlinks) && !no_modify) {
 		*repair = 1;
-		libxfs_writebuf(bp, 0);
-	} else
-		libxfs_buf_relse(bp);
+		libxfs_buf_mark_dirty(bp, 0);
+	}
+	libxfs_buf_relse(bp);
 	error = process_node_attr(mp, ino, dip, blkmap); /* + repair */
 	if (error)
 		*repair = 0;

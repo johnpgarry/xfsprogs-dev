@@ -46,8 +46,10 @@ process_agi_unlinked(
 		}
 	}
 
-	if (agi_dirty)
-		libxfs_writebuf(bp, 0);
+	if (agi_dirty) {
+		libxfs_buf_mark_dirty(bp, 0);
+		libxfs_buf_relse(bp);
+	}
 	else
 		libxfs_buf_relse(bp);
 }

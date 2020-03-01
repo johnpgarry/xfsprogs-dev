@@ -196,11 +196,16 @@ libxfs_trace_readbuf(
 	return bp;
 }
 
-int
-libxfs_trace_writebuf(const char *func, const char *file, int line, xfs_buf_t *bp, int flags)
+void
+libxfs_trace_dirtybuf(
+	const char		*func,
+	const char		*file,
+	int			line,
+	struct xfs_buf		*bp,
+	int			flags)
 {
 	__add_trace(bp, func, file, line);
-	return libxfs_writebuf(bp, flags);
+	libxfs_buf_mark_dirty(bp, flags);
 }
 
 struct xfs_buf *
@@ -995,8 +1000,14 @@ libxfs_writebuf_int(xfs_buf_t *bp, int flags)
 	return 0;
 }
 
-int
-libxfs_writebuf(xfs_buf_t *bp, int flags)
+/*
+ * Mark a buffer dirty.  The dirty data will be written out when the cache
+ * is flushed (or at release time if the buffer is uncached).
+ */
+void
+libxfs_buf_mark_dirty(
+	struct xfs_buf	*bp,
+	int		flags)
 {
 #ifdef IO_DEBUG
 	printf("%lx: %s: dirty blkno=%llu(%llu)\n",
@@ -1011,8 +1022,6 @@ libxfs_writebuf(xfs_buf_t *bp, int flags)
 	bp->b_error = 0;
 	bp->b_flags &= ~LIBXFS_B_STALE;
 	bp->b_flags |= (LIBXFS_B_DIRTY | flags);
-	libxfs_buf_relse(bp);
-	return 0;
 }
 
 void
@@ -1413,8 +1422,10 @@ libxfs_log_clear(
 	}
 	libxfs_log_header(ptr, fs_uuid, version, sunit, fmt, lsn, tail_lsn,
 			  next, bp);
-	if (bp)
-		libxfs_writebuf(bp, 0);
+	if (bp) {
+		libxfs_buf_mark_dirty(bp, 0);
+		libxfs_buf_relse(bp);
+	}
 
 	/*
 	 * There's nothing else to do if this is a log reset. The kernel detects
@@ -1463,8 +1474,10 @@ libxfs_log_clear(
 		 */
 		libxfs_log_header(ptr, fs_uuid, version, BBTOB(len), fmt, lsn,
 				  tail_lsn, next, bp);
-		if (bp)
-			libxfs_writebuf(bp, 0);
+		if (bp) {
+			libxfs_buf_mark_dirty(bp, 0);
+			libxfs_buf_relse(bp);
+		}
 
 		blk += len;
 		if (dptr)
