@@ -21,6 +21,8 @@
 
 #include "libxfs.h"
 
+static void libxfs_brelse(struct cache_node *node);
+
 /*
  * Important design/architecture note:
  *
@@ -437,7 +439,7 @@ __libxfs_getbufr(int blen)
 	return bp;
 }
 
-xfs_buf_t *
+static xfs_buf_t *
 libxfs_getbufr(struct xfs_buftarg *btp, xfs_daddr_t blkno, int bblen)
 {
 	xfs_buf_t	*bp;
@@ -641,8 +643,11 @@ libxfs_buf_relse(
 
 	if (!list_empty(&bp->b_node.cn_hash))
 		cache_node_put(libxfs_bcache, &bp->b_node);
-	else if (--bp->b_node.cn_count == 0)
-		libxfs_putbufr(bp);
+	else if (--bp->b_node.cn_count == 0) {
+		if (bp->b_flags & LIBXFS_B_DIRTY)
+			libxfs_bwrite(bp);
+		libxfs_brelse(&bp->b_node);
+	}
 }
 
 static struct cache_node *
@@ -1126,15 +1131,6 @@ libxfs_bflush(
 		return libxfs_bwrite(bp);
 	return bp->b_error;
 }
-
-void
-libxfs_putbufr(xfs_buf_t *bp)
-{
-	if (bp->b_flags & LIBXFS_B_DIRTY)
-		libxfs_bwrite(bp);
-	libxfs_brelse(&bp->b_node);
-}
-
 
 void
 libxfs_bcache_purge(void)
