@@ -30,7 +30,7 @@
  * outside libxfs clears bp->b_error - very little code even checks it - so the
  * libxfs code is tripping on stale errors left by the userspace code.
  *
- * We can't clear errors or zero buffer contents in libxfs_getbuf-* like we do
+ * We can't clear errors or zero buffer contents in libxfs_buf_get-* like we do
  * in the kernel, because those functions are used by the libxfs_readbuf_*
  * functions and hence need to leave the buffers unchanged on cache hits. This
  * is actually the only way to gather a write error from a libxfs_writebuf()
@@ -44,7 +44,7 @@
  *
  * IOWs, userspace is behaving quite differently to the kernel and as a result
  * it leaks errors from reads, invalidations and writes through
- * libxfs_getbuf/libxfs_readbuf.
+ * libxfs_buf_get/libxfs_readbuf.
  *
  * The result of this is that until the userspace code outside libxfs is cleaned
  * up, functions that release buffers from userspace control (i.e
@@ -391,7 +391,6 @@ libxfs_log_header(
 #undef libxfs_readbuf
 #undef libxfs_readbuf_map
 #undef libxfs_writebuf
-#undef libxfs_getbuf
 #undef libxfs_getbuf_map
 #undef libxfs_getbuf_flags
 
@@ -400,7 +399,8 @@ xfs_buf_t	*libxfs_readbuf(struct xfs_buftarg *, xfs_daddr_t, int, int,
 xfs_buf_t	*libxfs_readbuf_map(struct xfs_buftarg *, struct xfs_buf_map *,
 				int, int, const struct xfs_buf_ops *);
 int		libxfs_writebuf(xfs_buf_t *, int);
-xfs_buf_t	*libxfs_getbuf(struct xfs_buftarg *, xfs_daddr_t, int);
+struct xfs_buf *libxfs_buf_get(struct xfs_buftarg *btp, xfs_daddr_t daddr,
+				size_t len);
 xfs_buf_t	*libxfs_getbuf_map(struct xfs_buftarg *, struct xfs_buf_map *,
 				int, int);
 xfs_buf_t	*libxfs_getbuf_flags(struct xfs_buftarg *, xfs_daddr_t, int,
@@ -443,11 +443,19 @@ libxfs_trace_writebuf(const char *func, const char *file, int line, xfs_buf_t *b
 	return libxfs_writebuf(bp, flags);
 }
 
-xfs_buf_t *
-libxfs_trace_getbuf(const char *func, const char *file, int line,
-		struct xfs_buftarg *btp, xfs_daddr_t blkno, int len)
+struct xfs_buf *
+libxfs_trace_getbuf(
+	const char		*func,
+	const char		*file,
+	int			line,
+	struct xfs_buftarg	*btp,
+	xfs_daddr_t		blkno,
+	size_t			len)
 {
-	xfs_buf_t	*bp = libxfs_getbuf(btp, blkno, len);
+	struct xfs_buf		*bp;
+	DEFINE_SINGLE_BUF_MAP(map, blkno, numblks);
+
+	bp = libxfs_getbuf_map(target, &map, 1, 0);
 	__add_trace(bp, func, file, line);
 	return bp;
 }
@@ -804,16 +812,6 @@ reset_buf_state(
 	if (bp && !(bp->b_flags & LIBXFS_B_DIRTY))
 		bp->b_flags &= ~(LIBXFS_B_UNCHECKED | LIBXFS_B_STALE |
 				LIBXFS_B_UPTODATE);
-}
-
-struct xfs_buf *
-libxfs_getbuf(struct xfs_buftarg *btp, xfs_daddr_t blkno, int len)
-{
-	struct xfs_buf	*bp;
-
-	bp = libxfs_getbuf_flags(btp, blkno, len, 0);
-	reset_buf_state(bp);
-	return bp;
 }
 
 static struct xfs_buf *
