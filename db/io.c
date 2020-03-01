@@ -426,7 +426,7 @@ write_cur_buf(void)
 {
 	int ret;
 
-	ret = -libxfs_writebufr(iocur_top->bp);
+	ret = -libxfs_bwrite(iocur_top->bp);
 	if (ret != 0)
 		dbprintf(_("write error: %s\n"), strerror(ret));
 
@@ -442,7 +442,7 @@ write_cur_bbs(void)
 {
 	int ret;
 
-	ret = -libxfs_writebufr(iocur_top->bp);
+	ret = -libxfs_bwrite(iocur_top->bp);
 	if (ret != 0)
 		dbprintf(_("write error: %s\n"), strerror(ret));
 
