@@ -301,8 +301,9 @@ libxfs_bhash(cache_key_t key, unsigned int hashsize, unsigned int hashshift)
 static int
 libxfs_bcompare(struct cache_node *node, cache_key_t key)
 {
-	struct xfs_buf	*bp = (struct xfs_buf *)node;
-	struct xfs_bufkey *bkey = (struct xfs_bufkey *)key;
+	struct xfs_buf		*bp = container_of(node, struct xfs_buf,
+						   b_node);
+	struct xfs_bufkey	*bkey = (struct xfs_bufkey *)key;
 
 	if (bp->b_target->dev == bkey->buftarg->dev &&
 	    bp->b_bn == bkey->blkno) {
@@ -1052,7 +1053,8 @@ static void
 libxfs_brelse(
 	struct cache_node	*node)
 {
-	struct xfs_buf		*bp = (struct xfs_buf *)node;
+	struct xfs_buf		*bp = container_of(node, struct xfs_buf,
+						   b_node);
 
 	if (!bp)
 		return;
@@ -1117,7 +1119,8 @@ static int
 libxfs_bflush(
 	struct cache_node	*node)
 {
-	struct xfs_buf		*bp = (struct xfs_buf *)node;
+	struct xfs_buf		*bp = container_of(node, struct xfs_buf,
+						   b_node);
 
 	if (!bp->b_error && bp->b_flags & LIBXFS_B_DIRTY)
 		return libxfs_bwrite(bp);
