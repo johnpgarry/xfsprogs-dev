@@ -255,23 +255,11 @@ xfs_buf_associate_memory(struct xfs_buf *bp, void *mem, size_t len)
 	return 0;
 }
 
-/*
- * Allocate an uncached buffer that points nowhere.  The refcount will be 1,
- * and the cache node hash list will be empty to indicate that it's uncached.
- */
-static inline struct xfs_buf *
-xfs_buf_get_uncached(struct xfs_buftarg *targ, size_t bblen, int flags)
-{
-	struct xfs_buf	*bp;
-
-	bp = libxfs_getbufr(targ, XFS_BUF_DADDR_NULL, bblen);
-	if (!bp)
-		return NULL;
-
-	INIT_LIST_HEAD(&bp->b_node.cn_hash);
-	bp->b_node.cn_count = 1;
-	return bp;
-}
+struct xfs_buf *libxfs_buf_get_uncached(struct xfs_buftarg *targ, size_t bblen,
+		int flags);
+int libxfs_buf_read_uncached(struct xfs_buftarg *targ, xfs_daddr_t daddr,
+		size_t bblen, int flags, struct xfs_buf **bpp,
+		const struct xfs_buf_ops *ops);
 
 /* Push a single buffer on a delwri queue. */
 static inline void

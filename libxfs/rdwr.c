@@ -1073,6 +1073,73 @@ libxfs_readbuf_map(struct xfs_buftarg *btp, struct xfs_buf_map *map, int nmaps,
 	return bp;
 }
 
+/* Allocate a raw uncached buffer. */
+static inline struct xfs_buf *
+libxfs_getbufr_uncached(
+	struct xfs_buftarg	*targ,
+	xfs_daddr_t		daddr,
+	size_t			bblen)
+{
+	struct xfs_buf		*bp;
+
+	bp = libxfs_getbufr(targ, daddr, bblen);
+	if (!bp)
+		return NULL;
+
+	INIT_LIST_HEAD(&bp->b_node.cn_hash);
+	bp->b_node.cn_count = 1;
+	return bp;
+}
+
+/*
+ * Allocate an uncached buffer that points nowhere.  The refcount will be 1,
+ * and the cache node hash list will be empty to indicate that it's uncached.
+ */
+struct xfs_buf *
+libxfs_buf_get_uncached(
+	struct xfs_buftarg	*targ,
+	size_t			bblen,
+	int			flags)
+{
+	return libxfs_getbufr_uncached(targ, XFS_BUF_DADDR_NULL, bblen);
+}
+
+/*
+ * Allocate and read an uncached buffer.  The refcount will be 1, and the cache
+ * node hash list will be empty to indicate that it's uncached.
+ */
+int
+libxfs_buf_read_uncached(
+	struct xfs_buftarg	*targ,
+	xfs_daddr_t		daddr,
+	size_t			bblen,
+	int			flags,
+	struct xfs_buf		**bpp,
+	const struct xfs_buf_ops *ops)
+{
+	struct xfs_buf		*bp;
+	int			error;
+
+	*bpp = NULL;
+	bp = libxfs_getbufr_uncached(targ, daddr, bblen);
+	if (!bp)
+		return -ENOMEM;
+
+	error = libxfs_readbufr(targ, daddr, bp, bblen, flags);
+	if (error)
+		goto err;
+
+	error = libxfs_readbuf_verify(bp, ops);
+	if (error)
+		goto err;
+
+	*bpp = bp;
+	return 0;
+err:
+	libxfs_buf_relse(bp);
+	return error;
+}
+
 static int
 __write_buf(int fd, void *buf, int len, off64_t offset, int flags)
 {
