@@ -75,7 +75,7 @@ fsmap(
 
 		bt_cur = libxfs_rmapbt_init_cursor(mp, NULL, agbp, agno);
 		if (!bt_cur) {
-			libxfs_putbuf(agbp);
+			libxfs_buf_relse(agbp);
 			dbprintf(_("Not enough memory.\n"));
 			return;
 		}
@@ -85,14 +85,14 @@ fsmap(
 				fsmap_fn, &info);
 		if (error) {
 			libxfs_btree_del_cursor(bt_cur, XFS_BTREE_ERROR);
-			libxfs_putbuf(agbp);
+			libxfs_buf_relse(agbp);
 			dbprintf(_("Error %d while querying fsmap btree.\n"),
 				error);
 			return;
 		}
 
 		libxfs_btree_del_cursor(bt_cur, XFS_BTREE_NOERROR);
-		libxfs_putbuf(agbp);
+		libxfs_buf_relse(agbp);
 
 		if (agno == start_ag)
 			low.rm_startblock = 0;

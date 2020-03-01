@@ -418,7 +418,7 @@ rmtval_get(xfs_mount_t *mp, xfs_ino_t ino, blkmap_t *blkmap,
 		if (bp->b_error == -EFSBADCRC || bp->b_error == -EFSCORRUPTED) {
 			do_warn(
 	_("Corrupt remote block for attributes of inode %" PRIu64 "\n"), ino);
-			libxfs_putbuf(bp);
+			libxfs_buf_relse(bp);
 			clearit = 1;
 			break;
 		}
@@ -430,7 +430,7 @@ rmtval_get(xfs_mount_t *mp, xfs_ino_t ino, blkmap_t *blkmap,
 		amountdone += length;
 		value += length;
 		i++;
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 	}
 	return (clearit);
 }
@@ -782,7 +782,7 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 			do_warn(
 	_("bad attribute leaf magic %#x for inode %" PRIu64 "\n"),
 				 leafhdr.magic, ino);
-			libxfs_putbuf(bp);
+			libxfs_buf_relse(bp);
 			goto error_out;
 		}
 
@@ -793,7 +793,7 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 		if (process_leaf_attr_block(mp, leaf, da_bno, ino,
 				da_cursor->blkmap, current_hashval,
 				&greatest_hashval, &repair))  {
-			libxfs_putbuf(bp);
+			libxfs_buf_relse(bp);
 			goto error_out;
 		}
 
@@ -813,7 +813,7 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 			do_warn(
 	_("bad sibling back pointer for block %u in attribute fork for inode %" PRIu64 "\n"),
 				da_bno, ino);
-			libxfs_putbuf(bp);
+			libxfs_buf_relse(bp);
 			goto error_out;
 		}
 
@@ -822,7 +822,7 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 
 		if (da_bno != 0) {
 			if (verify_da_path(mp, da_cursor, 0, XFS_ATTR_FORK)) {
-				libxfs_putbuf(bp);
+				libxfs_buf_relse(bp);
 				goto error_out;
 			}
 		}
@@ -838,7 +838,7 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 		if (repair && !no_modify)
 			libxfs_writebuf(bp, 0);
 		else
-			libxfs_putbuf(bp);
+			libxfs_buf_relse(bp);
 	} while (da_bno != 0);
 
 	if (verify_final_da_path(mp, da_cursor, 0, XFS_ATTR_FORK))  {
@@ -992,7 +992,7 @@ _("would clear forw/back pointers in block 0 for attributes in inode %" PRIu64 "
 	if (badness) {
 		*repair = 0;
 		/* the block is bad.  lose the attribute fork. */
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 		return 1;
 	}
 
@@ -1001,7 +1001,7 @@ _("would clear forw/back pointers in block 0 for attributes in inode %" PRIu64 "
 	if (*repair && !no_modify)
 		libxfs_writebuf(bp, 0);
 	else
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 
 	return 0;
 }
@@ -1045,7 +1045,7 @@ _("would clear forw/back pointers in block 0 for attributes in inode %" PRIu64 "
 		*repair = 1;
 		libxfs_writebuf(bp, 0);
 	} else
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 	error = process_node_attr(mp, ino, dip, blkmap); /* + repair */
 	if (error)
 		*repair = 0;
@@ -1107,7 +1107,7 @@ process_longform_attr(
 	/* is this block sane? */
 	if (__check_attr_header(mp, bp, ino)) {
 		*repair = 0;
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 		return 1;
 	}
 
@@ -1130,7 +1130,7 @@ process_longform_attr(
 		do_warn(
 	_("bad attribute leaf magic # %#x for dir ino %" PRIu64 "\n"),
 			be16_to_cpu(info->magic), ino);
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 		*repair = 0;
 		return 1;
 	}

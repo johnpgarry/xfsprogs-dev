@@ -129,7 +129,7 @@ pf_queue_io(
 			pf_read_inode_dirs(args, bp);
 		XFS_BUF_SET_PRIORITY(bp, XFS_BUF_PRIORITY(bp) +
 						CACHE_PREFETCH_PRIORITY);
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 		return;
 	}
 	XFS_BUF_SET_PRIORITY(bp, flag);
@@ -286,13 +286,13 @@ pf_scan_lbtree(
 	 */
 	if (bp->b_error) {
 		bp->b_flags |= LIBXFS_B_UNCHECKED;
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 		return 0;
 	}
 
 	rc = (*func)(XFS_BUF_TO_BLOCK(bp), level - 1, isadir, args);
 
-	libxfs_putbuf(bp);
+	libxfs_buf_relse(bp);
 
 	return rc;
 }
@@ -578,7 +578,7 @@ pf_batch_read(
 		if ((bplist[num - 1]->b_flags & LIBXFS_B_DISCONTIG)) {
 			libxfs_readbufr_map(mp->m_ddev_targp, bplist[num - 1], 0);
 			bplist[num - 1]->b_flags |= LIBXFS_B_UNCHECKED;
-			libxfs_putbuf(bplist[num - 1]);
+			libxfs_buf_relse(bplist[num - 1]);
 			num--;
 		}
 
@@ -612,7 +612,7 @@ pf_batch_read(
 				B_IS_INODE(XFS_BUF_PRIORITY(bplist[i])) ? 'I' : 'M',
 				bplist[i], (long long)XFS_BUF_ADDR(bplist[i]),
 				args->agno);
-			libxfs_putbuf(bplist[i]);
+			libxfs_buf_relse(bplist[i]);
 		}
 		pthread_mutex_lock(&args->lock);
 		if (which != PF_SECONDARY) {

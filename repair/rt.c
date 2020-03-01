@@ -222,7 +222,7 @@ process_rtbitmap(xfs_mount_t	*mp,
 				prevbit = 0;
 			}
 		}
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 		if (extno == mp->m_sb.sb_rextents)
 			break;
 	}
@@ -266,7 +266,7 @@ process_rtsummary(xfs_mount_t	*mp,
 		bytes = bp->b_un.b_addr;
 		memmove((char *)sumfile + sumbno * mp->m_sb.sb_blocksize, bytes,
 			mp->m_sb.sb_blocksize);
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 	}
 }
 #endif

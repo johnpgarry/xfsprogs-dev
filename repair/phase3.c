@@ -49,7 +49,7 @@ process_agi_unlinked(
 	if (agi_dirty)
 		libxfs_writebuf(bp, 0);
 	else
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 }
 
 static void

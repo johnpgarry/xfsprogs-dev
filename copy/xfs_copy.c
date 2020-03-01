@@ -716,12 +716,12 @@ main(int argc, char **argv)
 	libxfs_sb_from_disk(sb, XFS_BUF_TO_SBP(sbp));
 
 	/* Do it again, now with proper length and verifier */
-	libxfs_putbuf(sbp);
+	libxfs_buf_relse(sbp);
 	libxfs_purgebuf(sbp);
 	sbp = libxfs_readbuf(mbuf.m_ddev_targp, XFS_SB_DADDR,
 			     1 << (sb->sb_sectlog - BBSHIFT),
 			     0, &xfs_sb_buf_ops);
-	libxfs_putbuf(sbp);
+	libxfs_buf_relse(sbp);
 
 	mp = libxfs_mount(&mbuf, sb, xargs.ddev, xargs.logdev, xargs.rtdev, 0);
 	if (mp == NULL) {

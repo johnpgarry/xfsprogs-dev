@@ -89,7 +89,7 @@ print_agresv_info(
 	length = be32_to_cpu(agf->agf_length);
 	free = be32_to_cpu(agf->agf_freeblks) +
 	       be32_to_cpu(agf->agf_flcount);
-	libxfs_putbuf(bp);
+	libxfs_buf_relse(bp);
 
 	printf("AG %d: length: %u free: %u reserved: %u used: %u",
 			agno, length, free, ask, used);

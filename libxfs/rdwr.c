@@ -48,7 +48,7 @@
  *
  * The result of this is that until the userspace code outside libxfs is cleaned
  * up, functions that release buffers from userspace control (i.e
- * libxfs_writebuf/libxfs_putbuf) need to zero bp->b_error to prevent
+ * libxfs_writebuf/libxfs_buf_relse) need to zero bp->b_error to prevent
  * propagation of stale errors into future buffer operations.
  */
 
@@ -394,7 +394,6 @@ libxfs_log_header(
 #undef libxfs_getbuf
 #undef libxfs_getbuf_map
 #undef libxfs_getbuf_flags
-#undef libxfs_putbuf
 
 xfs_buf_t	*libxfs_readbuf(struct xfs_buftarg *, xfs_daddr_t, int, int,
 				const struct xfs_buf_ops *);
@@ -406,7 +405,7 @@ xfs_buf_t	*libxfs_getbuf_map(struct xfs_buftarg *, struct xfs_buf_map *,
 				int, int);
 xfs_buf_t	*libxfs_getbuf_flags(struct xfs_buftarg *, xfs_daddr_t, int,
 				unsigned int);
-void		libxfs_putbuf (xfs_buf_t *);
+void		libxfs_buf_relse(struct xfs_buf *bp);
 
 #define	__add_trace(bp, func, file, line)	\
 do {						\
@@ -476,7 +475,7 @@ void
 libxfs_trace_putbuf(const char *func, const char *file, int line, xfs_buf_t *bp)
 {
 	__add_trace(bp, func, file, line);
-	libxfs_putbuf(bp);
+	libxfs_buf_relse(bp);
 }
 
 
@@ -851,7 +850,8 @@ libxfs_getbuf_map(struct xfs_buftarg *btp, struct xfs_buf_map *map,
 }
 
 void
-libxfs_putbuf(xfs_buf_t *bp)
+libxfs_buf_relse(
+	struct xfs_buf	*bp)
 {
 	/*
 	 * ensure that any errors on this use of the buffer don't carry
@@ -1190,7 +1190,7 @@ libxfs_writebuf(xfs_buf_t *bp, int flags)
 	bp->b_error = 0;
 	bp->b_flags &= ~LIBXFS_B_STALE;
 	bp->b_flags |= (LIBXFS_B_DIRTY | flags);
-	libxfs_putbuf(bp);
+	libxfs_buf_relse(bp);
 	return 0;
 }
 
@@ -1527,7 +1527,7 @@ xfs_buf_delwri_submit(
 		error2 = libxfs_writebufr(bp);
 		if (!error)
 			error = error2;
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 	}
 
 	return error;

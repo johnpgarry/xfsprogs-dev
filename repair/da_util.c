@@ -145,7 +145,7 @@ _("found non-root LEAFN node in inode %" PRIu64 " bno = %u\n"),
 					da_cursor->ino, bno);
 			}
 			*rbno = 0;
-			libxfs_putbuf(bp);
+			libxfs_buf_relse(bp);
 			return 1;
 		}
 
@@ -155,13 +155,13 @@ _("found non-root LEAFN node in inode %" PRIu64 " bno = %u\n"),
 _("bad %s magic number 0x%x in inode %" PRIu64 " bno = %u\n"),
 					FORKNAME(whichfork), nodehdr.magic,
 					da_cursor->ino, bno);
-			libxfs_putbuf(bp);
+			libxfs_buf_relse(bp);
 			goto error_out;
 		}
 
 		/* corrupt node; rebuild the dir. */
 		if (bp->b_error == -EFSBADCRC || bp->b_error == -EFSCORRUPTED) {
-			libxfs_putbuf(bp);
+			libxfs_buf_relse(bp);
 			do_warn(
 _("corrupt %s tree block %u for inode %" PRIu64 "\n"),
 				FORKNAME(whichfork), bno, da_cursor->ino);
@@ -173,7 +173,7 @@ _("corrupt %s tree block %u for inode %" PRIu64 "\n"),
 _("bad %s record count in inode %" PRIu64 ", count = %d, max = %d\n"),
 				FORKNAME(whichfork), da_cursor->ino,
 				nodehdr.count, geo->node_ents);
-			libxfs_putbuf(bp);
+			libxfs_buf_relse(bp);
 			goto error_out;
 		}
 
@@ -186,7 +186,7 @@ _("bad %s record count in inode %" PRIu64 ", count = %d, max = %d\n"),
 				do_warn(
 _("bad header depth for directory inode %" PRIu64 "\n"),
 					da_cursor->ino);
-				libxfs_putbuf(bp);
+				libxfs_buf_relse(bp);
 				i = -1;
 				goto error_out;
 			}
@@ -197,7 +197,7 @@ _("bad header depth for directory inode %" PRIu64 "\n"),
 				do_warn(
 _("bad %s btree for inode %" PRIu64 "\n"),
 					FORKNAME(whichfork), da_cursor->ino);
-				libxfs_putbuf(bp);
+				libxfs_buf_relse(bp);
 				goto error_out;
 			}
 		}
@@ -222,7 +222,7 @@ _("bad %s btree for inode %" PRIu64 "\n"),
 
 error_out:
 	while (i > 1 && i <= da_cursor->active) {
-		libxfs_putbuf(da_cursor->level[i].bp);
+		libxfs_buf_relse(da_cursor->level[i].bp);
 		i++;
 	}
 
@@ -252,7 +252,7 @@ release_da_cursor_int(
 		}
 		ASSERT(error != 0);
 
-		libxfs_putbuf(cursor->level[level].bp);
+		libxfs_buf_relse(cursor->level[level].bp);
 		cursor->level[level].bp = NULL;
 	}
 
@@ -406,7 +406,7 @@ _("would correct bad hashval in non-leaf %s block\n"
 	if (cursor->level[this_level].dirty && !no_modify)
 		libxfs_writebuf(cursor->level[this_level].bp, 0);
 	else
-		libxfs_putbuf(cursor->level[this_level].bp);
+		libxfs_buf_relse(cursor->level[this_level].bp);
 
 	cursor->level[this_level].bp = NULL;
 
@@ -600,7 +600,7 @@ _("bad level %d in %s block %u for inode %" PRIu64 "\n"),
 #ifdef XR_DIR_TRACE
 			fprintf(stderr, "verify_da_path returns 1 (bad) #4\n");
 #endif
-			libxfs_putbuf(bp);
+			libxfs_buf_relse(bp);
 			return 1;
 		}
 
@@ -622,7 +622,7 @@ _("bad level %d in %s block %u for inode %" PRIu64 "\n"),
 		if (cursor->level[this_level].dirty && !no_modify)
 			libxfs_writebuf(cursor->level[this_level].bp, 0);
 		else
-			libxfs_putbuf(cursor->level[this_level].bp);
+			libxfs_buf_relse(cursor->level[this_level].bp);
 
 		/* switch cursor to point at the new buffer we just read */
 		cursor->level[this_level].bp = bp;

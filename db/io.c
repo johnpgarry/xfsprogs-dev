@@ -96,7 +96,7 @@ pop_cur(void)
 		return;
 	}
 	if (iocur_top->bp) {
-		libxfs_putbuf(iocur_top->bp);
+		libxfs_buf_relse(iocur_top->bp);
 		iocur_top->bp = NULL;
 	}
 	if (iocur_top->bbmap) {

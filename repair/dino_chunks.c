@@ -56,7 +56,7 @@ check_aginode_block(xfs_mount_t	*mp,
 	if (cnt)
 		bp->b_ops = &xfs_inode_buf_ops;
 
-	libxfs_putbuf(bp);
+	libxfs_buf_relse(bp);
 	return(cnt);
 }
 
@@ -670,7 +670,7 @@ process_inode_chunk(
 					M_IGEO(mp)->blocks_per_cluster));
 			while (bp_index > 0) {
 				bp_index--;
-				libxfs_putbuf(bplist[bp_index]);
+				libxfs_buf_relse(bplist[bp_index]);
 			}
 			free(bplist);
 			return(1);
@@ -759,7 +759,7 @@ next_readbuf:
 			*bogus = 1;
 			for (bp_index = 0; bp_index < cluster_count; bp_index++)
 				if (bplist[bp_index])
-					libxfs_putbuf(bplist[bp_index]);
+					libxfs_buf_relse(bplist[bp_index]);
 			free(bplist);
 			return(0);
 		}
@@ -942,7 +942,7 @@ process_next:
 				if (dirty && !no_modify)
 					libxfs_writebuf(bplist[bp_index], 0);
 				else
-					libxfs_putbuf(bplist[bp_index]);
+					libxfs_buf_relse(bplist[bp_index]);
 			}
 			free(bplist);
 			break;

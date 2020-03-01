@@ -82,7 +82,7 @@ scan_sbtree(
 
 	(*func)(XFS_BUF_TO_BLOCK(bp), nlevels - 1, root, agno, suspect,
 			isroot, magic, priv, ops);
-	libxfs_putbuf(bp);
+	libxfs_buf_relse(bp);
 }
 
 /*
@@ -154,7 +154,7 @@ scan_lbtree(
 	if ((dirty || badcrc) && !no_modify)
 		libxfs_writebuf(bp, 0);
 	else
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 
 	return(err);
 }
@@ -2138,7 +2138,7 @@ scan_freelist(
 
 	agcnts->fdblocks += state.count;
 
-	libxfs_putbuf(agflbuf);
+	libxfs_buf_relse(agflbuf);
 }
 
 static void
@@ -2428,12 +2428,12 @@ scan_ag(
 	if (agi_dirty && !no_modify)
 		libxfs_writebuf(agibuf, 0);
 	else
-		libxfs_putbuf(agibuf);
+		libxfs_buf_relse(agibuf);
 
 	if (agf_dirty && !no_modify)
 		libxfs_writebuf(agfbuf, 0);
 	else
-		libxfs_putbuf(agfbuf);
+		libxfs_buf_relse(agfbuf);
 
 	if (sb_dirty && !no_modify) {
 		if (agno == 0)
@@ -2441,7 +2441,7 @@ scan_ag(
 		libxfs_sb_to_disk(XFS_BUF_TO_SBP(sbbuf), sb);
 		libxfs_writebuf(sbbuf, 0);
 	} else
-		libxfs_putbuf(sbbuf);
+		libxfs_buf_relse(sbbuf);
 	free(sb);
 	PROG_RPT_INC(prog_rpt_done[agno], 1);
 
@@ -2451,11 +2451,11 @@ scan_ag(
 	return;
 
 out_free_agibuf:
-	libxfs_putbuf(agibuf);
+	libxfs_buf_relse(agibuf);
 out_free_agfbuf:
-	libxfs_putbuf(agfbuf);
+	libxfs_buf_relse(agfbuf);
 out_free_sbbuf:
-	libxfs_putbuf(sbbuf);
+	libxfs_buf_relse(sbbuf);
 out_free_sb:
 	free(sb);
 

@@ -566,7 +566,7 @@ libxfs_trans_brelse(
 	ASSERT(bp->b_transp == tp);
 
 	if (!tp) {
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 		return;
 	}
 
@@ -602,7 +602,7 @@ libxfs_trans_brelse(
 	xfs_buf_item_put(bip);
 
 	bp->b_transp = NULL;
-	libxfs_putbuf(bp);
+	libxfs_buf_relse(bp);
 }
 
 /*
@@ -839,7 +839,7 @@ inode_item_done(
 	if (error) {
 		fprintf(stderr, _("%s: warning - iflush_int failed (%d)\n"),
 			progname, error);
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 		goto free;
 	}
 
@@ -868,7 +868,7 @@ buf_item_done(
 	xfs_buf_item_put(bip);
 	if (hold)
 		return;
-	libxfs_putbuf(bp);
+	libxfs_buf_relse(bp);
 }
 
 static void
@@ -906,7 +906,7 @@ buf_item_unlock(
 	bip->bli_flags &= ~XFS_BLI_HOLD;
 	xfs_buf_item_put(bip);
 	if (!hold)
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 }
 
 static void

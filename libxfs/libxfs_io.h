@@ -148,7 +148,7 @@ extern struct cache_operations	libxfs_bcache_operations;
 #define libxfs_getbuf_flags(dev, daddr, len, flags) \
 	libxfs_trace_getbuf_flags(__FUNCTION__, __FILE__, __LINE__, \
 			    (dev), (daddr), (len), (flags))
-#define libxfs_putbuf(buf) \
+#define libxfs_buf_relse(buf) \
 	libxfs_trace_putbuf(__FUNCTION__, __FILE__, __LINE__, (buf))
 
 extern xfs_buf_t *libxfs_trace_readbuf(const char *, const char *, int,
@@ -180,7 +180,7 @@ extern xfs_buf_t *libxfs_getbuf_map(struct xfs_buftarg *,
 			struct xfs_buf_map *, int, int);
 extern xfs_buf_t *libxfs_getbuf_flags(struct xfs_buftarg *, xfs_daddr_t,
 			int, unsigned int);
-extern void	libxfs_putbuf (xfs_buf_t *);
+void	libxfs_buf_relse(struct xfs_buf *bp);
 
 #endif
 

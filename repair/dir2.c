@@ -1012,7 +1012,7 @@ _("bad directory block magic # %#x in block %u for directory inode %" PRIu64 "\n
 		*repair = 1;
 		libxfs_writebuf(bp, 0);
 	} else
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 	return rval;
 }
 
@@ -1131,7 +1131,7 @@ _("can't read file block %u for directory inode %" PRIu64 "\n"),
 			do_warn(
 _("bad directory leaf magic # %#x for directory inode %" PRIu64 " block %u\n"),
 				leafhdr.magic, ino, da_bno);
-			libxfs_putbuf(bp);
+			libxfs_buf_relse(bp);
 			goto error_out;
 		}
 		buf_dirty = 0;
@@ -1141,7 +1141,7 @@ _("bad directory leaf magic # %#x for directory inode %" PRIu64 " block %u\n"),
 		 */
 		if (process_leaf_block_dir2(mp, leaf, da_bno, ino,
 				current_hashval, &greatest_hashval)) {
-			libxfs_putbuf(bp);
+			libxfs_buf_relse(bp);
 			goto error_out;
 		}
 		/*
@@ -1159,14 +1159,14 @@ _("bad directory leaf magic # %#x for directory inode %" PRIu64 " block %u\n"),
 			do_warn(
 _("bad sibling back pointer for block %u in directory inode %" PRIu64 "\n"),
 				da_bno, ino);
-			libxfs_putbuf(bp);
+			libxfs_buf_relse(bp);
 			goto error_out;
 		}
 		prev_bno = da_bno;
 		da_bno = leafhdr.forw;
 		if (da_bno != 0) {
 			if (verify_da_path(mp, da_cursor, 0, XFS_DATA_FORK)) {
-				libxfs_putbuf(bp);
+				libxfs_buf_relse(bp);
 				goto error_out;
 			}
 		}
@@ -1182,7 +1182,7 @@ _("bad sibling back pointer for block %u in directory inode %" PRIu64 "\n"),
 			*repair = 1;
 			libxfs_writebuf(bp, 0);
 		} else
-			libxfs_putbuf(bp);
+			libxfs_buf_relse(bp);
 	} while (da_bno != 0);
 	if (verify_final_da_path(mp, da_cursor, 0, XFS_DATA_FORK)) {
 		/*
@@ -1341,7 +1341,7 @@ _("bad directory block magic # %#x in block %" PRIu64 " for directory inode %" P
 			*repair = 1;
 			libxfs_writebuf(bp, 0);
 		} else
-			libxfs_putbuf(bp);
+			libxfs_buf_relse(bp);
 	}
 	if (good == 0)
 		return 1;

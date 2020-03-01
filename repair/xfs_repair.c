@@ -479,7 +479,7 @@ guess_correct_sunit(
 		if (error)
 			continue;
 		libxfs_sb_from_disk(&sb, XFS_BUF_TO_SBP(bp));
-		libxfs_putbuf(bp);
+		libxfs_buf_relse(bp);
 
 		calc_rootino = libxfs_ialloc_calc_rootino(mp, sb.sb_unit);
 		if (calc_rootino == mp->m_sb.sb_rootino)

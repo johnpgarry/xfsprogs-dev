@@ -527,7 +527,7 @@ rmap_store_ag_btree_rec(
 		}
 		b++;
 	}
-	libxfs_putbuf(agflbp);
+	libxfs_buf_relse(agflbp);
 	agflbp = NULL;
 	bitmap_free(&own_ag_bitmap);
 
@@ -579,7 +579,7 @@ err_slab:
 	free_slab_cursor(&rm_cur);
 err:
 	if (agflbp)
-		libxfs_putbuf(agflbp);
+		libxfs_buf_relse(agflbp);
 	if (own_ag_bitmap)
 		bitmap_free(&own_ag_bitmap);
 	return error;
@@ -1082,7 +1082,7 @@ err:
 	if (bt_cur)
 		libxfs_btree_del_cursor(bt_cur, XFS_BTREE_NOERROR);
 	if (agbp)
-		libxfs_putbuf(agbp);
+		libxfs_buf_relse(agbp);
 	free_slab_cursor(&rm_cur);
 	return 0;
 }
@@ -1417,7 +1417,7 @@ err:
 		libxfs_btree_del_cursor(bt_cur, error ? XFS_BTREE_ERROR :
 							XFS_BTREE_NOERROR);
 	if (agbp)
-		libxfs_putbuf(agbp);
+		libxfs_buf_relse(agbp);
 	free_slab_cursor(&rl_cur);
 	return 0;
 }
