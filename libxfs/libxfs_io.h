@@ -23,10 +23,17 @@ struct xfs_perag;
 struct xfs_buftarg {
 	struct xfs_mount	*bt_mount;
 	dev_t			dev;
+	unsigned int		flags;
 };
+
+/* We purged a dirty buffer and lost a write. */
+#define XFS_BUFTARG_LOST_WRITE		(1 << 0)
+/* A dirty buffer failed the write verifier. */
+#define XFS_BUFTARG_CORRUPT_WRITE	(1 << 1)
 
 extern void	libxfs_buftarg_init(struct xfs_mount *mp, dev_t ddev,
 				    dev_t logdev, dev_t rtdev);
+int libxfs_blkdev_issue_flush(struct xfs_buftarg *btp);
 
 #define LIBXFS_BBTOOFF64(bbs)	(((xfs_off_t)(bbs)) << BBSHIFT)
 

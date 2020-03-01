@@ -581,6 +581,8 @@ libxfs_buftarg_alloc(
 	}
 	btp->bt_mount = mp;
 	btp->dev = dev;
+	btp->flags = 0;
+
 	return btp;
 }
 
@@ -803,17 +805,104 @@ libxfs_rtmount_destroy(xfs_mount_t *mp)
 	mp->m_rsumip = mp->m_rbmip = NULL;
 }
 
+/* Flush a device and report on writes that didn't make it to stable storage. */
+static inline int
+libxfs_flush_buftarg(
+	struct xfs_buftarg	*btp,
+	const char		*buftarg_descr)
+{
+	int			error = 0;
+	int			err2;
+
+	/*
+	 * Write verifier failures are evidence of a buggy program.  Make sure
+	 * that this state is always reported to the caller.
+	 */
+	if (btp->flags & XFS_BUFTARG_CORRUPT_WRITE) {
+		fprintf(stderr,
+_("%s: Refusing to write a corrupt buffer to the %s!\n"),
+				progname, buftarg_descr);
+		error = -EFSCORRUPTED;
+	}
+
+	if (btp->flags & XFS_BUFTARG_LOST_WRITE) {
+		fprintf(stderr,
+_("%s: Lost a write to the %s!\n"),
+				progname, buftarg_descr);
+		if (!error)
+			error = -EIO;
+	}
+
+	err2 = libxfs_blkdev_issue_flush(btp);
+	if (err2) {
+		fprintf(stderr,
+_("%s: Flushing the %s failed, err=%d!\n"),
+				progname, buftarg_descr, -err2);
+	}
+	if (!error)
+		error = err2;
+
+	return error;
+}
+
+/*
+ * Flush all dirty buffers to stable storage and report on writes that didn't
+ * make it to stable storage.
+ */
+static int
+libxfs_flush_mount(
+	struct xfs_mount	*mp)
+{
+	int			error = 0;
+	int			err2;
+
+	/*
+	 * Purge the buffer cache to write all dirty buffers to disk and free
+	 * all incore buffers.  Buffers that fail write verification will cause
+	 * the CORRUPT_WRITE flag to be set in the buftarg.  Buffers that
+	 * cannot be written will cause the LOST_WRITE flag to be set in the
+	 * buftarg.
+	 */
+	libxfs_bcache_purge();
+
+	/* Flush all kernel and disk write caches, and report failures. */
+	if (mp->m_ddev_targp) {
+		err2 = libxfs_flush_buftarg(mp->m_ddev_targp, _("data device"));
+		if (!error)
+			error = err2;
+	}
+
+	if (mp->m_logdev_targp && mp->m_logdev_targp != mp->m_ddev_targp) {
+		err2 = libxfs_flush_buftarg(mp->m_logdev_targp,
+				_("log device"));
+		if (!error)
+			error = err2;
+	}
+
+	if (mp->m_rtdev_targp) {
+		err2 = libxfs_flush_buftarg(mp->m_rtdev_targp,
+				_("realtime device"));
+		if (!error)
+			error = err2;
+	}
+
+	return error;
+}
+
 /*
  * Release any resource obtained during a mount.
  */
-void
-libxfs_umount(xfs_mount_t *mp)
+int
+libxfs_umount(
+	struct xfs_mount	*mp)
 {
 	struct xfs_perag	*pag;
 	int			agno;
+	int			error;
 
 	libxfs_rtmount_destroy(mp);
-	libxfs_bcache_purge();
+
+	error = libxfs_flush_mount(mp);
 
 	for (agno = 0; agno < mp->m_maxagi; agno++) {
 		pag = radix_tree_delete(&mp->m_perag_tree, agno);
@@ -828,6 +917,7 @@ libxfs_umount(xfs_mount_t *mp)
 		kmem_free(mp->m_logdev_targp);
 	kmem_free(mp->m_ddev_targp);
 
+	return error;
 }
 
 /*
