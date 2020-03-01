@@ -749,10 +749,10 @@ Test whether v2 encryption policies are supported.  Prints "supported",
 .RE
 .PD
 .TP
-.BI "add_enckey [ \-d " descriptor " ]"
+.BI "add_enckey [ \-d " descriptor " ] [ \-k " key_id " ]"
 On filesystems that support encryption, add an encryption key to the filesystem
-containing the currently open file.  The key in binary (typically 64 bytes long)
-is read from standard input.
+containing the currently open file.  By default, the raw key in binary
+(typically 64 bytes long) is read from standard input.
 .RS 1.0i
 .PD 0
 .TP 0.4i
@@ -761,6 +761,10 @@ key descriptor, as a 16-character hex string (8 bytes).  If given, the key will
 be available for use by v1 encryption policies that use this descriptor.
 Otherwise, the key is added as a v2 policy key, and on success the resulting
 "key identifier" will be printed.
+.TP
+.BI \-k " key_id"
+ID of kernel keyring key of type "fscrypt-provisioning".  If given, the raw key
+will be taken from here rather than from standard input.
 .RE
 .PD
 .TP

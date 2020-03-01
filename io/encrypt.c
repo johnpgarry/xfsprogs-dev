@@ -4,6 +4,9 @@
  * Author: Eric Biggers <ebiggers@google.com>
  */
 
+#ifdef OVERRIDE_SYSTEM_FSCRYPT_ADD_KEY_ARG
+#  define fscrypt_add_key_arg sys_fscrypt_add_key_arg
+#endif
 #include "platform_defs.h"
 #include "command.h"
 #include "init.h"
@@ -99,13 +102,7 @@ struct fscrypt_key_specifier {
 	} u;
 };
 
-#define FS_IOC_ADD_ENCRYPTION_KEY		_IOWR('f', 23, struct fscrypt_add_key_arg)
-struct fscrypt_add_key_arg {
-	struct fscrypt_key_specifier key_spec;
-	__u32 raw_size;
-	__u32 __reserved[9];
-	__u8 raw[];
-};
+/* FS_IOC_ADD_ENCRYPTION_KEY is defined later */
 
 #define FS_IOC_REMOVE_ENCRYPTION_KEY		_IOWR('f', 24, struct fscrypt_remove_key_arg)
 #define FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS	_IOWR('f', 25, struct fscrypt_remove_key_arg)
@@ -135,6 +132,26 @@ struct fscrypt_get_key_status_arg {
 };
 
 #endif /* !FS_IOC_GET_ENCRYPTION_POLICY_EX */
+
+/*
+ * Since the key_id field was added later than struct fscrypt_add_key_arg
+ * itself, we may need to override the system definition to get that field.
+ */
+#if !defined(FS_IOC_ADD_ENCRYPTION_KEY) || \
+	defined(OVERRIDE_SYSTEM_FSCRYPT_ADD_KEY_ARG)
+#undef fscrypt_add_key_arg
+struct fscrypt_add_key_arg {
+	struct fscrypt_key_specifier key_spec;
+	__u32 raw_size;
+	__u32 key_id;
+	__u32 __reserved[8];
+	__u8 raw[];
+};
+#endif
+
+#ifndef FS_IOC_ADD_ENCRYPTION_KEY
+#  define FS_IOC_ADD_ENCRYPTION_KEY		_IOWR('f', 23, struct fscrypt_add_key_arg)
+#endif
 
 static const struct {
 	__u8 mode;
@@ -217,8 +234,9 @@ add_enckey_help(void)
 " 'add_enckey' - add key for v2 policies\n"
 " 'add_enckey -d 0000111122223333' - add key for v1 policies w/ given descriptor\n"
 "\n"
-"The key in binary is read from standard input.\n"
+"Unless -k is given, the key in binary is read from standard input.\n"
 " -d DESCRIPTOR -- master_key_descriptor\n"
+" -k KEY_ID -- ID of fscrypt-provisioning key containing the raw key\n"
 "\n"));
 }
 
@@ -429,6 +447,21 @@ str2keyspec(const char *str, int policy_version,
 		key_spec->type = FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR;
 	}
 	return policy_version;
+}
+
+static int
+parse_key_id(const char *arg)
+{
+	long value;
+	char *tmp;
+
+	value = strtol(arg, &tmp, 0);
+	if (value <= 0 || value > INT_MAX || tmp == arg || *tmp != '\0') {
+		fprintf(stderr, _("invalid key ID: %s\n"), arg);
+		/* 0 is never a valid Linux key ID. */
+		return 0;
+	}
+	return value;
 }
 
 static void
@@ -689,11 +722,16 @@ add_enckey_f(int argc, char **argv)
 
 	arg->key_spec.type = FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER;
 
-	while ((c = getopt(argc, argv, "d:")) != EOF) {
+	while ((c = getopt(argc, argv, "d:k:")) != EOF) {
 		switch (c) {
 		case 'd':
 			arg->key_spec.type = FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR;
 			if (!str2keydesc(optarg, arg->key_spec.u.descriptor))
+				goto out;
+			break;
+		case 'k':
+			arg->key_id = parse_key_id(optarg);
+			if (arg->key_id == 0)
 				goto out;
 			break;
 		default:
@@ -709,21 +747,23 @@ add_enckey_f(int argc, char **argv)
 		goto out;
 	}
 
-	raw_size = read_until_limit_or_eof(STDIN_FILENO, arg->raw,
-					   FSCRYPT_MAX_KEY_SIZE + 1);
-	if (raw_size < 0) {
-		fprintf(stderr, _("Error reading key from stdin: %s\n"),
-			strerror(errno));
-		exitcode = 1;
-		goto out;
-	}
-	if (raw_size > FSCRYPT_MAX_KEY_SIZE) {
-		fprintf(stderr,
-			_("Invalid key; got > FSCRYPT_MAX_KEY_SIZE (%d) bytes on stdin!\n"),
-			FSCRYPT_MAX_KEY_SIZE);
-		goto out;
-	}
-	arg->raw_size = raw_size;
+	if (arg->key_id == 0) {
+		raw_size = read_until_limit_or_eof(STDIN_FILENO, arg->raw,
+						   FSCRYPT_MAX_KEY_SIZE + 1);
+		if (raw_size < 0) {
+			fprintf(stderr, _("Error reading key from stdin: %s\n"),
+				strerror(errno));
+			exitcode = 1;
+			goto out;
+		}
+		if (raw_size > FSCRYPT_MAX_KEY_SIZE) {
+			fprintf(stderr,
+				_("Invalid key; got > FSCRYPT_MAX_KEY_SIZE (%d) bytes on stdin!\n"),
+				FSCRYPT_MAX_KEY_SIZE);
+			goto out;
+		}
+		arg->raw_size = raw_size;
+	} /* else, raw key is given via key with ID 'key_id' */
 
 	if (ioctl(file->fd, FS_IOC_ADD_ENCRYPTION_KEY, arg) != 0) {
 		fprintf(stderr, _("Error adding encryption key: %s\n"),
@@ -859,7 +899,7 @@ encrypt_init(void)
 
 	add_enckey_cmd.name = "add_enckey";
 	add_enckey_cmd.cfunc = add_enckey_f;
-	add_enckey_cmd.args = _("[-d descriptor]");
+	add_enckey_cmd.args = _("[-d descriptor] [-k key_id]");
 	add_enckey_cmd.argmin = 0;
 	add_enckey_cmd.argmax = -1;
 	add_enckey_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;

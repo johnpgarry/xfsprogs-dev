@@ -279,6 +279,27 @@ AC_DEFUN([AC_NEED_INTERNAL_FSXATTR],
   ])
 
 #
+# Check if we need to override the system struct fscrypt_add_key_arg
+# with the internal definition.  This /only/ happens if the system
+# actually defines struct fscrypt_add_key_arg /and/ the system
+# definition is missing certain fields.
+#
+AC_DEFUN([AC_NEED_INTERNAL_FSCRYPT_ADD_KEY_ARG],
+  [
+    AC_CHECK_TYPE(struct fscrypt_add_key_arg,
+      [
+        AC_CHECK_MEMBER(struct fscrypt_add_key_arg.key_id,
+          ,
+          need_internal_fscrypt_add_key_arg=yes,
+          [#include <linux/fs.h>]
+        )
+      ],,
+      [#include <linux/fs.h>]
+    )
+    AC_SUBST(need_internal_fscrypt_add_key_arg)
+  ])
+
+#
 # Check if we have a FS_IOC_GETFSMAP ioctl (Linux)
 #
 AC_DEFUN([AC_HAVE_GETFSMAP],
