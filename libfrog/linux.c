@@ -140,20 +140,29 @@ platform_set_blocksize(int fd, char *path, dev_t device, int blocksize, int fata
 	return error;
 }
 
-void
-platform_flush_device(int fd, dev_t device)
+/*
+ * Flush dirty pagecache and disk write cache to stable media.  Returns 0 for
+ * success or -1 (with errno set) for failure.
+ */
+int
+platform_flush_device(
+	int		fd,
+	dev_t		device)
 {
 	struct stat	st;
-	if (major(device) == RAMDISK_MAJOR)
-		return;
+	int		ret;
 
-	if (fstat(fd, &st) < 0)
-		return;
+	if (major(device) == RAMDISK_MAJOR)
+		return 0;
+
+	ret = fstat(fd, &st);
+	if (ret)
+		return ret;
 
 	if (S_ISREG(st.st_mode))
-		fsync(fd);
-	else
-		ioctl(fd, BLKFLSBUF, 0);
+		return fsync(fd);
+
+	return ioctl(fd, BLKFLSBUF, 0);
 }
 
 void
