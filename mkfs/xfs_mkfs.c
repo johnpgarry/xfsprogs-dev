@@ -3351,6 +3351,21 @@ finish_superblock_setup(
 
 }
 
+/* Prepare an uncached buffer, ready to write something out. */
+static inline struct xfs_buf *
+alloc_write_buf(
+	struct xfs_buftarg	*btp,
+	xfs_daddr_t		daddr,
+	int			bblen)
+{
+	struct xfs_buf		*bp;
+
+	bp = libxfs_buf_get_uncached(btp, bblen, 0);
+	bp->b_bn = daddr;
+	bp->b_maps[0].bm_bn = daddr;
+	return bp;
+}
+
 /*
  * Sanitise the data and log devices and prepare them so libxfs can mount the
  * device successfully. Also check we can access the rt device if configured.
@@ -3399,11 +3414,10 @@ prepare_devices(
 	 * the end of the device.  (MD sb is ~64k from the end, take out a wider
 	 * swath to be sure)
 	 */
-	buf = libxfs_buf_get(mp->m_ddev_targp, (xi->dsize - whack_blks),
-			    whack_blks);
+	buf = alloc_write_buf(mp->m_ddev_targp, (xi->dsize - whack_blks),
+			whack_blks);
 	memset(buf->b_addr, 0, WHACK_SIZE);
 	libxfs_writebuf(buf, 0);
-	libxfs_purgebuf(buf);
 
 	/*
 	 * Now zero out the beginning of the device, to obliterate any old
@@ -3411,19 +3425,17 @@ prepare_devices(
 	 * swap (somewhere around the page size), jfs (32k),
 	 * ext[2,3] and reiserfs (64k) - and hopefully all else.
 	 */
-	buf = libxfs_buf_get(mp->m_ddev_targp, 0, whack_blks);
+	buf = alloc_write_buf(mp->m_ddev_targp, 0, whack_blks);
 	memset(buf->b_addr, 0, WHACK_SIZE);
 	libxfs_writebuf(buf, 0);
-	libxfs_purgebuf(buf);
 
 	/* OK, now write the superblock... */
-	buf = libxfs_buf_get(mp->m_ddev_targp, XFS_SB_DADDR,
+	buf = alloc_write_buf(mp->m_ddev_targp, XFS_SB_DADDR,
 			XFS_FSS_TO_BB(mp, 1));
 	buf->b_ops = &xfs_sb_buf_ops;
 	memset(buf->b_addr, 0, cfg->sectorsize);
 	libxfs_sb_to_disk(buf->b_addr, sbp);
 	libxfs_writebuf(buf, 0);
-	libxfs_purgebuf(buf);
 
 	/* ...and zero the log.... */
 	lsunit = sbp->sb_logsunit;
@@ -3438,12 +3450,11 @@ prepare_devices(
 
 	/* finally, check we can write the last block in the realtime area */
 	if (mp->m_rtdev_targp->dev && cfg->rtblocks > 0) {
-		buf = libxfs_buf_get(mp->m_rtdev_targp,
-				    XFS_FSB_TO_BB(mp, cfg->rtblocks - 1LL),
-				    BTOBB(cfg->blocksize));
+		buf = alloc_write_buf(mp->m_rtdev_targp,
+				XFS_FSB_TO_BB(mp, cfg->rtblocks - 1LL),
+				BTOBB(cfg->blocksize));
 		memset(buf->b_addr, 0, cfg->blocksize);
 		libxfs_writebuf(buf, 0);
-		libxfs_purgebuf(buf);
 	}
 
 }

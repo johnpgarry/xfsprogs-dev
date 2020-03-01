@@ -640,18 +640,6 @@ libxfs_buf_relse(
 		libxfs_putbufr(bp);
 }
 
-void
-libxfs_purgebuf(xfs_buf_t *bp)
-{
-	struct xfs_bufkey key = {NULL};
-
-	key.buftarg = bp->b_target;
-	key.blkno = bp->b_bn;
-	key.bblen = bp->b_length;
-
-	cache_node_purge(libxfs_bcache, &key, (struct cache_node *)bp);
-}
-
 static struct cache_node *
 libxfs_balloc(cache_key_t key)
 {
