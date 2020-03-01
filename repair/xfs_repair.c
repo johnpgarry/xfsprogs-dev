@@ -703,6 +703,7 @@ main(int argc, char **argv)
 	struct xfs_sb	psb;
 	int		rval;
 	struct xfs_ino_geometry	*igeo;
+	int		error;
 
 	progname = basename(argv[0]);
 	setlocale(LC_ALL, "");
@@ -1104,7 +1105,13 @@ _("Note - stripe unit (%d) and width (%d) were copied from a backup superblock.\
 	 */
 	libxfs_bcache_flush();
 	format_log_max_lsn(mp);
-	libxfs_umount(mp);
+
+	/* Report failure if anything failed to get written to our fs. */
+	error = -libxfs_umount(mp);
+	if (error)
+		do_error(
+	_("File system metadata writeout failed, err=%d.  Re-run xfs_repair."),
+				error);
 
 	libxfs_destroy(&x);
 
