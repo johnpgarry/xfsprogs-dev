@@ -157,7 +157,6 @@ static char *next(
 #undef libxfs_readbuf_map
 #undef libxfs_writebuf
 #undef libxfs_getbuf_map
-#undef libxfs_getbuf_flags
 
 xfs_buf_t	*libxfs_readbuf_map(struct xfs_buftarg *, struct xfs_buf_map *,
 				int, int, const struct xfs_buf_ops *);
@@ -166,8 +165,6 @@ struct xfs_buf *libxfs_buf_get(struct xfs_buftarg *btp, xfs_daddr_t daddr,
 				size_t len);
 xfs_buf_t	*libxfs_getbuf_map(struct xfs_buftarg *, struct xfs_buf_map *,
 				int, int);
-xfs_buf_t	*libxfs_getbuf_flags(struct xfs_buftarg *, xfs_daddr_t, int,
-				unsigned int);
 void		libxfs_buf_relse(struct xfs_buf *bp);
 
 #define	__add_trace(bp, func, file, line)	\
@@ -232,15 +229,6 @@ libxfs_trace_getbuf_map(const char *func, const char *file, int line,
 		int flags)
 {
 	xfs_buf_t	*bp = libxfs_getbuf_map(btp, map, nmaps, flags);
-	__add_trace(bp, func, file, line);
-	return bp;
-}
-
-xfs_buf_t *
-libxfs_trace_getbuf_flags(const char *func, const char *file, int line,
-		struct xfs_buftarg *btp, xfs_daddr_t blkno, int len, unsigned int flags)
-{
-	xfs_buf_t	*bp = libxfs_getbuf_flags(btp, blkno, len, flags);
 	__add_trace(bp, func, file, line);
 	return bp;
 }
@@ -549,9 +537,12 @@ out_put:
 	return NULL;
 }
 
-struct xfs_buf *
-libxfs_getbuf_flags(struct xfs_buftarg *btp, xfs_daddr_t blkno, int len,
-		unsigned int flags)
+static struct xfs_buf *
+libxfs_getbuf_flags(
+	struct xfs_buftarg	*btp,
+	xfs_daddr_t		blkno,
+	int			len,
+	unsigned int		flags)
 {
 	struct xfs_bufkey key = {NULL};
 
