@@ -427,7 +427,7 @@ libxfs_trans_get_buf_map(
 	struct xfs_buf_log_item	*bip;
 
 	if (!tp)
-		return libxfs_getbuf_map(target, map, nmaps, 0);
+		return libxfs_buf_get_map(target, map, nmaps, 0);
 
 	/*
 	 * If we find the buffer in the cache with this transaction
@@ -445,7 +445,7 @@ libxfs_trans_get_buf_map(
 		return bp;
 	}
 
-	bp = libxfs_getbuf_map(target, map, nmaps, 0);
+	bp = libxfs_buf_get_map(target, map, nmaps, 0);
 	if (bp == NULL) {
 		return NULL;
 	}
