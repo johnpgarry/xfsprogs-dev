@@ -1577,3 +1577,17 @@ libxfs_log_header(
 	return BBTOB(len);
 }
 
+void
+libxfs_buf_set_priority(
+	struct xfs_buf	*bp,
+	int		priority)
+{
+	cache_node_set_priority(libxfs_bcache, &bp->b_node, priority);
+}
+
+int
+libxfs_buf_priority(
+	struct xfs_buf	*bp)
+{
+	return cache_node_get_priority(&bp->b_node);
+}

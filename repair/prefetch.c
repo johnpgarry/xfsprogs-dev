@@ -127,12 +127,12 @@ pf_queue_io(
 	if (bp->b_flags & LIBXFS_B_UPTODATE) {
 		if (B_IS_INODE(flag))
 			pf_read_inode_dirs(args, bp);
-		XFS_BUF_SET_PRIORITY(bp, XFS_BUF_PRIORITY(bp) +
+		libxfs_buf_set_priority(bp, libxfs_buf_priority(bp) +
 						CACHE_PREFETCH_PRIORITY);
 		libxfs_buf_relse(bp);
 		return;
 	}
-	XFS_BUF_SET_PRIORITY(bp, flag);
+	libxfs_buf_set_priority(bp, flag);
 
 	pthread_mutex_lock(&args->lock);
 
@@ -146,7 +146,7 @@ pf_queue_io(
 		}
 	} else {
 		ASSERT(!B_IS_INODE(flag));
-		XFS_BUF_SET_PRIORITY(bp, B_DIR_META_2);
+		libxfs_buf_set_priority(bp, B_DIR_META_2);
 	}
 
 	pftrace("getbuf %c %p (%llu) in AG %d (fsbno = %lu) added to queue"
@@ -276,7 +276,7 @@ pf_scan_lbtree(
 	if (!bp)
 		return 0;
 
-	XFS_BUF_SET_PRIORITY(bp, isadir ? B_DIR_BMAP : B_BMAP);
+	libxfs_buf_set_priority(bp, isadir ? B_DIR_BMAP : B_BMAP);
 
 	/*
 	 * If the verifier flagged a problem with the buffer, we can't trust
@@ -454,7 +454,7 @@ pf_read_inode_dirs(
 		}
 	}
 	if (hasdir)
-		XFS_BUF_SET_PRIORITY(bp, B_DIR_INODE);
+		libxfs_buf_set_priority(bp, B_DIR_INODE);
 }
 
 /*
@@ -502,7 +502,7 @@ pf_batch_read(
 			}
 
 			if (which != PF_META_ONLY ||
-				   !B_IS_INODE(XFS_BUF_PRIORITY(bplist[num])))
+				  !B_IS_INODE(libxfs_buf_priority(bplist[num])))
 				num++;
 			if (num == MAX_BUFS)
 				break;
@@ -548,7 +548,7 @@ pf_batch_read(
 
 		if (which == PF_PRIMARY) {
 			for (inode_bufs = 0, i = 0; i < num; i++) {
-				if (B_IS_INODE(XFS_BUF_PRIORITY(bplist[i])))
+				if (B_IS_INODE(libxfs_buf_priority(bplist[i])))
 					inode_bufs++;
 			}
 			args->inode_bufs_queued -= inode_bufs;
@@ -598,19 +598,20 @@ pf_batch_read(
 				bplist[i]->b_flags |= (LIBXFS_B_UPTODATE |
 						       LIBXFS_B_UNCHECKED);
 				len -= size;
-				if (B_IS_INODE(XFS_BUF_PRIORITY(bplist[i])))
+				if (B_IS_INODE(libxfs_buf_priority(bplist[i])))
 					pf_read_inode_dirs(args, bplist[i]);
 				else if (which == PF_META_ONLY)
-					XFS_BUF_SET_PRIORITY(bplist[i],
+					libxfs_buf_set_priority(bplist[i],
 								B_DIR_META_H);
 				else if (which == PF_PRIMARY && num == 1)
-					XFS_BUF_SET_PRIORITY(bplist[i],
+					libxfs_buf_set_priority(bplist[i],
 								B_DIR_META_S);
 			}
 		}
 		for (i = 0; i < num; i++) {
 			pftrace("putbuf %c %p (%llu) in AG %d",
-				B_IS_INODE(XFS_BUF_PRIORITY(bplist[i])) ? 'I' : 'M',
+				B_IS_INODE(libxfs_buf_priority(bplist[i])) ?
+								      'I' : 'M',
 				bplist[i], (long long)XFS_BUF_ADDR(bplist[i]),
 				args->agno);
 			libxfs_buf_relse(bplist[i]);
