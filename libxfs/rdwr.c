@@ -1420,15 +1420,13 @@ libxfs_log_clear(
 	/* write out the first log record */
 	ptr = dptr;
 	if (btp) {
-		bp = libxfs_getbufr(btp, start, len);
+		bp = libxfs_getbufr_uncached(btp, start, len);
 		ptr = bp->b_addr;
 	}
 	libxfs_log_header(ptr, fs_uuid, version, sunit, fmt, lsn, tail_lsn,
 			  next, bp);
-	if (bp) {
-		bp->b_flags |= LIBXFS_B_DIRTY;
-		libxfs_putbufr(bp);
-	}
+	if (bp)
+		libxfs_writebuf(bp, 0);
 
 	/*
 	 * There's nothing else to do if this is a log reset. The kernel detects
@@ -1468,7 +1466,7 @@ libxfs_log_clear(
 
 		ptr = dptr;
 		if (btp) {
-			bp = libxfs_getbufr(btp, blk, len);
+			bp = libxfs_getbufr_uncached(btp, blk, len);
 			ptr = bp->b_addr;
 		}
 		/*
@@ -1477,10 +1475,8 @@ libxfs_log_clear(
 		 */
 		libxfs_log_header(ptr, fs_uuid, version, BBTOB(len), fmt, lsn,
 				  tail_lsn, next, bp);
-		if (bp) {
-			bp->b_flags |= LIBXFS_B_DIRTY;
-			libxfs_putbufr(bp);
-		}
+		if (bp)
+			libxfs_writebuf(bp, 0);
 
 		blk += len;
 		if (dptr)
