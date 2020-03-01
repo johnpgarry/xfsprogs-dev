@@ -28,7 +28,7 @@ process_agi_unlinked(
 	xfs_agnumber_t		i;
 	int			agi_dirty = 0;
 
-	bp = libxfs_readbuf(mp->m_dev,
+	bp = libxfs_buf_read(mp->m_dev,
 			XFS_AG_DADDR(mp, agno, XFS_AGI_DADDR(mp)),
 			mp->m_sb.sb_sectsize/BBSIZE, 0, &xfs_agi_buf_ops);
 	if (!bp)

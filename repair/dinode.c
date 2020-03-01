@@ -748,7 +748,7 @@ get_agino_buf(
 		cluster_agino, cluster_daddr, cluster_blks);
 #endif
 
-	bp = libxfs_readbuf(mp->m_dev, cluster_daddr, cluster_blks,
+	bp = libxfs_buf_read(mp->m_dev, cluster_daddr, cluster_blks,
 			0, &xfs_inode_buf_ops);
 	if (!bp) {
 		do_warn(_("cannot read inode (%u/%u), disk block %" PRIu64 "\n"),
@@ -1179,7 +1179,7 @@ process_quota_inode(
 		fsbno = blkmap_get(blkmap, qbno);
 		dqid = (xfs_dqid_t)qbno * dqperchunk;
 
-		bp = libxfs_readbuf(mp->m_dev, XFS_FSB_TO_DADDR(mp, fsbno),
+		bp = libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, fsbno),
 				    dqchunklen, 0, &xfs_dquot_buf_ops);
 		if (!bp) {
 			do_warn(
@@ -1284,7 +1284,7 @@ _("cannot read inode %" PRIu64 ", file block %d, NULL disk block\n"),
 
 		byte_cnt = XFS_FSB_TO_B(mp, blk_cnt);
 
-		bp = libxfs_readbuf(mp->m_dev, XFS_FSB_TO_DADDR(mp, fsbno),
+		bp = libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, fsbno),
 				    BTOBB(byte_cnt), 0, &xfs_symlink_buf_ops);
 		if (!bp) {
 			do_warn(

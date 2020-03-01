@@ -112,7 +112,7 @@ init(
 	 */
 	memset(&xmount, 0, sizeof(struct xfs_mount));
 	libxfs_buftarg_init(&xmount, x.ddev, x.logdev, x.rtdev);
-	bp = libxfs_readbuf(xmount.m_ddev_targp, XFS_SB_DADDR,
+	bp = libxfs_buf_read(xmount.m_ddev_targp, XFS_SB_DADDR,
 			    1 << (XFS_MAX_SECTORSIZE_LOG - BBSHIFT), 0, NULL);
 
 	if (!bp || bp->b_error) {

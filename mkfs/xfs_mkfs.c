@@ -3529,7 +3529,7 @@ rewrite_secondary_superblocks(
 	struct xfs_buf		*buf;
 
 	/* rewrite the last superblock */
-	buf = libxfs_readbuf(mp->m_dev,
+	buf = libxfs_buf_read(mp->m_dev,
 			XFS_AGB_TO_DADDR(mp, mp->m_sb.sb_agcount - 1,
 				XFS_SB_DADDR),
 			XFS_FSS_TO_BB(mp, 1), 0, &xfs_sb_buf_ops);
@@ -3545,7 +3545,7 @@ rewrite_secondary_superblocks(
 	if (mp->m_sb.sb_agcount <= 2)
 		return;
 
-	buf = libxfs_readbuf(mp->m_dev,
+	buf = libxfs_buf_read(mp->m_dev,
 			XFS_AGB_TO_DADDR(mp, (mp->m_sb.sb_agcount - 1) / 2,
 				XFS_SB_DADDR),
 			XFS_FSS_TO_BB(mp, 1), 0, &xfs_sb_buf_ops);

@@ -44,7 +44,7 @@
  *
  * IOWs, userspace is behaving quite differently to the kernel and as a result
  * it leaks errors from reads, invalidations and writes through
- * libxfs_buf_get/libxfs_readbuf.
+ * libxfs_buf_get/libxfs_buf_read.
  *
  * The result of this is that until the userspace code outside libxfs is cleaned
  * up, functions that release buffers from userspace control (i.e
@@ -388,14 +388,11 @@ libxfs_log_header(
 
 #ifdef XFS_BUF_TRACING
 
-#undef libxfs_readbuf
 #undef libxfs_readbuf_map
 #undef libxfs_writebuf
 #undef libxfs_getbuf_map
 #undef libxfs_getbuf_flags
 
-xfs_buf_t	*libxfs_readbuf(struct xfs_buftarg *, xfs_daddr_t, int, int,
-				const struct xfs_buf_ops *);
 xfs_buf_t	*libxfs_readbuf_map(struct xfs_buftarg *, struct xfs_buf_map *,
 				int, int, const struct xfs_buf_ops *);
 int		libxfs_writebuf(xfs_buf_t *, int);
@@ -416,22 +413,21 @@ do {						\
 	}					\
 } while (0)
 
-xfs_buf_t *
-libxfs_trace_readbuf(const char *func, const char *file, int line,
-		struct xfs_buftarg *btp, xfs_daddr_t blkno, int len, int flags,
-		const struct xfs_buf_ops *ops)
+struct xfs_buf *
+libxfs_trace_readbuf(
+	const char		*func,
+	const char		*file,
+	int			line,
+	struct xfs_buftarg	*btp,
+	xfs_daddr_t		blkno,
+	size_t			len,
+	int			flags,
+	const struct xfs_buf_ops *ops)
 {
-	xfs_buf_t	*bp = libxfs_readbuf(btp, blkno, len, flags, ops);
-	__add_trace(bp, func, file, line);
-	return bp;
-}
+	struct xfs_buf		*bp;
+	DEFINE_SINGLE_BUF_MAP(map, blkno, numblks);
 
-xfs_buf_t *
-libxfs_trace_readbuf_map(const char *func, const char *file, int line,
-		struct xfs_buftarg *btp, struct xfs_buf_map *map, int nmaps, int flags,
-		const struct xfs_buf_ops *ops)
-{
-	xfs_buf_t	*bp = libxfs_readbuf_map(btp, map, nmaps, flags, ops);
+	bp = libxfs_readbuf_map(btp, &map, 1, flags, ops);
 	__add_trace(bp, func, file, line);
 	return bp;
 }
@@ -490,11 +486,12 @@ libxfs_trace_putbuf(const char *func, const char *file, int line, xfs_buf_t *bp)
 #endif
 
 
-xfs_buf_t *
-libxfs_getsb(xfs_mount_t *mp)
+struct xfs_buf *
+libxfs_getsb(
+	struct xfs_mount	*mp)
 {
-	return libxfs_readbuf(mp->m_ddev_targp, XFS_SB_DADDR,
-				XFS_FSS_TO_BB(mp, 1), 0, &xfs_sb_buf_ops);
+	return libxfs_buf_read(mp->m_ddev_targp, XFS_SB_DADDR,
+			XFS_FSS_TO_BB(mp, 1), 0, &xfs_sb_buf_ops);
 }
 
 kmem_zone_t			*xfs_buf_zone;
@@ -959,13 +956,16 @@ libxfs_readbuf_verify(struct xfs_buf *bp, const struct xfs_buf_ops *ops)
 	bp->b_flags &= ~LIBXFS_B_UNCHECKED;
 }
 
-
-xfs_buf_t *
-libxfs_readbuf(struct xfs_buftarg *btp, xfs_daddr_t blkno, int len, int flags,
-		const struct xfs_buf_ops *ops)
+static struct xfs_buf *
+libxfs_readbuf(
+	struct xfs_buftarg	*btp,
+	xfs_daddr_t		blkno,
+	size_t			len,
+	int			flags,
+	const struct xfs_buf_ops *ops)
 {
-	xfs_buf_t	*bp;
-	int		error;
+	struct xfs_buf		*bp;
+	int			error;
 
 	bp = libxfs_getbuf_flags(btp, blkno, len, 0);
 	if (!bp)

@@ -271,7 +271,7 @@ pf_scan_lbtree(
 	xfs_buf_t		*bp;
 	int			rc;
 
-	bp = libxfs_readbuf(mp->m_dev, XFS_FSB_TO_DADDR(mp, dbno),
+	bp = libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, dbno),
 			XFS_FSB_TO_BB(mp, 1), 0, &xfs_bmbt_buf_ops);
 	if (!bp)
 		return 0;
