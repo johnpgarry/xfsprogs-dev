@@ -19,7 +19,7 @@
 #include "xfs_trans.h"
 #include "libfrog/platform.h"
 
-#include "libxfs.h"		/* for LIBXFS_EXIT_ON_FAILURE */
+#include "libxfs.h"
 
 /*
  * Important design/architecture note:

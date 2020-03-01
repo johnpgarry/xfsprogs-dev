@@ -126,7 +126,6 @@ typedef struct libxfs_xinit {
 	int		bcache_flags;	/* cache init flags */
 } libxfs_init_t;
 
-#define LIBXFS_EXIT_ON_FAILURE	0x0001	/* exit the program if a call fails */
 #define LIBXFS_ISREADONLY	0x0002	/* disallow all mounted filesystems */
 #define LIBXFS_ISINACTIVE	0x0004	/* allow mounted only if mounted ro */
 #define LIBXFS_DANGEROUSLY	0x0008	/* repairing a device mounted ro    */

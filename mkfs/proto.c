@@ -262,7 +262,7 @@ newfile(
 		if (logit)
 			libxfs_trans_log_buf(tp, bp, 0, bp->b_bcount - 1);
 		else
-			libxfs_writebuf(bp, LIBXFS_EXIT_ON_FAILURE);
+			libxfs_writebuf(bp, 0);
 	}
 	ip->i_d.di_size = len;
 	return flags;
