@@ -943,6 +943,7 @@ libxfs_readbufr(struct xfs_buftarg *btp, xfs_daddr_t blkno, xfs_buf_t *bp,
 		pthread_self(), __FUNCTION__, bytes, error,
 		(long long)LIBXFS_BBTOOFF64(blkno), (long long)blkno, bp);
 #endif
+	bp->b_error = error;
 	return error;
 }
 
@@ -1002,9 +1003,7 @@ libxfs_readbuf(
 	 * contents. *cough* xfs_da_node_buf_ops *cough*.
 	 */
 	error = libxfs_readbufr(btp, blkno, bp, len, flags);
-	if (error)
-		bp->b_error = error;
-	else
+	if (!error)
 		libxfs_readbuf_verify(bp, ops);
 	return bp;
 }
