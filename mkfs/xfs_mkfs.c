@@ -3895,8 +3895,11 @@ main(
 	(XFS_BUF_TO_SBP(buf))->sb_inprogress = 0;
 	libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 
-	libxfs_umount(mp);
-	libxfs_destroy(&xi);
+	/* Exit w/ failure if anything failed to get written to our new fs. */
+	error = -libxfs_umount(mp);
+	if (error)
+		exit(1);
 
+	libxfs_destroy(&xi);
 	return 0;
 }
