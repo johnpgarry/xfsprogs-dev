@@ -1082,14 +1082,10 @@ __write_buf(int fd, void *buf, int len, off64_t offset, int flags)
 		int error = errno;
 		fprintf(stderr, _("%s: pwrite failed: %s\n"),
 			progname, strerror(error));
-		if (flags & LIBXFS_B_EXIT)
-			exit(1);
 		return -error;
 	} else if (sts != len) {
 		fprintf(stderr, _("%s: error - pwrite only %d of %d bytes\n"),
 			progname, sts, len);
-		if (flags & LIBXFS_B_EXIT)
-			exit(1);
 		return -EIO;
 	}
 	return 0;
@@ -1160,8 +1156,7 @@ libxfs_writebufr(xfs_buf_t *bp)
 			(long long)bp->b_bn, bp->b_bcount, -bp->b_error);
 	} else {
 		bp->b_flags |= LIBXFS_B_UPTODATE;
-		bp->b_flags &= ~(LIBXFS_B_DIRTY | LIBXFS_B_EXIT |
-				 LIBXFS_B_UNCHECKED);
+		bp->b_flags &= ~(LIBXFS_B_DIRTY | LIBXFS_B_UNCHECKED);
 	}
 	return bp->b_error;
 }
