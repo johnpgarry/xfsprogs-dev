@@ -1156,7 +1156,12 @@ libxfs_writebufr(xfs_buf_t *bp)
 			(long long)LIBXFS_BBTOOFF64(bp->b_bn),
 			(long long)bp->b_bn, bp, bp->b_error);
 #endif
-	if (!bp->b_error) {
+	if (bp->b_error) {
+		fprintf(stderr,
+	_("%s: write failed on %s bno 0x%llx/0x%x, err=%d\n"),
+			__func__, bp->b_ops->name,
+			(long long)bp->b_bn, bp->b_bcount, -bp->b_error);
+	} else {
 		bp->b_flags |= LIBXFS_B_UPTODATE;
 		bp->b_flags &= ~(LIBXFS_B_DIRTY | LIBXFS_B_EXIT |
 				 LIBXFS_B_UNCHECKED);
