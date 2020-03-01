@@ -400,9 +400,10 @@ pf_read_inode_dirs(
 	int			icnt = 0;
 	int			hasdir = 0;
 	int			isadir;
+	int			error;
 
-	libxfs_readbuf_verify(bp, &xfs_inode_buf_ops);
-	if (bp->b_error)
+	error = -libxfs_readbuf_verify(bp, &xfs_inode_buf_ops);
+	if (error)
 		return;
 
 	for (icnt = 0; icnt < (bp->b_bcount >> mp->m_sb.sb_inodelog); icnt++) {

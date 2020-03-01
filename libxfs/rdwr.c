@@ -946,14 +946,18 @@ libxfs_readbufr(struct xfs_buftarg *btp, xfs_daddr_t blkno, xfs_buf_t *bp,
 	return error;
 }
 
-void
-libxfs_readbuf_verify(struct xfs_buf *bp, const struct xfs_buf_ops *ops)
+int
+libxfs_readbuf_verify(
+	struct xfs_buf		*bp,
+	const struct xfs_buf_ops *ops)
 {
 	if (!ops)
-		return;
+		return bp->b_error;
+
 	bp->b_ops = ops;
 	bp->b_ops->verify_read(bp);
 	bp->b_flags &= ~LIBXFS_B_UNCHECKED;
+	return bp->b_error;
 }
 
 static struct xfs_buf *

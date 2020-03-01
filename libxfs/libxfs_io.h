@@ -206,8 +206,7 @@ libxfs_buf_read(
 
 #endif /* XFS_BUF_TRACING */
 
-extern void	libxfs_readbuf_verify(struct xfs_buf *bp,
-			const struct xfs_buf_ops *ops);
+int libxfs_readbuf_verify(struct xfs_buf *bp, const struct xfs_buf_ops *ops);
 struct xfs_buf *libxfs_getsb(struct xfs_mount *mp);
 extern void	libxfs_bcache_purge(void);
 extern void	libxfs_bcache_free(void);
