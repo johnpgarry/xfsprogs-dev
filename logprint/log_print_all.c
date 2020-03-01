@@ -39,7 +39,7 @@ xlog_print_find_oldest(
 		error = xlog_find_cycle_start(log, bp, first_blk,
 					      last_blk, last_half_cycle);
 
-	xlog_put_bp(bp);
+	libxfs_buf_relse(bp);
 	return error;
 }
 

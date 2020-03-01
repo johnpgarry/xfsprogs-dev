@@ -67,14 +67,7 @@ xlog_get_bp(
 		nbblks += log->l_sectBBsize;
 	nbblks = round_up(nbblks, log->l_sectBBsize);
 
-	return libxfs_getbufr(log->l_dev, (xfs_daddr_t)-1, nbblks);
-}
-
-void
-xlog_put_bp(
-	xfs_buf_t	*bp)
-{
-	libxfs_putbufr(bp);
+	return libxfs_buf_get_uncached(log->l_dev, nbblks, 0);
 }
 
 /*
@@ -274,7 +267,7 @@ xlog_find_verify_cycle(
 	*new_blk = -1;
 
 out:
-	xlog_put_bp(bp);
+	libxfs_buf_relse(bp);
 	return error;
 }
 
@@ -383,7 +376,7 @@ xlog_find_verify_log_record(
 		*last_blk = i;
 
 out:
-	xlog_put_bp(bp);
+	libxfs_buf_relse(bp);
 	return error;
 }
 
@@ -634,7 +627,7 @@ validate_head:
 			goto bp_err;
 	}
 
-	xlog_put_bp(bp);
+	libxfs_buf_relse(bp);
 	if (head_blk == log_bbnum)
 		*return_head_blk = 0;
 	else
@@ -648,7 +641,7 @@ validate_head:
 	return 0;
 
  bp_err:
-	xlog_put_bp(bp);
+	libxfs_buf_relse(bp);
 
 	if (error)
 		xfs_warn(log->l_mp, "failed to find log head");
@@ -745,7 +738,7 @@ xlog_find_tail(
 	}
 	if (!found) {
 		xfs_warn(log->l_mp, "%s: couldn't find sync record", __func__);
-		xlog_put_bp(bp);
+		libxfs_buf_relse(bp);
 		ASSERT(0);
 		return XFS_ERROR(EIO);
 	}
@@ -858,7 +851,7 @@ xlog_find_tail(
 		error = xlog_clear_stale_blocks(log, tail_lsn);
 
 done:
-	xlog_put_bp(bp);
+	libxfs_buf_relse(bp);
 
 	if (error)
 		xfs_warn(log->l_mp, "failed to locate log tail");
@@ -906,7 +899,7 @@ xlog_find_zeroed(
 	first_cycle = xlog_get_cycle(offset);
 	if (first_cycle == 0) {		/* completely zeroed log */
 		*blk_no = 0;
-		xlog_put_bp(bp);
+		libxfs_buf_relse(bp);
 		return -1;
 	}
 
@@ -917,7 +910,7 @@ xlog_find_zeroed(
 
 	last_cycle = xlog_get_cycle(offset);
 	if (last_cycle != 0) {		/* log completely written to */
-		xlog_put_bp(bp);
+		libxfs_buf_relse(bp);
 		return 0;
 	} else if (first_cycle != 1) {
 		/*
@@ -974,7 +967,7 @@ xlog_find_zeroed(
 
 	*blk_no = last_blk;
 bp_err:
-	xlog_put_bp(bp);
+	libxfs_buf_relse(bp);
 	if (error)
 		return error;
 	return -1;
@@ -1457,7 +1450,7 @@ xlog_do_recovery_pass(
 			hblks = h_size / XLOG_HEADER_CYCLE_SIZE;
 			if (h_size % XLOG_HEADER_CYCLE_SIZE)
 				hblks++;
-			xlog_put_bp(hbp);
+			libxfs_buf_relse(hbp);
 			hbp = xlog_get_bp(log, hblks);
 		} else {
 			hblks = 1;
@@ -1473,7 +1466,7 @@ xlog_do_recovery_pass(
 		return ENOMEM;
 	dbp = xlog_get_bp(log, BTOBB(h_size));
 	if (!dbp) {
-		xlog_put_bp(hbp);
+		libxfs_buf_relse(hbp);
 		return ENOMEM;
 	}
 
@@ -1657,8 +1650,8 @@ xlog_do_recovery_pass(
 	}
 
  bread_err2:
-	xlog_put_bp(dbp);
+	libxfs_buf_relse(dbp);
  bread_err1:
-	xlog_put_bp(hbp);
+	libxfs_buf_relse(hbp);
 	return error;
 }
