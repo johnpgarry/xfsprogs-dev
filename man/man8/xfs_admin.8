@@ -26,7 +26,7 @@ uses the
 .BR xfs_db (8)
 command to modify various parameters of a filesystem.
 .PP
-Devices that are mounted cannot be modified, except as noted below.
+Devices that are mounted cannot be modified.
 Administrators must unmount filesystems before
 .BR xfs_admin " or " xfs_db (8)
 can convert parameters.
@@ -67,7 +67,6 @@ log buffers).
 .TP
 .B \-l
 Print the current filesystem label.
-This command can be run if the filesystem is mounted.
 .TP
 .B \-p
 Enable 32bit project identifier support (PROJID32BIT feature).
@@ -103,7 +102,6 @@ The filesystem label can be cleared using the special "\c
 .B \-\-\c
 " value for
 .IR label .
-This command can be run if the filesystem is mounted.
 .TP
 .BI \-U " uuid"
 Set the UUID of the filesystem to
