@@ -1,3 +1,23 @@
+xfsprogs-5.5.0-rc1 (01 Mar 2020)
+	- xfsprogs: don't redeclare globals provided by libraries (Eric Sandeen)
+	- xfsprogs: actually check that writes succeeded (Darrick Wong)
+	- mkfs.xfs: check root inode location (Darrick Wong)
+	- mkfs.xfs: efficient block zeroing (Eric Sandeen)
+	- xfs_repair: fix broken unit conv. in dir invalidation (Darrick Wong)
+	- xfs_repair: fix bad next_unlinked field (Eric Sandeen)
+	- xfs_repair: don't corrupt attr fork clearing forw/back (Darrick Wong)
+	- xfs_repair: check root dir pointer before trashing it (Darrick Wong)
+	- xfs_repair: try to fix sb_unit value from secondaries (Darrick Wong)
+	- xfs_repair: join RT inodes to transaction only once (Eric Sandeen)
+	- xfs_io: fix over/underflow handling in timespecs (Darrick Wong)
+	- xfs_io: fix pwrite/pread length trunc on 32-bit systems (Darrick Wong)
+	- xfs_io: fix copy_file_range length argument overflow (Darrick Wong)
+	- xfs_io: support passing a keyring key to add_enckey (Eric Biggers)
+	- xfs_scrub: fix reporting of EINVAL for online repairs (Darrick Wong)
+	- man: document some missing xfs_db commands (Darrick Wong)
+	- man: document the xfs_db btheight command  (Darrick Wong)
+	- man: list xfs_io lsattr inode flag letters  (Darrick Wong)
+
 xfsprogs-5.5.0-rc0 (22 Jan 2020)
 	- libxfs changes merged from kernel 5.5
 
