@@ -1,3 +1,6 @@
+xfsprogs-5.5.0 (13 Mar 2020)
+	- xfsprogs: don't warn about packed members (Dave Chinner)
+
 xfsprogs-5.5.0-rc1 (01 Mar 2020)
 	- xfsprogs: don't redeclare globals provided by libraries (Eric Sandeen)
 	- xfsprogs: actually check that writes succeeded (Darrick Wong)
