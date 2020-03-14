@@ -31,6 +31,7 @@ check_aginode_block(xfs_mount_t	*mp,
 	int		i;
 	int		cnt = 0;
 	xfs_buf_t	*bp;
+	int		error;
 
 	/*
 	 * it's ok to read these possible inode blocks in one at
@@ -39,9 +40,10 @@ check_aginode_block(xfs_mount_t	*mp,
 	 * tree and we wouldn't be here and we stale the buffers out
 	 * so no one else will overlap them.
 	 */
-	bp = libxfs_buf_read(mp->m_dev, XFS_AGB_TO_DADDR(mp, agno, agbno),
-			XFS_FSB_TO_BB(mp, 1), 0, NULL);
-	if (!bp) {
+	error = -libxfs_buf_read(mp->m_dev, XFS_AGB_TO_DADDR(mp, agno, agbno),
+			XFS_FSB_TO_BB(mp, 1), LIBXFS_READBUF_SALVAGE, &bp,
+			NULL);
+	if (error) {
 		do_warn(_("cannot read agbno (%u/%u), disk block %" PRId64 "\n"),
 			agno, agbno, XFS_AGB_TO_DADDR(mp, agno, agbno));
 		return(0);
@@ -612,6 +614,7 @@ process_inode_chunk(
 	int			bp_index;
 	int			cluster_offset;
 	struct xfs_ino_geometry	*igeo = M_IGEO(mp);
+	int			error;
 
 	ASSERT(first_irec != NULL);
 	ASSERT(XFS_AGINO_TO_OFFSET(mp, first_irec->ino_startnum) == 0);
@@ -656,13 +659,13 @@ process_inode_chunk(
 		pftrace("about to read off %llu in AG %d",
 			XFS_AGB_TO_DADDR(mp, agno, agbno), agno);
 
-		bplist[bp_index] = libxfs_buf_read(mp->m_dev,
-					XFS_AGB_TO_DADDR(mp, agno, agbno),
-					XFS_FSB_TO_BB(mp,
-						M_IGEO(mp)->blocks_per_cluster),
-					0,
-					&xfs_inode_buf_ops);
-		if (!bplist[bp_index]) {
+		error = -libxfs_buf_read(mp->m_dev,
+				XFS_AGB_TO_DADDR(mp, agno, agbno),
+				XFS_FSB_TO_BB(mp,
+					M_IGEO(mp)->blocks_per_cluster),
+				LIBXFS_READBUF_SALVAGE, &bplist[bp_index],
+				&xfs_inode_buf_ops);
+		if (error) {
 			do_warn(_("cannot read inode %" PRIu64 ", disk block %" PRId64 ", cnt %d\n"),
 				XFS_AGINO_TO_INO(mp, agno, first_irec->ino_startnum),
 				XFS_AGB_TO_DADDR(mp, agno, agbno),

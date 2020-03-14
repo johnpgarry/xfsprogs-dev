@@ -391,6 +391,7 @@ rmtval_get(xfs_mount_t *mp, xfs_ino_t ino, blkmap_t *blkmap,
 	xfs_buf_t	*bp;
 	int		clearit = 0, i = 0, length = 0, amountdone = 0;
 	int		hdrsize = 0;
+	int		error;
 
 	if (xfs_sb_version_hascrc(&mp->m_sb))
 		hdrsize = sizeof(struct xfs_attr3_rmt_hdr);
@@ -405,10 +406,10 @@ rmtval_get(xfs_mount_t *mp, xfs_ino_t ino, blkmap_t *blkmap,
 			clearit = 1;
 			break;
 		}
-		bp = libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, bno),
-				    XFS_FSB_TO_BB(mp, 1), 0,
-				    &xfs_attr3_rmt_buf_ops);
-		if (!bp) {
+		error = -libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, bno),
+				XFS_FSB_TO_BB(mp, 1), LIBXFS_READBUF_SALVAGE,
+				&bp, &xfs_attr3_rmt_buf_ops);
+		if (error) {
 			do_warn(
 	_("can't read remote block for attributes of inode %" PRIu64 "\n"), ino);
 			clearit = 1;
@@ -737,6 +738,7 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 	xfs_dahash_t		current_hashval = 0;
 	xfs_dahash_t		greatest_hashval;
 	struct xfs_attr3_icleaf_hdr leafhdr;
+	int			error;
 
 	da_bno = da_cursor->level[0].bno;
 	ino = da_cursor->ino;
@@ -763,10 +765,11 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 			goto error_out;
 		}
 
-		bp = libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, dev_bno),
-				    XFS_FSB_TO_BB(mp, 1), 0,
-				    &xfs_attr3_leaf_buf_ops);
-		if (!bp) {
+		error = -libxfs_buf_read(mp->m_dev,
+				XFS_FSB_TO_DADDR(mp, dev_bno),
+				XFS_FSB_TO_BB(mp, 1), LIBXFS_READBUF_SALVAGE,
+				&bp, &xfs_attr3_leaf_buf_ops);
+		if (error) {
 			do_warn(
 	_("can't read file block %u (fsbno %" PRIu64 ") for attribute fork of inode %" PRIu64 "\n"),
 				da_bno, dev_bno, ino);
@@ -1073,6 +1076,7 @@ process_longform_attr(
 	xfs_fsblock_t		bno;
 	struct xfs_buf		*bp;
 	struct xfs_da_blkinfo	*info;
+	int			error;
 
 	*repair = 0;
 
@@ -1094,13 +1098,14 @@ process_longform_attr(
 		return 1;
 	}
 
-	bp = libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, bno),
-				XFS_FSB_TO_BB(mp, 1), 0, &xfs_da3_node_buf_ops);
-	if (!bp) {
+	error = -libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, bno),
+			XFS_FSB_TO_BB(mp, 1), LIBXFS_READBUF_SALVAGE, &bp,
+			&xfs_da3_node_buf_ops);
+	if (error) {
 		do_warn(
 	_("can't read block 0 of inode %" PRIu64 " attribute fork\n"),
 			ino);
-		return(1);
+		return 1;
 	}
 	if (bp->b_error == -EFSBADCRC)
 		(*repair)++;

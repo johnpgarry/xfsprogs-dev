@@ -272,10 +272,12 @@ pf_scan_lbtree(
 {
 	xfs_buf_t		*bp;
 	int			rc;
+	int			error;
 
-	bp = libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, dbno),
-			XFS_FSB_TO_BB(mp, 1), 0, &xfs_bmbt_buf_ops);
-	if (!bp)
+	error = -libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, dbno),
+			XFS_FSB_TO_BB(mp, 1), LIBXFS_READBUF_SALVAGE, &bp,
+			&xfs_bmbt_buf_ops);
+	if (error)
 		return 0;
 
 	libxfs_buf_set_priority(bp, isadir ? B_DIR_BMAP : B_BMAP);

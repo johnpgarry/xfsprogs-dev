@@ -193,9 +193,9 @@ process_rtbitmap(xfs_mount_t	*mp,
 			error = 1;
 			continue;
 		}
-		bp = libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, bno),
-				XFS_FSB_TO_BB(mp, 1), NULL);
-		if (!bp) {
+		error = -libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, bno),
+				XFS_FSB_TO_BB(mp, 1), 0, NULL, &bp);
+		if (error) {
 			do_warn(_("can't read block %d for rtbitmap inode\n"),
 					bmbno);
 			error = 1;
@@ -255,9 +255,9 @@ process_rtsummary(xfs_mount_t	*mp,
 			error++;
 			continue;
 		}
-		bp = libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, bno),
-				XFS_FSB_TO_BB(mp, 1), NULL);
-		if (!bp) {
+		error = -libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, bno),
+				XFS_FSB_TO_BB(mp, 1), 0, NULL, &bp);
+		if (error) {
 			do_warn(_("can't read block %d for rtsummary inode\n"),
 					sumbno);
 			error++;

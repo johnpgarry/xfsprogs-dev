@@ -415,9 +415,10 @@ rtmount_init(
 	xfs_mount_t	*mp,	/* file system mount structure */
 	int		flags)
 {
-	xfs_buf_t	*bp;	/* buffer for last block of subvolume */
+	struct xfs_buf	*bp;	/* buffer for last block of subvolume */
+	struct xfs_sb	*sbp;	/* filesystem superblock copy in mount */
 	xfs_daddr_t	d;	/* address of last block of subvolume */
-	xfs_sb_t	*sbp;	/* filesystem superblock copy in mount */
+	int		error;
 
 	sbp = &mp->m_sb;
 	if (sbp->sb_rblocks == 0)
@@ -450,9 +451,9 @@ rtmount_init(
 			(unsigned long long) mp->m_sb.sb_rblocks);
 		return -1;
 	}
-	bp = libxfs_buf_read(mp->m_rtdev,
-			d - XFS_FSB_TO_BB(mp, 1), XFS_FSB_TO_BB(mp, 1), 0, NULL);
-	if (bp == NULL) {
+	error = libxfs_buf_read(mp->m_rtdev, d - XFS_FSB_TO_BB(mp, 1),
+			XFS_FSB_TO_BB(mp, 1), 0, &bp, NULL);
+	if (error) {
 		fprintf(stderr, _("%s: realtime size check failed\n"),
 			progname);
 		return -1;
@@ -730,9 +731,9 @@ libxfs_mount(
 		return mp;
 
 	/* device size checks must pass unless we're a debugger. */
-	bp = libxfs_buf_read(mp->m_dev, d - XFS_FSS_TO_BB(mp, 1),
-			XFS_FSS_TO_BB(mp, 1), 0, NULL);
-	if (!bp) {
+	error = libxfs_buf_read(mp->m_dev, d - XFS_FSS_TO_BB(mp, 1),
+			XFS_FSS_TO_BB(mp, 1), 0, &bp, NULL);
+	if (error) {
 		fprintf(stderr, _("%s: data size check failed\n"), progname);
 		if (!debugger)
 			return NULL;
@@ -742,10 +743,10 @@ libxfs_mount(
 	if (mp->m_logdev_targp->dev &&
 	    mp->m_logdev_targp->dev != mp->m_ddev_targp->dev) {
 		d = (xfs_daddr_t) XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
-		if ( (XFS_BB_TO_FSB(mp, d) != mp->m_sb.sb_logblocks) ||
-		     (!(bp = libxfs_buf_read(mp->m_logdev_targp,
-					d - XFS_FSB_TO_BB(mp, 1),
-					XFS_FSB_TO_BB(mp, 1), 0, NULL)))) {
+		if (XFS_BB_TO_FSB(mp, d) != mp->m_sb.sb_logblocks ||
+		    libxfs_buf_read(mp->m_logdev_targp,
+				d - XFS_FSB_TO_BB(mp, 1), XFS_FSB_TO_BB(mp, 1),
+				0, &bp, NULL)) {
 			fprintf(stderr, _("%s: log size checks failed\n"),
 					progname);
 			if (!debugger)
@@ -770,10 +771,10 @@ libxfs_mount(
 	 * read the first one and let the user know to check the geometry.
 	 */
 	if (sbp->sb_agcount > 1000000) {
-		bp = libxfs_buf_read(mp->m_dev,
+		error = libxfs_buf_read(mp->m_dev,
 				XFS_AG_DADDR(mp, sbp->sb_agcount - 1, 0), 1,
-				0, NULL);
-		if (bp->b_error) {
+				0, &bp, NULL);
+		if (error) {
 			fprintf(stderr, _("%s: read of AG %u failed\n"),
 						progname, sbp->sb_agcount);
 			if (!debugger)
@@ -781,8 +782,8 @@ libxfs_mount(
 			fprintf(stderr, _("%s: limiting reads to AG 0\n"),
 								progname);
 			sbp->sb_agcount = 1;
-		}
-		libxfs_buf_relse(bp);
+		} else
+			libxfs_buf_relse(bp);
 	}
 
 	error = libxfs_initialize_perag(mp, sbp->sb_agcount, &mp->m_maxagi);

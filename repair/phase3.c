@@ -27,11 +27,13 @@ process_agi_unlinked(
 	struct xfs_agi		*agip;
 	xfs_agnumber_t		i;
 	int			agi_dirty = 0;
+	int			error;
 
-	bp = libxfs_buf_read(mp->m_dev,
+	error = -libxfs_buf_read(mp->m_dev,
 			XFS_AG_DADDR(mp, agno, XFS_AGI_DADDR(mp)),
-			mp->m_sb.sb_sectsize/BBSIZE, 0, &xfs_agi_buf_ops);
-	if (!bp)
+			mp->m_sb.sb_sectsize / BBSIZE, LIBXFS_READBUF_SALVAGE,
+			&bp, &xfs_agi_buf_ops);
+	if (error)
 		do_error(_("cannot read agi block %" PRId64 " for ag %u\n"),
 			XFS_AG_DADDR(mp, agno, XFS_AGI_DADDR(mp)), agno);
 

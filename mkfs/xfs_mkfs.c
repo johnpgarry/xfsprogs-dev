@@ -3548,13 +3548,14 @@ rewrite_secondary_superblocks(
 	struct xfs_mount	*mp)
 {
 	struct xfs_buf		*buf;
+	int			error;
 
 	/* rewrite the last superblock */
-	buf = libxfs_buf_read(mp->m_dev,
+	error = -libxfs_buf_read(mp->m_dev,
 			XFS_AGB_TO_DADDR(mp, mp->m_sb.sb_agcount - 1,
 				XFS_SB_DADDR),
-			XFS_FSS_TO_BB(mp, 1), 0, &xfs_sb_buf_ops);
-	if (!buf) {
+			XFS_FSS_TO_BB(mp, 1), 0, &buf, &xfs_sb_buf_ops);
+	if (error) {
 		fprintf(stderr, _("%s: could not re-read AG %u superblock\n"),
 				progname, mp->m_sb.sb_agcount - 1);
 		exit(1);
@@ -3567,11 +3568,11 @@ rewrite_secondary_superblocks(
 	if (mp->m_sb.sb_agcount <= 2)
 		return;
 
-	buf = libxfs_buf_read(mp->m_dev,
+	error = -libxfs_buf_read(mp->m_dev,
 			XFS_AGB_TO_DADDR(mp, (mp->m_sb.sb_agcount - 1) / 2,
 				XFS_SB_DADDR),
-			XFS_FSS_TO_BB(mp, 1), 0, &xfs_sb_buf_ops);
-	if (!buf) {
+			XFS_FSS_TO_BB(mp, 1), 0, &buf, &xfs_sb_buf_ops);
+	if (error) {
 		fprintf(stderr, _("%s: could not re-read AG %u superblock\n"),
 				progname, (mp->m_sb.sb_agcount - 1) / 2);
 		exit(1);
