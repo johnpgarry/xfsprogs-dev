@@ -896,13 +896,15 @@ libxfs_getbufr_uncached(
  * Allocate an uncached buffer that points nowhere.  The refcount will be 1,
  * and the cache node hash list will be empty to indicate that it's uncached.
  */
-struct xfs_buf *
+int
 libxfs_buf_get_uncached(
 	struct xfs_buftarg	*targ,
 	size_t			bblen,
-	int			flags)
+	int			flags,
+	struct xfs_buf		**bpp)
 {
-	return libxfs_getbufr_uncached(targ, XFS_BUF_DADDR_NULL, bblen);
+	*bpp = libxfs_getbufr_uncached(targ, XFS_BUF_DADDR_NULL, bblen);
+	return *bpp != NULL ? 0 : -ENOMEM;
 }
 
 /*

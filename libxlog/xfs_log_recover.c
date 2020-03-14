@@ -35,11 +35,13 @@ xlog_buf_bbcount_valid(
  * to map to a range of nbblks basic blocks at any valid (basic
  * block) offset within the log.
  */
-xfs_buf_t *
+struct xfs_buf *
 xlog_get_bp(
 	struct xlog	*log,
 	int		nbblks)
 {
+	struct xfs_buf	*bp;
+
 	if (!xlog_buf_bbcount_valid(log, nbblks)) {
 		xfs_warn(log->l_mp, "Invalid block length (0x%x) for buffer",
 			nbblks);
@@ -67,7 +69,8 @@ xlog_get_bp(
 		nbblks += log->l_sectBBsize;
 	nbblks = round_up(nbblks, log->l_sectBBsize);
 
-	return libxfs_buf_get_uncached(log->l_dev, nbblks, 0);
+	libxfs_buf_get_uncached(log->l_dev, nbblks, 0, &bp);
+	return bp;
 }
 
 /*

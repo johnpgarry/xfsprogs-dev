@@ -3359,8 +3359,14 @@ alloc_write_buf(
 	int			bblen)
 {
 	struct xfs_buf		*bp;
+	int			error;
 
-	bp = libxfs_buf_get_uncached(btp, bblen, 0);
+	error = -libxfs_buf_get_uncached(btp, bblen, 0, &bp);
+	if (error) {
+		fprintf(stderr, _("Could not get memory for buffer, err=%d\n"),
+				error);
+		exit(1);
+	}
 	bp->b_bn = daddr;
 	bp->b_maps[0].bm_bn = daddr;
 	return bp;
