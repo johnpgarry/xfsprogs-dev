@@ -542,8 +542,8 @@ set_cur(
 		if (!iocur_top->bbmap)
 			return;
 		memcpy(iocur_top->bbmap, bbmap, sizeof(struct bbmap));
-		bp = libxfs_buf_read_map(mp->m_ddev_targp, bbmap->b,
-					bbmap->nmaps, 0, ops);
+		libxfs_buf_read_map(mp->m_ddev_targp, bbmap->b, bbmap->nmaps,
+				LIBXFS_READBUF_SALVAGE, &bp, ops);
 	} else {
 		bp = libxfs_buf_read(mp->m_ddev_targp, blknum, len, 0, ops);
 		iocur_top->bbmap = NULL;

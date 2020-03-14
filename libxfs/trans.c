@@ -510,15 +510,8 @@ libxfs_trans_read_buf_map(
 
 	*bpp = NULL;
 
-	if (tp == NULL) {
-		bp = libxfs_buf_read_map(target, map, nmaps, flags, ops);
-		if (!bp) {
-			return (flags & XBF_TRYLOCK) ?  -EAGAIN : -ENOMEM;
-		}
-		if (bp->b_error)
-			goto out_relse;
-		goto done;
-	}
+	if (tp == NULL)
+		return libxfs_buf_read_map(target, map, nmaps, flags, bpp, ops);
 
 	bp = xfs_trans_buf_item_match(tp, target, map, nmaps);
 	if (bp) {
@@ -530,22 +523,15 @@ libxfs_trans_read_buf_map(
 		goto done;
 	}
 
-	bp = libxfs_buf_read_map(target, map, nmaps, flags, ops);
-	if (!bp) {
-		return (flags & XBF_TRYLOCK) ?  -EAGAIN : -ENOMEM;
-	}
-	if (bp->b_error)
-		goto out_relse;
+	error = libxfs_buf_read_map(target, map, nmaps, flags, &bp, ops);
+	if (error)
+		return error;
 
 	_libxfs_trans_bjoin(tp, bp, 1);
 done:
 	trace_xfs_trans_read_buf(bp->b_log_item);
 	*bpp = bp;
 	return 0;
-out_relse:
-	error = bp->b_error;
-	xfs_buf_relse(bp);
-	return error;
 }
 
 /*
