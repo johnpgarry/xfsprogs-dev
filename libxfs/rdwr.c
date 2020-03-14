@@ -545,25 +545,21 @@ __cache_lookup(
 	return 0;
 }
 
-static struct xfs_buf *
+static int
 libxfs_getbuf_flags(
 	struct xfs_buftarg	*btp,
 	xfs_daddr_t		blkno,
 	int			len,
-	unsigned int		flags)
+	unsigned int		flags,
+	struct xfs_buf		**bpp)
 {
 	struct xfs_bufkey	key = {NULL};
-	struct xfs_buf		*bp;
-	int			error;
 
 	key.buftarg = btp;
 	key.blkno = blkno;
 	key.bblen = len;
 
-	error = __cache_lookup(&key, flags, &bp);
-	if (error)
-		return NULL;
-	return bp;
+	return __cache_lookup(&key, flags, bpp);
 }
 
 /*
@@ -598,9 +594,13 @@ __libxfs_buf_get_map(
 	int			i;
 	int			error;
 
-	if (nmaps == 1)
-		return libxfs_getbuf_flags(btp, map[0].bm_bn, map[0].bm_len,
-					   flags);
+	if (nmaps == 1) {
+		error = libxfs_getbuf_flags(btp, map[0].bm_bn, map[0].bm_len,
+				flags, &bp);
+		if (error)
+			return NULL;
+		return bp;
+	}
 
 	key.buftarg = btp;
 	key.blkno = map[0].bm_bn;
@@ -748,8 +748,8 @@ libxfs_readbuf(
 	struct xfs_buf		*bp;
 	int			error;
 
-	bp = libxfs_getbuf_flags(btp, blkno, len, 0);
-	if (!bp)
+	error = libxfs_getbuf_flags(btp, blkno, len, 0, &bp);
+	if (error)
 		return NULL;
 
 	/*
