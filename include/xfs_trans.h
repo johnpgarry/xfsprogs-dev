@@ -105,10 +105,9 @@ void	libxfs_trans_log_buf(struct xfs_trans *, struct xfs_buf *,
 				uint, uint);
 bool	libxfs_trans_ordered_buf(xfs_trans_t *, struct xfs_buf *);
 
-struct xfs_buf	*libxfs_trans_get_buf_map(struct xfs_trans *tp,
-					struct xfs_buftarg *btp,
-					struct xfs_buf_map *map, int nmaps,
-					xfs_buf_flags_t flags);
+int	libxfs_trans_get_buf_map(struct xfs_trans *tp, struct xfs_buftarg *btp,
+		struct xfs_buf_map *map, int nmaps, xfs_buf_flags_t flags,
+		struct xfs_buf **bpp);
 
 int	libxfs_trans_read_buf_map(struct xfs_mount *mp, struct xfs_trans *tp,
 				  struct xfs_buftarg *btp,
@@ -123,8 +122,14 @@ libxfs_trans_get_buf(
 	int			numblks,
 	uint			flags)
 {
+	struct xfs_buf		*bp;
+	int			error;
 	DEFINE_SINGLE_BUF_MAP(map, blkno, numblks);
-	return libxfs_trans_get_buf_map(tp, btp, &map, 1, flags);
+
+	error = libxfs_trans_get_buf_map(tp, btp, &map, 1, flags, &bp);
+	if (error)
+		return NULL;
+	return bp;
 }
 
 static inline int
