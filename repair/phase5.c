@@ -652,6 +652,7 @@ prop_freespace_cursor(xfs_mount_t *mp, xfs_agnumber_t agno,
 	xfs_agblock_t		agbno;
 	bt_stat_level_t		*lptr;
 	const struct xfs_buf_ops *ops = btnum_to_ops(btnum);
+	int			error;
 
 	ASSERT(btnum == XFS_BTNUM_BNO || btnum == XFS_BTNUM_CNT);
 
@@ -692,9 +693,13 @@ prop_freespace_cursor(xfs_mount_t *mp, xfs_agnumber_t agno,
 
 		bt_hdr->bb_u.s.bb_rightsib = cpu_to_be32(agbno);
 
-		lptr->buf_p = libxfs_buf_get(mp->m_dev,
-					XFS_AGB_TO_DADDR(mp, agno, agbno),
-					XFS_FSB_TO_BB(mp, 1));
+		error = -libxfs_buf_get(mp->m_dev,
+				XFS_AGB_TO_DADDR(mp, agno, agbno),
+				XFS_FSB_TO_BB(mp, 1), &lptr->buf_p);
+		if (error)
+			do_error(
+	_("Cannot grab free space btree buffer, err=%d"),
+					error);
 		lptr->agbno = agbno;
 
 		if (lptr->modulo)
@@ -752,6 +757,7 @@ build_freespace_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 	bt_stat_level_t		*lptr;
 	xfs_extlen_t		freeblks;
 	const struct xfs_buf_ops *ops = btnum_to_ops(btnum);
+	int			error;
 
 	ASSERT(btnum == XFS_BTNUM_BNO || btnum == XFS_BTNUM_CNT);
 
@@ -770,9 +776,13 @@ build_freespace_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 		lptr = &btree_curs->level[i];
 
 		agbno = get_next_blockaddr(agno, i, btree_curs);
-		lptr->buf_p = libxfs_buf_get(mp->m_dev,
-					XFS_AGB_TO_DADDR(mp, agno, agbno),
-					XFS_FSB_TO_BB(mp, 1));
+		error = -libxfs_buf_get(mp->m_dev,
+				XFS_AGB_TO_DADDR(mp, agno, agbno),
+				XFS_FSB_TO_BB(mp, 1), &lptr->buf_p);
+		if (error)
+			do_error(
+	_("Cannot grab free space btree buffer, err=%d"),
+					error);
 
 		if (i == btree_curs->num_levels - 1)
 			btree_curs->root = agbno;
@@ -881,9 +891,14 @@ build_freespace_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 			lptr->agbno = get_next_blockaddr(agno, 0, btree_curs);
 			bt_hdr->bb_u.s.bb_rightsib = cpu_to_be32(lptr->agbno);
 
-			lptr->buf_p = libxfs_buf_get(mp->m_dev,
+			error = -libxfs_buf_get(mp->m_dev,
 					XFS_AGB_TO_DADDR(mp, agno, lptr->agbno),
-					XFS_FSB_TO_BB(mp, 1));
+					XFS_FSB_TO_BB(mp, 1),
+					&lptr->buf_p);
+			if (error)
+				do_error(
+	_("Cannot grab free space btree buffer, err=%d"),
+						error);
 		}
 	}
 
@@ -1021,6 +1036,7 @@ prop_ino_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 	xfs_agblock_t		agbno;
 	bt_stat_level_t		*lptr;
 	const struct xfs_buf_ops *ops = btnum_to_ops(btnum);
+	int			error;
 
 	level++;
 
@@ -1059,9 +1075,12 @@ prop_ino_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 
 		bt_hdr->bb_u.s.bb_rightsib = cpu_to_be32(agbno);
 
-		lptr->buf_p = libxfs_buf_get(mp->m_dev,
-					XFS_AGB_TO_DADDR(mp, agno, agbno),
-					XFS_FSB_TO_BB(mp, 1));
+		error = -libxfs_buf_get(mp->m_dev,
+				XFS_AGB_TO_DADDR(mp, agno, agbno),
+				XFS_FSB_TO_BB(mp, 1), &lptr->buf_p);
+		if (error)
+			do_error(_("Cannot grab inode btree buffer, err=%d"),
+					error);
 		lptr->agbno = agbno;
 
 		if (lptr->modulo)
@@ -1108,10 +1127,14 @@ build_agi(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 	xfs_buf_t	*agi_buf;
 	xfs_agi_t	*agi;
 	int		i;
+	int		error;
 
-	agi_buf = libxfs_buf_get(mp->m_dev,
+	error = -libxfs_buf_get(mp->m_dev,
 			XFS_AG_DADDR(mp, agno, XFS_AGI_DADDR(mp)),
-			mp->m_sb.sb_sectsize/BBSIZE);
+			mp->m_sb.sb_sectsize / BBSIZE, &agi_buf);
+	if (error)
+		do_error(_("Cannot grab AG %u AGI buffer, err=%d"),
+				agno, error);
 	agi_buf->b_ops = &xfs_agi_buf_ops;
 	agi = XFS_BUF_TO_AGI(agi_buf);
 	memset(agi, 0, mp->m_sb.sb_sectsize);
@@ -1173,6 +1196,7 @@ build_ino_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 	int			spmask;
 	uint64_t		sparse;
 	uint16_t		holemask;
+	int			error;
 
 	ASSERT(btnum == XFS_BTNUM_INO || btnum == XFS_BTNUM_FINO);
 
@@ -1180,9 +1204,12 @@ build_ino_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 		lptr = &btree_curs->level[i];
 
 		agbno = get_next_blockaddr(agno, i, btree_curs);
-		lptr->buf_p = libxfs_buf_get(mp->m_dev,
-					XFS_AGB_TO_DADDR(mp, agno, agbno),
-					XFS_FSB_TO_BB(mp, 1));
+		error = -libxfs_buf_get(mp->m_dev,
+				XFS_AGB_TO_DADDR(mp, agno, agbno),
+				XFS_FSB_TO_BB(mp, 1), &lptr->buf_p);
+		if (error)
+			do_error(_("Cannot grab inode btree buffer, err=%d"),
+					error);
 
 		if (i == btree_curs->num_levels - 1)
 			btree_curs->root = agbno;
@@ -1313,9 +1340,14 @@ nextrec:
 			lptr->agbno = get_next_blockaddr(agno, 0, btree_curs);
 			bt_hdr->bb_u.s.bb_rightsib = cpu_to_be32(lptr->agbno);
 
-			lptr->buf_p = libxfs_buf_get(mp->m_dev,
+			error = -libxfs_buf_get(mp->m_dev,
 					XFS_AGB_TO_DADDR(mp, agno, lptr->agbno),
-					XFS_FSB_TO_BB(mp, 1));
+					XFS_FSB_TO_BB(mp, 1),
+					&lptr->buf_p);
+			if (error)
+				do_error(
+	_("Cannot grab inode btree buffer, err=%d"),
+						error);
 		}
 	}
 
@@ -1429,6 +1461,7 @@ prop_rmap_cursor(
 	xfs_agblock_t		agbno;
 	struct bt_stat_level	*lptr;
 	const struct xfs_buf_ops *ops = btnum_to_ops(XFS_BTNUM_RMAP);
+	int			error;
 
 	level++;
 
@@ -1467,9 +1500,12 @@ prop_rmap_cursor(
 
 		bt_hdr->bb_u.s.bb_rightsib = cpu_to_be32(agbno);
 
-		lptr->buf_p = libxfs_buf_get(mp->m_dev,
-					XFS_AGB_TO_DADDR(mp, agno, agbno),
-					XFS_FSB_TO_BB(mp, 1));
+		error = -libxfs_buf_get(mp->m_dev,
+				XFS_AGB_TO_DADDR(mp, agno, agbno),
+				XFS_FSB_TO_BB(mp, 1), &lptr->buf_p);
+		if (error)
+			do_error(_("Cannot grab rmapbt buffer, err=%d"),
+					error);
 		lptr->agbno = agbno;
 
 		if (lptr->modulo)
@@ -1577,9 +1613,12 @@ build_rmap_tree(
 		lptr = &btree_curs->level[i];
 
 		agbno = get_next_blockaddr(agno, i, btree_curs);
-		lptr->buf_p = libxfs_buf_get(mp->m_dev,
-					XFS_AGB_TO_DADDR(mp, agno, agbno),
-					XFS_FSB_TO_BB(mp, 1));
+		error = -libxfs_buf_get(mp->m_dev,
+				XFS_AGB_TO_DADDR(mp, agno, agbno),
+				XFS_FSB_TO_BB(mp, 1), &lptr->buf_p);
+		if (error)
+			do_error(_("Cannot grab rmapbt buffer, err=%d"),
+					error);
 
 		if (i == btree_curs->num_levels - 1)
 			btree_curs->root = agbno;
@@ -1677,9 +1716,14 @@ _("Insufficient memory to construct reverse-map cursor."));
 			lptr->agbno = get_next_blockaddr(agno, 0, btree_curs);
 			bt_hdr->bb_u.s.bb_rightsib = cpu_to_be32(lptr->agbno);
 
-			lptr->buf_p = libxfs_buf_get(mp->m_dev,
+			error = -libxfs_buf_get(mp->m_dev,
 					XFS_AGB_TO_DADDR(mp, agno, lptr->agbno),
-					XFS_FSB_TO_BB(mp, 1));
+					XFS_FSB_TO_BB(mp, 1),
+					&lptr->buf_p);
+			if (error)
+				do_error(
+	_("Cannot grab rmapbt buffer, err=%d"),
+						error);
 		}
 	}
 	free_slab_cursor(&rmap_cur);
@@ -1781,6 +1825,7 @@ prop_refc_cursor(
 	xfs_agblock_t		agbno;
 	struct bt_stat_level	*lptr;
 	const struct xfs_buf_ops *ops = btnum_to_ops(XFS_BTNUM_REFC);
+	int			error;
 
 	level++;
 
@@ -1819,9 +1864,12 @@ prop_refc_cursor(
 
 		bt_hdr->bb_u.s.bb_rightsib = cpu_to_be32(agbno);
 
-		lptr->buf_p = libxfs_buf_get(mp->m_dev,
-					XFS_AGB_TO_DADDR(mp, agno, agbno),
-					XFS_FSB_TO_BB(mp, 1));
+		error = -libxfs_buf_get(mp->m_dev,
+				XFS_AGB_TO_DADDR(mp, agno, agbno),
+				XFS_FSB_TO_BB(mp, 1), &lptr->buf_p);
+		if (error)
+			do_error(_("Cannot grab refcountbt buffer, err=%d"),
+					error);
 		lptr->agbno = agbno;
 
 		if (lptr->modulo)
@@ -1884,9 +1932,12 @@ build_refcount_tree(
 		lptr = &btree_curs->level[i];
 
 		agbno = get_next_blockaddr(agno, i, btree_curs);
-		lptr->buf_p = libxfs_buf_get(mp->m_dev,
-					XFS_AGB_TO_DADDR(mp, agno, agbno),
-					XFS_FSB_TO_BB(mp, 1));
+		error = -libxfs_buf_get(mp->m_dev,
+				XFS_AGB_TO_DADDR(mp, agno, agbno),
+				XFS_FSB_TO_BB(mp, 1), &lptr->buf_p);
+		if (error)
+			do_error(_("Cannot grab refcountbt buffer, err=%d"),
+					error);
 
 		if (i == btree_curs->num_levels - 1)
 			btree_curs->root = agbno;
@@ -1972,9 +2023,14 @@ _("Insufficient memory to construct refcount cursor."));
 			lptr->agbno = get_next_blockaddr(agno, 0, btree_curs);
 			bt_hdr->bb_u.s.bb_rightsib = cpu_to_be32(lptr->agbno);
 
-			lptr->buf_p = libxfs_buf_get(mp->m_dev,
+			error = -libxfs_buf_get(mp->m_dev,
 					XFS_AGB_TO_DADDR(mp, agno, lptr->agbno),
-					XFS_FSB_TO_BB(mp, 1));
+					XFS_FSB_TO_BB(mp, 1),
+					&lptr->buf_p);
+			if (error)
+				do_error(
+	_("Cannot grab refcountbt buffer, err=%d"),
+						error);
 		}
 	}
 	free_slab_cursor(&refc_cur);
@@ -2007,9 +2063,12 @@ build_agf_agfl(
 	__be32			*freelist;
 	int			error;
 
-	agf_buf = libxfs_buf_get(mp->m_dev,
+	error = -libxfs_buf_get(mp->m_dev,
 			XFS_AG_DADDR(mp, agno, XFS_AGF_DADDR(mp)),
-			mp->m_sb.sb_sectsize/BBSIZE);
+			mp->m_sb.sb_sectsize / BBSIZE, &agf_buf);
+	if (error)
+		do_error(_("Cannot grab AG %u AGF buffer, err=%d"),
+				agno, error);
 	agf_buf->b_ops = &xfs_agf_buf_ops;
 	agf = XFS_BUF_TO_AGF(agf_buf);
 	memset(agf, 0, mp->m_sb.sb_sectsize);
@@ -2079,9 +2138,12 @@ build_agf_agfl(
 		platform_uuid_copy(&agf->agf_uuid, &mp->m_sb.sb_meta_uuid);
 
 	/* initialise the AGFL, then fill it if there are blocks left over. */
-	agfl_buf = libxfs_buf_get(mp->m_dev,
+	error = -libxfs_buf_get(mp->m_dev,
 			XFS_AG_DADDR(mp, agno, XFS_AGFL_DADDR(mp)),
-			mp->m_sb.sb_sectsize/BBSIZE);
+			mp->m_sb.sb_sectsize / BBSIZE, &agfl_buf);
+	if (error)
+		do_error(_("Cannot grab AG %u AGFL buffer, err=%d"),
+				agno, error);
 	agfl_buf->b_ops = &xfs_agfl_buf_ops;
 	agfl = XFS_BUF_TO_AGFL(agfl_buf);
 

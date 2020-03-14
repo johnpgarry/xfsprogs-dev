@@ -139,9 +139,9 @@ extern struct cache_operations	libxfs_bcache_operations;
 #define libxfs_buf_mark_dirty(buf) \
 	libxfs_trace_dirtybuf(__FUNCTION__, __FILE__, __LINE__, \
 			      (buf))
-#define libxfs_buf_get(dev, daddr, len) \
+#define libxfs_buf_get(dev, daddr, len, bpp) \
 	libxfs_trace_getbuf(__FUNCTION__, __FILE__, __LINE__, \
-			    (dev), (daddr), (len))
+			    (dev), (daddr), (len), (bpp))
 #define libxfs_buf_get_map(dev, map, nmaps, flags, bpp) \
 	libxfs_trace_getbuf_map(__FUNCTION__, __FILE__, __LINE__, \
 			    (dev), (map), (nmaps), (flags), (bpp))
@@ -157,9 +157,9 @@ int libxfs_trace_readbuf_map(const char *func, const char *file, int line,
 			const struct xfs_buf_ops *ops);
 void libxfs_trace_dirtybuf(const char *func, const char *file, int line,
 			struct xfs_buf *bp);
-struct xfs_buf *libxfs_trace_getbuf(const char *func, const char *file,
-			int line, struct xfs_buftarg *btp, xfs_daddr_t daddr,
-			size_t len);
+int libxfs_trace_getbuf(const char *func, const char *file, int line,
+			struct xfs_buftarg *btp, xfs_daddr_t daddr,
+			size_t len, struct xfs_buf **bpp);
 int libxfs_trace_getbuf_map(const char *func, const char *file, int line,
 			struct xfs_buftarg *btp, struct xfs_buf_map *map,
 			int nmaps, int flags, struct xfs_buf **bpp);
@@ -176,20 +176,16 @@ int libxfs_buf_get_map(struct xfs_buftarg *btp, struct xfs_buf_map *maps,
 			int nmaps, int flags, struct xfs_buf **bpp);
 void	libxfs_buf_relse(struct xfs_buf *bp);
 
-static inline struct xfs_buf*
+static inline int
 libxfs_buf_get(
 	struct xfs_buftarg	*target,
 	xfs_daddr_t		blkno,
-	size_t			numblks)
+	size_t			numblks,
+	struct xfs_buf		**bpp)
 {
-	struct xfs_buf		*bp;
-	int			error;
 	DEFINE_SINGLE_BUF_MAP(map, blkno, numblks);
 
-	error = libxfs_buf_get_map(target, &map, 1, 0, &bp);
-	if (error)
-		return NULL;
-	return bp;
+	return libxfs_buf_get_map(target, &map, 1, 0, bpp);
 }
 
 static inline struct xfs_buf*

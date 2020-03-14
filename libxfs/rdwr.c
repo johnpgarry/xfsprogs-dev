@@ -226,21 +226,22 @@ libxfs_trace_dirtybuf(
 	libxfs_buf_mark_dirty(bp);
 }
 
-struct xfs_buf *
+int
 libxfs_trace_getbuf(
 	const char		*func,
 	const char		*file,
 	int			line,
 	struct xfs_buftarg	*btp,
 	xfs_daddr_t		blkno,
-	size_t			len)
+	size_t			len,
+	struct xfs_buf		**bpp)
 {
-	struct xfs_buf		*bp;
+	int			error;
 	DEFINE_SINGLE_BUF_MAP(map, blkno, numblks);
 
-	libxfs_buf_get_map(target, &map, 1, 0, &bp);
+	error = libxfs_buf_get_map(target, &map, 1, 0, bpp);
 	__add_trace(bp, func, file, line);
-	return bp;
+	return error;
 }
 
 int
