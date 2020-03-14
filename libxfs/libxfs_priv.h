@@ -124,6 +124,8 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 #define xfs_err(mp,fmt,args...)			cmn_err(CE_ALERT,fmt, ## args)
 #define xfs_alert(mp,fmt,args...)		cmn_err(CE_ALERT,fmt, ## args)
 
+#define xfs_buf_ioerror_alert(bp,f)	((void) 0);
+
 #define xfs_hex_dump(d,n)		((void) 0)
 #define xfs_stack_trace()		((void) 0)
 
