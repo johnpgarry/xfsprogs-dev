@@ -114,22 +114,18 @@ int	libxfs_trans_read_buf_map(struct xfs_mount *mp, struct xfs_trans *tp,
 				  struct xfs_buf_map *map, int nmaps,
 				  xfs_buf_flags_t flags, struct xfs_buf **bpp,
 				  const struct xfs_buf_ops *ops);
-static inline struct xfs_buf *
+static inline int
 libxfs_trans_get_buf(
 	struct xfs_trans	*tp,
 	struct xfs_buftarg	*btp,
 	xfs_daddr_t		blkno,
 	int			numblks,
-	uint			flags)
+	uint			flags,
+	struct xfs_buf		**bpp)
 {
-	struct xfs_buf		*bp;
-	int			error;
 	DEFINE_SINGLE_BUF_MAP(map, blkno, numblks);
 
-	error = libxfs_trans_get_buf_map(tp, btp, &map, 1, flags, &bp);
-	if (error)
-		return NULL;
-	return bp;
+	return libxfs_trans_get_buf_map(tp, btp, &map, 1, flags, bpp);
 }
 
 static inline int
