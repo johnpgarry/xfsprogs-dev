@@ -2153,10 +2153,8 @@ build_agf_agfl(
 		agfl->agfl_magicnum = cpu_to_be32(XFS_AGFL_MAGIC);
 		agfl->agfl_seqno = cpu_to_be32(agno);
 		platform_uuid_copy(&agfl->agfl_uuid, &mp->m_sb.sb_meta_uuid);
-		for (i = 0; i < libxfs_agfl_size(mp); i++)
-			agfl->agfl_bno[i] = cpu_to_be32(NULLAGBLOCK);
 	}
-	freelist = XFS_BUF_TO_AGFL_BNO(mp, agfl_buf);
+	freelist = xfs_buf_to_agfl_bno(agfl_buf);
 
 	/*
 	 * do we have left-over blocks in the btree cursors that should

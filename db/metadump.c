@@ -2750,7 +2750,7 @@ scan_ag(
 			int i;
 			 __be32  *agfl_bno;
 
-			agfl_bno = XFS_BUF_TO_AGFL_BNO(mp, iocur_top->bp);
+			agfl_bno = xfs_buf_to_agfl_bno(iocur_top->bp);
 			i = be32_to_cpu(agf->agf_fllast);
 
 			for (;;) {
