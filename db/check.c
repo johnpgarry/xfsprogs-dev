@@ -2723,7 +2723,7 @@ process_inode(
 		error++;
 		return;
 	}
-	if (!libxfs_dinode_good_version(mp, xino.i_d.di_version)) {
+	if (!libxfs_dinode_good_version(&mp->m_sb, xino.i_d.di_version)) {
 		if (isfree || v)
 			dbprintf(_("bad version number %#x for inode %lld\n"),
 				xino.i_d.di_version, ino);
