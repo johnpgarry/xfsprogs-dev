@@ -526,7 +526,7 @@ void xfs_inode_verifier_error(struct xfs_inode *ip, int error,
 #define xfs_buf_verifier_error(bp,e,n,bu,bus,fa) \
 	xfs_verifier_error(bp, e, fa)
 void
-xfs_buf_corruption_error(struct xfs_buf *bp);
+xfs_buf_corruption_error(struct xfs_buf *bp, xfs_failaddr_t fa);
 
 void __xfs_buf_mark_corrupt(struct xfs_buf *bp, xfs_failaddr_t fa);
 #define xfs_buf_mark_corrupt(bp) __xfs_buf_mark_corrupt((bp), __this_address)
