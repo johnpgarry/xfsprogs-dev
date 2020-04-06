@@ -1369,6 +1369,26 @@ xfs_buf_delwri_submit(
 }
 
 /*
+ * Cancel a delayed write list.
+ *
+ * Remove each buffer from the list, clear the delwri queue flag and drop the
+ * associated buffer reference.
+ */
+void
+xfs_buf_delwri_cancel(
+	struct list_head	*buffer_list)
+{
+	struct xfs_buf		*bp;
+
+	while (!list_empty(buffer_list)) {
+		bp = list_first_entry(buffer_list, struct xfs_buf, b_list);
+		list_del_init(&bp->b_list);
+		bp->b_flags &= ~LIBXFS_B_DIRTY;
+		libxfs_buf_relse(bp);
+	}
+}
+
+/*
  * Format the log. The caller provides either a buftarg which is used to access
  * the log via buffers or a direct pointer to a buffer that encapsulates the
  * entire log.

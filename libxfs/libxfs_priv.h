@@ -250,6 +250,24 @@ div_u64_rem(uint64_t dividend, uint32_t divisor, uint32_t *remainder)
 	return dividend / divisor;
 }
 
+/**
+ * div64_u64_rem - unsigned 64bit divide with 64bit divisor and remainder
+ * @dividend: unsigned 64bit dividend
+ * @divisor: unsigned 64bit divisor
+ * @remainder: pointer to unsigned 64bit remainder
+ *
+ * Return: sets ``*remainder``, then returns dividend / divisor
+ */
+static inline uint64_t
+div64_u64_rem(
+	uint64_t	dividend,
+	uint64_t	divisor,
+	uint64_t	*remainder)
+{
+	*remainder = dividend % divisor;
+	return dividend / divisor;
+}
+
 #define min_t(type,x,y) \
 	({ type __x = (x); type __y = (y); __x < __y ? __x: __y; })
 #define max_t(type,x,y) \

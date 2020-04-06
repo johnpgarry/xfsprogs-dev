@@ -305,6 +305,8 @@
 
 #define trace_xfs_btree_commit_afakeroot(...)	((void) 0)
 #define trace_xfs_btree_commit_ifakeroot(...)	((void) 0)
+#define trace_xfs_btree_bload_level_geometry(...)	((void) 0)
+#define trace_xfs_btree_bload_block(...)	((void )0)
 
 /* set c = c to avoid unused var warnings */
 #define trace_xfs_perag_get(a,b,c,d)		((c) = (c))
