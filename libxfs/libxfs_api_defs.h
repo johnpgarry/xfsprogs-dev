@@ -32,7 +32,6 @@
 #define xfs_attr_get			libxfs_attr_get
 #define xfs_attr_leaf_newentsize	libxfs_attr_leaf_newentsize
 #define xfs_attr_namecheck		libxfs_attr_namecheck
-#define xfs_attr_remove			libxfs_attr_remove
 #define xfs_attr_set			libxfs_attr_set
 
 #define xfs_bmapi_read			libxfs_bmapi_read
