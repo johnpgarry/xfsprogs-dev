@@ -445,7 +445,7 @@ pf_read_inode_dirs(
 			continue;
 
 		if ((dino->di_forkoff != 0) &&
-		    (dino->di_forkoff >= XFS_LITINO(mp, dino->di_version) >> 3))
+		    (dino->di_forkoff >= XFS_LITINO(mp) >> 3))
 			continue;
 
 		switch (dino->di_format) {

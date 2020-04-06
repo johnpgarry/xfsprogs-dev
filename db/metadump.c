@@ -2382,8 +2382,7 @@ process_inode(
 	if (free_inode) {
 		if (zero_stale_data) {
 			/* Zero all of the inode literal area */
-			memset(XFS_DFORK_DPTR(dip), 0,
-			       XFS_LITINO(mp, dip->di_version));
+			memset(XFS_DFORK_DPTR(dip), 0, XFS_LITINO(mp));
 		}
 		goto done;
 	}
@@ -2417,7 +2416,7 @@ process_inode(
 
 	/* copy extended attributes if they exist and forkoff is valid */
 	if (success &&
-	    XFS_DFORK_DSIZE(dip, mp) < XFS_LITINO(mp, dip->di_version)) {
+	    XFS_DFORK_DSIZE(dip, mp) < XFS_LITINO(mp)) {
 		attr_data.remote_val_count = 0;
 		switch (dip->di_aformat) {
 			case XFS_DINODE_FMT_LOCAL:
