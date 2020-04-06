@@ -257,8 +257,8 @@ libxfs_ialloc(
 	inode = VFS_I(ip);
 	inode->i_mode = mode;
 	set_nlink(inode, nlink);
-	inode->i_uid = xfs_uid_to_kuid(cr->cr_uid);
-	inode->i_gid = xfs_gid_to_kgid(cr->cr_gid);
+	i_uid_write(inode, cr->cr_uid);
+	i_gid_write(inode, cr->cr_gid);
 	ip->i_d.di_projid = pip ? 0 : fsx->fsx_projid;
 	xfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD);
 

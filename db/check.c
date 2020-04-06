@@ -2898,8 +2898,8 @@ process_inode(
 			break;
 		}
 		if (ic) {
-			xfs_dqid_t uid = xfs_kuid_to_uid(VFS_I(&xino)->i_uid);
-			xfs_dqid_t gid = xfs_kgid_to_gid(VFS_I(&xino)->i_gid);
+			xfs_dqid_t	uid = i_uid_read(VFS_I(&xino));
+			xfs_dqid_t	gid = i_gid_read(VFS_I(&xino));
 
 			quota_add(&xino.i_d.di_projid, &gid, &uid, 0, bc, ic,
 				  rc);

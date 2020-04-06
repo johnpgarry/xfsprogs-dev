@@ -36,28 +36,6 @@ typedef struct {
 	gid_t val;
 } kgid_t;
 
-static inline kuid_t xfs_uid_to_kuid(uid_t uid)
-{
-	kuid_t	v = { .val = uid };
-	return v;
-}
-
-static inline kgid_t xfs_gid_to_kgid(gid_t gid)
-{
-	kgid_t	v = { .val = gid };
-	return v;
-}
-
-static inline uid_t xfs_kuid_to_uid(kuid_t uid)
-{
-	return uid.val;
-}
-
-static inline gid_t xfs_kgid_to_gid(kgid_t gid)
-{
-	return gid.val;
-}
-
 /*
  * Inode interface. This fakes up a "VFS inode" to make the xfs_inode appear
  * similar to the kernel which now is used tohold certain parts of the on-disk
@@ -76,6 +54,26 @@ struct inode {
 	kuid_t		i_uid;
 	kgid_t		i_gid;
 };
+
+static inline void i_uid_write(struct inode *inode, uid_t uid)
+{
+	inode->i_uid.val = uid;
+}
+
+static inline void i_gid_write(struct inode *inode, gid_t gid)
+{
+	inode->i_gid.val = gid;
+}
+
+static inline uid_t i_uid_read(const struct inode *inode)
+{
+	return inode->i_uid.val;
+}
+
+static inline gid_t i_gid_read(const struct inode *inode)
+{
+	return inode->i_gid.val;
+}
 
 typedef struct xfs_inode {
 	struct cache_node	i_node;
