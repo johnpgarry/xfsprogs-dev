@@ -303,6 +303,8 @@
 
 #define trace_xfs_fs_mark_healthy(a,b)		((void) 0)
 
+#define trace_xfs_btree_commit_afakeroot(...)	((void) 0)
+
 /* set c = c to avoid unused var warnings */
 #define trace_xfs_perag_get(a,b,c,d)		((c) = (c))
 #define trace_xfs_perag_get_tag(a,b,c,d)	((c) = (c))

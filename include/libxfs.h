@@ -67,6 +67,7 @@ struct iomap;
 #include "xfs_inode_buf.h"
 #include "xfs_alloc.h"
 #include "xfs_btree.h"
+#include "xfs_btree_staging.h"
 #include "xfs_btree_trace.h"
 #include "xfs_bmap.h"
 #include "xfs_trace.h"
