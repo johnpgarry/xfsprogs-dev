@@ -26,6 +26,28 @@ struct xfs_dir_ops;
 #define IS_I_VERSION(inode)			(0)
 #define inode_maybe_inc_iversion(inode,flags)	(0)
 
+/* Borrow the kernel's uid/gid types. */
+
+typedef struct {
+	uid_t val;
+} kuid_t;
+
+typedef struct {
+	gid_t val;
+} kgid_t;
+
+static inline kuid_t xfs_uid_to_kuid(uid_t uid)
+{
+	kuid_t	v = { .val = uid };
+	return v;
+}
+
+static inline kgid_t xfs_gid_to_kgid(gid_t gid)
+{
+	kgid_t	v = { .val = gid };
+	return v;
+}
+
 /*
  * Inode interface. This fakes up a "VFS inode" to make the xfs_inode appear
  * similar to the kernel which now is used tohold certain parts of the on-disk
@@ -41,6 +63,8 @@ struct inode {
 	struct timespec	i_atime;
 	struct timespec	i_mtime;
 	struct timespec	i_ctime;
+	kuid_t		i_uid;
+	kgid_t		i_gid;
 };
 
 typedef struct xfs_inode {
