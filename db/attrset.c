@@ -69,7 +69,7 @@ attr_set_f(
 	struct xfs_da_args	args = { NULL };
 	struct xfs_inode	*ip = NULL;
 	char			*name, *value, *sp;
-	int			c, valuelen = 0, flags = 0;
+	int			c, valuelen = 0;
 
 	if (cur_typ == NULL) {
 		dbprintf(_("no current type\n"));
@@ -84,23 +84,24 @@ attr_set_f(
 		switch (c) {
 		/* namespaces */
 		case 'r':
-			flags |= LIBXFS_ATTR_ROOT;
-			flags &= ~LIBXFS_ATTR_SECURE;
+			args.attr_filter |= LIBXFS_ATTR_ROOT;
+			args.attr_filter &= ~LIBXFS_ATTR_SECURE;
 			break;
 		case 'u':
-			flags &= ~(LIBXFS_ATTR_ROOT | LIBXFS_ATTR_SECURE);
+			args.attr_filter &= ~(LIBXFS_ATTR_ROOT |
+					      LIBXFS_ATTR_SECURE);
 			break;
 		case 's':
-			flags |= LIBXFS_ATTR_SECURE;
-			flags &= ~LIBXFS_ATTR_ROOT;
+			args.attr_filter |= LIBXFS_ATTR_SECURE;
+			args.attr_filter &= ~LIBXFS_ATTR_ROOT;
 			break;
 
 		/* modifiers */
 		case 'C':
-			flags |= LIBXFS_ATTR_CREATE;
+			args.attr_flags |= LIBXFS_ATTR_CREATE;
 			break;
 		case 'R':
-			flags |= LIBXFS_ATTR_REPLACE;
+			args.attr_flags |= LIBXFS_ATTR_REPLACE;
 			break;
 
 		case 'n':
@@ -151,7 +152,6 @@ attr_set_f(
 	args.name = (unsigned char *)name;
 	args.namelen = strlen(name);
 	args.value = value;
-	args.flags = flags;
 
 	if (libxfs_attr_set(&args)){
 		dbprintf(_("failed to set attr %s on inode %llu\n"),
@@ -179,7 +179,7 @@ attr_remove_f(
 	struct xfs_da_args	args = { NULL };
 	struct xfs_inode	*ip = NULL;
 	char			*name;
-	int			c, flags = 0;
+	int			c;
 
 	if (cur_typ == NULL) {
 		dbprintf(_("no current type\n"));
@@ -194,15 +194,16 @@ attr_remove_f(
 		switch (c) {
 		/* namespaces */
 		case 'r':
-			flags |= LIBXFS_ATTR_ROOT;
-			flags &= ~LIBXFS_ATTR_SECURE;
+			args.attr_filter |= LIBXFS_ATTR_ROOT;
+			args.attr_filter &= ~LIBXFS_ATTR_SECURE;
 			break;
 		case 'u':
-			flags &= ~(LIBXFS_ATTR_ROOT | LIBXFS_ATTR_SECURE);
+			args.attr_filter &= ~(LIBXFS_ATTR_ROOT |
+					      LIBXFS_ATTR_SECURE);
 			break;
 		case 's':
-			flags |= LIBXFS_ATTR_SECURE;
-			flags &= ~LIBXFS_ATTR_ROOT;
+			args.attr_filter |= LIBXFS_ATTR_SECURE;
+			args.attr_filter &= ~LIBXFS_ATTR_ROOT;
 			break;
 
 		case 'n':
@@ -232,7 +233,6 @@ attr_remove_f(
 	args.dp = ip;
 	args.name = (unsigned char *)name;
 	args.namelen = strlen(name);
-	args.flags = flags;
 
 	if (libxfs_attr_set(&args)) {
 		dbprintf(_("failed to remove attr %s from inode %llu\n"),

@@ -13,10 +13,10 @@
  * it can be included in both the internal and external libxfs header files
  * without introducing any depenencies between the two.
  */
-#define LIBXFS_ATTR_CREATE		ATTR_CREATE
-#define LIBXFS_ATTR_REPLACE		ATTR_REPLACE
-#define LIBXFS_ATTR_ROOT		ATTR_ROOT
-#define LIBXFS_ATTR_SECURE		ATTR_SECURE
+#define LIBXFS_ATTR_CREATE		XATTR_CREATE
+#define LIBXFS_ATTR_REPLACE		XATTR_REPLACE
+#define LIBXFS_ATTR_ROOT		XFS_ATTR_ROOT
+#define LIBXFS_ATTR_SECURE		XFS_ATTR_SECURE
 
 #define xfs_agfl_size			libxfs_agfl_size
 #define xfs_agfl_walk			libxfs_agfl_walk

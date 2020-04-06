@@ -24,6 +24,15 @@
 #include <stdbool.h>
 #include <libgen.h>
 
+/* Get XATTR_CREATE and XATTR_REPLACE from somewhere... */
+#ifdef HAVE_FSETXATTR
+# include <sys/xattr.h>
+#elif defined HAVE_LIBATTR
+# include <attr/xattr.h>
+#else
+# include <linux/xattr.h>
+#endif /* HAVE_FSETXATTR */
+
 typedef struct filldir		filldir_t;
 
 /* long and pointer must be either 32 bit or 64 bit */
