@@ -2070,7 +2070,7 @@ build_agf_agfl(
 		do_error(_("Cannot grab AG %u AGF buffer, err=%d"),
 				agno, error);
 	agf_buf->b_ops = &xfs_agf_buf_ops;
-	agf = XFS_BUF_TO_AGF(agf_buf);
+	agf = agf_buf->b_addr;
 	memset(agf, 0, mp->m_sb.sb_sectsize);
 
 #ifdef XR_BLD_FREE_TRACE

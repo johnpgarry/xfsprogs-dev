@@ -2384,7 +2384,7 @@ scan_ag(
 		objname = _("agf block");
 		goto out_free_sbbuf;
 	}
-	agf = XFS_BUF_TO_AGF(agfbuf);
+	agf = agfbuf->b_addr;
 
 	error = salvage_buffer(mp->m_dev,
 			XFS_AG_DADDR(mp, agno, XFS_AGI_DADDR(mp)),
