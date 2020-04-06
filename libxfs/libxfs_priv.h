@@ -268,6 +268,18 @@ div64_u64_rem(
 	return dividend / divisor;
 }
 
+static inline uint64_t
+div_u64(uint64_t dividend, uint32_t divisor)
+{
+	return dividend / divisor;
+}
+
+static inline uint64_t
+howmany_64(uint64_t dividend, uint32_t divisor)
+{
+	return div_u64(dividend + divisor - 1, divisor);
+}
+
 #define min_t(type,x,y) \
 	({ type __x = (x); type __y = (y); __x < __y ? __x: __y; })
 #define max_t(type,x,y) \
