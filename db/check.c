@@ -2898,8 +2898,11 @@ process_inode(
 			break;
 		}
 		if (ic) {
-			quota_add(&xino.i_d.di_projid, &xino.i_d.di_gid,
-				  &xino.i_d.di_uid, 0, bc, ic, rc);
+			xfs_dqid_t uid = xfs_kuid_to_uid(VFS_I(&xino)->i_uid);
+			xfs_dqid_t gid = xfs_kgid_to_gid(VFS_I(&xino)->i_gid);
+
+			quota_add(&xino.i_d.di_projid, &gid, &uid, 0, bc, ic,
+				  rc);
 		}
 	}
 	totblocks = totdblocks + totiblocks + atotdblocks + atotiblocks;

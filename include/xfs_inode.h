@@ -48,6 +48,16 @@ static inline kgid_t xfs_gid_to_kgid(gid_t gid)
 	return v;
 }
 
+static inline uid_t xfs_kuid_to_uid(kuid_t uid)
+{
+	return uid.val;
+}
+
+static inline gid_t xfs_kgid_to_gid(kgid_t gid)
+{
+	return gid.val;
+}
+
 /*
  * Inode interface. This fakes up a "VFS inode" to make the xfs_inode appear
  * similar to the kernel which now is used tohold certain parts of the on-disk

@@ -230,6 +230,7 @@ libxfs_ialloc(
 {
 	xfs_ino_t	ino;
 	xfs_inode_t	*ip;
+	struct inode	*inode;
 	uint		flags;
 	int		error;
 
@@ -253,10 +254,11 @@ libxfs_ialloc(
 		return error;
 	ASSERT(ip != NULL);
 
-	VFS_I(ip)->i_mode = mode;
-	set_nlink(VFS_I(ip), nlink);
-	ip->i_d.di_uid = cr->cr_uid;
-	ip->i_d.di_gid = cr->cr_gid;
+	inode = VFS_I(ip);
+	inode->i_mode = mode;
+	set_nlink(inode, nlink);
+	inode->i_uid = xfs_uid_to_kuid(cr->cr_uid);
+	inode->i_gid = xfs_gid_to_kgid(cr->cr_gid);
 	ip->i_d.di_projid = pip ? 0 : fsx->fsx_projid;
 	xfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD);
 
@@ -275,7 +277,7 @@ libxfs_ialloc(
 	}
 
 	if (pip && (VFS_I(pip)->i_mode & S_ISGID)) {
-		ip->i_d.di_gid = pip->i_d.di_gid;
+		inode->i_gid = VFS_I(pip)->i_gid;
 		if ((VFS_I(pip)->i_mode & S_ISGID) && (mode & S_IFMT) == S_IFDIR)
 			VFS_I(ip)->i_mode |= S_ISGID;
 	}
