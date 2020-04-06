@@ -34,7 +34,7 @@ const field_t	agfl_crc_hfld[] = { {
 	{ NULL }
 };
 
-#define	OFF(f)	bitize(offsetof(xfs_agfl_t, agfl_ ## f))
+#define	OFF(f)	bitize(offsetof(struct xfs_agfl, agfl_ ## f))
 const field_t	agfl_flds[] = {
 	{ "bno", FLDT_AGBLOCKNZ, OI(OFF(magicnum)), agfl_bno_size,
 	  FLD_ARRAY|FLD_COUNT, TYP_DATA },

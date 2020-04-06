@@ -454,7 +454,7 @@ read_ag_header(int fd, xfs_agnumber_t agno, wbuf *buf, ag_header_t *ag,
 	ASSERT(be32_to_cpu(ag->xfs_agf->agf_magicnum) == XFS_AGF_MAGIC);
 	ag->xfs_agi = (xfs_agi_t *) (buf->data + diff + 2 * sectorsize);
 	ASSERT(be32_to_cpu(ag->xfs_agi->agi_magicnum) == XFS_AGI_MAGIC);
-	ag->xfs_agfl = (xfs_agfl_t *) (buf->data + diff + 3 * sectorsize);
+	ag->xfs_agfl = (struct xfs_agfl *) (buf->data + diff + 3 * sectorsize);
 }
 
 

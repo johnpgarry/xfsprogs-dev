@@ -21,7 +21,7 @@ typedef struct ag_header  {
 	xfs_dsb_t	*xfs_sb;	/* superblock for filesystem or AG */
 	xfs_agf_t	*xfs_agf;	/* free space info */
 	xfs_agi_t	*xfs_agi;	/* free inode info */
-	xfs_agfl_t	*xfs_agfl;	/* AG freelist */
+	struct xfs_agfl	*xfs_agfl;	/* AG freelist */
 	char		*residue;
 	int		residue_length;
 } ag_header_t;
