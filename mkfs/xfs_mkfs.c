@@ -3490,6 +3490,7 @@ rewrite_secondary_superblocks(
 	struct xfs_mount	*mp)
 {
 	struct xfs_buf		*buf;
+	struct xfs_dsb		*dsb;
 	int			error;
 
 	/* rewrite the last superblock */
@@ -3502,7 +3503,8 @@ rewrite_secondary_superblocks(
 				progname, mp->m_sb.sb_agcount - 1);
 		exit(1);
 	}
-	XFS_BUF_TO_SBP(buf)->sb_rootino = cpu_to_be64(mp->m_sb.sb_rootino);
+	dsb = buf->b_addr;
+	dsb->sb_rootino = cpu_to_be64(mp->m_sb.sb_rootino);
 	libxfs_buf_mark_dirty(buf);
 	libxfs_buf_relse(buf);
 
@@ -3519,7 +3521,8 @@ rewrite_secondary_superblocks(
 				progname, (mp->m_sb.sb_agcount - 1) / 2);
 		exit(1);
 	}
-	XFS_BUF_TO_SBP(buf)->sb_rootino = cpu_to_be64(mp->m_sb.sb_rootino);
+	dsb = buf->b_addr;
+	dsb->sb_rootino = cpu_to_be64(mp->m_sb.sb_rootino);
 	libxfs_buf_mark_dirty(buf);
 	libxfs_buf_relse(buf);
 }
@@ -3582,6 +3585,7 @@ main(
 	struct xfs_mount	mbuf = {};
 	struct xfs_mount	*mp = &mbuf;
 	struct xfs_sb		*sbp = &mp->m_sb;
+	struct xfs_dsb		*dsb;
 	struct fs_topology	ft = {};
 	struct cli_params	cli = {
 		.xi = &xi,
@@ -3867,7 +3871,8 @@ main(
 	buf = libxfs_getsb(mp);
 	if (!buf || buf->b_error)
 		exit(1);
-	(XFS_BUF_TO_SBP(buf))->sb_inprogress = 0;
+	dsb = buf->b_addr;
+	dsb->sb_inprogress = 0;
 	libxfs_buf_mark_dirty(buf);
 	libxfs_buf_relse(buf);
 

@@ -2261,7 +2261,7 @@ sync_sb(xfs_mount_t *mp)
 
 	update_sb_version(mp);
 
-	libxfs_sb_to_disk(XFS_BUF_TO_SBP(bp), &mp->m_sb);
+	libxfs_sb_to_disk(bp->b_addr, &mp->m_sb);
 	libxfs_buf_mark_dirty(bp);
 	libxfs_buf_relse(bp);
 }

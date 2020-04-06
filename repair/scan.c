@@ -2375,7 +2375,7 @@ scan_ag(
 		objname = _("root superblock");
 		goto out_free_sb;
 	}
-	libxfs_sb_from_disk(sb, XFS_BUF_TO_SBP(sbbuf));
+	libxfs_sb_from_disk(sb, sbbuf->b_addr);
 
 	error = salvage_buffer(mp->m_dev,
 			XFS_AG_DADDR(mp, agno, XFS_AGF_DADDR(mp)),
@@ -2480,7 +2480,7 @@ scan_ag(
 	if (sb_dirty && !no_modify) {
 		if (agno == 0)
 			memcpy(&mp->m_sb, sb, sizeof(xfs_sb_t));
-		libxfs_sb_to_disk(XFS_BUF_TO_SBP(sbbuf), sb);
+		libxfs_sb_to_disk(sbbuf->b_addr, sb);
 		libxfs_buf_mark_dirty(sbbuf);
 		libxfs_buf_relse(sbbuf);
 	} else
