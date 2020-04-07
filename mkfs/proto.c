@@ -6,7 +6,7 @@
 
 #include "libxfs.h"
 #include <sys/stat.h>
-#include "xfs_multidisk.h"
+#include "libfrog/convert.h"
 
 /*
  * Prototypes for internal functions.

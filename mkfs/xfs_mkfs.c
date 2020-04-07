@@ -10,6 +10,7 @@
 #include "libxcmd.h"
 #include "libfrog/fsgeom.h"
 #include "libfrog/topology.h"
+#include "libfrog/convert.h"
 
 #define TERABYTES(count, blog)	((uint64_t)(count) << (40 - (blog)))
 #define GIGABYTES(count, blog)	((uint64_t)(count) << (30 - (blog)))
@@ -942,69 +943,6 @@ unknown(
 	usage();
 }
 
-long long
-cvtnum(
-	unsigned int	blksize,
-	unsigned int	sectsize,
-	const char	*s)
-{
-	long long	i;
-	char		*sp;
-	int		c;
-
-	i = strtoll(s, &sp, 0);
-	if (i == 0 && sp == s)
-		return -1LL;
-	if (*sp == '\0')
-		return i;
-
-	if (sp[1] != '\0')
-		return -1LL;
-
-	if (*sp == 'b') {
-		if (!blksize) {
-			fprintf(stderr,
-_("Blocksize must be provided prior to using 'b' suffix.\n"));
-			usage();
-		} else {
-			return i * blksize;
-		}
-	}
-	if (*sp == 's') {
-		if (!sectsize) {
-			fprintf(stderr,
-_("Sectorsize must be specified prior to using 's' suffix.\n"));
-			usage();
-		} else {
-			return i * sectsize;
-		}
-	}
-
-	c = tolower(*sp);
-	switch (c) {
-	case 'e':
-		i *= 1024LL;
-		/* fall through */
-	case 'p':
-		i *= 1024LL;
-		/* fall through */
-	case 't':
-		i *= 1024LL;
-		/* fall through */
-	case 'g':
-		i *= 1024LL;
-		/* fall through */
-	case 'm':
-		i *= 1024LL;
-		/* fall through */
-	case 'k':
-		return i * 1024LL;
-	default:
-		break;
-	}
-	return -1LL;
-}
-
 static void
 check_device_type(
 	const char	*name,
@@ -1374,9 +1312,13 @@ getnum(
 	 * convert it ourselves to guarantee there is no trailing garbage in the
 	 * number.
 	 */
-	if (sp->convert)
+	if (sp->convert) {
 		c = cvtnum(blocksize, sectorsize, str);
-	else {
+		if (c == -1LL) {
+			illegal_option(str, opts, index,
+				_("Not a valid value or illegal suffix"));
+		}
+	} else {
 		char		*str_end;
 
 		c = strtoll(str, &str_end, 0);

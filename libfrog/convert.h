@@ -14,7 +14,7 @@ extern uint64_t	cvt_u64(char *s, int base);
 extern uint32_t	cvt_u32(char *s, int base);
 extern uint16_t	cvt_u16(char *s, int base);
 
-extern long long cvtnum(size_t blocksize, size_t sectorsize, char *s);
+extern long long cvtnum(size_t blocksize, size_t sectorsize, const char *s);
 extern void cvtstr(double value, char *str, size_t sz);
 extern unsigned long cvttime(char *s);
 

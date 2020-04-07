@@ -182,9 +182,9 @@ cvt_u16(
 
 long long
 cvtnum(
-	size_t		blocksize,
-	size_t		sectorsize,
-	char		*s)
+	size_t		blksize,
+	size_t		sectsize,
+	const char	*s)
 {
 	long long	i;
 	char		*sp;
@@ -202,9 +202,13 @@ cvtnum(
 	c = tolower(*sp);
 	switch (c) {
 	case 'b':
-		return i * blocksize;
+		if (!blksize)
+			return -1LL;
+		return i * blksize;
 	case 's':
-		return i * sectorsize;
+		if (!sectsize)
+			return -1LL;
+		return i * sectsize;
 	case 'k':
 		return KILOBYTES(i);
 	case 'm':
