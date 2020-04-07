@@ -16,6 +16,10 @@ LTLDFLAGS = @LDFLAGS@
 CFLAGS = @CFLAGS@ -D_FILE_OFFSET_BITS=64 -Wno-address-of-packed-member
 BUILD_CFLAGS = @BUILD_CFLAGS@ -D_FILE_OFFSET_BITS=64
 
+# make sure we don't pick up whacky LDFLAGS from the make environment and
+# only use what we calculate from the configured options above.
+LDFLAGS =
+
 LIBRT = @librt@
 LIBUUID = @libuuid@
 LIBPTHREAD = @libpthread@
