@@ -9,6 +9,8 @@ LTLIBRARY = libxfs.la
 LT_CURRENT = 0
 LT_REVISION = 0
 LT_AGE = 0
+# we need a static build even if --disable-static is specified
+LTLDFLAGS += -static
 
 # headers to install in include/xfs
 PKGHFILES = xfs_fs.h \

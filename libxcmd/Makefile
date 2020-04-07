@@ -9,6 +9,8 @@ LTLIBRARY = libxcmd.la
 LT_CURRENT = 0
 LT_REVISION = 0
 LT_AGE = 0
+# we need a static build even if --disable-static is specified
+LTLDFLAGS += -static
 
 CFILES = command.c input.c help.c quit.c
 
