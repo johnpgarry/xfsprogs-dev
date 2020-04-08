@@ -1060,30 +1060,6 @@ libxfs_buf_mark_dirty(
 	bp->b_flags |= LIBXFS_B_DIRTY;
 }
 
-void
-libxfs_iomove(xfs_buf_t *bp, uint boff, int len, void *data, int flags)
-{
-#ifdef IO_DEBUG
-	if (boff + len > bp->b_bcount) {
-		printf("Badness, iomove out of range!\n"
-			"bp=(bno 0x%llx, bytes %u) range=(boff %u, bytes %u)\n",
-			(long long)bp->b_bn, bp->b_bcount, boff, len);
-		abort();
-	}
-#endif
-	switch (flags) {
-	case LIBXFS_BZERO:
-		memset(bp->b_addr + boff, 0, len);
-		break;
-	case LIBXFS_BREAD:
-		memcpy(data, bp->b_addr + boff, len);
-		break;
-	case LIBXFS_BWRITE:
-		memcpy(bp->b_addr + boff, data, len);
-		break;
-	}
-}
-
 /* Complain about (and remember) dropping dirty buffers. */
 static void
 libxfs_whine_dirty_buf(

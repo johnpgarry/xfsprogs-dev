@@ -378,9 +378,8 @@ static inline struct xfs_buf *xfs_buf_incore(struct xfs_buftarg *target,
 
 #define xfs_buf_oneshot(bp)		((void) 0)
 
-#define XBRW_READ			LIBXFS_BREAD
-#define XBRW_WRITE			LIBXFS_BWRITE
-#define xfs_buf_zero(bp,off,len)     libxfs_iomove(bp,off,len,NULL,LIBXFS_BZERO)
+#define xfs_buf_zero(bp, off, len) \
+	memset((bp)->b_addr + off, 0, len);
 
 /* mount stuff */
 #define XFS_MOUNT_32BITINODES		LIBXFS_MOUNT_32BITINODES

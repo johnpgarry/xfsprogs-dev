@@ -221,12 +221,6 @@ extern int	libxfs_device_zero(struct xfs_buftarg *, xfs_daddr_t, uint);
 
 extern int libxfs_bhash_size;
 
-#define LIBXFS_BREAD	0x1
-#define LIBXFS_BWRITE	0x2
-#define LIBXFS_BZERO	0x4
-
-extern void	libxfs_iomove (xfs_buf_t *, uint, int, void *, int);
-
 static inline int
 xfs_buf_verify_cksum(struct xfs_buf *bp, unsigned long cksum_offset)
 {
