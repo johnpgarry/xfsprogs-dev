@@ -203,25 +203,6 @@ verify_aginum(xfs_mount_t	*mp,
 	return verify_ag_bno(sbp, agno, agbno);
 }
 
-/*
- * return 1 if block number is good, 0 if out of range
- */
-int
-verify_dfsbno(xfs_mount_t	*mp,
-		xfs_fsblock_t	fsbno)
-{
-	xfs_agnumber_t	agno;
-	xfs_agblock_t	agbno;
-	xfs_sb_t	*sbp = &mp->m_sb;;
-
-	/* range check ag #, ag block.  range-checking offset is pointless */
-
-	agno = XFS_FSB_TO_AGNO(mp, fsbno);
-	agbno = XFS_FSB_TO_AGBNO(mp, fsbno);
-
-	return verify_ag_bno(sbp, agno, agbno) == 0;
-}
-
 #define XR_DFSBNORANGE_VALID	0
 #define XR_DFSBNORANGE_BADSTART	1
 #define XR_DFSBNORANGE_BADEND	2
@@ -835,7 +816,7 @@ _("bad numrecs 0 in inode %" PRIu64 " bmap btree root block\n"),
 		 * btree, we'd do it right here.  For now, if there's a
 		 * problem, we'll bail out and presumably clear the inode.
 		 */
-		if (!verify_dfsbno(mp, get_unaligned_be64(&pp[i])))  {
+		if (!libxfs_verify_fsbno(mp, get_unaligned_be64(&pp[i])))  {
 			do_warn(
 _("bad bmap btree ptr 0x%" PRIx64 " in ino %" PRIu64 "\n"),
 				get_unaligned_be64(&pp[i]), lino);

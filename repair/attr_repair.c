@@ -1092,7 +1092,7 @@ process_longform_attr(
 	}
 
 	/* FIX FOR bug 653709 -- EKN */
-	if (!xfs_verify_fsbno(mp, bno)) {
+	if (!libxfs_verify_fsbno(mp, bno)) {
 		do_warn(
 	_("block in attribute fork of inode %" PRIu64 " is not valid\n"), ino);
 		return 1;

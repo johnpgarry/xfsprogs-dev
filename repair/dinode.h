@@ -9,10 +9,6 @@
 struct blkmap;
 struct prefetch_args;
 
-int
-verify_dfsbno(xfs_mount_t	*mp,
-		xfs_fsblock_t	fsbno);
-
 void
 convert_extent(
 	xfs_bmbt_rec_t		*rp,

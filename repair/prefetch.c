@@ -188,8 +188,9 @@ pf_read_bmbt_reclist(
 				(irec.br_startoff >= fs_max_file_offset))
 			goto out_free;
 
-		if (!verify_dfsbno(mp, irec.br_startblock) || !verify_dfsbno(mp,
-				irec.br_startblock + irec.br_blockcount - 1))
+		if (!libxfs_verify_fsbno(mp, irec.br_startblock) ||
+		    !libxfs_verify_fsbno(mp, irec.br_startblock +
+					     irec.br_blockcount - 1))
 			goto out_free;
 
 		if (!args->dirs_only && ((irec.br_startoff +
@@ -337,7 +338,7 @@ pf_scanfunc_bmap(
 
 	for (i = 0; i < numrecs; i++) {
 		dbno = get_unaligned_be64(&pp[i]);
-		if (!verify_dfsbno(mp, dbno))
+		if (!libxfs_verify_fsbno(mp, dbno))
 			return 0;
 		if (!pf_scan_lbtree(dbno, level, isadir, args, pf_scanfunc_bmap))
 			return 0;
@@ -379,7 +380,7 @@ pf_read_btinode(
 
 	for (i = 0; i < numrecs; i++) {
 		dbno = get_unaligned_be64(&pp[i]);
-		if (!verify_dfsbno(mp, dbno))
+		if (!libxfs_verify_fsbno(mp, dbno))
 			break;
 		if (!pf_scan_lbtree(dbno, level, isadir, args, pf_scanfunc_bmap))
 			break;
