@@ -1,3 +1,10 @@
+xfsprogs-5.5.0-rc1 (08 Apr 2020)
+	- xfsprogs: fix silently broken option parsing (Dave Chinner)
+	- xfsprogs: various minor Coverity fixes (Darrick Wong)
+	- xfs_repair: fix dir_read_buf use of libxfs_da_read_buf (Darrick Wong)
+	- libxfs: check retval of device flush when closing (Darrick Wong)
+	- xfs_io:  set exitcode on failure appropriately (Dave Chinner)
+	
 xfsprogs-5.5.0-rc0 (18 Mar 2020)
 	- libxfs changes merged from kernel 5.6
 
