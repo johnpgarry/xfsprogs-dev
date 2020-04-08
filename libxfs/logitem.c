@@ -84,7 +84,6 @@ xfs_buf_item_init(
 	 * the first.  If we do already have one, there is
 	 * nothing to do here so return.
 	 */
-	XFS_BUF_SET_BDSTRAT_FUNC(bp, xfs_bdstrat_cb);
 	if (bp->b_log_item != NULL) {
 		lip = bp->b_log_item;
 		if (lip->li_type == XFS_LI_BUF) {
