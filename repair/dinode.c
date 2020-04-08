@@ -152,57 +152,6 @@ clear_dinode(xfs_mount_t *mp, xfs_dinode_t *dino, xfs_ino_t ino_num)
  * misc. inode-related utility routines
  */
 
-/*
- * verify_ag_bno is heavily used. In the common case, it
- * performs just two number of compares
- * Returns 1 for bad ag/bno pair or 0 if it's valid.
- */
-static __inline int
-verify_ag_bno(xfs_sb_t *sbp,
-		xfs_agnumber_t agno,
-		xfs_agblock_t agbno)
-{
-	if (agno < (sbp->sb_agcount - 1))
-		return (agbno >= sbp->sb_agblocks);
-	if (agno == (sbp->sb_agcount - 1))
-		return (agbno >= (sbp->sb_dblocks -
-				((xfs_rfsblock_t)(sbp->sb_agcount - 1) *
-				 sbp->sb_agblocks)));
-	return 1;
-}
-
-/*
- * have a separate routine to ensure that we don't accidentally
- * lose illegally set bits in the agino by turning it into an FSINO
- * to feed to the above routine
- */
-int
-verify_aginum(xfs_mount_t	*mp,
-		xfs_agnumber_t	agno,
-		xfs_agino_t	agino)
-{
-	xfs_agblock_t	agbno;
-	xfs_sb_t	*sbp = &mp->m_sb;;
-
-	/* range check ag #, ag block.  range-checking offset is pointless */
-
-	if (agino == 0 || agino == NULLAGINO)
-		return(1);
-
-	/*
-	 * agino's can't be too close to NULLAGINO because the min blocksize
-	 * is 9 bits and at most 1 bit of that gets used for the inode offset
-	 * so if the agino gets shifted by the # of offset bits and compared
-	 * to the legal agbno values, a bogus agino will be too large.  there
-	 * will be extra bits set at the top that shouldn't be set.
-	 */
-	agbno = XFS_AGINO_TO_AGBNO(mp, agino);
-	if (agbno == 0)
-		return 1;
-
-	return verify_ag_bno(sbp, agno, agbno);
-}
-
 #define XR_DFSBNORANGE_VALID	0
 #define XR_DFSBNORANGE_BADSTART	1
 #define XR_DFSBNORANGE_BADEND	2
