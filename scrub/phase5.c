@@ -242,7 +242,7 @@ render_ino_from_handle(
 	size_t			buflen,
 	void			*data)
 {
-	struct xfs_bstat	*bstat = data;
+	struct xfs_bulkstat	*bstat = data;
 
 	return scrub_render_ino_descr(ctx, buf, buflen, bstat->bs_ino,
 			bstat->bs_gen, NULL);
