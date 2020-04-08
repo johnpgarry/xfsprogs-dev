@@ -3679,7 +3679,7 @@ main(
 		case 'V':
 			printf(_("%s version %s\n"), progname, VERSION);
 			exit(0);
-		case '?':
+		default:
 			unknown(optopt, "");
 		}
 	}

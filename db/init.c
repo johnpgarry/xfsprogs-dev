@@ -84,15 +84,12 @@ init(
 		case 'V':
 			printf(_("%s version %s\n"), progname, VERSION);
 			exit(0);
-		case '?':
+		default:
 			usage();
-			/*NOTREACHED*/
 		}
 	}
-	if (optind + 1 != argc) {
+	if (optind + 1 != argc)
 		usage();
-		/*NOTREACHED*/
-	}
 
 	fsdevice = argv[optind];
 	if (!x.disfile)

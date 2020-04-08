@@ -326,7 +326,7 @@ process_args(int argc, char **argv)
 		case 'e':
 			report_corrected = true;
 			break;
-		case '?':
+		default:
 			usage();
 		}
 	}

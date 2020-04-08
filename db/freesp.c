@@ -177,7 +177,7 @@ init(
 		case 's':
 			summaryflag = 1;
 			break;
-		case '?':
+		default:
 			return usage();
 		}
 	}

@@ -127,6 +127,8 @@ copy_range_f(int argc, char **argv)
 			/* Expect no src_path arg */
 			src_path_arg = 0;
 			break;
+		default:
+			return command_usage(&copy_range_cmd);
 		}
 	}
 

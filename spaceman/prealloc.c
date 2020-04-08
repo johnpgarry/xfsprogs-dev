@@ -56,7 +56,6 @@ prealloc_f(
 			eofb.eof_min_file_size = cvtnum(fsgeom->blocksize,
 					fsgeom->sectsize, optarg);
 			break;
-		case '?':
 		default:
 			return command_usage(&prealloc_cmd);
 		}

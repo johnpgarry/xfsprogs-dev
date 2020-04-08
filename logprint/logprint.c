@@ -193,7 +193,7 @@ main(int argc, char **argv)
 			case 'V':
 				printf(_("%s version %s\n"), progname, VERSION);
 				exit(0);
-			case '?':
+			default:
 				usage();
 		}
 	}

@@ -671,8 +671,6 @@ main(
 		case 'x':
 			scrub_data = true;
 			break;
-		case '?':
-			/* fall through */
 		default:
 			usage();
 		}

@@ -310,7 +310,6 @@ init(
 		case 's':
 			summaryflag = 1;
 			break;
-		case '?':
 		default:
 			return command_usage(&freesp_cmd);
 		}
