@@ -88,6 +88,7 @@ sendfile_f(
 			if (fd < 0 || fd >= filecount) {
 				printf(_("value %d is out of range (0-%d)\n"),
 					fd, filecount-1);
+				exitcode = 1;
 				return 0;
 			}
 			break;
@@ -95,22 +96,28 @@ sendfile_f(
 			infile = optarg;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&sendfile_cmd);
 		}
 	}
-	if (infile && fd != -1)
+	if (infile && fd != -1) {
+		exitcode = 1;
 		return command_usage(&sendfile_cmd);
+	}
 
 	if (!infile)
 		fd = filetable[fd].fd;
-	else if ((fd = openfile(infile, NULL, IO_READONLY, 0, NULL)) < 0)
+	else if ((fd = openfile(infile, NULL, IO_READONLY, 0, NULL)) < 0) {
+		exitcode = 1;
 		return 0;
+	}
 
 	if (optind == argc - 2) {
 		offset = cvtnum(blocksize, sectsize, argv[optind]);
 		if (offset < 0) {
 			printf(_("non-numeric offset argument -- %s\n"),
 				argv[optind]);
+			exitcode = 1;
 			goto done;
 		}
 		optind++;
@@ -118,6 +125,7 @@ sendfile_f(
 		if (count < 0) {
 			printf(_("non-numeric length argument -- %s\n"),
 				argv[optind]);
+			exitcode = 1;
 			goto done;
 		}
 	} else {
@@ -125,6 +133,7 @@ sendfile_f(
 
 		if (fstat(fd, &stat) < 0) {
 			perror("fstat");
+			exitcode = 1;
 			goto done;
 		}
 		count = stat.st_size;
@@ -132,8 +141,11 @@ sendfile_f(
 
 	gettimeofday(&t1, NULL);
 	c = send_buffer(offset, count, fd, &total);
-	if (c < 0)
+	if (c < 0) {
+		exitcode = 1;
 		goto done;
+	}
+
 	if (qflag)
 		goto done;
 	gettimeofday(&t2, NULL);

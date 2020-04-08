@@ -39,6 +39,7 @@ get_cowextsize(const char *path, int fd)
 	if ((xfsctl(path, fd, FS_IOC_FSGETXATTR, &fsx)) < 0) {
 		printf("%s: XFS_IOC_FSGETXATTR %s: %s\n",
 			progname, path, strerror(errno));
+		exitcode = 1;
 		return 0;
 	}
 	printf("[%u] %s\n", fsx.fsx_cowextsize, path);
@@ -53,11 +54,13 @@ set_cowextsize(const char *path, int fd, long extsz)
 
 	if (fstat64(fd, &stat) < 0) {
 		perror("fstat64");
+		exitcode = 1;
 		return 0;
 	}
 	if ((xfsctl(path, fd, FS_IOC_FSGETXATTR, &fsx)) < 0) {
 		printf("%s: XFS_IOC_FSGETXATTR %s: %s\n",
 			progname, path, strerror(errno));
+		exitcode = 1;
 		return 0;
 	}
 
@@ -72,6 +75,7 @@ set_cowextsize(const char *path, int fd, long extsz)
 	if ((xfsctl(path, fd, FS_IOC_FSSETXATTR, &fsx)) < 0) {
 		printf("%s: XFS_IOC_FSSETXATTR %s: %s\n",
 			progname, path, strerror(errno));
+		exitcode = 1;
 		return 0;
 	}
 
@@ -154,6 +158,7 @@ cowextsize_f(
 		if (cowextsize < 0) {
 			printf(_("non-numeric cowextsize argument -- %s\n"),
 				argv[optind]);
+			exitcode = 1;
 			return 0;
 		}
 	} else {

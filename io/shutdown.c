@@ -24,12 +24,14 @@ shutdown_f(
 			flag = XFS_FSOP_GOING_FLAGS_LOGFLUSH;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&shutdown_cmd);
 		}
 	}
 
 	if ((xfsctl(file->name, file->fd, XFS_IOC_GOINGDOWN, &flag)) < 0) {
 		perror("XFS_IOC_GOINGDOWN");
+		exitcode = 1;
 		return 0;
 	}
 	return 0;

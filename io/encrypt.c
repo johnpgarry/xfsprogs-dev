@@ -603,6 +603,7 @@ set_encpolicy_f(int argc, char **argv)
 				fprintf(stderr,
 					_("invalid contents encryption mode: %s\n"),
 					optarg);
+				exitcode = 1;
 				return 0;
 			}
 			break;
@@ -611,6 +612,7 @@ set_encpolicy_f(int argc, char **argv)
 				fprintf(stderr,
 					_("invalid filenames encryption mode: %s\n"),
 					optarg);
+				exitcode = 1;
 				return 0;
 			}
 			break;
@@ -618,6 +620,7 @@ set_encpolicy_f(int argc, char **argv)
 			if (!parse_byte_value(optarg, &flags)) {
 				fprintf(stderr, _("invalid flags: %s\n"),
 					optarg);
+				exitcode = 1;
 				return 0;
 			}
 			break;
@@ -628,6 +631,7 @@ set_encpolicy_f(int argc, char **argv)
 				fprintf(stderr,
 					_("invalid policy version: %s\n"),
 					optarg);
+				exitcode = 1;
 				return 0;
 			}
 			if (val == 1) /* Just to avoid annoying people... */
@@ -636,14 +640,17 @@ set_encpolicy_f(int argc, char **argv)
 			break;
 		}
 		default:
+			exitcode = 1;
 			return command_usage(&set_encpolicy_cmd);
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 1)
+	if (argc > 1) {
+		exitcode = 1;
 		return command_usage(&set_encpolicy_cmd);
+	}
 
 	/*
 	 * If unspecified, the key descriptor or identifier defaults to all 0's.
@@ -652,8 +659,10 @@ set_encpolicy_f(int argc, char **argv)
 	memset(&key_spec, 0, sizeof(key_spec));
 	if (argc > 0) {
 		version = str2keyspec(argv[0], version, &key_spec);
-		if (version < 0)
+		if (version < 0) {
+			exitcode = 1;
 			return 0;
+		}
 	}
 	if (version < 0) /* version unspecified? */
 		version = FSCRYPT_POLICY_V1;
@@ -735,6 +744,7 @@ add_enckey_f(int argc, char **argv)
 				goto out;
 			break;
 		default:
+			exitcode = 1;
 			retval = command_usage(&add_enckey_cmd);
 			goto out;
 		}
@@ -743,6 +753,7 @@ add_enckey_f(int argc, char **argv)
 	argv += optind;
 
 	if (argc != 0) {
+		exitcode = 1;
 		retval = command_usage(&add_enckey_cmd);
 		goto out;
 	}
@@ -760,6 +771,7 @@ add_enckey_f(int argc, char **argv)
 			fprintf(stderr,
 				_("Invalid key; got > FSCRYPT_MAX_KEY_SIZE (%d) bytes on stdin!\n"),
 				FSCRYPT_MAX_KEY_SIZE);
+			exitcode = 1;
 			goto out;
 		}
 		arg->raw_size = raw_size;
@@ -794,17 +806,22 @@ rm_enckey_f(int argc, char **argv)
 			ioc = FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&rm_enckey_cmd);
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 1)
+	if (argc != 1) {
+		exitcode = 1;
 		return command_usage(&rm_enckey_cmd);
+	}
 
-	if (str2keyspec(argv[0], -1, &arg.key_spec) < 0)
+	if (str2keyspec(argv[0], -1, &arg.key_spec) < 0) {
+		exitcode = 1;
 		return 0;
+	}
 
 	if (ioctl(file->fd, ioc, &arg) != 0) {
 		fprintf(stderr, _("Error removing encryption key: %s\n"),
@@ -834,8 +851,10 @@ enckey_status_f(int argc, char **argv)
 
 	memset(&arg, 0, sizeof(arg));
 
-	if (str2keyspec(argv[1], -1, &arg.key_spec) < 0)
+	if (str2keyspec(argv[1], -1, &arg.key_spec) < 0) {
+		exitcode = 1;
 		return 0;
+	}
 
 	if (ioctl(file->fd, FS_IOC_GET_ENCRYPTION_KEY_STATUS, &arg) != 0) {
 		fprintf(stderr, _("Error getting encryption key status: %s\n"),

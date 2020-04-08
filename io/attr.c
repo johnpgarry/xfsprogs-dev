@@ -162,13 +162,15 @@ lsattr_callback(
 	if (recurse_dir && !S_ISDIR(stat->st_mode))
 		return 0;
 
-	if ((fd = open(path, O_RDONLY)) == -1)
+	if ((fd = open(path, O_RDONLY)) == -1) {
 		fprintf(stderr, _("%s: cannot open %s: %s\n"),
 			progname, path, strerror(errno));
-	else if ((xfsctl(path, fd, FS_IOC_FSGETXATTR, &fsx)) < 0)
+		exitcode = 1;
+	} else if ((xfsctl(path, fd, FS_IOC_FSGETXATTR, &fsx)) < 0) {
 		fprintf(stderr, _("%s: cannot get flags on %s: %s\n"),
 			progname, path, strerror(errno));
-	else
+		exitcode = 1;
+	} else
 		printxattr(fsx.fsx_xflags, 0, 1, path, 0, 1);
 
 	if (fd != -1)
@@ -205,6 +207,7 @@ lsattr_f(
 			vflag = 1;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&lsattr_cmd);
 		}
 	}
@@ -215,6 +218,7 @@ lsattr_f(
 	} else if ((xfsctl(name, file->fd, FS_IOC_FSGETXATTR, &fsx)) < 0) {
 		fprintf(stderr, _("%s: cannot get flags on %s: %s\n"),
 			progname, name, strerror(errno));
+		exitcode = 1;
 	} else {
 		printxattr(fsx.fsx_xflags, vflag, !aflag, name, vflag, !aflag);
 		if (aflag) {
@@ -241,15 +245,19 @@ chattr_callback(
 	if ((fd = open(path, O_RDONLY)) == -1) {
 		fprintf(stderr, _("%s: cannot open %s: %s\n"),
 			progname, path, strerror(errno));
+		exitcode = 1;
 	} else if (xfsctl(path, fd, FS_IOC_FSGETXATTR, &attr) < 0) {
 		fprintf(stderr, _("%s: cannot get flags on %s: %s\n"),
 			progname, path, strerror(errno));
+		exitcode = 1;
 	} else {
 		attr.fsx_xflags |= orflags;
 		attr.fsx_xflags &= ~andflags;
-		if (xfsctl(path, fd, FS_IOC_FSSETXATTR, &attr) < 0)
+		if (xfsctl(path, fd, FS_IOC_FSSETXATTR, &attr) < 0) {
 			fprintf(stderr, _("%s: cannot set flags on %s: %s\n"),
 				progname, path, strerror(errno));
+			exitcode = 1;
+		}
 	}
 
 	if (fd != -1)
@@ -285,6 +293,7 @@ chattr_f(
 				if (!p->flag) {
 					fprintf(stderr, _("%s: unknown flag\n"),
 						progname);
+					exitcode = 1;
 					return 0;
 				}
 			}
@@ -299,12 +308,14 @@ chattr_f(
 				if (!p->flag) {
 					fprintf(stderr, _("%s: unknown flag\n"),
 						progname);
+					exitcode = 1;
 					return 0;
 				}
 			}
 		} else {
 			fprintf(stderr, _("%s: bad chattr command, not +/-X\n"),
 				progname);
+			exitcode = 1;
 			return 0;
 		}
 	}
@@ -315,12 +326,15 @@ chattr_f(
 	} else if (xfsctl(name, file->fd, FS_IOC_FSGETXATTR, &attr) < 0) {
 		fprintf(stderr, _("%s: cannot get flags on %s: %s\n"),
 			progname, name, strerror(errno));
+		exitcode = 1;
 	} else {
 		attr.fsx_xflags |= orflags;
 		attr.fsx_xflags &= ~andflags;
-		if (xfsctl(name, file->fd, FS_IOC_FSSETXATTR, &attr) < 0)
+		if (xfsctl(name, file->fd, FS_IOC_FSSETXATTR, &attr) < 0) {
 			fprintf(stderr, _("%s: cannot set flags on %s: %s\n"),
 				progname, name, strerror(errno));
+			exitcode = 1;
+		}
 	}
 	return 0;
 }

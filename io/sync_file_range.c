@@ -46,6 +46,7 @@ sync_range_f(
 			sync_mode = SYNC_FILE_RANGE_WRITE;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&sync_range_cmd);
 		}
 	}
@@ -54,13 +55,16 @@ sync_range_f(
 	if (!sync_mode)
 		sync_mode = SYNC_FILE_RANGE_WRITE;
 
-	if (optind != argc - 2)
+	if (optind != argc - 2) {
+		exitcode = 1;
 		return command_usage(&sync_range_cmd);
+	}
 	init_cvtnum(&blocksize, &sectsize);
 	offset = cvtnum(blocksize, sectsize, argv[optind]);
 	if (offset < 0) {
 		printf(_("non-numeric offset argument -- %s\n"),
 			argv[optind]);
+		exitcode = 1;
 		return 0;
 	}
 	optind++;
@@ -68,11 +72,13 @@ sync_range_f(
 	if (length < 0) {
 		printf(_("non-numeric length argument -- %s\n"),
 			argv[optind]);
+		exitcode = 1;
 		return 0;
 	}
 
 	if (sync_file_range(file->fd, offset, length, sync_mode) < 0) {
 		perror("sync_file_range");
+		exitcode = 1;
 		return 0;
 	}
 	return 0;

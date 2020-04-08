@@ -31,6 +31,7 @@ imap_f(int argc, char **argv)
 	error = -xfrog_inumbers_alloc_req(nent, 0, &ireq);
 	if (error) {
 		xfrog_perror(error, "alloc req");
+		exitcode = 1;
 		return 0;
 	}
 

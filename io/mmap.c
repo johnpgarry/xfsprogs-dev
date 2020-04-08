@@ -113,6 +113,7 @@ mapset_f(
 	i = atoi(argv[1]);
 	if (i < 0 || i >= mapcount) {
 		printf("value %d is out of range (0-%d)\n", i, mapcount);
+		exitcode = 1;
 	} else {
 		mapping = &maptable[i];
 		maplist_f();
@@ -162,6 +163,7 @@ mmap_f(
 		fprintf(stderr, file ?
 			_("no mapped regions, try 'help mmap'\n") :
 			_("no files are open, try 'help open'\n"));
+		exitcode = 1;
 		return 0;
 	} else if (argc == 2) {
 		if (mapping)
@@ -169,9 +171,11 @@ mmap_f(
 		fprintf(stderr, file ?
 			_("no mapped regions, try 'help mmap'\n") :
 			_("no files are open, try 'help open'\n"));
+		exitcode = 1;
 		return 0;
 	} else if (!file) {
 		fprintf(stderr, _("no files are open, try 'help open'\n"));
+		exitcode = 1;
 		return 0;
 	}
 
@@ -205,30 +209,36 @@ mmap_f(
 			length2 = cvtnum(blocksize, sectsize, optarg);
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&mmap_cmd);
 		}
 	}
 	if (!prot)
 		prot = PROT_READ | PROT_WRITE | PROT_EXEC;
 
-	if (optind != argc - 2)
+	if (optind != argc - 2) {
+		exitcode = 1;
 		return command_usage(&mmap_cmd);
+	}
 
 	offset = cvtnum(blocksize, sectsize, argv[optind]);
 	if (offset < 0) {
 		printf(_("non-numeric offset argument -- %s\n"), argv[optind]);
+		exitcode = 1;
 		return 0;
 	}
 	optind++;
 	length = cvtnum(blocksize, sectsize, argv[optind]);
 	if (length < 0) {
 		printf(_("non-numeric length argument -- %s\n"), argv[optind]);
+		exitcode = 1;
 		return 0;
 	}
 
 	filename = strdup(file->name);
 	if (!filename) {
 		perror("strdup");
+		exitcode = 1;
 		return 0;
 	}
 
@@ -248,6 +258,7 @@ mmap_f(
 	if (address == MAP_FAILED) {
 		perror("mmap");
 		free(filename);
+		exitcode = 1;
 		return 0;
 	}
 
@@ -259,6 +270,7 @@ mmap_f(
 		mapcount = 0;
 		munmap(address, length);
 		free(filename);
+		exitcode = 1;
 		return 0;
 	}
 
@@ -313,6 +325,7 @@ msync_f(
 			flags |= MS_SYNC;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&msync_cmd);
 		}
 	}
@@ -326,6 +339,7 @@ msync_f(
 		if (offset < 0) {
 			printf(_("non-numeric offset argument -- %s\n"),
 				argv[optind]);
+			exitcode = 1;
 			return 0;
 		}
 		optind++;
@@ -333,18 +347,25 @@ msync_f(
 		if (length < 0) {
 			printf(_("non-numeric length argument -- %s\n"),
 				argv[optind]);
+			exitcode = 1;
 			return 0;
 		}
 	} else {
+		exitcode = 1;
 		return command_usage(&msync_cmd);
 	}
 
 	start = check_mapping_range(mapping, offset, length, 1);
-	if (!start)
+	if (!start) {
+		exitcode = 1;
 		return 0;
+	}
 
-	if (msync(start, length, flags) < 0)
+	if (msync(start, length, flags) < 0) {
 		perror("msync");
+		exitcode = 1;
+		return 0;
+	}
 
 	return 0;
 }
@@ -399,6 +420,7 @@ mread_f(
 			dump = 1;	/* mapping offset dump */
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&mread_cmd);
 		}
 	}
@@ -412,6 +434,7 @@ mread_f(
 		if (offset < 0) {
 			printf(_("non-numeric offset argument -- %s\n"),
 				argv[optind]);
+			exitcode = 1;
 			return 0;
 		}
 		optind++;
@@ -419,6 +442,7 @@ mread_f(
 		if (length < 0) {
 			printf(_("non-numeric length argument -- %s\n"),
 				argv[optind]);
+			exitcode = 1;
 			return 0;
 		}
 	} else {
@@ -426,16 +450,20 @@ mread_f(
 	}
 
 	start = check_mapping_range(mapping, offset, length, 0);
-	if (!start)
+	if (!start) {
+		exitcode = 1;
 		return 0;
+	}
 	dumpoffset = offset - mapping->offset;
 	if (dump == 2)
 		printoffset = offset;
 	else
 		printoffset = dumpoffset;
 
-	if (alloc_buffer(pagesize, 0, 0) < 0)
+	if (alloc_buffer(pagesize, 0, 0) < 0) {
+		exitcode = 1;
 		return 0;
+	}
 	bp = (char *)io_buffer;
 
 	dumplen = length % pagesize;
@@ -487,6 +515,7 @@ munmap_f(
 
 	if (munmap(mapping->addr, mapping->length) < 0) {
 		perror("munmap");
+		exitcode = 1;
 		return 0;
 	}
 	free(mapping->name);
@@ -558,6 +587,7 @@ mwrite_f(
 			}
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&mwrite_cmd);
 		}
 	}
@@ -571,6 +601,7 @@ mwrite_f(
 		if (offset < 0) {
 			printf(_("non-numeric offset argument -- %s\n"),
 				argv[optind]);
+			exitcode = 1;
 			return 0;
 		}
 		optind++;
@@ -578,15 +609,19 @@ mwrite_f(
 		if (length < 0) {
 			printf(_("non-numeric length argument -- %s\n"),
 				argv[optind]);
+			exitcode = 1;
 			return 0;
 		}
 	} else {
+		exitcode = 1;
 		return command_usage(&mwrite_cmd);
 	}
 
 	start = check_mapping_range(mapping, offset, length, 0);
-	if (!start)
+	if (!start) {
+		exitcode = 1;
 		return 0;
+	}
 
 	offset -= mapping->offset;
 	if (rflag) {
@@ -642,17 +677,21 @@ mremap_f(
 			flags = MREMAP_MAYMOVE;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&mremap_cmd);
 		}
 	}
 
-	if (optind != argc - 1)
+	if (optind != argc - 1) {
+		exitcode = 1;
 		return command_usage(&mremap_cmd);
+	}
 
 	new_length = cvtnum(blocksize, sectsize, argv[optind]);
 	if (new_length < 0) {
 		printf(_("non-numeric offset argument -- %s\n"),
 			argv[optind]);
+		exitcode = 1;
 		return 0;
 	}
 
@@ -662,13 +701,14 @@ mremap_f(
 	else
 		new_addr = mremap(mapping->addr, mapping->length,
 		                  new_length, flags, new_addr);
-	if (new_addr == MAP_FAILED)
+	if (new_addr == MAP_FAILED) {
 		perror("mremap");
-	else {
-		mapping->addr = new_addr;
-		mapping->length = new_length;
+		exitcode = 1;
+		return 0;
 	}
 
+	mapping->addr = new_addr;
+	mapping->length = new_length;
 	return 0;
 }
 #endif /* HAVE_MREMAP */

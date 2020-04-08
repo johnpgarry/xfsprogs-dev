@@ -36,17 +36,20 @@ utimes_f(
 	result = timespec_from_string(argv[1], argv[2], &t[0]);
 	if (result) {
 		fprintf(stderr, "Bad value for atime\n");
+		exitcode = 1;
 		return 0;
 	}
 	result = timespec_from_string(argv[3], argv[4], &t[1]);
 	if (result) {
 		fprintf(stderr, "Bad value for mtime\n");
+		exitcode = 1;
 		return 0;
 	}
 
 	/* Call futimens to update time. */
 	if (futimens(file->fd, t)) {
 		perror("futimens");
+		exitcode = 1;
 		return 0;
 	}
 

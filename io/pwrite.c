@@ -295,6 +295,7 @@ pwrite_f(
 			tmp = cvtnum(fsblocksize, fssectsize, optarg);
 			if (tmp < 0) {
 				printf(_("non-numeric bsize -- %s\n"), optarg);
+				exitcode = 1;
 				return 0;
 			}
 			bsize = tmp;
@@ -333,6 +334,7 @@ pwrite_f(
 			skip = cvtnum(fsblocksize, fssectsize, optarg);
 			if (skip < 0) {
 				printf(_("non-numeric skip -- %s\n"), optarg);
+				exitcode = 1;
 				return 0;
 			}
 			break;
@@ -340,6 +342,7 @@ pwrite_f(
 			seed = strtoul(optarg, &sp, 0);
 			if (!sp || sp == optarg) {
 				printf(_("non-numeric seed -- %s\n"), optarg);
+				exitcode = 1;
 				return 0;
 			}
 			break;
@@ -355,6 +358,7 @@ pwrite_f(
 			if (!sp || sp == optarg) {
 				printf(_("non-numeric vector count == %s\n"),
 					optarg);
+				exitcode = 1;
 				return 0;
 			}
 			break;
@@ -369,11 +373,13 @@ pwrite_f(
 			zeed = strtoul(optarg, &sp, 0);
 			if (!sp || sp == optarg) {
 				printf(_("non-numeric seed -- %s\n"), optarg);
+				exitcode = 1;
 				return 0;
 			}
 			break;
 		default:
 			/* Handle ifdef'd-out options above */
+			exitcode = 1;
 			if (c != '?')
 				printf(_("%s: command -%c not supported\n"), argv[0], c);
 			else
@@ -381,28 +387,38 @@ pwrite_f(
 			return 0;
 		}
 	}
-	if (((skip || dflag) && !infile) || (optind != argc - 2))
+	if (((skip || dflag) && !infile) || (optind != argc - 2)) {
+		exitcode = 1;
 		return command_usage(&pwrite_cmd);
-	if (infile && direction != IO_FORWARD)
+	}
+	if (infile && direction != IO_FORWARD) {
+		exitcode = 1;
 		return command_usage(&pwrite_cmd);
+	}
 	offset = cvtnum(fsblocksize, fssectsize, argv[optind]);
 	if (offset < 0) {
 		printf(_("non-numeric offset argument -- %s\n"), argv[optind]);
+		exitcode = 1;
 		return 0;
 	}
 	optind++;
 	count = cvtnum(fsblocksize, fssectsize, argv[optind]);
 	if (count < 0) {
 		printf(_("non-numeric length argument -- %s\n"), argv[optind]);
+		exitcode = 1;
 		return 0;
 	}
 
-	if (alloc_buffer(bsize, uflag, seed) < 0)
+	if (alloc_buffer(bsize, uflag, seed) < 0) {
+		exitcode = 1;
 		return 0;
+	}
 
 	c = IO_READONLY | (dflag ? IO_DIRECT : 0);
-	if (infile && ((fd = openfile(infile, NULL, c, 0, NULL)) < 0))
+	if (infile && ((fd = openfile(infile, NULL, c, 0, NULL)) < 0)) {
+		exitcode = 1;
 		return 0;
+	}
 
 	gettimeofday(&t1, NULL);
 	switch (direction) {
@@ -425,20 +441,25 @@ pwrite_f(
 		total = 0;
 		ASSERT(0);
 	}
-	if (c < 0)
+	if (c < 0) {
+		exitcode = 1;
 		goto done;
+	}
 	if (Wflag) {
 		if (fsync(file->fd) < 0) {
 			perror("fsync");
+			exitcode = 1;
 			goto done;
 		}
 	}
 	if (wflag) {
 		if (fdatasync(file->fd) < 0) {
 			perror("fdatasync");
+			exitcode = 1;
 			goto done;
 		}
 	}
+
 	if (qflag)
 		goto done;
 	gettimeofday(&t2, NULL);

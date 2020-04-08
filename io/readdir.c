@@ -151,18 +151,22 @@ readdir_f(
 			verbose = 1;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&readdir_cmd);
 		}
 	}
 
 	dfd = dup(file->fd);
-	if (dfd < 0)
-		return -1;
+	if (dfd < 0) {
+		exitcode = 1;
+		return 0;
+	}
 
 	dir = fdopendir(dfd);
 	if (!dir) {
 		close(dfd);
-		return -1;
+		exitcode = 1;
+		return 0;
 	}
 
 	if (offset == -1) {

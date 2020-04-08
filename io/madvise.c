@@ -60,6 +60,7 @@ madvise_f(
 			advise = MADV_WILLNEED;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&madvise_cmd);
 		}
 	}
@@ -73,6 +74,7 @@ madvise_f(
 		if (offset < 0) {
 			printf(_("non-numeric offset argument -- %s\n"),
 				argv[optind]);
+			exitcode = 1;
 			return 0;
 		}
 		optind++;
@@ -80,23 +82,29 @@ madvise_f(
 		if (llength < 0) {
 			printf(_("non-numeric length argument -- %s\n"),
 				argv[optind]);
+			exitcode = 1;
 			return 0;
 		} else if (llength > (size_t)llength) {
 			printf(_("length argument too large -- %lld\n"),
 				(long long)llength);
+			exitcode = 1;
 			return 0;
 		} else
 			length = (size_t)llength;
 	} else {
+		exitcode = 1;
 		return command_usage(&madvise_cmd);
 	}
 
 	start = check_mapping_range(mapping, offset, length, 1);
-	if (!start)
+	if (!start) {
+		exitcode = 1;
 		return 0;
+	}
 
 	if (madvise(start, length, advise) < 0) {
 		perror("madvise");
+		exitcode = 1;
 		return 0;
 	}
 	return 0;

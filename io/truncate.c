@@ -23,11 +23,13 @@ truncate_f(
 	offset = cvtnum(blocksize, sectsize, argv[1]);
 	if (offset < 0) {
 		printf(_("non-numeric truncate argument -- %s\n"), argv[1]);
+		exitcode = 1;
 		return 0;
 	}
 
 	if (ftruncate(file->fd, offset) < 0) {
 		perror("ftruncate");
+		exitcode = 1;
 		return 0;
 	}
 	return 0;

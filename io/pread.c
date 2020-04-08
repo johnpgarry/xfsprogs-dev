@@ -387,6 +387,7 @@ pread_f(
 			tmp = cvtnum(fsblocksize, fssectsize, optarg);
 			if (tmp < 0) {
 				printf(_("non-numeric bsize -- %s\n"), optarg);
+				exitcode = 1;
 				return 0;
 			}
 			bsize = tmp;
@@ -418,6 +419,7 @@ pread_f(
 			if (!sp || sp == optarg) {
 				printf(_("non-numeric vector count == %s\n"),
 					optarg);
+				exitcode = 1;
 				return 0;
 			}
 			break;
@@ -426,21 +428,26 @@ pread_f(
 			zeed = strtoul(optarg, &sp, 0);
 			if (!sp || sp == optarg) {
 				printf(_("non-numeric seed -- %s\n"), optarg);
+				exitcode = 1;
 				return 0;
 			}
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&pread_cmd);
 		}
 	}
-	if (optind != argc - 2)
+	if (optind != argc - 2) {
+		exitcode = 1;
 		return command_usage(&pread_cmd);
+	}
 
 	offset = cvtnum(fsblocksize, fssectsize, argv[optind]);
 	if (offset < 0 && (direction & (IO_RANDOM|IO_BACKWARD))) {
 		eof = -1;	/* read from EOF */
 	} else if (offset < 0) {
 		printf(_("non-numeric length argument -- %s\n"), argv[optind]);
+		exitcode = 1;
 		return 0;
 	}
 	optind++;
@@ -449,11 +456,14 @@ pread_f(
 		eof = -1;	/* read to EOF */
 	} else if (count < 0) {
 		printf(_("non-numeric length argument -- %s\n"), argv[optind]);
+		exitcode = 1;
 		return 0;
 	}
 
-	if (alloc_buffer(bsize, uflag, 0xabababab) < 0)
+	if (alloc_buffer(bsize, uflag, 0xabababab) < 0) {
+		exitcode = 1;
 		return 0;
+	}
 
 	gettimeofday(&t1, NULL);
 	switch (direction) {
@@ -473,8 +483,11 @@ pread_f(
 	default:
 		ASSERT(0);
 	}
-	if (c < 0)
+	if (c < 0) {
+		exitcode = 1;
 		return 0;
+	}
+
 	if (qflag)
 		return 0;
 	gettimeofday(&t2, NULL);

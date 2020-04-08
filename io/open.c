@@ -244,6 +244,7 @@ open_f(
 		if (file)
 			return stat_f(argc, argv);
 		fprintf(stderr, _("no files are open, try 'help open'\n"));
+		exitcode = 1;
 		return 0;
 	}
 
@@ -266,6 +267,7 @@ open_f(
 			mode = strtoul(optarg, &sp, 0);
 			if (!sp || sp == optarg) {
 				printf(_("non-numeric mode -- %s\n"), optarg);
+				exitcode = 1;
 				return 0;
 			}
 			break;
@@ -295,32 +297,43 @@ open_f(
 			flags |= IO_NOFOLLOW;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&open_cmd);
 		}
 	}
 
-	if (optind != argc - 1)
+	if (optind != argc - 1) {
+		exitcode = 1;
 		return command_usage(&open_cmd);
+	}
 
 	if ((flags & (IO_READONLY|IO_TMPFILE)) == (IO_READONLY|IO_TMPFILE)) {
 		fprintf(stderr, _("-T and -r options are incompatible\n"));
+		exitcode = 1;
 		return -1;
 	}
 
 	if ((flags & (IO_PATH|IO_NOFOLLOW)) &&
 	    (flags & ~(IO_PATH|IO_NOFOLLOW))) {
 		fprintf(stderr, _("-P and -L are incompatible with the other options\n"));
+		exitcode = 1;
 		return -1;
 	}
 
 	fd = openfile(argv[optind], &geometry, flags, mode, &fsp);
-	if (fd < 0)
+	if (fd < 0) {
+		exitcode = 1;
 		return 0;
+	}
 
 	if (!platform_test_xfs_fd(fd))
 		flags |= IO_FOREIGN;
 
-	addfile(argv[optind], fd, &geometry, flags, &fsp);
+	if (addfile(argv[optind], fd, &geometry, flags, &fsp) != 0) {
+		exitcode = 1;
+		return 0;
+	}
+
 	return 0;
 }
 
@@ -334,6 +347,7 @@ close_f(
 
 	if (close(file->fd) < 0) {
 		perror("close");
+		exitcode = 1;
 		return 0;
 	}
 	free(file->name);
@@ -389,9 +403,12 @@ lsproj_callback(
 	if ((fd = open(path, O_RDONLY)) == -1) {
 		fprintf(stderr, _("%s: cannot open %s: %s\n"),
 			progname, path, strerror(errno));
+		exitcode = 1;
 	} else {
 		if (getprojid(path, fd, &projid) == 0)
 			printf("[%u] %s\n", (unsigned int)projid, path);
+		else
+			exitcode = 1;
 		close(fd);
 	}
 	return 0;
@@ -417,19 +434,23 @@ lsproj_f(
 			recurse_dir = 0;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&lsproj_cmd);
 		}
 	}
 
-	if (argc != optind)
+	if (argc != optind) {
+		exitcode = 1;
 		return command_usage(&lsproj_cmd);
+	}
 
 	if (recurse_all || recurse_dir)
 		nftw(file->name, lsproj_callback,
 			100, FTW_PHYS | FTW_MOUNT | FTW_DEPTH);
-	else if (getprojid(file->name, file->fd, &projid) < 0)
+	else if (getprojid(file->name, file->fd, &projid) < 0) {
 		perror("getprojid");
-	else
+		exitcode = 1;
+	} else
 		printf(_("projid = %u\n"), (unsigned int)projid);
 	return 0;
 }
@@ -461,9 +482,12 @@ chproj_callback(
 	if ((fd = open(path, O_RDONLY)) == -1) {
 		fprintf(stderr, _("%s: cannot open %s: %s\n"),
 			progname, path, strerror(errno));
+		exitcode = 1;
 	} else {
-		if (setprojid(path, fd, prid) < 0)
+		if (setprojid(path, fd, prid) < 0) {
 			perror("setprojid");
+			exitcode = 1;
+		}
 		close(fd);
 	}
 	return 0;
@@ -488,24 +512,30 @@ chproj_f(
 			recurse_dir = 0;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&chproj_cmd);
 		}
 	}
 
-	if (argc != optind + 1)
+	if (argc != optind + 1) {
+		exitcode = 1;
 		return command_usage(&chproj_cmd);
+	}
 
 	prid = prid_from_string(argv[optind]);
 	if (prid == -1) {
 		printf(_("invalid project ID -- %s\n"), argv[optind]);
+		exitcode = 1;
 		return 0;
 	}
 
 	if (recurse_all || recurse_dir)
 		nftw(file->name, chproj_callback,
 			100, FTW_PHYS | FTW_MOUNT | FTW_DEPTH);
-	else if (setprojid(file->name, file->fd, prid) < 0)
+	else if (setprojid(file->name, file->fd, prid) < 0) {
 		perror("setprojid");
+		exitcode = 1;
+	}
 	return 0;
 }
 
@@ -529,7 +559,7 @@ get_extsize(const char *path, int fd)
 	if ((xfsctl(path, fd, FS_IOC_FSGETXATTR, &fsx)) < 0) {
 		printf("%s: FS_IOC_FSGETXATTR %s: %s\n",
 			progname, path, strerror(errno));
-		return 0;
+		return -1;
 	}
 	printf("[%u] %s\n", fsx.fsx_extsize, path);
 	return 0;
@@ -543,12 +573,12 @@ set_extsize(const char *path, int fd, long extsz)
 
 	if (fstat(fd, &stat) < 0) {
 		perror("fstat");
-		return 0;
+		return -1;
 	}
 	if ((xfsctl(path, fd, FS_IOC_FSGETXATTR, &fsx)) < 0) {
 		printf("%s: FS_IOC_FSGETXATTR %s: %s\n",
 			progname, path, strerror(errno));
-		return 0;
+		return -1;
 	}
 
 	if (S_ISREG(stat.st_mode)) {
@@ -557,14 +587,14 @@ set_extsize(const char *path, int fd, long extsz)
 		fsx.fsx_xflags |= FS_XFLAG_EXTSZINHERIT;
 	} else {
 		printf(_("invalid target file type - file %s\n"), path);
-		return 0;
+		return -1;
 	}
 	fsx.fsx_extsize = extsz;
 
 	if ((xfsctl(path, fd, FS_IOC_FSSETXATTR, &fsx)) < 0) {
 		printf("%s: FS_IOC_FSSETXATTR %s: %s\n",
 			progname, path, strerror(errno));
-		return 0;
+		return -1;
 	}
 
 	return 0;
@@ -585,8 +615,10 @@ get_extsize_callback(
 	if ((fd = open(path, O_RDONLY)) == -1) {
 		fprintf(stderr, _("%s: cannot open %s: %s\n"),
 			progname, path, strerror(errno));
+		exitcode = 1;
 	} else {
-		get_extsize(path, fd);
+		if (get_extsize(path, fd) < 0)
+			exitcode = 1;
 		close(fd);
 	}
 	return 0;
@@ -607,8 +639,10 @@ set_extsize_callback(
 	if ((fd = open(path, O_RDONLY)) == -1) {
 		fprintf(stderr, _("%s: cannot open %s: %s\n"),
 			progname, path, strerror(errno));
+		exitcode = 1;
 	} else {
-		set_extsize(path, fd, extsize);
+		if (set_extsize(path, fd, extsize) < 0)
+			exitcode = 1;
 		close(fd);
 	}
 	return 0;
@@ -635,6 +669,7 @@ extsize_f(
 			recurse_dir = 0;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&extsize_cmd);
 		}
 	}
@@ -644,20 +679,23 @@ extsize_f(
 		if (extsize < 0) {
 			printf(_("non-numeric extsize argument -- %s\n"),
 				argv[optind]);
+			exitcode = 1;
 			return 0;
 		}
 	} else {
 		extsize = -1;
 	}
 
-	if (recurse_all || recurse_dir)
+	if (recurse_all || recurse_dir) {
 		nftw(file->name, (extsize >= 0) ?
 			set_extsize_callback : get_extsize_callback,
 			100, FTW_PHYS | FTW_MOUNT | FTW_DEPTH);
-	else if (extsize >= 0)
-		set_extsize(file->name, file->fd, extsize);
-	else
-		get_extsize(file->name, file->fd);
+	} else if (extsize >= 0) {
+		if (set_extsize(file->name, file->fd, extsize) < 0)
+			exitcode = 1;
+	} else if (get_extsize(file->name, file->fd) < 0) {
+		exitcode = 1;
+	}
 	return 0;
 }
 
@@ -689,6 +727,7 @@ get_last_inode(void)
 	ret = -xfrog_inumbers_alloc_req(IGROUP_NR, 0, &ireq);
 	if (ret) {
 		xfrog_perror(ret, "alloc req");
+		exitcode = 1;
 		return 0;
 	}
 
@@ -696,6 +735,7 @@ get_last_inode(void)
 		ret = -xfrog_inumbers(&xfd, ireq);
 		if (ret) {
 			xfrog_perror(ret, "XFS_IOC_FSINUMBERS");
+			exitcode = 1;
 			goto out;
 		}
 
@@ -744,6 +784,7 @@ inode_f(
 			ret_next = 1;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&inode_cmd);
 		}
 	}
@@ -761,12 +802,16 @@ inode_f(
 	}
 
 	/* Extra junk? */
-	if (optind < argc)
+	if (optind < argc) {
+		exitcode = 1;
 		return command_usage(&inode_cmd);
+	}
 
 	/* -n option requires an inode number */
-	if (ret_next && userino == NULLFSINO)
+	if (ret_next && userino == NULLFSINO) {
+		exitcode = 1;
 		return command_usage(&inode_cmd);
+	}
 
 	if (userino == NULLFSINO) {
 		/* We are finding last inode in use */

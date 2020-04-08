@@ -69,6 +69,7 @@ file_f(
 	i = atoi(argv[1]);
 	if (i < 0 || i >= filecount) {
 		printf(_("value %d is out of range (0-%d)\n"), i, filecount-1);
+		exitcode = 1;
 	} else {
 		file = &filetable[i];
 		filelist_f();

@@ -24,15 +24,18 @@ resblks_f(
 		blks = cvtnum(file->geom.blocksize, file->geom.sectsize, argv[1]);
 		if (blks < 0) {
 			printf(_("non-numeric argument -- %s\n"), argv[1]);
+			exitcode = 1;
 			return 0;
 		}
 		res.resblks = blks;
 		if (xfsctl(file->name, file->fd, XFS_IOC_SET_RESBLKS, &res) < 0) {
 			perror("XFS_IOC_SET_RESBLKS");
+			exitcode = 1;
 			return 0;
 		}
 	} else if (xfsctl(file->name, file->fd, XFS_IOC_GET_RESBLKS, &res) < 0) {
 		perror("XFS_IOC_GET_RESBLKS");
+		exitcode = 1;
 		return 0;
 	}
 	printf(_("reserved blocks = %llu\n"),

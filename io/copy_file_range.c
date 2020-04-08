@@ -89,6 +89,7 @@ copy_range_f(int argc, char **argv)
 			src_off = cvtnum(fsblocksize, fssectsize, optarg);
 			if (src_off < 0) {
 				printf(_("invalid source offset -- %s\n"), optarg);
+				exitcode = 1;
 				return 0;
 			}
 			break;
@@ -96,6 +97,7 @@ copy_range_f(int argc, char **argv)
 			dst_off = cvtnum(fsblocksize, fssectsize, optarg);
 			if (dst_off < 0) {
 				printf(_("invalid destination offset -- %s\n"), optarg);
+				exitcode = 1;
 				return 0;
 			}
 			break;
@@ -103,6 +105,7 @@ copy_range_f(int argc, char **argv)
 			llen = cvtnum(fsblocksize, fssectsize, optarg);
 			if (llen == -1LL) {
 				printf(_("invalid length -- %s\n"), optarg);
+				exitcode = 1;
 				return 0;
 			}
 			/*
@@ -112,6 +115,7 @@ copy_range_f(int argc, char **argv)
 			if ((size_t)llen != llen) {
 				errno = EOVERFLOW;
 				perror("copy_range");
+				exitcode = 1;
 				return 0;
 			}
 			len = llen;
@@ -122,23 +126,29 @@ copy_range_f(int argc, char **argv)
 			if (src_file_nr < 0 || src_file_nr >= filecount) {
 				printf(_("file value %d is out of range (0-%d)\n"),
 					src_file_nr, filecount - 1);
+				exitcode = 1;
 				return 0;
 			}
 			/* Expect no src_path arg */
 			src_path_arg = 0;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&copy_range_cmd);
 		}
 	}
 
-	if (optind != argc - src_path_arg)
+	if (optind != argc - src_path_arg) {
+		exitcode = 1;
 		return command_usage(&copy_range_cmd);
+	}
 
 	if (src_path_arg) {
 		fd = openfile(argv[optind], NULL, IO_READONLY, 0, NULL);
-		if (fd < 0)
+		if (fd < 0) {
+			exitcode = 1;
 			return 0;
+		}
 	} else {
 		fd = filetable[src_file_nr].fd;
 	}
@@ -158,6 +168,8 @@ copy_range_f(int argc, char **argv)
 	ret = copy_file_range_cmd(fd, &src_off, &dst_off, len);
 out:
 	close(fd);
+	if (ret < 0)
+		exitcode = 1;
 	return ret;
 }
 

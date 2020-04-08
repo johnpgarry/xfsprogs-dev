@@ -15,10 +15,10 @@ static cmdinfo_t log_writes_cmd;
 static int
 mark_log(const char *device, const char *mark)
 {
-	struct dm_task 	*dmt;
-	const int 	size = 80;
-	char 		message[size];
-	int 		len, ret = 0;
+	struct dm_task	*dmt;
+	const int	size = 80;
+	char		message[size];
+	int		len, ret = 0;
 
 	len = snprintf(message, size, "mark %s", mark);
 	if (len >= size) {
@@ -47,14 +47,13 @@ out:
 
 static int
 log_writes_f(
-	int			argc,
-	char			**argv)
+	int		argc,
+	char		**argv)
 {
-	const char 	*device = NULL;
-	const char 	*mark = NULL;
-	int 		c;
+	const char	*device = NULL;
+	const char	*mark = NULL;
+	int		c;
 
-	exitcode = 1;
 	while ((c = getopt(argc, argv, "d:m:")) != EOF) {
 		switch (c) {
 		case 'd':
@@ -64,15 +63,18 @@ log_writes_f(
 			mark = optarg;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&log_writes_cmd);
 		}
 	}
 
-	if (device == NULL || mark == NULL)
+	if (device == NULL || mark == NULL) {
+		exitcode = 1;
 		return command_usage(&log_writes_cmd);
+	}
 
-	if (mark_log(device, mark))
-		exitcode = 0;
+	if (!mark_log(device, mark))
+		exitcode = 1;
 
 	return 0;
 }

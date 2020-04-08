@@ -123,6 +123,7 @@ inject_f(
 			command = XFS_IOC_ERROR_CLEARALL;
 		if ((xfsctl(file->name, file->fd, command, &error)) < 0) {
 			perror("XFS_IOC_ERROR_INJECTION");
+			exitcode = 1;
 			continue;
 		}
 	}

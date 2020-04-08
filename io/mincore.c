@@ -34,36 +34,44 @@ mincore_f(
 		if (offset < 0) {
 			printf(_("non-numeric offset argument -- %s\n"),
 				argv[1]);
+			exitcode = 1;
 			return 0;
 		}
 		llength = cvtnum(blocksize, sectsize, argv[2]);
 		if (llength < 0) {
 			printf(_("non-numeric length argument -- %s\n"),
 				argv[2]);
+			exitcode = 1;
 			return 0;
 		} else if (llength > (size_t)llength) {
 			printf(_("length argument too large -- %lld\n"),
 				(long long)llength);
+			exitcode = 1;
 			return 0;
 		} else
 			length = (size_t)llength;
 	} else {
+		exitcode = 1;
 		return command_usage(&mincore_cmd);
 	}
 
 	start = check_mapping_range(mapping, offset, length, 1);
-	if (!start)
+	if (!start) {
+		exitcode = 1;
 		return 0;
+	}
 
 	vec = calloc(length/pagesize, sizeof(unsigned char));
 	if (!vec) {
 		perror("calloc");
+		exitcode = 1;
 		return 0;
 	}
 
 	if (mincore(start, length, vec) < 0) {
 		perror("mincore");
 		free(vec);
+		exitcode = 1;
 		return 0;
 	}
 

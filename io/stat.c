@@ -137,15 +137,19 @@ stat_f(
 			verbose = 1;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&stat_cmd);
 		}
 	}
 
-	if (raw && verbose)
+	if (raw && verbose) {
+		exitcode = 1;
 		return command_usage(&stat_cmd);
+	}
 
 	if (fstat(file->fd, &st) < 0) {
 		perror("fstat");
+		exitcode = 1;
 		return 0;
 	}
 
@@ -185,6 +189,7 @@ statfs_f(
 	printf(_("fd.path = \"%s\"\n"), file->name);
 	if (platform_fstatfs(file->fd, &st) < 0) {
 		perror("fstatfs");
+		exitcode = 1;
 	} else {
 		printf(_("statfs.f_bsize = %lld\n"), (long long) st.f_bsize);
 		printf(_("statfs.f_blocks = %lld\n"), (long long) st.f_blocks);
@@ -200,6 +205,7 @@ statfs_f(
 	ret = -xfrog_geometry(file->fd, &fsgeo);
 	if (ret) {
 		xfrog_perror(ret, "XFS_IOC_FSGEOMETRY");
+		exitcode = 1;
 	} else {
 		printf(_("geom.bsize = %u\n"), fsgeo.blocksize);
 		printf(_("geom.agcount = %u\n"), fsgeo.agcount);
@@ -216,6 +222,7 @@ statfs_f(
 	}
 	if ((xfsctl(file->name, file->fd, XFS_IOC_FSCOUNTS, &fscounts)) < 0) {
 		perror("XFS_IOC_FSCOUNTS");
+		exitcode = 1;
 	} else {
 		printf(_("counts.freedata = %llu\n"),
 			(unsigned long long) fscounts.freedata);
@@ -321,6 +328,7 @@ statx_f(
 				if (!p || p == optarg) {
 					printf(
 				_("non-numeric mask -- %s\n"), optarg);
+					exitcode = 1;
 					return 0;
 				}
 			}
@@ -340,6 +348,7 @@ statx_f(
 			atflag |= AT_STATX_DONT_SYNC;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&statx_cmd);
 		}
 	}
@@ -350,8 +359,10 @@ statx_f(
 	memset(&stx, 0xbf, sizeof(stx));
 	if (_statx(file->fd, "", atflag | AT_EMPTY_PATH, mask, &stx) < 0) {
 		perror("statx");
+		exitcode = 1;
 		return 0;
 	}
+	exitcode = 0;
 
 	if (raw)
 		return dump_raw_statx(&stx);

@@ -19,6 +19,7 @@ fsync_f(
 {
 	if (fsync(file->fd) < 0) {
 		perror("fsync");
+		exitcode = 1;
 		return 0;
 	}
 	return 0;
@@ -31,6 +32,7 @@ fdatasync_f(
 {
 	if (fdatasync(file->fd) < 0) {
 		perror("fdatasync");
+		exitcode = 1;
 		return 0;
 	}
 	return 0;

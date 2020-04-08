@@ -65,19 +65,23 @@ fadvise_f(
 			range = 1;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&fadvise_cmd);
 		}
 	}
 	if (range) {
 		size_t	blocksize, sectsize;
 
-		if (optind != argc - 2)
+		if (optind != argc - 2) {
+			exitcode = 1;
 			return command_usage(&fadvise_cmd);
+		}
 		init_cvtnum(&blocksize, &sectsize);
 		offset = cvtnum(blocksize, sectsize, argv[optind]);
 		if (offset < 0) {
 			printf(_("non-numeric offset argument -- %s\n"),
 				argv[optind]);
+			exitcode = 1;
 			return 0;
 		}
 		optind++;
@@ -85,14 +89,17 @@ fadvise_f(
 		if (length < 0) {
 			printf(_("non-numeric length argument -- %s\n"),
 				argv[optind]);
+			exitcode = 1;
 			return 0;
 		}
 	} else if (optind != argc) {
+		exitcode = 1;
 		return command_usage(&fadvise_cmd);
 	}
 
 	if (posix_fadvise(file->fd, offset, length, advise) < 0) {
 		perror("fadvise");
+		exitcode = 1;
 		return 0;
 	}
 	return 0;

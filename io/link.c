@@ -35,6 +35,7 @@ flink_f(
 
 	if (linkat(file->fd, "", AT_FDCWD, argv[1], AT_EMPTY_PATH) < 0) {
 		perror("flink");
+		exitcode = 1;
 		return 0;
 	}
 	return 0;

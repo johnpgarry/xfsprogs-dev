@@ -257,6 +257,7 @@ fiemap_f(
 			vflag++;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&fiemap_cmd);
 		}
 	}
@@ -266,6 +267,7 @@ fiemap_f(
 		start_offset = cvtnum(fsblocksize, fssectsize, argv[optind]);
 		if (start_offset < 0) {
 			printf("non-numeric offset argument -- %s\n", argv[optind]);
+			exitcode = 1;
 			return 0;
 		}
 		last_logical = start_offset;
@@ -277,6 +279,7 @@ fiemap_f(
 		length = cvtnum(fsblocksize, fssectsize, argv[optind]);
 		if (length < 0) {
 			printf("non-numeric len argument -- %s\n", argv[optind]);
+			exitcode = 1;
 			return 0;
 		}
 		range_end = start_offset + length;

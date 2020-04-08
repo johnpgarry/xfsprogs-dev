@@ -51,6 +51,7 @@ getrusage_f(
 
 	if (getrusage(RUSAGE_SELF, &rusage) < 0) {
 		perror("getrusage");
+		exitcode = 1;
 		return 0;
 	}
 

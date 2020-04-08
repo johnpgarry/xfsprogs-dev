@@ -417,13 +417,16 @@ fsmap_f(
 			vflag++;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&fsmap_cmd);
 		}
 	}
 
 	if ((dflag + lflag + rflag > 1) || (mflag > 0 && vflag > 0) ||
-	    (argc > optind && dflag + lflag + rflag == 0))
+	    (argc > optind && dflag + lflag + rflag == 0)) {
+		exitcode = 1;
 		return command_usage(&fsmap_cmd);
+	}
 
 	if (argc > optind) {
 		start = cvtnum(fsblocksize, fssectsize, argv[optind]);
@@ -431,6 +434,7 @@ fsmap_f(
 			fprintf(stderr,
 				_("Bad rmap start_bblock %s.\n"),
 				argv[optind]);
+			exitcode = 1;
 			return 0;
 		}
 		start <<= BBSHIFT;
@@ -442,6 +446,7 @@ fsmap_f(
 			fprintf(stderr,
 				_("Bad rmap end_bblock %s.\n"),
 				argv[optind + 1]);
+			exitcode = 1;
 			return 0;
 		}
 		end <<= BBSHIFT;
@@ -495,8 +500,8 @@ fsmap_f(
 				" iflags=0x%x [\"%s\"]: %s\n"),
 				progname, head->fmh_iflags, file->name,
 				strerror(errno));
-			free(head);
 			exitcode = 1;
+			free(head);
 			return 0;
 		}
 		if (head->fmh_entries > map_size + 2) {

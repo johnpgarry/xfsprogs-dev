@@ -375,6 +375,7 @@ parent_f(int argc, char **argv)
 	if (!fs) {
 		fprintf(stderr, _("file argument, \"%s\", is not in a mounted XFS filesystem\n"),
 			file->name);
+		exitcode = 1;
 		return 1;
 	}
 	mntpt = fs->fs_dir;

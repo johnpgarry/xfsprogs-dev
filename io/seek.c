@@ -120,15 +120,20 @@ seek_f(
 			startflag = 1;
 			break;
 		default:
+			exitcode = 1;
 			return command_usage(&seek_cmd);
 		}
 	}
-	if (!(flag & (SEEK_DFLAG | SEEK_HFLAG)) || optind != argc - 1)
+	if (!(flag & (SEEK_DFLAG | SEEK_HFLAG)) || optind != argc - 1) {
+		exitcode = 1;
 		return command_usage(&seek_cmd);
+	}
 
 	start = offset = cvtnum(fsblocksize, fssectsize, argv[optind]);
-	if (offset < 0)
+	if (offset < 0) {
+		exitcode = 1;
 		return command_usage(&seek_cmd);
+	}
 
 	/*
 	 * check to see if the offset is a data or hole entry and
@@ -174,9 +179,10 @@ found_hole:
 	for (c = 0; flag; c++) {
 		if (offset == -1) {
 			/* print error or eof if the only entry */
-			if (errno != ENXIO || c == 0 )
+			if (errno != ENXIO || c == 0 ) {
 				seek_output(startflag, seekinfo[current].name,
 					    start, offset);
+			}
 			return 0;	/* stop on error or EOF */
 		}
 
