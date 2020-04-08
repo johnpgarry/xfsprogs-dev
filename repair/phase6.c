@@ -179,7 +179,6 @@ static int
 dir_read_buf(
 	struct xfs_inode	*ip,
 	xfs_dablk_t		bno,
-	xfs_daddr_t		mappedbno,
 	struct xfs_buf		**bpp,
 	const struct xfs_buf_ops *ops,
 	int			*crc_error)
@@ -187,14 +186,13 @@ dir_read_buf(
 	int error;
 	int error2;
 
-	error = -libxfs_da_read_buf(NULL, ip, bno, mappedbno, bpp,
-				   XFS_DATA_FORK, ops);
+	error = -libxfs_da_read_buf(NULL, ip, bno, 0, bpp, XFS_DATA_FORK, ops);
 
 	if (error != EFSBADCRC && error != EFSCORRUPTED)
 		return error;
 
-	error2 = -libxfs_da_read_buf(NULL, ip, bno, mappedbno, bpp,
-				   XFS_DATA_FORK, NULL);
+	error2 = -libxfs_da_read_buf(NULL, ip, bno, 0, bpp, XFS_DATA_FORK,
+			NULL);
 	if (error2)
 		return error2;
 
@@ -2035,8 +2033,7 @@ longform_dir2_check_leaf(
 	int			fixit = 0;
 
 	da_bno = mp->m_dir_geo->leafblk;
-	error = dir_read_buf(ip, da_bno, -1, &bp, &xfs_dir3_leaf1_buf_ops,
-			     &fixit);
+	error = dir_read_buf(ip, da_bno, &bp, &xfs_dir3_leaf1_buf_ops, &fixit);
 	if (error == EFSBADCRC || error == EFSCORRUPTED || fixit) {
 		do_warn(
 	_("leaf block %u for directory inode %" PRIu64 " bad CRC\n"),
@@ -2137,8 +2134,8 @@ longform_dir2_check_node(
 		 * a node block, then we'll skip it below based on a magic
 		 * number check.
 		 */
-		error = dir_read_buf(ip, da_bno, -1, &bp,
-				     &xfs_da3_node_buf_ops, &fixit);
+		error = dir_read_buf(ip, da_bno, &bp, &xfs_da3_node_buf_ops,
+				&fixit);
 		if (error) {
 			do_warn(
 	_("can't read leaf block %u for directory inode %" PRIu64 ", error %d\n"),
@@ -2205,8 +2202,8 @@ longform_dir2_check_node(
 		if (bmap_next_offset(NULL, ip, &next_da_bno, XFS_DATA_FORK))
 			break;
 
-		error = dir_read_buf(ip, da_bno, -1, &bp,
-				     &xfs_dir3_free_buf_ops, &fixit);
+		error = dir_read_buf(ip, da_bno, &bp, &xfs_dir3_free_buf_ops,
+				&fixit);
 		if (error) {
 			do_warn(
 	_("can't read freespace block %u for directory inode %" PRIu64 ", error %d\n"),
@@ -2367,7 +2364,7 @@ longform_dir2_entry_check(xfs_mount_t	*mp,
 		else
 			ops = &xfs_dir3_data_buf_ops;
 
-		error = dir_read_buf(ip, da_bno, -1, &bplist[db], ops, &fixit);
+		error = dir_read_buf(ip, da_bno, &bplist[db], ops, &fixit);
 		if (error) {
 			do_warn(
 	_("can't read data block %u for directory inode %" PRIu64 " error %d\n"),
