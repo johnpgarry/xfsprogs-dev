@@ -166,13 +166,18 @@ libxfs_device_close(dev_t dev)
 
 	for (d = 0; d < MAX_DEVS; d++)
 		if (dev_map[d].dev == dev) {
-			int	fd;
+			int	fd, ret;
 
 			fd = dev_map[d].fd;
 			dev_map[d].dev = dev_map[d].fd = 0;
 
-			fsync(fd);
-			platform_flush_device(fd, dev);
+			ret = platform_flush_device(fd, dev);
+			if (ret) {
+				ret = -errno;
+				fprintf(stderr,
+	_("%s: flush of device %lld failed, err=%d"),
+						progname, (long long)dev, ret);
+			}
 			close(fd);
 
 			return;
