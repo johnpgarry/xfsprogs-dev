@@ -134,6 +134,15 @@ _("can't read %s block %u for inode %" PRIu64 "\n"),
 			goto error_out;
 		}
 
+		/* corrupt leafn/node; rebuild the dir. */
+		if (bp->b_error == -EFSBADCRC || bp->b_error == -EFSCORRUPTED) {
+			do_warn(
+_("corrupt %s tree block %u for inode %" PRIu64 "\n"),
+				FORKNAME(whichfork), bno, da_cursor->ino);
+			libxfs_buf_relse(bp);
+			goto error_out;
+		}
+
 		node = bp->b_addr;
 		libxfs_da3_node_hdr_from_disk(mp, &nodehdr, node);
 
@@ -157,15 +166,6 @@ _("bad %s magic number 0x%x in inode %" PRIu64 " bno = %u\n"),
 					FORKNAME(whichfork), nodehdr.magic,
 					da_cursor->ino, bno);
 			libxfs_buf_relse(bp);
-			goto error_out;
-		}
-
-		/* corrupt node; rebuild the dir. */
-		if (bp->b_error == -EFSBADCRC || bp->b_error == -EFSCORRUPTED) {
-			libxfs_buf_relse(bp);
-			do_warn(
-_("corrupt %s tree block %u for inode %" PRIu64 "\n"),
-				FORKNAME(whichfork), bno, da_cursor->ino);
 			goto error_out;
 		}
 
@@ -560,6 +560,13 @@ _("can't get map info for %s block %u of inode %" PRIu64 "\n"),
 			do_warn(
 _("can't read %s block %u for inode %" PRIu64 "\n"),
 				FORKNAME(whichfork), dabno, cursor->ino);
+			return 1;
+		}
+		if (bp->b_error == -EFSCORRUPTED || bp->b_error == -EFSBADCRC) {
+			do_warn(
+_("corrupt %s tree block %u for inode %" PRIu64 "\n"),
+				FORKNAME(whichfork), dabno, cursor->ino);
+			libxfs_buf_relse(bp);
 			return 1;
 		}
 
