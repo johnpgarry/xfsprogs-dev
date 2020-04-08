@@ -1028,7 +1028,7 @@ libxfs_bwrite(
 	if (bp->b_error) {
 		fprintf(stderr,
 	_("%s: write failed on %s bno 0x%llx/0x%x, err=%d\n"),
-			__func__, bp->b_ops->name,
+			__func__, bp->b_ops ? bp->b_ops->name : "(unknown)",
 			(long long)bp->b_bn, bp->b_bcount, -bp->b_error);
 	} else {
 		bp->b_flags |= LIBXFS_B_UPTODATE;
