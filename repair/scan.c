@@ -1947,6 +1947,7 @@ scan_inobt(
 	const struct xfs_buf_ops *ops)
 {
 	struct aghdr_cnts	*agcnts = priv;
+	xfs_agino_t		lastino = 0;
 	int			i;
 	int			numrecs;
 	int			state;
@@ -2029,7 +2030,16 @@ _("inode btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 		 * the block.  skip processing of bogus records.
 		 */
 		for (i = 0; i < numrecs; i++) {
+			xfs_agino_t	startino;
+
 			freecount = inorec_get_freecount(mp, &rp[i]);
+			startino = be32_to_cpu(rp[i].ir_startino);
+			if (i > 0 && startino <= lastino)
+				do_warn(_(
+	"out-of-order ino btree record %d (%u) block %u/%u\n"),
+						i, startino, agno, bno);
+			else
+				lastino = startino + XFS_INODES_PER_CHUNK - 1;
 
 			if (magic == XFS_IBT_MAGIC ||
 			    magic == XFS_IBT_CRC_MAGIC) {
