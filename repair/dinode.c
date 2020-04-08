@@ -228,31 +228,23 @@ verify_dfsbno(xfs_mount_t	*mp,
 #define XR_DFSBNORANGE_OVERFLOW	3
 
 static __inline int
-verify_dfsbno_range(xfs_mount_t	*mp,
-		xfs_fsblock_t	fsbno,
-		xfs_filblks_t	count)
+verify_dfsbno_range(
+	struct xfs_mount	*mp,
+	xfs_fsblock_t		fsbno,
+	xfs_filblks_t		count)
 {
-	xfs_agnumber_t	agno;
-	xfs_agblock_t	agbno;
-	xfs_sb_t	*sbp = &mp->m_sb;;
-
 	/* the start and end blocks better be in the same allocation group */
-	agno = XFS_FSB_TO_AGNO(mp, fsbno);
-	if (agno != XFS_FSB_TO_AGNO(mp, fsbno + count - 1)) {
+	if (XFS_FSB_TO_AGNO(mp, fsbno) !=
+	    XFS_FSB_TO_AGNO(mp, fsbno + count - 1)) {
 		return XR_DFSBNORANGE_OVERFLOW;
 	}
 
-	agbno = XFS_FSB_TO_AGBNO(mp, fsbno);
-	if (verify_ag_bno(sbp, agno, agbno)) {
+	if (!libxfs_verify_fsbno(mp, fsbno))
 		return XR_DFSBNORANGE_BADSTART;
-	}
-
-	agbno = XFS_FSB_TO_AGBNO(mp, fsbno + count - 1);
-	if (verify_ag_bno(sbp, agno, agbno)) {
+	if (!libxfs_verify_fsbno(mp, fsbno + count - 1))
 		return XR_DFSBNORANGE_BADEND;
-	}
 
-	return (XR_DFSBNORANGE_VALID);
+	return XR_DFSBNORANGE_VALID;
 }
 
 static int
