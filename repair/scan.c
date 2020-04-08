@@ -1949,6 +1949,7 @@ scan_inobt(
 	const struct xfs_buf_ops *ops)
 {
 	struct aghdr_cnts	*agcnts = priv;
+	char			*name;
 	xfs_agino_t		lastino = 0;
 	int			i;
 	int			numrecs;
@@ -1961,17 +1962,32 @@ scan_inobt(
 
 	hdr_errors = 0;
 
+	switch (magic) {
+	case XFS_FIBT_MAGIC:
+	case XFS_FIBT_CRC_MAGIC:
+		name = "fino";
+		break;
+	case XFS_IBT_MAGIC:
+	case XFS_IBT_CRC_MAGIC:
+		name = "ino";
+		break;
+	default:
+		name = "(unknown)";
+		assert(0);
+		break;
+	}
+
 	if (be32_to_cpu(block->bb_magic) != magic) {
-		do_warn(_("bad magic # %#x in inobt block %d/%d\n"),
-			be32_to_cpu(block->bb_magic), agno, bno);
+		do_warn(_("bad magic # %#x in %sbt block %d/%d\n"),
+			be32_to_cpu(block->bb_magic), name, agno, bno);
 		hdr_errors++;
 		bad_ino_btree = 1;
 		if (suspect)
 			return;
 	}
 	if (be16_to_cpu(block->bb_level) != level) {
-		do_warn(_("expected level %d got %d in inobt block %d/%d\n"),
-			level, be16_to_cpu(block->bb_level), agno, bno);
+		do_warn(_("expected level %d got %d in %sbt block %d/%d\n"),
+			level, be16_to_cpu(block->bb_level), name, agno, bno);
 		hdr_errors++;
 		bad_ino_btree = 1;
 		if (suspect)
@@ -1993,8 +2009,8 @@ scan_inobt(
 	default:
 		set_bmap(agno, bno, XR_E_MULT);
 		do_warn(
-_("inode btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
-			state, agno, bno, suspect);
+_("%sbt btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
+			name, state, agno, bno, suspect);
 	}
 
 	numrecs = be16_to_cpu(block->bb_numrecs);
@@ -2016,8 +2032,8 @@ _("inode btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 
 		if (hdr_errors)  {
 			bad_ino_btree = 1;
-			do_warn(_("dubious inode btree block header %d/%d\n"),
-				agno, bno);
+			do_warn(_("dubious %sbt btree block header %d/%d\n"),
+				name, agno, bno);
 			suspect++;
 		}
 
@@ -2038,8 +2054,8 @@ _("inode btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 			startino = be32_to_cpu(rp[i].ir_startino);
 			if (i > 0 && startino <= lastino)
 				do_warn(_(
-	"out-of-order ino btree record %d (%u) block %u/%u\n"),
-						i, startino, agno, bno);
+	"out-of-order %s btree record %d (%u) block %u/%u\n"),
+						name, i, startino, agno, bno);
 			else
 				lastino = startino + XFS_INODES_PER_CHUNK - 1;
 
