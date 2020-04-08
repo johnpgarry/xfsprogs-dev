@@ -20,6 +20,7 @@
 #define xfs_agfl_walk			libxfs_agfl_walk
 
 #define xfs_ag_init_headers		libxfs_ag_init_headers
+#define xfs_ag_block_count		libxfs_ag_block_count
 
 #define xfs_alloc_ag_max_usable		libxfs_alloc_ag_max_usable
 #define xfs_allocbt_maxrecs		libxfs_allocbt_maxrecs

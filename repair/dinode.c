@@ -255,17 +255,6 @@ verify_dfsbno_range(xfs_mount_t	*mp,
 	return (XR_DFSBNORANGE_VALID);
 }
 
-int
-verify_agbno(xfs_mount_t	*mp,
-		xfs_agnumber_t	agno,
-		xfs_agblock_t	agbno)
-{
-	xfs_sb_t	*sbp = &mp->m_sb;;
-
-	/* range check ag #, ag block.  range-checking offset is pointless */
-	return verify_ag_bno(sbp, agno, agbno) == 0;
-}
-
 static int
 process_rt_rec(
 	xfs_mount_t		*mp,
