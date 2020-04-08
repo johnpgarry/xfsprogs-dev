@@ -699,7 +699,7 @@ _("%s freespace btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 	"out-of-order bno btree record %d (%u %u) block %u/%u\n"),
 						i, b, len, agno, bno);
 				} else {
-					lastblock = b;
+					lastblock = end - 1;
 				}
 			} else {
 				agcnts->fdblocks += len;
@@ -1396,7 +1396,7 @@ _("extent (%u/%u) len %u claimed, state is %d\n"),
 	"out-of-order %s btree record %d (%u %u) block %u/%u\n"),
 					name, i, b, len, agno, bno);
 			} else {
-				lastblock = b;
+				lastblock = end - 1;
 			}
 
 			/* Is this record mergeable with the last one? */
