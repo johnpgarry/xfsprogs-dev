@@ -180,6 +180,7 @@
 #define xfs_trans_roll_inode		libxfs_trans_roll_inode
 #define xfs_trans_roll			libxfs_trans_roll
 
+#define xfs_verify_agbno		libxfs_verify_agbno
 #define xfs_verify_cksum		libxfs_verify_cksum
 #define xfs_verify_dir_ino		libxfs_verify_dir_ino
 #define xfs_verify_ino			libxfs_verify_ino
