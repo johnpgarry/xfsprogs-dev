@@ -719,7 +719,7 @@ _("%s freespace btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 				state = get_bmap_ext(agno, b, end, &blen);
 				switch (state) {
 				case XR_E_UNKNOWN:
-					set_bmap(agno, b, XR_E_FREE1);
+					set_bmap_ext(agno, b, blen, XR_E_FREE1);
 					break;
 				case XR_E_FREE1:
 					/*
