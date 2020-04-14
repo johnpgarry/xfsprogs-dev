@@ -5,7 +5,6 @@ Documentation=man:xfs_scrub(8)
 
 [Service]
 Type=oneshot
-WorkingDirectory=%I
 PrivateNetwork=true
 ProtectSystem=full
 ProtectHome=read-only
