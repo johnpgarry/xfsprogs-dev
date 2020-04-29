@@ -45,6 +45,23 @@ struct inode {
 	struct timespec	i_ctime;
 };
 
+static inline uint32_t i_uid_read(struct inode *inode)
+{
+	return inode->i_uid;
+}
+static inline uint32_t i_gid_read(struct inode *inode)
+{
+	return inode->i_gid;
+}
+static inline void i_uid_write(struct inode *inode, uint32_t uid)
+{
+	inode->i_uid = uid;
+}
+static inline void i_gid_write(struct inode *inode, uint32_t gid)
+{
+	inode->i_gid = gid;
+}
+
 typedef struct xfs_inode {
 	struct cache_node	i_node;
 	struct xfs_mount	*i_mount;	/* fs mount struct ptr */
