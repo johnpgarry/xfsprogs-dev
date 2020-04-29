@@ -458,6 +458,9 @@ static inline struct xfs_buf *xfs_buf_incore(struct xfs_buftarg *target,
 #define xfs_icreate_log(tp, agno, agbno, cnt, isize, len, gen) ((void) 0)
 #define xfs_sb_validate_fsb_count(sbp, nblks)		(0)
 
+#define xfs_uid_to_kuid(uid)	(uid)
+#define xfs_gid_to_kgid(gid)	(gid)
+
 /*
  * Prototypes for kernel static functions that are aren't in their
  * associated header files.

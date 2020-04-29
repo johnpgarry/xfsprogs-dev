@@ -33,6 +33,8 @@ struct xfs_dir_ops;
  */
 struct inode {
 	mode_t		i_mode;
+	uint32_t	i_uid;
+	uint32_t	i_gid;
 	uint32_t	i_nlink;
 	xfs_dev_t	i_rdev;		/* This actually holds xfs_dev_t */
 	unsigned long	i_state;	/* Not actually used in userspace */
