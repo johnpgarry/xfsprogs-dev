@@ -2898,8 +2898,8 @@ process_inode(
 			break;
 		}
 		if (ic) {
-			quota_add(&xino.i_d.di_projid, &xino.i_d.di_gid,
-				  &xino.i_d.di_uid, 0, bc, ic, rc);
+			quota_add(&xino.i_d.di_projid, &VFS_I(&xino)->i_gid,
+				  &VFS_I(&xino)->i_uid, 0, bc, ic, rc);
 		}
 	}
 	totblocks = totdblocks + totiblocks + atotdblocks + atotiblocks;

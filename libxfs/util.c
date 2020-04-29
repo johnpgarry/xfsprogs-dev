@@ -255,8 +255,8 @@ libxfs_ialloc(
 
 	VFS_I(ip)->i_mode = mode;
 	set_nlink(VFS_I(ip), nlink);
-	ip->i_d.di_uid = cr->cr_uid;
-	ip->i_d.di_gid = cr->cr_gid;
+	i_uid_write(VFS_I(ip), cr->cr_uid);
+	i_gid_write(VFS_I(ip), cr->cr_gid);
 	ip->i_d.di_projid = pip ? 0 : fsx->fsx_projid;
 	xfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD);
 
@@ -275,7 +275,7 @@ libxfs_ialloc(
 	}
 
 	if (pip && (VFS_I(pip)->i_mode & S_ISGID)) {
-		ip->i_d.di_gid = pip->i_d.di_gid;
+		VFS_I(ip)->i_gid = VFS_I(pip)->i_gid;
 		if ((VFS_I(pip)->i_mode & S_ISGID) && (mode & S_IFMT) == S_IFDIR)
 			VFS_I(ip)->i_mode |= S_ISGID;
 	}
