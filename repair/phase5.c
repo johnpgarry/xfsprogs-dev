@@ -441,7 +441,7 @@ calculate_freespace_cursor(xfs_mount_t *mp, xfs_agnumber_t agno,
 	 * as they will be *after* accounting for the free space
 	 * we've used up will need fewer blocks to to represent
 	 * than we've allocated.  We can use the AGFL to hold
-	 * xfs_agfl_size (sector/xfs_agfl_t) blocks but that's it.
+	 * xfs_agfl_size (sector/struct xfs_agfl) blocks but that's it.
 	 * Thus we limit things to xfs_agfl_size/2 for each of the 2 btrees.
 	 * if the number of extra blocks is more than that,
 	 * we'll have to be called again.
