@@ -531,7 +531,7 @@ void xfs_inode_verifier_error(struct xfs_inode *ip, int error,
 #define xfs_buf_verifier_error(bp,e,n,bu,bus,fa) \
 	xfs_verifier_error(bp, e, fa)
 void
-xfs_buf_corruption_error(struct xfs_buf *bp);
+xfs_buf_corruption_error(struct xfs_buf *bp, xfs_failaddr_t fa);
 
 /* XXX: this is clearly a bug - a shared header needs to export this */
 /* xfs_rtalloc.c */
