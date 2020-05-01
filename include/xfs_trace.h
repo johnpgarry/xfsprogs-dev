@@ -48,6 +48,8 @@
 #define trace_xfs_btree_overlapped_query_range(a,b,c)	((void) 0)
 #define trace_xfs_btree_commit_afakeroot(a)	((void) 0)
 #define trace_xfs_btree_commit_ifakeroot(a)	((void) 0)
+#define trace_xfs_btree_bload_level_geometry(a,b,c,d,e,f,g) ((void) 0)
+#define trace_xfs_btree_bload_block(a,b,c,d,e,f) ((void) 0)
 
 #define trace_xfs_free_extent(a,b,c,d,e,f,g)	((void) 0)
 #define trace_xfs_agf(a,b,c,d)			((void) 0)

@@ -250,13 +250,15 @@ int libxfs_buf_read_uncached(struct xfs_buftarg *targ, xfs_daddr_t daddr,
 		const struct xfs_buf_ops *ops);
 
 /* Push a single buffer on a delwri queue. */
-static inline void
+static inline bool
 xfs_buf_delwri_queue(struct xfs_buf *bp, struct list_head *buffer_list)
 {
 	bp->b_node.cn_count++;
 	list_add_tail(&bp->b_list, buffer_list);
+	return true;
 }
 
 int xfs_buf_delwri_submit(struct list_head *buffer_list);
+void xfs_buf_delwri_cancel(struct list_head *list);
 
 #endif	/* __LIBXFS_IO_H__ */
