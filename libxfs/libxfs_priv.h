@@ -383,6 +383,9 @@ static inline struct xfs_buf *xfs_buf_incore(struct xfs_buftarg *target,
 #define xfs_buf_zero(bp, off, len) \
 	memset((bp)->b_addr + off, 0, len);
 
+void __xfs_buf_mark_corrupt(struct xfs_buf *bp, xfs_failaddr_t fa);
+#define xfs_buf_mark_corrupt(bp) __xfs_buf_mark_corrupt((bp), __this_address)
+
 /* mount stuff */
 #define XFS_MOUNT_32BITINODES		LIBXFS_MOUNT_32BITINODES
 #define XFS_MOUNT_ATTR2			LIBXFS_MOUNT_ATTR2
