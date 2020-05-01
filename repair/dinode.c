@@ -143,7 +143,7 @@ clear_dinode(xfs_mount_t *mp, xfs_dinode_t *dino, xfs_ino_t ino_num)
 	clear_dinode_unlinked(mp, dino);
 
 	/* and clear the forks */
-	memset(XFS_DFORK_DPTR(dino), 0, XFS_LITINO(mp, dino->di_version));
+	memset(XFS_DFORK_DPTR(dino), 0, XFS_LITINO(mp));
 	return;
 }
 
@@ -1017,7 +1017,7 @@ process_lclinode(
 	if (whichfork == XFS_DATA_FORK && be64_to_cpu(dip->di_size) >
 						XFS_DFORK_DSIZE(dip, mp)) {
 		do_warn(
-	_("local inode %" PRIu64 " data fork is too large (size = %lld, max = %d)\n"),
+	_("local inode %" PRIu64 " data fork is too large (size = %lld, max = %zu)\n"),
 		       lino, (unsigned long long) be64_to_cpu(dip->di_size),
 			XFS_DFORK_DSIZE(dip, mp));
 		return(1);
@@ -1025,7 +1025,7 @@ process_lclinode(
 		asf = (xfs_attr_shortform_t *)XFS_DFORK_APTR(dip);
 		if (be16_to_cpu(asf->hdr.totsize) > XFS_DFORK_ASIZE(dip, mp)) {
 			do_warn(
-	_("local inode %" PRIu64 " attr fork too large (size %d, max = %d)\n"),
+	_("local inode %" PRIu64 " attr fork too large (size %d, max = %zu)\n"),
 				lino, be16_to_cpu(asf->hdr.totsize),
 				XFS_DFORK_ASIZE(dip, mp));
 			return(1);
@@ -1797,12 +1797,10 @@ _("bad attr fork offset %d in dev inode %" PRIu64 ", should be %d\n"),
 	case XFS_DINODE_FMT_LOCAL:	/* fall through ... */
 	case XFS_DINODE_FMT_EXTENTS:	/* fall through ... */
 	case XFS_DINODE_FMT_BTREE:
-		if (dino->di_forkoff >=
-				(XFS_LITINO(mp, dino->di_version) >> 3)) {
+		if (dino->di_forkoff >= (XFS_LITINO(mp) >> 3)) {
 			do_warn(
-_("bad attr fork offset %d in inode %" PRIu64 ", max=%d\n"),
-				dino->di_forkoff, lino,
-				XFS_LITINO(mp, dino->di_version) >> 3);
+_("bad attr fork offset %d in inode %" PRIu64 ", max=%zu\n"),
+				dino->di_forkoff, lino, XFS_LITINO(mp) >> 3);
 			return 1;
 		}
 		break;

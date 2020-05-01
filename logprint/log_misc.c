@@ -563,7 +563,7 @@ xlog_print_trans_inode(
     mode = dino.di_mode & S_IFMT;
     size = (int)dino.di_size;
     xlog_print_trans_inode_core(&dino);
-    *ptr += xfs_log_dinode_size(dino.di_version);
+    *ptr += xfs_log_dinode_size(log->l_mp);
     skip_count--;
 
     switch (f->ilf_fields & (XFS_ILOG_DEV | XFS_ILOG_UUID)) {

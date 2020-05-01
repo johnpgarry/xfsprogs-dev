@@ -285,8 +285,10 @@ xlog_recover_print_inode(
 	       f->ilf_dsize);
 
 	/* core inode comes 2nd */
-	ASSERT(item->ri_buf[1].i_len == xfs_log_dinode_size(2) ||
-		item->ri_buf[1].i_len == xfs_log_dinode_size(3));
+	/* ASSERT len vs xfs_log_dinode_size() for V3 or V2 inodes */
+	ASSERT(item->ri_buf[1].i_len ==
+			offsetof(struct xfs_log_dinode, di_next_unlinked) ||
+	       item->ri_buf[1].i_len == sizeof(struct xfs_log_dinode));
 	xlog_recover_print_inode_core((struct xfs_log_dinode *)
 				      item->ri_buf[1].i_addr);
 

@@ -2771,8 +2771,7 @@ process_inode(
 		error++;
 		return;
 	}
-	if ((unsigned int)XFS_DFORK_ASIZE(dip, mp) >=
-					XFS_LITINO(mp, xino.i_d.di_version))  {
+	if ((unsigned int)XFS_DFORK_ASIZE(dip, mp) >= XFS_LITINO(mp)) {
 		if (v)
 			dbprintf(_("bad fork offset %d for inode %lld\n"),
 				xino.i_d.di_forkoff, id->ino);
