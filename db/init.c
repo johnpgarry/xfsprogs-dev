@@ -119,7 +119,7 @@ init(
 	}
 
 	/* copy SB from buffer to in-core, converting architecture as we go */
-	libxfs_sb_from_disk(&xmount.m_sb, XFS_BUF_TO_SBP(bp));
+	libxfs_sb_from_disk(&xmount.m_sb, bp->b_addr);
 	libxfs_buf_relse(bp);
 
 	sbp = &xmount.m_sb;

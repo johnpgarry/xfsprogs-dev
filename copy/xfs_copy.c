@@ -720,7 +720,7 @@ main(int argc, char **argv)
 	}
 
 	sb = &mbuf.m_sb;
-	libxfs_sb_from_disk(sb, XFS_BUF_TO_SBP(sbp));
+	libxfs_sb_from_disk(sb, sbp->b_addr);
 
 	/* Do it again, now with proper length and verifier */
 	libxfs_buf_relse(sbp);

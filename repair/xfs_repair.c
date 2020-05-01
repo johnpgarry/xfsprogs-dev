@@ -478,7 +478,7 @@ guess_correct_sunit(
 		error = -libxfs_sb_read_secondary(mp, NULL, agno, &bp);
 		if (error)
 			continue;
-		libxfs_sb_from_disk(&sb, XFS_BUF_TO_SBP(bp));
+		libxfs_sb_from_disk(&sb, bp->b_addr);
 		libxfs_buf_relse(bp);
 
 		calc_rootino = libxfs_ialloc_calc_rootino(mp, sb.sb_unit);
@@ -1081,7 +1081,7 @@ _("Warning:  project quota information would be cleared.\n"
 	if (!sbp)
 		do_error(_("couldn't get superblock\n"));
 
-	dsb = XFS_BUF_TO_SBP(sbp);
+	dsb = sbp->b_addr;
 
 	if (be16_to_cpu(dsb->sb_qflags) & XFS_ALL_QUOTA_CHKD) {
 		do_warn(_("Note - quota info will be regenerated on next "
