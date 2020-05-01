@@ -55,6 +55,8 @@
 #include "xfs_fs.h"
 #include "libfrog/crc32c.h"
 
+#include <sys/xattr.h>
+
 /* Zones used in libxfs allocations that aren't in shared header files */
 extern kmem_zone_t *xfs_buf_item_zone;
 extern kmem_zone_t *xfs_ili_zone;
