@@ -512,7 +512,7 @@ rmap_store_ag_btree_rec(
 	free_slab_cursor(&rm_cur);
 
 	/* Create rmaps for any AGFL blocks that aren't already rmapped. */
-	agfl_bno = XFS_BUF_TO_AGFL_BNO(mp, agflbp);
+	agfl_bno = xfs_buf_to_agfl_bno(agflbp);
 	b = agfl_bno + ag_rmap->ar_flcount;
 	while (*b != cpu_to_be32(NULLAGBLOCK) &&
 	       b - agfl_bno < libxfs_agfl_size(mp)) {
