@@ -147,7 +147,7 @@ xfs_alloc_lookup_eq(
 	cur->bc_rec.a.ar_startblock = bno;
 	cur->bc_rec.a.ar_blockcount = len;
 	error = xfs_btree_lookup(cur, XFS_LOOKUP_EQ, stat);
-	cur->bc_private.a.priv.abt.active = (*stat == 1);
+	cur->bc_ag.priv.abt.active = (*stat == 1);
 	return error;
 }
 
@@ -167,7 +167,7 @@ xfs_alloc_lookup_ge(
 	cur->bc_rec.a.ar_startblock = bno;
 	cur->bc_rec.a.ar_blockcount = len;
 	error = xfs_btree_lookup(cur, XFS_LOOKUP_GE, stat);
-	cur->bc_private.a.priv.abt.active = (*stat == 1);
+	cur->bc_ag.priv.abt.active = (*stat == 1);
 	return error;
 }
 
@@ -186,7 +186,7 @@ xfs_alloc_lookup_le(
 	cur->bc_rec.a.ar_startblock = bno;
 	cur->bc_rec.a.ar_blockcount = len;
 	error = xfs_btree_lookup(cur, XFS_LOOKUP_LE, stat);
-	cur->bc_private.a.priv.abt.active = (*stat == 1);
+	cur->bc_ag.priv.abt.active = (*stat == 1);
 	return error;
 }
 
@@ -194,7 +194,7 @@ static inline bool
 xfs_alloc_cur_active(
 	struct xfs_btree_cur	*cur)
 {
-	return cur && cur->bc_private.a.priv.abt.active;
+	return cur && cur->bc_ag.priv.abt.active;
 }
 
 /*
@@ -226,7 +226,7 @@ xfs_alloc_get_rec(
 	int			*stat)	/* output: success/failure */
 {
 	struct xfs_mount	*mp = cur->bc_mp;
-	xfs_agnumber_t		agno = cur->bc_private.a.agno;
+	xfs_agnumber_t		agno = cur->bc_ag.agno;
 	union xfs_btree_rec	*rec;
 	int			error;
 
@@ -904,7 +904,7 @@ xfs_alloc_cur_check(
 		deactivate = true;
 out:
 	if (deactivate)
-		cur->bc_private.a.priv.abt.active = false;
+		cur->bc_ag.priv.abt.active = false;
 	trace_xfs_alloc_cur_check(args->mp, cur->bc_btnum, bno, len, diff,
 				  *new);
 	return 0;
@@ -1348,7 +1348,7 @@ xfs_alloc_walk_iter(
 		if (error)
 			return error;
 		if (i == 0)
-			cur->bc_private.a.priv.abt.active = false;
+			cur->bc_ag.priv.abt.active = false;
 
 		if (count > 0)
 			count--;
@@ -1463,7 +1463,7 @@ xfs_alloc_ag_vextent_locality(
 		if (error)
 			return error;
 		if (i) {
-			acur->cnt->bc_private.a.priv.abt.active = true;
+			acur->cnt->bc_ag.priv.abt.active = true;
 			fbcur = acur->cnt;
 			fbinc = false;
 		}
