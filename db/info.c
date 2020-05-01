@@ -85,7 +85,7 @@ print_agresv_info(
 	error = -libxfs_read_agf(mp, NULL, agno, 0, &bp);
 	if (error)
 		xfrog_perror(error, "AGF");
-	agf = XFS_BUF_TO_AGF(bp);
+	agf = bp->b_addr;
 	length = be32_to_cpu(agf->agf_length);
 	free = be32_to_cpu(agf->agf_freeblks) +
 	       be32_to_cpu(agf->agf_flcount);

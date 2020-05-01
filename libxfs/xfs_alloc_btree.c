@@ -34,7 +34,7 @@ xfs_allocbt_set_root(
 	int			inc)
 {
 	struct xfs_buf		*agbp = cur->bc_private.a.agbp;
-	struct xfs_agf		*agf = XFS_BUF_TO_AGF(agbp);
+	struct xfs_agf		*agf = agbp->b_addr;
 	xfs_agnumber_t		seqno = be32_to_cpu(agf->agf_seqno);
 	int			btnum = cur->bc_btnum;
 	struct xfs_perag	*pag = xfs_perag_get(cur->bc_mp, seqno);
@@ -85,7 +85,7 @@ xfs_allocbt_free_block(
 	struct xfs_buf		*bp)
 {
 	struct xfs_buf		*agbp = cur->bc_private.a.agbp;
-	struct xfs_agf		*agf = XFS_BUF_TO_AGF(agbp);
+	struct xfs_agf		*agf = agbp->b_addr;
 	xfs_agblock_t		bno;
 	int			error;
 
@@ -111,7 +111,7 @@ xfs_allocbt_update_lastrec(
 	int			ptr,
 	int			reason)
 {
-	struct xfs_agf		*agf = XFS_BUF_TO_AGF(cur->bc_private.a.agbp);
+	struct xfs_agf		*agf = cur->bc_private.a.agbp->b_addr;
 	xfs_agnumber_t		seqno = be32_to_cpu(agf->agf_seqno);
 	struct xfs_perag	*pag;
 	__be32			len;
@@ -224,7 +224,7 @@ xfs_allocbt_init_ptr_from_cur(
 	struct xfs_btree_cur	*cur,
 	union xfs_btree_ptr	*ptr)
 {
-	struct xfs_agf		*agf = XFS_BUF_TO_AGF(cur->bc_private.a.agbp);
+	struct xfs_agf		*agf = cur->bc_private.a.agbp->b_addr;
 
 	ASSERT(cur->bc_private.a.agno == be32_to_cpu(agf->agf_seqno));
 
@@ -480,7 +480,7 @@ xfs_allocbt_init_cursor(
 	xfs_agnumber_t		agno,		/* allocation group number */
 	xfs_btnum_t		btnum)		/* btree identifier */
 {
-	struct xfs_agf		*agf = XFS_BUF_TO_AGF(agbp);
+	struct xfs_agf		*agf = agbp->b_addr;
 	struct xfs_btree_cur	*cur;
 
 	ASSERT(btnum == XFS_BTNUM_BNO || btnum == XFS_BTNUM_CNT);
