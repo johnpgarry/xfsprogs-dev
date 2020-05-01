@@ -1136,7 +1136,7 @@ build_agi(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 		do_error(_("Cannot grab AG %u AGI buffer, err=%d"),
 				agno, error);
 	agi_buf->b_ops = &xfs_agi_buf_ops;
-	agi = XFS_BUF_TO_AGI(agi_buf);
+	agi = agi_buf->b_addr;
 	memset(agi, 0, mp->m_sb.sb_sectsize);
 
 	agi->agi_magicnum = cpu_to_be32(XFS_AGI_MAGIC);

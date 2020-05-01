@@ -37,7 +37,7 @@ process_agi_unlinked(
 		do_error(_("cannot read agi block %" PRId64 " for ag %u\n"),
 			XFS_AG_DADDR(mp, agno, XFS_AGI_DADDR(mp)), agno);
 
-	agip = XFS_BUF_TO_AGI(bp);
+	agip = bp->b_addr;
 
 	ASSERT(be32_to_cpu(agip->agi_seqno) == agno);
 

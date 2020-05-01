@@ -2393,7 +2393,7 @@ scan_ag(
 		objname = _("agi block");
 		goto out_free_agfbuf;
 	}
-	agi = XFS_BUF_TO_AGI(agibuf);
+	agi = agibuf->b_addr;
 
 	/* fix up bad ag headers */
 
