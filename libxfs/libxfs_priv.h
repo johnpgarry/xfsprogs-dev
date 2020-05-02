@@ -253,6 +253,21 @@ div_u64_rem(uint64_t dividend, uint32_t divisor, uint32_t *remainder)
 }
 
 /**
+ * div_u64 - unsigned 64bit divide with 32bit divisor
+ * @dividend: unsigned 64bit dividend
+ * @divisor: unsigned 32bit divisor
+ *
+ * This is the most common 64bit divide and should be used if possible,
+ * as many 32bit archs can optimize this variant better than a full 64bit
+ * divide.
+ */
+static inline uint64_t div_u64(uint64_t dividend, uint32_t divisor)
+{
+        uint32_t remainder;
+        return div_u64_rem(dividend, divisor, &remainder);
+}
+
+/**
  * div64_u64_rem - unsigned 64bit divide with 64bit divisor and remainder
  * @dividend: unsigned 64bit dividend
  * @divisor: unsigned 64bit divisor
@@ -378,6 +393,14 @@ roundup_64(uint64_t x, uint32_t y)
 	x += y - 1;
 	do_div(x, y);
 	return x * y;
+}
+
+static inline uint64_t
+howmany_64(uint64_t x, uint32_t y)
+{
+	x += y - 1;
+	do_div(x, y);
+	return x;
 }
 
 /* buffer management */
