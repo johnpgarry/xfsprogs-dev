@@ -2707,6 +2707,8 @@ process_inode(
 		"dev", "local", "extents", "btree", "uuid"
 	};
 
+	/* xfs_inode_from_disk expects to have an mp to work with */
+	xino.i_mount = mp;
 	libxfs_inode_from_disk(&xino, dip);
 
 	ino = XFS_AGINO_TO_INO(mp, be32_to_cpu(agf->agf_seqno), agino);
@@ -2723,10 +2725,10 @@ process_inode(
 		error++;
 		return;
 	}
-	if (!libxfs_dinode_good_version(&mp->m_sb, xino.i_d.di_version)) {
+	if (!libxfs_dinode_good_version(&mp->m_sb, dip->di_version)) {
 		if (isfree || v)
 			dbprintf(_("bad version number %#x for inode %lld\n"),
-				xino.i_d.di_version, ino);
+				dip->di_version, ino);
 		error++;
 		return;
 	}

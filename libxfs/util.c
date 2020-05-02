@@ -260,20 +260,6 @@ libxfs_ialloc(
 	ip->i_d.di_projid = pip ? 0 : fsx->fsx_projid;
 	xfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD);
 
-	/*
-	 * We only support filesystems that understand v2 format inodes. So if
-	 * this is currently an old format inode, then change the inode version
-	 * number now.  This way we only do the conversion here rather than here
-	 * and in the flush/logging code.
-	 */
-	if (ip->i_d.di_version == 1) {
-		ip->i_d.di_version = 2;
-		/*
-		 * old link count, projid_lo/hi field, pad field
-		 * already zeroed
-		 */
-	}
-
 	if (pip && (VFS_I(pip)->i_mode & S_ISGID)) {
 		VFS_I(ip)->i_gid = VFS_I(pip)->i_gid;
 		if ((VFS_I(pip)->i_mode & S_ISGID) && (mode & S_IFMT) == S_IFDIR)
@@ -288,7 +274,7 @@ libxfs_ialloc(
 	ip->i_d.di_dmstate = 0;
 	ip->i_d.di_flags = pip ? 0 : xfs_flags2diflags(ip, fsx->fsx_xflags);
 
-	if (ip->i_d.di_version == 3) {
+	if (xfs_sb_version_has_v3inode(&ip->i_mount->m_sb)) {
 		ASSERT(ip->i_d.di_ino == ino);
 		ASSERT(uuid_equal(&ip->i_d.di_uuid, &mp->m_sb.sb_meta_uuid));
 		VFS_I(ip)->i_version = 1;
@@ -381,7 +367,6 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 
 	ASSERT(ip->i_d.di_format != XFS_DINODE_FMT_BTREE ||
 		ip->i_d.di_nextents > ip->i_df.if_ext_max);
-	ASSERT(ip->i_d.di_version > 1);
 
 	iip = ip->i_itemp;
 	mp = ip->i_mount;
@@ -402,7 +387,7 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 	ASSERT(ip->i_d.di_forkoff <= mp->m_sb.sb_inodesize);
 
 	/* bump the change count on v3 inodes */
-	if (ip->i_d.di_version == 3)
+	if (xfs_sb_version_has_v3inode(&mp->m_sb))
 		VFS_I(ip)->i_version++;
 
 	/* Check the inline fork data before we write out. */
