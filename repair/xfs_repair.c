@@ -25,6 +25,7 @@
 #include "libfrog/fsgeom.h"
 #include "libfrog/platform.h"
 #include "bulkload.h"
+#include "quotacheck.h"
 
 /*
  * option tables for getsubopt calls
@@ -42,6 +43,7 @@ enum o_opt_nums {
 	PHASE2_THREADS,
 	BLOAD_LEAF_SLACK,
 	BLOAD_NODE_SLACK,
+	NOQUOTA,
 	O_MAX_OPTS,
 };
 
@@ -54,6 +56,7 @@ static char *o_opts[] = {
 	[PHASE2_THREADS]	= "phase2_threads",
 	[BLOAD_LEAF_SLACK]	= "debug_bload_leaf_slack",
 	[BLOAD_NODE_SLACK]	= "debug_bload_node_slack",
+	[NOQUOTA]		= "noquota",
 	[O_MAX_OPTS]		= NULL,
 };
 
@@ -276,6 +279,9 @@ process_args(int argc, char **argv)
 						do_abort(
 		_("-o debug_bload_node_slack requires a parameter\n"));
 					bload_node_slack = (int)strtol(val, NULL, 0);
+					break;
+				case NOQUOTA:
+					quotacheck_skip();
 					break;
 				default:
 					unknown('o', val);
