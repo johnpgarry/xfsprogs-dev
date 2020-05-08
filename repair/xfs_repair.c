@@ -1106,7 +1106,7 @@ _("Warning:  project quota information would be cleared.\n"
 
 	dsb = sbp->b_addr;
 
-	if (mp->m_sb.sb_qflags & XFS_ALL_QUOTA_CHKD) {
+	if ((mp->m_sb.sb_qflags & XFS_ALL_QUOTA_CHKD) != quotacheck_results()) {
 		do_warn(_("Note - quota info will be regenerated on next "
 			"quota mount.\n"));
 		dsb->sb_qflags &= cpu_to_be16(~(XFS_UQUOTA_CHKD |
