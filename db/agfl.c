@@ -47,6 +47,7 @@ const field_t	agfl_crc_flds[] = {
 	{ "uuid", FLDT_UUID, OI(OFF(uuid)), C1, 0, TYP_NONE },
 	{ "lsn", FLDT_UINT64X, OI(OFF(lsn)), C1, 0, TYP_NONE },
 	{ "crc", FLDT_CRC, OI(OFF(crc)), C1, 0, TYP_NONE },
+	/* the bno array is after the actual structure */
 	{ "bno", FLDT_AGBLOCKNZ, OI(bitize(sizeof(struct xfs_agfl))),
 	  agfl_bno_size, FLD_ARRAY|FLD_COUNT, TYP_DATA },
 	{ NULL }
