@@ -33,6 +33,7 @@ fetchline(void)
 	static EditLine	*el;
 	static History	*hist;
 	HistEvent	hevent;
+	const char	*cmd;
 	char		*line;
 	int		count;
 
@@ -45,13 +46,18 @@ fetchline(void)
 		el_set(el, EL_PROMPT, el_get_prompt);
 		el_set(el, EL_HIST, history, (const char *)hist);
 	}
-	line = strdup(el_gets(el, &count));
-	if (line) {
-		if (count > 0)
-			line[count-1] = '\0';
-		if (*line)
-			history(hist, &hevent, H_ENTER, line);
-	}
+	cmd = el_gets(el, &count);
+	if (!cmd)
+		return NULL;
+
+	line = strdup(cmd);
+	if (!line)
+		return NULL;
+
+	if (count > 0)
+		line[count-1] = '\0';
+	if (*line)
+		history(hist, &hevent, H_ENTER, line);
 	return line;
 }
 #else
