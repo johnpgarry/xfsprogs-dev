@@ -908,7 +908,6 @@ mk_root_dir(xfs_mount_t *mp)
 	/*
 	 * initialize the directory
 	 */
-	ip->d_ops = mp->m_dir_inode_ops;
 	libxfs_dir_init(tp, ip, ip);
 
 	error = -libxfs_trans_commit(tp);

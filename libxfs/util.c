@@ -338,14 +338,6 @@ libxfs_ialloc(
 	ip->i_d.di_anextents = 0;
 
 	/*
-	 * set up the inode ops structure that the libxfs code relies on
-	 */
-	if (XFS_ISDIR(ip))
-		ip->d_ops = ip->i_mount->m_dir_inode_ops;
-	else
-		ip->d_ops = ip->i_mount->m_nondir_inode_ops;
-
-	/*
 	 * Log the new values stuffed into the inode.
 	 */
 	xfs_trans_ijoin(tp, ip, 0);

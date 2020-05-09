@@ -1287,14 +1287,6 @@ libxfs_iget(
 		return -EFSCORRUPTED;
 	}
 
-	/*
-	 * set up the inode ops structure that the libxfs code relies on
-	 */
-	if (XFS_ISDIR(ip))
-		ip->d_ops = mp->m_dir_inode_ops;
-	else
-		ip->d_ops = mp->m_nondir_inode_ops;
-
 	*ipp = ip;
 	return 0;
 }

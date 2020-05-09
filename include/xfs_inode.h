@@ -14,7 +14,6 @@
 struct xfs_trans;
 struct xfs_mount;
 struct xfs_inode_log_item;
-struct xfs_dir_ops;
 
 /*
  * These are not actually used, they are only for userspace build
@@ -79,7 +78,6 @@ typedef struct xfs_inode {
 	unsigned int		i_cformat;	/* format of cow fork */
 
 	xfs_fsize_t		i_size;		/* in-memory size */
-	const struct xfs_dir_ops *d_ops;	/* directory ops vector */
 	struct xfs_ifork_ops	*i_fork_ops;	/* fork verifiers */
 	struct inode		i_vnode;
 } xfs_inode_t;
