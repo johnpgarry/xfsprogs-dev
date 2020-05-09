@@ -263,8 +263,8 @@ div_u64_rem(uint64_t dividend, uint32_t divisor, uint32_t *remainder)
  */
 static inline uint64_t div_u64(uint64_t dividend, uint32_t divisor)
 {
-        uint32_t remainder;
-        return div_u64_rem(dividend, divisor, &remainder);
+	uint32_t remainder;
+	return div_u64_rem(dividend, divisor, &remainder);
 }
 
 /**
