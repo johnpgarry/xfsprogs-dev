@@ -18,8 +18,14 @@ check_if_api_calls() {
 	while read f; do grep "^$f(" libxfs/*.c; done | sed -e 's/^.*:xfs_/xfs_/g' -e 's/.$//g'
 }
 
+# Generate a grep search expression for troublesome API call sites.
+# " foo(", ",foo(", "-foo(", and "(foo(" are examples.
+grep_pattern() {
+	sed -e 's/^/[[:space:],-\\(]/g' -e 's/$/(/g'
+}
+
 find_libxfs_violations() {
-	grep -r -n -f <(find_possible_api_calls | check_if_api_calls | sed -e 's/^/[[:space:],-(]/g' -e 's/$/(/g' ) $tool_dirs
+	grep -r -n -f <(find_possible_api_calls | check_if_api_calls | grep_pattern) $tool_dirs
 }
 
 # libxfs calls without negated error codes
@@ -33,7 +39,7 @@ find_possible_libxfs_api_calls() {
 }
 
 find_libxfs_api_violations() {
-	grep -r -n -f <(find_possible_libxfs_api_calls | sed -e 's/^/[[:space:],-(]/g' -e 's/$/(/g') $tool_dirs
+	grep -r -n -f <(find_possible_libxfs_api_calls | grep_pattern) $tool_dirs
 }
 
 (find_libxfs_violations ; find_errcode_violations ; find_libxfs_api_violations) | sort -g -t ':' -k 2 | sort -g -t ':' -k 1 | uniq
