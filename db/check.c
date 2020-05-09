@@ -1294,6 +1294,18 @@ check_blist(
 	return 0;
 }
 
+static inline bool
+dbmap_boundscheck(
+	xfs_agnumber_t	agno,
+	xfs_agblock_t	agbno)
+{
+	if (agno >= mp->m_sb.sb_agcount)
+		return false;
+	if (agbno >= mp->m_sb.sb_agblocks)
+		return false;
+	return true;
+}
+
 static void
 check_dbmap(
 	xfs_agnumber_t	agno,
@@ -1307,6 +1319,12 @@ check_dbmap(
 	dbm_t		d;
 
 	for (i = 0, p = &dbmap[agno][agbno]; i < len; i++, p++) {
+		if (!dbmap_boundscheck(agno, agbno + i)) {
+			dbprintf(_("block %u/%u beyond end of expected area\n"),
+				agno, agbno + i);
+			error++;
+			break;
+		}
 		d = (dbm_t)*p;
 		if (ignore_reflink && (d == DBM_UNKNOWN || d == DBM_DATA ||
 				       d == DBM_RLDATA))
@@ -1468,6 +1486,13 @@ check_range(
 	return 1;
 }
 
+static inline bool
+rdbmap_boundscheck(
+	xfs_rfsblock_t	bno)
+{
+	return bno < mp->m_sb.sb_agblocks;
+}
+
 static void
 check_rdbmap(
 	xfs_rfsblock_t	bno,
@@ -1478,6 +1503,12 @@ check_rdbmap(
 	char		*p;
 
 	for (i = 0, p = &dbmap[mp->m_sb.sb_agcount][bno]; i < len; i++, p++) {
+		if (!rdbmap_boundscheck(bno + i)) {
+			dbprintf(_("rtblock %llu beyond end of expected area\n"),
+				bno + i);
+			error++;
+			break;
+		}
 		if ((dbm_t)*p != type) {
 			if (!sflag || CHECK_BLIST(bno + i))
 				dbprintf(_("rtblock %llu expected type %s got "
@@ -1599,6 +1630,12 @@ check_set_dbmap(
 	check_dbmap(agno, agbno, len, type1, is_reflink(type2));
 	mayprint = verbose | blist_size;
 	for (i = 0, p = &dbmap[agno][agbno]; i < len; i++, p++) {
+		if (!dbmap_boundscheck(agno, agbno + i)) {
+			dbprintf(_("block %u/%u beyond end of expected area\n"),
+				agno, agbno + i);
+			error++;
+			break;
+		}
 		if (*p == DBM_RLDATA && type2 == DBM_DATA)
 			;	/* do nothing */
 		else if (*p == DBM_DATA && type2 == DBM_DATA)
@@ -1627,6 +1664,12 @@ check_set_rdbmap(
 	check_rdbmap(bno, len, type1);
 	mayprint = verbose | blist_size;
 	for (i = 0, p = &dbmap[mp->m_sb.sb_agcount][bno]; i < len; i++, p++) {
+		if (!rdbmap_boundscheck(bno + i)) {
+			dbprintf(_("rtblock %llu beyond end of expected area\n"),
+				bno + i);
+			error++;
+			break;
+		}
 		*p = (char)type2;
 		if (mayprint && (verbose || CHECK_BLIST(bno + i)))
 			dbprintf(_("setting rtblock %llu to %s\n"),
