@@ -9,10 +9,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-#if defined(ENABLE_READLINE)
-# include <readline/history.h>
-# include <readline/readline.h>
-#elif defined(ENABLE_EDITLINE)
+#ifdef ENABLE_EDITLINE
 # include <histedit.h>
 #endif
 
@@ -28,18 +25,7 @@ get_prompt(void)
 	return prompt;
 }
 
-#if defined(ENABLE_READLINE)
-char *
-fetchline(void)
-{
-	char	*line;
-
-	line = readline(get_prompt());
-	if (line && *line)
-		add_history(line);
-	return line;
-}
-#elif defined(ENABLE_EDITLINE)
+#ifdef ENABLE_EDITLINE
 static char *el_get_prompt(EditLine *e) { return get_prompt(); }
 char *
 fetchline(void)

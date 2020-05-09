@@ -25,7 +25,6 @@ LIBUUID = @libuuid@
 LIBPTHREAD = @libpthread@
 LIBTERMCAP = @libtermcap@
 LIBEDITLINE = @libeditline@
-LIBREADLINE = @libreadline@
 LIBBLKID = @libblkid@
 LIBDEVMAPPER = @libdevmapper@
 LIBXFS = $(TOPDIR)/libxfs/libxfs.la
@@ -82,7 +81,6 @@ RPM_VERSION	= @rpm_version@
 ENABLE_SHARED	= @enable_shared@
 ENABLE_GETTEXT	= @enable_gettext@
 ENABLE_EDITLINE	= @enable_editline@
-ENABLE_READLINE	= @enable_readline@
 ENABLE_BLKID	= @enable_blkid@
 ENABLE_SCRUB	= @enable_scrub@
 

@@ -14,11 +14,6 @@ LTLDFLAGS += -static
 
 CFILES = command.c input.c help.c quit.c
 
-ifeq ($(ENABLE_READLINE),yes)
-LCFLAGS += -DENABLE_READLINE
-LTLIBS += $(LIBREADLINE) $(LIBTERMCAP)
-endif
-
 ifeq ($(ENABLE_EDITLINE),yes)
 LCFLAGS += -DENABLE_EDITLINE
 LTLIBS += $(LIBEDITLINE) $(LIBTERMCAP)

@@ -42,13 +42,6 @@ AC_ARG_ENABLE(blkid,
 	enable_blkid=yes)
 AC_SUBST(enable_blkid)
 
-AC_ARG_ENABLE(readline,
-[  --enable-readline=[yes/no] Enable readline command editing [default=no]],
-	test $enable_readline = yes && libreadline="-lreadline",
-	enable_readline=no)
-AC_SUBST(libreadline)
-AC_SUBST(enable_readline)
-
 AC_ARG_ENABLE(editline,
 [  --enable-editline=[yes/no] Enable editline command editing [default=no]],
 	test $enable_editline = yes && libeditline="-ledit",

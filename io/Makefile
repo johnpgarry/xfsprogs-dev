@@ -68,10 +68,6 @@ ifeq ($(HAVE_SYNCFS),yes)
 LCFLAGS += -DHAVE_SYNCFS
 endif
 
-ifeq ($(ENABLE_READLINE),yes)
-LLDLIBS += $(LIBREADLINE) $(LIBTERMCAP)
-endif
-
 ifeq ($(ENABLE_EDITLINE),yes)
 LLDLIBS += $(LIBEDITLINE) $(LIBTERMCAP)
 endif
