@@ -179,7 +179,7 @@ copy_range_init(void)
 	copy_range_cmd.name = "copy_range";
 	copy_range_cmd.cfunc = copy_range_f;
 	copy_range_cmd.argmin = 1;
-	copy_range_cmd.argmax = 7;
+	copy_range_cmd.argmax = 8;
 	copy_range_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
 	copy_range_cmd.args = _("[-s src_off] [-d dst_off] [-l len] src_file | -f N");
 	copy_range_cmd.oneline = _("Copy a range of data between two files");
