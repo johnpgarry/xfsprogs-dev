@@ -4118,7 +4118,7 @@ scan_freelist(
 		return;
 	}
 
-	/* open coded XFS_BUF_TO_AGFL_BNO */
+	/* open coded xfs_buf_to_agfl_bno */
 	state.count = 0;
 	state.agno = seqno;
 	libxfs_agfl_walk(mp, agf, iocur_top->bp, scan_agfl, &state);
