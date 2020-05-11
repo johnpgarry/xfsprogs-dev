@@ -2149,17 +2149,14 @@ build_agf_agfl(
 
 	/* setting to 0xff results in initialisation to NULLAGBLOCK */
 	memset(agfl, 0xff, mp->m_sb.sb_sectsize);
+	freelist = xfs_buf_to_agfl_bno(agfl_buf);
 	if (xfs_sb_version_hascrc(&mp->m_sb)) {
-		__be32 *agfl_bno = xfs_buf_to_agfl_bno(agfl_buf);
-
 		agfl->agfl_magicnum = cpu_to_be32(XFS_AGFL_MAGIC);
 		agfl->agfl_seqno = cpu_to_be32(agno);
 		platform_uuid_copy(&agfl->agfl_uuid, &mp->m_sb.sb_meta_uuid);
 		for (i = 0; i < libxfs_agfl_size(mp); i++)
-			agfl_bno[i] = cpu_to_be32(NULLAGBLOCK);
+			freelist[i] = cpu_to_be32(NULLAGBLOCK);
 	}
-
-	freelist = xfs_buf_to_agfl_bno(agfl_buf);
 
 	/*
 	 * do we have left-over blocks in the btree cursors that should
