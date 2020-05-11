@@ -67,10 +67,9 @@ attr_set_f(
 	int			argc,
 	char			**argv)
 {
-	struct xfs_inode	*ip = NULL;
-	struct xfs_da_args	args = { NULL };
-	char			*name, *value, *sp;
-	int			c, valuelen = 0;
+	struct xfs_da_args	args = { };
+	char			*sp;
+	int			c;
 
 	if (cur_typ == NULL) {
 		dbprintf(_("no current type\n"));
@@ -111,8 +110,9 @@ attr_set_f(
 
 		/* value length */
 		case 'v':
-			valuelen = (int)strtol(optarg, &sp, 0);
-			if (*sp != '\0' || valuelen < 0 || valuelen > 64*1024) {
+			args.valuelen = strtol(optarg, &sp, 0);
+			if (*sp != '\0' ||
+			    args.valuelen < 0 || args.valuelen > 64 * 1024) {
 				dbprintf(_("bad attr_set valuelen %s\n"), optarg);
 				return 0;
 			}
@@ -129,35 +129,29 @@ attr_set_f(
 		return 0;
 	}
 
-	name = argv[optind];
+	args.name = (const unsigned char *)argv[optind];
+	args.namelen = strlen(argv[optind]);
 
-	if (valuelen) {
-		value = (char *)memalign(getpagesize(), valuelen);
-		if (!value) {
-			dbprintf(_("cannot allocate buffer (%d)\n"), valuelen);
+	if (args.valuelen) {
+		args.value = memalign(getpagesize(), args.valuelen);
+		if (!args.value) {
+			dbprintf(_("cannot allocate buffer (%d)\n"),
+				args.valuelen);
 			goto out;
 		}
-		memset(value, 'v', valuelen);
-	} else {
-		value = NULL;
+		memset(args.value, 'v', args.valuelen);
 	}
 
-	if (libxfs_iget(mp, NULL, iocur_top->ino, 0, &ip,
+	if (libxfs_iget(mp, NULL, iocur_top->ino, 0, &args.dp,
 			&xfs_default_ifork_ops)) {
 		dbprintf(_("failed to iget inode %llu\n"),
 			(unsigned long long)iocur_top->ino);
 		goto out;
 	}
 
-	args.dp = ip;
-	args.name = (unsigned char *)name;
-	args.namelen = strlen(name);
-	args.value = value;
-	args.valuelen = valuelen;
-
 	if (libxfs_attr_set(&args)) {
 		dbprintf(_("failed to set attr %s on inode %llu\n"),
-			name, (unsigned long long)iocur_top->ino);
+			args.name, (unsigned long long)iocur_top->ino);
 		goto out;
 	}
 
@@ -166,10 +160,10 @@ attr_set_f(
 
 out:
 	mp->m_flags &= ~LIBXFS_MOUNT_COMPAT_ATTR;
-	if (ip)
-		libxfs_irele(ip);
-	if (value)
-		free(value);
+	if (args.dp)
+		libxfs_irele(args.dp);
+	if (args.value)
+		free(args.value);
 	return 0;
 }
 
@@ -178,9 +172,7 @@ attr_remove_f(
 	int			argc,
 	char			**argv)
 {
-	struct xfs_inode	*ip = NULL;
-	struct xfs_da_args	args = { NULL };
-	char			*name;
+	struct xfs_da_args	args = { };
 	int			c;
 
 	if (cur_typ == NULL) {
@@ -223,23 +215,20 @@ attr_remove_f(
 		return 0;
 	}
 
-	name = argv[optind];
+	args.name = (const unsigned char *)argv[optind];
+	args.namelen = strlen(argv[optind]);
 
-	if (libxfs_iget(mp, NULL, iocur_top->ino, 0, &ip,
+	if (libxfs_iget(mp, NULL, iocur_top->ino, 0, &args.dp,
 			&xfs_default_ifork_ops)) {
 		dbprintf(_("failed to iget inode %llu\n"),
 			(unsigned long long)iocur_top->ino);
 		goto out;
 	}
 
-	args.dp = ip;
-	args.name = (unsigned char *)name;
-	args.namelen = strlen(name);
-	args.value = NULL;
-
 	if (libxfs_attr_set(&args)) {
 		dbprintf(_("failed to remove attr %s from inode %llu\n"),
-			name, (unsigned long long)iocur_top->ino);
+			(unsigned char *)args.name,
+			(unsigned long long)iocur_top->ino);
 		goto out;
 	}
 
@@ -248,7 +237,7 @@ attr_remove_f(
 
 out:
 	mp->m_flags &= ~LIBXFS_MOUNT_COMPAT_ATTR;
-	if (ip)
-		libxfs_irele(ip);
+	if (args.dp)
+		libxfs_irele(args.dp);
 	return 0;
 }
