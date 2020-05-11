@@ -99,9 +99,11 @@ attr_set_f(
 		/* modifiers */
 		case 'C':
 			args.attr_flags |= XATTR_CREATE;
+			args.attr_flags &= ~XATTR_REPLACE;
 			break;
 		case 'R':
 			args.attr_flags |= XATTR_REPLACE;
+			args.attr_flags &= ~XATTR_CREATE;
 			break;
 
 		case 'n':
