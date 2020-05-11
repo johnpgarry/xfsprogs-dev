@@ -395,8 +395,8 @@ apply_patch()
 			fi
 		fi
 	else
-		echo "Applying with patch utility:"
-		patch -p1 < $_new_patch.2
+		echo "Applying with git am:"
+		git am -s $_new_patch.2
 		echo "Patch was applied in $REPO; check for rejects, etc"
 	fi
 
