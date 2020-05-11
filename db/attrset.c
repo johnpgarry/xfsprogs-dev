@@ -130,7 +130,16 @@ attr_set_f(
 	}
 
 	args.name = (const unsigned char *)argv[optind];
+	if (!args.name) {
+		dbprintf(_("invalid name\n"));
+		return 0;
+	}
+
 	args.namelen = strlen(argv[optind]);
+	if (args.namelen >= MAXNAMELEN) {
+		dbprintf(_("name too long\n"));
+		return 0;
+	}
 
 	if (args.valuelen) {
 		args.value = memalign(getpagesize(), args.valuelen);
@@ -216,7 +225,16 @@ attr_remove_f(
 	}
 
 	args.name = (const unsigned char *)argv[optind];
+	if (!args.name) {
+		dbprintf(_("invalid name\n"));
+		return 0;
+	}
+
 	args.namelen = strlen(argv[optind]);
+	if (args.namelen >= MAXNAMELEN) {
+		dbprintf(_("name too long\n"));
+		return 0;
+	}
 
 	if (libxfs_iget(mp, NULL, iocur_top->ino, 0, &args.dp,
 			&xfs_default_ifork_ops)) {
