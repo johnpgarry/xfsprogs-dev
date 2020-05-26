@@ -230,14 +230,21 @@ fetchline(void)
 	}
 
 	if (inputstacksize == 1) {
-		line = xstrdup(el_gets(el, &count));
-		if (line) {
-			if (count > 0)
-				line[count-1] = '\0';
-			if (*line) {
-				history(hist, &hevent, H_ENTER, line);
-				logprintf("%s", line);
-			}
+		const char	*cmd;
+
+		cmd = el_gets(el, &count);
+		if (!cmd)
+			return NULL;
+
+		line = xstrdup(cmd);
+		if (!line)
+			return NULL;
+
+		if (count > 0)
+			line[count-1] = '\0';
+		if (*line) {
+			history(hist, &hevent, H_ENTER, line);
+			logprintf("%s", line);
 		}
 	} else {
 		line = fetchline_internal();
