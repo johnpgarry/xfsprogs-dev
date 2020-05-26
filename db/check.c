@@ -1490,7 +1490,7 @@ static inline bool
 rdbmap_boundscheck(
 	xfs_rfsblock_t	bno)
 {
-	return bno < mp->m_sb.sb_agblocks;
+	return bno < mp->m_sb.sb_rblocks;
 }
 
 static void
