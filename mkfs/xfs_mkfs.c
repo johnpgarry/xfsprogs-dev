@@ -1696,14 +1696,6 @@ validate_sectorsize(
 	int			dry_run,
 	int			force_overwrite)
 {
-	/* set configured sector sizes in preparation for checks */
-	if (!cli->sectorsize) {
-		cfg->sectorsize = dft->sectorsize;
-	} else {
-		cfg->sectorsize = cli->sectorsize;
-	}
-	cfg->sectorlog = libxfs_highbit32(cfg->sectorsize);
-
 	/*
 	 * Before anything else, verify that we are correctly operating on
 	 * files or block devices and set the control parameters correctly.
@@ -1730,6 +1722,7 @@ validate_sectorsize(
 	memset(ft, 0, sizeof(*ft));
 	get_topology(cli->xi, ft, force_overwrite);
 
+	/* set configured sector sizes in preparation for checks */
 	if (!cli->sectorsize) {
 		/*
 		 * Unless specified manually on the command line use the
@@ -1741,9 +1734,8 @@ validate_sectorsize(
 		 * Set the topology sectors if they were not probed to the
 		 * minimum supported sector size.
 		 */
-
 		if (!ft->lsectorsize)
-			ft->lsectorsize = XFS_MIN_SECTORSIZE;
+			ft->lsectorsize = dft->sectorsize;
 
 		/* Older kernels may not have physical/logical distinction */
 		if (!ft->psectorsize)
@@ -1759,9 +1751,10 @@ _("specified blocksize %d is less than device physical sector size %d\n"
 				ft->lsectorsize);
 			cfg->sectorsize = ft->lsectorsize;
 		}
+	} else
+		cfg->sectorsize = cli->sectorsize;
 
-		cfg->sectorlog = libxfs_highbit32(cfg->sectorsize);
-	}
+	cfg->sectorlog = libxfs_highbit32(cfg->sectorsize);
 
 	/* validate specified/probed sector size */
 	if (cfg->sectorsize < XFS_MIN_SECTORSIZE ||
