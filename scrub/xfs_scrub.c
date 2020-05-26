@@ -493,7 +493,7 @@ _("Scrub aborted after phase %d."),
 			break;
 
 		/* Too many errors? */
-		if (xfs_scrub_excessive_errors(ctx)) {
+		if (scrub_excessive_errors(ctx)) {
 			ret = ECANCELED;
 			break;
 		}
@@ -761,7 +761,7 @@ main(
 	 * We don't want every thread yelling that into the output, so check
 	 * if we hit the threshold and tell the user *once*.
 	 */
-	if (xfs_scrub_excessive_errors(&ctx))
+	if (scrub_excessive_errors(&ctx))
 		str_info(&ctx, ctx.mntpoint, _("Too many errors; aborting."));
 
 	if (debug_tweak_on("XFS_SCRUB_FORCE_ERROR"))

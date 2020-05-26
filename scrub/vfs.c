@@ -182,7 +182,7 @@ scan_fs_dir(
 			break;
 		}
 
-		if (xfs_scrub_excessive_errors(ctx)) {
+		if (scrub_excessive_errors(ctx)) {
 			sft->aborted = true;
 			break;
 		}

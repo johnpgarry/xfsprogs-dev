@@ -93,7 +93,7 @@ scrub_iterate_filemaps(
 			ret = fn(ctx, fd, whichfork, &fsx, &bmap, arg);
 			if (ret)
 				goto out;
-			if (xfs_scrub_excessive_errors(ctx))
+			if (scrub_excessive_errors(ctx))
 				goto out;
 		}
 

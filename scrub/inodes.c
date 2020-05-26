@@ -193,7 +193,7 @@ _("Changed too many times during scan; giving up."));
 			default:
 				goto err;
 			}
-			if (xfs_scrub_excessive_errors(ctx)) {
+			if (scrub_excessive_errors(ctx)) {
 				si->aborted = true;
 				goto out;
 			}

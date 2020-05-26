@@ -13,7 +13,7 @@
  */
 #define DESCR_BUFSZ	256
 
-bool xfs_scrub_excessive_errors(struct scrub_ctx *ctx);
+bool scrub_excessive_errors(struct scrub_ctx *ctx);
 
 enum error_level {
 	S_ERROR	= 0,

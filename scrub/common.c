@@ -30,7 +30,7 @@ extern char		*progname;
 
 /* Too many errors? Bail out. */
 bool
-xfs_scrub_excessive_errors(
+scrub_excessive_errors(
 	struct scrub_ctx	*ctx)
 {
 	unsigned long long	errors_seen;

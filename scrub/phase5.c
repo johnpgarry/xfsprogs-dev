@@ -402,7 +402,7 @@ _("Filesystem has errors, skipping connectivity checks."));
 	if (aborted)
 		return ECANCELED;
 
-	xfs_scrub_report_preen_triggers(ctx);
+	scrub_report_preen_triggers(ctx);
 	return 0;
 }
 

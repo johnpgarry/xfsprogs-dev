@@ -44,7 +44,7 @@ scan_ag_metadata(
 	 * First we scrub and fix the AG headers, because we need
 	 * them to work well enough to check the AG btrees.
 	 */
-	ret = xfs_scrub_ag_headers(ctx, agno, &alist);
+	ret = scrub_ag_headers(ctx, agno, &alist);
 	if (ret)
 		goto err;
 
@@ -54,7 +54,7 @@ scan_ag_metadata(
 		goto err;
 
 	/* Now scrub the AG btrees. */
-	ret = xfs_scrub_ag_metadata(ctx, agno, &alist);
+	ret = scrub_ag_metadata(ctx, agno, &alist);
 	if (ret)
 		goto err;
 
@@ -108,7 +108,7 @@ scan_fs_metadata(
 		return;
 
 	action_list_init(&alist);
-	ret = xfs_scrub_fs_metadata(ctx, &alist);
+	ret = scrub_fs_metadata(ctx, &alist);
 	if (ret) {
 		*aborted = true;
 		return;
@@ -141,7 +141,7 @@ phase2_func(
 	 * anything else.
 	 */
 	action_list_init(&alist);
-	ret = xfs_scrub_primary_super(ctx, &alist);
+	ret = scrub_primary_super(ctx, &alist);
 	if (ret)
 		goto out;
 	ret = action_list_process_or_defer(ctx, 0, &alist);

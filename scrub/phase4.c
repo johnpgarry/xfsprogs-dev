@@ -119,7 +119,7 @@ phase4_func(
 	 * counters, so counter repairs have to be put on the list now so that
 	 * they get fixed before we stop retrying unfixed metadata repairs.
 	 */
-	ret = xfs_scrub_fs_summary(ctx, &ctx->action_lists[0]);
+	ret = scrub_fs_summary(ctx, &ctx->action_lists[0]);
 	if (ret)
 		return ret;
 

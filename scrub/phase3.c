@@ -84,7 +84,7 @@ scrub_inode(
 	}
 
 	/* Scrub the inode. */
-	error = scrub_fd(ctx, xfs_scrub_inode_fields, bstat, &alist);
+	error = scrub_fd(ctx, scrub_inode_fields, bstat, &alist);
 	if (error)
 		goto out;
 
@@ -93,13 +93,13 @@ scrub_inode(
 		goto out;
 
 	/* Scrub all block mappings. */
-	error = scrub_fd(ctx, xfs_scrub_data_fork, bstat, &alist);
+	error = scrub_fd(ctx, scrub_data_fork, bstat, &alist);
 	if (error)
 		goto out;
-	error = scrub_fd(ctx, xfs_scrub_attr_fork, bstat, &alist);
+	error = scrub_fd(ctx, scrub_attr_fork, bstat, &alist);
 	if (error)
 		goto out;
-	error = scrub_fd(ctx, xfs_scrub_cow_fork, bstat, &alist);
+	error = scrub_fd(ctx, scrub_cow_fork, bstat, &alist);
 	if (error)
 		goto out;
 
@@ -109,22 +109,22 @@ scrub_inode(
 
 	if (S_ISLNK(bstat->bs_mode)) {
 		/* Check symlink contents. */
-		error = xfs_scrub_symlink(ctx, bstat->bs_ino, bstat->bs_gen,
+		error = scrub_symlink(ctx, bstat->bs_ino, bstat->bs_gen,
 				&alist);
 	} else if (S_ISDIR(bstat->bs_mode)) {
 		/* Check the directory entries. */
-		error = scrub_fd(ctx, xfs_scrub_dir, bstat, &alist);
+		error = scrub_fd(ctx, scrub_dir, bstat, &alist);
 	}
 	if (error)
 		goto out;
 
 	/* Check all the extended attributes. */
-	error = scrub_fd(ctx, xfs_scrub_attr, bstat, &alist);
+	error = scrub_fd(ctx, scrub_attr, bstat, &alist);
 	if (error)
 		goto out;
 
 	/* Check parent pointers. */
-	error = scrub_fd(ctx, xfs_scrub_parent, bstat, &alist);
+	error = scrub_fd(ctx, scrub_parent, bstat, &alist);
 	if (error)
 		goto out;
 
@@ -181,7 +181,7 @@ phase3_func(
 	if (err)
 		goto free;
 
-	xfs_scrub_report_preen_triggers(ctx);
+	scrub_report_preen_triggers(ctx);
 	err = ptcounter_value(ictx.icount, &val);
 	if (err) {
 		str_liberror(ctx, err, _("summing scanned inode counter"));

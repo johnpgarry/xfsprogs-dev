@@ -96,7 +96,7 @@ static inline bool needs_repair(struct xfs_scrub_metadata *sm)
 
 /* Warn about strange circumstances after scrub. */
 static inline void
-xfs_scrub_warn_incomplete_scrub(
+scrub_warn_incomplete_scrub(
 	struct scrub_ctx		*ctx,
 	struct descr			*dsc,
 	struct xfs_scrub_metadata	*meta)
@@ -184,7 +184,7 @@ _("Filesystem is shut down, aborting."));
 	}
 
 	/* Complain about incomplete or suspicious metadata. */
-	xfs_scrub_warn_incomplete_scrub(ctx, &dsc, meta);
+	scrub_warn_incomplete_scrub(ctx, &dsc, meta);
 
 	/*
 	 * If we need repairs or there were discrepancies, schedule a
@@ -229,7 +229,7 @@ _("Optimization is possible."));
 
 /* Bulk-notify user about things that could be optimized. */
 void
-xfs_scrub_report_preen_triggers(
+scrub_report_preen_triggers(
 	struct scrub_ctx		*ctx)
 {
 	int				i;
@@ -249,7 +249,7 @@ _("Optimizations of %s are possible."), _(xfrog_scrubbers[i].descr));
 
 /* Save a scrub context for later repairs. */
 static int
-xfs_scrub_save_repair(
+scrub_save_repair(
 	struct scrub_ctx		*ctx,
 	struct action_list		*alist,
 	struct xfs_scrub_metadata	*meta)
@@ -290,7 +290,7 @@ xfs_scrub_save_repair(
  * return a positive error code.
  */
 static int
-xfs_scrub_meta_type(
+scrub_meta_type(
 	struct scrub_ctx		*ctx,
 	unsigned int			type,
 	xfs_agnumber_t			agno,
@@ -313,7 +313,7 @@ xfs_scrub_meta_type(
 	case CHECK_ABORT:
 		return ECANCELED;
 	case CHECK_REPAIR:
-		ret = xfs_scrub_save_repair(ctx, alist, &meta);
+		ret = scrub_save_repair(ctx, alist, &meta);
 		if (ret)
 			return ret;
 		/* fall through */
@@ -331,7 +331,7 @@ xfs_scrub_meta_type(
  * XFROG_SCRUB_TYPE_INODE or for checking summary metadata.
  */
 static bool
-xfs_scrub_all_types(
+scrub_all_types(
 	struct scrub_ctx		*ctx,
 	enum xfrog_scrub_type		scrub_type,
 	xfs_agnumber_t			agno,
@@ -349,7 +349,7 @@ xfs_scrub_all_types(
 		if (sc->flags & XFROG_SCRUB_DESCR_SUMMARY)
 			continue;
 
-		ret = xfs_scrub_meta_type(ctx, type, agno, alist);
+		ret = scrub_meta_type(ctx, type, agno, alist);
 		if (ret)
 			return ret;
 	}
@@ -364,49 +364,49 @@ xfs_scrub_all_types(
  * return nonzero.
  */
 int
-xfs_scrub_primary_super(
+scrub_primary_super(
 	struct scrub_ctx		*ctx,
 	struct action_list		*alist)
 {
-	return xfs_scrub_meta_type(ctx, XFS_SCRUB_TYPE_SB, 0, alist);
+	return scrub_meta_type(ctx, XFS_SCRUB_TYPE_SB, 0, alist);
 }
 
 /* Scrub each AG's header blocks. */
 int
-xfs_scrub_ag_headers(
+scrub_ag_headers(
 	struct scrub_ctx		*ctx,
 	xfs_agnumber_t			agno,
 	struct action_list		*alist)
 {
-	return xfs_scrub_all_types(ctx, XFROG_SCRUB_TYPE_AGHEADER, agno, alist);
+	return scrub_all_types(ctx, XFROG_SCRUB_TYPE_AGHEADER, agno, alist);
 }
 
 /* Scrub each AG's metadata btrees. */
 int
-xfs_scrub_ag_metadata(
+scrub_ag_metadata(
 	struct scrub_ctx		*ctx,
 	xfs_agnumber_t			agno,
 	struct action_list		*alist)
 {
-	return xfs_scrub_all_types(ctx, XFROG_SCRUB_TYPE_PERAG, agno, alist);
+	return scrub_all_types(ctx, XFROG_SCRUB_TYPE_PERAG, agno, alist);
 }
 
 /* Scrub whole-FS metadata btrees. */
 int
-xfs_scrub_fs_metadata(
+scrub_fs_metadata(
 	struct scrub_ctx		*ctx,
 	struct action_list		*alist)
 {
-	return xfs_scrub_all_types(ctx, XFROG_SCRUB_TYPE_FS, 0, alist);
+	return scrub_all_types(ctx, XFROG_SCRUB_TYPE_FS, 0, alist);
 }
 
 /* Scrub FS summary metadata. */
 int
-xfs_scrub_fs_summary(
+scrub_fs_summary(
 	struct scrub_ctx		*ctx,
 	struct action_list		*alist)
 {
-	return xfs_scrub_meta_type(ctx, XFS_SCRUB_TYPE_FSCOUNTERS, 0, alist);
+	return scrub_meta_type(ctx, XFS_SCRUB_TYPE_FSCOUNTERS, 0, alist);
 }
 
 /* How many items do we have to check? */
@@ -440,7 +440,7 @@ scrub_estimate_ag_work(
  * return nonzero.
  */
 static int
-__xfs_scrub_file(
+__scrub_file(
 	struct scrub_ctx		*ctx,
 	uint64_t			ino,
 	uint32_t			gen,
@@ -464,87 +464,87 @@ __xfs_scrub_file(
 	if (fix == CHECK_DONE)
 		return 0;
 
-	return xfs_scrub_save_repair(ctx, alist, &meta);
+	return scrub_save_repair(ctx, alist, &meta);
 }
 
 int
-xfs_scrub_inode_fields(
+scrub_inode_fields(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
 	struct action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_INODE, alist);
+	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_INODE, alist);
 }
 
 int
-xfs_scrub_data_fork(
+scrub_data_fork(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
 	struct action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_BMBTD, alist);
+	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_BMBTD, alist);
 }
 
 int
-xfs_scrub_attr_fork(
+scrub_attr_fork(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
 	struct action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_BMBTA, alist);
+	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_BMBTA, alist);
 }
 
 int
-xfs_scrub_cow_fork(
+scrub_cow_fork(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
 	struct action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_BMBTC, alist);
+	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_BMBTC, alist);
 }
 
 int
-xfs_scrub_dir(
+scrub_dir(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
 	struct action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_DIR, alist);
+	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_DIR, alist);
 }
 
 int
-xfs_scrub_attr(
+scrub_attr(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
 	struct action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_XATTR, alist);
+	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_XATTR, alist);
 }
 
 int
-xfs_scrub_symlink(
+scrub_symlink(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
 	struct action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_SYMLINK, alist);
+	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_SYMLINK, alist);
 }
 
 int
-xfs_scrub_parent(
+scrub_parent(
 	struct scrub_ctx	*ctx,
 	uint64_t		ino,
 	uint32_t		gen,
 	struct action_list	*alist)
 {
-	return __xfs_scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_PARENT, alist);
+	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_PARENT, alist);
 }
 
 /*
@@ -553,7 +553,7 @@ xfs_scrub_parent(
  * return false.
  */
 static bool
-__xfs_scrub_test(
+__scrub_test(
 	struct scrub_ctx		*ctx,
 	unsigned int			type,
 	bool				repair)
@@ -606,59 +606,59 @@ _("Kernel %s %s facility not detected."),
 }
 
 bool
-xfs_can_scrub_fs_metadata(
+can_scrub_fs_metadata(
 	struct scrub_ctx	*ctx)
 {
-	return __xfs_scrub_test(ctx, XFS_SCRUB_TYPE_PROBE, false);
+	return __scrub_test(ctx, XFS_SCRUB_TYPE_PROBE, false);
 }
 
 bool
-xfs_can_scrub_inode(
+can_scrub_inode(
 	struct scrub_ctx	*ctx)
 {
-	return __xfs_scrub_test(ctx, XFS_SCRUB_TYPE_INODE, false);
+	return __scrub_test(ctx, XFS_SCRUB_TYPE_INODE, false);
 }
 
 bool
-xfs_can_scrub_bmap(
+can_scrub_bmap(
 	struct scrub_ctx	*ctx)
 {
-	return __xfs_scrub_test(ctx, XFS_SCRUB_TYPE_BMBTD, false);
+	return __scrub_test(ctx, XFS_SCRUB_TYPE_BMBTD, false);
 }
 
 bool
-xfs_can_scrub_dir(
+can_scrub_dir(
 	struct scrub_ctx	*ctx)
 {
-	return __xfs_scrub_test(ctx, XFS_SCRUB_TYPE_DIR, false);
+	return __scrub_test(ctx, XFS_SCRUB_TYPE_DIR, false);
 }
 
 bool
-xfs_can_scrub_attr(
+can_scrub_attr(
 	struct scrub_ctx	*ctx)
 {
-	return __xfs_scrub_test(ctx, XFS_SCRUB_TYPE_XATTR, false);
+	return __scrub_test(ctx, XFS_SCRUB_TYPE_XATTR, false);
 }
 
 bool
-xfs_can_scrub_symlink(
+can_scrub_symlink(
 	struct scrub_ctx	*ctx)
 {
-	return __xfs_scrub_test(ctx, XFS_SCRUB_TYPE_SYMLINK, false);
+	return __scrub_test(ctx, XFS_SCRUB_TYPE_SYMLINK, false);
 }
 
 bool
-xfs_can_scrub_parent(
+can_scrub_parent(
 	struct scrub_ctx	*ctx)
 {
-	return __xfs_scrub_test(ctx, XFS_SCRUB_TYPE_PARENT, false);
+	return __scrub_test(ctx, XFS_SCRUB_TYPE_PARENT, false);
 }
 
 bool
 xfs_can_repair(
 	struct scrub_ctx	*ctx)
 {
-	return __xfs_scrub_test(ctx, XFS_SCRUB_TYPE_PROBE, true);
+	return __scrub_test(ctx, XFS_SCRUB_TYPE_PROBE, true);
 }
 
 /* General repair routines. */
@@ -776,7 +776,7 @@ _("Read-only filesystem; cannot make changes."));
 	}
 
 	if (repair_flags & XRM_COMPLAIN_IF_UNFIXED)
-		xfs_scrub_warn_incomplete_scrub(ctx, &dsc, &meta);
+		scrub_warn_incomplete_scrub(ctx, &dsc, &meta);
 	if (needs_repair(&meta)) {
 		/*
 		 * Still broken; if we've been told not to complain then we

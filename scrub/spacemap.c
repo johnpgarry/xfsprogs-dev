@@ -62,7 +62,7 @@ scrub_iterate_fsmap(
 			error = fn(ctx, p, arg);
 			if (error)
 				goto out;
-			if (xfs_scrub_excessive_errors(ctx))
+			if (scrub_excessive_errors(ctx))
 				goto out;
 		}
 

@@ -258,7 +258,7 @@ action_list_process(
 		}
 	}
 
-	if (xfs_scrub_excessive_errors(ctx))
+	if (scrub_excessive_errors(ctx))
 		return ECANCELED;
 	return 0;
 }

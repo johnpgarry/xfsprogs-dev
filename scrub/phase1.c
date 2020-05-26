@@ -140,10 +140,10 @@ _("Not an XFS filesystem."));
 	}
 
 	/* Do we have kernel-assisted metadata scrubbing? */
-	if (!xfs_can_scrub_fs_metadata(ctx) || !xfs_can_scrub_inode(ctx) ||
-	    !xfs_can_scrub_bmap(ctx) || !xfs_can_scrub_dir(ctx) ||
-	    !xfs_can_scrub_attr(ctx) || !xfs_can_scrub_symlink(ctx) ||
-	    !xfs_can_scrub_parent(ctx)) {
+	if (!can_scrub_fs_metadata(ctx) || !can_scrub_inode(ctx) ||
+	    !can_scrub_bmap(ctx) || !can_scrub_dir(ctx) ||
+	    !can_scrub_attr(ctx) || !can_scrub_symlink(ctx) ||
+	    !can_scrub_parent(ctx)) {
 		str_error(ctx, ctx->mntpoint,
 _("Kernel metadata scrubbing facility is not available."));
 		return ECANCELED;

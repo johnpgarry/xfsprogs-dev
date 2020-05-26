@@ -119,7 +119,7 @@ phase7_func(
 
 	/* Check and fix the fs summary counters. */
 	action_list_init(&alist);
-	error = xfs_scrub_fs_summary(ctx, &alist);
+	error = scrub_fs_summary(ctx, &alist);
 	if (error)
 		return error;
 	error = action_list_process(ctx, ctx->mnt.fd, &alist,
