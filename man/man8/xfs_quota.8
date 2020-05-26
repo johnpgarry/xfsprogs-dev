@@ -457,14 +457,46 @@ must be specified.
 .B \-bir
 ]
 .I value
+[
+.B -d
+|
+.I id
+|
+.I name
+]
 .br
 Allows the quota enforcement timeout (i.e. the amount of time allowed
 to pass before the soft limits are enforced as the hard limits) to
 be modified. The current timeout setting can be displayed using the
 .B state
-command. The value argument is a number of seconds, but units of
-\&'minutes', 'hours', 'days', and 'weeks' are also understood
+command.
+.br
+When setting the default timer via the
+.B \-d
+option, or for
+.B id
+0, or if no argument is given after
+.I value
+the
+.I value
+argument is a number of seconds indicating the relative amount of time after
+soft limits are exceeded, before hard limits are enforced.
+.br
+When setting any other individual timer by
+.I id
+or
+.I name,
+the
+.I value
+is the number of seconds from now, at which time the hard limits will be enforced.
+This allows extending the grace time of an individual user who has exceeded soft
+limits.
+.br
+For
+.I value,
+units of \&'minutes', 'hours', 'days', and 'weeks' are also understood
 (as are their abbreviations 'm', 'h', 'd', and 'w').
+.br
 .HP
 .B warn
 [

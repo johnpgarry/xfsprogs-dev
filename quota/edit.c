@@ -419,6 +419,7 @@ restore_f(
 
 static void
 set_timer(
+	uint32_t	id,
 	uint		type,
 	uint		mask,
 	char		*dev,
@@ -427,14 +428,43 @@ set_timer(
 	fs_disk_quota_t	d;
 
 	memset(&d, 0, sizeof(d));
+
+	/*
+	 * If id is specified we are extending grace time by value
+	 * Otherwise we are setting the default grace time
+	 */
+	if (id) {
+		time_t	now;
+
+		/* Get quota to find out whether user is past soft limits */
+		if (xfsquotactl(XFS_GETQUOTA, dev, type, id, (void *)&d) < 0) {
+			exitcode = 1;
+			fprintf(stderr, _("%s: cannot get quota: %s\n"),
+					progname, strerror(errno));
+				return;
+		}
+
+		time(&now);
+
+		/* Only set grace time if user is already past soft limit */
+		if (d.d_blk_softlimit && d.d_bcount > d.d_blk_softlimit)
+			d.d_btimer = now + value;
+		if (d.d_ino_softlimit && d.d_icount > d.d_ino_softlimit)
+			d.d_itimer = now + value;
+		if (d.d_rtb_softlimit && d.d_rtbcount > d.d_rtb_softlimit)
+			d.d_rtbtimer = now + value;
+	} else {
+		d.d_btimer = value;
+		d.d_itimer = value;
+		d.d_rtbtimer = value;
+	}
+
 	d.d_version = FS_DQUOT_VERSION;
 	d.d_flags = type;
 	d.d_fieldmask = mask;
-	d.d_itimer = value;
-	d.d_btimer = value;
-	d.d_rtbtimer = value;
+	d.d_id = id;
 
-	if (xfsquotactl(XFS_SETQLIM, dev, type, 0, (void *)&d) < 0) {
+	if (xfsquotactl(XFS_SETQLIM, dev, type, id, (void *)&d) < 0) {
 		exitcode = 1;
 		fprintf(stderr, _("%s: cannot set timer: %s\n"),
 				progname, strerror(errno));
@@ -447,10 +477,15 @@ timer_f(
 	char		**argv)
 {
 	uint		value;
-	int		c, type = 0, mask = 0;
+	char		*name = NULL;
+	uint32_t	id = 0;
+	int		c, flags = 0, type = 0, mask = 0;
 
-	while ((c = getopt(argc, argv, "bgipru")) != EOF) {
+	while ((c = getopt(argc, argv, "bdgipru")) != EOF) {
 		switch (c) {
+		case 'd':
+			flags |= DEFAULTS_FLAG;
+			break;
 		case 'b':
 			mask |= FS_DQ_BTIMER;
 			break;
@@ -474,23 +509,45 @@ timer_f(
 		}
 	}
 
-	if (argc != optind + 1)
+	 /*
+	 * Older versions of the command did not accept -d|id|name,
+	 * so in that case we assume we're setting default timer,
+	 * and the last arg is the timer value.
+	 *
+	 * Otherwise, if the defaults flag is set, we expect 1 more arg for
+	 * timer value ; if not, 2 more args: 1 for value, one for id/name.
+	 */
+	if (!(flags & DEFAULTS_FLAG) && (argc == optind + 1)) {
+		value = cvttime(argv[optind++]);
+	} else if (flags & DEFAULTS_FLAG) {
+		if (argc != optind + 1)
+			return command_usage(&timer_cmd);
+		value = cvttime(argv[optind++]);
+	} else if (argc == optind + 2) {
+		value = cvttime(argv[optind++]);
+		name = (flags & DEFAULTS_FLAG) ? "0" : argv[optind++];
+	} else
 		return command_usage(&timer_cmd);
 
-	value = cvttime(argv[optind++]);
 
+	/* if none of -bir specified, set them all */
 	if (!mask)
 		mask = FS_DQ_TIMER_MASK;
 
 	if (!type) {
 		type = XFS_USER_QUOTA;
 	} else if (type != XFS_GROUP_QUOTA &&
-	           type != XFS_PROJ_QUOTA &&
-	           type != XFS_USER_QUOTA) {
+		   type != XFS_PROJ_QUOTA &&
+		   type != XFS_USER_QUOTA) {
 		return command_usage(&timer_cmd);
 	}
 
-	set_timer(type, mask, fs_path->fs_name, value);
+	if (name)
+		id = id_from_string(name, type);
+
+	if (id >= 0)
+		set_timer(id, type, mask, fs_path->fs_name, value);
+
 	return 0;
 }
 
@@ -616,9 +673,9 @@ edit_init(void)
 
 	timer_cmd.name = "timer";
 	timer_cmd.cfunc = timer_f;
-	timer_cmd.argmin = 2;
+	timer_cmd.argmin = 1;
 	timer_cmd.argmax = -1;
-	timer_cmd.args = _("[-bir] [-g|-p|-u] value");
+	timer_cmd.args = _("[-bir] [-g|-p|-u] value [-d|id|name]");
 	timer_cmd.oneline = _("set quota enforcement timeouts");
 	timer_cmd.help = timer_help;
 	timer_cmd.flags = CMD_FLAG_FOREIGN_OK;
