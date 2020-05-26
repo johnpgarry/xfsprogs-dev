@@ -53,6 +53,7 @@ crc_f(
 	char		**argv)
 {
 	const struct xfs_buf_ops *stashed_ops = NULL;
+	struct xfs_buf_ops nowrite_ops;
 	extern char	*progname;
 	const field_t	*fields;
 	const ftattr_t	*fa;
@@ -127,7 +128,6 @@ crc_f(
 	}
 
 	if (invalidate) {
-		struct xfs_buf_ops nowrite_ops;
 		flist_t		*sfl;
 		int		bit_length;
 		int		parentoffset;
