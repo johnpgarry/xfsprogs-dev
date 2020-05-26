@@ -120,6 +120,9 @@ zero_log(
 			do_error(_("failed to clear log"));
 	}
 
+	/* And we are now magically complete! */
+	PROG_RPT_INC(prog_rpt_done[0], mp->m_sb.sb_logblocks);
+
 	/*
 	 * Finally, seed the max LSN from the current state of the log if this
 	 * is a v5 filesystem.
@@ -160,7 +163,10 @@ phase2(
 
 	/* Zero log if applicable */
 	do_log(_("        - zero log...\n"));
+
+	set_progress_msg(PROG_FMT_ZERO_LOG, (uint64_t)mp->m_sb.sb_logblocks);
 	zero_log(mp);
+	print_final_rpt();
 
 	do_log(_("        - scan filesystem freespace and inode maps...\n"));
 
