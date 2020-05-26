@@ -101,6 +101,40 @@ warn_help(void)
 "\n"));
 }
 
+static uint32_t
+id_from_string(
+	char	*name,
+	int	type)
+{
+	uint32_t	id = -1;
+	const char	*type_name = "unknown type";
+
+	switch (type) {
+	case XFS_USER_QUOTA:
+		type_name = "user";
+		id = uid_from_string(name);
+		break;
+	case XFS_GROUP_QUOTA:
+		type_name = "group";
+		id = gid_from_string(name);
+		break;
+	case XFS_PROJ_QUOTA:
+		type_name = "project";
+		id = prid_from_string(name);
+		break;
+	default:
+		ASSERT(0);
+		break;
+	}
+
+	if (id == -1) {
+		fprintf(stderr, _("%s: invalid %s name: %s\n"),
+			type_name, progname, name);
+		exitcode = 1;
+	}
+	return id;
+}
+
 static void
 set_limits(
 	uint32_t	id,
@@ -133,75 +167,6 @@ set_limits(
 		fprintf(stderr, _("%s: cannot set limits: %s\n"),
 				progname, strerror(errno));
 	}
-}
-
-static void
-set_user_limits(
-	char		*name,
-	uint		type,
-	uint		mask,
-	uint64_t	*bsoft,
-	uint64_t	*bhard,
-	uint64_t	*isoft,
-	uint64_t	*ihard,
-	uint64_t	*rtbsoft,
-	uint64_t	*rtbhard)
-{
-	uid_t		uid = uid_from_string(name);
-
-	if (uid == -1) {
-		exitcode = 1;
-		fprintf(stderr, _("%s: invalid user name: %s\n"),
-				progname, name);
-	} else
-		set_limits(uid, type, mask, fs_path->fs_name,
-				bsoft, bhard, isoft, ihard, rtbsoft, rtbhard);
-}
-
-static void
-set_group_limits(
-	char		*name,
-	uint		type,
-	uint		mask,
-	uint64_t	*bsoft,
-	uint64_t	*bhard,
-	uint64_t	*isoft,
-	uint64_t	*ihard,
-	uint64_t	*rtbsoft,
-	uint64_t	*rtbhard)
-{
-	gid_t		gid = gid_from_string(name);
-
-	if (gid == -1) {
-		exitcode = 1;
-		fprintf(stderr, _("%s: invalid group name: %s\n"),
-				progname, name);
-	} else
-		set_limits(gid, type, mask, fs_path->fs_name,
-				bsoft, bhard, isoft, ihard, rtbsoft, rtbhard);
-}
-
-static void
-set_project_limits(
-	char		*name,
-	uint		type,
-	uint		mask,
-	uint64_t	*bsoft,
-	uint64_t	*bhard,
-	uint64_t	*isoft,
-	uint64_t	*ihard,
-	uint64_t	*rtbsoft,
-	uint64_t	*rtbhard)
-{
-	prid_t		prid = prid_from_string(name);
-
-	if (prid == -1) {
-		exitcode = 1;
-		fprintf(stderr, _("%s: invalid project name: %s\n"),
-				progname, name);
-	} else
-		set_limits(prid, type, mask, fs_path->fs_name,
-				bsoft, bhard, isoft, ihard, rtbsoft, rtbhard);
 }
 
 /* extract number of blocks from an ascii string */
@@ -258,6 +223,7 @@ limit_f(
 	char		**argv)
 {
 	char		*name;
+	uint32_t	id;
 	uint64_t	bsoft, bhard, isoft, ihard, rtbsoft, rtbhard;
 	int		c, type = 0, mask = 0, flags = 0;
 	uint		bsize, ssize, endoptions;
@@ -339,20 +305,13 @@ limit_f(
 		return command_usage(&limit_cmd);
 	}
 
-	switch (type) {
-	case XFS_USER_QUOTA:
-		set_user_limits(name, type, mask,
-			&bsoft, &bhard, &isoft, &ihard, &rtbsoft, &rtbhard);
-		break;
-	case XFS_GROUP_QUOTA:
-		set_group_limits(name, type, mask,
-			&bsoft, &bhard, &isoft, &ihard, &rtbsoft, &rtbhard);
-		break;
-	case XFS_PROJ_QUOTA:
-		set_project_limits(name, type, mask,
-			&bsoft, &bhard, &isoft, &ihard, &rtbsoft, &rtbhard);
-		break;
-	}
+
+	id = id_from_string(name, type);
+	if (id >= 0)
+		set_limits(id, type, mask, fs_path->fs_name,
+			   &bsoft, &bhard, &isoft, &ihard, &rtbsoft, &rtbhard);
+	else
+		exitcode = -1;
 	return 0;
 }
 
@@ -561,63 +520,13 @@ set_warnings(
 	}
 }
 
-static void
-set_user_warnings(
-	char		*name,
-	uint		type,
-	uint		mask,
-	uint		value)
-{
-	uid_t		uid = uid_from_string(name);
-
-	if (uid == -1) {
-		exitcode = 1;
-		fprintf(stderr, _("%s: invalid user name: %s\n"),
-				progname, name);
-	} else
-		set_warnings(uid, type, mask, fs_path->fs_name, value);
-}
-
-static void
-set_group_warnings(
-	char		*name,
-	uint		type,
-	uint		mask,
-	uint		value)
-{
-	gid_t		gid = gid_from_string(name);
-
-	if (gid == -1) {
-		exitcode = 1;
-		fprintf(stderr, _("%s: invalid group name: %s\n"),
-				progname, name);
-	} else
-		set_warnings(gid, type, mask, fs_path->fs_name, value);
-}
-
-static void
-set_project_warnings(
-	char		*name,
-	uint		type,
-	uint		mask,
-	uint		value)
-{
-	prid_t		prid = prid_from_string(name);
-
-	if (prid == -1) {
-		exitcode = 1;
-		fprintf(stderr, _("%s: invalid project name: %s\n"),
-				progname, name);
-	} else
-		set_warnings(prid, type, mask, fs_path->fs_name, value);
-}
-
 static int
 warn_f(
 	int		argc,
 	char		**argv)
 {
 	char		*name;
+	uint32_t	id;
 	uint		value;
 	int		c, flags = 0, type = 0, mask = 0;
 
@@ -675,17 +584,12 @@ warn_f(
 		return command_usage(&warn_cmd);
 	}
 
-	switch (type) {
-	case XFS_USER_QUOTA:
-		set_user_warnings(name, type, mask, value);
-		break;
-	case XFS_GROUP_QUOTA:
-		set_group_warnings(name, type, mask, value);
-		break;
-	case XFS_PROJ_QUOTA:
-		set_project_warnings(name, type, mask, value);
-		break;
-	}
+	id = id_from_string(name, type);
+	if (id >= 0)
+		set_warnings(id, type, mask, fs_path->fs_name, value);
+	else
+		exitcode = -1;
+
 	return 0;
 }
 
