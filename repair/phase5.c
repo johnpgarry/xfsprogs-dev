@@ -2055,7 +2055,7 @@ build_agf_agfl(
 {
 	struct extent_tree_node	*ext_ptr;
 	struct xfs_buf		*agf_buf, *agfl_buf;
-	int			i;
+	unsigned int		agfl_idx;
 	struct xfs_agfl		*agfl;
 	struct xfs_agf		*agf;
 	xfs_fsblock_t		fsb;
@@ -2153,8 +2153,8 @@ build_agf_agfl(
 		agfl->agfl_magicnum = cpu_to_be32(XFS_AGFL_MAGIC);
 		agfl->agfl_seqno = cpu_to_be32(agno);
 		platform_uuid_copy(&agfl->agfl_uuid, &mp->m_sb.sb_meta_uuid);
-		for (i = 0; i < libxfs_agfl_size(mp); i++)
-			freelist[i] = cpu_to_be32(NULLAGBLOCK);
+		for (agfl_idx = 0; agfl_idx < libxfs_agfl_size(mp); agfl_idx++)
+			freelist[agfl_idx] = cpu_to_be32(NULLAGBLOCK);
 	}
 
 	/*
@@ -2165,19 +2165,21 @@ build_agf_agfl(
 		/*
 		 * yes, now grab as many blocks as we can
 		 */
-		i = 0;
-		while (bno_bt->num_free_blocks > 0 && i < libxfs_agfl_size(mp))
+		agfl_idx = 0;
+		while (bno_bt->num_free_blocks > 0 &&
+		       agfl_idx < libxfs_agfl_size(mp))
 		{
-			freelist[i] = cpu_to_be32(
+			freelist[agfl_idx] = cpu_to_be32(
 					get_next_blockaddr(agno, 0, bno_bt));
-			i++;
+			agfl_idx++;
 		}
 
-		while (bcnt_bt->num_free_blocks > 0 && i < libxfs_agfl_size(mp))
+		while (bcnt_bt->num_free_blocks > 0 &&
+		       agfl_idx < libxfs_agfl_size(mp))
 		{
-			freelist[i] = cpu_to_be32(
+			freelist[agfl_idx] = cpu_to_be32(
 					get_next_blockaddr(agno, 0, bcnt_bt));
-			i++;
+			agfl_idx++;
 		}
 		/*
 		 * now throw the rest of the blocks away and complain
@@ -2200,9 +2202,9 @@ _("Insufficient memory saving lost blocks.\n"));
 		}
 
 		agf->agf_flfirst = 0;
-		agf->agf_fllast = cpu_to_be32(i - 1);
-		agf->agf_flcount = cpu_to_be32(i);
-		rmap_store_agflcount(mp, agno, i);
+		agf->agf_fllast = cpu_to_be32(agfl_idx - 1);
+		agf->agf_flcount = cpu_to_be32(agfl_idx);
+		rmap_store_agflcount(mp, agno, agfl_idx);
 
 #ifdef XR_BLD_FREE_TRACE
 		fprintf(stderr, "writing agfl for ag %u\n", agno);
