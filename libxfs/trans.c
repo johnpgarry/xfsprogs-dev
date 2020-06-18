@@ -811,7 +811,7 @@ inode_item_done(
 	/*
 	 * Get the buffer containing the on-disk inode.
 	 */
-	error = xfs_imap_to_bp(mp, NULL, &ip->i_imap, &dip, &bp, 0, 0);
+	error = xfs_imap_to_bp(mp, NULL, &ip->i_imap, &dip, &bp, 0);
 	if (error) {
 		fprintf(stderr, _("%s: warning - imap_to_bp failed (%d)\n"),
 			progname, error);
