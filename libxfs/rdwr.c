@@ -1259,23 +1259,12 @@ libxfs_iget(
 	if (error)
 		goto out_destroy;
 
-	if (ip->i_d.di_format == XFS_DINODE_FMT_LOCAL &&
-	    xfs_ifork_verify_local_data(ip))
-		goto out_rele;
-
-	if (ip->i_d.di_aformat == XFS_DINODE_FMT_LOCAL &&
-	    xfs_ifork_verify_local_attr(ip))
-		goto out_rele;
-
 	*ipp = ip;
 	return 0;
 out_destroy:
 	kmem_cache_free(xfs_inode_zone, ip);
 	*ipp = NULL;
 	return error;
-out_rele:
-	libxfs_irele(ip);
-	return -EFSCORRUPTED;
 }
 
 static void
