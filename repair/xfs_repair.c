@@ -459,8 +459,7 @@ has_plausible_rootdir(
 	int			error;
 	bool			ret = false;
 
-	error = -libxfs_iget(mp, NULL, mp->m_sb.sb_rootino, 0, &ip,
-			&xfs_default_ifork_ops);
+	error = -libxfs_iget(mp, NULL, mp->m_sb.sb_rootino, 0, &ip);
 	if (error)
 		goto out;
 	if (!S_ISDIR(VFS_I(ip)->i_mode))

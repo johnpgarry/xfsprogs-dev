@@ -1262,8 +1262,7 @@ libxfs_iget(
 	struct xfs_trans	*tp,
 	xfs_ino_t		ino,
 	uint			lock_flags,
-	struct xfs_inode	**ipp,
-	struct xfs_ifork_ops	*ifork_ops)
+	struct xfs_inode	**ipp)
 {
 	struct xfs_inode	*ip;
 	int			error = 0;
@@ -1281,7 +1280,7 @@ libxfs_iget(
 		return error;
 	}
 
-	ip->i_fork_ops = ifork_ops;
+	ip->i_fork_ops = &xfs_default_ifork_ops;
 	if (!libxfs_inode_verify_forks(ip)) {
 		libxfs_irele(ip);
 		return -EFSCORRUPTED;

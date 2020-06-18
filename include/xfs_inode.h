@@ -160,9 +160,9 @@ extern struct timespec64 current_time(struct inode *inode);
 
 /* Inode Cache Interfaces */
 extern bool	libxfs_inode_verify_forks(struct xfs_inode *ip);
-extern int	libxfs_iget(struct xfs_mount *, struct xfs_trans *, xfs_ino_t,
-				uint, struct xfs_inode **,
-				struct xfs_ifork_ops *);
+extern int	libxfs_iget(struct xfs_mount *mp, struct xfs_trans *tp,
+				xfs_ino_t ino, uint lock_flags,
+				struct xfs_inode **ipp);
 extern void	libxfs_irele(struct xfs_inode *ip);
 
 #endif /* __XFS_INODE_H__ */
