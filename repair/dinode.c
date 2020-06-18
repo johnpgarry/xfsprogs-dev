@@ -1939,7 +1939,7 @@ process_inode_attr_fork(
 	int		repair = 0;
 	int		err;
 
-	if (!XFS_DFORK_Q(dino)) {
+	if (!dino->di_forkoff) {
 		*anextents = 0;
 		if (dino->di_aformat != XFS_DINODE_FMT_EXTENTS) {
 			do_warn(_("bad attribute format %d in inode %" PRIu64 ", "),

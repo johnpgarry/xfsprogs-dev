@@ -262,7 +262,7 @@ xfs_inode_from_disk(
 	error = xfs_iformat_data_fork(ip, from);
 	if (error)
 		return error;
-	if (XFS_DFORK_Q(from)) {
+	if (from->di_forkoff) {
 		error = xfs_iformat_attr_fork(ip, from);
 		if (error)
 			goto out_destroy_data_fork;
@@ -432,7 +432,7 @@ xfs_dinode_verify_forkoff(
 	struct xfs_dinode	*dip,
 	struct xfs_mount	*mp)
 {
-	if (!XFS_DFORK_Q(dip))
+	if (!dip->di_forkoff)
 		return NULL;
 
 	switch (dip->di_format)  {
@@ -535,7 +535,7 @@ xfs_dinode_verify(
 		return __this_address;
 	}
 
-	if (XFS_DFORK_Q(dip)) {
+	if (dip->di_forkoff) {
 		fa = xfs_dinode_verify_fork(dip, mp, XFS_ATTR_FORK);
 		if (fa)
 			return fa;

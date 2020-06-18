@@ -67,7 +67,7 @@ bmroota_key_count(
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
 	block = (xfs_bmdr_block_t *)((char *)obj + byteize(startoff));
-	ASSERT(XFS_DFORK_Q(dip) && (char *)block == XFS_DFORK_APTR(dip));
+	ASSERT(dip->di_forkoff != 0 && (char *)block == XFS_DFORK_APTR(dip));
 	ASSERT(be16_to_cpu(block->bb_level) > 0);
 	return be16_to_cpu(block->bb_numrecs);
 }
@@ -87,7 +87,7 @@ bmroota_key_offset(
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
 	block = (xfs_bmdr_block_t *)((char *)obj + byteize(startoff));
-	ASSERT(XFS_DFORK_Q(dip) && (char *)block == XFS_DFORK_APTR(dip));
+	ASSERT(dip->di_forkoff != 0 && (char *)block == XFS_DFORK_APTR(dip));
 	ASSERT(be16_to_cpu(block->bb_level) > 0);
 	kp = XFS_BMDR_KEY_ADDR(block, idx);
 	return bitize((int)((char *)kp - (char *)block));
@@ -106,7 +106,7 @@ bmroota_ptr_count(
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
 	block = (xfs_bmdr_block_t *)((char *)obj + byteize(startoff));
-	ASSERT(XFS_DFORK_Q(dip) && (char *)block == XFS_DFORK_APTR(dip));
+	ASSERT(dip->di_forkoff != 0 && (char *)block == XFS_DFORK_APTR(dip));
 	ASSERT(be16_to_cpu(block->bb_level) > 0);
 	return be16_to_cpu(block->bb_numrecs);
 }
@@ -125,7 +125,7 @@ bmroota_ptr_offset(
 	ASSERT(obj == iocur_top->data);
 	dip = obj;
 	block = (xfs_bmdr_block_t *)((char *)obj + byteize(startoff));
-	ASSERT(XFS_DFORK_Q(dip) && (char *)block == XFS_DFORK_APTR(dip));
+	ASSERT(dip->di_forkoff != 0 && (char *)block == XFS_DFORK_APTR(dip));
 	ASSERT(be16_to_cpu(block->bb_level) > 0);
 	pp = XFS_BMDR_PTR_ADDR(block, idx,
 		libxfs_bmdr_maxrecs(XFS_DFORK_ASIZE(dip, mp), 0));
@@ -149,7 +149,7 @@ bmroota_size(
 	dip = obj;
 #ifdef DEBUG
 	block = (xfs_bmdr_block_t *)((char *)obj + byteize(startoff));
-	ASSERT(XFS_DFORK_Q(dip) && (char *)block == XFS_DFORK_APTR(dip));
+	ASSERT(dip->di_forkoff != 0 && (char *)block == XFS_DFORK_APTR(dip));
 #endif
 	return bitize((int)XFS_DFORK_ASIZE(dip, mp));
 }
