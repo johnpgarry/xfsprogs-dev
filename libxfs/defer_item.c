@@ -37,7 +37,7 @@ xfs_extent_free_create_intent(
 }
 
 /* Get an EFD so we can process all the free extents. */
-STATIC void *
+STATIC struct xfs_log_item *
 xfs_extent_free_create_done(
 	struct xfs_trans		*tp,
 	struct xfs_log_item		*intent,
@@ -50,8 +50,8 @@ xfs_extent_free_create_done(
 STATIC int
 xfs_extent_free_finish_item(
 	struct xfs_trans		*tp,
+	struct xfs_log_item		*done,
 	struct list_head		*item,
-	void				*done_item,
 	void				**state)
 {
 	struct xfs_extent_free_item	*free;
@@ -98,8 +98,8 @@ const struct xfs_defer_op_type xfs_extent_free_defer_type = {
 STATIC int
 xfs_agfl_free_finish_item(
 	struct xfs_trans		*tp,
+	struct xfs_log_item		*done,
 	struct list_head		*item,
-	void				*done_item,
 	void				**state)
 {
 	struct xfs_mount		*mp = tp->t_mountp;
@@ -145,7 +145,7 @@ xfs_rmap_update_create_intent(
 }
 
 /* Get an RUD so we can process all the deferred rmap updates. */
-STATIC void *
+STATIC struct xfs_log_item *
 xfs_rmap_update_create_done(
 	struct xfs_trans		*tp,
 	struct xfs_log_item		*intent,
@@ -158,8 +158,8 @@ xfs_rmap_update_create_done(
 STATIC int
 xfs_rmap_update_finish_item(
 	struct xfs_trans		*tp,
+	struct xfs_log_item		*done,
 	struct list_head		*item,
-	void				*done_item,
 	void				**state)
 {
 	struct xfs_rmap_intent		*rmap;
@@ -231,7 +231,7 @@ xfs_refcount_update_create_intent(
 }
 
 /* Get an CUD so we can process all the deferred refcount updates. */
-STATIC void *
+STATIC struct xfs_log_item *
 xfs_refcount_update_create_done(
 	struct xfs_trans		*tp,
 	struct xfs_log_item		*intent,
@@ -244,8 +244,8 @@ xfs_refcount_update_create_done(
 STATIC int
 xfs_refcount_update_finish_item(
 	struct xfs_trans		*tp,
+	struct xfs_log_item		*done,
 	struct list_head		*item,
-	void				*done_item,
 	void				**state)
 {
 	struct xfs_refcount_intent	*refc;
@@ -325,7 +325,7 @@ xfs_bmap_update_create_intent(
 }
 
 /* Get an BUD so we can process all the deferred rmap updates. */
-STATIC void *
+STATIC struct xfs_log_item *
 xfs_bmap_update_create_done(
 	struct xfs_trans		*tp,
 	struct xfs_log_item		*intent,
@@ -338,8 +338,8 @@ xfs_bmap_update_create_done(
 STATIC int
 xfs_bmap_update_finish_item(
 	struct xfs_trans		*tp,
+	struct xfs_log_item		*done,
 	struct list_head		*item,
-	void				*done_item,
 	void				**state)
 {
 	struct xfs_bmap_intent		*bmap;
