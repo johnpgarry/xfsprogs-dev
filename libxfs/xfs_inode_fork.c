@@ -230,6 +230,7 @@ xfs_iformat_data_fork(
 	 * Initialize the extent count early, as the per-format routines may
 	 * depend on it.
 	 */
+	ip->i_df.if_format = dip->di_format;
 	ip->i_df.if_nextents = be32_to_cpu(dip->di_nextents);
 
 	switch (inode->i_mode & S_IFMT) {
@@ -243,7 +244,7 @@ xfs_iformat_data_fork(
 	case S_IFREG:
 	case S_IFLNK:
 	case S_IFDIR:
-		switch (dip->di_format) {
+		switch (ip->i_df.if_format) {
 		case XFS_DINODE_FMT_LOCAL:
 			error = xfs_iformat_local(ip, dip, XFS_DATA_FORK,
 					be64_to_cpu(dip->di_size));
@@ -289,9 +290,12 @@ xfs_iformat_attr_fork(
 	 * depend on it.
 	 */
 	ip->i_afp = kmem_zone_zalloc(xfs_ifork_zone, KM_NOFS);
+	ip->i_afp->if_format = dip->di_aformat;
+	if (unlikely(ip->i_afp->if_format == 0)) /* pre IRIX 6.2 file system */
+		ip->i_afp->if_format = XFS_DINODE_FMT_EXTENTS;
 	ip->i_afp->if_nextents = be16_to_cpu(dip->di_anextents);
 
-	switch (dip->di_aformat) {
+	switch (ip->i_afp->if_format) {
 	case XFS_DINODE_FMT_LOCAL:
 		error = xfs_iformat_local(ip, dip, XFS_ATTR_FORK,
 				xfs_dfork_attr_shortform_size(dip));
@@ -514,7 +518,7 @@ xfs_idestroy_fork(
 	 * not local then we may or may not have an extents list,
 	 * so check and free it up if we do.
 	 */
-	if (XFS_IFORK_FORMAT(ip, whichfork) == XFS_DINODE_FMT_LOCAL) {
+	if (ifp->if_format == XFS_DINODE_FMT_LOCAL) {
 		if (ifp->if_u1.if_data != NULL) {
 			kmem_free(ifp->if_u1.if_data);
 			ifp->if_u1.if_data = NULL;
@@ -611,7 +615,7 @@ xfs_iflush_fork(
 	}
 	cp = XFS_DFORK_PTR(dip, whichfork);
 	mp = ip->i_mount;
-	switch (XFS_IFORK_FORMAT(ip, whichfork)) {
+	switch (ifp->if_format) {
 	case XFS_DINODE_FMT_LOCAL:
 		if ((iip->ili_fields & dataflag[whichfork]) &&
 		    (ifp->if_bytes > 0)) {
@@ -684,7 +688,7 @@ xfs_ifork_init_cow(
 	ip->i_cowfp = kmem_zone_zalloc(xfs_ifork_zone,
 				       KM_NOFS);
 	ip->i_cowfp->if_flags = XFS_IFEXTENTS;
-	ip->i_cformat = XFS_DINODE_FMT_EXTENTS;
+	ip->i_cowfp->if_format = XFS_DINODE_FMT_EXTENTS;
 }
 
 /* Verify the inline contents of the data fork of an inode. */
