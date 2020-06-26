@@ -23,11 +23,8 @@
 
 /* Dummy defer item ops, since we don't do logging. */
 
-/* Extent Freeing */
-
-/* Get an EFI. */
-STATIC struct xfs_log_item *
-xfs_extent_free_create_intent(
+static struct xfs_log_item *
+noop_create_intent(
 	struct xfs_trans		*tp,
 	struct list_head		*items,
 	unsigned int			count,
@@ -36,15 +33,22 @@ xfs_extent_free_create_intent(
 	return NULL;
 }
 
-/* Get an EFD so we can process all the free extents. */
-STATIC struct xfs_log_item *
-xfs_extent_free_create_done(
+static struct xfs_log_item *
+noop_create_done(
 	struct xfs_trans		*tp,
 	struct xfs_log_item		*intent,
 	unsigned int			count)
 {
 	return NULL;
 }
+
+static void
+noop_abort_intent(
+	struct xfs_log_item		*intent)
+{
+}
+
+/* Extent Freeing */
 
 /* Process a free extent. */
 STATIC int
@@ -65,13 +69,6 @@ xfs_extent_free_finish_item(
 	return error;
 }
 
-/* Abort all pending EFIs. */
-STATIC void
-xfs_extent_free_abort_intent(
-	struct xfs_log_item		*intent)
-{
-}
-
 /* Cancel a free extent. */
 STATIC void
 xfs_extent_free_cancel_item(
@@ -84,9 +81,9 @@ xfs_extent_free_cancel_item(
 }
 
 const struct xfs_defer_op_type xfs_extent_free_defer_type = {
-	.create_intent	= xfs_extent_free_create_intent,
-	.abort_intent	= xfs_extent_free_abort_intent,
-	.create_done	= xfs_extent_free_create_done,
+	.create_intent	= noop_create_intent,
+	.abort_intent	= noop_abort_intent,
+	.create_done	= noop_create_done,
 	.finish_item	= xfs_extent_free_finish_item,
 	.cancel_item	= xfs_extent_free_cancel_item,
 };
@@ -124,35 +121,14 @@ xfs_agfl_free_finish_item(
 
 /* sub-type with special handling for AGFL deferred frees */
 const struct xfs_defer_op_type xfs_agfl_free_defer_type = {
-	.create_intent	= xfs_extent_free_create_intent,
-	.abort_intent	= xfs_extent_free_abort_intent,
-	.create_done	= xfs_extent_free_create_done,
+	.create_intent	= noop_create_intent,
+	.abort_intent	= noop_abort_intent,
+	.create_done	= noop_create_done,
 	.finish_item	= xfs_agfl_free_finish_item,
 	.cancel_item	= xfs_extent_free_cancel_item,
 };
 
 /* Reverse Mapping */
-
-/* Get an RUI. */
-STATIC struct xfs_log_item *
-xfs_rmap_update_create_intent(
-	struct xfs_trans		*tp,
-	struct list_head		*items,
-	unsigned int			count,
-	bool				sort)
-{
-	return NULL;
-}
-
-/* Get an RUD so we can process all the deferred rmap updates. */
-STATIC struct xfs_log_item *
-xfs_rmap_update_create_done(
-	struct xfs_trans		*tp,
-	struct xfs_log_item		*intent,
-	unsigned int			count)
-{
-	return NULL;
-}
 
 /* Process a deferred rmap update. */
 STATIC int
@@ -188,13 +164,6 @@ xfs_rmap_update_finish_cleanup(
 	xfs_rmap_finish_one_cleanup(tp, rcur, error);
 }
 
-/* Abort all pending RUIs. */
-STATIC void
-xfs_rmap_update_abort_intent(
-	struct xfs_log_item		*intent)
-{
-}
-
 /* Cancel a deferred rmap update. */
 STATIC void
 xfs_rmap_update_cancel_item(
@@ -207,36 +176,15 @@ xfs_rmap_update_cancel_item(
 }
 
 const struct xfs_defer_op_type xfs_rmap_update_defer_type = {
-	.create_intent	= xfs_rmap_update_create_intent,
-	.abort_intent	= xfs_rmap_update_abort_intent,
-	.create_done	= xfs_rmap_update_create_done,
+	.create_intent	= noop_create_intent,
+	.abort_intent	= noop_abort_intent,
+	.create_done	= noop_create_done,
 	.finish_item	= xfs_rmap_update_finish_item,
 	.finish_cleanup = xfs_rmap_update_finish_cleanup,
 	.cancel_item	= xfs_rmap_update_cancel_item,
 };
 
 /* Reference Counting */
-
-/* Get an CUI. */
-STATIC struct xfs_log_item *
-xfs_refcount_update_create_intent(
-	struct xfs_trans		*tp,
-	struct list_head		*items,
-	unsigned int			count,
-	bool				sort)
-{
-	return NULL;
-}
-
-/* Get an CUD so we can process all the deferred refcount updates. */
-STATIC struct xfs_log_item *
-xfs_refcount_update_create_done(
-	struct xfs_trans		*tp,
-	struct xfs_log_item		*intent,
-	unsigned int			count)
-{
-	return NULL;
-}
 
 /* Process a deferred refcount update. */
 STATIC int
@@ -280,13 +228,6 @@ xfs_refcount_update_finish_cleanup(
 	xfs_refcount_finish_one_cleanup(tp, rcur, error);
 }
 
-/* Abort all pending CUIs. */
-STATIC void
-xfs_refcount_update_abort_intent(
-	struct xfs_log_item		*intent)
-{
-}
-
 /* Cancel a deferred refcount update. */
 STATIC void
 xfs_refcount_update_cancel_item(
@@ -299,9 +240,9 @@ xfs_refcount_update_cancel_item(
 }
 
 const struct xfs_defer_op_type xfs_refcount_update_defer_type = {
-	.create_intent	= xfs_refcount_update_create_intent,
-	.abort_intent	= xfs_refcount_update_abort_intent,
-	.create_done	= xfs_refcount_update_create_done,
+	.create_intent	= noop_create_intent,
+	.abort_intent	= noop_abort_intent,
+	.create_done	= noop_create_done,
 	.finish_item	= xfs_refcount_update_finish_item,
 	.finish_cleanup = xfs_refcount_update_finish_cleanup,
 	.cancel_item	= xfs_refcount_update_cancel_item,
@@ -309,28 +250,7 @@ const struct xfs_defer_op_type xfs_refcount_update_defer_type = {
 
 /* Inode Block Mapping */
 
-/* Get an BUI. */
-STATIC struct xfs_log_item *
-xfs_bmap_update_create_intent(
-	struct xfs_trans		*tp,
-	struct list_head		*items,
-	unsigned int			count,
-	bool				sort)
-{
-	return NULL;
-}
-
-/* Get an BUD so we can process all the deferred rmap updates. */
-STATIC struct xfs_log_item *
-xfs_bmap_update_create_done(
-	struct xfs_trans		*tp,
-	struct xfs_log_item		*intent,
-	unsigned int			count)
-{
-	return NULL;
-}
-
-/* Process a deferred rmap update. */
+/* Process a deferred bmap update. */
 STATIC int
 xfs_bmap_update_finish_item(
 	struct xfs_trans		*tp,
@@ -360,14 +280,7 @@ xfs_bmap_update_finish_item(
 	return error;
 }
 
-/* Abort all pending BUIs. */
-STATIC void
-xfs_bmap_update_abort_intent(
-	struct xfs_log_item		*intent)
-{
-}
-
-/* Cancel a deferred rmap update. */
+/* Cancel a deferred bmap update. */
 STATIC void
 xfs_bmap_update_cancel_item(
 	struct list_head		*item)
@@ -379,9 +292,9 @@ xfs_bmap_update_cancel_item(
 }
 
 const struct xfs_defer_op_type xfs_bmap_update_defer_type = {
-	.create_intent	= xfs_bmap_update_create_intent,
-	.abort_intent	= xfs_bmap_update_abort_intent,
-	.create_done	= xfs_bmap_update_create_done,
+	.create_intent	= noop_create_intent,
+	.abort_intent	= noop_abort_intent,
+	.create_done	= noop_create_done,
 	.finish_item	= xfs_bmap_update_finish_item,
 	.cancel_item	= xfs_bmap_update_cancel_item,
 };
