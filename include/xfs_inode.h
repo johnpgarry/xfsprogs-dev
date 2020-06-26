@@ -78,7 +78,6 @@ typedef struct xfs_inode {
 	unsigned int		i_cformat;	/* format of cow fork */
 
 	xfs_fsize_t		i_size;		/* in-memory size */
-	struct xfs_ifork_ops	*i_fork_ops;	/* fork verifiers */
 	struct inode		i_vnode;
 } xfs_inode_t;
 
