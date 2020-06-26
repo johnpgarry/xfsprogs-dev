@@ -158,7 +158,6 @@ extern int	libxfs_iflush_int (struct xfs_inode *, struct xfs_buf *);
 extern struct timespec64 current_time(struct inode *inode);
 
 /* Inode Cache Interfaces */
-extern bool	libxfs_inode_verify_forks(struct xfs_inode *ip);
 extern int	libxfs_iget(struct xfs_mount *mp, struct xfs_trans *tp,
 				xfs_ino_t ino, uint lock_flags,
 				struct xfs_inode **ipp);
