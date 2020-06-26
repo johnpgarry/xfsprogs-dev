@@ -1268,19 +1268,24 @@ out_destroy:
 }
 
 static void
-libxfs_idestroy(xfs_inode_t *ip)
+libxfs_idestroy(
+	struct xfs_inode	*ip)
 {
 	switch (VFS_I(ip)->i_mode & S_IFMT) {
 		case S_IFREG:
 		case S_IFDIR:
 		case S_IFLNK:
-			libxfs_idestroy_fork(ip, XFS_DATA_FORK);
+			libxfs_idestroy_fork(&ip->i_df);
 			break;
 	}
-	if (ip->i_afp)
-		libxfs_idestroy_fork(ip, XFS_ATTR_FORK);
-	if (ip->i_cowfp)
-		xfs_idestroy_fork(ip, XFS_COW_FORK);
+	if (ip->i_afp) {
+		libxfs_idestroy_fork(ip->i_afp);
+		kmem_cache_free(xfs_ifork_zone, ip->i_afp);
+	}
+	if (ip->i_cowfp) {
+		libxfs_idestroy_fork(ip->i_cowfp);
+		kmem_cache_free(xfs_ifork_zone, ip->i_cowfp);
+	}
 }
 
 void
