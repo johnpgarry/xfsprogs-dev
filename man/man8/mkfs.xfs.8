@@ -398,6 +398,16 @@ will have this extent size hint applied.
 The value must be provided in units of filesystem blocks.
 Directories will pass on this hint to newly created regular files and
 directories.
+.TP
+.BI daxinherit= value
+If set, all inodes created by
+.B mkfs.xfs
+will be created with the DAX flag set.
+Directories will pass on this flag to newly created regular files and
+directories.
+By default,
+.B mkfs.xfs
+will not enable DAX mode.
 .RE
 .TP
 .B \-f
