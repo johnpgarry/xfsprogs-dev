@@ -153,8 +153,7 @@ attr_set_f(
 		memset(args.value, 'v', args.valuelen);
 	}
 
-	if (libxfs_iget(mp, NULL, iocur_top->ino, 0, &args.dp,
-			&xfs_default_ifork_ops)) {
+	if (libxfs_iget(mp, NULL, iocur_top->ino, 0, &args.dp)) {
 		dbprintf(_("failed to iget inode %llu\n"),
 			(unsigned long long)iocur_top->ino);
 		goto out;
@@ -238,8 +237,7 @@ attr_remove_f(
 		return 0;
 	}
 
-	if (libxfs_iget(mp, NULL, iocur_top->ino, 0, &args.dp,
-			&xfs_default_ifork_ops)) {
+	if (libxfs_iget(mp, NULL, iocur_top->ino, 0, &args.dp)) {
 		dbprintf(_("failed to iget inode %llu\n"),
 			(unsigned long long)iocur_top->ino);
 		goto out;

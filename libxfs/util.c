@@ -247,8 +247,7 @@ libxfs_ialloc(
 	}
 	ASSERT(*ialloc_context == NULL);
 
-	error = libxfs_iget(tp->t_mountp, tp, ino, 0, &ip,
-			&xfs_default_ifork_ops);
+	error = libxfs_iget(tp->t_mountp, tp, ino, 0, &ip);
 	if (error != 0)
 		return error;
 	ASSERT(ip != NULL);
