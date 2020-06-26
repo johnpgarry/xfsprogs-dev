@@ -155,6 +155,10 @@ if there are two allocation groups and the two superblocks do not
 agree on the filesystem geometry.  Only use this option if you validated
 the geometry yourself and know what you are doing.  If In doubt run
 in no modify mode first.
+.TP
+.BI noquota
+Don't validate quota counters at all.
+Quotacheck will be run during the next mount to recalculate all values.
 .RE
 .TP
 .B \-t " interval"
