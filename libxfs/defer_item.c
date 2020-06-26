@@ -26,7 +26,7 @@
 /* Extent Freeing */
 
 /* Get an EFI. */
-STATIC void *
+STATIC struct xfs_log_item *
 xfs_extent_free_create_intent(
 	struct xfs_trans		*tp,
 	struct list_head		*items,
@@ -40,7 +40,7 @@ xfs_extent_free_create_intent(
 STATIC void *
 xfs_extent_free_create_done(
 	struct xfs_trans		*tp,
-	void				*intent,
+	struct xfs_log_item		*intent,
 	unsigned int			count)
 {
 	return NULL;
@@ -68,7 +68,7 @@ xfs_extent_free_finish_item(
 /* Abort all pending EFIs. */
 STATIC void
 xfs_extent_free_abort_intent(
-	void				*intent)
+	struct xfs_log_item		*intent)
 {
 }
 
@@ -134,7 +134,7 @@ const struct xfs_defer_op_type xfs_agfl_free_defer_type = {
 /* Reverse Mapping */
 
 /* Get an RUI. */
-STATIC void *
+STATIC struct xfs_log_item *
 xfs_rmap_update_create_intent(
 	struct xfs_trans		*tp,
 	struct list_head		*items,
@@ -148,7 +148,7 @@ xfs_rmap_update_create_intent(
 STATIC void *
 xfs_rmap_update_create_done(
 	struct xfs_trans		*tp,
-	void				*intent,
+	struct xfs_log_item		*intent,
 	unsigned int			count)
 {
 	return NULL;
@@ -193,7 +193,7 @@ xfs_rmap_update_finish_cleanup(
 /* Abort all pending RUIs. */
 STATIC void
 xfs_rmap_update_abort_intent(
-	void				*intent)
+	struct xfs_log_item		*intent)
 {
 }
 
@@ -220,7 +220,7 @@ const struct xfs_defer_op_type xfs_rmap_update_defer_type = {
 /* Reference Counting */
 
 /* Get an CUI. */
-STATIC void *
+STATIC struct xfs_log_item *
 xfs_refcount_update_create_intent(
 	struct xfs_trans		*tp,
 	struct list_head		*items,
@@ -234,7 +234,7 @@ xfs_refcount_update_create_intent(
 STATIC void *
 xfs_refcount_update_create_done(
 	struct xfs_trans		*tp,
-	void				*intent,
+	struct xfs_log_item		*intent,
 	unsigned int			count)
 {
 	return NULL;
@@ -287,7 +287,7 @@ xfs_refcount_update_finish_cleanup(
 /* Abort all pending CUIs. */
 STATIC void
 xfs_refcount_update_abort_intent(
-	void				*intent)
+	struct xfs_log_item		*intent)
 {
 }
 
@@ -314,7 +314,7 @@ const struct xfs_defer_op_type xfs_refcount_update_defer_type = {
 /* Inode Block Mapping */
 
 /* Get an BUI. */
-STATIC void *
+STATIC struct xfs_log_item *
 xfs_bmap_update_create_intent(
 	struct xfs_trans		*tp,
 	struct list_head		*items,
@@ -328,7 +328,7 @@ xfs_bmap_update_create_intent(
 STATIC void *
 xfs_bmap_update_create_done(
 	struct xfs_trans		*tp,
-	void				*intent,
+	struct xfs_log_item		*intent,
 	unsigned int			count)
 {
 	return NULL;
@@ -367,7 +367,7 @@ xfs_bmap_update_finish_item(
 /* Abort all pending BUIs. */
 STATIC void
 xfs_bmap_update_abort_intent(
-	void				*intent)
+	struct xfs_log_item		*intent)
 {
 }
 
