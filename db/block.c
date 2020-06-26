@@ -77,7 +77,7 @@ ablock_f(
 		dbprintf(_("no current inode\n"));
 		return 0;
 	}
-	haveattr = XFS_DFORK_Q((xfs_dinode_t *)iocur_top->data);
+	haveattr = ((struct xfs_dinode *)iocur_top->data)->di_forkoff;
 	pop_cur();
 	if (!haveattr) {
 		dbprintf(_("no attribute data for file\n"));
