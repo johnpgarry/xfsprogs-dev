@@ -130,6 +130,16 @@ state_timelimit(
 		time_to_string(timelimit, VERBOSE_FLAG | ABSOLUTE_FLAG));
 }
 
+static void
+state_warnlimit(
+	FILE		*fp,
+	uint		form,
+	uint16_t	warnlimit)
+{
+	fprintf(fp, _("%s max warnings: %u\n"),
+		form_to_string(form), warnlimit);
+}
+
 /*
  * fs_quota_stat holds a subset of fs_quota_statv; this copies
  * the smaller into the larger, leaving any not-present fields
@@ -218,7 +228,11 @@ state_quotafile_mount(
 				sv.qs_flags & XFS_QUOTA_PDQ_ENFD);
 
 	state_timelimit(fp, XFS_BLOCK_QUOTA, sv.qs_btimelimit);
+	state_warnlimit(fp, XFS_BLOCK_QUOTA, sv.qs_bwarnlimit);
+
 	state_timelimit(fp, XFS_INODE_QUOTA, sv.qs_itimelimit);
+	state_warnlimit(fp, XFS_INODE_QUOTA, sv.qs_iwarnlimit);
+
 	state_timelimit(fp, XFS_RTBLOCK_QUOTA, sv.qs_rtbtimelimit);
 }
 
