@@ -315,8 +315,8 @@ phase4(xfs_mount_t *mp)
 			case XR_E_BAD_STATE:
 			default:
 				do_warn(
-				_("unknown block state, ag %d, block %d\n"),
-					i, j);
+				_("unknown block state, ag %d, blocks %u-%u\n"),
+					i, j, j + blen - 1);
 				/* fall through .. */
 			case XR_E_UNKNOWN:
 			case XR_E_FREE:
