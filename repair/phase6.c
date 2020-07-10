@@ -2425,6 +2425,9 @@ out_fix:
 		*num_illegal = 0;
 		*need_dot = 0;
 	} else {
+		if (fixit || dotdot_update)
+			do_warn(
+	_("would rebuild directory inode %" PRIu64 "\n"), ino);
 		for (i = 0; i < num_bps; i++)
 			if (bplist[i])
 				libxfs_buf_relse(bplist[i]);
