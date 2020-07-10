@@ -53,5 +53,7 @@ int bulkload_add_blocks(struct bulkload *bkl, xfs_fsblock_t fsbno,
 void bulkload_destroy(struct bulkload *bkl, int error);
 int bulkload_claim_block(struct xfs_btree_cur *cur, struct bulkload *bkl,
 		union xfs_btree_ptr *ptr);
+void bulkload_estimate_ag_slack(struct repair_ctx *sc,
+		struct xfs_btree_bload *bload, unsigned int free);
 
 #endif /* __XFS_REPAIR_BULKLOAD_H__ */
