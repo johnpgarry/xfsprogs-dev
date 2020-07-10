@@ -369,8 +369,7 @@ verify_sb(char *sb_buf, xfs_sb_t *sb, int is_primary_sb)
 		return(XR_BAD_VERSION);
 
 	/* does sb think mkfs really finished ? */
-
-	if (is_primary_sb && sb->sb_inprogress == 1)
+	if (is_primary_sb && sb->sb_inprogress)
 		return(XR_BAD_INPROGRESS);
 
 	/*
