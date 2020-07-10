@@ -307,11 +307,11 @@ limit_f(
 
 
 	id = id_from_string(name, type);
-	if (id >= 0)
-		set_limits(id, type, mask, fs_path->fs_name,
-			   &bsoft, &bhard, &isoft, &ihard, &rtbsoft, &rtbhard);
-	else
-		exitcode = -1;
+	if (id == -1)
+		return 0;
+
+	set_limits(id, type, mask, fs_path->fs_name,
+		   &bsoft, &bhard, &isoft, &ihard, &rtbsoft, &rtbhard);
 	return 0;
 }
 
@@ -545,9 +545,10 @@ timer_f(
 	if (name)
 		id = id_from_string(name, type);
 
-	if (id >= 0)
-		set_timer(id, type, mask, fs_path->fs_name, value);
+	if (id == -1)
+		return 0;
 
+	set_timer(id, type, mask, fs_path->fs_name, value);
 	return 0;
 }
 
@@ -642,11 +643,10 @@ warn_f(
 	}
 
 	id = id_from_string(name, type);
-	if (id >= 0)
-		set_warnings(id, type, mask, fs_path->fs_name, value);
-	else
-		exitcode = -1;
+	if (id == -1)
+		return 0;
 
+	set_warnings(id, type, mask, fs_path->fs_name, value);
 	return 0;
 }
 
