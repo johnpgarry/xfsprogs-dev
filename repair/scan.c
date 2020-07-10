@@ -2441,6 +2441,8 @@ scan_ag(
 		objname = _("root superblock");
 		goto out_free_sb;
 	}
+	if (sbbuf->b_error == -EFSBADCRC)
+		do_warn(_("superblock has bad CRC for ag %d\n"), agno);
 	libxfs_sb_from_disk(sb, sbbuf->b_addr);
 
 	error = salvage_buffer(mp->m_dev,
@@ -2450,6 +2452,8 @@ scan_ag(
 		objname = _("agf block");
 		goto out_free_sbbuf;
 	}
+	if (agfbuf->b_error == -EFSBADCRC)
+		do_warn(_("agf has bad CRC for ag %d\n"), agno);
 	agf = agfbuf->b_addr;
 
 	error = salvage_buffer(mp->m_dev,
@@ -2459,6 +2463,8 @@ scan_ag(
 		objname = _("agi block");
 		goto out_free_agfbuf;
 	}
+	if (agibuf->b_error == -EFSBADCRC)
+		do_warn(_("agi has bad CRC for ag %d\n"), agno);
 	agi = agibuf->b_addr;
 
 	/* fix up bad ag headers */
