@@ -5,6 +5,7 @@
  */
 
 #include "libxfs.h"
+#include "libfrog/bitmap.h"
 #include "avl.h"
 #include "globals.h"
 #include "agheader.h"
@@ -211,7 +212,7 @@ build_agf_agfl(
 	struct bt_rebuild	*btr_cnt,
 	struct bt_rebuild	*btr_rmap,
 	struct bt_rebuild	*btr_refc,
-	struct xfs_slab		*lost_fsb)
+	struct bitmap		*lost_blocks)
 {
 	struct extent_tree_node	*ext_ptr;
 	struct xfs_buf		*agf_buf, *agfl_buf;
@@ -428,7 +429,7 @@ static void
 phase5_func(
 	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno,
-	struct xfs_slab		*lost_fsb)
+	struct bitmap		*lost_blocks)
 {
 	struct repair_ctx	sc = { .mp = mp, };
 	struct bt_rebuild	btr_bno;
@@ -543,7 +544,7 @@ _("unable to rebuild AG %u.  Not enough free space in on-disk AG.\n"),
 	 * set up agf and agfl
 	 */
 	build_agf_agfl(mp, agno, &btr_bno, &btr_cnt, &btr_rmap, &btr_refc,
-			lost_fsb);
+			lost_blocks);
 
 	build_inode_btrees(&sc, agno, &btr_ino, &btr_fino);
 
@@ -553,15 +554,15 @@ _("unable to rebuild AG %u.  Not enough free space in on-disk AG.\n"),
 	/*
 	 * tear down cursors
 	 */
-	finish_rebuild(mp, &btr_bno, lost_fsb);
-	finish_rebuild(mp, &btr_cnt, lost_fsb);
-	finish_rebuild(mp, &btr_ino, lost_fsb);
+	finish_rebuild(mp, &btr_bno, lost_blocks);
+	finish_rebuild(mp, &btr_cnt, lost_blocks);
+	finish_rebuild(mp, &btr_ino, lost_blocks);
 	if (xfs_sb_version_hasfinobt(&mp->m_sb))
-		finish_rebuild(mp, &btr_fino, lost_fsb);
+		finish_rebuild(mp, &btr_fino, lost_blocks);
 	if (xfs_sb_version_hasrmapbt(&mp->m_sb))
-		finish_rebuild(mp, &btr_rmap, lost_fsb);
+		finish_rebuild(mp, &btr_rmap, lost_blocks);
 	if (xfs_sb_version_hasreflink(&mp->m_sb))
-		finish_rebuild(mp, &btr_refc, lost_fsb);
+		finish_rebuild(mp, &btr_refc, lost_blocks);
 
 	/*
 	 * release the incore per-AG bno/bcnt trees so the extent nodes
@@ -572,48 +573,33 @@ _("unable to rebuild AG %u.  Not enough free space in on-disk AG.\n"),
 	PROG_RPT_INC(prog_rpt_done[agno], 1);
 }
 
-/* Inject lost blocks back into the filesystem. */
+/* Inject this unused space back into the filesystem. */
 static int
-inject_lost_blocks(
-	struct xfs_mount	*mp,
-	struct xfs_slab		*lost_fsbs)
+inject_lost_extent(
+	uint64_t		start,
+	uint64_t		length,
+	void			*arg)
 {
-	struct xfs_trans	*tp = NULL;
-	struct xfs_slab_cursor	*cur = NULL;
-	xfs_fsblock_t		*fsb;
+	struct xfs_mount	*mp = arg;
+	struct xfs_trans	*tp;
 	int			error;
 
-	error = init_slab_cursor(lost_fsbs, NULL, &cur);
+	error = -libxfs_trans_alloc_rollable(mp, 16, &tp);
 	if (error)
 		return error;
 
-	while ((fsb = pop_slab_cursor(cur)) != NULL) {
-		error = -libxfs_trans_alloc_rollable(mp, 16, &tp);
-		if (error)
-			goto out_cancel;
+	error = -libxfs_free_extent(tp, start, length,
+			&XFS_RMAP_OINFO_ANY_OWNER, XFS_AG_RESV_NONE);
+	if (error)
+		return error;
 
-		error = -libxfs_free_extent(tp, *fsb, 1,
-				&XFS_RMAP_OINFO_ANY_OWNER, XFS_AG_RESV_NONE);
-		if (error)
-			goto out_cancel;
-
-		error = -libxfs_trans_commit(tp);
-		if (error)
-			goto out_cancel;
-		tp = NULL;
-	}
-
-out_cancel:
-	if (tp)
-		libxfs_trans_cancel(tp);
-	free_slab_cursor(&cur);
-	return error;
+	return -libxfs_trans_commit(tp);
 }
 
 void
 phase5(xfs_mount_t *mp)
 {
-	struct xfs_slab		*lost_fsb;
+	struct bitmap		*lost_blocks = NULL;
 	xfs_agnumber_t		agno;
 	int			error;
 
@@ -656,12 +642,12 @@ phase5(xfs_mount_t *mp)
 	if (sb_fdblocks_ag == NULL)
 		do_error(_("cannot alloc sb_fdblocks_ag buffers\n"));
 
-	error = init_slab(&lost_fsb, sizeof(xfs_fsblock_t));
+	error = bitmap_alloc(&lost_blocks);
 	if (error)
-		do_error(_("cannot alloc lost block slab\n"));
+		do_error(_("cannot alloc lost block bitmap\n"));
 
 	for (agno = 0; agno < mp->m_sb.sb_agcount; agno++)
-		phase5_func(mp, agno, lost_fsb);
+		phase5_func(mp, agno, lost_blocks);
 
 	print_final_rpt();
 
@@ -704,10 +690,10 @@ _("unable to add AG %u reverse-mapping data to btree.\n"), agno);
 	 * Put blocks that were unnecessarily reserved for btree
 	 * reconstruction back into the filesystem free space data.
 	 */
-	error = inject_lost_blocks(mp, lost_fsb);
+	error = bitmap_iterate(lost_blocks, inject_lost_extent, mp);
 	if (error)
 		do_error(_("Unable to reinsert lost blocks into filesystem.\n"));
-	free_slab(&lost_fsb);
+	bitmap_free(&lost_blocks);
 
 	bad_ino_btree = 0;
 

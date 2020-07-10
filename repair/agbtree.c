@@ -5,6 +5,7 @@
  */
 #include <libxfs.h>
 #include "err_protos.h"
+#include "libfrog/bitmap.h"
 #include "slab.h"
 #include "rmap.h"
 #include "incore.h"
@@ -131,21 +132,21 @@ void
 finish_rebuild(
 	struct xfs_mount	*mp,
 	struct bt_rebuild	*btr,
-	struct xfs_slab		*lost_fsb)
+	struct bitmap		*lost_blocks)
 {
 	struct bulkload_resv	*resv, *n;
+	int			error;
 
 	for_each_bulkload_reservation(&btr->newbt, resv, n) {
-		while (resv->used < resv->len) {
-			xfs_fsblock_t	fsb = resv->fsbno + resv->used;
-			int		error;
+		if (resv->used == resv->len)
+			continue;
 
-			error = slab_add(lost_fsb, &fsb);
-			if (error)
-				do_error(
-_("Insufficient memory saving lost blocks.\n"));
-			resv->used++;
-		}
+		error = bitmap_set(lost_blocks, resv->fsbno + resv->used,
+				   resv->len - resv->used);
+		if (error)
+			do_error(
+_("Insufficient memory saving lost blocks, err=%d.\n"), error);
+		resv->used = resv->len;
 	}
 
 	bulkload_destroy(&btr->newbt, 0);
