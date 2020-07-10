@@ -585,3 +585,74 @@ _("Error %d while creating rmap btree for AG %u.\n"), error, agno);
 	libxfs_btree_del_cursor(btr->cur, 0);
 	free_slab_cursor(&btr->slab_cursor);
 }
+
+/* rebuild the refcount tree */
+
+/* Grab one refcount record. */
+static int
+get_refcountbt_record(
+	struct xfs_btree_cur		*cur,
+	void				*priv)
+{
+	struct xfs_refcount_irec	*rec;
+	struct bt_rebuild		*btr = priv;
+
+	rec = pop_slab_cursor(btr->slab_cursor);
+	memcpy(&cur->bc_rec.rc, rec, sizeof(struct xfs_refcount_irec));
+	return 0;
+}
+
+/* Set up the refcount rebuild parameters. */
+void
+init_refc_cursor(
+	struct repair_ctx	*sc,
+	xfs_agnumber_t		agno,
+	unsigned int		free_space,
+	struct bt_rebuild	*btr)
+{
+	int			error;
+
+	if (!xfs_sb_version_hasreflink(&sc->mp->m_sb))
+		return;
+
+	init_rebuild(sc, &XFS_RMAP_OINFO_REFC, free_space, btr);
+	btr->cur = libxfs_refcountbt_stage_cursor(sc->mp, &btr->newbt.afake,
+			agno);
+
+	btr->bload.get_record = get_refcountbt_record;
+	btr->bload.claim_block = rebuild_claim_block;
+
+	/* Compute how many blocks we'll need. */
+	error = -libxfs_btree_bload_compute_geometry(btr->cur, &btr->bload,
+			refcount_record_count(sc->mp, agno));
+	if (error)
+		do_error(
+_("Unable to compute refcount btree geometry, error %d.\n"), error);
+
+	reserve_btblocks(sc->mp, agno, btr, btr->bload.nr_blocks);
+}
+
+/* Rebuild a refcount btree. */
+void
+build_refcount_tree(
+	struct repair_ctx	*sc,
+	xfs_agnumber_t		agno,
+	struct bt_rebuild	*btr)
+{
+	int			error;
+
+	error = init_refcount_cursor(agno, &btr->slab_cursor);
+	if (error)
+		do_error(
+_("Insufficient memory to construct refcount cursor.\n"));
+
+	/* Add all observed refcount records. */
+	error = -libxfs_btree_bload(btr->cur, &btr->bload, btr);
+	if (error)
+		do_error(
+_("Error %d while creating refcount btree for AG %u.\n"), error, agno);
+
+	/* Since we're not writing the AGF yet, no need to commit the cursor */
+	libxfs_btree_del_cursor(btr->cur, 0);
+	free_slab_cursor(&btr->slab_cursor);
+}
