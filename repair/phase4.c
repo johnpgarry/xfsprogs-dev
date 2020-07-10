@@ -306,6 +306,12 @@ phase4(xfs_mount_t *mp)
 		for (j = ag_hdr_block; j < ag_end; j += blen)  {
 			bstate = get_bmap_ext(i, j, ag_end, &blen);
 			switch (bstate) {
+			case XR_E_FREE1:
+				if (no_modify)
+					do_warn(
+	_("free space (%u,%u-%u) only seen by one free space btree\n"),
+						i, j, j + blen - 1);
+				break;
 			case XR_E_BAD_STATE:
 			default:
 				do_warn(
@@ -313,7 +319,6 @@ phase4(xfs_mount_t *mp)
 					i, j);
 				/* fall through .. */
 			case XR_E_UNKNOWN:
-			case XR_E_FREE1:
 			case XR_E_FREE:
 			case XR_E_INUSE:
 			case XR_E_INUSE_FS:
