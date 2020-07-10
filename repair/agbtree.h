@@ -49,4 +49,9 @@ void init_ino_cursors(struct repair_ctx *sc, xfs_agnumber_t agno,
 void build_inode_btrees(struct repair_ctx *sc, xfs_agnumber_t agno,
 		struct bt_rebuild *btr_ino, struct bt_rebuild *btr_fino);
 
+void init_rmapbt_cursor(struct repair_ctx *sc, xfs_agnumber_t agno,
+		unsigned int free_space, struct bt_rebuild *btr);
+void build_rmap_tree(struct repair_ctx *sc, xfs_agnumber_t agno,
+		struct bt_rebuild *btr);
+
 #endif /* __XFS_REPAIR_AG_BTREE_H__ */
