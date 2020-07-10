@@ -348,11 +348,32 @@ finish_cursor(bt_status_t *curs)
  * failure at runtime. Hence leave a couple of records slack space in
  * each block to allow immediate modification of the tree without
  * requiring splits to be done.
- *
- * XXX(hch): any reason we don't just look at mp->m_alloc_mxr?
  */
-#define XR_ALLOC_BLOCK_MAXRECS(mp, level) \
-	(libxfs_allocbt_maxrecs((mp), (mp)->m_sb.sb_blocksize, (level) == 0) - 2)
+static void
+compute_level_geometry(
+	struct xfs_mount	*mp,
+	struct bt_stat_level	*lptr,
+	uint64_t		nr_this_level,
+	int			slack,
+	bool			leaf)
+{
+	unsigned int		maxrecs = mp->m_alloc_mxr[!leaf];
+	unsigned int		desired_npb;
+
+	desired_npb = max(mp->m_alloc_mnr[!leaf], maxrecs - slack);
+	lptr->num_recs_tot = nr_this_level;
+	lptr->num_blocks = max(1ULL, nr_this_level / desired_npb);
+
+	lptr->num_recs_pb = nr_this_level / lptr->num_blocks;
+	lptr->modulo = nr_this_level % lptr->num_blocks;
+	if (lptr->num_recs_pb > maxrecs ||
+	    (lptr->num_recs_pb == maxrecs && lptr->modulo)) {
+		lptr->num_blocks++;
+
+		lptr->num_recs_pb = nr_this_level / lptr->num_blocks;
+		lptr->modulo = nr_this_level % lptr->num_blocks;
+	}
+}
 
 /*
  * this calculates a freespace cursor for an ag.
@@ -370,6 +391,7 @@ calculate_freespace_cursor(xfs_mount_t *mp, xfs_agnumber_t agno,
 	int			i;
 	int			extents_used;
 	int			extra_blocks;
+	uint64_t		old_blocks;
 	bt_stat_level_t		*lptr;
 	bt_stat_level_t		*p_lptr;
 	extent_tree_node_t	*ext_ptr;
@@ -388,10 +410,7 @@ calculate_freespace_cursor(xfs_mount_t *mp, xfs_agnumber_t agno,
 	 * of the tree and set up the cursor for the leaf level
 	 * (note that the same code is duplicated further down)
 	 */
-	lptr->num_blocks = howmany(num_extents, XR_ALLOC_BLOCK_MAXRECS(mp, 0));
-	lptr->num_recs_pb = num_extents / lptr->num_blocks;
-	lptr->modulo = num_extents % lptr->num_blocks;
-	lptr->num_recs_tot = num_extents;
+	compute_level_geometry(mp, lptr, num_extents, 2, true);
 	level = 1;
 
 #ifdef XR_BLD_FREE_TRACE
@@ -405,30 +424,23 @@ calculate_freespace_cursor(xfs_mount_t *mp, xfs_agnumber_t agno,
 	 * if we need more levels, set them up.  # of records
 	 * per level is the # of blocks in the level below it
 	 */
-	if (lptr->num_blocks > 1)  {
-		for (; btree_curs->level[level - 1].num_blocks > 1
-				&& level < XFS_BTREE_MAXLEVELS;
-				level++)  {
-			lptr = &btree_curs->level[level];
-			p_lptr = &btree_curs->level[level - 1];
-			lptr->num_blocks = howmany(p_lptr->num_blocks,
-					XR_ALLOC_BLOCK_MAXRECS(mp, level));
-			lptr->modulo = p_lptr->num_blocks
-					% lptr->num_blocks;
-			lptr->num_recs_pb = p_lptr->num_blocks
-					/ lptr->num_blocks;
-			lptr->num_recs_tot = p_lptr->num_blocks;
-#ifdef XR_BLD_FREE_TRACE
-			fprintf(stderr, "%s %d %d %d %d %d\n", __func__,
-					level,
-					lptr->num_blocks,
-					lptr->num_recs_pb,
-					lptr->modulo,
-					lptr->num_recs_tot);
-#endif
-		}
-	}
+	while (lptr->num_blocks > 1) {
+		p_lptr = lptr;
+		lptr = &btree_curs->level[level];
 
+		compute_level_geometry(mp, lptr,
+				p_lptr->num_blocks, 0, false);
+#ifdef XR_BLD_FREE_TRACE
+		fprintf(stderr, "%s %d %d %d %d %d\n", __func__,
+				level,
+				lptr->num_blocks,
+				lptr->num_recs_pb,
+				lptr->modulo,
+				lptr->num_recs_tot);
+#endif
+		level++;
+	}
+	ASSERT(level < XFS_BTREE_MAXLEVELS);
 	ASSERT(lptr->num_blocks == 1);
 	btree_curs->num_levels = level;
 
@@ -496,8 +508,11 @@ calculate_freespace_cursor(xfs_mount_t *mp, xfs_agnumber_t agno,
 	 * see if the number of leaf blocks will change as a result
 	 * of the number of extents changing
 	 */
-	if (howmany(num_extents, XR_ALLOC_BLOCK_MAXRECS(mp, 0))
-			!= btree_curs->level[0].num_blocks)  {
+	old_blocks = btree_curs->level[0].num_blocks;
+	compute_level_geometry(mp, &btree_curs->level[0], num_extents, 2, true);
+	extra_blocks = 0;
+
+	if (old_blocks != btree_curs->level[0].num_blocks)  {
 		/*
 		 * yes -- recalculate the cursor.  If the number of
 		 * excess (overallocated) blocks is < xfs_agfl_size/2, we're ok.
@@ -553,31 +568,19 @@ calculate_freespace_cursor(xfs_mount_t *mp, xfs_agnumber_t agno,
 		}
 
 		lptr = &btree_curs->level[0];
-		lptr->num_blocks = howmany(num_extents,
-					XR_ALLOC_BLOCK_MAXRECS(mp, 0));
-		lptr->num_recs_pb = num_extents / lptr->num_blocks;
-		lptr->modulo = num_extents % lptr->num_blocks;
-		lptr->num_recs_tot = num_extents;
 		level = 1;
 
 		/*
 		 * if we need more levels, set them up
 		 */
-		if (lptr->num_blocks > 1)  {
-			for (level = 1; btree_curs->level[level-1].num_blocks
-					> 1 && level < XFS_BTREE_MAXLEVELS;
-					level++)  {
-				lptr = &btree_curs->level[level];
-				p_lptr = &btree_curs->level[level-1];
-				lptr->num_blocks = howmany(p_lptr->num_blocks,
-					XR_ALLOC_BLOCK_MAXRECS(mp, level));
-				lptr->modulo = p_lptr->num_blocks
-						% lptr->num_blocks;
-				lptr->num_recs_pb = p_lptr->num_blocks
-						/ lptr->num_blocks;
-				lptr->num_recs_tot = p_lptr->num_blocks;
-			}
+		while (lptr->num_blocks > 1) {
+			p_lptr = lptr;
+			lptr = &btree_curs->level[level++];
+
+			compute_level_geometry(mp, lptr,
+					p_lptr->num_blocks, 0, false);
 		}
+		ASSERT(level < XFS_BTREE_MAXLEVELS);
 		ASSERT(lptr->num_blocks == 1);
 		btree_curs->num_levels = level;
 
@@ -591,22 +594,6 @@ calculate_freespace_cursor(xfs_mount_t *mp, xfs_agnumber_t agno,
 
 		ASSERT(blocks_allocated_total >= blocks_needed);
 		extra_blocks = blocks_allocated_total - blocks_needed;
-	} else  {
-		if (extents_used > 0) {
-			/*
-			 * reset the leaf level geometry to account
-			 * for consumed extents.  we can leave the
-			 * rest of the cursor alone since the number
-			 * of leaf blocks hasn't changed.
-			 */
-			lptr = &btree_curs->level[0];
-
-			lptr->num_recs_pb = num_extents / lptr->num_blocks;
-			lptr->modulo = num_extents % lptr->num_blocks;
-			lptr->num_recs_tot = num_extents;
-		}
-
-		extra_blocks = 0;
 	}
 
 	btree_curs->num_tot_blocks = blocks_allocated_pt;
@@ -1376,7 +1363,6 @@ init_rmapbt_cursor(
 	struct bt_stat_level	*lptr;
 	struct bt_stat_level	*p_lptr;
 	xfs_extlen_t		blocks_allocated;
-	int			maxrecs;
 
 	if (!xfs_sb_version_hasrmapbt(&mp->m_sb)) {
 		memset(btree_curs, 0, sizeof(struct bt_status));
@@ -1412,32 +1398,20 @@ init_rmapbt_cursor(
 	 * Leave enough slack in the rmapbt that we can insert the
 	 * metadata AG entries without too many splits.
 	 */
-	maxrecs = mp->m_rmap_mxr[0];
-	if (num_recs > maxrecs)
-		maxrecs -= 10;
-	blocks_allocated = lptr->num_blocks = howmany(num_recs, maxrecs);
-
-	lptr->modulo = num_recs % lptr->num_blocks;
-	lptr->num_recs_pb = num_recs / lptr->num_blocks;
-	lptr->num_recs_tot = num_recs;
+	compute_level_geometry(mp, lptr, num_recs,
+			num_recs > mp->m_rmap_mxr[0] ? 10 : 0, true);
+	blocks_allocated = lptr->num_blocks;
 	level = 1;
 
-	if (lptr->num_blocks > 1)  {
-		for (; btree_curs->level[level-1].num_blocks > 1
-				&& level < XFS_BTREE_MAXLEVELS;
-				level++)  {
-			lptr = &btree_curs->level[level];
-			p_lptr = &btree_curs->level[level - 1];
-			lptr->num_blocks = howmany(p_lptr->num_blocks,
-				mp->m_rmap_mxr[1]);
-			lptr->modulo = p_lptr->num_blocks % lptr->num_blocks;
-			lptr->num_recs_pb = p_lptr->num_blocks
-					/ lptr->num_blocks;
-			lptr->num_recs_tot = p_lptr->num_blocks;
+	while (lptr->num_blocks > 1) {
+		p_lptr = lptr;
+		lptr = &btree_curs->level[level++];
 
-			blocks_allocated += lptr->num_blocks;
-		}
+		compute_level_geometry(mp, lptr,
+				p_lptr->num_blocks, 0, false);
+		blocks_allocated += lptr->num_blocks;
 	}
+	ASSERT(level < XFS_BTREE_MAXLEVELS);
 	ASSERT(lptr->num_blocks == 1);
 	btree_curs->num_levels = level;
 
