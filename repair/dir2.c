@@ -983,6 +983,13 @@ _("can't read block %u for directory inode %" PRIu64 "\n"),
 			mp->m_dir_geo->datablk, ino);
 		return 1;
 	}
+	if (bp->b_error == -EFSCORRUPTED) {
+		do_warn(
+_("corrupt directory block %u for inode %" PRIu64 "\n"),
+			mp->m_dir_geo->datablk, ino);
+		libxfs_buf_relse(bp);
+		return 1;
+	}
 	/*
 	 * Verify the block
 	 */
@@ -1120,6 +1127,13 @@ _("can't map block %u for directory inode %" PRIu64 "\n"),
 			do_warn(
 _("can't read file block %u for directory inode %" PRIu64 "\n"),
 				da_bno, ino);
+			goto error_out;
+		}
+		if (bp->b_error == -EFSCORRUPTED) {
+			do_warn(
+_("corrupt directory leafn block %u for inode %" PRIu64 "\n"),
+				da_bno, ino);
+			libxfs_buf_relse(bp);
 			goto error_out;
 		}
 		leaf = bp->b_addr;
@@ -1322,6 +1336,13 @@ _("block %" PRIu64 " for directory inode %" PRIu64 " is missing\n"),
 			do_warn(
 _("can't read block %" PRIu64 " for directory inode %" PRIu64 "\n"),
 				dbno, ino);
+			continue;
+		}
+		if (bp->b_error == -EFSCORRUPTED) {
+			do_warn(
+_("corrupt directory data block %lu for inode %" PRIu64 "\n"),
+				dbno, ino);
+			libxfs_buf_relse(bp);
 			continue;
 		}
 		data = bp->b_addr;
