@@ -10,11 +10,6 @@ struct blkmap;
 struct prefetch_args;
 
 int
-verify_agbno(xfs_mount_t	*mp,
-		xfs_agnumber_t	agno,
-		xfs_agblock_t	agbno);
-
-int
 verify_dfsbno(xfs_mount_t	*mp,
 		xfs_fsblock_t	fsbno);
 
