@@ -1561,7 +1561,7 @@ verify_single_ino_chunk_align(
 	 * (NULLAGINO). if it gets closer, the agino number will be illegal as
 	 * the agbno will be too large.
 	 */
-	if (verify_aginum(mp, agno, ino)) {
+	if (!libxfs_verify_agino(mp, agno, ino)) {
 		do_warn(
 _("bad starting inode # (%" PRIu64 " (0x%x 0x%x)) in %s rec, skipping rec\n"),
 			lino, agno, ino, inobt_name);
@@ -1569,7 +1569,7 @@ _("bad starting inode # (%" PRIu64 " (0x%x 0x%x)) in %s rec, skipping rec\n"),
 		return ++suspect;
 	}
 
-	if (verify_aginum(mp, agno,
+	if (!libxfs_verify_agino(mp, agno,
 			ino + XFS_INODES_PER_CHUNK - 1)) {
 		do_warn(
 _("bad ending inode # (%" PRIu64 " (0x%x 0x%zx)) in %s rec, skipping rec\n"),

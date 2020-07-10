@@ -1124,7 +1124,7 @@ check_uncertain_aginodes(xfs_mount_t *mp, xfs_agnumber_t agno)
 
 			agino = i + irec->ino_startnum;
 
-			if (verify_aginum(mp, agno, agino))
+			if (!libxfs_verify_agino(mp, agno, agino))
 				continue;
 
 			if (nrec != NULL && nrec->ino_startnum <= agino &&
@@ -1133,7 +1133,7 @@ check_uncertain_aginodes(xfs_mount_t *mp, xfs_agnumber_t agno)
 				continue;
 
 			if ((nrec = find_inode_rec(mp, agno, agino)) == NULL)
-				if (!verify_aginum(mp, agno, agino))
+				if (libxfs_verify_agino(mp, agno, agino))
 					if (verify_aginode_chunk(mp, agno,
 							agino, &start))
 						got_some = 1;
@@ -1215,7 +1215,7 @@ process_uncertain_aginodes(xfs_mount_t *mp, xfs_agnumber_t agno)
 			 * good tree), bad inode numbers, and inode numbers
 			 * pointing to bogus inodes
 			 */
-			if (verify_aginum(mp, agno, agino))
+			if (!libxfs_verify_agino(mp, agno, agino))
 				continue;
 
 			if (nrec != NULL && nrec->ino_startnum <= agino &&
