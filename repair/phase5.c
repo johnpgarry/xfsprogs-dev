@@ -2023,7 +2023,6 @@ build_agf_agfl(
 	struct bt_status	*bno_bt,
 	struct bt_status	*bcnt_bt,
 	xfs_extlen_t		freeblks,	/* # free blocks in tree */
-	int			lostblocks,	/* # blocks that will be lost */
 	struct bt_status	*rmap_bt,
 	struct bt_status	*refcnt_bt,
 	struct xfs_slab		*lost_fsb)
@@ -2439,9 +2438,9 @@ phase5_func(
 		/*
 		 * set up agf and agfl
 		 */
-		build_agf_agfl(mp, agno, &bno_btree_curs,
-				&bcnt_btree_curs, freeblks1, extra_blocks,
-				&rmap_btree_curs, &refcnt_btree_curs, lost_fsb);
+		build_agf_agfl(mp, agno, &bno_btree_curs, &bcnt_btree_curs,
+				freeblks1, &rmap_btree_curs,
+				&refcnt_btree_curs, lost_fsb);
 		/*
 		 * build inode allocation tree.
 		 */
