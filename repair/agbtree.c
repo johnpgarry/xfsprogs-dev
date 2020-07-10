@@ -217,8 +217,6 @@ init_freespace_cursors(
 	struct bt_rebuild	*btr_bno,
 	struct bt_rebuild	*btr_cnt)
 {
-	unsigned int		bno_blocks;
-	unsigned int		cnt_blocks;
 	int			error;
 
 	init_rebuild(sc, &XFS_RMAP_OINFO_AG, free_space, btr_bno);
@@ -244,9 +242,7 @@ init_freespace_cursors(
 	 */
 	do {
 		unsigned int	num_freeblocks;
-
-		bno_blocks = btr_bno->bload.nr_blocks;
-		cnt_blocks = btr_cnt->bload.nr_blocks;
+		int		delta_bno, delta_cnt;
 
 		/* Compute how many bnobt blocks we'll need. */
 		error = -libxfs_btree_bload_compute_geometry(btr_bno->cur,
@@ -262,25 +258,30 @@ _("Unable to compute free space by block btree geometry, error %d.\n"), -error);
 			do_error(
 _("Unable to compute free space by length btree geometry, error %d.\n"), -error);
 
+		/*
+		 * Compute the deficit between the number of blocks reserved
+		 * and the number of blocks we think we need for the btree.
+		 */
+		delta_bno = (int)btr_bno->newbt.nr_reserved -
+				 btr_bno->bload.nr_blocks;
+		delta_cnt = (int)btr_cnt->newbt.nr_reserved -
+				 btr_cnt->bload.nr_blocks;
+
 		/* We don't need any more blocks, so we're done. */
-		if (bno_blocks >= btr_bno->bload.nr_blocks &&
-		    cnt_blocks >= btr_cnt->bload.nr_blocks)
+		if (delta_bno >= 0 && delta_cnt >= 0) {
+			*extra_blocks = delta_bno + delta_cnt;
 			break;
+		}
 
 		/* Allocate however many more blocks we need this time. */
-		if (bno_blocks < btr_bno->bload.nr_blocks)
-			reserve_btblocks(sc->mp, agno, btr_bno,
-					btr_bno->bload.nr_blocks - bno_blocks);
-		if (cnt_blocks < btr_cnt->bload.nr_blocks)
-			reserve_btblocks(sc->mp, agno, btr_cnt,
-					btr_cnt->bload.nr_blocks - cnt_blocks);
+		if (delta_bno < 0)
+			reserve_btblocks(sc->mp, agno, btr_bno, -delta_bno);
+		if (delta_cnt < 0)
+			reserve_btblocks(sc->mp, agno, btr_cnt, -delta_cnt);
 
 		/* Ok, now how many free space records do we have? */
 		*nr_extents = count_bno_extents_blocks(agno, &num_freeblocks);
 	} while (1);
-
-	*extra_blocks = (bno_blocks - btr_bno->bload.nr_blocks) +
-			(cnt_blocks - btr_cnt->bload.nr_blocks);
 }
 
 /* Rebuild the free space btrees. */

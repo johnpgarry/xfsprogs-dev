@@ -41,6 +41,9 @@ struct bulkload {
 
 	/* The last reservation we allocated from. */
 	struct bulkload_resv	*last_resv;
+
+	/* Number of blocks reserved via resv_list. */
+	unsigned int		nr_reserved;
 };
 
 #define for_each_bulkload_reservation(bkl, resv, n)	\

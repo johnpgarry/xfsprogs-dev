@@ -40,6 +40,8 @@ bulkload_add_blocks(
 	resv->len = len;
 	resv->used = 0;
 	list_add_tail(&resv->list, &bkl->resv_list);
+	bkl->nr_reserved += len;
+
 	return 0;
 }
 
