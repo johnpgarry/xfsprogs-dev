@@ -200,7 +200,7 @@ option will set the file permissions to read-write (0644). This allows xfs_io to
 set up mismatches between the file permissions and the open file descriptor
 read/write mode to exercise permission checks inside various syscalls.
 .TP
-.BI "pread [ \-b " bsize " ] [ \-v ] [ \-FBR [ \-Z " seed " ] ] [ \-V " vectors " ] " "offset length"
+.BI "pread [ \-b " bsize " ] [ \-qv ] [ \-FBR [ \-Z " seed " ] ] [ \-V " vectors " ] " "offset length"
 Reads a range of bytes in a specified blocksize from the given
 .IR offset .
 .RS 1.0i
@@ -210,6 +210,9 @@ Reads a range of bytes in a specified blocksize from the given
 can be used to set the blocksize into which the
 .BR read (2)
 requests will be split. The default blocksize is 4096 bytes.
+.TP
+.B \-q
+quiet mode, do not write anything to standard output.
 .TP
 .B \-v
 dump the contents of the buffer after reading,
@@ -241,7 +244,7 @@ See the
 .B pread
 command.
 .TP
-.BI "pwrite [ \-i " file " ] [ \-dDwNOW ] [ \-s " skip " ] [ \-b " size " ] [ \-S " seed " ] [ \-FBR [ \-Z " zeed " ] ] [ \-V " vectors " ] " "offset length"
+.BI "pwrite [ \-i " file " ] [ \-qdDwNOW ] [ \-s " skip " ] [ \-b " size " ] [ \-S " seed " ] [ \-FBR [ \-Z " zeed " ] ] [ \-V " vectors " ] " "offset length"
 Writes a range of bytes in a specified blocksize from the given
 .IR offset .
 The bytes written can be either a set pattern or read in from another
@@ -253,6 +256,9 @@ file before writing.
 allows an input
 .I file
 to be specified as the source of the data to be written.
+.TP
+.B \-q
+quiet mode, do not write anything to standard output.
 .TP
 .B \-d
 causes direct I/O, rather than the usual buffered

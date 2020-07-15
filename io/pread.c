@@ -30,6 +30,7 @@ pread_help(void)
 " The reads are performed in sequential blocks starting at offset, with the\n"
 " blocksize tunable using the -b option (default blocksize is 4096 bytes),\n"
 " unless a different pattern is requested.\n"
+" -q   -- quiet mode, do not write anything to standard output.\n"
 " -B   -- read backwards through the range from offset (backwards N bytes)\n"
 " -F   -- read forwards through the range of bytes from offset (default)\n"
 " -v   -- be verbose, dump out buffers (used when reading forwards)\n"
@@ -506,7 +507,7 @@ pread_init(void)
 	pread_cmd.argmin = 2;
 	pread_cmd.argmax = -1;
 	pread_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
-	pread_cmd.args = _("[-b bs] [-v] [-i N] [-FBR [-Z N]] off len");
+	pread_cmd.args = _("[-b bs] [-qv] [-i N] [-FBR [-Z N]] off len");
 	pread_cmd.oneline = _("reads a number of bytes at a specified offset");
 	pread_cmd.help = pread_help;
 

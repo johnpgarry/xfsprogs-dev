@@ -27,6 +27,7 @@ pwrite_help(void)
 " The writes are performed in sequential blocks starting at offset, with the\n"
 " blocksize tunable using the -b option (default blocksize is 4096 bytes),\n"
 " unless a different write pattern is requested.\n"
+" -q   -- quiet mode, do not write anything to standard output.\n"
 " -S   -- use an alternate seed number for filling the write buffer\n"
 " -i   -- input file, source of data to write (used when writing forward)\n"
 " -d   -- open the input file for direct IO\n"
@@ -483,7 +484,7 @@ pwrite_init(void)
 	pwrite_cmd.argmax = -1;
 	pwrite_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
 	pwrite_cmd.args =
-_("[-i infile [-dDwNOW] [-s skip]] [-b bs] [-S seed] [-FBR [-Z N]] [-V N] off len");
+_("[-i infile [-qdDwNOW] [-s skip]] [-b bs] [-S seed] [-FBR [-Z N]] [-V N] off len");
 	pwrite_cmd.oneline =
 		_("writes a number of bytes at a specified offset");
 	pwrite_cmd.help = pwrite_help;
