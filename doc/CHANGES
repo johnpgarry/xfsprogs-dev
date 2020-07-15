@@ -1,3 +1,16 @@
+xfsprogs-5.7.0-rc1 (15 Jul 2020)
+	- remove libreadline support (Christoph Hellwig)
+	- xfs_quota: allow individual timer extension (Eric Sandeen)
+	- xfs_quota: fix unsigned int id comparisons (Darrick Wong)
+	- xfs_repair: fix progress reporting (Eric Sandeen)
+	- xfs_repair: fix minrecs error during phase5 btree rebuild (Gao Xiang)
+	- xfs_repair: add missing validations to match xfs_check (Darrick Wong)
+	- xfs_repair: use btree bulk loading (Darrick Wong)
+	- xfs_io: fix copy_range argument parsing (Eric Sandeen)
+	- xfs_io: document -q option for pread/pwrite command (Xiao Yang)
+	- xfs_metadump: man page fixes (Kaixu Xia)
+	- xfs_db: fix crc invalidation segfault (Anthony Iliopoulos)
+
 xfsprogs-5.7.0-rc0 (07 May 2020)
 	- libxfs changes merged from kernel 5.7
 
