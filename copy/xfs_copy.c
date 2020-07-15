@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include "xfs_copy.h"
 #include "libxlog.h"
+#include "libfrog/platform.h"
 
 #define	rounddown(x, y)	(((x)/(y))*(y))
 #define uuid_equal(s,d) (platform_uuid_compare((s),(d)) == 0)
@@ -138,6 +139,14 @@ check_errors(void)
 	int	i, first_error = 0;
 
 	for (i = 0; i < num_targets; i++)  {
+		if (target[i].state != INACTIVE) {
+			if (platform_flush_device(target[i].fd, 0)) {
+				target[i].error = errno;
+				target[i].state = INACTIVE;
+				target[i].err_type = 2;
+			}
+		}
+
 		if (target[i].state == INACTIVE)  {
 			if (first_error == 0)  {
 				first_error++;
@@ -145,10 +154,21 @@ check_errors(void)
 				_("THE FOLLOWING COPIES FAILED TO COMPLETE\n"));
 			}
 			do_log("    %s -- ", target[i].name);
-			if (target[i].err_type == 0)
+			switch (target[i].err_type) {
+			case 0:
 				do_log(_("write error"));
-			else
+				break;
+			case 1:
 				do_log(_("lseek error"));
+				break;
+			case 2:
+				do_log(_("flush error"));
+				break;
+			default:
+				do_log(_("unknown error type %d"),
+						target[i].err_type);
+				break;
+			}
 			do_log(_(" at offset %lld\n"), target[i].position);
 		}
 	}
