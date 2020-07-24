@@ -1,3 +1,6 @@
+xfsprogs-5.7.0 (24 Jul 2020)
+	- xfs_io: Document '-q' option for sendfile command (Xiao Yang)
+
 xfsprogs-5.7.0-rc1 (15 Jul 2020)
 	- remove libreadline support (Christoph Hellwig)
 	- xfs_quota: allow individual timer extension (Eric Sandeen)
