@@ -541,13 +541,17 @@ manual page to allocate and zero blocks within the range.
 Truncates the current file at the given offset using
 .BR ftruncate (2).
 .TP
-.BI "sendfile \-i " srcfile " | \-f " N " [ " "offset length " ]
+.BI "sendfile [ \-q ] \-i " srcfile " | \-f " N " [ " "offset length " ]
 On platforms which support it, allows a direct in-kernel copy between
 two file descriptors. The current open file is the target, the source
 must be specified as another open file
 .RB ( \-f )
 or by path
 .RB ( \-i ).
+.RS 1.0i
+.B \-q
+quiet mode, do not write anything to standard output.
+.RE
 .TP
 .BI "readdir [ -v ] [ -o " offset " ] [ -l " length " ] "
 Read a range of directory entries from a given offset of a directory.

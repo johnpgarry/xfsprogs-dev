@@ -25,6 +25,7 @@ sendfile_help(void)
 " Copies data between one file descriptor and another.  Because this copying\n"
 " is done within the kernel, sendfile does not need to transfer data to and\n"
 " from user space.\n"
+" -q -- quiet mode, do not write anything to standard output.\n"
 " -f -- specifies an input file from which to source data to write\n"
 " -i -- specifies an input file name from which to source data to write.\n"
 " An offset and length in the source file can be optionally specified.\n"
@@ -168,7 +169,7 @@ sendfile_init(void)
 	sendfile_cmd.argmax = -1;
 	sendfile_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
 	sendfile_cmd.args =
-		_("-i infile | -f N [off len]");
+		_("[-q] -i infile | -f N [off len]");
 	sendfile_cmd.oneline =
 		_("Transfer data directly between file descriptors");
 	sendfile_cmd.help = sendfile_help;
