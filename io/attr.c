@@ -198,10 +198,8 @@ lsattr_f(
 			break;
 		case 'a':
 			aflag = 1;
-			vflag = 0;
 			break;
 		case 'v':
-			aflag = 0;
 			vflag = 1;
 			break;
 		default:

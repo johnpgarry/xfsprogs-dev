@@ -142,11 +142,6 @@ stat_f(
 		}
 	}
 
-	if (raw && verbose) {
-		exitcode = 1;
-		return command_usage(&stat_cmd);
-	}
-
 	if (fstat(file->fd, &st) < 0) {
 		perror("fstat");
 		exitcode = 1;
