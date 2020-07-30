@@ -15,6 +15,7 @@
 #include "versions.h"
 #include "progress.h"
 #include "threads.h"
+#include "quotacheck.h"
 
 static void
 update_inode_nlinks(
@@ -97,6 +98,10 @@ do_link_updates(
 
 	for (irec = findfirst_inode_rec(agno); irec;
 	     irec = next_ino_rec(irec)) {
+		xfs_ino_t	ino;
+
+		ino = XFS_AGINO_TO_INO(mp, agno, irec->ino_startnum);
+
 		for (j = 0; j < XFS_INODES_PER_CHUNK; j++)  {
 			ASSERT(is_inode_confirmed(irec, j));
 
@@ -109,10 +114,8 @@ do_link_updates(
 			ASSERT(no_modify || nrefs > 0);
 
 			if (get_inode_disk_nlinks(irec, j) != nrefs)
-				update_inode_nlinks(wq->wq_ctx,
-					XFS_AGINO_TO_INO(mp, agno,
-						irec->ino_startnum + j),
-					nrefs);
+				update_inode_nlinks(wq->wq_ctx, ino + j, nrefs);
+			quotacheck_adjust(mp, ino + j);
 		}
 	}
 
@@ -126,6 +129,7 @@ phase7(
 {
 	struct workqueue	wq;
 	int			agno;
+	int			ret;
 
 	if (!no_modify)
 		do_log(_("Phase 7 - verify and correct link counts...\n"));
@@ -134,12 +138,21 @@ phase7(
 
 	set_progress_msg(PROGRESS_FMT_CORR_LINK, (uint64_t) glob_agcount);
 
+	ret = quotacheck_setup(mp);
+	if (ret)
+		do_error(_("unable to set up quotacheck, err=%d\n"), ret);
 	create_work_queue(&wq, mp, scan_threads);
 
 	for (agno = 0; agno < mp->m_sb.sb_agcount; agno++)
 		queue_work(&wq, do_link_updates, agno, NULL);
 
 	destroy_work_queue(&wq);
+
+	quotacheck_verify(mp, XFS_DQ_USER);
+	quotacheck_verify(mp, XFS_DQ_GROUP);
+	quotacheck_verify(mp, XFS_DQ_PROJ);
+
+	quotacheck_teardown();
 
 	print_final_rpt();
 }
