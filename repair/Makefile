@@ -9,16 +9,65 @@ LSRCFILES = README
 
 LTCOMMAND = xfs_repair
 
-HFILES = agheader.h agbtree.h attr_repair.h avl.h bulkload.h bmap.h btree.h \
-	da_util.h dinode.h dir2.h err_protos.h globals.h incore.h protos.h \
-	rt.h progress.h scan.h versions.h prefetch.h rmap.h slab.h threads.h
+HFILES = \
+	agheader.h \
+	agbtree.h \
+	attr_repair.h \
+	avl.h \
+	bulkload.h \
+	bmap.h \
+	btree.h \
+	da_util.h \
+	dinode.h \
+	dir2.h \
+	err_protos.h \
+	globals.h \
+	incore.h \
+	prefetch.h \
+	progress.h \
+	protos.h \
+	rmap.h \
+	rt.h \
+	scan.h \
+	slab.h \
+	threads.h \
+	versions.h
 
-CFILES = agheader.c agbtree.c attr_repair.c avl.c bulkload.c bmap.c btree.c \
-	da_util.c dino_chunks.c dinode.c dir2.c globals.c incore.c \
-	incore_bmc.c init.c incore_ext.c incore_ino.c phase1.c \
-	phase2.c phase3.c phase4.c phase5.c phase6.c phase7.c \
-	progress.c prefetch.c rmap.c rt.c sb.c scan.c slab.c threads.c \
-	versions.c xfs_repair.c
+CFILES = \
+	agheader.c \
+	agbtree.c \
+	attr_repair.c \
+	avl.c \
+	bulkload.c \
+	bmap.c \
+	btree.c \
+	da_util.c \
+	dino_chunks.c \
+	dinode.c \
+	dir2.c \
+	globals.c \
+	incore_bmc.c \
+	incore.c \
+	incore_ext.c \
+	incore_ino.c \
+	init.c \
+	phase1.c \
+	phase2.c \
+	phase3.c \
+	phase4.c \
+	phase5.c \
+	phase6.c \
+	phase7.c \
+	prefetch.c \
+	progress.c \
+	rmap.c \
+	rt.c \
+	sb.c \
+	scan.c \
+	slab.c \
+	threads.c \
+	versions.c \
+	xfs_repair.c
 
 LLDLIBS = $(LIBXFS) $(LIBXLOG) $(LIBXCMD) $(LIBFROG) $(LIBUUID) $(LIBRT) \
 	$(LIBPTHREAD) $(LIBBLKID)
