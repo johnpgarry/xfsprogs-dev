@@ -9,6 +9,7 @@
 void quotacheck_skip(void);
 void quotacheck_adjust(struct xfs_mount *mp, xfs_ino_t ino);
 void quotacheck_verify(struct xfs_mount *mp, unsigned int type);
+uint16_t quotacheck_results(void);
 int quotacheck_setup(struct xfs_mount *mp);
 void quotacheck_teardown(void);
 
