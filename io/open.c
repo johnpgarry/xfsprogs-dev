@@ -426,12 +426,10 @@ lsproj_f(
 	while ((c = getopt(argc, argv, "DR")) != EOF) {
 		switch (c) {
 		case 'D':
-			recurse_all = 0;
 			recurse_dir = 1;
 			break;
 		case 'R':
 			recurse_all = 1;
-			recurse_dir = 0;
 			break;
 		default:
 			exitcode = 1;
@@ -504,12 +502,10 @@ chproj_f(
 	while ((c = getopt(argc, argv, "DR")) != EOF) {
 		switch (c) {
 		case 'D':
-			recurse_all = 0;
 			recurse_dir = 1;
 			break;
 		case 'R':
 			recurse_all = 1;
-			recurse_dir = 0;
 			break;
 		default:
 			exitcode = 1;
@@ -525,6 +521,13 @@ chproj_f(
 	prid = prid_from_string(argv[optind]);
 	if (prid == -1) {
 		printf(_("invalid project ID -- %s\n"), argv[optind]);
+		exitcode = 1;
+		return 0;
+	}
+
+	if (recurse_all && recurse_dir) {
+		fprintf(stderr, _("%s: -R and -D options are mutually exclusive\n"),
+			progname);
 		exitcode = 1;
 		return 0;
 	}
@@ -661,12 +664,10 @@ extsize_f(
 	while ((c = getopt(argc, argv, "DR")) != EOF) {
 		switch (c) {
 		case 'D':
-			recurse_all = 0;
 			recurse_dir = 1;
 			break;
 		case 'R':
 			recurse_all = 1;
-			recurse_dir = 0;
 			break;
 		default:
 			exitcode = 1;
@@ -684,6 +685,13 @@ extsize_f(
 		}
 	} else {
 		extsize = -1;
+	}
+
+	if (recurse_all && recurse_dir) {
+		fprintf(stderr, _("%s: -R and -D options are mutually exclusive\n"),
+			progname);
+		exitcode = 1;
+		return 0;
 	}
 
 	if (recurse_all || recurse_dir) {
@@ -960,7 +968,7 @@ open_init(void)
 	lsproj_cmd.cfunc = lsproj_f;
 	lsproj_cmd.args = _("[-D | -R]");
 	lsproj_cmd.argmin = 0;
-	lsproj_cmd.argmax = -1;
+	lsproj_cmd.argmax = 1;
 	lsproj_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
 	lsproj_cmd.oneline =
 		_("list project identifier set on the currently open file");

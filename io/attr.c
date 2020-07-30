@@ -191,12 +191,10 @@ lsattr_f(
 	while ((c = getopt(argc, argv, "DRav")) != EOF) {
 		switch (c) {
 		case 'D':
-			recurse_all = 0;
 			recurse_dir = 1;
 			break;
 		case 'R':
 			recurse_all = 1;
-			recurse_dir = 0;
 			break;
 		case 'a':
 			aflag = 1;
@@ -318,6 +316,13 @@ chattr_f(
 			exitcode = 1;
 			return 0;
 		}
+	}
+
+	if (recurse_all && recurse_dir) {
+		fprintf(stderr, _("%s: -R and -D options are mutually exclusive\n"),
+			progname);
+		exitcode = 1;
+		return 0;
 	}
 
 	if (recurse_all || recurse_dir) {
