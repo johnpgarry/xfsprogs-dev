@@ -27,58 +27,6 @@ static struct xfs_name		xfs_name_dot = {(unsigned char *)".",
 						XFS_DIR3_FT_DIR};
 
 /*
- * When we're checking directory inodes, we're allowed to set a directory's
- * dotdot entry to zero to signal that the parent needs to be reconnected
- * during phase 6.  If we're handling a shortform directory the ifork
- * verifiers will fail, so temporarily patch out this canary so that we can
- * verify the rest of the fork and move on to fixing the dir.
- */
-static xfs_failaddr_t
-phase6_verify_dir(
-	struct xfs_inode		*ip)
-{
-	struct xfs_mount		*mp = ip->i_mount;
-	struct xfs_ifork		*ifp;
-	struct xfs_dir2_sf_hdr		*sfp;
-	xfs_failaddr_t			fa;
-	xfs_ino_t			old_parent;
-	bool				parent_bypass = false;
-	int				size;
-
-	ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
-	sfp = (struct xfs_dir2_sf_hdr *)ifp->if_u1.if_data;
-	size = ifp->if_bytes;
-
-	/*
-	 * If this is a shortform directory, phase4 may have set the parent
-	 * inode to zero to indicate that it must be fixed.  Temporarily
-	 * set a valid parent so that the directory verifier will pass.
-	 */
-	if (size > offsetof(struct xfs_dir2_sf_hdr, parent) &&
-	    size >= xfs_dir2_sf_hdr_size(sfp->i8count)) {
-		old_parent = libxfs_dir2_sf_get_parent_ino(sfp);
-		if (old_parent == 0) {
-			libxfs_dir2_sf_put_parent_ino(sfp, mp->m_sb.sb_rootino);
-			parent_bypass = true;
-		}
-	}
-
-	fa = libxfs_default_ifork_ops.verify_dir(ip);
-
-	/* Put it back. */
-	if (parent_bypass)
-		libxfs_dir2_sf_put_parent_ino(sfp, old_parent);
-
-	return fa;
-}
-
-static struct xfs_ifork_ops phase6_ifork_ops = {
-	.verify_attr	= xfs_attr_shortform_verify,
-	.verify_dir	= phase6_verify_dir,
-	.verify_symlink	= xfs_symlink_shortform_verify,
-};
-
-/*
  * Data structures used to keep track of directories where the ".."
  * entries are updated. These must be rebuilt after the initial pass
  */
@@ -1094,7 +1042,7 @@ mv_orphanage(
 					(unsigned long long)ino, ++incr);
 
 	/* Orphans may not have a proper parent, so use custom ops here */
-	err = -libxfs_iget(mp, NULL, ino, 0, &ino_p, &phase6_ifork_ops);
+	err = -libxfs_iget(mp, NULL, ino, 0, &ino_p, &xfs_default_ifork_ops);
 	if (err)
 		do_error(_("%d - couldn't iget disconnected inode\n"), err);
 
@@ -2868,7 +2816,7 @@ process_dir_inode(
 
 	ASSERT(!is_inode_refchecked(irec, ino_offset) || dotdot_update);
 
-	error = -libxfs_iget(mp, NULL, ino, 0, &ip, &phase6_ifork_ops);
+	error = -libxfs_iget(mp, NULL, ino, 0, &ip, &xfs_default_ifork_ops);
 	if (error) {
 		if (!no_modify)
 			do_error(
