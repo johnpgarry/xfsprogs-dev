@@ -480,6 +480,15 @@ _("corrected entry offsets in directory %" PRIu64 "\n"),
 	 * check parent (..) entry
 	 */
 	*parent = libxfs_dir2_sf_get_parent_ino(sfp);
+	/*
+	 * If this function is called during inode discovery (phase 3), it will
+	 * set a bad sf dir parent pointer to the root directory. This fixes
+	 * the directory enough to pass the inode fork verifier in phase 6 when
+	 * we try to reset the parent pointer to the correct value. There is no
+	 * need to re-check the parent pointer during phase 4.
+	 */
+	if (!ino_discovery)
+		return 0;
 
 	/*
 	 * if parent entry is bogus, null it out.  we'll fix it later .
