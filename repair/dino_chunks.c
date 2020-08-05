@@ -859,14 +859,7 @@ next_readbuf:
 		 */
 		if (isa_dir)  {
 			set_inode_isadir(ino_rec, irec_offset);
-			/*
-			 * we always set the parent but
-			 * we may as well wait until
-			 * phase 4 (no inode discovery)
-			 * because the parent info will
-			 * be solid then.
-			 */
-			if (!ino_discovery)  {
+			if (ino_discovery)  {
 				ASSERT(parent != 0);
 				set_inode_parent(ino_rec, irec_offset, parent);
 				ASSERT(parent ==
