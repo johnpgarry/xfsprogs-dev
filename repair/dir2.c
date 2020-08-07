@@ -84,7 +84,7 @@ process_sf_dir2_fixi8(
 	memmove(oldsfp, newsfp, oldsize);
 	newsfp->count = oldsfp->count;
 	newsfp->i8count = 0;
-	ino = libxfs_dir2_sf_get_parent_ino(sfp);
+	ino = libxfs_dir2_sf_get_parent_ino(oldsfp);
 	libxfs_dir2_sf_put_parent_ino(newsfp, ino);
 	oldsfep = xfs_dir2_sf_firstentry(oldsfp);
 	newsfep = xfs_dir2_sf_firstentry(newsfp);
