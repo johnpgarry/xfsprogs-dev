@@ -792,6 +792,25 @@ next_readbuf:
 		if (is_inode_sparse(ino_rec, irec_offset))
 			goto process_next;
 
+		/*
+		 * Repair skips reading the cluster buffer if the first inode
+		 * in the cluster is marked as sparse.  If subsequent inodes in
+		 * the cluster buffer are /not/ marked sparse, there won't be
+		 * a buffer, so we need to avoid the null pointer dereference.
+		 */
+		if (bplist[bp_index] == NULL) {
+			do_warn(
+	_("imap claims inode %" PRIu64 " is present, but inode cluster is sparse, "),
+						ino);
+			if (verbose || !no_modify)
+				do_warn(_("correcting imap\n"));
+			else
+				do_warn(_("would correct imap\n"));
+			set_inode_sparse(ino_rec, irec_offset);
+			set_inode_free(ino_rec, irec_offset);
+			goto process_next;
+		}
+
 		/* make inode pointer */
 		dino = xfs_make_iptr(mp, bplist[bp_index], cluster_offset);
 
