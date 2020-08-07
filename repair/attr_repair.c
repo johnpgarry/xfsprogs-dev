@@ -1107,6 +1107,15 @@ process_longform_attr(
 			ino);
 		return 1;
 	}
+
+	if (bp->b_error == -EFSCORRUPTED) {
+		do_warn(
+	_("corrupt block 0 of inode %" PRIu64 " attribute fork\n"),
+			ino);
+		libxfs_buf_relse(bp);
+		return 1;
+	}
+
 	if (bp->b_error == -EFSBADCRC)
 		(*repair)++;
 
