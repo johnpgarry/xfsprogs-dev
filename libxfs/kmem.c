@@ -39,9 +39,11 @@ kmem_zone_destroy(kmem_zone_t *zone)
 }
 
 void *
-kmem_zone_alloc(kmem_zone_t *zone, int flags)
+kmem_cache_alloc(
+	struct kmem_zone	*zone,
+	gfp_t			flags)
 {
-	void	*ptr = malloc(zone->zone_unitsize);
+	void			*ptr = malloc(zone->zone_unitsize);
 
 	if (ptr == NULL) {
 		fprintf(stderr, _("%s: zone alloc failed (%s, %d bytes): %s\n"),
@@ -55,7 +57,7 @@ kmem_zone_alloc(kmem_zone_t *zone, int flags)
 void *
 kmem_zone_zalloc(kmem_zone_t *zone, int flags)
 {
-	void	*ptr = kmem_zone_alloc(zone, flags);
+	void	*ptr = kmem_cache_alloc(zone, flags);
 
 	memset(ptr, 0, zone->zone_unitsize);
 	return ptr;
