@@ -1077,15 +1077,15 @@ process_quota_inode(
 
 	switch (ino_type) {
 		case XR_INO_UQUOTA:
-			quota_type = XFS_DQ_USER;
+			quota_type = XFS_DQTYPE_USER;
 			quota_string = _("User quota");
 			break;
 		case XR_INO_GQUOTA:
-			quota_type = XFS_DQ_GROUP;
+			quota_type = XFS_DQTYPE_GROUP;
 			quota_string = _("Group quota");
 			break;
 		case XR_INO_PQUOTA:
-			quota_type = XFS_DQ_PROJ;
+			quota_type = XFS_DQTYPE_PROJ;
 			quota_string = _("Project quota");
 			break;
 		default:
@@ -1139,7 +1139,7 @@ _("cannot read inode %" PRIu64 ", file block %" PRIu64 ", disk block %" PRIu64 "
 				}
 			}
 			if (libxfs_dquot_verify(mp, &dqb->dd_diskdq, dqid) != NULL ||
-			    (dqb->dd_diskdq.d_flags & XFS_DQ_ALLTYPES) != quota_type) {
+			    (dqb->dd_diskdq.d_flags & XFS_DQTYPE_REC_MASK) != quota_type) {
 				do_warn(_("%s: Corrupt quota for id %u. "),
 						quota_string, dqid);
 				bad_dqb = 1;
