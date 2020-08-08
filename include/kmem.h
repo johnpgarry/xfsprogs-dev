@@ -21,10 +21,12 @@ typedef unsigned int __bitwise gfp_t;
 
 #define GFP_KERNEL	((gfp_t)0)
 #define __GFP_NOFAIL	((gfp_t)0)
+#define GFP_NOFS	((gfp_t)0)
+
+#define __GFP_ZERO	((gfp_t)(1U << 0))
 
 extern kmem_zone_t *kmem_zone_init(int, char *);
 extern void	*kmem_cache_alloc(struct kmem_zone *zone, gfp_t flags);
-extern void	*kmem_zone_zalloc(kmem_zone_t *, int);
 extern int	kmem_zone_destroy(kmem_zone_t *);
 
 static inline void
@@ -32,6 +34,14 @@ kmem_cache_free(kmem_zone_t *zone, void *ptr)
 {
 	zone->allocated--;
 	free(ptr);
+}
+
+static inline void *
+kmem_cache_zalloc(
+	struct kmem_zone	*zone,
+	gfp_t			flags)
+{
+	return kmem_cache_alloc(zone, flags | __GFP_ZERO);
 }
 
 extern void	*kmem_alloc(size_t, int);

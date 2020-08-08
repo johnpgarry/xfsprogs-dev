@@ -96,7 +96,7 @@ xfs_buf_item_init(
 		}
 	}
 
-	bip = (xfs_buf_log_item_t *)kmem_zone_zalloc(xfs_buf_item_zone, 0);
+	bip = kmem_cache_zalloc(xfs_buf_item_zone, 0);
 #ifdef LI_DEBUG
 	fprintf(stderr, "adding buf item %p for not-logged buffer %p\n",
 		bip, bp);
@@ -138,7 +138,7 @@ xfs_inode_item_init(
 	struct xfs_inode_log_item	*iip;
 
 	ASSERT(ip->i_itemp == NULL);
-	iip = ip->i_itemp = kmem_zone_zalloc(xfs_ili_zone, 0);
+	iip = ip->i_itemp = kmem_cache_zalloc(xfs_ili_zone, 0);
 #ifdef LI_DEBUG
 	fprintf(stderr, "inode_item_init for inode %llu, iip=%p\n",
 		ip->i_ino, iip);
