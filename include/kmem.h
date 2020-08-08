@@ -17,8 +17,13 @@ typedef struct kmem_zone {
 	int	allocated;	/* debug: How many currently allocated  */
 } kmem_zone_t;
 
+typedef unsigned int __bitwise gfp_t;
+
+#define GFP_KERNEL	((gfp_t)0)
+#define __GFP_NOFAIL	((gfp_t)0)
+
 extern kmem_zone_t *kmem_zone_init(int, char *);
-extern void	*kmem_zone_alloc(kmem_zone_t *, int);
+extern void	*kmem_cache_alloc(struct kmem_zone *zone, gfp_t flags);
 extern void	*kmem_zone_zalloc(kmem_zone_t *, int);
 extern int	kmem_zone_destroy(kmem_zone_t *);
 
