@@ -3447,15 +3447,15 @@ process_quota(
 	switch (qtype) {
 	case IS_USER_QUOTA:
 		s = "user";
-		exp_flags = XFS_DQ_USER;
+		exp_flags = XFS_DQTYPE_USER;
 		break;
 	case IS_PROJECT_QUOTA:
 		s = "project";
-		exp_flags = XFS_DQ_PROJ;
+		exp_flags = XFS_DQTYPE_PROJ;
 		break;
 	case IS_GROUP_QUOTA:
 		s = "group";
-		exp_flags = XFS_DQ_GROUP;
+		exp_flags = XFS_DQTYPE_GROUP;
 		break;
 	default:
 		ASSERT(0);
