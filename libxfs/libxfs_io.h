@@ -85,6 +85,7 @@ typedef struct xfs_buf {
 	const char		*b_file;
 	int			b_line;
 #endif
+	struct list_head	b_li_list;
 } xfs_buf_t;
 
 bool xfs_verify_magic(struct xfs_buf *bp, __be32 dmagic);

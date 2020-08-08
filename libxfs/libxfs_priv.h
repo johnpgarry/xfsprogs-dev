@@ -410,6 +410,8 @@ howmany_64(uint64_t x, uint32_t y)
 #define xfs_buf_stale(bp)		((bp)->b_flags |= LIBXFS_B_STALE)
 #define XFS_BUF_UNDELAYWRITE(bp)	((bp)->b_flags &= ~LIBXFS_B_DIRTY)
 
+#define _XBF_INODES			(1U << 0)
+
 static inline struct xfs_buf *xfs_buf_incore(struct xfs_buftarg *target,
 		xfs_daddr_t blkno, size_t numblks, xfs_buf_flags_t flags)
 {
