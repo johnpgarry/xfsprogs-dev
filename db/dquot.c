@@ -48,7 +48,7 @@ const field_t	dqblk_flds[] = {
 const field_t	disk_dquot_flds[] = {
 	{ "magic", FLDT_UINT16X, OI(DOFF(magic)), C1, 0, TYP_NONE },
 	{ "version", FLDT_UINT8X, OI(DOFF(version)), C1, 0, TYP_NONE },
-	{ "flags", FLDT_UINT8X, OI(DOFF(flags)), C1, 0, TYP_NONE },
+	{ "flags", FLDT_UINT8X, OI(DOFF(type)), C1, 0, TYP_NONE },
 	{ "id", FLDT_DQID, OI(DOFF(id)), C1, 0, TYP_NONE },
 	{ "blk_hardlimit", FLDT_QCNT, OI(DOFF(blk_hardlimit)), C1, 0,
 	  TYP_NONE },
