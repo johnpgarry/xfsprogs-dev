@@ -692,6 +692,7 @@ xfs_log_item_init(
 	item->li_type = type;
 
 	INIT_LIST_HEAD(&item->li_trans);
+	INIT_LIST_HEAD(&item->li_bio_list);
 }   
 
 static struct xfs_buftarg *

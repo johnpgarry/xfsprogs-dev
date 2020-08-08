@@ -821,6 +821,7 @@ inode_item_done(
 
 	libxfs_buf_mark_dirty(bp);
 free_buf:
+	list_del_init(&iip->ili_item.li_bio_list);
 	libxfs_buf_relse(bp);
 free_item:
 	xfs_inode_item_put(iip);

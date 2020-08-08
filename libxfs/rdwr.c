@@ -450,8 +450,10 @@ __libxfs_getbufr(int blen)
 				free(bp->b_maps);
 			bp->b_maps = NULL;
 		}
-	} else
+	} else {
 		bp = kmem_zone_zalloc(xfs_buf_zone, 0);
+		INIT_LIST_HEAD(&bp->b_li_list);
+	}
 	pthread_mutex_unlock(&xfs_buf_freelist.cm_mutex);
 	bp->b_ops = NULL;
 	if (bp->b_flags & LIBXFS_B_DIRTY)

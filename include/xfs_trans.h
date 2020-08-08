@@ -18,6 +18,7 @@ struct xfs_buf_map;
 
 typedef struct xfs_log_item {
 	struct list_head		li_trans;	/* transaction list */
+	struct list_head		li_bio_list;
 	xfs_lsn_t			li_lsn;		/* last on-disk lsn */
 	struct xfs_mount		*li_mountp;	/* ptr to fs mount */
 	struct xfs_buf			*li_buf;
