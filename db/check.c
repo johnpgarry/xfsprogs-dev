@@ -2797,10 +2797,10 @@ process_inode(
 					be64_to_cpu(dip->di_nblocks), ino);
 			error++;
 		}
-		if (dip->di_nlink != 0) {
+		if (nlink != 0) {
 			if (v)
 				dbprintf(_("bad nlink %d for free inode %lld\n"),
-					be32_to_cpu(dip->di_nlink), ino);
+					nlink, ino);
 			error++;
 		}
 		if (dip->di_mode != 0) {
