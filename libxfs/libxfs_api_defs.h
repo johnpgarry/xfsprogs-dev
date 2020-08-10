@@ -60,7 +60,6 @@
 #define xfs_da_hashname			libxfs_da_hashname
 #define xfs_da_read_buf			libxfs_da_read_buf
 #define xfs_da_shrink_inode		libxfs_da_shrink_inode
-#define xfs_default_ifork_ops		libxfs_default_ifork_ops
 #define xfs_defer_cancel		libxfs_defer_cancel
 #define xfs_defer_finish		libxfs_defer_finish
 #define xfs_dinode_calc_crc		libxfs_dinode_calc_crc

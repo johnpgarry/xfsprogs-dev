@@ -78,7 +78,6 @@ typedef struct xfs_inode {
 	unsigned int		i_cformat;	/* format of cow fork */
 
 	xfs_fsize_t		i_size;		/* in-memory size */
-	struct xfs_ifork_ops	*i_fork_ops;	/* fork verifiers */
 	struct inode		i_vnode;
 } xfs_inode_t;
 
@@ -161,8 +160,7 @@ extern struct timespec64 current_time(struct inode *inode);
 /* Inode Cache Interfaces */
 extern bool	libxfs_inode_verify_forks(struct xfs_inode *ip);
 extern int	libxfs_iget(struct xfs_mount *, struct xfs_trans *, xfs_ino_t,
-				uint, struct xfs_inode **,
-				struct xfs_ifork_ops *);
+				uint, struct xfs_inode **);
 extern void	libxfs_irele(struct xfs_inode *ip);
 
 #endif /* __XFS_INODE_H__ */
