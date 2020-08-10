@@ -335,7 +335,7 @@ process_inode(
 	ideal = extcount_ideal;
 	if (!skipd)
 		process_fork(dip, XFS_DATA_FORK);
-	skipa = !aflag || !XFS_DFORK_Q(dip);
+	skipa = !aflag || !dip->di_forkoff;
 	if (!skipa)
 		process_fork(dip, XFS_ATTR_FORK);
 	if (vflag && (!skipd || !skipa))

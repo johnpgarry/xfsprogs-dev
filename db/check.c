@@ -2918,7 +2918,7 @@ process_inode(
 			&nextents, &blkmap, XFS_DATA_FORK);
 		break;
 	}
-	if (XFS_DFORK_Q(dip)) {
+	if (dip->di_forkoff) {
 		sbversion |= XFS_SB_VERSION_ATTRBIT;
 		switch (dip->di_aformat) {
 		case XFS_DINODE_FMT_LOCAL:

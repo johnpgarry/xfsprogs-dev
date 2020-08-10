@@ -55,15 +55,16 @@ ablock_help(void)
 /*ARGSUSED*/
 static int
 ablock_f(
-	int		argc,
-	char		**argv)
+	int			argc,
+	char			**argv)
 {
-	bmap_ext_t	bm;
-	xfs_fileoff_t	bno;
-	xfs_fsblock_t	dfsbno;
-	int		haveattr;
-	int		nex;
-	char		*p;
+	bmap_ext_t		bm;
+	xfs_fileoff_t		bno;
+	xfs_fsblock_t		dfsbno;
+	int			haveattr;
+	int			nex;
+	char			*p;
+	struct xfs_dinode	*dip = iocur_top->data;
 
 	bno = (xfs_fileoff_t)strtoull(argv[1], &p, 0);
 	if (*p != '\0') {
@@ -72,12 +73,12 @@ ablock_f(
 	}
 	push_cur();
 	set_cur_inode(iocur_top->ino);
-	if (!iocur_top->data) {
+	if (!dip) {
 		pop_cur();
 		dbprintf(_("no current inode\n"));
 		return 0;
 	}
-	haveattr = XFS_DFORK_Q((xfs_dinode_t *)iocur_top->data);
+	haveattr = dip->di_forkoff;
 	pop_cur();
 	if (!haveattr) {
 		dbprintf(_("no attribute data for file\n"));

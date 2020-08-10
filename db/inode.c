@@ -251,7 +251,7 @@ inode_a_bmbt_count(
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
 	dip = obj;
-	if (!XFS_DFORK_Q(dip))
+	if (!dip->di_forkoff)
 		return 0;
 	ASSERT((char *)XFS_DFORK_APTR(dip) - (char *)dip == byteize(startoff));
 	return dip->di_aformat == XFS_DINODE_FMT_BTREE;
@@ -267,7 +267,7 @@ inode_a_bmx_count(
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
 	dip = obj;
-	if (!XFS_DFORK_Q(dip))
+	if (!dip->di_forkoff)
 		return 0;
 	ASSERT((char *)XFS_DFORK_APTR(dip) - (char *)dip == byteize(startoff));
 	return dip->di_aformat == XFS_DINODE_FMT_EXTENTS ?
@@ -283,7 +283,7 @@ inode_a_count(
 
 	ASSERT(startoff == 0);
 	dip = obj;
-	return XFS_DFORK_Q(dip);
+	return dip->di_forkoff;
 }
 
 static int
@@ -297,7 +297,7 @@ inode_a_offset(
 	ASSERT(startoff == 0);
 	ASSERT(idx == 0);
 	dip = obj;
-	ASSERT(XFS_DFORK_Q(dip));
+	ASSERT(dip->di_forkoff != 0);
 	return bitize((int)((char *)XFS_DFORK_APTR(dip) - (char *)dip));
 }
 
@@ -311,7 +311,7 @@ inode_a_sfattr_count(
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
 	dip = obj;
-	if (!XFS_DFORK_Q(dip))
+	if (!dip->di_forkoff)
 		return 0;
 	ASSERT((char *)XFS_DFORK_APTR(dip) - (char *)dip == byteize(startoff));
 	return dip->di_aformat == XFS_DINODE_FMT_LOCAL;
