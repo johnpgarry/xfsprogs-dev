@@ -1,3 +1,8 @@
+xfsprogs-5.8.0-rc0 (10 Aug 2020)
+	- xfs_repair: check quota counters (Darrick Wong)
+	- xfs_io: fix -D vs -R handling (Xiao Yang)
+	- libxfs changes merged from kernel 5.8
+
 xfsprogs-5.7.0 (24 Jul 2020)
 	- xfs_io: Document '-q' option for sendfile command (Xiao Yang)
 
