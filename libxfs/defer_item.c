@@ -46,18 +46,10 @@ xfs_extent_free_diff_items(
 STATIC void *
 xfs_extent_free_create_intent(
 	struct xfs_trans		*tp,
+	struct list_head		*items,
 	unsigned int			count)
 {
 	return NULL;
-}
-
-/* Log a free extent to the intent item. */
-STATIC void
-xfs_extent_free_log_item(
-	struct xfs_trans		*tp,
-	void				*intent,
-	struct list_head		*item)
-{
 }
 
 /* Get an EFD so we can process all the free extents. */
@@ -111,7 +103,6 @@ const struct xfs_defer_op_type xfs_extent_free_defer_type = {
 	.diff_items	= xfs_extent_free_diff_items,
 	.create_intent	= xfs_extent_free_create_intent,
 	.abort_intent	= xfs_extent_free_abort_intent,
-	.log_item	= xfs_extent_free_log_item,
 	.create_done	= xfs_extent_free_create_done,
 	.finish_item	= xfs_extent_free_finish_item,
 	.cancel_item	= xfs_extent_free_cancel_item,
@@ -153,7 +144,6 @@ const struct xfs_defer_op_type xfs_agfl_free_defer_type = {
 	.diff_items	= xfs_extent_free_diff_items,
 	.create_intent	= xfs_extent_free_create_intent,
 	.abort_intent	= xfs_extent_free_abort_intent,
-	.log_item	= xfs_extent_free_log_item,
 	.create_done	= xfs_extent_free_create_done,
 	.finish_item	= xfs_agfl_free_finish_item,
 	.cancel_item	= xfs_extent_free_cancel_item,
@@ -182,18 +172,10 @@ xfs_rmap_update_diff_items(
 STATIC void *
 xfs_rmap_update_create_intent(
 	struct xfs_trans		*tp,
+	struct list_head		*items,
 	unsigned int			count)
 {
 	return NULL;
-}
-
-/* Log rmap updates in the intent item. */
-STATIC void
-xfs_rmap_update_log_item(
-	struct xfs_trans		*tp,
-	void				*intent,
-	struct list_head		*item)
-{
 }
 
 /* Get an RUD so we can process all the deferred rmap updates. */
@@ -264,7 +246,6 @@ const struct xfs_defer_op_type xfs_rmap_update_defer_type = {
 	.diff_items	= xfs_rmap_update_diff_items,
 	.create_intent	= xfs_rmap_update_create_intent,
 	.abort_intent	= xfs_rmap_update_abort_intent,
-	.log_item	= xfs_rmap_update_log_item,
 	.create_done	= xfs_rmap_update_create_done,
 	.finish_item	= xfs_rmap_update_finish_item,
 	.finish_cleanup = xfs_rmap_update_finish_cleanup,
@@ -294,18 +275,10 @@ xfs_refcount_update_diff_items(
 STATIC void *
 xfs_refcount_update_create_intent(
 	struct xfs_trans		*tp,
+	struct list_head		*items,
 	unsigned int			count)
 {
 	return NULL;
-}
-
-/* Log refcount updates in the intent item. */
-STATIC void
-xfs_refcount_update_log_item(
-	struct xfs_trans		*tp,
-	void				*intent,
-	struct list_head		*item)
-{
 }
 
 /* Get an CUD so we can process all the deferred refcount updates. */
@@ -384,7 +357,6 @@ const struct xfs_defer_op_type xfs_refcount_update_defer_type = {
 	.diff_items	= xfs_refcount_update_diff_items,
 	.create_intent	= xfs_refcount_update_create_intent,
 	.abort_intent	= xfs_refcount_update_abort_intent,
-	.log_item	= xfs_refcount_update_log_item,
 	.create_done	= xfs_refcount_update_create_done,
 	.finish_item	= xfs_refcount_update_finish_item,
 	.finish_cleanup = xfs_refcount_update_finish_cleanup,
@@ -412,18 +384,10 @@ xfs_bmap_update_diff_items(
 STATIC void *
 xfs_bmap_update_create_intent(
 	struct xfs_trans		*tp,
+	struct list_head		*items,
 	unsigned int			count)
 {
 	return NULL;
-}
-
-/* Log bmap updates in the intent item. */
-STATIC void
-xfs_bmap_update_log_item(
-	struct xfs_trans		*tp,
-	void				*intent,
-	struct list_head		*item)
-{
 }
 
 /* Get an BUD so we can process all the deferred rmap updates. */
@@ -488,7 +452,6 @@ const struct xfs_defer_op_type xfs_bmap_update_defer_type = {
 	.diff_items	= xfs_bmap_update_diff_items,
 	.create_intent	= xfs_bmap_update_create_intent,
 	.abort_intent	= xfs_bmap_update_abort_intent,
-	.log_item	= xfs_bmap_update_log_item,
 	.create_done	= xfs_bmap_update_create_done,
 	.finish_item	= xfs_bmap_update_finish_item,
 	.cancel_item	= xfs_bmap_update_cancel_item,
