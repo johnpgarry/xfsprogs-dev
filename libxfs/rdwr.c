@@ -586,12 +586,22 @@ libxfs_getbuf_flags(
 	struct xfs_buf		**bpp)
 {
 	struct xfs_bufkey	key = {NULL};
+	int			ret;
 
 	key.buftarg = btp;
 	key.blkno = blkno;
 	key.bblen = len;
 
-	return __cache_lookup(&key, flags, bpp);
+	ret = __cache_lookup(&key, flags, bpp);
+	if (ret)
+		return ret;
+
+	if (btp == btp->bt_mount->m_ddev_targp) {
+		(*bpp)->b_pag = xfs_perag_get(btp->bt_mount,
+				xfs_daddr_to_agno(btp->bt_mount, blkno));
+	}
+
+	return 0;
 }
 
 /*
@@ -1084,6 +1094,9 @@ libxfs_brelse(
 		return;
 	if (bp->b_flags & LIBXFS_B_DIRTY)
 		libxfs_whine_dirty_buf(bp);
+	if (bp->b_pag)
+		xfs_perag_put(bp->b_pag);
+	bp->b_pag = NULL;
 
 	pthread_mutex_lock(&xfs_buf_freelist.cm_mutex);
 	list_add(&bp->b_node.cn_mru, &xfs_buf_freelist.cm_list);
