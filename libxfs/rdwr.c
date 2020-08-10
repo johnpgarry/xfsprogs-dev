@@ -1266,6 +1266,8 @@ libxfs_iget(
 	struct xfs_ifork_ops	*ifork_ops)
 {
 	struct xfs_inode	*ip;
+	struct xfs_dinode	*dip;
+	struct xfs_buf		*bp;
 	int			error = 0;
 
 	ip = kmem_zone_zalloc(xfs_inode_zone, 0);
@@ -1274,14 +1276,24 @@ libxfs_iget(
 
 	ip->i_ino = ino;
 	ip->i_mount = mp;
-	error = xfs_iread(mp, tp, ip, 0);
-	if (error) {
-		kmem_cache_free(xfs_inode_zone, ip);
-		*ipp = NULL;
-		return error;
-	}
+	error = xfs_imap(mp, tp, ip->i_ino, &ip->i_imap, 0);
+	if (error)
+		goto out_destroy;
+
+	error = xfs_imap_to_bp(mp, tp, &ip->i_imap, &dip, &bp, 0);
+	if (error)
+		goto out_destroy;
+
+	error = xfs_inode_from_disk(ip, dip);
+	if (!error)
+		xfs_buf_set_ref(bp, XFS_INO_REF);
+	xfs_trans_brelse(tp, bp);
+
+	if (error)
+		goto out_destroy;
 
 	ip->i_fork_ops = ifork_ops;
+
 	if (!libxfs_inode_verify_forks(ip)) {
 		libxfs_irele(ip);
 		return -EFSCORRUPTED;
@@ -1289,6 +1301,11 @@ libxfs_iget(
 
 	*ipp = ip;
 	return 0;
+
+out_destroy:
+	kmem_cache_free(xfs_inode_zone, ip);
+	*ipp = NULL;
+	return error;
 }
 
 static void
