@@ -351,11 +351,13 @@ libxfs_ialloc(
  * Originally based on xfs_iflush_int() from xfs_inode.c in the kernel.
  */
 int
-libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
+libxfs_iflush_int(
+	xfs_inode_t			*ip,
+	xfs_buf_t			*bp)
 {
-	xfs_inode_log_item_t	*iip;
-	xfs_dinode_t		*dip;
-	xfs_mount_t		*mp;
+	struct xfs_inode_log_item	*iip;
+	xfs_dinode_t			*dip;
+	xfs_mount_t			*mp;
 
 	ASSERT(ip->i_d.di_format != XFS_DINODE_FMT_BTREE ||
 		ip->i_d.di_nextents > ip->i_df.if_ext_max);

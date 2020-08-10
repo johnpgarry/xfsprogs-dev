@@ -132,10 +132,10 @@ xfs_buf_item_log(
  */
 void
 xfs_inode_item_init(
-	xfs_inode_t		*ip,
-	xfs_mount_t		*mp)
+	xfs_inode_t			*ip,
+	xfs_mount_t			*mp)
 {
-	xfs_inode_log_item_t	*iip;
+	struct xfs_inode_log_item	*iip;
 
 	ASSERT(ip->i_itemp == NULL);
 	iip = ip->i_itemp = kmem_zone_zalloc(xfs_ili_zone, 0);

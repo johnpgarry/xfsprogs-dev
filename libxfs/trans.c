@@ -793,13 +793,13 @@ xfs_inode_item_put(
  */
 static void
 inode_item_done(
-	xfs_inode_log_item_t	*iip)
+	struct xfs_inode_log_item	*iip)
 {
-	xfs_dinode_t		*dip;
-	xfs_inode_t		*ip;
-	xfs_mount_t		*mp;
-	xfs_buf_t		*bp;
-	int			error;
+	xfs_dinode_t			*dip;
+	xfs_inode_t			*ip;
+	xfs_mount_t			*mp;
+	xfs_buf_t			*bp;
+	int				error;
 
 	ip = iip->ili_inode;
 	mp = iip->ili_item.li_mountp;
@@ -874,7 +874,7 @@ trans_committed(
 		if (lip->li_type == XFS_LI_BUF)
 			buf_item_done((xfs_buf_log_item_t *)lip);
 		else if (lip->li_type == XFS_LI_INODE)
-			inode_item_done((xfs_inode_log_item_t *)lip);
+			inode_item_done((struct xfs_inode_log_item *)lip);
 		else {
 			fprintf(stderr, _("%s: unrecognised log item type\n"),
 				progname);
@@ -902,7 +902,7 @@ buf_item_unlock(
 
 static void
 inode_item_unlock(
-	xfs_inode_log_item_t	*iip)
+	struct xfs_inode_log_item	*iip)
 {
 	xfs_inode_item_put(iip);
 }
@@ -919,7 +919,7 @@ xfs_trans_free_items(
 		if (lip->li_type == XFS_LI_BUF)
 			buf_item_unlock((xfs_buf_log_item_t *)lip);
 		else if (lip->li_type == XFS_LI_INODE)
-			inode_item_unlock((xfs_inode_log_item_t *)lip);
+			inode_item_unlock((struct xfs_inode_log_item *)lip);
 		else {
 			fprintf(stderr, _("%s: unrecognised log item type\n"),
 				progname);
