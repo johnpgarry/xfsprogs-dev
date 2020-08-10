@@ -9,6 +9,7 @@
 #define KM_NOFS		0x0004u
 #define KM_MAYFAIL	0x0008u
 #define KM_LARGE	0x0010u
+#define KM_NOLOCKDEP	0x0020u
 
 typedef struct kmem_zone {
 	int	zone_unitsize;	/* Size in bytes of zone unit           */
