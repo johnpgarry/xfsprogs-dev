@@ -47,6 +47,7 @@ typedef struct xfs_buf_log_item {
 #define XFS_BLI_HOLD			(1<<1)
 #define XFS_BLI_STALE			(1<<2)
 #define XFS_BLI_INODE_ALLOC_BUF		(1<<3)
+#define XFS_BLI_ORDERED			(1<<4)
 
 typedef struct xfs_qoff_logitem {
 	xfs_log_item_t		qql_item;	/* common portion */
