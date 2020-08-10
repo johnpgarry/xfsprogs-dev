@@ -1223,24 +1223,6 @@ xfs_verify_magic16(
 kmem_zone_t		*xfs_inode_zone;
 extern kmem_zone_t	*xfs_ili_zone;
 
-/*
- * If there are inline format data / attr forks attached to this inode,
- * make sure they're not corrupt.
- */
-bool
-libxfs_inode_verify_forks(
-	struct xfs_inode	*ip)
-{
-	if (ip->i_d.di_format == XFS_DINODE_FMT_LOCAL &&
-	    xfs_ifork_verify_local_data(ip))
-		return false;
-
-	if (ip->i_d.di_aformat == XFS_DINODE_FMT_LOCAL &&
-	    xfs_ifork_verify_local_attr(ip))
-		return false;
-	return true;
-}
-
 int
 libxfs_iget(
 	struct xfs_mount	*mp,
@@ -1275,11 +1257,6 @@ libxfs_iget(
 
 	if (error)
 		goto out_destroy;
-
-	if (!libxfs_inode_verify_forks(ip)) {
-		libxfs_irele(ip);
-		return -EFSCORRUPTED;
-	}
 
 	*ipp = ip;
 	return 0;
