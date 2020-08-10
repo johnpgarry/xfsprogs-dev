@@ -266,7 +266,7 @@ libxfs_ialloc(
 	}
 
 	ip->i_d.di_size = 0;
-	ip->i_d.di_nextents = 0;
+	ip->i_df.if_nextents = 0;
 	ASSERT(ip->i_d.di_nblocks == 0);
 	ip->i_d.di_extsize = pip ? 0 : fsx->fsx_extsize;
 	ip->i_d.di_dmevmask = 0;
@@ -334,7 +334,6 @@ libxfs_ialloc(
 	}
 	/* Attribute fork settings for new inode. */
 	ip->i_d.di_aformat = XFS_DINODE_FMT_EXTENTS;
-	ip->i_d.di_anextents = 0;
 
 	/*
 	 * Log the new values stuffed into the inode.
@@ -359,7 +358,7 @@ libxfs_iflush_int(
 	xfs_mount_t			*mp;
 
 	ASSERT(ip->i_d.di_format != XFS_DINODE_FMT_BTREE ||
-		ip->i_d.di_nextents > ip->i_df.if_ext_max);
+		ip->i_df.if_nextents > ip->i_df.if_ext_max);
 
 	iip = ip->i_itemp;
 	mp = ip->i_mount;
@@ -376,7 +375,7 @@ libxfs_iflush_int(
 			(ip->i_d.di_format == XFS_DINODE_FMT_BTREE)   ||
 			(ip->i_d.di_format == XFS_DINODE_FMT_LOCAL) );
 	}
-	ASSERT(ip->i_d.di_nextents+ip->i_d.di_anextents <= ip->i_d.di_nblocks);
+	ASSERT(ip->i_df.if_nextents+ip->i_afp->if_nextents <= ip->i_d.di_nblocks);
 	ASSERT(ip->i_d.di_forkoff <= mp->m_sb.sb_inodesize);
 
 	/* bump the change count on v3 inodes */
