@@ -128,7 +128,7 @@ error:
 
 void
 xlog_recover_print_efi(
-	xlog_recover_item_t	*item)
+	struct xlog_recover_item *item)
 {
 	xfs_efi_log_format_t	*f, *src_f;
 	xfs_extent_t		*ex;
@@ -202,7 +202,7 @@ xlog_print_trans_efd(char **ptr, uint len)
 
 void
 xlog_recover_print_efd(
-	xlog_recover_item_t	*item)
+	struct xlog_recover_item *item)
 {
 	xfs_efd_log_format_t	*f;
 

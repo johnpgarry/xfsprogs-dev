@@ -1012,9 +1012,9 @@ STATIC void
 xlog_recover_add_item(
 	struct list_head	*head)
 {
-	xlog_recover_item_t	*item;
+	struct xlog_recover_item *item;
 
-	item = kmem_zalloc(sizeof(xlog_recover_item_t), 0);
+	item = kmem_zalloc(sizeof(struct xlog_recover_item), 0);
 	INIT_LIST_HEAD(&item->ri_list);
 	list_add_tail(&item->ri_list, head);
 }
@@ -1026,7 +1026,7 @@ xlog_recover_add_to_cont_trans(
 	char			*dp,
 	int			len)
 {
-	xlog_recover_item_t	*item;
+	struct xlog_recover_item *item;
 	char			*ptr, *old_ptr;
 	int			old_len;
 
@@ -1039,7 +1039,8 @@ xlog_recover_add_to_cont_trans(
 		return 0;
 	}
 	/* take the tail entry */
-	item = list_entry(trans->r_itemq.prev, xlog_recover_item_t, ri_list);
+	item = list_entry(trans->r_itemq.prev, struct xlog_recover_item,
+			  ri_list);
 
 	old_ptr = item->ri_buf[item->ri_cnt-1].i_addr;
 	old_len = item->ri_buf[item->ri_cnt-1].i_len;
@@ -1073,7 +1074,7 @@ xlog_recover_add_to_trans(
 	int			len)
 {
 	struct xfs_inode_log_format	*in_f;			/* any will do */
-	xlog_recover_item_t	*item;
+	struct xlog_recover_item *item;
 	char			*ptr;
 
 	if (!len)
@@ -1097,13 +1098,14 @@ xlog_recover_add_to_trans(
 	in_f = (struct xfs_inode_log_format *)ptr;
 
 	/* take the tail entry */
-	item = list_entry(trans->r_itemq.prev, xlog_recover_item_t, ri_list);
+	item = list_entry(trans->r_itemq.prev, struct xlog_recover_item,
+			  ri_list);
 	if (item->ri_total != 0 &&
 	     item->ri_total == item->ri_cnt) {
 		/* tail item is in use, get a new one */
 		xlog_recover_add_item(&trans->r_itemq);
 		item = list_entry(trans->r_itemq.prev,
-					xlog_recover_item_t, ri_list);
+					struct xlog_recover_item, ri_list);
 	}
 
 	if (item->ri_total == 0) {		/* first region to be added */
@@ -1140,7 +1142,7 @@ STATIC void
 xlog_recover_free_trans(
 	struct xlog_recover	*trans)
 {
-	xlog_recover_item_t	*item, *n;
+	struct xlog_recover_item *item, *n;
 	int			i;
 
 	list_for_each_entry_safe(item, n, &trans->r_itemq, ri_list) {

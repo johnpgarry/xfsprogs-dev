@@ -33,9 +33,9 @@ extern struct xfs_inode_log_format *
 	xfs_inode_item_format_convert(char *, uint, struct xfs_inode_log_format *);
 
 extern int xlog_print_trans_efi(char **ptr, uint src_len, int continued);
-extern void xlog_recover_print_efi(xlog_recover_item_t *item);
+extern void xlog_recover_print_efi(struct xlog_recover_item *item);
 extern int xlog_print_trans_efd(char **ptr, uint len);
-extern void xlog_recover_print_efd(xlog_recover_item_t *item);
+extern void xlog_recover_print_efd(struct xlog_recover_item *item);
 
 extern int xlog_print_trans_rui(char **ptr, uint src_len, int continued);
 extern void xlog_recover_print_rui(struct xlog_recover_item *item);

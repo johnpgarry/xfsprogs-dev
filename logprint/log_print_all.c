@@ -68,7 +68,7 @@ xlog_recover_print_data(
 
 STATIC void
 xlog_recover_print_buffer(
-	xlog_recover_item_t	*item)
+	struct xlog_recover_item *item)
 {
 	xfs_agi_t		*agi;
 	xfs_agf_t		*agf;
@@ -183,7 +183,7 @@ xlog_recover_print_buffer(
 
 STATIC void
 xlog_recover_print_quotaoff(
-	xlog_recover_item_t	*item)
+	struct xlog_recover_item *item)
 {
 	xfs_qoff_logformat_t	*qoff_f;
 	char			str[32] = { 0 };
@@ -202,7 +202,7 @@ xlog_recover_print_quotaoff(
 
 STATIC void
 xlog_recover_print_dquot(
-	xlog_recover_item_t	*item)
+	struct xlog_recover_item *item)
 {
 	xfs_dq_logformat_t	*f;
 	struct xfs_disk_dquot	*d;
@@ -268,7 +268,7 @@ xlog_recover_print_inode_core(
 
 STATIC void
 xlog_recover_print_inode(
-	xlog_recover_item_t	*item)
+	struct xlog_recover_item *item)
 {
 	struct xfs_inode_log_format	f_buf;
 	struct xfs_inode_log_format	*f;
@@ -384,7 +384,7 @@ xlog_recover_print_icreate(
 
 void
 xlog_recover_print_logitem(
-	xlog_recover_item_t	*item)
+	struct xlog_recover_item	*item)
 {
 	switch (ITEM_TYPE(item)) {
 	case XFS_LI_BUF:
@@ -434,7 +434,7 @@ xlog_recover_print_logitem(
 
 static void
 xlog_recover_print_item(
-	xlog_recover_item_t	*item)
+	struct xlog_recover_item *item)
 {
 	int			i;
 
@@ -502,7 +502,7 @@ xlog_recover_print_trans(
 	struct list_head	*itemq,
 	int			print)
 {
-	xlog_recover_item_t	*item;
+	struct xlog_recover_item *item;
 
 	if (print < 3)
 		return;
