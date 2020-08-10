@@ -425,11 +425,13 @@ bmap_next_offset(
 	struct xfs_ifork	*ifp;		/* inode fork pointer */
 	struct xfs_iext_cursor	icur;
 
-	if (XFS_IFORK_FORMAT(ip, whichfork) != XFS_DINODE_FMT_BTREE &&
-	    XFS_IFORK_FORMAT(ip, whichfork) != XFS_DINODE_FMT_EXTENTS &&
-	    XFS_IFORK_FORMAT(ip, whichfork) != XFS_DINODE_FMT_LOCAL)
+	ifp = XFS_IFORK_PTR(ip, whichfork);
+
+	if (ifp->if_format != XFS_DINODE_FMT_BTREE &&
+	    ifp->if_format != XFS_DINODE_FMT_EXTENTS &&
+	    ifp->if_format != XFS_DINODE_FMT_LOCAL)
 	       return EIO;
-	if (XFS_IFORK_FORMAT(ip, whichfork) == XFS_DINODE_FMT_LOCAL) {
+	if (ifp->if_format == XFS_DINODE_FMT_LOCAL) {
 		*bnop = NULLFILEOFF;
 		return 0;
 	}
@@ -487,8 +489,9 @@ mk_rbmino(xfs_mount_t *mp)
 	memset(&ip->i_d, 0, sizeof(ip->i_d));
 
 	VFS_I(ip)->i_mode = S_IFREG;
-	ip->i_d.di_format = XFS_DINODE_FMT_EXTENTS;
-	ip->i_d.di_aformat = XFS_DINODE_FMT_EXTENTS;
+	ip->i_df.if_format = XFS_DINODE_FMT_EXTENTS;
+	if (ip->i_afp)
+		ip->i_afp->if_format = XFS_DINODE_FMT_EXTENTS;
 
 	set_nlink(VFS_I(ip), 1);	/* account for sb ptr */
 
@@ -727,8 +730,9 @@ mk_rsumino(xfs_mount_t *mp)
 	memset(&ip->i_d, 0, sizeof(ip->i_d));
 
 	VFS_I(ip)->i_mode = S_IFREG;
-	ip->i_d.di_format = XFS_DINODE_FMT_EXTENTS;
-	ip->i_d.di_aformat = XFS_DINODE_FMT_EXTENTS;
+	ip->i_df.if_format = XFS_DINODE_FMT_EXTENTS;
+	if (ip->i_afp)
+		ip->i_afp->if_format = XFS_DINODE_FMT_EXTENTS;
 
 	set_nlink(VFS_I(ip), 1);	/* account for sb ptr */
 
@@ -826,8 +830,9 @@ mk_root_dir(xfs_mount_t *mp)
 	memset(&ip->i_d, 0, sizeof(ip->i_d));
 
 	VFS_I(ip)->i_mode = mode|S_IFDIR;
-	ip->i_d.di_format = XFS_DINODE_FMT_EXTENTS;
-	ip->i_d.di_aformat = XFS_DINODE_FMT_EXTENTS;
+	ip->i_df.if_format = XFS_DINODE_FMT_EXTENTS;
+	if (ip->i_afp)
+		ip->i_afp->if_format = XFS_DINODE_FMT_EXTENTS;
 
 	set_nlink(VFS_I(ip), 2);	/* account for . and .. */
 
@@ -1204,8 +1209,8 @@ dir_binval(
 	xfs_dablk_t		dabno;
 	int			error = 0;
 
-	if (ip->i_d.di_format != XFS_DINODE_FMT_EXTENTS &&
-	    ip->i_d.di_format != XFS_DINODE_FMT_BTREE)
+	if (ip->i_df.if_format != XFS_DINODE_FMT_EXTENTS &&
+	    ip->i_df.if_format != XFS_DINODE_FMT_BTREE)
 		return 0;
 
 	geo = tp->t_mountp->m_dir_geo;
@@ -2855,7 +2860,7 @@ process_dir_inode(
 	/*
 	 * look for bogus entries
 	 */
-	switch (ip->i_d.di_format)  {
+	switch (ip->i_df.if_format)  {
 		case XFS_DINODE_FMT_EXTENTS:
 		case XFS_DINODE_FMT_BTREE:
 			/*
@@ -2920,7 +2925,7 @@ _("error %d fixing shortform directory %llu\n"),
 	 * if it has to move them around.
 	 */
 	if (!no_modify && need_root_dotdot && ino == mp->m_sb.sb_rootino)  {
-		ASSERT(ip->i_d.di_format != XFS_DINODE_FMT_LOCAL);
+		ASSERT(ip->i_df.if_format != XFS_DINODE_FMT_LOCAL);
 
 		do_warn(_("recreating root directory .. entry\n"));
 
@@ -2972,7 +2977,7 @@ _("error %d fixing shortform directory %llu\n"),
 			do_warn(
 	_("would create missing \".\" entry in dir ino %" PRIu64 "\n"),
 				ino);
-		} else if (ip->i_d.di_format != XFS_DINODE_FMT_LOCAL)  {
+		} else if (ip->i_df.if_format != XFS_DINODE_FMT_LOCAL)  {
 			/*
 			 * need to create . entry in longform dir.
 			 */
