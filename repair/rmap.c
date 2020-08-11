@@ -399,6 +399,7 @@ rmap_add_fixed_ag_rec(
 			nr = 1;
 		agino = ino_rec->ino_startnum + startidx;
 		agbno = XFS_AGINO_TO_AGBNO(mp, agino);
+		ASSERT(get_bmap(agno, agbno) == XR_E_INO);
 		if (XFS_AGINO_TO_OFFSET(mp, agino) == 0) {
 			error = rmap_add_ag_rec(mp, agno, agbno, nr,
 					XFS_RMAP_OWN_INODES);
