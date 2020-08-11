@@ -476,28 +476,6 @@ _("Fatal error: inode %" PRIu64 " - blkmap_set_ext(): %s\n"
 			locked_agno = agno;
 		}
 
-		if (check_dups) {
-			/*
-			 * if we're just checking the bmap for dups,
-			 * return if we find one, otherwise, continue
-			 * checking each entry without setting the
-			 * block bitmap
-			 */
-			if (!(type == XR_INO_DATA &&
-			    xfs_sb_version_hasreflink(&mp->m_sb)) &&
-			    search_dup_extent(agno, agbno, ebno)) {
-				do_warn(
-_("%s fork in ino %" PRIu64 " claims dup extent, "
-  "off - %" PRIu64 ", start - %" PRIu64 ", cnt %" PRIu64 "\n"),
-					forkname, ino, irec.br_startoff,
-					irec.br_startblock,
-					irec.br_blockcount);
-				goto done;
-			}
-			*tot += irec.br_blockcount;
-			continue;
-		}
-
 		for (b = irec.br_startblock;
 		     agbno < ebno;
 		     b += blen, agbno += blen) {
@@ -552,6 +530,17 @@ _("illegal state %d in block map %" PRIu64 "\n"),
 					state, b);
 				goto done;
 			}
+		}
+
+		if (check_dups) {
+			/*
+			 * If we're just checking the bmap for dups and we
+			 * didn't find any non-reflink collisions, update our
+			 * inode's block count and move on to the next extent.
+			 * We're not yet updating the block usage information.
+			 */
+			*tot += irec.br_blockcount;
+			continue;
 		}
 
 		/*
