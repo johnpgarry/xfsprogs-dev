@@ -285,7 +285,8 @@ Set the copy-on-write extent size hint on all inodes created by
 .BR mkfs.xfs "."
 The value must be provided in units of filesystem blocks.
 If the value is zero, the default value (currently 32 blocks) will be used.
-Directories will pass on this hint to newly created children.
+Directories will pass on this hint to newly created regular files and
+directories.
 .TP
 .BI name= value
 This can be used to specify the name of the special file containing
@@ -380,20 +381,23 @@ this information.
 If set, all inodes created by
 .B mkfs.xfs
 will be created with the realtime flag set.
-Directories will pass on this flag to newly created children.
+Directories will pass on this flag to newly created regular files and
+directories.
 .TP
 .BI projinherit= value
 All inodes created by
 .B mkfs.xfs
 will be assigned this project quota id.
-Directories will pass on the project id to newly created children.
+Directories will pass on the project id to newly created regular files and
+directories.
 .TP
 .BI extszinherit= value
 All inodes created by
 .B mkfs.xfs
 will have this extent size hint applied.
 The value must be provided in units of filesystem blocks.
-Directories will pass on this hint to newly created children.
+Directories will pass on this hint to newly created regular files and
+directories.
 .RE
 .TP
 .B \-f
