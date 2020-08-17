@@ -172,6 +172,9 @@ const field_t	inode_v3_flds[] = {
 	{ "cowextsz", FLDT_UINT1,
 	  OI(COFF(flags2) + bitsz(uint64_t) - XFS_DIFLAG2_COWEXTSIZE_BIT-1), C1,
 	  0, TYP_NONE },
+	{ "dax", FLDT_UINT1,
+	  OI(COFF(flags2) + bitsz(uint64_t) - XFS_DIFLAG2_DAX_BIT - 1), C1,
+	  0, TYP_NONE },
 	{ NULL }
 };
 
