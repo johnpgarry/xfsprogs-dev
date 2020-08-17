@@ -588,18 +588,20 @@ set_iocur_type(
 {
 	struct xfs_buf	*bp = iocur_top->bp;
 
-	/* Inodes are special; verifier checks all inodes in the chunk */
+	/*
+	 * Inodes are special; verifier checks all inodes in the chunk, the
+	 * set_cur_inode() will help that
+	 */
 	if (type->typnm == TYP_INODE) {
 		xfs_daddr_t	b = iocur_top->bb;
+		xfs_agblock_t	agbno;
+		xfs_agino_t	agino;
 		xfs_ino_t	ino;
 
-		/*
-		 * Note that this will back up to the beginning of the inode
- 		 * which contains the current disk location; daddr may change.
- 		 */
-		ino = XFS_AGINO_TO_INO(mp, xfs_daddr_to_agno(mp, b),
-			((b << BBSHIFT) >> mp->m_sb.sb_inodelog) %
-			XFS_AGB_TO_AGINO(mp, mp->m_sb.sb_agblocks));
+		agbno = xfs_daddr_to_agbno(mp, b);
+		agino = XFS_OFFBNO_TO_AGINO(mp, agbno,
+				iocur_top->boff / mp->m_sb.sb_inodesize);
+		ino = XFS_AGINO_TO_INO(mp, xfs_daddr_to_agno(mp, b), agino);
 		set_cur_inode(ino);
 		return;
 	}
