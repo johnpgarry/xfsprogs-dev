@@ -216,6 +216,8 @@ type_f(
 		tt = findtyp(argv[1]);
 		if (tt == NULL) {
 			dbprintf(_("no such type %s\n"), argv[1]);
+		} else if (iocur_top->typ == tt) {
+			return 0;
 		} else {
 			if (iocur_top->typ == NULL)
 				dbprintf(_("no current object\n"));
