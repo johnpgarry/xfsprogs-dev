@@ -586,7 +586,7 @@ void
 set_iocur_type(
 	const typ_t	*type)
 {
-	struct xfs_buf	*bp = iocur_top->bp;
+	int		bb_count = 1;	/* type's size in basic blocks */
 
 	/*
 	 * Inodes are special; verifier checks all inodes in the chunk, the
@@ -607,29 +607,10 @@ set_iocur_type(
 	}
 
 	/* adjust buffer size for types with fields & hence fsize() */
-	if (type->fields) {
-		int bb_count;	/* type's size in basic blocks */
-
+	if (type->fields)
 		bb_count = BTOBB(byteize(fsize(type->fields,
-					       iocur_top->data, 0, 0)));
-		set_cur(type, iocur_top->bb, bb_count, DB_RING_IGN, NULL);
-	}
-	iocur_top->typ = type;
-
-	/* verify the buffer if the type has one. */
-	if (!bp)
-		return;
-	if (!type->bops) {
-		bp->b_ops = NULL;
-		bp->b_flags |= LIBXFS_B_UNCHECKED;
-		return;
-	}
-	if (!(bp->b_flags & LIBXFS_B_UPTODATE))
-		return;
-	bp->b_error = 0;
-	bp->b_ops = type->bops;
-	bp->b_ops->verify_read(bp);
-	bp->b_flags &= ~LIBXFS_B_UNCHECKED;
+				       iocur_top->data, 0, 0)));
+	set_cur(type, iocur_top->bb, bb_count, DB_RING_IGN, NULL);
 }
 
 static void
