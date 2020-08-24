@@ -191,6 +191,62 @@ state_stat_to_statv(
 }
 
 static void
+state_quotafile_stat(
+	FILE			*fp,
+	uint			type,
+	struct fs_path          *mount,
+	struct fs_quota_statv	*sv,
+	struct fs_quota_stat	*s,
+	uint			flags)
+{
+	bool			accounting, enforcing;
+	struct fs_qfilestatv	*qsv;
+	char			*dev = mount->fs_name;
+
+	if (xfsquotactl(XFS_GETQSTATV, dev, type, 0, (void *)sv) < 0) {
+		if (xfsquotactl(XFS_GETQSTAT, dev, type, 0, (void *)s) < 0) {
+			if (flags & VERBOSE_FLAG)
+				fprintf(fp,
+					_("%s quota are not enabled on %s\n"),
+					type_to_string(type), dev);
+			return;
+		}
+		state_stat_to_statv(s, sv);
+	}
+
+	switch(type) {
+	case XFS_USER_QUOTA:
+		qsv = &sv->qs_uquota;
+		accounting = sv->qs_flags & XFS_QUOTA_UDQ_ACCT;
+		enforcing = sv->qs_flags & XFS_QUOTA_UDQ_ENFD;
+		break;
+	case XFS_GROUP_QUOTA:
+		qsv = &sv->qs_gquota;
+		accounting = sv->qs_flags & XFS_QUOTA_GDQ_ACCT;
+		enforcing = sv->qs_flags & XFS_QUOTA_GDQ_ENFD;
+		break;
+	case XFS_PROJ_QUOTA:
+		qsv = &sv->qs_pquota;
+		accounting = sv->qs_flags & XFS_QUOTA_PDQ_ACCT;
+		enforcing = sv->qs_flags & XFS_QUOTA_PDQ_ENFD;
+		break;
+	default:
+		return;
+	}
+
+
+	state_qfilestat(fp, mount, type, qsv, accounting, enforcing);
+
+	state_timelimit(fp, XFS_BLOCK_QUOTA, sv->qs_btimelimit);
+	state_warnlimit(fp, XFS_BLOCK_QUOTA, sv->qs_bwarnlimit);
+
+	state_timelimit(fp, XFS_INODE_QUOTA, sv->qs_itimelimit);
+	state_warnlimit(fp, XFS_INODE_QUOTA, sv->qs_iwarnlimit);
+
+	state_timelimit(fp, XFS_RTBLOCK_QUOTA, sv->qs_rtbtimelimit);
+}
+
+static void
 state_quotafile_mount(
 	FILE			*fp,
 	uint			type,
@@ -199,41 +255,23 @@ state_quotafile_mount(
 {
 	struct fs_quota_stat	s;
 	struct fs_quota_statv	sv;
-	char			*dev = mount->fs_name;
 
 	sv.qs_version = FS_QSTATV_VERSION1;
 
-	if (xfsquotactl(XFS_GETQSTATV, dev, type, 0, (void *)&sv) < 0) {
-		if (xfsquotactl(XFS_GETQSTAT, dev, type, 0, (void *)&s) < 0) {
-			if (flags & VERBOSE_FLAG)
-				fprintf(fp,
-					_("%s quota are not enabled on %s\n"),
-					type_to_string(type), dev);
-			return;
-		}
-		state_stat_to_statv(&s, &sv);
+	if (type & XFS_USER_QUOTA) {
+		state_quotafile_stat(fp, XFS_USER_QUOTA, mount,
+				     &sv, &s, flags);
 	}
 
-	if (type & XFS_USER_QUOTA)
-		state_qfilestat(fp, mount, XFS_USER_QUOTA, &sv.qs_uquota,
-				sv.qs_flags & XFS_QUOTA_UDQ_ACCT,
-				sv.qs_flags & XFS_QUOTA_UDQ_ENFD);
-	if (type & XFS_GROUP_QUOTA)
-		state_qfilestat(fp, mount, XFS_GROUP_QUOTA, &sv.qs_gquota,
-				sv.qs_flags & XFS_QUOTA_GDQ_ACCT,
-				sv.qs_flags & XFS_QUOTA_GDQ_ENFD);
-	if (type & XFS_PROJ_QUOTA)
-		state_qfilestat(fp, mount, XFS_PROJ_QUOTA, &sv.qs_pquota,
-				sv.qs_flags & XFS_QUOTA_PDQ_ACCT,
-				sv.qs_flags & XFS_QUOTA_PDQ_ENFD);
+	if (type & XFS_GROUP_QUOTA) {
+		state_quotafile_stat(fp, XFS_GROUP_QUOTA, mount,
+				     &sv, &s, flags);
+	}
 
-	state_timelimit(fp, XFS_BLOCK_QUOTA, sv.qs_btimelimit);
-	state_warnlimit(fp, XFS_BLOCK_QUOTA, sv.qs_bwarnlimit);
-
-	state_timelimit(fp, XFS_INODE_QUOTA, sv.qs_itimelimit);
-	state_warnlimit(fp, XFS_INODE_QUOTA, sv.qs_iwarnlimit);
-
-	state_timelimit(fp, XFS_RTBLOCK_QUOTA, sv.qs_rtbtimelimit);
+	if (type & XFS_PROJ_QUOTA) {
+		state_quotafile_stat(fp, XFS_PROJ_QUOTA, mount,
+				     &sv, &s, flags);
+	}
 }
 
 static void
