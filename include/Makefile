@@ -35,6 +35,7 @@ HFILES = handle.h \
 	linux.h \
 	xfs.h \
 	xqm.h \
+	xfs_fs_compat.h \
 	xfs_arch.h
 
 LSRCFILES = platform_defs.h.in builddefs.in buildmacros buildrules install-sh

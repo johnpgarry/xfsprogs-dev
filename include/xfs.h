@@ -39,6 +39,8 @@ extern int xfs_assert_largefile[sizeof(off_t)-8];
 #endif
 
 #include <xfs/xfs_types.h>
+/* Include deprecated/compat pre-vfs xfs-specific symbols */
+#include <xfs/xfs_fs_compat.h>
 #include <xfs/xfs_fs.h>
 
 #endif	/* __XFS_H__ */
