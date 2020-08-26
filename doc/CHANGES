@@ -1,3 +1,12 @@
+xfsprogs-5.8.0-rc1 (26 Aug 2020)
+	- mkfs: allow setting dax flag on root directory (Darrick Wong)
+	- xfs_quota: improve reporting and messages (Bill O'Donnell)
+	- xfs_db: use correct inode to set inode type (Zorro Lang)
+	- xfs_db: fix nlink usage in check (Darrick Wong)
+	- xfs_db: report the inode dax flag (Darrick Wong)
+	- man: update mkfs.xfs inode flag option documentation (Darrick Wong)
+	- xfsprogs: move custom interface def'ns to new header (Eric Sandeen)
+
 xfsprogs-5.8.0-rc0 (10 Aug 2020)
 	- xfs_repair: check quota counters (Darrick Wong)
 	- xfs_io: fix -D vs -R handling (Xiao Yang)
