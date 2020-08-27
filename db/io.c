@@ -561,8 +561,10 @@ set_cur(
 		return;
 	iocur_top->buf = bp->b_addr;
 	iocur_top->bp = bp;
-	if (!ops)
+	if (!ops) {
+		bp->b_ops = NULL;
 		bp->b_flags |= LIBXFS_B_UNCHECKED;
+	}
 
 	iocur_top->bb = blknum;
 	iocur_top->blen = len;
