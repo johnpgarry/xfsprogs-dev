@@ -176,16 +176,15 @@ verify_dfsbno_range(
 
 	return XR_DFSBNORANGE_VALID;
 }
-
 static int
 process_rt_rec(
-	xfs_mount_t		*mp,
-	xfs_bmbt_irec_t 	*irec,
+	struct xfs_mount	*mp,
+	struct xfs_bmbt_irec	*irec,
 	xfs_ino_t		ino,
 	xfs_rfsblock_t		*tot,
 	int			check_dups)
 {
-	xfs_fsblock_t		b;
+	xfs_fsblock_t		b, lastb;
 	xfs_rtblock_t		ext;
 	int			state;
 	int			pwe;		/* partially-written extent */
@@ -193,7 +192,7 @@ process_rt_rec(
 	/*
 	 * check numeric validity of the extent
 	 */
-	if (irec->br_startblock >= mp->m_sb.sb_rblocks) {
+	if (!libxfs_verify_rtbno(mp, irec->br_startblock)) {
 		do_warn(
 _("inode %" PRIu64 " - bad rt extent start block number %" PRIu64 ", offset %" PRIu64 "\n"),
 			ino,
@@ -201,21 +200,23 @@ _("inode %" PRIu64 " - bad rt extent start block number %" PRIu64 ", offset %" P
 			irec->br_startoff);
 		return 1;
 	}
-	if (irec->br_startblock + irec->br_blockcount - 1 >= mp->m_sb.sb_rblocks) {
+
+	lastb = irec->br_startblock + irec->br_blockcount - 1;
+	if (!libxfs_verify_rtbno(mp, lastb)) {
 		do_warn(
 _("inode %" PRIu64 " - bad rt extent last block number %" PRIu64 ", offset %" PRIu64 "\n"),
 			ino,
-			irec->br_startblock + irec->br_blockcount - 1,
+			lastb,
 			irec->br_startoff);
 		return 1;
 	}
-	if (irec->br_startblock + irec->br_blockcount - 1 < irec->br_startblock) {
+	if (lastb < irec->br_startblock) {
 		do_warn(
 _("inode %" PRIu64 " - bad rt extent overflows - start %" PRIu64 ", "
   "end %" PRIu64 ", offset %" PRIu64 "\n"),
 			ino,
 			irec->br_startblock,
-			irec->br_startblock + irec->br_blockcount - 1,
+			lastb,
 			irec->br_startoff);
 		return 1;
 	}
