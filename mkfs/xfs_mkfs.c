@@ -3095,7 +3095,7 @@ calculate_log_size(
 	if (!cfg->loginternal) {
 		if (min_logblocks > cfg->logblocks) {
 			fprintf(stderr,
-_("external log device %lld too small, must be at least %lld blocks\n"),
+_("external log device size %lld blocks too small, must be at least %lld blocks\n"),
 				(long long)cfg->logblocks,
 				(long long)min_logblocks);
 			usage();
