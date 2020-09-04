@@ -1126,8 +1126,10 @@ _("cannot read inode %" PRIu64 ", file block %" PRIu64 ", disk block %" PRIu64 "
 					goto bad;
 				}
 			}
-			if (libxfs_dquot_verify(mp, &dqb->dd_diskdq, dqid,
-						quota_type) != NULL) {
+			if (libxfs_dquot_verify(mp, &dqb->dd_diskdq, dqid)
+						!= NULL ||
+			    (dqb->dd_diskdq.d_flags & XFS_DQ_ALLTYPES)
+						!= quota_type) {
 				do_warn(_("%s: Corrupt quota for id %u. "),
 						quota_string, dqid);
 				bad_dqb = 1;
