@@ -69,6 +69,7 @@ typedef struct xfs_buf {
 	pthread_t		b_holder;
 	unsigned int		b_recur;
 	void			*b_log_item;
+	struct list_head	b_li_list;	/* Log items list head */
 	void			*b_transp;
 	void			*b_addr;
 	int			b_error;

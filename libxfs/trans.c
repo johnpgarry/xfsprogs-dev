@@ -783,6 +783,8 @@ xfs_inode_item_put(
 	ASSERT(iip->ili_item.li_buf == NULL);
 
 	ip->i_itemp = NULL;
+
+	list_del_init(&iip->ili_item.li_bio_list);
 	kmem_cache_free(xfs_ili_zone, iip);
 }
 

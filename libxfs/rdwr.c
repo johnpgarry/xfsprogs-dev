@@ -376,6 +376,7 @@ __initbuf(xfs_buf_t *bp, struct xfs_buftarg *btp, xfs_daddr_t bno,
 	bp->b_holder = 0;
 	bp->b_recur = 0;
 	bp->b_ops = NULL;
+	INIT_LIST_HEAD(&bp->b_li_list);
 
 	if (!bp->b_maps) {
 		bp->b_nmaps = 1;
