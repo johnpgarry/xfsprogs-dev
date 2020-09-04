@@ -39,7 +39,7 @@ struct qc_dquots {
 	pthread_mutex_t		lock;
 	struct avl64tree_desc	tree;
 
-	/* One of XFS_DQ_{USER,GROUP,PROJ} */
+	/* One of XFS_DQTYPE_USER/PROJ/GROUP */
 	uint16_t		type;
 };
 
@@ -70,11 +70,11 @@ static const char *
 qflags_typestr(
 	unsigned int		type)
 {
-	if (type & XFS_DQ_USER)
+	if (type & XFS_DQTYPE_USER)
 		return _("user quota");
-	else if (type & XFS_DQ_GROUP)
+	else if (type & XFS_DQTYPE_GROUP)
 		return _("group quota");
-	else if (type & XFS_DQ_PROJ)
+	else if (type & XFS_DQTYPE_PROJ)
 		return _("project quota");
 	return NULL;
 }
@@ -345,15 +345,15 @@ quotacheck_verify(
 	int			error;
 
 	switch (type) {
-	case XFS_DQ_USER:
+	case XFS_DQTYPE_USER:
 		ino = mp->m_sb.sb_uquotino;
 		dquots = user_dquots;
 		break;
-	case XFS_DQ_GROUP:
+	case XFS_DQTYPE_GROUP:
 		ino = mp->m_sb.sb_gquotino;
 		dquots = group_dquots;
 		break;
-	case XFS_DQ_PROJ:
+	case XFS_DQTYPE_PROJ:
 		ino = mp->m_sb.sb_pquotino;
 		dquots = proj_dquots;
 		break;
@@ -434,17 +434,17 @@ qc_has_quotafile(
 	unsigned int		qflag;
 
 	switch (type) {
-	case XFS_DQ_USER:
+	case XFS_DQTYPE_USER:
 		lost = lost_uquotino;
 		ino = mp->m_sb.sb_uquotino;
 		qflag = XFS_UQUOTA_CHKD;
 		break;
-	case XFS_DQ_GROUP:
+	case XFS_DQTYPE_GROUP:
 		lost = lost_gquotino;
 		ino = mp->m_sb.sb_gquotino;
 		qflag = XFS_GQUOTA_CHKD;
 		break;
-	case XFS_DQ_PROJ:
+	case XFS_DQTYPE_PROJ:
 		lost = lost_pquotino;
 		ino = mp->m_sb.sb_pquotino;
 		qflag = XFS_PQUOTA_CHKD;
@@ -493,22 +493,22 @@ quotacheck_setup(
 	if (!fs_quotas || lost_quotas || noquota)
 		return 0;
 
-	if (qc_has_quotafile(mp, XFS_DQ_USER)) {
-		user_dquots = qc_dquots_init(XFS_DQ_USER);
+	if (qc_has_quotafile(mp, XFS_DQTYPE_USER)) {
+		user_dquots = qc_dquots_init(XFS_DQTYPE_USER);
 		if (!user_dquots)
 			goto err;
 		chkd_flags |= XFS_UQUOTA_CHKD;
 	}
 
-	if (qc_has_quotafile(mp, XFS_DQ_GROUP)) {
-		group_dquots = qc_dquots_init(XFS_DQ_GROUP);
+	if (qc_has_quotafile(mp, XFS_DQTYPE_GROUP)) {
+		group_dquots = qc_dquots_init(XFS_DQTYPE_GROUP);
 		if (!group_dquots)
 			goto err;
 		chkd_flags |= XFS_GQUOTA_CHKD;
 	}
 
-	if (qc_has_quotafile(mp, XFS_DQ_PROJ)) {
-		proj_dquots = qc_dquots_init(XFS_DQ_PROJ);
+	if (qc_has_quotafile(mp, XFS_DQTYPE_PROJ)) {
+		proj_dquots = qc_dquots_init(XFS_DQTYPE_PROJ);
 		if (!proj_dquots)
 			goto err;
 		chkd_flags |= XFS_PQUOTA_CHKD;
