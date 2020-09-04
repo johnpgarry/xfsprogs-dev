@@ -3436,7 +3436,7 @@ process_quota(
 	int		cb;
 	xfs_dqblk_t	*dqb;
 	xfs_dqid_t	dqid;
-	uint8_t		exp_flags = 0;
+	xfs_dqtype_t	exp_flags = 0;
 	uint		i;
 	uint		perblock;
 	xfs_fileoff_t	qbno;
