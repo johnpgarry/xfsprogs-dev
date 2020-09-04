@@ -1,3 +1,6 @@
+xfsprogs-5.8.0 (04 Sep 2020)
+	- xfs_db: set b_ops to NULL for types without verifiers (Eric Sandeen)
+
 xfsprogs-5.8.0-rc1 (26 Aug 2020)
 	- mkfs: allow setting dax flag on root directory (Darrick Wong)
 	- xfs_quota: improve reporting and messages (Bill O'Donnell)
