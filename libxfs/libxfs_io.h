@@ -243,6 +243,12 @@ xfs_buf_associate_memory(struct xfs_buf *bp, void *mem, size_t len)
 	return 0;
 }
 
+static inline void
+xfs_buf_hold(struct xfs_buf *bp)
+{
+	bp->b_node.cn_count++;
+}
+
 int libxfs_buf_get_uncached(struct xfs_buftarg *targ, size_t bblen, int flags,
 		struct xfs_buf **bpp);
 int libxfs_buf_read_uncached(struct xfs_buftarg *targ, xfs_daddr_t daddr,
@@ -253,7 +259,7 @@ int libxfs_buf_read_uncached(struct xfs_buftarg *targ, xfs_daddr_t daddr,
 static inline bool
 xfs_buf_delwri_queue(struct xfs_buf *bp, struct list_head *buffer_list)
 {
-	bp->b_node.cn_count++;
+	xfs_buf_hold(bp);
 	list_add_tail(&bp->b_list, buffer_list);
 	return true;
 }

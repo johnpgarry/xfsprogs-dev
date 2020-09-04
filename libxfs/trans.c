@@ -780,6 +780,8 @@ xfs_inode_item_put(
 {
 	struct xfs_inode		*ip = iip->ili_inode;
 
+	ASSERT(iip->ili_item.li_buf == NULL);
+
 	ip->i_itemp = NULL;
 	kmem_cache_free(xfs_ili_zone, iip);
 }
@@ -795,47 +797,35 @@ static void
 inode_item_done(
 	struct xfs_inode_log_item	*iip)
 {
-	xfs_dinode_t			*dip;
-	xfs_inode_t			*ip;
-	xfs_mount_t			*mp;
 	xfs_buf_t			*bp;
 	int				error;
 
-	ip = iip->ili_inode;
-	mp = iip->ili_item.li_mountp;
-	ASSERT(ip != NULL);
+	ASSERT(iip->ili_inode != NULL);
 
 	if (!(iip->ili_fields & XFS_ILOG_ALL))
-		goto free;
+		goto free_item;
 
-	/*
-	 * Get the buffer containing the on-disk inode.
-	 */
-	error = xfs_imap_to_bp(mp, NULL, &ip->i_imap, &dip, &bp, 0);
-	if (error) {
-		fprintf(stderr, _("%s: warning - imap_to_bp failed (%d)\n"),
-			progname, error);
-		goto free;
-	}
+	bp = iip->ili_item.li_buf;
+	iip->ili_item.li_buf = NULL;
 
 	/*
 	 * Flush the inode and disassociate it from the transaction regardless
 	 * of whether the flush succeed or not. If we fail the flush, make sure
 	 * we still release the buffer reference we currently hold.
 	 */
-	error = libxfs_iflush_int(ip, bp);
+	error = libxfs_iflush_int(iip->ili_inode, bp);
 	bp->b_transp = NULL;	/* remove xact ptr */
 
 	if (error) {
 		fprintf(stderr, _("%s: warning - iflush_int failed (%d)\n"),
 			progname, error);
-		libxfs_buf_relse(bp);
 		goto free;
 	}
 
 	libxfs_buf_mark_dirty(bp);
-	libxfs_buf_relse(bp);
 free:
+	libxfs_buf_relse(bp);
+free_item:
 	xfs_inode_item_put(iip);
 }
 

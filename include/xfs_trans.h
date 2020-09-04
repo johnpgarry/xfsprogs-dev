@@ -22,6 +22,7 @@ typedef struct xfs_log_item {
 	struct xfs_mount		*li_mountp;	/* ptr to fs mount */
 	uint				li_type;	/* item type */
 	unsigned long			li_flags;	/* misc flags */
+	struct xfs_buf			*li_buf;	/* real buffer pointer */
 } xfs_log_item_t;
 
 #define XFS_LI_DIRTY	3	/* log item dirty in transaction */
