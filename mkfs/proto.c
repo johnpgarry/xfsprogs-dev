@@ -244,6 +244,12 @@ newfile(
 		nb = XFS_B_TO_FSB(mp, len);
 		nmap = 1;
 		error = -libxfs_bmapi_write(tp, ip, 0, nb, 0, nb, &map, &nmap);
+		if (error == ENOSYS && XFS_IS_REALTIME_INODE(ip)) {
+			fprintf(stderr,
+	_("%s: creating realtime files from proto file not supported.\n"),
+					progname);
+			exit(1);
+		}
 		if (error) {
 			fail(_("error allocating space for a file"), error);
 		}
