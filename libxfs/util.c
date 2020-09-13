@@ -224,9 +224,9 @@ xfs_inode_propagate_flags(
 			ip->i_d.di_extsize = pip->i_d.di_extsize;
 		}
 	} else {
-		if (pip->i_d.di_flags & XFS_DIFLAG_RTINHERIT) {
+		if ((pip->i_d.di_flags & XFS_DIFLAG_RTINHERIT) &&
+		    xfs_sb_version_hasrealtime(&ip->i_mount->m_sb))
 			di_flags |= XFS_DIFLAG_REALTIME;
-		}
 		if (pip->i_d.di_flags & XFS_DIFLAG_EXTSZINHERIT) {
 			di_flags |= XFS_DIFLAG_EXTSIZE;
 			ip->i_d.di_extsize = pip->i_d.di_extsize;
