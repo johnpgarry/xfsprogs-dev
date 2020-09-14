@@ -2421,6 +2421,17 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 						XFS_DIFLAG_NOSYMLINKS);
 			}
 		}
+		if (flags & XFS_DIFLAG_RTINHERIT) {
+			/* must be a dir */
+			if (di_mode && !S_ISDIR(di_mode)) {
+				if (!uncertain) {
+					do_warn(
+	_("rtinherit flag set on non-dir inode %" PRIu64 "\n"),
+						lino);
+				}
+				flags &= ~XFS_DIFLAG_RTINHERIT;
+			}
+		}
 		if (flags & (XFS_DIFLAG_REALTIME | FS_XFLAG_EXTSIZE)) {
 			/* must be a file */
 			if (di_mode && !S_ISREG(di_mode)) {
