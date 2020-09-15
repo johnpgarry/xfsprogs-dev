@@ -39,7 +39,7 @@ kmem_zone_destroy(kmem_zone_t *zone)
 }
 
 void *
-kmem_zone_alloc(kmem_zone_t *zone, int flags)
+kmem_cache_alloc(kmem_zone_t *zone, gfp_t flags)
 {
 	void	*ptr = malloc(zone->zone_unitsize);
 
@@ -52,15 +52,15 @@ kmem_zone_alloc(kmem_zone_t *zone, int flags)
 	zone->allocated++;
 	return ptr;
 }
+
 void *
 kmem_zone_zalloc(kmem_zone_t *zone, int flags)
 {
-	void	*ptr = kmem_zone_alloc(zone, flags);
+	void	*ptr = kmem_cache_alloc(zone, flags);
 
 	memset(ptr, 0, zone->zone_unitsize);
 	return ptr;
 }
-
 
 void *
 kmem_alloc(size_t size, int flags)
