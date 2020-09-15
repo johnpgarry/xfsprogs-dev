@@ -20,11 +20,14 @@ typedef struct kmem_zone {
 typedef unsigned int __bitwise gfp_t;
 
 #define GFP_KERNEL	((__force gfp_t)0)
+#define GFP_NOFS	((__force gfp_t)0)
 #define __GFP_NOFAIL	((__force gfp_t)0)
+
+#define __GFP_ZERO	(__force gfp_t)1
 
 extern kmem_zone_t *kmem_zone_init(int, char *);
 extern void	*kmem_cache_alloc(kmem_zone_t *, gfp_t);
-extern void	*kmem_zone_zalloc(kmem_zone_t *, int);
+extern void	*kmem_cache_zalloc(kmem_zone_t *, gfp_t);
 extern int	kmem_zone_destroy(kmem_zone_t *);
 
 static inline void

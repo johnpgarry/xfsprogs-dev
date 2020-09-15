@@ -452,7 +452,7 @@ __libxfs_getbufr(int blen)
 			bp->b_maps = NULL;
 		}
 	} else
-		bp = kmem_zone_zalloc(xfs_buf_zone, 0);
+		bp = kmem_cache_zalloc(xfs_buf_zone, 0);
 	pthread_mutex_unlock(&xfs_buf_freelist.cm_mutex);
 	bp->b_ops = NULL;
 	if (bp->b_flags & LIBXFS_B_DIRTY)
@@ -1250,7 +1250,7 @@ libxfs_iget(
 	struct xfs_buf		*bp;
 	int			error = 0;
 
-	ip = kmem_zone_zalloc(xfs_inode_zone, 0);
+	ip = kmem_cache_zalloc(xfs_inode_zone, 0);
 	if (!ip)
 		return -ENOMEM;
 

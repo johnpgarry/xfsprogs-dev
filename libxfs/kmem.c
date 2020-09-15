@@ -54,7 +54,7 @@ kmem_cache_alloc(kmem_zone_t *zone, gfp_t flags)
 }
 
 void *
-kmem_zone_zalloc(kmem_zone_t *zone, int flags)
+kmem_cache_zalloc(kmem_zone_t *zone, gfp_t flags)
 {
 	void	*ptr = kmem_cache_alloc(zone, flags);
 
