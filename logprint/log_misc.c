@@ -369,7 +369,7 @@ xlog_print_trans_buffer(char **ptr, int len, int *i, int num_ops)
 		else {
 			printf("\n");
 			printf(_("ver: %d  flags: 0x%x  id: %d  \n"),
-				dq->d_version, dq->d_flags,
+				dq->d_version, dq->d_type,
 				be32_to_cpu(dq->d_id));
 			printf(_("blk limits  hard: %llu  soft: %llu\n"),
 			       (unsigned long long)
@@ -695,7 +695,7 @@ xlog_print_trans_dquot(char **ptr, int len, int *i, int num_ops)
 	ASSERT(be32_to_cpu(head->oh_len) == sizeof(struct xfs_disk_dquot));
 	memmove(&ddq, *ptr, sizeof(struct xfs_disk_dquot));
 	printf(_("DQUOT: magic 0x%hx flags 0%ho\n"),
-	       be16_to_cpu(ddq.d_magic), ddq.d_flags);
+	       be16_to_cpu(ddq.d_magic), ddq.d_type);
 	*ptr += be32_to_cpu(head->oh_len);
     }
     if (head && head->oh_flags & XLOG_CONTINUE_TRANS)

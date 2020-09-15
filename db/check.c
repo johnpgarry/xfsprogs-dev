@@ -3436,7 +3436,7 @@ process_quota(
 	int		cb;
 	xfs_dqblk_t	*dqb;
 	xfs_dqid_t	dqid;
-	xfs_dqtype_t	exp_flags = 0;
+	uint8_t		exp_flags = 0;
 	uint		i;
 	uint		perblock;
 	xfs_fileoff_t	qbno;
@@ -3509,21 +3509,21 @@ process_quota(
 				error++;
 				continue;
 			}
-			if (dqb->dd_diskdq.d_flags & ~XFS_DQTYPE_ANY) {
+			if (dqb->dd_diskdq.d_type & ~XFS_DQTYPE_ANY) {
 				if (scicb)
 					dbprintf(_("bad flags %#x for %s dqblk "
 						 "%lld entry %d id %u\n"),
-						dqb->dd_diskdq.d_flags, s,
+						dqb->dd_diskdq.d_type, s,
 						(xfs_fileoff_t)qbno, i, dqid);
 				error++;
 				continue;
 			}
-			if ((dqb->dd_diskdq.d_flags & XFS_DQTYPE_REC_MASK)
+			if ((dqb->dd_diskdq.d_type & XFS_DQTYPE_REC_MASK)
 								!= exp_flags) {
 				if (scicb)
 					dbprintf(_("wrong type %#x for %s dqblk "
 						 "%lld entry %d id %u\n"),
-						dqb->dd_diskdq.d_flags &
+						dqb->dd_diskdq.d_type &
 							XFS_DQTYPE_REC_MASK, s,
 						(xfs_fileoff_t)qbno, i, dqid);
 				error++;
