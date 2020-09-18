@@ -1,3 +1,7 @@
+xfsprogs-5.9.0-rc0 (17 Sep 2020)
+	- libxfs changes merged from kernel 5.9
+	- libxfs: make buffers track the per-ag structures (Darrick Wong)
+
 xfsprogs-5.8.0 (04 Sep 2020)
 	- xfs_db: set b_ops to NULL for types without verifiers (Eric Sandeen)
 
