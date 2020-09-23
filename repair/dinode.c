@@ -323,6 +323,7 @@ process_bmbt_reclist_int(
 	xfs_extlen_t		blen;
 	xfs_agnumber_t		locked_agno = -1;
 	int			error = 1;
+	int			error2;
 
 	if (type == XR_INO_RTDATA)
 		ftype = ftype_real_time;
@@ -383,14 +384,14 @@ _("zero length extent (off = %" PRIu64 ", fsbno = %" PRIu64 ") in ino %" PRIu64 
 		}
 
 		if (type == XR_INO_RTDATA && whichfork == XFS_DATA_FORK) {
+			pthread_mutex_lock(&rt_lock.lock);
+			error2 = process_rt_rec(mp, &irec, ino, tot, check_dups);
+			pthread_mutex_unlock(&rt_lock.lock);
+			if (error2)
+				return error2;
+
 			/*
-			 * realtime bitmaps don't use AG locks, so returning
-			 * immediately is fine for this code path.
-			 */
-			if (process_rt_rec(mp, &irec, ino, tot, check_dups))
-				return 1;
-			/*
-			 * skip rest of loop processing since that'irec.br_startblock
+			 * skip rest of loop processing since the rest is
 			 * all for regular file forks and attr forks
 			 */
 			continue;
@@ -442,7 +443,6 @@ _("inode %" PRIu64 " - extent exceeds max offset - start %" PRIu64 ", "
 		}
 
 		if (blkmapp && *blkmapp) {
-			int	error2;
 			error2 = blkmap_set_ext(blkmapp, irec.br_startoff,
 					irec.br_startblock, irec.br_blockcount);
 			if (error2) {
