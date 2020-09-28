@@ -2530,10 +2530,10 @@ _("size %s specified for data subvolume is too large, maximum is %lld blocks\n")
 		cfg->dblocks = DTOBT(xi->dsize, cfg->blocklog);
 	}
 
-	if (cfg->dblocks < XFS_MIN_DATA_BLOCKS) {
+	if (cfg->dblocks < XFS_MIN_DATA_BLOCKS(cfg)) {
 		fprintf(stderr,
-_("size %lld of data subvolume is too small, minimum %d blocks\n"),
-			(long long)cfg->dblocks, XFS_MIN_DATA_BLOCKS);
+_("size %lld of data subvolume is too small, minimum %lld blocks\n"),
+			(long long)cfg->dblocks, XFS_MIN_DATA_BLOCKS(cfg));
 		usage();
 	}
 
