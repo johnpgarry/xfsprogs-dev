@@ -347,6 +347,28 @@ _("bmap rec out of order, inode %" PRIu64" entry %d "
 		cp = irec.br_blockcount;
 		sp = irec.br_startblock;
 
+		if (irec.br_state != XFS_EXT_NORM) {
+			/* No unwritten extents in the attr fork */
+			if (whichfork == XFS_ATTR_FORK) {
+				do_warn(
+_("unwritten extent (off = %" PRIu64 ", fsbno = %" PRIu64 ") in ino %" PRIu64 " attr fork\n"),
+					irec.br_startoff,
+					irec.br_startblock,
+					ino);
+				goto done;
+			}
+
+			/* No unwritten extents in non-regular files */
+			if (type != XR_INO_DATA && type != XR_INO_RTDATA) {
+				do_warn(
+_("unwritten extent (off = %" PRIu64 ", fsbno = %" PRIu64 ") in non-regular file ino %" PRIu64 "\n"),
+					irec.br_startoff,
+					irec.br_startblock,
+					ino);
+				goto done;
+			}
+		}
+
 		/*
 		 * check numeric validity of the extent
 		 */
