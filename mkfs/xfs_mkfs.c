@@ -3237,6 +3237,9 @@ start_superblock_setup(
 	} else
 		sbp->sb_logsunit = 0;
 
+	/* log reservation calculations depend on rt geometry */
+	sbp->sb_rblocks = cfg->rtblocks;
+	sbp->sb_rextsize = cfg->rtextblocks;
 }
 
 static void
@@ -3274,14 +3277,12 @@ finish_superblock_setup(
 	}
 
 	sbp->sb_dblocks = cfg->dblocks;
-	sbp->sb_rblocks = cfg->rtblocks;
 	sbp->sb_rextents = cfg->rtextents;
 	platform_uuid_copy(&sbp->sb_uuid, &cfg->uuid);
 	/* Only in memory; libxfs expects this as if read from disk */
 	platform_uuid_copy(&sbp->sb_meta_uuid, &cfg->uuid);
 	sbp->sb_logstart = cfg->logstart;
 	sbp->sb_rootino = sbp->sb_rbmino = sbp->sb_rsumino = NULLFSINO;
-	sbp->sb_rextsize = cfg->rtextblocks;
 	sbp->sb_agcount = (xfs_agnumber_t)cfg->agcount;
 	sbp->sb_rbmblocks = cfg->rtbmblocks;
 	sbp->sb_logblocks = (xfs_extlen_t)cfg->logblocks;
