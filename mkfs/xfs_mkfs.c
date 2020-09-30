@@ -3244,7 +3244,6 @@ start_superblock_setup(
 
 static void
 initialise_mount(
-	struct mkfs_params	*cfg,
 	struct xfs_mount	*mp,
 	struct xfs_sb		*sbp)
 {
@@ -3425,7 +3424,6 @@ static void
 initialise_ag_headers(
 	struct mkfs_params	*cfg,
 	struct xfs_mount	*mp,
-	struct xfs_sb		*sbp,
 	xfs_agnumber_t		agno,
 	int			*worst_freelist,
 	struct list_head	*buffer_list)
@@ -3766,7 +3764,7 @@ main(
 	 * provided functions to determine on-disk format information.
 	 */
 	start_superblock_setup(&cfg, mp, sbp);
-	initialise_mount(&cfg, mp, sbp);
+	initialise_mount(mp, sbp);
 
 	/*
 	 * With the mount set up, we can finally calculate the log size
@@ -3819,7 +3817,7 @@ main(
 	 */
 	INIT_LIST_HEAD(&buffer_list);
 	for (agno = 0; agno < cfg.agcount; agno++) {
-		initialise_ag_headers(&cfg, mp, sbp, agno, &worst_freelist,
+		initialise_ag_headers(&cfg, mp, agno, &worst_freelist,
 				&buffer_list);
 
 		if (agno % 16)
