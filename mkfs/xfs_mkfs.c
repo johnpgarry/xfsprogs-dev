@@ -3421,11 +3421,6 @@ prepare_devices(
 
 }
 
-/*
- * XXX: this code is mostly common with the kernel growfs code.
- * These initialisations should be pulled into libxfs to keep the
- * kernel/userspace header initialisation code the same.
- */
 static void
 initialise_ag_headers(
 	struct mkfs_params	*cfg,
