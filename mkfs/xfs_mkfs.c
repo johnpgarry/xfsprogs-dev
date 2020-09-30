@@ -1973,7 +1973,7 @@ _("sparse inodes not supported without CRC support\n"));
 		}
 		cli->sb_feat.spinodes = false;
 
-		if (cli->sb_feat.rmapbt) {
+		if (cli->sb_feat.rmapbt && cli_opt_set(&mopts, M_RMAPBT)) {
 			fprintf(stderr,
 _("rmapbt not supported without CRC support\n"));
 			usage();
@@ -1995,17 +1995,19 @@ _("cowextsize not supported without reflink support\n"));
 		usage();
 	}
 
-	if (cli->sb_feat.reflink && cli->xi->rtname) {
-		fprintf(stderr,
+	if (cli->xi->rtname) {
+		if (cli->sb_feat.reflink && cli_opt_set(&mopts, M_REFLINK)) {
+			fprintf(stderr,
 _("reflink not supported with realtime devices\n"));
-		usage();
+			usage();
+		}
 		cli->sb_feat.reflink = false;
-	}
 
-	if (cli->sb_feat.rmapbt && cli->xi->rtname) {
-		fprintf(stderr,
+		if (cli->sb_feat.rmapbt && cli_opt_set(&mopts, M_RMAPBT)) {
+			fprintf(stderr,
 _("rmapbt not supported with realtime devices\n"));
-		usage();
+			usage();
+		}
 		cli->sb_feat.rmapbt = false;
 	}
 
