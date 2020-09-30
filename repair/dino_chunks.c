@@ -601,6 +601,7 @@ process_inode_chunk(
 	xfs_dinode_t		*dino;
 	int			icnt;
 	int			status;
+	int			bp_found;
 	int			is_used;
 	int			ino_dirty;
 	int			irec_offset;
@@ -614,6 +615,7 @@ process_inode_chunk(
 	int			bp_index;
 	int			cluster_offset;
 	struct xfs_ino_geometry	*igeo = M_IGEO(mp);
+	bool			can_punch_sparse = false;
 	int			error;
 
 	ASSERT(first_irec != NULL);
@@ -625,6 +627,10 @@ process_inode_chunk(
 	cluster_count = XFS_INODES_PER_CHUNK / M_IGEO(mp)->inodes_per_cluster;
 	if (cluster_count == 0)
 		cluster_count = 1;
+
+	if (xfs_sb_version_hassparseinodes(&mp->m_sb) &&
+	    M_IGEO(mp)->inodes_per_cluster >= XFS_INODES_PER_HOLEMASK_BIT)
+		can_punch_sparse = true;
 
 	/*
 	 * get all blocks required to read in this chunk (may wind up
@@ -700,6 +706,7 @@ next_readbuf:
 	cluster_offset = 0;
 	icnt = 0;
 	status = 0;
+	bp_found = 0;
 	bp_index = 0;
 
 	/*
@@ -725,8 +732,10 @@ next_readbuf:
 						(agno == 0 &&
 						(mp->m_sb.sb_rootino == agino ||
 						 mp->m_sb.sb_rsumino == agino ||
-						 mp->m_sb.sb_rbmino == agino)))
+						 mp->m_sb.sb_rbmino == agino))) {
 					status++;
+					bp_found++;
+				}
 			}
 
 			irec_offset++;
@@ -749,9 +758,33 @@ next_readbuf:
 				irec_offset = 0;
 			}
 			if (cluster_offset == M_IGEO(mp)->inodes_per_cluster) {
+				if (can_punch_sparse &&
+				    bplist[bp_index] != NULL &&
+				    bp_found == 0) {
+					/*
+					 * We didn't find any good inodes in
+					 * this cluster, blow it away before
+					 * moving on to the next one.
+					 */
+					libxfs_buf_relse(bplist[bp_index]);
+					bplist[bp_index] = NULL;
+				}
 				bp_index++;
 				cluster_offset = 0;
+				bp_found = 0;
 			}
+		}
+
+		if (can_punch_sparse &&
+		    bp_index < cluster_count &&
+		    bplist[bp_index] != NULL &&
+		    bp_found == 0) {
+			/*
+			 * We didn't find any good inodes in this cluster, blow
+			 * it away.
+			 */
+			libxfs_buf_relse(bplist[bp_index]);
+			bplist[bp_index] = NULL;
 		}
 
 		/*
