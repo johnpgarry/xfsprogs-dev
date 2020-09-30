@@ -2395,17 +2395,14 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 			flags &= XFS_DIFLAG_ANY;
 		}
 
-		if (flags & (XFS_DIFLAG_REALTIME | XFS_DIFLAG_RTINHERIT)) {
-			/* need an rt-dev! */
-			if (!rt_name) {
-				if (!uncertain) {
-					do_warn(
+		/* need an rt-dev for the realtime flag! */
+		if ((flags & XFS_DIFLAG_REALTIME) && !rt_name) {
+			if (!uncertain) {
+				do_warn(
 	_("inode %" PRIu64 " has RT flag set but there is no RT device\n"),
-						lino);
-				}
-				flags &= ~(XFS_DIFLAG_REALTIME |
-						XFS_DIFLAG_RTINHERIT);
+					lino);
 			}
+			flags &= ~XFS_DIFLAG_REALTIME;
 		}
 		if (flags & XFS_DIFLAG_NEWRTBM) {
 			/* must be a rt bitmap inode */
