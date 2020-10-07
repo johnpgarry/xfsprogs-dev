@@ -428,7 +428,7 @@ xfrog_bulkstat_alloc_req(
 
 	breq = calloc(1, XFS_BULKSTAT_REQ_SIZE(nr));
 	if (!breq)
-		return -errno;
+		return -ENOMEM;
 
 	breq->hdr.icount = nr;
 	breq->hdr.ino = startino;
