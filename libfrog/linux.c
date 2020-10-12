@@ -73,6 +73,8 @@ platform_check_mount(char *name, char *block, struct stat *s, int flags)
 	 * servers.  So first, a simple check: does the "dev" start with "/" ?
 	 */
 	while ((mnt = getmntent(f)) != NULL) {
+		if (!strcmp(mnt->mnt_type, "autofs"))
+			continue;
 		if (mnt->mnt_fsname[0] != '/')
 			continue;
 		if (stat(mnt->mnt_dir, &mst) < 0)
