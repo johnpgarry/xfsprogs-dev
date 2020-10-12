@@ -110,6 +110,7 @@ uint32_t	sb_unit;
 uint32_t	sb_width;
 
 struct aglock	*ag_locks;
+struct aglock	rt_lock;
 
 int		report_interval;
 uint64_t	*prog_rpt_done;

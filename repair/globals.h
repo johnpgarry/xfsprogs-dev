@@ -154,6 +154,7 @@ struct aglock {
 	pthread_mutex_t	lock __attribute__((__aligned__(64)));
 };
 extern struct aglock	*ag_locks;
+extern struct aglock	rt_lock;
 
 extern int		report_interval;
 extern uint64_t		*prog_rpt_done;
