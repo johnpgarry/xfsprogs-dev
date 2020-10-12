@@ -107,7 +107,8 @@ path_to_fshandle(
 		}
 
 		fdhp->fsfd = fd;
-		strncpy(fdhp->fspath, fspath, sizeof(fdhp->fspath));
+		strncpy(fdhp->fspath, fspath, sizeof(fdhp->fspath) - 1);
+		fdhp->fspath[sizeof(fdhp->fspath) - 1] = 0;
 		memcpy(fdhp->fsh, *fshanp, FSIDSIZE);
 
 		fdhp->fnxt = fdhash_head;
