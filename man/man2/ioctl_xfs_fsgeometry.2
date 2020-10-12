@@ -3,18 +3,18 @@
 .\" %%%LICENSE_START(GPLv2+_DOC_FULL)
 .\" SPDX-License-Identifier: GPL-2.0+
 .\" %%%LICENSE_END
-.TH IOCTL-XFS-FSOP-GEOMETRY 2 2019-06-17 "XFS"
+.TH IOCTL-XFS-FSGEOMETRY 2 2019-06-17 "XFS"
 .SH NAME
-ioctl_xfs_fsop_geometry \- report XFS filesystem layout and features 
+ioctl_xfs_fsgeometry \- report XFS filesystem layout and features
 .SH SYNOPSIS
 .br
 .B #include <xfs/xfs_fs.h>
 .PP
-.BI "int ioctl(int " fd ", XFS_IOC_FSOP_GEOMETRY, struct xfs_fsop_geom*" arg );
+.BI "int ioctl(int " fd ", XFS_IOC_FSGEOMETRY, struct xfs_fsop_geom *" arg );
 .br
-.BI "int ioctl(int " fd ", XFS_IOC_FSOP_GEOMETRY_V4, struct xfs_fsop_geom_v4 *" arg );
+.BI "int ioctl(int " fd ", XFS_IOC_FSGEOMETRY_V4, struct xfs_fsop_geom_v4 *" arg );
 .br
-.BI "int ioctl(int " fd ", XFS_IOC_FSOP_GEOMETRY_V1, struct xfs_fsop_geom_v1 *" arg );
+.BI "int ioctl(int " fd ", XFS_IOC_FSGEOMETRY_V1, struct xfs_fsop_geom_v1 *" arg );
 .SH DESCRIPTION
 Report the details of an XFS filesystem layout, features, and other descriptive items.
 This information is conveyed in a structure of the following form:
