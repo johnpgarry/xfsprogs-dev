@@ -130,38 +130,19 @@ scrub_scan_estimate_blocks(
 	unsigned long long		*f_free)
 {
 	struct xfs_fsop_counts		fc;
-	struct xfs_fsop_resblks		rb;
-	struct statvfs			sfs;
 	int				error;
-
-	/* Grab the fstatvfs counters, since it has to report accurately. */
-	error = fstatvfs(ctx->mnt.fd, &sfs);
-	if (error)
-		return errno;
 
 	/* Fetch the filesystem counters. */
 	error = ioctl(ctx->mnt.fd, XFS_IOC_FSCOUNTS, &fc);
 	if (error)
 		return errno;
 
-	/*
-	 * XFS reserves some blocks to prevent hard ENOSPC, so add those
-	 * blocks back to the free data counts.
-	 */
-	error = ioctl(ctx->mnt.fd, XFS_IOC_GET_RESBLKS, &rb);
-	if (error)
-		return errno;
-
-	sfs.f_bfree += rb.resblks_avail;
-
-	*d_blocks = sfs.f_blocks;
-	if (ctx->mnt.fsgeom.logstart > 0)
-		*d_blocks += ctx->mnt.fsgeom.logblocks;
-	*d_bfree = sfs.f_bfree;
+	*d_blocks = ctx->mnt.fsgeom.datablocks;
+	*d_bfree = fc.freedata;
 	*r_blocks = ctx->mnt.fsgeom.rtblocks;
 	*r_bfree = fc.freertx;
-	*f_files = sfs.f_files;
-	*f_free = sfs.f_ffree;
+	*f_files = fc.allocino;
+	*f_free = fc.freeino;
 
 	return 0;
 }
