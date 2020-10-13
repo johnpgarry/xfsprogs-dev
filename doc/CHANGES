@@ -1,3 +1,14 @@
+xfsprogs-5.9.0-rc1 (13 Oct 2020)
+	- mkfs.xfs: disallow creation of RT files from proto file (Darrick Wong)
+	- mkfs.xfs: fix ASSERT on small device with stripe geom (Pavel Reichl)
+	- xfs_repair: more fixes from fuzz-testing (Darrick Wong)
+	- libhandle: fix potential unterminated string problem (Darrick Wong)
+	- libhandle: libfrog: fix a potential null pointer deref (Darrick Wong)
+	- man: install all manpages that redirect to another page (Darrick Wong)
+	- man: fix ioctl_xfs_geometry manpage naming (Eric Sandeen)
+	- xfsprogs: various realtime related fixes (Darrick Wong)
+	- xfsprogs: ignore autofs mount table entries (Ian Kent)
+
 xfsprogs-5.9.0-rc0 (17 Sep 2020)
 	- libxfs changes merged from kernel 5.9
 	- libxfs: make buffers track the per-ag structures (Darrick Wong)
