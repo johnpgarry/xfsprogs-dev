@@ -1,3 +1,6 @@
+xfsprogs-5.9.0 (20 Oct 2020)
+	- No further changes
+
 xfsprogs-5.9.0-rc1 (13 Oct 2020)
 	- mkfs.xfs: disallow creation of RT files from proto file (Darrick Wong)
 	- mkfs.xfs: fix ASSERT on small device with stripe geom (Pavel Reichl)
