@@ -77,8 +77,8 @@ attr_sf_entry_size(
 	sf = (struct xfs_attr_shortform *)((char *)obj + byteize(startoff));
 	e = &sf->list[0];
 	for (i = 0; i < idx; i++)
-		e = XFS_ATTR_SF_NEXTENTRY(e);
-	return bitize((int)XFS_ATTR_SF_ENTSIZE(e));
+		e = xfs_attr_sf_nextentry(e);
+	return bitize((int)xfs_attr_sf_entsize(e));
 }
 
 static int
@@ -134,7 +134,7 @@ attr_shortform_list_offset(
 	sf = (struct xfs_attr_shortform *)((char *)obj + byteize(startoff));
 	e = &sf->list[0];
 	for (i = 0; i < idx; i++)
-		e = XFS_ATTR_SF_NEXTENTRY(e);
+		e = xfs_attr_sf_nextentry(e);
 	return bitize((int)((char *)e - (char *)sf));
 }
 
@@ -154,6 +154,6 @@ attrshort_size(
 	sf = (struct xfs_attr_shortform *)((char *)obj + byteize(startoff));
 	e = &sf->list[0];
 	for (i = 0; i < sf->hdr.count; i++)
-		e = XFS_ATTR_SF_NEXTENTRY(e);
+		e = xfs_attr_sf_nextentry(e);
 	return bitize((int)((char *)e - (char *)sf));
 }
