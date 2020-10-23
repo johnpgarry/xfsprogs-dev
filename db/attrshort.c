@@ -33,7 +33,7 @@ const field_t	attr_sf_hdr_flds[] = {
 	{ NULL }
 };
 
-#define	EOFF(f)	bitize(offsetof(xfs_attr_sf_entry_t, f))
+#define	EOFF(f)	bitize(offsetof(struct xfs_attr_sf_entry, f))
 const field_t	attr_sf_entry_flds[] = {
 	{ "namelen", FLDT_UINT8D, OI(EOFF(namelen)), C1, 0, TYP_NONE },
 	{ "valuelen", FLDT_UINT8D, OI(EOFF(valuelen)), C1, 0, TYP_NONE },
@@ -56,10 +56,10 @@ attr_sf_entry_name_count(
 	void			*obj,
 	int			startoff)
 {
-	xfs_attr_sf_entry_t	*e;
+	struct xfs_attr_sf_entry	*e;
 
 	ASSERT(bitoffs(startoff) == 0);
-	e = (xfs_attr_sf_entry_t *)((char *)obj + byteize(startoff));
+	e = (struct xfs_attr_sf_entry *)((char *)obj + byteize(startoff));
 	return e->namelen;
 }
 
@@ -69,7 +69,7 @@ attr_sf_entry_size(
 	int			startoff,
 	int			idx)
 {
-	xfs_attr_sf_entry_t	*e;
+	struct xfs_attr_sf_entry	*e;
 	int			i;
 	xfs_attr_shortform_t	*sf;
 
@@ -86,10 +86,10 @@ attr_sf_entry_value_count(
 	void			*obj,
 	int			startoff)
 {
-	xfs_attr_sf_entry_t	*e;
+	struct xfs_attr_sf_entry	*e;
 
 	ASSERT(bitoffs(startoff) == 0);
-	e = (xfs_attr_sf_entry_t *)((char *)obj + byteize(startoff));
+	e = (struct xfs_attr_sf_entry *)((char *)obj + byteize(startoff));
 	return e->valuelen;
 }
 
@@ -100,11 +100,11 @@ attr_sf_entry_value_offset(
 	int			startoff,
 	int			idx)
 {
-	xfs_attr_sf_entry_t	*e;
+	struct xfs_attr_sf_entry	*e;
 
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(idx == 0);
-	e = (xfs_attr_sf_entry_t *)((char *)obj + byteize(startoff));
+	e = (struct xfs_attr_sf_entry *)((char *)obj + byteize(startoff));
 	return bitize((int)((char *)&e->nameval[e->namelen] - (char *)e));
 }
 
@@ -126,7 +126,7 @@ attr_shortform_list_offset(
 	int			startoff,
 	int			idx)
 {
-	xfs_attr_sf_entry_t	*e;
+	struct xfs_attr_sf_entry	*e;
 	int			i;
 	xfs_attr_shortform_t	*sf;
 
@@ -145,7 +145,7 @@ attrshort_size(
 	int			startoff,
 	int			idx)
 {
-	xfs_attr_sf_entry_t	*e;
+	struct xfs_attr_sf_entry	*e;
 	int			i;
 	xfs_attr_shortform_t	*sf;
 

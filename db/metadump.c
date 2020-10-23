@@ -1371,7 +1371,7 @@ process_sf_attr(
 	 */
 
 	xfs_attr_shortform_t	*asfp;
-	xfs_attr_sf_entry_t	*asfep;
+	struct xfs_attr_sf_entry	*asfep;
 	int			ino_attr_size;
 	int			i;
 
@@ -1413,7 +1413,7 @@ process_sf_attr(
 			       asfep->valuelen);
 		}
 
-		asfep = (xfs_attr_sf_entry_t *)((char *)asfep +
+		asfep = (struct xfs_attr_sf_entry *)((char *)asfep +
 				XFS_ATTR_SF_ENTSIZE(asfep));
 	}
 
