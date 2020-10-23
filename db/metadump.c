@@ -1399,7 +1399,7 @@ process_sf_attr(
 						"%llu", (long long)cur_ino);
 			break;
 		} else if ((char *)asfep - (char *)asfp +
-				XFS_ATTR_SF_ENTSIZE(asfep) > ino_attr_size) {
+				xfs_attr_sf_entsize(asfep) > ino_attr_size) {
 			if (show_warnings)
 				print_warning("attr entry length in inode %llu "
 					"overflows space", (long long)cur_ino);
@@ -1414,7 +1414,7 @@ process_sf_attr(
 		}
 
 		asfep = (struct xfs_attr_sf_entry *)((char *)asfep +
-				XFS_ATTR_SF_ENTSIZE(asfep));
+				xfs_attr_sf_entsize(asfep));
 	}
 
 	/* zero stale data in rest of space in attr fork, if any */
