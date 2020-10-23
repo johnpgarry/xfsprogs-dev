@@ -184,6 +184,21 @@ option set. When the option
 .B \-m crc=0
 is used, the free inode btree feature is not supported and is disabled.
 .TP
+.BI inobtcount= value
+This option causes the filesystem to record the number of blocks used by
+the inode btree and the free inode btree.
+This can be used to reduce mount times when the free inode btree is enabled.
+.IP
+By default,
+.B mkfs.xfs
+will not enable this option.
+This feature is only available for filesystems created with the (default)
+.B \-m finobt=1
+option set.
+When the option
+.B \-m finobt=0
+is used, the inode btree counter feature is not supported and is disabled.
+.TP
 .BI uuid= value
 Use the given value as the filesystem UUID for the newly created filesystem.
 The default is to generate a random UUID.
