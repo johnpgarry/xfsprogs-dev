@@ -112,6 +112,28 @@ fp_sarray(
 	return 1;
 }
 
+static void
+fp_time64(
+	time64_t		sec)
+{
+	time_t			tt = sec;
+	char			*c;
+
+	BUILD_BUG_ON(sizeof(long) != sizeof(time_t));
+
+	if (sec > LONG_MAX || sec < LONG_MIN)
+		goto raw;
+
+	c = ctime(&tt);
+	if (!c)
+		goto raw;
+
+	dbprintf("%24.24s", c);
+	return;
+raw:
+	dbprintf("%lld", sec);
+}
+
 int
 fp_time(
 	void			*obj,
@@ -126,9 +148,7 @@ fp_time(
 	struct timespec64	tv;
 	xfs_timestamp_t		*ts;
 	int			bitpos;
-	char			*c;
 	int			i;
-	time_t			t;
 
 	ASSERT(bitoffs(bit) == 0);
 	for (i = 0, bitpos = bit;
@@ -139,10 +159,8 @@ fp_time(
 
 		ts = obj + byteize(bitpos);
 		tv = libxfs_inode_from_disk_ts(obj, *ts);
-		t = tv.tv_sec;
 
-		c = ctime(&t);
-		dbprintf("%24.24s", c);
+		fp_time64(tv.tv_sec);
 
 		if (i < count - 1)
 			dbprintf(" ");
@@ -195,7 +213,8 @@ fp_qtimer(
 	int			base,
 	int			array)
 {
-	uint32_t		sec;
+	struct xfs_disk_dquot	*ddq = obj;
+	time64_t		sec;
 	__be32			*t;
 	int			bitpos;
 	int			i;
@@ -208,9 +227,16 @@ fp_qtimer(
 			dbprintf("%d:", i + base);
 
 		t = obj + byteize(bitpos);
-		sec = be32_to_cpu(*t);
+		sec = libxfs_dquot_from_disk_ts(ddq, *t);
 
-		dbprintf("%u", sec);
+		/*
+		 * Display the raw value if it's the default grace expiration
+		 * period (root dquot) or if the quota has not expired.
+		 */
+		if (ddq->d_id == 0 || sec == 0)
+			dbprintf("%lld", sec);
+		else
+			fp_time64(sec);
 
 		if (i < count - 1)
 			dbprintf(" ");

@@ -727,6 +727,8 @@ version_string(
 		strcat(s, ",REFLINK");
 	if (xfs_sb_version_hasinobtcounts(sbp))
 		strcat(s, ",INOBTCNT");
+	if (xfs_sb_version_hasbigtime(sbp))
+		strcat(s, ",BIGTIME");
 	return s;
 }
 
