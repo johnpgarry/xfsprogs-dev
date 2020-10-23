@@ -111,8 +111,6 @@ phase7_func(
 	unsigned long long	d_bfree;
 	unsigned long long	r_blocks;
 	unsigned long long	r_bfree;
-	unsigned long long	f_files;
-	unsigned long long	f_free;
 	bool			complain;
 	int			ip;
 	int			error;
@@ -160,7 +158,7 @@ phase7_func(
 	}
 
 	error = scrub_scan_estimate_blocks(ctx, &d_blocks, &d_bfree, &r_blocks,
-			&r_bfree, &f_files, &f_free);
+			&r_bfree, &used_files);
 	if (error) {
 		str_liberror(ctx, error, _("estimating verify work"));
 		return error;
@@ -177,7 +175,6 @@ phase7_func(
 	/* Report on what we found. */
 	used_data = cvt_off_fsb_to_b(&ctx->mnt, d_blocks - d_bfree);
 	used_rt = cvt_off_fsb_to_b(&ctx->mnt, r_blocks - r_bfree);
-	used_files = f_files - f_free;
 	stat_data = totalcount.dbytes;
 	stat_rt = totalcount.rbytes;
 
