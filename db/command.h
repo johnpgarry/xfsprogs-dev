@@ -32,3 +32,4 @@ extern void		convert_init(void);
 extern void		btdump_init(void);
 extern void		info_init(void);
 extern void		btheight_init(void);
+extern void		namei_init(void);
