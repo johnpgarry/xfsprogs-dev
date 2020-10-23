@@ -435,6 +435,21 @@ xlog_print_trans_qoff(char **ptr, uint len)
     }
 }	/* xlog_print_trans_qoff */
 
+void
+xlog_print_dinode_ts(
+	struct xfs_log_dinode	*ldip,
+	bool			compact)
+{
+	const char		*fmt;
+
+	if (compact)
+		fmt = _("atime 0x%x mtime 0x%x ctime 0x%x\n");
+	else
+		fmt = _("		atime:%d  mtime:%d  ctime:%d\n");
+
+	printf(fmt, ldip->di_atime.t_sec, ldip->di_mtime.t_sec,
+			ldip->di_ctime.t_sec);
+}
 
 static void
 xlog_print_trans_inode_core(
@@ -446,8 +461,7 @@ xlog_print_trans_inode_core(
 	   (int)ip->di_format);
     printf(_("nlink %hd uid %d gid %d\n"),
 	   ip->di_nlink, ip->di_uid, ip->di_gid);
-    printf(_("atime 0x%x mtime 0x%x ctime 0x%x\n"),
-	   ip->di_atime.t_sec, ip->di_mtime.t_sec, ip->di_ctime.t_sec);
+    xlog_print_dinode_ts(ip, true);
     printf(_("size 0x%llx nblocks 0x%llx extsize 0x%x nextents 0x%x\n"),
 	   (unsigned long long)ip->di_size, (unsigned long long)ip->di_nblocks,
 	   ip->di_extsize, ip->di_nextents);
