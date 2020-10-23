@@ -150,6 +150,22 @@ valid
 are:
 .RS 1.2i
 .TP
+.BI bigtime= value
+This option enables filesystems that can handle inode timestamps from December
+1901 to July 2486, and quota timer expirations from January 1970 to July 2486.
+The value is either 0 to disable the feature, or 1 to enable large timestamps.
+.IP
+If this feature is not enabled, the filesystem can only handle timestamps from
+December 1901 to January 2038, and quota timers from January 1970 to February
+2106.
+.IP
+By default,
+.B mkfs.xfs
+will not enable this feature.
+If the option
+.B \-m crc=0
+is used, the large timestamp feature is not supported and is disabled.
+.TP
 .BI crc= value
 This is used to create a filesystem which maintains and checks CRC information
 in all metadata objects on disk. The value is either 0 to disable the feature,
