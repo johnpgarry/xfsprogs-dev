@@ -719,12 +719,11 @@ phase6_estimate(
 	unsigned long long	d_bfree;
 	unsigned long long	r_blocks;
 	unsigned long long	r_bfree;
-	unsigned long long	f_files;
-	unsigned long long	f_free;
+	unsigned long long	dontcare;
 	int			ret;
 
-	ret = scrub_scan_estimate_blocks(ctx, &d_blocks, &d_bfree,
-				&r_blocks, &r_bfree, &f_files, &f_free);
+	ret = scrub_scan_estimate_blocks(ctx, &d_blocks, &d_bfree, &r_blocks,
+			&r_bfree, &dontcare);
 	if (ret) {
 		str_liberror(ctx, ret, _("estimating verify work"));
 		return ret;
