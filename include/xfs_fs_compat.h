@@ -93,4 +93,8 @@ struct timespec64 {
 	long		tv_nsec;		/* nanoseconds */
 };
 
+#define U32_MAX		((uint32_t)~0U)
+#define S32_MAX		((int32_t)(U32_MAX >> 1))
+#define S32_MIN		((int32_t)(-S32_MAX - 1))
+
 #endif	/* __XFS_FS_COMPAT_H__ */
