@@ -3046,7 +3046,7 @@ process_lclinode(
 	blkmap_t		**blkmapp,
 	int			whichfork)
 {
-	xfs_attr_shortform_t	*asf;
+	struct xfs_attr_shortform	*asf;
 	xfs_fsblock_t		bno;
 
 	bno = XFS_INO_TO_FSB(mp, id->ino);
@@ -3059,7 +3059,7 @@ process_lclinode(
 		error++;
 	}
 	else if (whichfork == XFS_ATTR_FORK) {
-		asf = (xfs_attr_shortform_t *)XFS_DFORK_APTR(dip);
+		asf = (struct xfs_attr_shortform *)XFS_DFORK_APTR(dip);
 		if (be16_to_cpu(asf->hdr.totsize) > XFS_DFORK_ASIZE(dip, mp)) {
 			if (!sflag || id->ilist || CHECK_BLIST(bno))
 				dbprintf(_("local inode %lld attr is too large "
