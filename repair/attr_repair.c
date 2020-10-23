@@ -210,14 +210,14 @@ process_shortform_attr(
 	xfs_dinode_t	*dip,
 	int		*repair)
 {
-	xfs_attr_shortform_t	*asf;
+	struct xfs_attr_shortform	*asf;
 	struct xfs_attr_sf_entry	*currententry, *nextentry, *tempentry;
 	int			i, junkit;
 	int			currentsize, remainingspace;
 
 	*repair = 0;
 
-	asf = (xfs_attr_shortform_t *) XFS_DFORK_APTR(dip);
+	asf = (struct xfs_attr_shortform *) XFS_DFORK_APTR(dip);
 
 	/* Assumption: hdr.totsize is less than a leaf block and was checked
 	 * by lclinode for valid sizes. Check the count though.
@@ -1212,9 +1212,9 @@ process_attributes(
 	int		err;
 	__u8		aformat = dip->di_aformat;
 #ifdef DEBUG
-	xfs_attr_shortform_t *asf;
+	struct xfs_attr_shortform *asf;
 
-	asf = (xfs_attr_shortform_t *) XFS_DFORK_APTR(dip);
+	asf = (struct xfs_attr_shortform *) XFS_DFORK_APTR(dip);
 #endif
 
 	if (aformat == XFS_DINODE_FMT_LOCAL) {
