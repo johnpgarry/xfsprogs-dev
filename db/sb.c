@@ -620,6 +620,100 @@ do_version(xfs_agnumber_t agno, uint16_t version, uint32_t features)
 	return 1;
 }
 
+/* Add new V5 features to the filesystem. */
+static bool
+add_v5_features(
+	struct xfs_mount	*mp,
+	uint32_t		compat,
+	uint32_t		ro_compat,
+	uint32_t		incompat,
+	uint32_t		log_incompat)
+{
+	struct xfs_sb		tsb;
+	xfs_agnumber_t		agno = 0;
+	xfs_agnumber_t		revert_agno = 0;
+	uint32_t		old_compat;
+	uint32_t		old_ro_compat;
+	uint32_t		old_incompat;
+	uint32_t		old_log_incompat;
+
+	dbprintf(_("Upgrading V5 filesystem\n"));
+
+	/* Upgrade primary superblock. */
+	if (!get_sb(agno, &tsb))
+		goto fail;
+
+	/* Save old values */
+	old_compat = tsb.sb_features_compat;
+	old_ro_compat = tsb.sb_features_ro_compat;
+	old_incompat = tsb.sb_features_incompat;
+	old_log_incompat = tsb.sb_features_log_incompat;
+
+	/* Update feature flags and force user to run repair before mounting. */
+	tsb.sb_features_compat |= compat;
+	tsb.sb_features_ro_compat |= ro_compat;
+	tsb.sb_features_incompat |= incompat;
+	tsb.sb_features_log_incompat |= log_incompat;
+	tsb.sb_inprogress = 1;
+	libxfs_sb_to_disk(iocur_top->data, &tsb);
+
+	/* Write new primary superblock */
+	write_cur();
+	if (!iocur_top->bp || iocur_top->bp->b_error)
+		goto fail;
+
+	/* Update the secondary superblocks, or revert. */
+	for (agno = 1; agno < mp->m_sb.sb_agcount; agno++) {
+		if (!get_sb(agno, &tsb)) {
+			agno--;
+			goto revert;
+		}
+
+		/* Set features on secondary suepr. */
+		tsb.sb_features_compat |= compat;
+		tsb.sb_features_ro_compat |= ro_compat;
+		tsb.sb_features_incompat |= incompat;
+		tsb.sb_features_log_incompat |= log_incompat;
+		libxfs_sb_to_disk(iocur_top->data, &tsb);
+		write_cur();
+
+		/* Write or abort. */
+		if (!iocur_top->bp || iocur_top->bp->b_error)
+			goto revert;
+	}
+
+	/* All superblocks updated, update the incore values. */
+	mp->m_sb.sb_features_compat |= compat;
+	mp->m_sb.sb_features_ro_compat |= ro_compat;
+	mp->m_sb.sb_features_incompat |= incompat;
+	mp->m_sb.sb_features_log_incompat |= log_incompat;
+
+	dbprintf(_("Upgraded V5 filesystem.  Please run xfs_repair.\n"));
+	return true;
+
+revert:
+	/*
+	 * Try to revert feature flag changes, and don't worry if we fail.
+	 * We're probably in a mess anyhow, and the admin will have to run
+	 * repair anyways.
+	 */
+	for (revert_agno = 0; revert_agno <= agno; revert_agno++) {
+		if (!get_sb(revert_agno, &tsb))
+			continue;
+
+		tsb.sb_features_compat = old_compat;
+		tsb.sb_features_ro_compat = old_ro_compat;
+		tsb.sb_features_incompat = old_incompat;
+		tsb.sb_features_log_incompat = old_log_incompat;
+		libxfs_sb_to_disk(iocur_top->data, &tsb);
+		write_cur();
+	}
+fail:
+	dbprintf(
+_("Failed to upgrade V5 filesystem AG %d, please run xfs_repair.\n"), agno);
+	return false;
+}
+
 static char *
 version_string(
 	xfs_sb_t	*sbp)
@@ -692,12 +786,7 @@ version_string(
 	return s;
 }
 
-/*
- * XXX: this only supports reading and writing to version 4 superblock fields.
- * V5 superblocks always define certain V4 feature bits - they are blocked from
- * being changed if a V5 sb is detected, but otherwise v5 superblock features
- * are not handled here.
- */
+/* Upgrade a superblock to support a feature. */
 static int
 version_f(
 	int		argc,
@@ -705,6 +794,10 @@ version_f(
 {
 	uint16_t	version = 0;
 	uint32_t	features = 0;
+	uint32_t	upgrade_compat = 0;
+	uint32_t	upgrade_ro_compat = 0;
+	uint32_t	upgrade_incompat = 0;
+	uint32_t	upgrade_log_incompat = 0;
 	xfs_agnumber_t	ag;
 
 	if (argc == 2) {	/* WRITE VERSION */
@@ -716,7 +809,28 @@ version_f(
 		}
 
 		/* Logic here derived from the IRIX xfs_chver(1M) script. */
-		if (!strcasecmp(argv[1], "extflg")) {
+		if (!strcasecmp(argv[1], "inobtcount")) {
+			if (xfs_sb_version_hasinobtcounts(&mp->m_sb)) {
+				dbprintf(
+		_("inode btree counter feature is already enabled\n"));
+				exitcode = 1;
+				return 1;
+			}
+			if (!xfs_sb_version_hasfinobt(&mp->m_sb)) {
+				dbprintf(
+		_("inode btree counter feature cannot be enabled on filesystems lacking free inode btrees\n"));
+				exitcode = 1;
+				return 1;
+			}
+			if (!xfs_sb_version_hascrc(&mp->m_sb)) {
+				dbprintf(
+		_("inode btree counter feature cannot be enabled on pre-V5 filesystems\n"));
+				exitcode = 1;
+				return 1;
+			}
+
+			upgrade_ro_compat |= XFS_SB_FEAT_RO_COMPAT_INOBTCNT;
+		} else if (!strcasecmp(argv[1], "extflg")) {
 			switch (XFS_SB_VERSION_NUM(&mp->m_sb)) {
 			case XFS_SB_VERSION_1:
 				version = 0x0004 | XFS_SB_VERSION_EXTFLGBIT;
@@ -806,6 +920,17 @@ version_f(
 				}
 			mp->m_sb.sb_versionnum = version;
 			mp->m_sb.sb_features2 = features;
+		}
+
+		if (upgrade_compat || upgrade_ro_compat || upgrade_incompat ||
+		    upgrade_log_incompat) {
+			if (!add_v5_features(mp, upgrade_compat,
+					upgrade_ro_compat,
+					upgrade_incompat,
+					upgrade_log_incompat)) {
+				exitcode = 1;
+				return 1;
+			}
 		}
 	}
 
