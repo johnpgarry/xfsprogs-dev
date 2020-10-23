@@ -349,7 +349,7 @@ static struct opt_params dopts = {
 		},
 		{ .index = D_RTINHERIT,
 		  .conflicts = { { NULL, LAST_CONFLICT } },
-		  .minval = 1,
+		  .minval = 0,
 		  .maxval = 1,
 		  .defaultval = 1,
 		},
@@ -1429,6 +1429,8 @@ data_opts_parser(
 	case D_RTINHERIT:
 		if (getnum(value, opts, subopt))
 			cli->fsx.fsx_xflags |= FS_XFLAG_RTINHERIT;
+		else
+			cli->fsx.fsx_xflags &= ~FS_XFLAG_RTINHERIT;
 		break;
 	case D_PROJINHERIT:
 		cli->fsx.fsx_projid = getnum(value, opts, subopt);
