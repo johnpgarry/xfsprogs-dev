@@ -330,6 +330,7 @@ report_mount(
 	uint		flags)
 {
 	fs_disk_quota_t	d;
+	time64_t	timer;
 	char		*dev = mount->fs_name;
 	char		c[8], h[8], s[8];
 	uint		qflags;
@@ -397,6 +398,7 @@ report_mount(
 	}
 
 	if (form & XFS_BLOCK_QUOTA) {
+		timer = d.d_btimer;
 		qflags = (flags & HUMAN_FLAG);
 		if (d.d_blk_hardlimit && d.d_bcount > d.d_blk_hardlimit)
 			qflags |= LIMIT_FLAG;
@@ -408,16 +410,17 @@ report_mount(
 				bbs_to_string(d.d_blk_softlimit, s, sizeof(s)),
 				bbs_to_string(d.d_blk_hardlimit, h, sizeof(h)),
 				d.d_bwarns,
-				time_to_string(d.d_btimer, qflags));
+				time_to_string(timer, qflags));
 		else
 			fprintf(fp, " %10llu %10llu %10llu     %02d %9s",
 				(unsigned long long)d.d_bcount >> 1,
 				(unsigned long long)d.d_blk_softlimit >> 1,
 				(unsigned long long)d.d_blk_hardlimit >> 1,
 				d.d_bwarns,
-				time_to_string(d.d_btimer, qflags));
+				time_to_string(timer, qflags));
 	}
 	if (form & XFS_INODE_QUOTA) {
+		timer = d.d_itimer;
 		qflags = (flags & HUMAN_FLAG);
 		if (d.d_ino_hardlimit && d.d_icount > d.d_ino_hardlimit)
 			qflags |= LIMIT_FLAG;
@@ -429,16 +432,17 @@ report_mount(
 				num_to_string(d.d_ino_softlimit, s, sizeof(s)),
 				num_to_string(d.d_ino_hardlimit, h, sizeof(h)),
 				d.d_iwarns,
-				time_to_string(d.d_itimer, qflags));
+				time_to_string(timer, qflags));
 		else
 			fprintf(fp, " %10llu %10llu %10llu     %02d %9s",
 				(unsigned long long)d.d_icount,
 				(unsigned long long)d.d_ino_softlimit,
 				(unsigned long long)d.d_ino_hardlimit,
 				d.d_iwarns,
-				time_to_string(d.d_itimer, qflags));
+				time_to_string(timer, qflags));
 	}
 	if (form & XFS_RTBLOCK_QUOTA) {
+		timer = d.d_rtbtimer;
 		qflags = (flags & HUMAN_FLAG);
 		if (d.d_rtb_hardlimit && d.d_rtbcount > d.d_rtb_hardlimit)
 			qflags |= LIMIT_FLAG;
@@ -450,14 +454,14 @@ report_mount(
 				bbs_to_string(d.d_rtb_softlimit, s, sizeof(s)),
 				bbs_to_string(d.d_rtb_hardlimit, h, sizeof(h)),
 				d.d_rtbwarns,
-				time_to_string(d.d_rtbtimer, qflags));
+				time_to_string(timer, qflags));
 		else
 			fprintf(fp, " %10llu %10llu %10llu     %02d %9s",
 				(unsigned long long)d.d_rtbcount >> 1,
 				(unsigned long long)d.d_rtb_softlimit >> 1,
 				(unsigned long long)d.d_rtb_hardlimit >> 1,
 				d.d_rtbwarns,
-				time_to_string(d.d_rtbtimer, qflags));
+				time_to_string(timer, qflags));
 	}
 	fputc('\n', fp);
 	return 1;
