@@ -85,4 +85,12 @@ struct xfs_extent_data {
 #define XFS_IOC_CLONE_RANGE	 _IOW (0x94, 13, struct xfs_clone_args)
 #define XFS_IOC_FILE_EXTENT_SAME _IOWR(0x94, 54, struct xfs_extent_data)
 
+/* 64-bit seconds counter that works independently of the C library time_t. */
+typedef long long int time64_t;
+
+struct timespec64 {
+	time64_t	tv_sec;			/* seconds */
+	long		tv_nsec;		/* nanoseconds */
+};
+
 #endif	/* __XFS_FS_COMPAT_H__ */
