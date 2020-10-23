@@ -806,6 +806,20 @@ This makes it easier to find discrepancies in the reservation calculations
 between xfsprogs and the kernel, which will help when diagnosing minimum
 log size calculation errors.
 .TP
+.BI "ls [\-d] [" dir_path "]..."
+List the contents of the given paths.
+If a path resolves to a directory, the directory will be listed.
+If a path resolves to a file that is not a directory, the entry for the file
+within the parent directory will be listed.
+If no paths are supplied and the IO cursor points at a directory inode,
+the contents of that directory will be listed.
+If no paths are supplied and the IO cursor points at a file that is not a
+directory, a directory entry will be synthesized for the file.
+If the
+.B \-d
+option is specified, list the directory itself and not its contents.
+The output format is: inode number, file type, hash, name length, name.
+.TP
 .BI "metadump [\-egow] " filename
 Dumps metadata to a file. See
 .BR xfs_metadump (8)
