@@ -148,4 +148,7 @@ libxfs_trans_read_buf(
 	return libxfs_trans_read_buf_map(mp, tp, btp, &map, 1, flags, bpp, ops);
 }
 
+#define xfs_log_item_in_current_chkpt(lip)	(false)
+#define xfs_trans_item_relog(lip, tp)		(NULL)
+
 #endif	/* __XFS_TRANS_H__ */
