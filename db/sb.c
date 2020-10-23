@@ -620,6 +620,44 @@ do_version(xfs_agnumber_t agno, uint16_t version, uint32_t features)
 	return 1;
 }
 
+/* Add new V5 features to the filesystem. */
+static bool
+add_v5_features(
+	struct xfs_mount	*mp,
+	uint32_t		compat,
+	uint32_t		ro_compat,
+	uint32_t		incompat,
+	uint32_t		log_incompat)
+{
+	struct xfs_sb		tsb;
+	xfs_agnumber_t		agno;
+
+	dbprintf(_("Upgrading V5 filesystem\n"));
+	for (agno = 0; agno < mp->m_sb.sb_agcount; agno++) {
+		if (!get_sb(agno, &tsb))
+			break;
+
+		tsb.sb_features_compat |= compat;
+		tsb.sb_features_ro_compat |= ro_compat;
+		tsb.sb_features_incompat |= incompat;
+		tsb.sb_features_log_incompat |= log_incompat;
+		libxfs_sb_to_disk(iocur_top->data, &tsb);
+		write_cur();
+	}
+
+	if (agno != mp->m_sb.sb_agcount) {
+		dbprintf(
+_("Failed to upgrade V5 filesystem AG %d\n"), agno);
+		return false;
+	}
+
+	mp->m_sb.sb_features_compat |= compat;
+	mp->m_sb.sb_features_ro_compat |= ro_compat;
+	mp->m_sb.sb_features_incompat |= incompat;
+	mp->m_sb.sb_features_log_incompat |= log_incompat;
+	return true;
+}
+
 static char *
 version_string(
 	xfs_sb_t	*sbp)
@@ -705,6 +743,10 @@ version_f(
 {
 	uint16_t	version = 0;
 	uint32_t	features = 0;
+	uint32_t	upgrade_compat = 0;
+	uint32_t	upgrade_ro_compat = 0;
+	uint32_t	upgrade_incompat = 0;
+	uint32_t	upgrade_log_incompat = 0;
 	xfs_agnumber_t	ag;
 
 	if (argc == 2) {	/* WRITE VERSION */
@@ -716,7 +758,28 @@ version_f(
 		}
 
 		/* Logic here derived from the IRIX xfs_chver(1M) script. */
-		if (!strcasecmp(argv[1], "extflg")) {
+		if (!strcasecmp(argv[1], "inobtcount")) {
+			if (xfs_sb_version_hasinobtcounts(&mp->m_sb)) {
+				dbprintf(
+		_("inode btree counter feature is already enabled\n"));
+				exitcode = 1;
+				return 1;
+			}
+			if (!xfs_sb_version_hasfinobt(&mp->m_sb)) {
+				dbprintf(
+		_("inode btree counter feature cannot be enabled on filesystems lacking free inode btrees\n"));
+				exitcode = 1;
+				return 1;
+			}
+			if (!xfs_sb_version_hascrc(&mp->m_sb)) {
+				dbprintf(
+		_("inode btree counter feature cannot be enabled on pre-V5 filesystems\n"));
+				exitcode = 1;
+				return 1;
+			}
+
+			upgrade_ro_compat |= XFS_SB_FEAT_RO_COMPAT_INOBTCNT;
+		} else if (!strcasecmp(argv[1], "extflg")) {
 			switch (XFS_SB_VERSION_NUM(&mp->m_sb)) {
 			case XFS_SB_VERSION_1:
 				version = 0x0004 | XFS_SB_VERSION_EXTFLGBIT;
@@ -806,6 +869,17 @@ version_f(
 				}
 			mp->m_sb.sb_versionnum = version;
 			mp->m_sb.sb_features2 = features;
+		}
+
+		if (upgrade_compat || upgrade_ro_compat || upgrade_incompat ||
+		    upgrade_log_incompat) {
+			if (!add_v5_features(mp, upgrade_compat,
+					upgrade_ro_compat,
+					upgrade_incompat,
+					upgrade_log_incompat)) {
+				exitcode = 1;
+				return 1;
+			}
 		}
 	}
 

@@ -6,6 +6,8 @@ xfs_admin \- change parameters of an XFS filesystem
 [
 .B \-eflpu
 ] [
+.BR \-O " feature"
+] [
 .BR "\-c 0" | 1
 ] [
 .B \-L
@@ -102,6 +104,20 @@ The filesystem label can be cleared using the special "\c
 .B \-\-\c
 " value for
 .IR label .
+.TP
+.BI \-O " feature"
+Add a new feature to the filesystem.
+Only one feature can be specified at a time.
+Features are as follows:
+.RS 0.7i
+.TP
+.B inobtcount
+Upgrade the filesystem to support the inode btree counters feature.
+This reduces mount time by caching the size of the inode btrees in the
+allocation group metadata.
+Once enabled, the filesystem will not be writable by older kernels.
+The filesystem cannot be downgraded after this feature is enabled.
+.RE
 .TP
 .BI \-U " uuid"
 Set the UUID of the filesystem to
