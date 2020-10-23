@@ -9,7 +9,6 @@
 #include <sys/statvfs.h>
 #include "platform_defs.h"
 #include "xfs_arch.h"
-#include "xfs_format.h"
 #include "libfrog/paths.h"
 #include "libfrog/workqueue.h"
 #include "xfs_scrub.h"
