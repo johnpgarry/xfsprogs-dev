@@ -151,4 +151,24 @@ libxfs_trans_read_buf(
 #define xfs_log_item_in_current_chkpt(lip)	(false)
 #define xfs_trans_item_relog(lip, tp)		(NULL)
 
+/* Contorted mess to make gcc shut up. */
+#define xlog_grant_push_threshold(log, need)	\
+		((log) == (log) ? NULLCOMMITLSN : NULLCOMMITLSN)
+
+/*
+ * By comparing each component, we don't have to worry about extra
+ * endian issues in treating two 32 bit numbers as one 64 bit number
+ */
+static inline xfs_lsn_t	_lsn_cmp(xfs_lsn_t lsn1, xfs_lsn_t lsn2)
+{
+	if (CYCLE_LSN(lsn1) != CYCLE_LSN(lsn2))
+		return (CYCLE_LSN(lsn1)<CYCLE_LSN(lsn2))? -999 : 999;
+
+	if (BLOCK_LSN(lsn1) != BLOCK_LSN(lsn2))
+		return (BLOCK_LSN(lsn1)<BLOCK_LSN(lsn2))? -999 : 999;
+
+	return 0;
+}
+#define XFS_LSN_CMP(a, b)			_lsn_cmp(a, b)
+
 #endif	/* __XFS_TRANS_H__ */
