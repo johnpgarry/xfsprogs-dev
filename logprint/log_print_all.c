@@ -249,8 +249,7 @@ xlog_recover_print_inode_core(
 	printf(_("		uid:%d  gid:%d  nlink:%d projid:0x%04x%04x\n"),
 	       di->di_uid, di->di_gid, di->di_nlink,
 	       di->di_projid_hi, di->di_projid_lo);
-	printf(_("		atime:%d  mtime:%d  ctime:%d\n"),
-	       di->di_atime.t_sec, di->di_mtime.t_sec, di->di_ctime.t_sec);
+	xlog_print_dinode_ts(di, false);
 	printf(_("		flushiter:%d\n"), di->di_flushiter);
 	printf(_("		size:0x%llx  nblks:0x%llx  exsize:%d  "
 	     "nextents:%d  anextents:%d\n"), (unsigned long long)

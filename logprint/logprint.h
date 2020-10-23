@@ -29,6 +29,8 @@ extern void print_xlog_record_line(void);
 extern void print_xlog_op_line(void);
 extern void print_stars(void);
 
+void xlog_print_dinode_ts(struct xfs_log_dinode *ldip, bool compact);
+
 extern struct xfs_inode_log_format *
 	xfs_inode_item_format_convert(char *, uint, struct xfs_inode_log_format *);
 
