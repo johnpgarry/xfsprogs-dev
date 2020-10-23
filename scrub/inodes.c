@@ -10,7 +10,6 @@
 #include <sys/statvfs.h>
 #include "platform_defs.h"
 #include "xfs_arch.h"
-#include "xfs_format.h"
 #include "handle.h"
 #include "libfrog/paths.h"
 #include "libfrog/workqueue.h"
@@ -74,7 +73,7 @@ bulkstat_for_inumbers(
 	 * Check each of the stats we got back to make sure we got the inodes
 	 * we asked for.
 	 */
-	for (i = 0, bs = bstat; i < XFS_INODES_PER_CHUNK; i++) {
+	for (i = 0, bs = bstat; i < LIBFROG_BULKSTAT_CHUNKSIZE; i++) {
 		if (!(inumbers->xi_allocmask & (1ULL << i)))
 			continue;
 		if (bs->bs_ino == inumbers->xi_startino + i) {
@@ -134,7 +133,7 @@ scan_ag_inodes(
 			sizeof(handle.ha_fid.fid_len);
 	handle.ha_fid.fid_pad = 0;
 
-	error = -xfrog_bulkstat_alloc_req(XFS_INODES_PER_CHUNK, 0, &breq);
+	error = -xfrog_bulkstat_alloc_req(LIBFROG_BULKSTAT_CHUNKSIZE, 0, &breq);
 	if (error) {
 		str_liberror(ctx, error, descr);
 		si->aborted = true;
