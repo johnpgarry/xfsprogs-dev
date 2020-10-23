@@ -101,7 +101,7 @@ quota_mount(
 	}
 
 	if (form & XFS_BLOCK_QUOTA) {
-		timer = d.d_btimer;
+		timer = decode_timer(&d, d.d_btimer, d.d_btimer_hi);
 		qflags = (flags & HUMAN_FLAG);
 		if (d.d_blk_hardlimit && d.d_bcount > d.d_blk_hardlimit)
 			qflags |= LIMIT_FLAG;
@@ -123,7 +123,7 @@ quota_mount(
 				time_to_string(timer, qflags));
 	}
 	if (form & XFS_INODE_QUOTA) {
-		timer = d.d_itimer;
+		timer = decode_timer(&d, d.d_itimer, d.d_itimer_hi);
 		qflags = (flags & HUMAN_FLAG);
 		if (d.d_ino_hardlimit && d.d_icount > d.d_ino_hardlimit)
 			qflags |= LIMIT_FLAG;
@@ -145,7 +145,7 @@ quota_mount(
 				time_to_string(timer, qflags));
 	}
 	if (form & XFS_RTBLOCK_QUOTA) {
-		timer = d.d_rtbtimer;
+		timer = decode_timer(&d, d.d_rtbtimer, d.d_rtbtimer_hi);
 		qflags = (flags & HUMAN_FLAG);
 		if (d.d_rtb_hardlimit && d.d_rtbcount > d.d_rtb_hardlimit)
 			qflags |= LIMIT_FLAG;
