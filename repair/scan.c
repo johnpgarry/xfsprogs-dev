@@ -1948,6 +1948,12 @@ _("invalid inode count, inode chunk %d/%u, count %d ninodes %d\n"),
 	return suspect;
 }
 
+struct ino_priv {
+	struct aghdr_cnts	*agcnts;
+	uint32_t		ino_blocks;
+	uint32_t		fino_blocks;
+};
+
 /*
  * this one walks the inode btrees sucking the info there into
  * the incore avl tree.  We try and rescue corrupted btree records
@@ -1976,7 +1982,8 @@ scan_inobt(
 	void			*priv,
 	const struct xfs_buf_ops *ops)
 {
-	struct aghdr_cnts	*agcnts = priv;
+	struct ino_priv		*ipriv = priv;
+	struct aghdr_cnts	*agcnts = ipriv->agcnts;
 	char			*name;
 	xfs_agino_t		lastino = 0;
 	int			i;
@@ -2020,6 +2027,17 @@ scan_inobt(
 		bad_ino_btree = 1;
 		if (suspect)
 			return;
+	}
+
+	switch (magic) {
+	case XFS_FIBT_MAGIC:
+	case XFS_FIBT_CRC_MAGIC:
+		ipriv->fino_blocks++;
+		break;
+	case XFS_IBT_MAGIC:
+	case XFS_IBT_CRC_MAGIC:
+		ipriv->ino_blocks++;
+		break;
 	}
 
 	/*
@@ -2363,6 +2381,9 @@ validate_agi(
 	xfs_agnumber_t		agno,
 	struct aghdr_cnts	*agcnts)
 {
+	struct ino_priv		priv = {
+		.agcnts = agcnts,
+	};
 	xfs_agblock_t		bno;
 	int			i;
 	uint32_t		magic;
@@ -2372,7 +2393,7 @@ validate_agi(
 		magic = xfs_sb_version_hascrc(&mp->m_sb) ? XFS_IBT_CRC_MAGIC
 							 : XFS_IBT_MAGIC;
 		scan_sbtree(bno, be32_to_cpu(agi->agi_level),
-			    agno, 0, scan_inobt, 1, magic, agcnts,
+			    agno, 0, scan_inobt, 1, magic, &priv,
 			    &xfs_inobt_buf_ops);
 	} else {
 		do_warn(_("bad agbno %u for inobt root, agno %d\n"),
@@ -2385,12 +2406,23 @@ validate_agi(
 			magic = xfs_sb_version_hascrc(&mp->m_sb) ?
 					XFS_FIBT_CRC_MAGIC : XFS_FIBT_MAGIC;
 			scan_sbtree(bno, be32_to_cpu(agi->agi_free_level),
-				    agno, 0, scan_inobt, 1, magic, agcnts,
+				    agno, 0, scan_inobt, 1, magic, &priv,
 				    &xfs_finobt_buf_ops);
 		} else {
 			do_warn(_("bad agbno %u for finobt root, agno %d\n"),
 				be32_to_cpu(agi->agi_free_root), agno);
 		}
+	}
+
+	if (xfs_sb_version_hasinobtcounts(&mp->m_sb)) {
+		if (be32_to_cpu(agi->agi_iblocks) != priv.ino_blocks)
+			do_warn(_("bad inobt block count %u, saw %u\n"),
+					priv.ino_blocks,
+					be32_to_cpu(agi->agi_iblocks));
+		if (be32_to_cpu(agi->agi_fblocks) != priv.fino_blocks)
+			do_warn(_("bad finobt block count %u, saw %u\n"),
+					priv.fino_blocks,
+					be32_to_cpu(agi->agi_fblocks));
 	}
 
 	if (be32_to_cpu(agi->agi_count) != agcnts->agicount) {
