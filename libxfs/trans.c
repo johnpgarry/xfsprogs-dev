@@ -463,10 +463,10 @@ libxfs_trans_get_buf_map(
 
 xfs_buf_t *
 libxfs_trans_getsb(
-	xfs_trans_t		*tp,
-	struct xfs_mount	*mp)
+	struct xfs_trans	*tp)
 {
-	xfs_buf_t		*bp;
+	struct xfs_mount	*mp = tp->t_mountp;
+	struct xfs_buf		*bp;
 	struct xfs_buf_log_item	*bip;
 	int			len = XFS_FSS_TO_BB(mp, 1);
 	DEFINE_SINGLE_BUF_MAP(map, XFS_SB_DADDR, len);
