@@ -138,7 +138,7 @@ fp_time(
 			dbprintf("%d:", i + base);
 
 		ts = obj + byteize(bitpos);
-		tv = libxfs_inode_from_disk_ts(*ts);
+		tv = libxfs_inode_from_disk_ts(obj, *ts);
 		t = tv.tv_sec;
 
 		c = ctime(&t);
@@ -174,7 +174,7 @@ fp_nsec(
 			dbprintf("%d:", i + base);
 
 		ts = obj + byteize(bitpos);
-		tv = libxfs_inode_from_disk_ts(*ts);
+		tv = libxfs_inode_from_disk_ts(obj, *ts);
 
 		dbprintf("%u", tv.tv_nsec);
 
