@@ -179,10 +179,9 @@ const field_t	inode_v3_flds[] = {
 };
 
 
-#define	TOFF(f)	bitize(offsetof(xfs_timestamp_t, t_ ## f))
 const field_t	timestamp_flds[] = {
-	{ "sec", FLDT_TIME, OI(TOFF(sec)), C1, 0, TYP_NONE },
-	{ "nsec", FLDT_NSEC, OI(TOFF(nsec)), C1, 0, TYP_NONE },
+	{ "sec", FLDT_TIME, OI(0), C1, 0, TYP_NONE },
+	{ "nsec", FLDT_NSEC, OI(0), C1, 0, TYP_NONE },
 	{ NULL }
 };
 
