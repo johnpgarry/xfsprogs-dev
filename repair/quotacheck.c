@@ -237,6 +237,7 @@ quotacheck_adjust(
 /* Compare this on-disk dquot against whatever we observed. */
 static void
 qc_check_dquot(
+	struct xfs_mount	*mp,
 	struct xfs_disk_dquot	*ddq,
 	struct qc_dquots	*dquots)
 {
@@ -270,6 +271,14 @@ qc_check_dquot(
 		do_warn(_("%s id %u has icount %llu, expected %"PRIu64"\n"),
 				qflags_typestr(dquots->type), id,
 				be64_to_cpu(ddq->d_icount), qrec->icount);
+		chkd_flags = 0;
+	}
+
+	if ((ddq->d_type & XFS_DQTYPE_BIGTIME) &&
+	    !xfs_sb_version_hasbigtime(&mp->m_sb)) {
+		do_warn(
+	_("%s id %u is marked bigtime but file system does not support large timestamps\n"),
+				qflags_typestr(dquots->type), id);
 		chkd_flags = 0;
 	}
 
@@ -322,7 +331,7 @@ _("cannot read %s inode %"PRIu64", block %"PRIu64", disk block %"PRIu64", err=%d
 		for (dqnr = 0;
 		     dqnr < dqperchunk && dqid <= UINT_MAX;
 		     dqnr++, dqb++, dqid++)
-			qc_check_dquot(&dqb->dd_diskdq, dquots);
+			qc_check_dquot(mp, &dqb->dd_diskdq, dquots);
 		libxfs_buf_relse(bp);
 	}
 
