@@ -2167,9 +2167,12 @@ static void
 check_nsec(
 	const char		*name,
 	xfs_ino_t		lino,
-	struct xfs_timestamp	*t,
+	xfs_timestamp_t		*ts,
 	int			*dirty)
 {
+	struct xfs_legacy_timestamp *t;
+
+	t = (struct xfs_legacy_timestamp *)ts;
 	if (be32_to_cpu(t->t_nsec) < NSEC_PER_SEC)
 		return;
 

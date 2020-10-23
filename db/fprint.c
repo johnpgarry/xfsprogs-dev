@@ -123,6 +123,7 @@ fp_time(
 	int			base,
 	int			array)
 {
+	struct timespec64	tv;
 	xfs_timestamp_t		*ts;
 	int			bitpos;
 	char			*c;
@@ -137,7 +138,8 @@ fp_time(
 			dbprintf("%d:", i + base);
 
 		ts = obj + byteize(bitpos);
-		t = (int)be32_to_cpu(ts->t_sec);
+		tv = libxfs_inode_from_disk_ts(*ts);
+		t = tv.tv_sec;
 
 		c = ctime(&t);
 		dbprintf("%24.24s", c);
@@ -159,8 +161,8 @@ fp_nsec(
 	int			base,
 	int			array)
 {
+	struct timespec64	tv;
 	xfs_timestamp_t		*ts;
-	unsigned int		nsec;
 	int			bitpos;
 	int			i;
 
@@ -172,9 +174,9 @@ fp_nsec(
 			dbprintf("%d:", i + base);
 
 		ts = obj + byteize(bitpos);
-		nsec = (int)be32_to_cpu(ts->t_nsec);
+		tv = libxfs_inode_from_disk_ts(*ts);
 
-		dbprintf("%u", nsec);
+		dbprintf("%u", tv.tv_nsec);
 
 		if (i < count - 1)
 			dbprintf(" ");
