@@ -36,6 +36,7 @@ struct inode {
 	uint32_t		i_gid;
 	uint32_t		i_nlink;
 	xfs_dev_t		i_rdev;	 /* This actually holds xfs_dev_t */
+	unsigned int		i_count;
 	unsigned long		i_state; /* Not actually used in userspace */
 	uint32_t		i_generation;
 	uint64_t		i_version;
@@ -59,6 +60,11 @@ static inline void i_uid_write(struct inode *inode, uint32_t uid)
 static inline void i_gid_write(struct inode *inode, uint32_t gid)
 {
 	inode->i_gid = gid;
+}
+
+static inline void ihold(struct inode *inode)
+{
+	inode->i_count++;
 }
 
 typedef struct xfs_inode {

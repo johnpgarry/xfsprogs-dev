@@ -1254,6 +1254,7 @@ libxfs_iget(
 	if (!ip)
 		return -ENOMEM;
 
+	VFS_I(ip)->i_count = 1;
 	ip->i_ino = ino;
 	ip->i_mount = mp;
 	error = xfs_imap(mp, tp, ip->i_ino, &ip->i_imap, 0);
@@ -1305,9 +1306,13 @@ void
 libxfs_irele(
 	struct xfs_inode	*ip)
 {
-	ASSERT(ip->i_itemp == NULL);
-	libxfs_idestroy(ip);
-	kmem_cache_free(xfs_inode_zone, ip);
+	VFS_I(ip)->i_count--;
+
+	if (VFS_I(ip)->i_count == 0) {
+		ASSERT(ip->i_itemp == NULL);
+		libxfs_idestroy(ip);
+		kmem_cache_free(xfs_inode_zone, ip);
+	}
 }
 
 /*
