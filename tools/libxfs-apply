@@ -193,6 +193,14 @@ filter_xfsprogs_patch()
 	rm -f $_libxfs_files
 }
 
+add_header()
+{
+	local hdr="$1"
+	local hdrfile="$2"
+
+	tail -n 1 "$hdrfile" | grep -q "^${hdr}$" || echo "$hdr" >> "$hdrfile"
+}
+
 fixup_header_format()
 {
 	local _source=$1
@@ -280,13 +288,13 @@ fixup_header_format()
 	sed -i '${/^[[:space:]]*$/d;}' $_hdr.new
 
 	# Add Signed-off-by: header if specified
-	if [ ! -z ${SIGNED_OFF_BY+x} ]; then 
-		echo "Signed-off-by: $SIGNED_OFF_BY" >> $_hdr.new
+	if [ ! -z ${SIGNED_OFF_BY+x} ]; then
+		add_header "Signed-off-by: $SIGNED_OFF_BY" $_hdr.new
 	else	# get it from git config if present
 		SOB_NAME=`git config --get user.name`
 		SOB_EMAIL=`git config --get user.email`
 		if [ ! -z ${SOB_NAME+x} ]; then
-			echo "Signed-off-by: $SOB_NAME <$SOB_EMAIL>" >> $_hdr.new
+			add_header "Signed-off-by: $SOB_NAME <$SOB_EMAIL>" $_hdr.new
 		fi
 	fi
 
