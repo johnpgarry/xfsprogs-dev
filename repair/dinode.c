@@ -2126,7 +2126,7 @@ check_nsec(
 	struct xfs_timestamp	*t,
 	int			*dirty)
 {
-	if (be32_to_cpu(t->t_nsec) < 1000000000)
+	if (be32_to_cpu(t->t_nsec) < NSEC_PER_SEC)
 		return;
 
 	do_warn(

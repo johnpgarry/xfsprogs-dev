@@ -110,7 +110,6 @@ progress_report(
 	fflush(pt.fp);
 }
 
-#define NSEC_PER_SEC	(1000000000)
 static void *
 progress_report_thread(void *arg)
 {
