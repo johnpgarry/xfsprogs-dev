@@ -31,17 +31,17 @@ struct xfs_inode_log_item;
  * metadata.
  */
 struct inode {
-	mode_t		i_mode;
-	uint32_t	i_uid;
-	uint32_t	i_gid;
-	uint32_t	i_nlink;
-	xfs_dev_t	i_rdev;		/* This actually holds xfs_dev_t */
-	unsigned long	i_state;	/* Not actually used in userspace */
-	uint32_t	i_generation;
-	uint64_t	i_version;
-	struct timespec	i_atime;
-	struct timespec	i_mtime;
-	struct timespec	i_ctime;
+	mode_t			i_mode;
+	uint32_t		i_uid;
+	uint32_t		i_gid;
+	uint32_t		i_nlink;
+	xfs_dev_t		i_rdev;	 /* This actually holds xfs_dev_t */
+	unsigned long		i_state; /* Not actually used in userspace */
+	uint32_t		i_generation;
+	uint64_t		i_version;
+	struct timespec64	i_atime;
+	struct timespec64	i_mtime;
+	struct timespec64	i_ctime;
 };
 
 static inline uint32_t i_uid_read(struct inode *inode)
