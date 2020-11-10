@@ -350,7 +350,7 @@ const ftattr_t	ftattrtab[] = {
 	{ FLDT_TIME, "time", fp_time, NULL, SI(bitsz(int32_t)), FTARG_SIGNED,
 	  NULL, NULL },
 	{ FLDT_TIMESTAMP, "timestamp", NULL, (char *)timestamp_flds,
-	  SI(bitsz(xfs_timestamp_t)), 0, NULL, timestamp_flds },
+	  SI(bitsz(struct xfs_legacy_timestamp)), 0, NULL, timestamp_flds },
 	{ FLDT_UINT1, "uint1", fp_num, "%u", SI(1), 0, NULL, NULL },
 	{ FLDT_UINT16D, "uint16d", fp_num, "%u", SI(bitsz(uint16_t)), 0, NULL,
 	  NULL },
