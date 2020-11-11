@@ -446,8 +446,10 @@ xlog_print_trans_inode_core(
 	   (int)ip->di_format);
     printf(_("nlink %hd uid %d gid %d\n"),
 	   ip->di_nlink, ip->di_uid, ip->di_gid);
-    printf(_("atime 0x%x mtime 0x%x ctime 0x%x\n"),
-	   ip->di_atime.t_sec, ip->di_mtime.t_sec, ip->di_ctime.t_sec);
+    printf(_("atime 0x%llx mtime 0x%llx ctime 0x%llx\n"),
+		xlog_extract_dinode_ts(ip->di_atime),
+		xlog_extract_dinode_ts(ip->di_mtime),
+		xlog_extract_dinode_ts(ip->di_ctime));
     printf(_("size 0x%llx nblocks 0x%llx extsize 0x%x nextents 0x%x\n"),
 	   (unsigned long long)ip->di_size, (unsigned long long)ip->di_nblocks,
 	   ip->di_extsize, ip->di_nextents);
@@ -738,6 +740,16 @@ xlog_print_trans_icreate(
  *
  ******************************************************************************
  */
+
+time64_t
+xlog_extract_dinode_ts(
+	const xfs_ictimestamp_t		its)
+{
+	struct xfs_legacy_ictimestamp	*lits;
+
+	lits = (struct xfs_legacy_ictimestamp *)&its;
+	return (time64_t)lits->t_sec;
+}
 
 void
 xlog_print_lseek(struct xlog *log, int fd, xfs_daddr_t blkno, int whence)
