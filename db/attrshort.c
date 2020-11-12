@@ -18,7 +18,7 @@ static int	attr_sf_entry_value_offset(void *obj, int startoff, int idx);
 static int	attr_shortform_list_count(void *obj, int startoff);
 static int	attr_shortform_list_offset(void *obj, int startoff, int idx);
 
-#define	OFF(f)	bitize(offsetof(xfs_attr_shortform_t, f))
+#define	OFF(f)	bitize(offsetof(struct xfs_attr_shortform, f))
 const field_t	attr_shortform_flds[] = {
 	{ "hdr", FLDT_ATTR_SF_HDR, OI(OFF(hdr)), C1, 0, TYP_NONE },
 	{ "list", FLDT_ATTR_SF_ENTRY, attr_shortform_list_offset,
@@ -71,10 +71,10 @@ attr_sf_entry_size(
 {
 	struct xfs_attr_sf_entry	*e;
 	int				i;
-	xfs_attr_shortform_t		*sf;
+	struct xfs_attr_shortform	*sf;
 
 	ASSERT(bitoffs(startoff) == 0);
-	sf = (xfs_attr_shortform_t *)((char *)obj + byteize(startoff));
+	sf = (struct xfs_attr_shortform *)((char *)obj + byteize(startoff));
 	e = &sf->list[0];
 	for (i = 0; i < idx; i++)
 		e = XFS_ATTR_SF_NEXTENTRY(e);
@@ -110,13 +110,13 @@ attr_sf_entry_value_offset(
 
 static int
 attr_shortform_list_count(
-	void			*obj,
-	int			startoff)
+	void				*obj,
+	int				startoff)
 {
-	xfs_attr_shortform_t	*sf;
+	struct xfs_attr_shortform	*sf;
 
 	ASSERT(bitoffs(startoff) == 0);
-	sf = (xfs_attr_shortform_t *)((char *)obj + byteize(startoff));
+	sf = (struct xfs_attr_shortform *)((char *)obj + byteize(startoff));
 	return sf->hdr.count;
 }
 
@@ -128,10 +128,10 @@ attr_shortform_list_offset(
 {
 	struct xfs_attr_sf_entry	*e;
 	int				i;
-	xfs_attr_shortform_t		*sf;
+	struct xfs_attr_shortform	*sf;
 
 	ASSERT(bitoffs(startoff) == 0);
-	sf = (xfs_attr_shortform_t *)((char *)obj + byteize(startoff));
+	sf = (struct xfs_attr_shortform *)((char *)obj + byteize(startoff));
 	e = &sf->list[0];
 	for (i = 0; i < idx; i++)
 		e = XFS_ATTR_SF_NEXTENTRY(e);
@@ -147,11 +147,11 @@ attrshort_size(
 {
 	struct xfs_attr_sf_entry	*e;
 	int				i;
-	xfs_attr_shortform_t		*sf;
+	struct xfs_attr_shortform	*sf;
 
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(idx == 0);
-	sf = (xfs_attr_shortform_t *)((char *)obj + byteize(startoff));
+	sf = (struct xfs_attr_shortform *)((char *)obj + byteize(startoff));
 	e = &sf->list[0];
 	for (i = 0; i < sf->hdr.count; i++)
 		e = XFS_ATTR_SF_NEXTENTRY(e);

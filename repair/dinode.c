@@ -92,7 +92,7 @@ _("would have cleared inode %" PRIu64 " attributes\n"), ino_num);
 	 */
 
 	if (!no_modify) {
-		xfs_attr_shortform_t *asf = (xfs_attr_shortform_t *)
+		struct xfs_attr_shortform *asf = (struct xfs_attr_shortform *)
 				XFS_DFORK_APTR(dino);
 		asf->hdr.totsize = cpu_to_be16(sizeof(xfs_attr_sf_hdr_t));
 		asf->hdr.count = 0;
@@ -927,14 +927,14 @@ process_exinode(
  */
 static int
 process_lclinode(
-	xfs_mount_t		*mp,
-	xfs_agnumber_t		agno,
-	xfs_agino_t		ino,
-	xfs_dinode_t		*dip,
-	int			whichfork)
+	xfs_mount_t			*mp,
+	xfs_agnumber_t			agno,
+	xfs_agino_t			ino,
+	xfs_dinode_t			*dip,
+	int				whichfork)
 {
-	xfs_attr_shortform_t	*asf;
-	xfs_ino_t		lino;
+	struct xfs_attr_shortform	*asf;
+	xfs_ino_t			lino;
 
 	lino = XFS_AGINO_TO_INO(mp, agno, ino);
 	if (whichfork == XFS_DATA_FORK && be64_to_cpu(dip->di_size) >
@@ -945,7 +945,7 @@ process_lclinode(
 			XFS_DFORK_DSIZE(dip, mp));
 		return(1);
 	} else if (whichfork == XFS_ATTR_FORK) {
-		asf = (xfs_attr_shortform_t *)XFS_DFORK_APTR(dip);
+		asf = (struct xfs_attr_shortform *)XFS_DFORK_APTR(dip);
 		if (be16_to_cpu(asf->hdr.totsize) > XFS_DFORK_ASIZE(dip, mp)) {
 			do_warn(
 	_("local inode %" PRIu64 " attr fork too large (size %d, max = %zu)\n"),

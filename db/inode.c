@@ -322,19 +322,19 @@ inode_a_sfattr_count(
 
 int
 inode_a_size(
-	void			*obj,
-	int			startoff,
-	int			idx)
+	void				*obj,
+	int				startoff,
+	int				idx)
 {
-	xfs_attr_shortform_t	*asf;
-	xfs_dinode_t		*dip;
+	struct xfs_attr_shortform	*asf;
+	xfs_dinode_t			*dip;
 
 	ASSERT(startoff == 0);
 	ASSERT(idx == 0);
 	dip = obj;
 	switch (dip->di_aformat) {
 	case XFS_DINODE_FMT_LOCAL:
-		asf = (xfs_attr_shortform_t *)XFS_DFORK_APTR(dip);
+		asf = (struct xfs_attr_shortform *)XFS_DFORK_APTR(dip);
 		return bitize(be16_to_cpu(asf->hdr.totsize));
 	case XFS_DINODE_FMT_EXTENTS:
 		return (int)be16_to_cpu(dip->di_anextents) *

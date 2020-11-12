@@ -3010,17 +3010,17 @@ process_inode(
 /* ARGSUSED */
 static void
 process_lclinode(
-	inodata_t		*id,
-	xfs_dinode_t		*dip,
-	dbm_t			type,
-	xfs_rfsblock_t		*totd,
-	xfs_rfsblock_t		*toti,
-	xfs_extnum_t		*nex,
-	blkmap_t		**blkmapp,
-	int			whichfork)
+	inodata_t			*id,
+	xfs_dinode_t			*dip,
+	dbm_t				type,
+	xfs_rfsblock_t			*totd,
+	xfs_rfsblock_t			*toti,
+	xfs_extnum_t			*nex,
+	blkmap_t			**blkmapp,
+	int				whichfork)
 {
-	xfs_attr_shortform_t	*asf;
-	xfs_fsblock_t		bno;
+	struct xfs_attr_shortform	*asf;
+	xfs_fsblock_t			bno;
 
 	bno = XFS_INO_TO_FSB(mp, id->ino);
 	if (whichfork == XFS_DATA_FORK && be64_to_cpu(dip->di_size) >
@@ -3032,7 +3032,7 @@ process_lclinode(
 		error++;
 	}
 	else if (whichfork == XFS_ATTR_FORK) {
-		asf = (xfs_attr_shortform_t *)XFS_DFORK_APTR(dip);
+		asf = (struct xfs_attr_shortform *)XFS_DFORK_APTR(dip);
 		if (be16_to_cpu(asf->hdr.totsize) > XFS_DFORK_ASIZE(dip, mp)) {
 			if (!sflag || id->ilist || CHECK_BLIST(bno))
 				dbprintf(_("local inode %lld attr is too large "

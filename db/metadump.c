@@ -1370,12 +1370,12 @@ process_sf_attr(
 	 * values with 'v' (to see a valid string length, as opposed to NULLs)
 	 */
 
-	xfs_attr_shortform_t		*asfp;
+	struct xfs_attr_shortform	*asfp;
 	struct xfs_attr_sf_entry	*asfep;
 	int				ino_attr_size;
 	int				i;
 
-	asfp = (xfs_attr_shortform_t *)XFS_DFORK_APTR(dip);
+	asfp = (struct xfs_attr_shortform *)XFS_DFORK_APTR(dip);
 	if (asfp->hdr.count == 0)
 		return;
 
