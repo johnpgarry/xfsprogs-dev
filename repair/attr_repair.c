@@ -314,7 +314,7 @@ process_shortform_attr(
 					currententry->valuelen);
 
 		remainingspace = remainingspace -
-					XFS_ATTR_SF_ENTSIZE(currententry);
+					xfs_attr_sf_entsize(currententry);
 
 		if (junkit) {
 			if (!no_modify) {
@@ -324,7 +324,7 @@ process_shortform_attr(
 					i, ino);
 				tempentry = (struct xfs_attr_sf_entry *)
 					((intptr_t) currententry +
-					 XFS_ATTR_SF_ENTSIZE(currententry));
+					 xfs_attr_sf_entsize(currententry));
 				memmove(currententry,tempentry,remainingspace);
 				asf->hdr.count -= 1;
 				i--; /* no worries, it will wrap back to 0 */
@@ -339,8 +339,8 @@ process_shortform_attr(
 
 		/* Let's get ready for the next entry... */
 		nextentry = (struct xfs_attr_sf_entry *)((intptr_t) nextentry +
-			 		XFS_ATTR_SF_ENTSIZE(currententry));
-		currentsize = currentsize + XFS_ATTR_SF_ENTSIZE(currententry);
+			 		xfs_attr_sf_entsize(currententry));
+		currentsize = currentsize + xfs_attr_sf_entsize(currententry);
 
 	} /* end the loop */
 
