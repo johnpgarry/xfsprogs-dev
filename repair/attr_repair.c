@@ -205,15 +205,15 @@ valuecheck(
  */
 static int
 process_shortform_attr(
-	struct xfs_mount *mp,
-	xfs_ino_t	ino,
-	xfs_dinode_t	*dip,
-	int		*repair)
+	struct xfs_mount		*mp,
+	xfs_ino_t			ino,
+	xfs_dinode_t			*dip,
+	int				*repair)
 {
 	xfs_attr_shortform_t	*asf;
-	xfs_attr_sf_entry_t	*currententry, *nextentry, *tempentry;
-	int			i, junkit;
-	int			currentsize, remainingspace;
+	struct xfs_attr_sf_entry	*currententry, *nextentry, *tempentry;
+	int				i, junkit;
+	int				currentsize, remainingspace;
 
 	*repair = 0;
 
@@ -250,7 +250,7 @@ process_shortform_attr(
 		junkit = 0;
 
 		/* don't go off the end if the hdr.count was off */
-		if ((currentsize + (sizeof(xfs_attr_sf_entry_t) - 1)) >
+		if ((currentsize + (sizeof(struct xfs_attr_sf_entry) - 1)) >
 						be16_to_cpu(asf->hdr.totsize))
 			break; /* get out and reset count and totSize */
 
@@ -322,7 +322,7 @@ process_shortform_attr(
 				do_warn(
 	_("removing attribute entry %d for inode %" PRIu64 "\n"),
 					i, ino);
-				tempentry = (xfs_attr_sf_entry_t *)
+				tempentry = (struct xfs_attr_sf_entry *)
 					((intptr_t) currententry +
 					 XFS_ATTR_SF_ENTSIZE(currententry));
 				memmove(currententry,tempentry,remainingspace);
@@ -338,7 +338,7 @@ process_shortform_attr(
 		}
 
 		/* Let's get ready for the next entry... */
-		nextentry = (xfs_attr_sf_entry_t *)((intptr_t) nextentry +
+		nextentry = (struct xfs_attr_sf_entry *)((intptr_t) nextentry +
 			 		XFS_ATTR_SF_ENTSIZE(currententry));
 		currentsize = currentsize + XFS_ATTR_SF_ENTSIZE(currententry);
 

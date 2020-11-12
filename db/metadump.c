@@ -1363,17 +1363,17 @@ process_sf_symlink(
 
 static void
 process_sf_attr(
-	xfs_dinode_t		*dip)
+	xfs_dinode_t			*dip)
 {
 	/*
 	 * with extended attributes, obfuscate the names and fill the actual
 	 * values with 'v' (to see a valid string length, as opposed to NULLs)
 	 */
 
-	xfs_attr_shortform_t	*asfp;
-	xfs_attr_sf_entry_t	*asfep;
-	int			ino_attr_size;
-	int			i;
+	xfs_attr_shortform_t		*asfp;
+	struct xfs_attr_sf_entry	*asfep;
+	int				ino_attr_size;
+	int				i;
 
 	asfp = (xfs_attr_shortform_t *)XFS_DFORK_APTR(dip);
 	if (asfp->hdr.count == 0)
@@ -1413,7 +1413,7 @@ process_sf_attr(
 			       asfep->valuelen);
 		}
 
-		asfep = (xfs_attr_sf_entry_t *)((char *)asfep +
+		asfep = (struct xfs_attr_sf_entry *)((char *)asfep +
 				XFS_ATTR_SF_ENTSIZE(asfep));
 	}
 
