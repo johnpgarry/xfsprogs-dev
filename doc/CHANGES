@@ -1,3 +1,6 @@
+xfsprogs-5.10.0-rc0
+	- libxfs changes merged from kernel 5.10
+
 xfsprogs-5.9.0 (20 Oct 2020)
 	- No further changes
 
