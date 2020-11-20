@@ -2123,10 +2123,14 @@ static void
 check_nsec(
 	const char		*name,
 	xfs_ino_t		lino,
+	struct xfs_dinode	*dip,
 	xfs_timestamp_t		*ts,
 	int			*dirty)
 {
 	struct xfs_legacy_timestamp *t;
+
+	if (xfs_dinode_has_bigtime(dip))
+		return;
 
 	t = (struct xfs_legacy_timestamp *)ts;
 	if (be32_to_cpu(t->t_nsec) < NSEC_PER_SEC)
@@ -2550,6 +2554,27 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 			flags2 &= ~XFS_DIFLAG2_COWEXTSIZE;
 		}
 
+		if (xfs_dinode_has_bigtime(dino) &&
+		    !xfs_sb_version_hasbigtime(&mp->m_sb)) {
+			if (!uncertain) {
+				do_warn(
+	_("inode %" PRIu64 " is marked bigtime but file system does not support large timestamps\n"),
+					lino);
+			}
+			flags2 &= ~XFS_DIFLAG2_BIGTIME;
+
+			if (no_modify) {
+				do_warn(_("would zero timestamps.\n"));
+			} else {
+				do_warn(_("zeroing timestamps.\n"));
+				dino->di_atime = 0;
+				dino->di_mtime = 0;
+				dino->di_ctime = 0;
+				dino->di_crtime = 0;
+				*dirty = 1;
+			}
+		}
+
 		if (!verify_mode && flags2 != be64_to_cpu(dino->di_flags2)) {
 			if (!no_modify) {
 				do_warn(_("fixing bad flags2.\n"));
@@ -2677,11 +2702,11 @@ _("Bad CoW extent size %u on inode %" PRIu64 ", "),
 	}
 
 	/* nsec fields cannot be larger than 1 billion */
-	check_nsec("atime", lino, &dino->di_atime, dirty);
-	check_nsec("mtime", lino, &dino->di_mtime, dirty);
-	check_nsec("ctime", lino, &dino->di_ctime, dirty);
+	check_nsec("atime", lino, dino, &dino->di_atime, dirty);
+	check_nsec("mtime", lino, dino, &dino->di_mtime, dirty);
+	check_nsec("ctime", lino, dino, &dino->di_ctime, dirty);
 	if (dino->di_version >= 3)
-		check_nsec("crtime", lino, &dino->di_crtime, dirty);
+		check_nsec("crtime", lino, dino, &dino->di_crtime, dirty);
 
 	/*
 	 * general size/consistency checks:
