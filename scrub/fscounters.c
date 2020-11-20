@@ -115,7 +115,7 @@ out_free:
 }
 
 /*
- * Estimate the number of blocks and inodes in the filesystem.  Returns 0
+ * Estimate the number of blocks and used inodes in the filesystem.  Returns 0
  * or a positive error number.
  */
 int
@@ -125,8 +125,7 @@ scrub_scan_estimate_blocks(
 	unsigned long long		*d_bfree,
 	unsigned long long		*r_blocks,
 	unsigned long long		*r_bfree,
-	unsigned long long		*f_files,
-	unsigned long long		*f_free)
+	unsigned long long		*f_files_used)
 {
 	struct xfs_fsop_counts		fc;
 	int				error;
@@ -140,8 +139,7 @@ scrub_scan_estimate_blocks(
 	*d_bfree = fc.freedata;
 	*r_blocks = ctx->mnt.fsgeom.rtblocks;
 	*r_bfree = fc.freertx;
-	*f_files = fc.allocino;
-	*f_free = fc.freeino;
+	*f_files_used = fc.allocino - fc.freeino;
 
 	return 0;
 }
