@@ -17,6 +17,8 @@ extern int	fp_time(void *obj, int bit, int count, char *fmtstr, int size,
 			int arg, int base, int array);
 extern int	fp_nsec(void *obj, int bit, int count, char *fmtstr, int size,
 			int arg, int base, int array);
+extern int	fp_qtimer(void *obj, int bit, int count, char *fmtstr, int size,
+			int arg, int base, int array);
 extern int	fp_uuid(void *obj, int bit, int count, char *fmtstr, int size,
 			int arg, int base, int array);
 extern int	fp_crc(void *obj, int bit, int count, char *fmtstr, int size,

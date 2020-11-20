@@ -180,6 +180,40 @@ fp_nsec(
 	return 1;
 }
 
+int
+fp_qtimer(
+	void			*obj,
+	int			bit,
+	int			count,
+	char			*fmtstr,
+	int			size,
+	int			arg,
+	int			base,
+	int			array)
+{
+	uint32_t		sec;
+	__be32			*t;
+	int			bitpos;
+	int			i;
+
+	ASSERT(bitoffs(bit) == 0);
+	for (i = 0, bitpos = bit;
+	     i < count && !seenint();
+	     i++, bitpos += size) {
+		if (array)
+			dbprintf("%d:", i + base);
+
+		t = obj + byteize(bitpos);
+		sec = be32_to_cpu(*t);
+
+		dbprintf("%u", sec);
+
+		if (i < count - 1)
+			dbprintf(" ");
+	}
+	return 1;
+}
+
 /*ARGSUSED*/
 int
 fp_uuid(
