@@ -112,22 +112,21 @@ fp_sarray(
 	return 1;
 }
 
-/*ARGSUSED*/
 int
 fp_time(
-	void	*obj,
-	int	bit,
-	int	count,
-	char	*fmtstr,
-	int	size,
-	int	arg,
-	int	base,
-	int	array)
+	void			*obj,
+	int			bit,
+	int			count,
+	char			*fmtstr,
+	int			size,
+	int			arg,
+	int			base,
+	int			array)
 {
-	int	bitpos;
-	char	*c;
-	int	i;
-	time_t  t;
+	struct timespec64	tv;
+	xfs_timestamp_t		*ts;
+	int			bitpos;
+	int			i;
 
 	ASSERT(bitoffs(bit) == 0);
 	for (i = 0, bitpos = bit;
@@ -135,10 +134,46 @@ fp_time(
 	     i++, bitpos += size) {
 		if (array)
 			dbprintf("%d:", i + base);
-		t = (time_t)getbitval((char *)obj + byteize(bitpos), 0,
-				sizeof(int32_t) * 8, BVSIGNED);
-		c = ctime(&t);
-		dbprintf("%24.24s", c);
+
+		ts = obj + byteize(bitpos);
+		tv = libxfs_inode_from_disk_ts(obj, *ts);
+
+		dbprintf("%24.24s", tv.tv_sec);
+
+		if (i < count - 1)
+			dbprintf(" ");
+	}
+	return 1;
+}
+
+int
+fp_nsec(
+	void			*obj,
+	int			bit,
+	int			count,
+	char			*fmtstr,
+	int			size,
+	int			arg,
+	int			base,
+	int			array)
+{
+	struct timespec64	tv;
+	xfs_timestamp_t		*ts;
+	int			bitpos;
+	int			i;
+
+	ASSERT(bitoffs(bit) == 0);
+	for (i = 0, bitpos = bit;
+	     i < count && !seenint();
+	     i++, bitpos += size) {
+		if (array)
+			dbprintf("%d:", i + base);
+
+		ts = obj + byteize(bitpos);
+		tv = libxfs_inode_from_disk_ts(obj, *ts);
+
+		dbprintf("%u", tv.tv_nsec);
+
 		if (i < count - 1)
 			dbprintf(" ");
 	}
