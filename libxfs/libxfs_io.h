@@ -22,7 +22,7 @@ struct xfs_perag;
  */
 struct xfs_buftarg {
 	struct xfs_mount	*bt_mount;
-	dev_t			dev;
+	dev_t			bt_bdev;
 	unsigned int		flags;
 };
 
@@ -64,7 +64,6 @@ typedef struct xfs_buf {
 	unsigned		b_bcount;
 	unsigned int		b_length;
 	struct xfs_buftarg	*b_target;
-#define b_dev		b_target->dev
 	pthread_mutex_t		b_lock;
 	pthread_t		b_holder;
 	unsigned int		b_recur;

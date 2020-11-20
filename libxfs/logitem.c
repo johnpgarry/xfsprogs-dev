@@ -45,7 +45,7 @@ xfs_trans_buf_item_match(
 	list_for_each_entry(lip, &tp->t_items, li_trans) {
 		blip = (struct xfs_buf_log_item *)lip;
 		if (blip->bli_item.li_type == XFS_LI_BUF &&
-		    blip->bli_buf->b_target->dev == btp->dev &&
+		    blip->bli_buf->b_target->bt_bdev == btp->bt_bdev &&
 		    XFS_BUF_ADDR(blip->bli_buf) == map[0].bm_bn &&
 		    blip->bli_buf->b_bcount == BBTOB(len)) {
 			ASSERT(blip->bli_buf->b_map_count == nmaps);

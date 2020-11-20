@@ -443,7 +443,7 @@ rtmount_init(
 		return -1;
 	}
 
-	if (mp->m_rtdev_targp->dev == 0 && !(flags & LIBXFS_MOUNT_DEBUGGER)) {
+	if (mp->m_rtdev_targp->bt_bdev == 0 && !(flags & LIBXFS_MOUNT_DEBUGGER)) {
 		fprintf(stderr, _("%s: filesystem has a realtime subvolume\n"),
 			progname);
 		return -1;
@@ -601,7 +601,7 @@ libxfs_buftarg_alloc(
 		exit(1);
 	}
 	btp->bt_mount = mp;
-	btp->dev = dev;
+	btp->bt_bdev = dev;
 	btp->flags = 0;
 
 	return btp;
@@ -616,7 +616,7 @@ libxfs_buftarg_init(
 {
 	if (mp->m_ddev_targp) {
 		/* should already have all buftargs initialised */
-		if (mp->m_ddev_targp->dev != dev ||
+		if (mp->m_ddev_targp->bt_bdev != dev ||
 		    mp->m_ddev_targp->bt_mount != mp) {
 			fprintf(stderr,
 				_("%s: bad buftarg reinit, ddev\n"),
@@ -630,14 +630,14 @@ libxfs_buftarg_init(
 					progname);
 				exit(1);
 			}
-		} else if (mp->m_logdev_targp->dev != logdev ||
+		} else if (mp->m_logdev_targp->bt_bdev != logdev ||
 			   mp->m_logdev_targp->bt_mount != mp) {
 			fprintf(stderr,
 				_("%s: bad buftarg reinit, logdev\n"),
 				progname);
 			exit(1);
 		}
-		if (rtdev && (mp->m_rtdev_targp->dev != rtdev ||
+		if (rtdev && (mp->m_rtdev_targp->bt_bdev != rtdev ||
 			      mp->m_rtdev_targp->bt_mount != mp)) {
 			fprintf(stderr,
 				_("%s: bad buftarg reinit, rtdev\n"),
@@ -760,8 +760,8 @@ libxfs_mount(
 	} else
 		libxfs_buf_relse(bp);
 
-	if (mp->m_logdev_targp->dev &&
-	    mp->m_logdev_targp->dev != mp->m_ddev_targp->dev) {
+	if (mp->m_logdev_targp->bt_bdev &&
+	    mp->m_logdev_targp->bt_bdev != mp->m_ddev_targp->bt_bdev) {
 		d = (xfs_daddr_t) XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
 		if (XFS_BB_TO_FSB(mp, d) != mp->m_sb.sb_logblocks ||
 		    libxfs_buf_read(mp->m_logdev_targp,

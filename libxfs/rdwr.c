@@ -68,7 +68,7 @@ libxfs_device_zero(struct xfs_buftarg *btp, xfs_daddr_t start, uint len)
 	char		*z;
 	int		error, fd;
 
-	fd = libxfs_device_to_fd(btp->dev);
+	fd = libxfs_device_to_fd(btp->bt_bdev);
 	start_offset = LIBXFS_BBTOOFF64(start);
 
 	/* try to use special zeroing methods, fall back to writes if needed */
@@ -201,7 +201,7 @@ libxfs_bcompare(struct cache_node *node, cache_key_t key)
 						   b_node);
 	struct xfs_bufkey	*bkey = (struct xfs_bufkey *)key;
 
-	if (bp->b_target->dev == bkey->buftarg->dev &&
+	if (bp->b_target->bt_bdev == bkey->buftarg->bt_bdev &&
 	    bp->b_bn == bkey->blkno) {
 		if (bp->b_bcount == BBTOB(bkey->bblen))
 			return CACHE_HIT;
@@ -577,7 +577,7 @@ int
 libxfs_readbufr(struct xfs_buftarg *btp, xfs_daddr_t blkno, xfs_buf_t *bp,
 		int len, int flags)
 {
-	int	fd = libxfs_device_to_fd(btp->dev);
+	int	fd = libxfs_device_to_fd(btp->bt_bdev);
 	int	bytes = BBTOB(len);
 	int	error;
 
@@ -585,7 +585,7 @@ libxfs_readbufr(struct xfs_buftarg *btp, xfs_daddr_t blkno, xfs_buf_t *bp,
 
 	error = __read_buf(fd, bp->b_addr, bytes, LIBXFS_BBTOOFF64(blkno), flags);
 	if (!error &&
-	    bp->b_target->dev == btp->dev &&
+	    bp->b_target->bt_bdev == btp->bt_bdev &&
 	    bp->b_bn == blkno &&
 	    bp->b_bcount == bytes)
 		bp->b_flags |= LIBXFS_B_UPTODATE;
@@ -615,7 +615,7 @@ libxfs_readbufr_map(struct xfs_buftarg *btp, struct xfs_buf *bp, int flags)
 	void	*buf;
 	int	i;
 
-	fd = libxfs_device_to_fd(btp->dev);
+	fd = libxfs_device_to_fd(btp->bt_bdev);
 	buf = bp->b_addr;
 	for (i = 0; i < bp->b_nmaps; i++) {
 		off64_t	offset = LIBXFS_BBTOOFF64(bp->b_maps[i].bm_bn);
@@ -799,7 +799,7 @@ int
 libxfs_bwrite(
 	struct xfs_buf	*bp)
 {
-	int		fd = libxfs_device_to_fd(bp->b_target->dev);
+	int		fd = libxfs_device_to_fd(bp->b_target->bt_bdev);
 
 	/*
 	 * we never write buffers that are marked stale. This indicates they
@@ -1131,11 +1131,11 @@ libxfs_blkdev_issue_flush(
 {
 	int			fd, ret;
 
-	if (btp->dev == 0)
+	if (btp->bt_bdev == 0)
 		return 0;
 
-	fd = libxfs_device_to_fd(btp->dev);
-	ret = platform_flush_device(fd, btp->dev);
+	fd = libxfs_device_to_fd(btp->bt_bdev);
+	ret = platform_flush_device(fd, btp->bt_bdev);
 	return ret ? -errno : 0;
 }
 
@@ -1212,7 +1212,7 @@ libxfs_log_clear(
 	char			*ptr;
 
 	if (((btp && dptr) || (!btp && !dptr)) ||
-	    (btp && !btp->dev) || !fs_uuid)
+	    (btp && !btp->bt_bdev) || !fs_uuid)
 		return -EINVAL;
 
 	/* first zero the log */

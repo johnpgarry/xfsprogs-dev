@@ -3583,7 +3583,7 @@ prepare_devices(
 			 lsunit, XLOG_FMT, XLOG_INIT_CYCLE, false);
 
 	/* finally, check we can write the last block in the realtime area */
-	if (mp->m_rtdev_targp->dev && cfg->rtblocks > 0) {
+	if (mp->m_rtdev_targp->bt_bdev && cfg->rtblocks > 0) {
 		buf = alloc_write_buf(mp->m_rtdev_targp,
 				XFS_FSB_TO_BB(mp, cfg->rtblocks - 1LL),
 				BTOBB(cfg->blocksize));
