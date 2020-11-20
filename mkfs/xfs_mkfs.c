@@ -11,6 +11,7 @@
 #include "libfrog/fsgeom.h"
 #include "libfrog/topology.h"
 #include "libfrog/convert.h"
+#include <ini.h>
 
 #define TERABYTES(count, blog)	((uint64_t)(count) << (40 - (blog)))
 #define GIGABYTES(count, blog)	((uint64_t)(count) << (30 - (blog)))
@@ -42,6 +43,11 @@ static unsigned int		sectorsize;
 enum {
 	B_SIZE = 0,
 	B_MAX_OPTS,
+};
+
+enum {
+	C_OPTFILE = 0,
+	C_MAX_OPTS,
 };
 
 enum {
@@ -234,6 +240,28 @@ static struct opt_params bopts = {
 		  .conflicts = { { NULL, LAST_CONFLICT } },
 		  .minval = XFS_MIN_BLOCKSIZE,
 		  .maxval = XFS_MAX_BLOCKSIZE,
+		  .defaultval = SUBOPT_NEEDS_VAL,
+		},
+	},
+};
+
+/*
+ * Config file specification. Usage is:
+ *
+ * mkfs.xfs -c options=<name>
+ *
+ * A subopt is used for the filename so in future we can extend the behaviour
+ * of the config file (e.g. specified defaults rather than options) if we ever
+ * have a need to do that sort of thing.
+ */
+static struct opt_params copts = {
+	.name = 'c',
+	.subopts = {
+		[C_OPTFILE] = "options",
+	},
+	.subopt_params = {
+		{ .index = C_OPTFILE,
+		  .conflicts = { { NULL, LAST_CONFLICT } },
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 	},
@@ -766,6 +794,8 @@ struct cli_params {
 	int	sectorsize;
 	int	blocksize;
 
+	char	*cfgfile;
+
 	/* parameters that depend on sector/block size being validated. */
 	char	*dsize;
 	char	*agsize;
@@ -880,6 +910,7 @@ usage( void )
 {
 	fprintf(stderr, _("Usage: %s\n\
 /* blocksize */		[-b size=num]\n\
+/* config file */	[-c options=xxx]\n\
 /* metadata */		[-m crc=0|1,finobt=0|1,uuid=xxx,rmapbt=0|1,reflink=0|1,\n\
 			    inobtcnt=0|1,bigtime=0|1]\n\
 /* data subvol */	[-d agcount=n,agsize=n,file,name=xxx,size=num,\n\
@@ -1405,6 +1436,23 @@ block_opts_parser(
 }
 
 static int
+cfgfile_opts_parser(
+	struct opt_params	*opts,
+	int			subopt,
+	char			*value,
+	struct cli_params	*cli)
+{
+	switch (subopt) {
+	case C_OPTFILE:
+		cli->cfgfile = getstr(value, opts, subopt);
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static int
 data_opts_parser(
 	struct opt_params	*opts,
 	int			subopt,
@@ -1689,6 +1737,7 @@ static struct subopts {
 				  struct cli_params	*cli);
 } subopt_tab[] = {
 	{ 'b', &bopts, block_opts_parser },
+	{ 'c', &copts, cfgfile_opts_parser },
 	{ 'd', &dopts, data_opts_parser },
 	{ 'i', &iopts, inode_opts_parser },
 	{ 'l', &lopts, log_opts_parser },
@@ -3622,6 +3671,65 @@ check_root_ino(
 	}
 }
 
+/*
+ * INI file format option parser.
+ *
+ * This is called by the file parser library for every valid option it finds in
+ * the config file. The option is already broken down into a
+ * {section,name,value} tuple, so all we need to do is feed it to the correct
+ * suboption parser function and translate the return value.
+ *
+ * Returns 0 on failure, 1 for success.
+ */
+static int
+cfgfile_parse_ini(
+	void			*user,
+	const char		*section,
+	const char		*name,
+	const char		*value)
+{
+	struct cli_params	*cli = user;
+
+	fprintf(stderr, "Ini debug: file %s, section %s, name %s, value %s\n",
+		cli->cfgfile, section, name, value);
+
+	return 1;
+}
+
+void
+cfgfile_parse(
+	struct cli_params	*cli)
+{
+	int			error;
+
+	if (!cli->cfgfile)
+		return;
+
+	error = ini_parse(cli->cfgfile, cfgfile_parse_ini, cli);
+	if (error) {
+		if (error > 0) {
+			fprintf(stderr,
+		_("%s: Unrecognised input on line %d. Aborting.\n"),
+				cli->cfgfile, error);
+		} else if (error == -1) {
+			fprintf(stderr,
+		_("Unable to open config file %s. Aborting.\n"),
+				cli->cfgfile);
+		} else if (error == -2) {
+			fprintf(stderr,
+		_("Memory allocation failure parsing %s. Aborting.\n"),
+				cli->cfgfile);
+		} else {
+			fprintf(stderr,
+		_("Unknown error %d opening config file %s. Aborting.\n"),
+				error, cli->cfgfile);
+		}
+		exit(1);
+	}
+	printf(_("Parameters parsed from config file %s successfully\n"),
+		cli->cfgfile);
+}
+
 int
 main(
 	int			argc,
@@ -3710,13 +3818,14 @@ main(
 	memcpy(&cli.sb_feat, &dft.sb_feat, sizeof(cli.sb_feat));
 	memcpy(&cli.fsx, &dft.fsx, sizeof(cli.fsx));
 
-	while ((c = getopt(argc, argv, "b:d:i:l:L:m:n:KNp:qr:s:CfV")) != EOF) {
+	while ((c = getopt(argc, argv, "b:c:d:i:l:L:m:n:KNp:qr:s:CfV")) != EOF) {
 		switch (c) {
 		case 'C':
 		case 'f':
 			force_overwrite = 1;
 			break;
 		case 'b':
+		case 'c':
 		case 'd':
 		case 'i':
 		case 'l':
@@ -3759,6 +3868,14 @@ main(
 		dfile = xi.volname = getstr(argv[optind], &dopts, D_NAME);
 	} else
 		dfile = xi.dname;
+
+	/*
+	 * Now we have all the options parsed, we can read in the option file
+	 * specified on the command line via "-c options=xxx". Once we have all
+	 * the options from this file parsed, we can then proceed with parameter
+	 * and bounds checking and making the filesystem.
+	 */
+	cfgfile_parse(&cli);
 
 	protostring = setup_proto(protofile);
 
