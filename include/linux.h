@@ -92,7 +92,7 @@ static __inline__ void platform_uuid_unparse(uuid_t *uu, char *buffer)
 	uuid_unparse(*uu, buffer);
 }
 
-static __inline__ int platform_uuid_parse(char *buffer, uuid_t *uu)
+static __inline__ int platform_uuid_parse(const char *buffer, uuid_t *uu)
 {
 	return uuid_parse(buffer, *uu);
 }

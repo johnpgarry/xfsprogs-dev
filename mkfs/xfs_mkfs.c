@@ -994,8 +994,8 @@ respec(
 
 static void
 unknown(
-	char		opt,
-	char		*s)
+	const char	opt,
+	const char	*s)
 {
 	fprintf(stderr, _("unknown option -%c %s\n"), opt, s);
 	usage();
@@ -1406,7 +1406,7 @@ getnum(
  */
 static char *
 getstr(
-	char			*str,
+	const char		*str,
 	struct opt_params	*opts,
 	int			index)
 {
@@ -1415,14 +1415,14 @@ getstr(
 	/* empty strings for string options are not valid */
 	if (!str || *str == '\0')
 		reqval(opts->name, opts->subopts, index);
-	return str;
+	return (char *)str;
 }
 
 static int
 block_opts_parser(
 	struct opt_params	*opts,
 	int			subopt,
-	char			*value,
+	const char		*value,
 	struct cli_params	*cli)
 {
 	switch (subopt) {
@@ -1439,7 +1439,7 @@ static int
 cfgfile_opts_parser(
 	struct opt_params	*opts,
 	int			subopt,
-	char			*value,
+	const char		*value,
 	struct cli_params	*cli)
 {
 	switch (subopt) {
@@ -1456,7 +1456,7 @@ static int
 data_opts_parser(
 	struct opt_params	*opts,
 	int			subopt,
-	char			*value,
+	const char		*value,
 	struct cli_params	*cli)
 {
 	switch (subopt) {
@@ -1533,7 +1533,7 @@ static int
 inode_opts_parser(
 	struct opt_params	*opts,
 	int			subopt,
-	char			*value,
+	const char		*value,
 	struct cli_params	*cli)
 {
 	switch (subopt) {
@@ -1568,7 +1568,7 @@ static int
 log_opts_parser(
 	struct opt_params	*opts,
 	int			subopt,
-	char			*value,
+	const char		*value,
 	struct cli_params	*cli)
 {
 	switch (subopt) {
@@ -1614,7 +1614,7 @@ static int
 meta_opts_parser(
 	struct opt_params	*opts,
 	int			subopt,
-	char			*value,
+	const char		*value,
 	struct cli_params	*cli)
 {
 	switch (subopt) {
@@ -1654,7 +1654,7 @@ static int
 naming_opts_parser(
 	struct opt_params	*opts,
 	int			subopt,
-	char			*value,
+	const char		*value,
 	struct cli_params	*cli)
 {
 	switch (subopt) {
@@ -1683,7 +1683,7 @@ static int
 rtdev_opts_parser(
 	struct opt_params	*opts,
 	int			subopt,
-	char			*value,
+	const char		*value,
 	struct cli_params	*cli)
 {
 	switch (subopt) {
@@ -1713,7 +1713,7 @@ static int
 sector_opts_parser(
 	struct opt_params	*opts,
 	int			subopt,
-	char			*value,
+	const char		*value,
 	struct cli_params	*cli)
 {
 	switch (subopt) {
@@ -1733,7 +1733,7 @@ static struct subopts {
 	struct opt_params *opts;
 	int		(*parser)(struct opt_params	*opts,
 				  int			subopt,
-				  char			*value,
+				  const char		*value,
 				  struct cli_params	*cli);
 } subopt_tab[] = {
 	{ 'b', &bopts, block_opts_parser },
