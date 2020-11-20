@@ -145,6 +145,12 @@ enum {
  * name MANDATORY
  *   Name is a single char, e.g., for '-d file', name is 'd'.
  *
+ * ini_section MANDATORY
+ *   This field is required to connect each opt_params (that is to say, each
+ *   option class) to a section in the config file. The only option class this
+ *   is not required for is the config file specification class itself.
+ *   The section name is a string, not longer than MAX_INI_NAME_LEN.
+ *
  * subopts MANDATORY
  *   Subopts is a list of strings naming suboptions. In the example above,
  *   it would contain "file". The last entry of this list has to be NULL.
@@ -203,6 +209,8 @@ enum {
  */
 struct opt_params {
 	const char	name;
+#define MAX_INI_NAME_LEN	32
+	const char	ini_section[MAX_INI_NAME_LEN];
 	const char	*subopts[MAX_SUBOPTS];
 
 	struct subopt_param {
@@ -230,6 +238,7 @@ static struct opt_params sopts;
 
 static struct opt_params bopts = {
 	.name = 'b',
+	.ini_section = "block",
 	.subopts = {
 		[B_SIZE] = "size",
 	},
@@ -269,6 +278,7 @@ static struct opt_params copts = {
 
 static struct opt_params dopts = {
 	.name = 'd',
+	.ini_section = "data",
 	.subopts = {
 		[D_AGCOUNT] = "agcount",
 		[D_FILE] = "file",
@@ -413,6 +423,7 @@ static struct opt_params dopts = {
 
 static struct opt_params iopts = {
 	.name = 'i',
+	.ini_section = "inode",
 	.subopts = {
 		[I_ALIGN] = "align",
 		[I_MAXPCT] = "maxpct",
@@ -474,6 +485,7 @@ static struct opt_params iopts = {
 
 static struct opt_params lopts = {
 	.name = 'l',
+	.ini_section = "log",
 	.subopts = {
 		[L_AGNUM] = "agnum",
 		[L_INTERNAL] = "internal",
@@ -573,6 +585,7 @@ static struct opt_params lopts = {
 
 static struct opt_params nopts = {
 	.name = 'n',
+	.ini_section = "naming",
 	.subopts = {
 		[N_SIZE] = "size",
 		[N_VERSION] = "version",
@@ -604,6 +617,7 @@ static struct opt_params nopts = {
 
 static struct opt_params ropts = {
 	.name = 'r',
+	.ini_section = "realtime",
 	.subopts = {
 		[R_EXTSIZE] = "extsize",
 		[R_SIZE] = "size",
@@ -654,6 +668,7 @@ static struct opt_params ropts = {
 
 static struct opt_params sopts = {
 	.name = 's',
+	.ini_section = "sector",
 	.subopts = {
 		[S_SIZE] = "size",
 		[S_SECTSIZE] = "sectsize",
@@ -684,6 +699,7 @@ static struct opt_params sopts = {
 
 static struct opt_params mopts = {
 	.name = 'm',
+	.ini_section = "metadata",
 	.subopts = {
 		[M_CRC] = "crc",
 		[M_FINOBT] = "finobt",
@@ -999,6 +1015,17 @@ unknown(
 {
 	fprintf(stderr, _("unknown option -%c %s\n"), opt, s);
 	usage();
+}
+
+static void
+invalid_cfgfile_opt(
+	const char	*filename,
+	const char	*section,
+	const char	*name,
+	const char	*value)
+{
+	fprintf(stderr, _("%s: invalid config file option: [%s]: %s=%s\n"),
+		filename, section, name, value);
 }
 
 static void
@@ -1729,23 +1756,22 @@ sector_opts_parser(
 }
 
 static struct subopts {
-	char		opt;
 	struct opt_params *opts;
 	int		(*parser)(struct opt_params	*opts,
 				  int			subopt,
 				  const char		*value,
 				  struct cli_params	*cli);
 } subopt_tab[] = {
-	{ 'b', &bopts, block_opts_parser },
-	{ 'c', &copts, cfgfile_opts_parser },
-	{ 'd', &dopts, data_opts_parser },
-	{ 'i', &iopts, inode_opts_parser },
-	{ 'l', &lopts, log_opts_parser },
-	{ 'm', &mopts, meta_opts_parser },
-	{ 'n', &nopts, naming_opts_parser },
-	{ 'r', &ropts, rtdev_opts_parser },
-	{ 's', &sopts, sector_opts_parser },
-	{ '\0', NULL, NULL },
+	{ &bopts, block_opts_parser },
+	{ &copts, cfgfile_opts_parser },
+	{ &dopts, data_opts_parser },
+	{ &iopts, inode_opts_parser },
+	{ &lopts, log_opts_parser },
+	{ &mopts, meta_opts_parser },
+	{ &nopts, naming_opts_parser },
+	{ &ropts, rtdev_opts_parser },
+	{ &sopts, sector_opts_parser },
+	{ NULL, NULL },
 };
 
 static void
@@ -1759,7 +1785,7 @@ parse_subopts(
 	int		ret = 0;
 
 	while (sop->opts) {
-		if (sop->opt == opt)
+		if (sop->opts->name == opt)
 			break;
 		sop++;
 	}
@@ -1780,6 +1806,45 @@ parse_subopts(
 		if (ret)
 			unknown(opt, value);
 	}
+}
+
+static bool
+parse_cfgopt(
+	const char	*section,
+	const char	*name,
+	const char	*value,
+	struct cli_params *cli)
+{
+	struct subopts	*sop = &subopt_tab[0];
+	char		**subopts;
+	int		ret = 0;
+	int		i;
+
+	while (sop->opts) {
+		if (sop->opts->ini_section[0] != '\0' &&
+		    strcasecmp(section, sop->opts->ini_section) == 0)
+			break;
+		sop++;
+	}
+
+	/* Config files with unknown sections get caught here. */
+	if (!sop->opts)
+		goto invalid_opt;
+
+	subopts = (char **)sop->opts->subopts;
+	for (i = 0; i < MAX_SUBOPTS; i++) {
+		if (!subopts[i])
+			break;
+		if (strcasecmp(name, subopts[i]) == 0) {
+			ret = (sop->parser)(sop->opts, i, value, cli);
+			if (ret)
+				goto invalid_opt;
+			return true;
+		}
+	}
+invalid_opt:
+	invalid_cfgfile_opt(cli->cfgfile, section, name, value);
+	return false;
 }
 
 static void
@@ -3690,9 +3755,8 @@ cfgfile_parse_ini(
 {
 	struct cli_params	*cli = user;
 
-	fprintf(stderr, "Ini debug: file %s, section %s, name %s, value %s\n",
-		cli->cfgfile, section, name, value);
-
+	if (!parse_cfgopt(section, name, value, cli))
+		return 0;
 	return 1;
 }
 
