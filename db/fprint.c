@@ -112,6 +112,35 @@ fp_sarray(
 	return 1;
 }
 
+static void
+fp_time64(
+	time64_t		sec)
+{
+	time_t			tt = sec;
+	time64_t		tt_sec = tt;
+	char			*c;
+
+	/*
+	 * Stupid time_t shenanigans -- POSIX.1-2017 only requires that this
+	 * type represent a time in seconds.  Since we have no idea if our
+	 * time64_t filesystem timestamps can actually be represented by the C
+	 * library, we resort to converting the input value from time64_t to
+	 * time_t and back to time64_t to check for information loss.  If so,
+	 * we print the raw value; otherwise we print a human-readable value.
+	 */
+	if (tt_sec != sec)
+		goto raw;
+
+	c = ctime(&tt);
+	if (!c)
+		goto raw;
+
+	dbprintf("%24.24s", c);
+	return;
+raw:
+	dbprintf("%lld", sec);
+}
+
 int
 fp_time(
 	void			*obj,
@@ -138,7 +167,7 @@ fp_time(
 		ts = obj + byteize(bitpos);
 		tv = libxfs_inode_from_disk_ts(obj, *ts);
 
-		dbprintf("%24.24s", tv.tv_sec);
+		fp_time64(tv.tv_sec);
 
 		if (i < count - 1)
 			dbprintf(" ");
@@ -191,7 +220,8 @@ fp_qtimer(
 	int			base,
 	int			array)
 {
-	uint32_t		sec;
+	struct xfs_disk_dquot	*ddq = obj;
+	time64_t		sec;
 	__be32			*t;
 	int			bitpos;
 	int			i;
@@ -204,9 +234,16 @@ fp_qtimer(
 			dbprintf("%d:", i + base);
 
 		t = obj + byteize(bitpos);
-		sec = be32_to_cpu(*t);
+		sec = libxfs_dquot_from_disk_ts(ddq, *t);
 
-		dbprintf("%u", sec);
+		/*
+		 * Display the raw value if it's the default grace expiration
+		 * period (root dquot) or if the quota has not expired.
+		 */
+		if (ddq->d_id == 0 || sec == 0)
+			dbprintf("%lld", sec);
+		else
+			fp_time64(sec);
 
 		if (i < count - 1)
 			dbprintf(" ");
