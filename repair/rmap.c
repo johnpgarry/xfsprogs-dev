@@ -1402,8 +1402,8 @@ _("Missing reference count record for (%u/%u) len %u count %u\n"),
 
 		/* Compare each refcount observation against the btree's */
 		if (tmp.rc_startblock != rl_rec->rc_startblock ||
-		    tmp.rc_blockcount < rl_rec->rc_blockcount ||
-		    tmp.rc_refcount < rl_rec->rc_refcount)
+		    tmp.rc_blockcount != rl_rec->rc_blockcount ||
+		    tmp.rc_refcount != rl_rec->rc_refcount)
 			do_warn(
 _("Incorrect reference count: saw (%u/%u) len %u nlinks %u; should be (%u/%u) len %u nlinks %u\n"),
 				agno, tmp.rc_startblock, tmp.rc_blockcount,
