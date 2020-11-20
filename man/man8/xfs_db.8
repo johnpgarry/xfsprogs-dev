@@ -887,6 +887,29 @@ The possible data types are:
 .BR rtsummary ", " sb ", " symlink " and " text .
 See the TYPES section below for more information on these data types.
 .TP
+.BI "timelimit [" OPTIONS ]
+Print the minimum and maximum supported values for inode timestamps,
+quota expiration timers, and quota grace periods supported by this
+filesystem.
+Options include:
+.RS 1.0i
+.TP 0.4i
+.B \--bigtime
+Print the time limits of an XFS filesystem with the
+.B bigtime
+feature enabled.
+.TP 0.4i
+.B \--classic
+Print the time limits of a classic XFS filesystem.
+.TP 0.4i
+.B \--compact
+Print all limits as raw values on a single line.
+.TP 0.4i
+.B \--pretty
+Print the timestamps in the current locale's date and time format instead of
+raw seconds since the Unix epoch.
+.RE
+.TP
 .BI "uuid [" uuid " | " generate " | " rewrite " | " restore ]
 Set the filesystem universally unique identifier (UUID).
 The filesystem UUID can be used by

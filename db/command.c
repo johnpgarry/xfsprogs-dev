@@ -139,4 +139,5 @@ init_commands(void)
 	write_init();
 	dquot_init();
 	fuzz_init();
+	timelimit_init();
 }
