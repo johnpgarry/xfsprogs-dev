@@ -409,31 +409,40 @@ without stripe geometry alignment even if the underlying storage device provides
 this information.
 .TP
 .BI rtinherit= value
-If set, all inodes created by
+If
+.I value
+is set to 1, all inodes created by
 .B mkfs.xfs
 will be created with the realtime flag set.
+The default is 0.
 Directories will pass on this flag to newly created regular files and
 directories.
 .TP
 .BI projinherit= value
 All inodes created by
 .B mkfs.xfs
-will be assigned this project quota id.
+will be assigned the project quota id provided in
+.I value.
 Directories will pass on the project id to newly created regular files and
 directories.
 .TP
 .BI extszinherit= value
 All inodes created by
 .B mkfs.xfs
-will have this extent size hint applied.
+will have this
+.I value
+extent size hint applied.
 The value must be provided in units of filesystem blocks.
 Directories will pass on this hint to newly created regular files and
 directories.
 .TP
 .BI daxinherit= value
-If set, all inodes created by
+If
+.I value
+is set to 1, all inodes created by
 .B mkfs.xfs
 will be created with the DAX flag set.
+The default is 0.
 Directories will pass on this flag to newly created regular files and
 directories.
 By default,
