@@ -3,6 +3,8 @@
  * Copyright (c) 2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#ifndef XFS_QUOTA_QUOTA_H_
+#define XFS_QUOTA_QUOTA_H_
 
 #include "xqm.h"
 #include "libfrog/paths.h"
@@ -73,3 +75,8 @@ extern char *uid_to_name(uint32_t __uid);
 extern char *gid_to_name(uint32_t __gid);
 extern char *prid_to_name(uint32_t __prid);
 extern bool isdigits_only(const char *);
+
+time64_t decode_timer(const struct fs_disk_quota *d, __s32 timer_lo,
+		__s8 timer_hi);
+
+#endif /* XFS_QUOTA_QUOTA_H_ */
