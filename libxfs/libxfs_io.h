@@ -80,12 +80,6 @@ typedef struct xfs_buf {
 	struct xfs_buf_map	__b_map;
 	int			b_nmaps;
 	struct list_head	b_list;
-#ifdef XFS_BUF_TRACING
-	struct list_head	b_lock_list;
-	const char		*b_func;
-	const char		*b_file;
-	int			b_line;
-#endif
 } xfs_buf_t;
 
 bool xfs_verify_magic(struct xfs_buf *bp, __be32 dmagic);
@@ -129,47 +123,6 @@ extern struct cache_operations	libxfs_bcache_operations;
 /* Return the buffer even if the verifiers fail. */
 #define LIBXFS_READBUF_SALVAGE		(1 << 1)
 
-#ifdef XFS_BUF_TRACING
-
-#define libxfs_buf_read(dev, daddr, len, flags, bpp, ops) \
-	libxfs_trace_readbuf(__FUNCTION__, __FILE__, __LINE__, \
-			    (dev), (daddr), (len), (flags), (bpp), (ops))
-#define libxfs_buf_read_map(dev, map, nmaps, flags, bpp, ops) \
-	libxfs_trace_readbuf_map(__FUNCTION__, __FILE__, __LINE__, \
-			    (dev), (map), (nmaps), (flags), (bpp), (ops))
-#define libxfs_buf_mark_dirty(buf) \
-	libxfs_trace_dirtybuf(__FUNCTION__, __FILE__, __LINE__, \
-			      (buf))
-#define libxfs_buf_get(dev, daddr, len, bpp) \
-	libxfs_trace_getbuf(__FUNCTION__, __FILE__, __LINE__, \
-			    (dev), (daddr), (len), (bpp))
-#define libxfs_buf_get_map(dev, map, nmaps, flags, bpp) \
-	libxfs_trace_getbuf_map(__FUNCTION__, __FILE__, __LINE__, \
-			    (dev), (map), (nmaps), (flags), (bpp))
-#define libxfs_buf_relse(buf) \
-	libxfs_trace_putbuf(__FUNCTION__, __FILE__, __LINE__, (buf))
-
-int libxfs_trace_readbuf(const char *func, const char *file, int line,
-			struct xfs_buftarg *btp, xfs_daddr_t daddr, size_t len,
-			int flags, const struct xfs_buf_ops *ops,
-			struct xfs_buf **bpp);
-int libxfs_trace_readbuf_map(const char *func, const char *file, int line,
-			struct xfs_buftarg *btp, struct xfs_buf_map *maps,
-			int nmaps, int flags, struct xfs_buf **bpp,
-			const struct xfs_buf_ops *ops);
-void libxfs_trace_dirtybuf(const char *func, const char *file, int line,
-			struct xfs_buf *bp);
-int libxfs_trace_getbuf(const char *func, const char *file, int line,
-			struct xfs_buftarg *btp, xfs_daddr_t daddr,
-			size_t len, struct xfs_buf **bpp);
-int libxfs_trace_getbuf_map(const char *func, const char *file, int line,
-			struct xfs_buftarg *btp, struct xfs_buf_map *map,
-			int nmaps, int flags, struct xfs_buf **bpp);
-extern void	libxfs_trace_putbuf (const char *, const char *, int,
-			xfs_buf_t *);
-
-#else
-
 int libxfs_buf_read_map(struct xfs_buftarg *btp, struct xfs_buf_map *maps,
 			int nmaps, int flags, struct xfs_buf **bpp,
 			const struct xfs_buf_ops *ops);
@@ -203,8 +156,6 @@ libxfs_buf_read(
 
 	return libxfs_buf_read_map(target, &map, 1, flags, bpp, ops);
 }
-
-#endif /* XFS_BUF_TRACING */
 
 int libxfs_readbuf_verify(struct xfs_buf *bp, const struct xfs_buf_ops *ops);
 struct xfs_buf *libxfs_getsb(struct xfs_mount *mp);

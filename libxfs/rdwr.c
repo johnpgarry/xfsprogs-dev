@@ -147,133 +147,6 @@ static char *next(
 	return ptr + offset;
 }
 
-/*
- * Simple I/O (buffer cache) interface
- */
-
-
-#ifdef XFS_BUF_TRACING
-
-#undef libxfs_buf_read_map
-#undef libxfs_writebuf
-#undef libxfs_buf_get_map
-
-int		libxfs_buf_read_map(struct xfs_buftarg *btp,
-				struct xfs_buf_map *maps, int nmaps, int flags,
-				struct xfs_buf **bpp,
-				const struct xfs_buf_ops *ops);
-int		libxfs_writebuf(xfs_buf_t *, int);
-int		libxfs_buf_get_map(struct xfs_buftarg *btp,
-				struct xfs_buf_map *maps, int nmaps, int flags,
-				struct xfs_buf **bpp);
-void		libxfs_buf_relse(struct xfs_buf *bp);
-
-#define	__add_trace(bp, func, file, line)	\
-do {						\
-	if (bp) {				\
-		(bp)->b_func = (func);		\
-		(bp)->b_file = (file);		\
-		(bp)->b_line = (line);		\
-	}					\
-} while (0)
-
-int
-libxfs_trace_readbuf(
-	const char		*func,
-	const char		*file,
-	int			line,
-	struct xfs_buftarg	*btp,
-	xfs_daddr_t		blkno,
-	size_t			len,
-	int			flags,
-	const struct xfs_buf_ops *ops,
-	struct xfs_buf		**bpp)
-{
-	int			error;
-	DEFINE_SINGLE_BUF_MAP(map, blkno, numblks);
-
-	error = libxfs_buf_read_map(btp, &map, 1, flags, bpp, ops);
-	__add_trace(*bpp, func, file, line);
-	return error;
-}
-
-int
-libxfs_trace_readbuf_map(
-	const char		*func,
-	const char		*file,
-	int			line,
-	struct xfs_buftarg	*btp,
-	struct xfs_buf_map	*map,
-	int			nmaps,
-	int			flags,
-	struct xfs_buf		**bpp,
-	const struct xfs_buf_ops *ops)
-{
-	int			error;
-
-	error = libxfs_buf_read_map(btp, map, nmaps, flags, bpp, ops);
-	__add_trace(*bpp, func, file, line);
-	return error;
-}
-
-void
-libxfs_trace_dirtybuf(
-	const char		*func,
-	const char		*file,
-	int			line,
-	struct xfs_buf		*bp)
-{
-	__add_trace(bp, func, file, line);
-	libxfs_buf_mark_dirty(bp);
-}
-
-int
-libxfs_trace_getbuf(
-	const char		*func,
-	const char		*file,
-	int			line,
-	struct xfs_buftarg	*btp,
-	xfs_daddr_t		blkno,
-	size_t			len,
-	struct xfs_buf		**bpp)
-{
-	int			error;
-	DEFINE_SINGLE_BUF_MAP(map, blkno, numblks);
-
-	error = libxfs_buf_get_map(target, &map, 1, 0, bpp);
-	__add_trace(bp, func, file, line);
-	return error;
-}
-
-int
-libxfs_trace_getbuf_map(
-	const char		*func,
-	const char		*file,
-	int			line,
-	struct xfs_buftarg	*btp,
-	struct xfs_buf_map	*map,
-	int			nmaps,
-	int			flags,
-	struct xfs_buf		**bpp)
-{
-	int			error;
-
-	error = libxfs_buf_get_map(btp, map, nmaps, flags, bpp);
-	__add_trace(*bpp, func, file, line);
-	return error;
-}
-
-void
-libxfs_trace_putbuf(const char *func, const char *file, int line, xfs_buf_t *bp)
-{
-	__add_trace(bp, func, file, line);
-	libxfs_buf_relse(bp);
-}
-
-
-#endif
-
-
 struct xfs_buf *
 libxfs_getsb(
 	struct xfs_mount	*mp)
@@ -369,9 +242,6 @@ __initbuf(xfs_buf_t *bp, struct xfs_buftarg *btp, xfs_daddr_t bno,
 		exit(1);
 	}
 	memset(bp->b_addr, 0, bytes);
-#ifdef XFS_BUF_TRACING
-	list_head_init(&bp->b_lock_list);
-#endif
 	pthread_mutex_init(&bp->b_lock, NULL);
 	bp->b_holder = 0;
 	bp->b_recur = 0;
@@ -513,11 +383,6 @@ libxfs_getbufr_map(struct xfs_buftarg *btp, xfs_daddr_t blkno, int bblen,
 	return bp;
 }
 
-#ifdef XFS_BUF_TRACING
-struct list_head	lock_buf_list = {&lock_buf_list, &lock_buf_list};
-int			lock_buf_count = 0;
-#endif
-
 static int
 __cache_lookup(
 	struct xfs_bufkey	*key,
@@ -562,12 +427,6 @@ __cache_lookup(
 
 	cache_node_set_priority(libxfs_bcache, cn,
 			cache_node_get_priority(cn) - CACHE_PREFETCH_PRIORITY);
-#ifdef XFS_BUF_TRACING
-	pthread_mutex_lock(&libxfs_bcache->c_mutex);
-	lock_buf_count++;
-	list_add(&bp->b_lock_list, &lock_buf_list);
-	pthread_mutex_unlock(&libxfs_bcache->c_mutex);
-#endif
 #ifdef IO_DEBUG
 	printf("%lx %s: hit buffer %p for bno = 0x%llx/0x%llx\n",
 		pthread_self(), __FUNCTION__,
@@ -678,14 +537,6 @@ libxfs_buf_relse(
 	 * over to the next user.
 	 */
 	bp->b_error = 0;
-
-#ifdef XFS_BUF_TRACING
-	pthread_mutex_lock(&libxfs_bcache->c_mutex);
-	lock_buf_count--;
-	ASSERT(lock_buf_count >= 0);
-	list_del_init(&bp->b_lock_list);
-	pthread_mutex_unlock(&libxfs_bcache->c_mutex);
-#endif
 	if (use_xfs_buf_lock) {
 		if (bp->b_recur) {
 			bp->b_recur--;
