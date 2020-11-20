@@ -340,12 +340,6 @@ libxfs_getbufr(struct xfs_buftarg *btp, xfs_daddr_t blkno, int bblen)
 	bp =__libxfs_getbufr(blen);
 	if (bp)
 		libxfs_initbuf(bp, btp, blkno, blen);
-#ifdef IO_DEBUG
-	printf("%lx: %s: allocated %u bytes buffer, key=0x%llx(0x%llx), %p\n",
-		pthread_self(), __FUNCTION__, blen,
-		(long long)LIBXFS_BBTOOFF64(blkno), (long long)blkno, bp);
-#endif
-
 	return bp;
 }
 
@@ -374,12 +368,6 @@ libxfs_getbufr_map(struct xfs_buftarg *btp, xfs_daddr_t blkno, int bblen,
 	bp =__libxfs_getbufr(blen);
 	if (bp)
 		libxfs_initbuf_map(bp, btp, map, nmaps);
-#ifdef IO_DEBUG
-	printf("%lx: %s: allocated %u bytes buffer, key=0x%llx(0x%llx), %p\n",
-		pthread_self(), __FUNCTION__, blen,
-		(long long)LIBXFS_BBTOOFF64(blkno), (long long)blkno, bp);
-#endif
-
 	return bp;
 }
 
@@ -427,12 +415,6 @@ __cache_lookup(
 
 	cache_node_set_priority(libxfs_bcache, cn,
 			cache_node_get_priority(cn) - CACHE_PREFETCH_PRIORITY);
-#ifdef IO_DEBUG
-	printf("%lx %s: hit buffer %p for bno = 0x%llx/0x%llx\n",
-		pthread_self(), __FUNCTION__,
-		bp, bp->b_bn, (long long)LIBXFS_BBTOOFF64(key->blkno));
-#endif
-
 	*bpp = bp;
 	return 0;
 }
@@ -607,11 +589,6 @@ libxfs_readbufr(struct xfs_buftarg *btp, xfs_daddr_t blkno, xfs_buf_t *bp,
 	    bp->b_bn == blkno &&
 	    bp->b_bcount == bytes)
 		bp->b_flags |= LIBXFS_B_UPTODATE;
-#ifdef IO_DEBUG
-	printf("%lx: %s: read %u bytes, error %d, blkno=0x%llx(0x%llx), %p\n",
-		pthread_self(), __FUNCTION__, bytes, error,
-		(long long)LIBXFS_BBTOOFF64(blkno), (long long)blkno, bp);
-#endif
 	bp->b_error = error;
 	return error;
 }
@@ -654,11 +631,6 @@ libxfs_readbufr_map(struct xfs_buftarg *btp, struct xfs_buf *bp, int flags)
 
 	if (!error)
 		bp->b_flags |= LIBXFS_B_UPTODATE;
-#ifdef IO_DEBUG
-	printf("%lx: %s: read %lu bytes, error %d, blkno=%llu(%llu), %p\n",
-		pthread_self(), __FUNCTION__, buf - (char *)bp->b_addr, error,
-		(long long)LIBXFS_BBTOOFF64(bp->b_bn), (long long)bp->b_bn, bp);
-#endif
 	return error;
 }
 
@@ -728,11 +700,6 @@ libxfs_buf_read_map(
 		goto err;
 
 ok:
-#ifdef IO_DEBUGX
-	printf("%lx: %s: read %lu bytes, error %d, blkno=%llu(%llu), %p\n",
-		pthread_self(), __FUNCTION__, buf - (char *)bp->b_addr, error,
-		(long long)LIBXFS_BBTOOFF64(bp->b_bn), (long long)bp->b_bn, bp);
-#endif
 	*bpp = bp;
 	return 0;
 err:
@@ -881,12 +848,6 @@ libxfs_bwrite(
 		}
 	}
 
-#ifdef IO_DEBUG
-	printf("%lx: %s: wrote %u bytes, blkno=%llu(%llu), %p, error %d\n",
-			pthread_self(), __FUNCTION__, bp->b_bcount,
-			(long long)LIBXFS_BBTOOFF64(bp->b_bn),
-			(long long)bp->b_bn, bp, bp->b_error);
-#endif
 	if (bp->b_error) {
 		fprintf(stderr,
 	_("%s: write failed on %s bno 0x%llx/0x%x, err=%d\n"),
@@ -907,12 +868,6 @@ void
 libxfs_buf_mark_dirty(
 	struct xfs_buf	*bp)
 {
-#ifdef IO_DEBUG
-	printf("%lx: %s: dirty blkno=%llu(%llu)\n",
-			pthread_self(), __FUNCTION__,
-			(long long)LIBXFS_BBTOOFF64(bp->b_bn),
-			(long long)bp->b_bn);
-#endif
 	/*
 	 * Clear any error hanging over from reading the buffer. This prevents
 	 * subsequent reads after this write from seeing stale errors.

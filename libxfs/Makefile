@@ -102,7 +102,6 @@ CFILES = cache.c \
 
 #
 # Tracing flags:
-# -DIO_DEBUG		reads and writes of buffers
 # -DMEM_DEBUG		all zone memory use
 # -DLI_DEBUG		log item (ino/buf) manipulation
 # -DXACT_DEBUG		transaction state changes
