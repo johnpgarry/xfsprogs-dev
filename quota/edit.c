@@ -419,13 +419,13 @@ restore_f(
 
 static void
 set_timer(
-	uint32_t	id,
-	uint		type,
-	uint		mask,
-	char		*dev,
-	uint		value)
+	uint32_t		id,
+	uint			type,
+	uint			mask,
+	char			*dev,
+	time64_t		value)
 {
-	fs_disk_quota_t	d;
+	struct fs_disk_quota	d;
 
 	memset(&d, 0, sizeof(d));
 
@@ -476,7 +476,7 @@ timer_f(
 	int		argc,
 	char		**argv)
 {
-	uint		value;
+	time64_t	value;
 	char		*name = NULL;
 	uint32_t	id = 0;
 	int		c, flags = 0, type = 0, mask = 0;
