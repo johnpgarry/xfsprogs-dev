@@ -2288,23 +2288,31 @@ validate_agf(
 
 	if (xfs_sb_version_hasrmapbt(&mp->m_sb)) {
 		struct rmap_priv	priv;
+		unsigned int		levels;
 
 		memset(&priv.high_key, 0xFF, sizeof(priv.high_key));
 		priv.high_key.rm_blockcount = 0;
 		priv.agcnts = agcnts;
 		priv.last_rec.rm_owner = XFS_RMAP_OWN_UNKNOWN;
 		priv.nr_blocks = 0;
+
+		levels = be32_to_cpu(agf->agf_levels[XFS_BTNUM_RMAP]);
+		if (levels >= XFS_BTREE_MAXLEVELS) {
+			do_warn(_("bad levels %u for rmapbt root, agno %d\n"),
+				levels, agno);
+			rmap_avoid_check();
+		}
+
 		bno = be32_to_cpu(agf->agf_roots[XFS_BTNUM_RMAP]);
 		if (libxfs_verify_agbno(mp, agno, bno)) {
-			scan_sbtree(bno,
-				    be32_to_cpu(agf->agf_levels[XFS_BTNUM_RMAP]),
-				    agno, 0, scan_rmapbt, 1, XFS_RMAP_CRC_MAGIC,
-				    &priv, &xfs_rmapbt_buf_ops);
+			scan_sbtree(bno, levels, agno, 0, scan_rmapbt, 1,
+					XFS_RMAP_CRC_MAGIC, &priv,
+					&xfs_rmapbt_buf_ops);
 			if (be32_to_cpu(agf->agf_rmap_blocks) != priv.nr_blocks)
 				do_warn(_("bad rmapbt block count %u, saw %u\n"),
 					priv.nr_blocks,
 					be32_to_cpu(agf->agf_rmap_blocks));
-		} else  {
+		} else {
 			do_warn(_("bad agbno %u for rmapbt root, agno %d\n"),
 				bno, agno);
 			rmap_avoid_check();
@@ -2312,20 +2320,28 @@ validate_agf(
 	}
 
 	if (xfs_sb_version_hasreflink(&mp->m_sb)) {
+		unsigned int	levels;
+
+		levels = be32_to_cpu(agf->agf_refcount_level);
+		if (levels >= XFS_BTREE_MAXLEVELS) {
+			do_warn(_("bad levels %u for refcountbt root, agno %d\n"),
+				levels, agno);
+			refcount_avoid_check();
+		}
+
 		bno = be32_to_cpu(agf->agf_refcount_root);
 		if (libxfs_verify_agbno(mp, agno, bno)) {
 			struct refc_priv	priv;
 
 			memset(&priv, 0, sizeof(priv));
-			scan_sbtree(bno,
-				    be32_to_cpu(agf->agf_refcount_level),
-				    agno, 0, scan_refcbt, 1, XFS_REFC_CRC_MAGIC,
-				    &priv, &xfs_refcountbt_buf_ops);
+			scan_sbtree(bno, levels, agno, 0, scan_refcbt, 1,
+					XFS_REFC_CRC_MAGIC, &priv,
+					&xfs_refcountbt_buf_ops);
 			if (be32_to_cpu(agf->agf_refcount_blocks) != priv.nr_blocks)
 				do_warn(_("bad refcountbt block count %u, saw %u\n"),
 					priv.nr_blocks,
 					be32_to_cpu(agf->agf_refcount_blocks));
-		} else  {
+		} else {
 			do_warn(_("bad agbno %u for refcntbt root, agno %d\n"),
 				bno, agno);
 			refcount_avoid_check();
