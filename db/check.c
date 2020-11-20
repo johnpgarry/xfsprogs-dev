@@ -1569,19 +1569,46 @@ check_rootdir(void)
 	}
 }
 
+static inline void
+report_rrange(
+	xfs_rfsblock_t	low,
+	xfs_rfsblock_t	high)
+{
+	if (low == high)
+		dbprintf(_("rtblock %llu out of range\n"), low);
+	else
+		dbprintf(_("rtblocks %llu..%llu out of range\n"), low, high);
+}
+
 static int
 check_rrange(
 	xfs_rfsblock_t	bno,
 	xfs_extlen_t	len)
 {
 	xfs_extlen_t	i;
+	xfs_rfsblock_t	low = 0;
+	xfs_rfsblock_t	high = 0;
+	bool		valid_range = false;
+	int		cur, prev = 0;
 
 	if (bno + len - 1 >= mp->m_sb.sb_rblocks) {
 		for (i = 0; i < len; i++) {
-			if (!sflag || CHECK_BLIST(bno + i))
-				dbprintf(_("rtblock %llu out of range\n"),
-					bno + i);
+			cur = !sflag || CHECK_BLIST(bno + i) ? 1 : 0;
+			if (cur == 1 && prev == 0) {
+				low = high = bno + i;
+				valid_range = true;
+			} else if (cur == 0 && prev == 0) {
+				/* Do nothing */
+			} else if (cur == 0 && prev == 1) {
+				report_rrange(low, high);
+				valid_range = false;
+			} else if (cur == 1 && prev == 1) {
+				high = bno + i;
+			}
+			prev = cur;
 		}
+		if (valid_range)
+			report_rrange(low, high);
 		error++;
 		return 0;
 	}
