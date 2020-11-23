@@ -406,47 +406,43 @@ dir_hash_dup_names(dir_hash_tab_t *hashtab)
 }
 
 /*
- * Given a block number in a fork, return the next valid block number
- * (not a hole).
- * If this is the last block number then NULLFILEOFF is returned.
- *
- * This was originally in the kernel, but only used in xfs_repair.
+ * Given a block number in a fork, return the next valid block number (not a
+ * hole).  If this is the last block number then NULLFILEOFF is returned.
  */
 static int
 bmap_next_offset(
-	xfs_trans_t	*tp,			/* transaction pointer */
-	xfs_inode_t	*ip,			/* incore inode */
-	xfs_fileoff_t	*bnop,			/* current block */
-	int		whichfork)		/* data or attr fork */
+	struct xfs_inode	*ip,
+	xfs_fileoff_t		*bnop)
 {
-	xfs_fileoff_t	bno;			/* current block */
-	int		error;			/* error return value */
-	xfs_bmbt_irec_t got;			/* current extent value */
-	struct xfs_ifork	*ifp;		/* inode fork pointer */
+	xfs_fileoff_t		bno;
+	int			error;
+	struct xfs_bmbt_irec	got;
 	struct xfs_iext_cursor	icur;
 
-	ifp = XFS_IFORK_PTR(ip, whichfork);
-
-	if (ifp->if_format != XFS_DINODE_FMT_BTREE &&
-	    ifp->if_format != XFS_DINODE_FMT_EXTENTS &&
-	    ifp->if_format != XFS_DINODE_FMT_LOCAL)
-	       return EIO;
-	if (ifp->if_format == XFS_DINODE_FMT_LOCAL) {
+	switch (ip->i_df.if_format) {
+	case XFS_DINODE_FMT_LOCAL:
 		*bnop = NULLFILEOFF;
 		return 0;
+	case XFS_DINODE_FMT_BTREE:
+	case XFS_DINODE_FMT_EXTENTS:
+		break;
+	default:
+		return EIO;
 	}
-	ifp = XFS_IFORK_PTR(ip, whichfork);
-	if (!(ifp->if_flags & XFS_IFEXTENTS) &&
-	    (error = -libxfs_iread_extents(tp, ip, whichfork)))
-		return error;
+
+	if (!(ip->i_df.if_flags & XFS_IFEXTENTS)) {
+		error = -libxfs_iread_extents(NULL, ip, XFS_DATA_FORK);
+		if (error)
+			return error;
+	}
+
 	bno = *bnop + 1;
-	if (!libxfs_iext_lookup_extent(ip, ifp, bno, &icur, &got))
+	if (!libxfs_iext_lookup_extent(ip, &ip->i_df, bno, &icur, &got))
 		*bnop = NULLFILEOFF;
 	else
 		*bnop = got.br_startoff < bno ? bno : got.br_startoff;
 	return 0;
 }
-
 
 static void
 res_failed(
@@ -2059,7 +2055,7 @@ longform_dir2_check_node(
 			next_da_bno != NULLFILEOFF && da_bno < mp->m_dir_geo->freeblk;
 			da_bno = (xfs_dablk_t)next_da_bno) {
 		next_da_bno = da_bno + mp->m_dir_geo->fsbcount - 1;
-		if (bmap_next_offset(NULL, ip, &next_da_bno, XFS_DATA_FORK))
+		if (bmap_next_offset(ip, &next_da_bno))
 			break;
 
 		/*
@@ -2134,7 +2130,7 @@ longform_dir2_check_node(
 	     next_da_bno != NULLFILEOFF;
 	     da_bno = (xfs_dablk_t)next_da_bno) {
 		next_da_bno = da_bno + mp->m_dir_geo->fsbcount - 1;
-		if (bmap_next_offset(NULL, ip, &next_da_bno, XFS_DATA_FORK))
+		if (bmap_next_offset(ip, &next_da_bno))
 			break;
 
 		error = dir_read_buf(ip, da_bno, &bp, &xfs_dir3_free_buf_ops,
@@ -2266,7 +2262,7 @@ longform_dir2_entry_check(xfs_mount_t	*mp,
 		struct xfs_dir2_data_hdr *d;
 
 		next_da_bno = da_bno + mp->m_dir_geo->fsbcount - 1;
-		if (bmap_next_offset(NULL, ip, &next_da_bno, XFS_DATA_FORK)) {
+		if (bmap_next_offset(ip, &next_da_bno)) {
 			/*
 			 * if this is the first block, there isn't anything we
 			 * can recover so we just trash it.
