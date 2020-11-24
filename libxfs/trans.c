@@ -721,7 +721,7 @@ libxfs_trans_ordered_buf(
 	bool			ret;
 
 	ret = test_bit(XFS_LI_DIRTY, &bip->bli_item.li_flags);
-	libxfs_trans_log_buf(tp, bp, 0, bp->b_bcount);
+	libxfs_trans_log_buf(tp, bp, 0, BBTOB(bp->b_length));
 	return ret;
 }
 

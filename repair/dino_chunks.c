@@ -687,7 +687,7 @@ process_inode_chunk(
 
 		pftrace("readbuf %p (%llu, %d) in AG %d", bplist[bp_index],
 			(long long)XFS_BUF_ADDR(bplist[bp_index]),
-			bplist[bp_index]->b_bcount, agno);
+			bplist[bp_index]->b_length, agno);
 
 		bplist[bp_index]->b_ops = &xfs_inode_buf_ops;
 

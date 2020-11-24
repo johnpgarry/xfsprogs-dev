@@ -424,9 +424,9 @@ rmtval_get(xfs_mount_t *mp, xfs_ino_t ino, blkmap_t *blkmap,
 			break;
 		}
 
-		ASSERT(mp->m_sb.sb_blocksize == bp->b_bcount);
+		ASSERT(mp->m_sb.sb_blocksize == BBTOB(bp->b_length));
 
-		length = min(bp->b_bcount - hdrsize, valuelen - amountdone);
+		length = min(BBTOB(bp->b_length) - hdrsize, valuelen - amountdone);
 		memmove(value, bp->b_addr + hdrsize, length);
 		amountdone += length;
 		value += length;

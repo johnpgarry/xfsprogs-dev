@@ -241,6 +241,8 @@ newfile(
 		ip->i_df.if_format = XFS_DINODE_FMT_LOCAL;
 		flags = XFS_ILOG_DDATA;
 	} else if (len > 0) {
+		int	bcount;
+
 		nb = XFS_B_TO_FSB(mp, len);
 		nmap = 1;
 		error = -libxfs_bmapi_write(tp, ip, 0, nb, 0, nb, &map, &nmap);
@@ -269,10 +271,11 @@ newfile(
 			exit(1);
 		}
 		memmove(bp->b_addr, buf, len);
-		if (len < bp->b_bcount)
-			memset((char *)bp->b_addr + len, 0, bp->b_bcount - len);
+		bcount = BBTOB(bp->b_length);
+		if (len < bcount)
+			memset((char *)bp->b_addr + len, 0, bcount - len);
 		if (logit)
-			libxfs_trans_log_buf(tp, bp, 0, bp->b_bcount - 1);
+			libxfs_trans_log_buf(tp, bp, 0, bcount - 1);
 		else {
 			libxfs_buf_mark_dirty(bp);
 			libxfs_buf_relse(bp);

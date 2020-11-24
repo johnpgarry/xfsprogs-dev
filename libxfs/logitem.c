@@ -47,7 +47,7 @@ xfs_trans_buf_item_match(
 		if (blip->bli_item.li_type == XFS_LI_BUF &&
 		    blip->bli_buf->b_target->bt_bdev == btp->bt_bdev &&
 		    XFS_BUF_ADDR(blip->bli_buf) == map[0].bm_bn &&
-		    blip->bli_buf->b_bcount == BBTOB(len)) {
+		    blip->bli_buf->b_length == len) {
 			ASSERT(blip->bli_buf->b_map_count == nmaps);
 			return blip->bli_buf;
 		}
@@ -105,7 +105,7 @@ xfs_buf_item_init(
 	bip->bli_buf = bp;
 	bip->__bli_format.blf_type = XFS_LI_BUF;
 	bip->__bli_format.blf_blkno = (int64_t)XFS_BUF_ADDR(bp);
-	bip->__bli_format.blf_len = (unsigned short)BTOBB(bp->b_bcount);
+	bip->__bli_format.blf_len = (unsigned short)bp->b_length;
 	bp->b_log_item = bip;
 }
 

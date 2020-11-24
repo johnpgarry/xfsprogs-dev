@@ -61,7 +61,6 @@ typedef struct xfs_buf {
 	struct cache_node	b_node;
 	unsigned int		b_flags;
 	xfs_daddr_t		b_bn;
-	unsigned		b_bcount;
 	unsigned int		b_length;
 	struct xfs_buftarg	*b_target;
 	pthread_mutex_t		b_lock;
@@ -97,7 +96,6 @@ typedef unsigned int xfs_buf_flags_t;
 
 #define xfs_buf_offset(bp, offset)	((bp)->b_addr + (offset))
 #define XFS_BUF_ADDR(bp)		((bp)->b_bn)
-#define XFS_BUF_SIZE(bp)		((bp)->b_bcount)
 
 #define XFS_BUF_SET_ADDR(bp,blk)	((bp)->b_bn = (blk))
 
@@ -190,7 +188,7 @@ static inline int
 xfs_buf_associate_memory(struct xfs_buf *bp, void *mem, size_t len)
 {
 	bp->b_addr = mem;
-	bp->b_bcount = len;
+	bp->b_length = BTOBB(len);
 	return 0;
 }
 

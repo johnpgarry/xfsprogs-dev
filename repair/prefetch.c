@@ -411,7 +411,9 @@ pf_read_inode_dirs(
 	if (error)
 		return;
 
-	for (icnt = 0; icnt < (bp->b_bcount >> mp->m_sb.sb_inodelog); icnt++) {
+	for (icnt = 0;
+	     icnt < (BBTOB(bp->b_length) >> mp->m_sb.sb_inodelog);
+	     icnt++) {
 		dino = xfs_make_iptr(mp, bp, icnt);
 
 		/*
@@ -523,21 +525,21 @@ pf_batch_read(
 		 */
 		first_off = LIBXFS_BBTOOFF64(XFS_BUF_ADDR(bplist[0]));
 		last_off = LIBXFS_BBTOOFF64(XFS_BUF_ADDR(bplist[num-1])) +
-			XFS_BUF_SIZE(bplist[num-1]);
+			BBTOB(bplist[num-1]->b_length);
 		while (num > 1 && last_off - first_off > pf_max_bytes) {
 			num--;
 			last_off = LIBXFS_BBTOOFF64(XFS_BUF_ADDR(bplist[num-1])) +
-				XFS_BUF_SIZE(bplist[num-1]);
+				BBTOB(bplist[num-1]->b_length);
 		}
 		if (num < ((last_off - first_off) >> (mp->m_sb.sb_blocklog + 3))) {
 			/*
 			 * not enough blocks for one big read, so determine
 			 * the number of blocks that are close enough.
 			 */
-			last_off = first_off + XFS_BUF_SIZE(bplist[0]);
+			last_off = first_off + BBTOB(bplist[0]->b_length);
 			for (i = 1; i < num; i++) {
 				next_off = LIBXFS_BBTOOFF64(XFS_BUF_ADDR(bplist[i])) +
-						XFS_BUF_SIZE(bplist[i]);
+						BBTOB(bplist[i]->b_length);
 				if (next_off - last_off > pf_batch_bytes)
 					break;
 				last_off = next_off;
@@ -596,7 +598,7 @@ pf_batch_read(
 			for (i = 0; i < num; i++) {
 
 				pbuf = ((char *)buf) + (LIBXFS_BBTOOFF64(XFS_BUF_ADDR(bplist[i])) - first_off);
-				size = XFS_BUF_SIZE(bplist[i]);
+				size = BBTOB(bplist[i]->b_length);
 				if (len < size)
 					break;
 				memcpy(bplist[i]->b_addr, pbuf, size);

@@ -204,7 +204,7 @@ write_buf(
 			print_warning(
 			    "obfuscation corrupted block at %s bno 0x%llx/0x%x",
 				bp->b_ops->name,
-				(long long)bp->b_bn, bp->b_bcount);
+				(long long)bp->b_bn, BBTOB(bp->b_length));
 		}
 	}
 
