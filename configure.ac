@@ -113,7 +113,7 @@ esac
 # Some important tools should be installed into the root partitions.
 #
 # Check whether exec_prefix=/usr: and install them to /sbin in that
-# case.  If the user choses a different prefix assume he just wants
+# case.  If the user chooses a different prefix assume they just want
 # a local install for testing and not a system install.
 #
 case $exec_prefix:$prefix in

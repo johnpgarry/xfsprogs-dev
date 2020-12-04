@@ -128,7 +128,7 @@ To most users, disk quotas are either of no concern or a fact of life
 that cannot be avoided.
 There are two possible quotas that can be imposed \- a limit can be set
 on the amount of space a user can occupy, and there may be a limit on
-the number of files (inodes) he can own.
+the number of files (inodes) they can own.
 .PP
 The
 .B quota
@@ -167,10 +167,10 @@ the file, not only are the recent changes lost, but possibly much, or even
 all, of the contents that previously existed.
 .br
 There are several possible safe exits for a user caught in this situation.
-He can use the editor shell escape command to examine his file space
+They can use the editor shell escape command to examine their file space
 and remove surplus files.  Alternatively, using
 .BR sh (1),
-he can suspend
+they can suspend
 the editor, remove some files, then resume it.
 A third possibility is to write the file to some other filesystem (perhaps
 to a file on
