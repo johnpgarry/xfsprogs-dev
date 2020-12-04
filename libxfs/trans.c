@@ -230,6 +230,7 @@ xfs_trans_reserve(
 			error = -ENOSPC;
 			goto undo_blocks;
 		}
+		tp->t_rtx_res += rtextents;
 	}
 
 	return 0;
@@ -765,6 +766,19 @@ _("Transaction block reservation exceeded! %u > %u\n"),
 		tp->t_ifree_delta += delta;
 		break;
 	case XFS_TRANS_SB_FREXTENTS:
+		/*
+		 * Track the number of rt extents allocated in the transaction.
+		 * Make sure it does not exceed the number reserved.
+		 */
+		if (delta < 0) {
+			tp->t_rtx_res_used += (uint)-delta;
+			if (tp->t_rtx_res_used > tp->t_rtx_res) {
+				fprintf(stderr,
+_("Transaction rt block reservation exceeded! %u > %u\n"),
+					tp->t_rtx_res_used, tp->t_rtx_res);
+				ASSERT(0);
+			}
+		}
 		tp->t_frextents_delta += delta;
 		break;
 	default:
