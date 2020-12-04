@@ -178,6 +178,12 @@ to a file on
 where the user's quota has not been exceeded.
 Then after rectifying the quota situation, the file can be moved back to the
 filesystem it belongs on.
+.SS Default Quotas
+The XFS quota subsystem allows a default quota to be enforced
+for any user, group or project which does not have a quota limit
+explicitly set.
+These limits are stored in and displayed as ID 0's limits, although they
+do not actually limit ID 0.
 .SH USER COMMANDS
 .TP
 .B print
