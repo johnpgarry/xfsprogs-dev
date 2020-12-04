@@ -726,17 +726,8 @@ Same as above without a need for configuration files.
 .in -5
 .fi
 .SH CAVEATS
-XFS implements delayed allocation (aka. allocate-on-flush) and this
-has implications for the quota subsystem.
-Since quota accounting can only be done when blocks are actually
-allocated, it is possible to issue (buffered) writes into a file
-and not see the usage immediately updated.
-Only when the data is actually written out, either via one of the
-kernels flushing mechanisms, or via a manual
-.BR sync (2),
-will the usage reported reflect what has actually been written.
 .PP
-In addition, the XFS allocation mechanism will always reserve the
+The XFS allocation mechanism will always reserve the
 maximum amount of space required before proceeding with an allocation.
 If insufficient space for this reservation is available, due to the
 block quota limit being reached for example, this may result in the
