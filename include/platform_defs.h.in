@@ -86,9 +86,9 @@ extern int	platform_nproc(void);
 /* Simplified from version in include/linux/overflow.h */
 
 /*
- *  * Compute a*b+c, returning SIZE_MAX on overflow. Internal helper for
- *   * struct_size() below.
- *    */
+ * Compute a*b+c, returning SIZE_MAX on overflow. Internal helper for
+ * struct_size() below.
+ */
 static inline size_t __ab_c_size(size_t a, size_t b, size_t c)
 {
 	return (a * b) + c;
