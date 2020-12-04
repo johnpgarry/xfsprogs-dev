@@ -1,4 +1,15 @@
-xfsprogs-5.10.0-rc0
+xfsprogs-5.10.0-rc1 (04 Dec 2020)
+	- xfsprogs: Add inode btree counter feature (Darrick Wong)
+	- xfsprogs: Add bigtime feature for Y2038 (Darrick Wong)
+	- xfsprogs: Polish translation update (Jakub Bogusz)
+	- mkfs.xfs: Add config file feature (Dave Chinner)
+	- mkfs.xfs: allow users to specify rtinherit=0 (Darrick Wong)
+	- xfs_repair: simplify bmap_next_offset (Christoph Hellwig)
+	- man: various manpage updates (Eric Sandeen)
+	- libxfs: remove some old dead code (Dave Chinner)
+	- libxfs: add realtime extent tracking (Darrick Wong)
+
+xfsprogs-5.10.0-rc0 (17 Nov 2020)
 	- libxfs changes merged from kernel 5.10
 
 xfsprogs-5.9.0 (20 Oct 2020)
