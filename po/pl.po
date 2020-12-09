@@ -13857,11 +13857,6 @@ msgstr ""
 "znaleziono niedozwolony znak null w i-węźle dowiązania symbolicznego "
 "%<PRIu64>\n"
 
-#: .././repair/dinode.c:1344
-#, c-format
-msgid "inode %<PRIu64> has bad inode type (IFMNT)\n"
-msgstr "i-węzeł %<PRIu64> ma błędny typ i-węzła (IFMNT)\n"
-
 #: .././repair/dinode.c:1355
 #, c-format
 msgid "size of character device inode %<PRIu64> != 0 (%<PRId64> bytes)\n"

@@ -11774,11 +11774,6 @@ msgstr ""
 msgid "component of symlink in inode %llu too long\n"
 msgstr "Bestandteil des symbolischen Verweises in Inode %llu zu lang\n"
 
-#: .././repair/dinode.c:1611
-#, c-format
-msgid "inode %llu has bad inode type (IFMNT)\n"
-msgstr "Inode %llu hat falschen Inode-Typ (IFMNT)\n"
-
 #: .././repair/dinode.c:1621
 #, c-format
 msgid "size of character device inode %llu != 0 (%lld bytes)\n"

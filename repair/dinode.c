@@ -1393,17 +1393,6 @@ process_misc_ino_types(xfs_mount_t	*mp,
 			int		type)
 {
 	/*
-	 * disallow mountpoint inodes until such time as the
-	 * kernel actually allows them to be created (will
-	 * probably require a superblock version rev, sigh).
-	 */
-	if (type == XR_INO_MOUNTPOINT)  {
-		do_warn(
-_("inode %" PRIu64 " has bad inode type (IFMNT)\n"), lino);
-		return(1);
-	}
-
-	/*
 	 * must also have a zero size
 	 */
 	if (be64_to_cpu(dino->di_size) != 0)  {
@@ -1688,7 +1677,6 @@ _("directory inode %" PRIu64 " has bad size %" PRId64 "\n"),
 	case XR_INO_CHRDEV:	/* fall through to FIFO case ... */
 	case XR_INO_BLKDEV:	/* fall through to FIFO case ... */
 	case XR_INO_SOCK:	/* fall through to FIFO case ... */
-	case XR_INO_MOUNTPOINT:	/* fall through to FIFO case ... */
 	case XR_INO_FIFO:
 		if (process_misc_ino_types(mp, dino, lino, type))
 			return 1;
