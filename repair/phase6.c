@@ -919,7 +919,7 @@ mk_orphanage(xfs_mount_t *mp)
 		do_error(_("%d - couldn't iget root inode to make %s\n"),
 			i, ORPHANAGE);*/
 
-	error = -libxfs_inode_alloc(&tp, pip, mode|S_IFDIR,
+	error = -libxfs_dir_ialloc(&tp, pip, mode|S_IFDIR,
 					1, 0, &zerocr, &zerofsx, &ip);
 	if (error) {
 		do_error(_("%s inode allocation failed %d\n"),

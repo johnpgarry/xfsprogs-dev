@@ -531,7 +531,7 @@ error0:	/* Cancel bmap, cancel trans */
  * other in repair - now there is just the one.
  */
 int
-libxfs_inode_alloc(
+libxfs_dir_ialloc(
 	xfs_trans_t	**tp,
 	xfs_inode_t	*pip,
 	mode_t		mode,
