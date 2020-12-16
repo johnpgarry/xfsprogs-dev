@@ -521,6 +521,7 @@ libxfs_dir_ialloc(
 	struct fsxattr		*fsx,
 	struct xfs_inode	**ipp)
 {
+	struct xfs_buf		*agibp;
 	xfs_ino_t		parent_ino = dp ? dp->i_ino : 0;
 	xfs_ino_t		ino;
 	int			error;
@@ -532,12 +533,18 @@ libxfs_dir_ialloc(
 	 * Call the space management code to pick the on-disk inode to be
 	 * allocated.
 	 */
-	error = xfs_dialloc(tpp, parent_ino, mode, &ino);
+	error = xfs_dialloc_select_ag(tpp, parent_ino, mode, &agibp);
 	if (error)
 		return error;
 
-	if (ino == NULLFSINO)
+	if (!agibp)
 		return -ENOSPC;
+
+	/* Allocate an inode from the selected AG */
+	error = xfs_dialloc_ag(*tpp, agibp, parent_ino, &ino);
+	if (error)
+		return error;
+	ASSERT(ino != NULLFSINO);
 
 	return libxfs_init_new_inode(*tpp, dp, ino, mode, nlink, rdev, cr, fsx,
 			ipp);
