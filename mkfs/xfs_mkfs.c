@@ -3800,7 +3800,7 @@ main(
 	char			**argv)
 {
 	xfs_agnumber_t		agno;
-	xfs_buf_t		*buf;
+	struct xfs_buf		*buf;
 	int			c;
 	char			*dfile = NULL;
 	char			*logfile = NULL;

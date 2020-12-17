@@ -223,7 +223,7 @@ libxfs_bcompare(struct cache_node *node, cache_key_t key)
 }
 
 static void
-__initbuf(xfs_buf_t *bp, struct xfs_buftarg *btp, xfs_daddr_t bno,
+__initbuf(struct xfs_buf *bp, struct xfs_buftarg *btp, xfs_daddr_t bno,
 		unsigned int bytes)
 {
 	bp->b_flags = 0;
@@ -257,14 +257,14 @@ __initbuf(xfs_buf_t *bp, struct xfs_buftarg *btp, xfs_daddr_t bno,
 }
 
 static void
-libxfs_initbuf(xfs_buf_t *bp, struct xfs_buftarg *btp, xfs_daddr_t bno,
+libxfs_initbuf(struct xfs_buf *bp, struct xfs_buftarg *btp, xfs_daddr_t bno,
 		unsigned int bytes)
 {
 	__initbuf(bp, btp, bno, bytes);
 }
 
 static void
-libxfs_initbuf_map(xfs_buf_t *bp, struct xfs_buftarg *btp,
+libxfs_initbuf_map(struct xfs_buf *bp, struct xfs_buftarg *btp,
 		struct xfs_buf_map *map, int nmaps)
 {
 	unsigned int bytes = 0;
@@ -292,10 +292,10 @@ libxfs_initbuf_map(xfs_buf_t *bp, struct xfs_buftarg *btp,
 	bp->b_flags |= LIBXFS_B_DISCONTIG;
 }
 
-static xfs_buf_t *
+static struct xfs_buf *
 __libxfs_getbufr(int blen)
 {
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 
 	/*
 	 * first look for a buffer that can be used as-is,
@@ -313,7 +313,7 @@ __libxfs_getbufr(int blen)
 		}
 		if (&bp->b_node.cn_mru == &xfs_buf_freelist.cm_list) {
 			bp = list_entry(xfs_buf_freelist.cm_list.next,
-					xfs_buf_t, b_node.cn_mru);
+					struct xfs_buf, b_node.cn_mru);
 			list_del_init(&bp->b_node.cn_mru);
 			free(bp->b_addr);
 			bp->b_addr = NULL;
@@ -331,10 +331,10 @@ __libxfs_getbufr(int blen)
 	return bp;
 }
 
-static xfs_buf_t *
+static struct xfs_buf *
 libxfs_getbufr(struct xfs_buftarg *btp, xfs_daddr_t blkno, int bblen)
 {
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 	int		blen = BBTOB(bblen);
 
 	bp =__libxfs_getbufr(blen);
@@ -343,11 +343,11 @@ libxfs_getbufr(struct xfs_buftarg *btp, xfs_daddr_t blkno, int bblen)
 	return bp;
 }
 
-static xfs_buf_t *
+static struct xfs_buf *
 libxfs_getbufr_map(struct xfs_buftarg *btp, xfs_daddr_t blkno, int bblen,
 		struct xfs_buf_map *map, int nmaps)
 {
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 	int		blen = BBTOB(bblen);
 
 	if (!map || !nmaps) {
@@ -574,7 +574,7 @@ __read_buf(int fd, void *buf, int len, off64_t offset, int flags)
 }
 
 int
-libxfs_readbufr(struct xfs_buftarg *btp, xfs_daddr_t blkno, xfs_buf_t *bp,
+libxfs_readbufr(struct xfs_buftarg *btp, xfs_daddr_t blkno, struct xfs_buf *bp,
 		int len, int flags)
 {
 	int	fd = libxfs_device_to_fd(btp->bt_bdev);
@@ -915,7 +915,7 @@ libxfs_bulkrelse(
 	struct cache		*cache,
 	struct list_head	*list)
 {
-	xfs_buf_t		*bp;
+	struct xfs_buf		*bp;
 	int			count = 0;
 
 	if (list_empty(list))
@@ -941,7 +941,7 @@ void
 libxfs_bcache_free(void)
 {
 	struct list_head	*cm_list;
-	xfs_buf_t		*bp, *next;
+	struct xfs_buf		*bp, *next;
 
 	cm_list = &xfs_buf_freelist.cm_list;
 	list_for_each_entry_safe(bp, next, cm_list, b_node.cn_mru) {

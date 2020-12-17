@@ -104,7 +104,7 @@ typedef struct libxfs_xinit {
 	int             risfile;        /* realtime "subvolume" is a reg file */
 	int             rcreat;         /* try to create realtime subvolume */
 	int		setblksize;	/* attempt to set device blksize */
-	int		usebuflock;	/* lock xfs_buf_t's - for MT usage */
+	int		usebuflock;	/* lock xfs_buf's - for MT usage */
 				/* output results */
 	dev_t           ddev;           /* device for data subvolume */
 	dev_t           logdev;         /* device for log subvolume */

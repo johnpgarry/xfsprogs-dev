@@ -718,7 +718,7 @@ main(int argc, char **argv)
 	xfs_mount_t	*temp_mp;
 	xfs_mount_t	*mp;
 	xfs_dsb_t	*dsb;
-	xfs_buf_t	*sbp;
+	struct xfs_buf	*sbp;
 	xfs_mount_t	xfs_m;
 	struct xlog	log = {0};
 	char		*msgbuf;

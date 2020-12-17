@@ -163,7 +163,7 @@ process_rtbitmap(xfs_mount_t	*mp,
 	int		bmbno;
 	int		end_bmbno;
 	xfs_fsblock_t	bno;
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 	xfs_rtblock_t	extno;
 	int		i;
 	int		len;
@@ -243,7 +243,7 @@ process_rtsummary(xfs_mount_t	*mp,
 		blkmap_t	*blkmap)
 {
 	xfs_fsblock_t	bno;
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 	char		*bytes;
 	int		sumbno;
 

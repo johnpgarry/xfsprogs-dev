@@ -34,7 +34,7 @@ static int		pf_max_fsbs;
 static int		pf_batch_bytes;
 static int		pf_batch_fsbs;
 
-static void		pf_read_inode_dirs(prefetch_args_t *, xfs_buf_t *);
+static void		pf_read_inode_dirs(prefetch_args_t *, struct xfs_buf *);
 
 /*
  * Buffer priorities for the libxfs cache
@@ -271,7 +271,7 @@ pf_scan_lbtree(
 					int			isadir,
 					prefetch_args_t		*args))
 {
-	xfs_buf_t		*bp;
+	struct xfs_buf		*bp;
 	int			rc;
 	int			error;
 
@@ -399,7 +399,7 @@ pf_read_exinode(
 static void
 pf_read_inode_dirs(
 	prefetch_args_t		*args,
-	xfs_buf_t		*bp)
+	struct xfs_buf		*bp)
 {
 	xfs_dinode_t		*dino;
 	int			icnt = 0;
@@ -473,7 +473,7 @@ pf_batch_read(
 	pf_which_t		which,
 	void			*buf)
 {
-	xfs_buf_t		*bplist[MAX_BUFS];
+	struct xfs_buf		*bplist[MAX_BUFS];
 	unsigned int		num;
 	off64_t			first_off, last_off, next_off;
 	int			len, size;
@@ -592,8 +592,8 @@ pf_batch_read(
 
 		if (len > 0) {
 			/*
-			 * go through the xfs_buf_t list copying from the
-			 * read buffer into the xfs_buf_t's and release them.
+			 * go through the struct xfs_buf list copying from the
+			 * read buffer into the xfs_buf's and release them.
 			 */
 			for (i = 0; i < num; i++) {
 

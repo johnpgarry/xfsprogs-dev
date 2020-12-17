@@ -152,7 +152,7 @@ scan_lbtree(
 	uint64_t	magic,
 	const struct xfs_buf_ops *ops)
 {
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 	int		err;
 	int		dirty = 0;
 	bool		badcrc = false;
@@ -2204,7 +2204,7 @@ scan_freelist(
 	xfs_agf_t		*agf,
 	struct aghdr_cnts	*agcnts)
 {
-	xfs_buf_t		*agflbuf;
+	struct xfs_buf		*agflbuf;
 	xfs_agnumber_t		agno;
 	struct agfl_state	state;
 	int			error;

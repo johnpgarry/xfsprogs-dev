@@ -30,7 +30,7 @@ check_aginode_block(xfs_mount_t	*mp,
 	xfs_dinode_t	*dino_p;
 	int		i;
 	int		cnt = 0;
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 	int		error;
 
 	/*
@@ -597,7 +597,7 @@ process_inode_chunk(
 {
 	xfs_ino_t		parent;
 	ino_tree_node_t		*ino_rec;
-	xfs_buf_t		**bplist;
+	struct xfs_buf		**bplist;
 	xfs_dinode_t		*dino;
 	int			icnt;
 	int			status;
@@ -644,10 +644,10 @@ process_inode_chunk(
 	ino_rec = first_irec;
 	irec_offset = 0;
 
-	bplist = malloc(cluster_count * sizeof(xfs_buf_t *));
+	bplist = malloc(cluster_count * sizeof(struct xfs_buf *));
 	if (bplist == NULL)
 		do_error(_("failed to allocate %zd bytes of memory\n"),
-			cluster_count * sizeof(xfs_buf_t *));
+			cluster_count * sizeof(struct xfs_buf *));
 
 	for (bp_index = 0; bp_index < cluster_count; bp_index++) {
 		/*

@@ -8,7 +8,7 @@
 #define	_XR_DA_UTIL_H
 
 struct da_level_state  {
-	xfs_buf_t	*bp;		/* block bp */
+	struct xfs_buf	*bp;		/* block bp */
 	xfs_dablk_t	bno;		/* file block number */
 	xfs_dahash_t	hashval;	/* last verified hashval */
 	int		index;		/* current index in block */

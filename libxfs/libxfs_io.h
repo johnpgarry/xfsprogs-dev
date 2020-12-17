@@ -57,7 +57,7 @@ struct xfs_buf_ops {
 	xfs_failaddr_t (*verify_struct)(struct xfs_buf *);
 };
 
-typedef struct xfs_buf {
+struct xfs_buf {
 	struct cache_node	b_node;
 	unsigned int		b_flags;
 	xfs_daddr_t		b_bn;
@@ -78,7 +78,7 @@ typedef struct xfs_buf {
 	struct xfs_buf_map	__b_map;
 	int			b_nmaps;
 	struct list_head	b_list;
-} xfs_buf_t;
+};
 
 bool xfs_verify_magic(struct xfs_buf *bp, __be32 dmagic);
 bool xfs_verify_magic16(struct xfs_buf *bp, __be16 dmagic);
@@ -163,7 +163,7 @@ extern int	libxfs_bcache_overflowed(void);
 
 /* Buffer (Raw) Interfaces */
 int		libxfs_bwrite(struct xfs_buf *bp);
-extern int	libxfs_readbufr(struct xfs_buftarg *, xfs_daddr_t, xfs_buf_t *, int, int);
+extern int	libxfs_readbufr(struct xfs_buftarg *, xfs_daddr_t, struct xfs_buf *, int, int);
 extern int	libxfs_readbufr_map(struct xfs_buftarg *, struct xfs_buf *, int);
 
 extern int	libxfs_device_zero(struct xfs_buftarg *, xfs_daddr_t, uint);

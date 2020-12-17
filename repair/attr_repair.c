@@ -388,7 +388,7 @@ rmtval_get(xfs_mount_t *mp, xfs_ino_t ino, blkmap_t *blkmap,
 		xfs_dablk_t blocknum, int valuelen, char* value)
 {
 	xfs_fsblock_t	bno;
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 	int		clearit = 0, i = 0, length = 0, amountdone = 0;
 	int		hdrsize = 0;
 	int		error;
@@ -730,7 +730,7 @@ process_leaf_attr_level(xfs_mount_t	*mp,
 {
 	int			repair;
 	xfs_attr_leafblock_t	*leaf;
-	xfs_buf_t		*bp;
+	struct xfs_buf		*bp;
 	xfs_ino_t		ino;
 	xfs_fsblock_t		dev_bno;
 	xfs_dablk_t		da_bno;

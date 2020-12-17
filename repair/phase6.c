@@ -558,7 +558,7 @@ mk_rbmino(xfs_mount_t *mp)
 static int
 fill_rbmino(xfs_mount_t *mp)
 {
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 	xfs_trans_t	*tp;
 	xfs_inode_t	*ip;
 	xfs_rtword_t	*bmp;
@@ -626,7 +626,7 @@ _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime bitmap inode %
 static int
 fill_rsumino(xfs_mount_t *mp)
 {
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 	xfs_trans_t	*tp;
 	xfs_inode_t	*ip;
 	xfs_suminfo_t	*smp;

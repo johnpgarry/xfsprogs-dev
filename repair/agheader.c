@@ -467,7 +467,7 @@ secondary_sb_whack(
  */
 
 int
-verify_set_agheader(xfs_mount_t *mp, xfs_buf_t *sbuf, xfs_sb_t *sb,
+verify_set_agheader(xfs_mount_t *mp, struct xfs_buf *sbuf, xfs_sb_t *sb,
 	xfs_agf_t *agf, xfs_agi_t *agi, xfs_agnumber_t i)
 {
 	int rval = 0;

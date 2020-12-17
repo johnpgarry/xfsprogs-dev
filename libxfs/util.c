@@ -339,7 +339,7 @@ libxfs_init_new_inode(
 int
 libxfs_iflush_int(
 	xfs_inode_t			*ip,
-	xfs_buf_t			*bp)
+	struct xfs_buf			*bp)
 {
 	struct xfs_inode_log_item	*iip;
 	xfs_dinode_t			*dip;

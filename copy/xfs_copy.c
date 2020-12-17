@@ -569,7 +569,7 @@ main(int argc, char **argv)
 	xfs_mount_t	*mp;
 	xfs_mount_t	mbuf;
 	struct xlog	xlog;
-	xfs_buf_t	*sbp;
+	struct xfs_buf	*sbp;
 	xfs_sb_t	*sb;
 	xfs_agnumber_t	num_ags, agno;
 	xfs_agblock_t	bno;

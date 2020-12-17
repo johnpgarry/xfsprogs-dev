@@ -30,7 +30,7 @@ char *progname = "libxfs";	/* default, changed by each tool */
 struct cache *libxfs_bcache;	/* global buffer cache */
 int libxfs_bhash_size;		/* #buckets in bcache */
 
-int	use_xfs_buf_lock;	/* global flag: use xfs_buf_t locks for MT */
+int	use_xfs_buf_lock;	/* global flag: use struct xfs_buf locks for MT */
 
 /*
  * dev_map - map open devices to fd.

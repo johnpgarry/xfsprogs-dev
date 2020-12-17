@@ -396,7 +396,7 @@ libxfs_trans_bjoin(
 void
 libxfs_trans_bhold_release(
 	xfs_trans_t		*tp,
-	xfs_buf_t		*bp)
+	struct xfs_buf		*bp)
 {
 	struct xfs_buf_log_item *bip = bp->b_log_item;
 
@@ -462,7 +462,7 @@ libxfs_trans_get_buf_map(
 	return 0;
 }
 
-xfs_buf_t *
+struct xfs_buf *
 libxfs_trans_getsb(
 	struct xfs_trans	*tp)
 {
@@ -605,7 +605,7 @@ libxfs_trans_brelse(
 void
 libxfs_trans_bhold(
 	xfs_trans_t		*tp,
-	xfs_buf_t		*bp)
+	struct xfs_buf		*bp)
 {
 	struct xfs_buf_log_item	*bip = bp->b_log_item;
 
@@ -662,7 +662,7 @@ libxfs_trans_log_buf(
 void
 libxfs_trans_binval(
 	xfs_trans_t		*tp,
-	xfs_buf_t		*bp)
+	struct xfs_buf		*bp)
 {
 	struct xfs_buf_log_item	*bip = bp->b_log_item;
 
@@ -696,7 +696,7 @@ libxfs_trans_binval(
 void
 libxfs_trans_inode_alloc_buf(
 	xfs_trans_t		*tp,
-	xfs_buf_t		*bp)
+	struct xfs_buf		*bp)
 {
 	struct xfs_buf_log_item	*bip = bp->b_log_item;
 
@@ -813,7 +813,7 @@ static void
 inode_item_done(
 	struct xfs_inode_log_item	*iip)
 {
-	xfs_buf_t			*bp;
+	struct xfs_buf			*bp;
 	int				error;
 
 	ASSERT(iip->ili_inode != NULL);
@@ -849,7 +849,7 @@ static void
 buf_item_done(
 	xfs_buf_log_item_t	*bip)
 {
-	xfs_buf_t		*bp;
+	struct xfs_buf		*bp;
 	int			hold;
 	extern kmem_zone_t	*xfs_buf_item_zone;
 
@@ -893,7 +893,7 @@ static void
 buf_item_unlock(
 	xfs_buf_log_item_t	*bip)
 {
-	xfs_buf_t		*bp = bip->bli_buf;
+	struct xfs_buf		*bp = bip->bli_buf;
 	uint			hold;
 
 	/* Clear the buffer's association with this transaction. */

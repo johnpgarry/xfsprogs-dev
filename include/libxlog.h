@@ -76,12 +76,12 @@ extern int xlog_is_dirty(struct xfs_mount *, struct xlog *, libxfs_init_t *,
 			 int);
 extern struct xfs_buf *xlog_get_bp(struct xlog *, int);
 extern int	xlog_bread(struct xlog *log, xfs_daddr_t blk_no, int nbblks,
-				xfs_buf_t *bp, char **offset);
+				struct xfs_buf *bp, char **offset);
 extern int	xlog_bread_noalign(struct xlog *log, xfs_daddr_t blk_no,
-				int nbblks, xfs_buf_t *bp);
+				int nbblks, struct xfs_buf *bp);
 
 extern int	xlog_find_zeroed(struct xlog *log, xfs_daddr_t *blk_no);
-extern int	xlog_find_cycle_start(struct xlog *log, xfs_buf_t *bp,
+extern int	xlog_find_cycle_start(struct xlog *log, struct xfs_buf *bp,
 				xfs_daddr_t first_blk, xfs_daddr_t *last_blk,
 				uint cycle);
 extern int	xlog_find_tail(struct xlog *log, xfs_daddr_t *head_blk,

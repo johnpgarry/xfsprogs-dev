@@ -227,7 +227,7 @@ xlog_find_verify_cycle(
 {
 	xfs_daddr_t	i, j;
 	uint		cycle;
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 	int		bufblks;
 	char		*buf = NULL;
 	int		error = 0;
@@ -294,7 +294,7 @@ xlog_find_verify_log_record(
 	int			extra_bblks)
 {
 	xfs_daddr_t		i;
-	xfs_buf_t		*bp;
+	struct xfs_buf		*bp;
 	char			*offset = NULL;
 	xlog_rec_header_t	*head = NULL;
 	int			error = 0;
@@ -401,7 +401,7 @@ xlog_find_head(
 	struct xlog	*log,
 	xfs_daddr_t	*return_head_blk)
 {
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 	char		*offset;
 	xfs_daddr_t	new_blk, first_blk, start_blk, last_blk, head_blk;
 	int		num_scan_bblks;
@@ -676,7 +676,7 @@ xlog_find_tail(
 	xlog_rec_header_t	*rhead;
 	xlog_op_header_t	*op_head;
 	char			*offset = NULL;
-	xfs_buf_t		*bp;
+	struct xfs_buf		*bp;
 	int			error, i, found;
 	xfs_daddr_t		umount_data_blk;
 	xfs_daddr_t		after_umount_blk;
@@ -882,7 +882,7 @@ xlog_find_zeroed(
 	struct xlog	*log,
 	xfs_daddr_t	*blk_no)
 {
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 	char		*offset;
 	uint	        first_cycle, last_cycle;
 	xfs_daddr_t	new_blk, last_blk, start_blk;
@@ -1419,7 +1419,7 @@ xlog_do_recovery_pass(
 	xlog_rec_header_t	*rhead;
 	xfs_daddr_t		blk_no;
 	char			*offset;
-	xfs_buf_t		*hbp, *dbp;
+	struct xfs_buf		*hbp, *dbp;
 	int			error = 0, h_size;
 	int			bblks, split_bblks;
 	int			hblks, split_hblks, wrapped_hblks;

@@ -16,7 +16,7 @@ xlog_print_find_oldest(
 	struct xlog	*log,
 	xfs_daddr_t	*last_blk)
 {
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 	xfs_daddr_t	first_blk;
 	uint		first_half_cycle, last_half_cycle;
 	int		error = 0;
