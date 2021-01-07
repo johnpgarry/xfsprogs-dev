@@ -521,7 +521,6 @@ libxfs_dir_ialloc(
 	struct fsxattr		*fsx,
 	struct xfs_inode	**ipp)
 {
-	struct xfs_buf		*ialloc_context = NULL;
 	xfs_ino_t		parent_ino = dp ? dp->i_ino : 0;
 	xfs_ino_t		ino;
 	int			error;
@@ -530,34 +529,9 @@ libxfs_dir_ialloc(
 	 * Call the space management code to pick the on-disk inode to be
 	 * allocated.
 	 */
-	error = xfs_dialloc(*tpp, parent_ino, mode, &ialloc_context, &ino);
+	error = xfs_dialloc(tpp, parent_ino, mode, &ino);
 	if (error)
 		return error;
-
-	/*
-	 * If the AGI buffer is non-NULL, then we were unable to get an
-	 * inode in one operation.  We need to commit the current
-	 * transaction and call xfs_dialloc() again.  It is guaranteed
-	 * to succeed the second time.
-	 */
-	if (ialloc_context) {
-		error = xfs_dialloc_roll(tpp, ialloc_context);
-		if (error) {
-			fprintf(stderr, _("%s: cannot duplicate transaction: %s\n"),
-				progname, strerror(error));
-			exit(1);
-		}
-		/*
-		 * Call dialloc again. Since we've locked out all other
-		 * allocations in this allocation group, this call should
-		 * always succeed.
-		 */
-		error = xfs_dialloc(*tpp, parent_ino, mode, &ialloc_context,
-				&ino);
-		if (error)
-			return error;
-		ASSERT(!ialloc_context);
-	}
 
 	if (ino == NULLFSINO)
 		return -ENOSPC;
