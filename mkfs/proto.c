@@ -225,7 +225,7 @@ newfile(
 	char		*buf,
 	int		len)
 {
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 	xfs_daddr_t	d;
 	int		error;
 	int		flags;

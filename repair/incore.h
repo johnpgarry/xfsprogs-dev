@@ -599,7 +599,7 @@ typedef struct bm_level_state  {
 /*
 	int			level;
 	uint64_t		prev_last_key;
-	xfs_buf_t		*bp;
+	struct xfs_buf		*bp;
 	xfs_bmbt_block_t	*block;
 */
 } bm_level_state_t;

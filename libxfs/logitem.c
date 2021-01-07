@@ -27,7 +27,7 @@ kmem_zone_t	*xfs_ili_zone;		/* inode log item zone */
  * Check to see if a buffer matching the given parameters is already
  * a part of the given transaction.
  */
-xfs_buf_t *
+struct xfs_buf *
 xfs_trans_buf_item_match(
 	xfs_trans_t		*tp,
 	struct xfs_buftarg	*btp,
@@ -68,7 +68,7 @@ xfs_trans_buf_item_match(
  */
 void
 xfs_buf_item_init(
-	xfs_buf_t		*bp,
+	struct xfs_buf		*bp,
 	xfs_mount_t		*mp)
 {
 	xfs_log_item_t		*lip;

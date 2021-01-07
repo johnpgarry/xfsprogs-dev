@@ -395,7 +395,7 @@ build_agf_agfl(
 static void
 sync_sb(xfs_mount_t *mp)
 {
-	xfs_buf_t	*bp;
+	struct xfs_buf	*bp;
 
 	bp = libxfs_getsb(mp);
 	if (!bp)
