@@ -531,9 +531,9 @@ error0:	/* Cancel bmap, cancel trans */
  * other in repair - now there is just the one.
  */
 int
-libxfs_inode_alloc(
-	xfs_trans_t	**tp,
-	xfs_inode_t	*pip,
+libxfs_dir_ialloc(
+	xfs_trans_t	**tpp,
+	xfs_inode_t	*dp,
 	mode_t		mode,
 	nlink_t		nlink,
 	xfs_dev_t	rdev,
@@ -541,16 +541,18 @@ libxfs_inode_alloc(
 	struct fsxattr	*fsx,
 	xfs_inode_t	**ipp)
 {
-	xfs_buf_t	*ialloc_context;
+	xfs_trans_t	*tp;
 	xfs_inode_t	*ip;
-	int		error;
+	xfs_buf_t	*ialloc_context = NULL;
+	int		code;
 
-	ialloc_context = (xfs_buf_t *)0;
-	error = libxfs_ialloc(*tp, pip, mode, nlink, rdev, cr, fsx,
+	tp = *tpp;
+
+	code = libxfs_ialloc(tp, dp, mode, nlink, rdev, cr, fsx,
 			   &ialloc_context, &ip);
-	if (error) {
+	if (code) {
 		*ipp = NULL;
-		return error;
+		return code;
 	}
 	if (!ialloc_context && !ip) {
 		*ipp = NULL;
@@ -559,25 +561,29 @@ libxfs_inode_alloc(
 
 	if (ialloc_context) {
 
-		xfs_trans_bhold(*tp, ialloc_context);
+		xfs_trans_bhold(tp, ialloc_context);
 
-		error = xfs_trans_roll(tp);
-		if (error) {
+		code = xfs_trans_roll(&tp);
+		if (code) {
 			fprintf(stderr, _("%s: cannot duplicate transaction: %s\n"),
-				progname, strerror(error));
+				progname, strerror(code));
 			exit(1);
 		}
-		xfs_trans_bjoin(*tp, ialloc_context);
-		error = libxfs_ialloc(*tp, pip, mode, nlink, rdev, cr,
+		xfs_trans_bjoin(tp, ialloc_context);
+		code = libxfs_ialloc(tp, dp, mode, nlink, rdev, cr,
 				   fsx, &ialloc_context, &ip);
 		if (!ip)
-			error = -ENOSPC;
-		if (error)
-			return error;
+			code = -ENOSPC;
+		if (code) {
+			*tpp = tp;
+			*ipp = NULL;
+			return code;
+		}
 	}
 
 	*ipp = ip;
-	return error;
+	*tpp = tp;
+	return code;
 }
 
 void

@@ -156,7 +156,7 @@ typedef struct cred {
 	gid_t	cr_gid;
 } cred_t;
 
-extern int	libxfs_inode_alloc (struct xfs_trans **, struct xfs_inode *,
+extern int	libxfs_dir_ialloc (struct xfs_trans **, struct xfs_inode *,
 				mode_t, nlink_t, xfs_dev_t, struct cred *,
 				struct fsxattr *, struct xfs_inode **);
 extern void	libxfs_trans_inode_alloc_buf (struct xfs_trans *,
