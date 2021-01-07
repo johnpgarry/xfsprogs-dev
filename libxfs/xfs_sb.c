@@ -394,13 +394,6 @@ xfs_validate_sb_common(
 		return -ENOSYS;
 	}
 
-	if (xfs_sb_validate_fsb_count(sbp, sbp->sb_dblocks) ||
-	    xfs_sb_validate_fsb_count(sbp, sbp->sb_rblocks)) {
-		xfs_warn(mp,
-		"file system too large to be mounted on this system.");
-		return -EFBIG;
-	}
-
 	return 0;
 }
 
