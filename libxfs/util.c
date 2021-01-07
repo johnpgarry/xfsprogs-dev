@@ -560,16 +560,12 @@ libxfs_dir_ialloc(
 	}
 
 	if (ialloc_context) {
-
-		xfs_trans_bhold(tp, ialloc_context);
-
-		code = xfs_trans_roll(&tp);
+		code = xfs_dialloc_roll(&tp, ialloc_context);
 		if (code) {
 			fprintf(stderr, _("%s: cannot duplicate transaction: %s\n"),
 				progname, strerror(code));
 			exit(1);
 		}
-		xfs_trans_bjoin(tp, ialloc_context);
 		code = libxfs_ialloc(tp, dp, mode, nlink, rdev, cr,
 				   fsx, &ialloc_context, &ip);
 		if (!ip)

@@ -61,20 +61,21 @@ typedef struct xfs_qoff_logitem {
 #define XFS_DEFER_OPS_NR_BUFS	2	/* join up to two buffers */
 
 typedef struct xfs_trans {
-	unsigned int	t_log_res;		/* amt of log space resvd */
-	unsigned int	t_log_count;		/* count for perm log res */
-	unsigned int	t_blk_res;		/* # of blocks resvd */
-	unsigned int	t_blk_res_used;		/* # of resvd blocks used */
-	unsigned int	t_rtx_res;		/* # of rt extents resvd */
-	unsigned int	t_rtx_res_used;		/* # of resvd rt extents used */
-	unsigned int	t_flags;		/* misc flags */
-	xfs_fsblock_t	t_firstblock;		/* first block allocated */
-	struct xfs_mount *t_mountp;		/* ptr to fs mount struct */
-	long		t_icount_delta;		/* superblock icount change */
-	long		t_ifree_delta;		/* superblock ifree change */
-	long		t_fdblocks_delta;	/* superblock fdblocks chg */
-	long		t_frextents_delta;	/* superblock freextents chg */
-	struct list_head	t_items;	/* first log item desc chunk */
+	unsigned int		t_log_res;	/* amt of log space resvd */
+	unsigned int		t_log_count;	/* count for perm log res */
+	unsigned int		t_blk_res;	/* # of blocks resvd */
+	unsigned int		t_blk_res_used;	/* # of resvd blocks used */
+	unsigned int		t_rtx_res;	/* # of rt extents resvd */
+	unsigned int		t_rtx_res_used;	/* # of resvd rt extents used */
+	unsigned int		t_flags;	/* misc flags */
+	xfs_fsblock_t		t_firstblock;	/* first block allocated */
+	struct xfs_mount 	*t_mountp;	/* ptr to fs mount struct */
+	struct xfs_dquot_acct	*t_dqinfo;	/* acctg info for dquots */
+	long			t_icount_delta;	/* superblock icount change */
+	long			t_ifree_delta;	/* superblock ifree change */
+	long			t_fdblocks_delta;/* superblock fdblocks chg */
+	long			t_frextents_delta;/* superblock freextents chg*/
+	struct list_head	t_items;	/* log item descriptors */
 	struct list_head	t_dfops;	/* deferred operations */
 } xfs_trans_t;
 
