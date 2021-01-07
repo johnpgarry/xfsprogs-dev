@@ -239,44 +239,24 @@ xfs_inode_propagate_flags(
 }
 
 /*
- * Allocate an inode on disk and return a copy of its in-core version.
- * Set mode, nlink, and rdev appropriately within the inode.
- * The uid and gid for the inode are set according to the contents of
- * the given cred structure.
- *
- * This was once shared with the kernel, but has diverged to the point
- * where it's no longer worth the hassle of maintaining common code.
+ * Initialise a newly allocated inode and return the in-core inode to the
+ * caller locked exclusively.
  */
 static int
-libxfs_ialloc(
-	xfs_trans_t	*tp,
-	xfs_inode_t	*pip,
-	mode_t		mode,
-	nlink_t		nlink,
-	xfs_dev_t	rdev,
-	struct cred	*cr,
-	struct fsxattr	*fsx,
-	xfs_buf_t	**ialloc_context,
-	xfs_inode_t	**ipp)
+libxfs_init_new_inode(
+	struct xfs_trans	*tp,
+	struct xfs_inode	*pip,
+	xfs_ino_t		ino,
+	umode_t			mode,
+	xfs_nlink_t		nlink,
+	dev_t			rdev,
+	struct cred		*cr,
+	struct fsxattr		*fsx,
+	struct xfs_inode	**ipp)
 {
-	xfs_ino_t	ino;
-	xfs_inode_t	*ip;
-	uint		flags;
-	int		error;
-
-	/*
-	 * Call the space management code to pick
-	 * the on-disk inode to be allocated.
-	 */
-	error = xfs_dialloc(tp, pip ? pip->i_ino : 0, mode,
-			    ialloc_context, &ino);
-	if (error != 0)
-		return error;
-	if (*ialloc_context || ino == NULLFSINO) {
-		*ipp = NULL;
-		return 0;
-	}
-	ASSERT(*ialloc_context == NULL);
+	struct xfs_inode	*ip;
+	unsigned int		flags;
+	int			error;
 
 	error = libxfs_iget(tp->t_mountp, tp, ino, 0, &ip);
 	if (error != 0)
@@ -532,54 +512,58 @@ error0:	/* Cancel bmap, cancel trans */
  */
 int
 libxfs_dir_ialloc(
-	xfs_trans_t	**tpp,
-	xfs_inode_t	*dp,
-	mode_t		mode,
-	nlink_t		nlink,
-	xfs_dev_t	rdev,
-	struct cred	*cr,
-	struct fsxattr	*fsx,
-	xfs_inode_t	**ipp)
+	struct xfs_trans	**tpp,
+	struct xfs_inode	*dp,
+	mode_t			mode,
+	nlink_t			nlink,
+	xfs_dev_t		rdev,
+	struct cred		*cr,
+	struct fsxattr		*fsx,
+	struct xfs_inode	**ipp)
 {
-	xfs_trans_t	*tp;
-	xfs_inode_t	*ip;
-	xfs_buf_t	*ialloc_context = NULL;
-	int		code;
+	struct xfs_buf		*ialloc_context = NULL;
+	xfs_ino_t		parent_ino = dp ? dp->i_ino : 0;
+	xfs_ino_t		ino;
+	int			error;
 
-	tp = *tpp;
+	/*
+	 * Call the space management code to pick the on-disk inode to be
+	 * allocated.
+	 */
+	error = xfs_dialloc(*tpp, parent_ino, mode, &ialloc_context, &ino);
+	if (error)
+		return error;
 
-	code = libxfs_ialloc(tp, dp, mode, nlink, rdev, cr, fsx,
-			   &ialloc_context, &ip);
-	if (code) {
-		*ipp = NULL;
-		return code;
-	}
-	if (!ialloc_context && !ip) {
-		*ipp = NULL;
-		return -ENOSPC;
-	}
-
+	/*
+	 * If the AGI buffer is non-NULL, then we were unable to get an
+	 * inode in one operation.  We need to commit the current
+	 * transaction and call xfs_dialloc() again.  It is guaranteed
+	 * to succeed the second time.
+	 */
 	if (ialloc_context) {
-		code = xfs_dialloc_roll(&tp, ialloc_context);
-		if (code) {
+		error = xfs_dialloc_roll(tpp, ialloc_context);
+		if (error) {
 			fprintf(stderr, _("%s: cannot duplicate transaction: %s\n"),
-				progname, strerror(code));
+				progname, strerror(error));
 			exit(1);
 		}
-		code = libxfs_ialloc(tp, dp, mode, nlink, rdev, cr,
-				   fsx, &ialloc_context, &ip);
-		if (!ip)
-			code = -ENOSPC;
-		if (code) {
-			*tpp = tp;
-			*ipp = NULL;
-			return code;
-		}
+		/*
+		 * Call dialloc again. Since we've locked out all other
+		 * allocations in this allocation group, this call should
+		 * always succeed.
+		 */
+		error = xfs_dialloc(*tpp, parent_ino, mode, &ialloc_context,
+				&ino);
+		if (error)
+			return error;
+		ASSERT(!ialloc_context);
 	}
 
-	*ipp = ip;
-	*tpp = tp;
-	return code;
+	if (ino == NULLFSINO)
+		return -ENOSPC;
+
+	return libxfs_init_new_inode(*tpp, dp, ino, mode, nlink, rdev, cr,
+				fsx, ipp);
 }
 
 void
