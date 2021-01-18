@@ -47,7 +47,7 @@ Description: XFS filesystem-specific static libraries and headers
  for complete details.
 
 Package: xfsprogs-udeb
-XC-Package-Type: udeb
+Package-Type: udeb
 Section: debian-installer
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
