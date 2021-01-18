@@ -1,3 +1,14 @@
+xfsprogs (5.10.0-2) unstable; urgency=low
+
+  * Team upload
+  * debian: cryptographically verify upstream tarball (Closes: #979644)
+  * debian: remove dependency on essential util-linux
+  * debian: remove "Priority: extra"
+  * debian: use Package-Type over its predecessor
+  * debian: add missing copyright info (Closes: #979653)
+
+ -- Bastian Germann <bastiangermann@fishpost.de>  Thu, 14 Jan 2021 18:59:14 +0100
+
 xfsprogs (5.10.0-1) unstable; urgency=low
 
   * New upstream release
