@@ -722,3 +722,20 @@ unicrash_check_fs_label(
 	return __unicrash_check_name(uc, dsc, _("filesystem label"),
 			label, 0);
 }
+
+/* Load libicu and initialize it. */
+bool
+unicrash_load(void)
+{
+	UErrorCode		uerr = U_ZERO_ERROR;
+
+	u_init(&uerr);
+	return U_FAILURE(uerr);
+}
+
+/* Unload libicu once we're done with it. */
+void
+unicrash_unload(void)
+{
+	u_cleanup();
+}
