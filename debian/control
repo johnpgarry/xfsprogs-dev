@@ -13,7 +13,7 @@ Provides: fsck-backend
 Suggests: xfsdump, acl, attr, quota
 Breaks: xfsdump (<< 3.0.0)
 Replaces: xfsdump (<< 3.0.0)
-Architecture: any
+Architecture: linux-any
 Description: Utilities for managing the XFS filesystem
  A set of commands to use the XFS filesystem, including mkfs.xfs.
  .
@@ -31,7 +31,7 @@ Package: xfslibs-dev
 Section: libdevel
 Depends: libc6-dev | libc-dev, uuid-dev, xfsprogs (>= 3.0.0), ${misc:Depends}
 Breaks: xfsprogs (<< 3.0.0)
-Architecture: any
+Architecture: linux-any
 Description: XFS filesystem-specific static libraries and headers
  xfslibs-dev contains the libraries and header files needed to
  develop XFS filesystem-specific programs.
@@ -49,7 +49,7 @@ Description: XFS filesystem-specific static libraries and headers
 Package: xfsprogs-udeb
 Package-Type: udeb
 Section: debian-installer
-Architecture: any
+Architecture: linux-any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: A stripped-down version of xfsprogs, for debian-installer
  This package is an xfsprogs package built for reduced size, so that it
