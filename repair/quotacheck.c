@@ -234,12 +234,48 @@ quotacheck_adjust(
 	libxfs_irele(ip);
 }
 
+/* Check the ondisk dquot's id and type match what the incore dquot expects. */
+static bool
+qc_dquot_check_type(
+	struct xfs_mount	*mp,
+	xfs_dqtype_t		type,
+	xfs_dqid_t		id,
+	struct xfs_disk_dquot	*ddq)
+{
+	uint8_t			ddq_type;
+
+	ddq_type = ddq->d_type & XFS_DQTYPE_REC_MASK;
+
+	if (be32_to_cpu(ddq->d_id) != id)
+		return false;
+
+	/*
+	 * V5 filesystems always expect an exact type match.  V4 filesystems
+	 * expect an exact match for user dquots and for non-root group and
+	 * project dquots.
+	 */
+	if (xfs_sb_version_hascrc(&mp->m_sb) || type == XFS_DQTYPE_USER || id)
+		return ddq_type == type;
+
+	/*
+	 * V4 filesystems support either group or project quotas, but not both
+	 * at the same time.  The non-user quota file can be switched between
+	 * group and project quota uses depending on the mount options, which
+	 * means that we can encounter the other type when we try to load quota
+	 * defaults.  Quotacheck will soon reset the the entire quota file
+	 * (including the root dquot) anyway, but don't log scary corruption
+	 * reports to dmesg.
+	 */
+	return ddq_type == XFS_DQTYPE_GROUP || ddq_type == XFS_DQTYPE_PROJ;
+}
+
 /* Compare this on-disk dquot against whatever we observed. */
 static void
 qc_check_dquot(
 	struct xfs_mount	*mp,
 	struct xfs_disk_dquot	*ddq,
-	struct qc_dquots	*dquots)
+	struct qc_dquots	*dquots,
+	xfs_dqid_t		dqid)
 {
 	struct qc_rec		*qrec;
 	struct qc_rec		empty = {
@@ -252,6 +288,22 @@ qc_check_dquot(
 	qrec = qc_rec_get(dquots, id, false);
 	if (!qrec)
 		qrec = &empty;
+
+	if (!qc_dquot_check_type(mp, dquots->type, dqid, ddq)) {
+		const char	*dqtypestr;
+
+		dqtypestr = qflags_typestr(ddq->d_type & XFS_DQTYPE_REC_MASK);
+		if (dqtypestr)
+			do_warn(_("%s id %u saw type %s id %u\n"),
+					qflags_typestr(dquots->type), dqid,
+					dqtypestr, be32_to_cpu(ddq->d_id));
+		else
+			do_warn(_("%s id %u saw type %x id %u\n"),
+					qflags_typestr(dquots->type), dqid,
+					ddq->d_type & XFS_DQTYPE_REC_MASK,
+					be32_to_cpu(ddq->d_id));
+		chkd_flags = 0;
+	}
 
 	if (be64_to_cpu(ddq->d_bcount) != qrec->bcount) {
 		do_warn(_("%s id %u has bcount %llu, expected %"PRIu64"\n"),
@@ -327,11 +379,11 @@ _("cannot read %s inode %"PRIu64", block %"PRIu64", disk block %"PRIu64", err=%d
 		}
 
 		dqb = bp->b_addr;
-		dqid = map->br_startoff * dqperchunk;
+		dqid = (map->br_startoff + bno) * dqperchunk;
 		for (dqnr = 0;
 		     dqnr < dqperchunk && dqid <= UINT_MAX;
 		     dqnr++, dqb++, dqid++)
-			qc_check_dquot(mp, &dqb->dd_diskdq, dquots);
+			qc_check_dquot(mp, &dqb->dd_diskdq, dquots, dqid);
 		libxfs_buf_relse(bp);
 	}
 
