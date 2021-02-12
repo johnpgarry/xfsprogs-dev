@@ -87,7 +87,7 @@ binary-arch: checkroot built
 	rm -f debian/xfslibs-dev/lib/libhandle.la
 	rm -f debian/xfslibs-dev/lib/libhandle.a
 	rm -fr debian/xfslibs-dev/usr/lib
-	dh_installdocs
+	dh_installdocs -XCHANGES
 	dh_installchangelogs
 	dh_strip
 	dh_compress
