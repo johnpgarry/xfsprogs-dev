@@ -119,6 +119,7 @@ scan_ag_inodes(
 	struct scrub_ctx	*ctx = (struct scrub_ctx *)wq->wq_ctx;
 	struct xfs_bulkstat	*bs;
 	struct xfs_inumbers	*inumbers;
+	uint64_t		nextino = cvt_agino_to_ino(&ctx->mnt, agno, 0);
 	int			i;
 	int			error;
 	int			stale_count = 0;
@@ -153,6 +154,21 @@ scan_ag_inodes(
 	/* Find the inode chunk & alloc mask */
 	error = -xfrog_inumbers(&ctx->mnt, ireq);
 	while (!error && !si->aborted && ireq->hdr.ocount > 0) {
+		/*
+		 * Make sure that we always make forward progress while we
+		 * scan the inode btree.
+		 */
+		if (nextino > inumbers->xi_startino) {
+			str_corrupt(ctx, descr,
+	_("AG %u inode btree is corrupt near agino %lu, got %lu"), agno,
+				cvt_ino_to_agino(&ctx->mnt, nextino),
+				cvt_ino_to_agino(&ctx->mnt,
+						ireq->inumbers[0].xi_startino));
+			si->aborted = true;
+			break;
+		}
+		nextino = ireq->hdr.ino;
+
 		/*
 		 * We can have totally empty inode chunks on filesystems where
 		 * there are more than 64 inodes per block.  Skip these.
