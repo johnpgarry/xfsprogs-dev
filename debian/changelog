@@ -1,3 +1,9 @@
+xfsprogs (5.10.0-3) unstable; urgency=medium
+
+  * Drop unused dh-python from Build-Depends (Closes: #981361)
+
+ -- Bastian Germann <bastiangermann@fishpost.de>  Fri, 05 Feb 2021 00:18:31 +0100
+
 xfsprogs (5.10.0-2) unstable; urgency=low
 
   * Team upload
