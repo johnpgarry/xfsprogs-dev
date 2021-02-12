@@ -702,9 +702,8 @@ out0:
 int
 cmp(const void *s1, const void *s2)
 {
-	return( ((struct xfs_bstat *)s2)->bs_extents -
-	        ((struct xfs_bstat *)s1)->bs_extents);
-
+	return( ((struct xfs_bulkstat *)s2)->bs_extents -
+	        ((struct xfs_bulkstat *)s1)->bs_extents);
 }
 
 /*
