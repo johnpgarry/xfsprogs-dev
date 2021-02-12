@@ -235,8 +235,10 @@ obj_to_handle(
 {
 	char		hbuf [MAXHANSIZ];
 	int		ret;
-	uint32_t	handlen;
-	xfs_fsop_handlereq_t hreq;
+	uint32_t	handlen = 0;
+	struct xfs_fsop_handlereq hreq = { };
+
+	memset(hbuf, 0, MAXHANSIZ);
 
 	if (opcode == XFS_IOC_FD_TO_HANDLE) {
 		hreq.fd      = obj.fd;
@@ -275,7 +277,7 @@ open_by_fshandle(
 {
 	int		fsfd;
 	char		*path;
-	xfs_fsop_handlereq_t hreq;
+	struct xfs_fsop_handlereq hreq = { };
 
 	if ((fsfd = handle_to_fsfd(fshanp, &path)) < 0)
 		return -1;
@@ -382,7 +384,7 @@ attr_list_by_handle(
 {
 	int		error, fd;
 	char		*path;
-	xfs_fsop_attrlist_handlereq_t alhreq;
+	struct xfs_fsop_attrlist_handlereq alhreq = { };
 
 	if ((fd = handle_to_fsfd(hanp, &path)) < 0)
 		return -1;

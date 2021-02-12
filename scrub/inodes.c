@@ -111,7 +111,7 @@ scan_ag_inodes(
 	xfs_agnumber_t		agno,
 	void			*arg)
 {
-	struct xfs_handle	handle;
+	struct xfs_handle	handle = { };
 	char			descr[DESCR_BUFSZ];
 	struct xfs_inumbers_req	*ireq;
 	struct xfs_bulkstat_req	*breq;
