@@ -582,8 +582,15 @@ fsrall_cleanup(int timeout)
 static int
 cmp(const void *s1, const void *s2)
 {
-	return( ((struct xfs_bulkstat *)s2)->bs_extents -
-	        ((struct xfs_bulkstat *)s1)->bs_extents);
+	const struct xfs_bulkstat	*bs1 = s1;
+	const struct xfs_bulkstat	*bs2 = s2;
+
+	ASSERT((bs1->bs_version == XFS_BULKSTAT_VERSION_V1 &&
+		bs2->bs_version == XFS_BULKSTAT_VERSION_V1) ||
+		(bs1->bs_version == XFS_BULKSTAT_VERSION_V5 &&
+		bs2->bs_version == XFS_BULKSTAT_VERSION_V5));
+
+	return (bs2->bs_extents - bs1->bs_extents);
 }
 
 /*
