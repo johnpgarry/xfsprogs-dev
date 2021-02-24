@@ -6,6 +6,8 @@ xfs_admin \- change parameters of an XFS filesystem
 [
 .B \-eflpu
 ] [
+.BI \-O " featurelist"
+] [
 .BR "\-c 0" | 1
 ] [
 .B \-L
@@ -113,6 +115,26 @@ The filesystem label can be cleared using the special "\c
 .B \-\-\c
 " value for
 .IR label .
+.TP
+.BI \-O " feature1" = "status" , "feature2" = "status..."
+Add or remove features on an existing V5 filesystem.
+The features should be specified as a comma-separated list.
+.I status
+should be either 0 to disable the feature or 1 to enable the feature.
+Note, however, that most features cannot be disabled.
+.IP
+.B NOTE:
+Administrators must ensure the filesystem is clean by running
+.B xfs_repair -n
+to inspect the filesystem before performing the upgrade.
+If corruption is found, recovery procedures (e.g. reformat followed by
+restoration from backup; or running
+.B xfs_repair
+without the
+.BR -n )
+must be followed to clean the filesystem.
+.IP
+There are no feature options currently.
 .TP
 .BI \-U " uuid"
 Set the UUID of the filesystem to
