@@ -134,7 +134,16 @@ without the
 .BR -n )
 must be followed to clean the filesystem.
 .IP
-There are no feature options currently.
+Supported features are as follows:
+.RS 0.7i
+.TP 0.4i
+.B inobtcount
+Keep a count the number of blocks in each inode btree in the AGI.
+This reduces mount time by speeding up metadata space reservation calculations.
+The filesystem cannot be downgraded after this feature is enabled.
+Once enabled, the filesystem will not be writable by older kernels.
+This feature was added to Linux 5.10.
+.RE
 .TP
 .BI \-U " uuid"
 Set the UUID of the filesystem to

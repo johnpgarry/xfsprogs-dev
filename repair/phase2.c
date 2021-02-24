@@ -131,6 +131,33 @@ zero_log(
 		libxfs_max_lsn = log->l_last_sync_lsn;
 }
 
+static bool
+set_inobtcount(
+	struct xfs_mount	*mp)
+{
+	if (!xfs_sb_version_hascrc(&mp->m_sb)) {
+		printf(
+	_("Inode btree count feature only supported on V5 filesystems.\n"));
+		exit(0);
+	}
+
+	if (!xfs_sb_version_hasfinobt(&mp->m_sb)) {
+		printf(
+	_("Inode btree count feature requires free inode btree.\n"));
+		exit(0);
+	}
+
+	if (xfs_sb_version_hasinobtcounts(&mp->m_sb)) {
+		printf(_("Filesystem already has inode btree counts.\n"));
+		exit(0);
+	}
+
+	printf(_("Adding inode btree counts to filesystem.\n"));
+	mp->m_sb.sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_INOBTCNT;
+	mp->m_sb.sb_features_incompat |= XFS_SB_FEAT_INCOMPAT_NEEDSREPAIR;
+	return true;
+}
+
 /* Perform the user's requested upgrades on filesystem. */
 static void
 upgrade_filesystem(
@@ -139,6 +166,9 @@ upgrade_filesystem(
 	struct xfs_buf		*bp;
 	bool			dirty = false;
 	int			error;
+
+	if (add_inobtcount)
+		dirty |= set_inobtcount(mp);
 
         if (no_modify || !dirty)
                 return;
