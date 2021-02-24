@@ -717,7 +717,6 @@ main(int argc, char **argv)
 {
 	xfs_mount_t	*temp_mp;
 	xfs_mount_t	*mp;
-	xfs_dsb_t	*dsb;
 	struct xfs_buf	*sbp;
 	xfs_mount_t	xfs_m;
 	struct xlog	log = {0};
@@ -1103,22 +1102,19 @@ _("Warning:  project quota information would be cleared.\n"
 	if (!sbp)
 		do_error(_("couldn't get superblock\n"));
 
-	dsb = sbp->b_addr;
-
 	if ((mp->m_sb.sb_qflags & XFS_ALL_QUOTA_CHKD) != quotacheck_results()) {
 		do_warn(_("Note - quota info will be regenerated on next "
 			"quota mount.\n"));
-		dsb->sb_qflags &= cpu_to_be16(~(XFS_UQUOTA_CHKD |
-						XFS_GQUOTA_CHKD |
-						XFS_PQUOTA_CHKD |
-						XFS_OQUOTA_CHKD));
+		mp->m_sb.sb_qflags &= ~(XFS_UQUOTA_CHKD | XFS_GQUOTA_CHKD |
+					XFS_PQUOTA_CHKD | XFS_OQUOTA_CHKD);
+		libxfs_sb_to_disk(sbp->b_addr, &mp->m_sb);
 	}
 
 	if (copied_sunit) {
 		do_warn(
 _("Note - stripe unit (%d) and width (%d) were copied from a backup superblock.\n"
   "Please reset with mount -o sunit=<value>,swidth=<value> if necessary\n"),
-			be32_to_cpu(dsb->sb_unit), be32_to_cpu(dsb->sb_width));
+			mp->m_sb.sb_unit, mp->m_sb.sb_width);
 	}
 
 	libxfs_buf_mark_dirty(sbp);
