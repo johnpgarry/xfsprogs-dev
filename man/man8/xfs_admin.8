@@ -13,6 +13,9 @@ xfs_admin \- change parameters of an XFS filesystem
 ] [
 .B \-U
 .I uuid
+] [
+.B \-r
+.I rtdev
 ]
 .I device
 [
@@ -122,6 +125,11 @@ not be able to mount the filesystem.  To remove this incompatible flag, use
 .BR restore ,
 which will restore the original UUID and remove the incompatible
 feature flag as needed.
+.TP
+.BI \-r " rtdev"
+Specifies the device special file where the filesystem's realtime section
+resides.
+Only for those filesystems which use a realtime section.
 .TP
 .B \-V
 Prints the version number and exits.
