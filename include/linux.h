@@ -31,6 +31,8 @@
 #ifdef OVERRIDE_SYSTEM_FSXATTR
 # undef fsxattr
 #endif
+#include <unistd.h>
+#include <assert.h>
 
 static __inline__ int xfsctl(const char *path, int fd, int cmd, void *p)
 {
@@ -185,6 +187,17 @@ platform_zero_range(
 #else
 #define platform_zero_range(fd, s, l)	(-EOPNOTSUPP)
 #endif
+
+/*
+ * Use SIGKILL to simulate an immediate program crash, without a chance to run
+ * atexit handlers.
+ */
+static inline void
+platform_crash(void)
+{
+	kill(getpid(), SIGKILL);
+	assert(0);
+}
 
 /*
  * Check whether we have to define FS_IOC_FS[GS]ETXATTR ourselves. These

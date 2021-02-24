@@ -590,7 +590,8 @@ out_unwind:
 static struct xfs_buftarg *
 libxfs_buftarg_alloc(
 	struct xfs_mount	*mp,
-	dev_t			dev)
+	dev_t			dev,
+	unsigned long		write_fails)
 {
 	struct xfs_buftarg	*btp;
 
@@ -603,9 +604,28 @@ libxfs_buftarg_alloc(
 	btp->bt_mount = mp;
 	btp->bt_bdev = dev;
 	btp->flags = 0;
+	if (write_fails) {
+		btp->writes_left = write_fails;
+		btp->flags |= XFS_BUFTARG_INJECT_WRITE_FAIL;
+	}
+	pthread_mutex_init(&btp->lock, NULL);
 
 	return btp;
 }
+
+enum libxfs_write_failure_nums {
+	WF_DATA = 0,
+	WF_LOG,
+	WF_RT,
+	WF_MAX_OPTS,
+};
+
+static char *wf_opts[] = {
+	[WF_DATA]		= "ddev",
+	[WF_LOG]		= "logdev",
+	[WF_RT]			= "rtdev",
+	[WF_MAX_OPTS]		= NULL,
+};
 
 void
 libxfs_buftarg_init(
@@ -614,6 +634,46 @@ libxfs_buftarg_init(
 	dev_t			logdev,
 	dev_t			rtdev)
 {
+	char			*p = getenv("LIBXFS_DEBUG_WRITE_CRASH");
+	unsigned long		dfail = 0, lfail = 0, rfail = 0;
+
+	/* Simulate utility crash after a certain number of writes. */
+	while (p && *p) {
+		char *val;
+
+		switch (getsubopt(&p, wf_opts, &val)) {
+		case WF_DATA:
+			if (!val) {
+				fprintf(stderr,
+		_("ddev write fail requires a parameter\n"));
+				exit(1);
+			}
+			dfail = strtoul(val, NULL, 0);
+			break;
+		case WF_LOG:
+			if (!val) {
+				fprintf(stderr,
+		_("logdev write fail requires a parameter\n"));
+				exit(1);
+			}
+			lfail = strtoul(val, NULL, 0);
+			break;
+		case WF_RT:
+			if (!val) {
+				fprintf(stderr,
+		_("rtdev write fail requires a parameter\n"));
+				exit(1);
+			}
+			rfail = strtoul(val, NULL, 0);
+			break;
+		default:
+			fprintf(stderr, _("unknown write fail type %s\n"),
+					val);
+			exit(1);
+			break;
+		}
+	}
+
 	if (mp->m_ddev_targp) {
 		/* should already have all buftargs initialised */
 		if (mp->m_ddev_targp->bt_bdev != dev ||
@@ -647,12 +707,12 @@ libxfs_buftarg_init(
 		return;
 	}
 
-	mp->m_ddev_targp = libxfs_buftarg_alloc(mp, dev);
+	mp->m_ddev_targp = libxfs_buftarg_alloc(mp, dev, dfail);
 	if (!logdev || logdev == dev)
 		mp->m_logdev_targp = mp->m_ddev_targp;
 	else
-		mp->m_logdev_targp = libxfs_buftarg_alloc(mp, logdev);
-	mp->m_rtdev_targp = libxfs_buftarg_alloc(mp, rtdev);
+		mp->m_logdev_targp = libxfs_buftarg_alloc(mp, logdev, lfail);
+	mp->m_rtdev_targp = libxfs_buftarg_alloc(mp, rtdev, rfail);
 }
 
 /*

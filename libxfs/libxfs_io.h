@@ -22,6 +22,8 @@ struct xfs_perag;
  */
 struct xfs_buftarg {
 	struct xfs_mount	*bt_mount;
+	pthread_mutex_t		lock;
+	unsigned long		writes_left;
 	dev_t			bt_bdev;
 	unsigned int		flags;
 };
@@ -30,6 +32,23 @@ struct xfs_buftarg {
 #define XFS_BUFTARG_LOST_WRITE		(1 << 0)
 /* A dirty buffer failed the write verifier. */
 #define XFS_BUFTARG_CORRUPT_WRITE	(1 << 1)
+/* Simulate failure after a certain number of writes. */
+#define XFS_BUFTARG_INJECT_WRITE_FAIL	(1 << 2)
+
+/* Simulate the system crashing after a certain number of writes. */
+static inline void
+xfs_buftarg_trip_write(
+	struct xfs_buftarg	*btp)
+{
+	if (!(btp->flags & XFS_BUFTARG_INJECT_WRITE_FAIL))
+		return;
+
+	pthread_mutex_lock(&btp->lock);
+	btp->writes_left--;
+	if (!btp->writes_left)
+		platform_crash();
+	pthread_mutex_unlock(&btp->lock);
+}
 
 extern void	libxfs_buftarg_init(struct xfs_mount *mp, dev_t ddev,
 				    dev_t logdev, dev_t rtdev);

@@ -74,8 +74,10 @@ libxfs_device_zero(struct xfs_buftarg *btp, xfs_daddr_t start, uint len)
 	/* try to use special zeroing methods, fall back to writes if needed */
 	len_bytes = LIBXFS_BBTOOFF64(len);
 	error = platform_zero_range(fd, start_offset, len_bytes);
-	if (!error)
+	if (!error) {
+		xfs_buftarg_trip_write(btp);
 		return 0;
+	}
 
 	zsize = min(BDSTRAT_SIZE, BBTOB(len));
 	if ((z = memalign(libxfs_device_alignment(), zsize)) == NULL) {
@@ -105,6 +107,7 @@ libxfs_device_zero(struct xfs_buftarg *btp, xfs_daddr_t start, uint len)
 				progname, __FUNCTION__);
 			exit(1);
 		}
+		xfs_buftarg_trip_write(btp);
 		offset += bytes;
 	}
 	free(z);
@@ -860,6 +863,7 @@ libxfs_bwrite(
 	} else {
 		bp->b_flags |= LIBXFS_B_UPTODATE;
 		bp->b_flags &= ~(LIBXFS_B_DIRTY | LIBXFS_B_UNCHECKED);
+		xfs_buftarg_trip_write(bp->b_target);
 	}
 	return bp->b_error;
 }
