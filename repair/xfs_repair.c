@@ -849,6 +849,12 @@ unlock:
 	pthread_mutex_unlock(&wb_mutex);
 }
 
+static inline void
+phase_end(int phase)
+{
+	timestamp(PHASE_END, phase, NULL);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -878,7 +884,7 @@ main(int argc, char **argv)
 	msgbuf = malloc(DURATION_BUF_SIZE);
 
 	timestamp(PHASE_START, 0, NULL);
-	timestamp(PHASE_END, 0, NULL);
+	phase_end(0);
 
 	/* -f forces this, but let's be nice and autodetect it, as well. */
 	if (!isa_file) {
@@ -901,7 +907,7 @@ main(int argc, char **argv)
 
 	/* do phase1 to make sure we have a superblock */
 	phase1(temp_mp);
-	timestamp(PHASE_END, 1, NULL);
+	phase_end(1);
 
 	if (no_modify && primary_sb_modified)  {
 		do_warn(_("Primary superblock would have been modified.\n"
@@ -1127,23 +1133,23 @@ main(int argc, char **argv)
 
 	/* make sure the per-ag freespace maps are ok so we can mount the fs */
 	phase2(mp, phase2_threads);
-	timestamp(PHASE_END, 2, NULL);
+	phase_end(2);
 
 	if (do_prefetch)
 		init_prefetch(mp);
 
 	phase3(mp, phase2_threads);
-	timestamp(PHASE_END, 3, NULL);
+	phase_end(3);
 
 	phase4(mp);
-	timestamp(PHASE_END, 4, NULL);
+	phase_end(4);
 
 	if (no_modify)
 		printf(_("No modify flag set, skipping phase 5\n"));
 	else {
 		phase5(mp);
 	}
-	timestamp(PHASE_END, 5, NULL);
+	phase_end(5);
 
 	/*
 	 * Done with the block usage maps, toss them...
@@ -1153,10 +1159,10 @@ main(int argc, char **argv)
 
 	if (!bad_ino_btree)  {
 		phase6(mp);
-		timestamp(PHASE_END, 6, NULL);
+		phase_end(6);
 
 		phase7(mp, phase2_threads);
-		timestamp(PHASE_END, 7, NULL);
+		phase_end(7);
 	} else  {
 		do_warn(
 _("Inode allocation btrees are too corrupted, skipping phases 6 and 7\n"));
