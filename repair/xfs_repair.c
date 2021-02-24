@@ -66,12 +66,14 @@ static char *o_opts[] = {
 enum c_opt_nums {
 	CONVERT_LAZY_COUNT = 0,
 	CONVERT_INOBTCOUNT,
+	CONVERT_BIGTIME,
 	C_MAX_OPTS,
 };
 
 static char *c_opts[] = {
 	[CONVERT_LAZY_COUNT]	= "lazycount",
 	[CONVERT_INOBTCOUNT]	= "inobtcount",
+	[CONVERT_BIGTIME]	= "bigtime",
 	[C_MAX_OPTS]		= NULL,
 };
 
@@ -312,6 +314,15 @@ process_args(int argc, char **argv)
 						do_abort(
 		_("-c inobtcount only supports upgrades\n"));
 					add_inobtcount = true;
+					break;
+				case CONVERT_BIGTIME:
+					if (!val)
+						do_abort(
+		_("-c bigtime requires a parameter\n"));
+					if (strtol(val, NULL, 0) != 1)
+						do_abort(
+		_("-c bigtime only supports upgrades\n"));
+					add_bigtime = true;
 					break;
 				default:
 					unknown('c', val);

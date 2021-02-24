@@ -158,6 +158,27 @@ set_inobtcount(
 	return true;
 }
 
+static bool
+set_bigtime(
+	struct xfs_mount	*mp)
+{
+	if (!xfs_sb_version_hascrc(&mp->m_sb)) {
+		printf(
+	_("Large timestamp feature only supported on V5 filesystems.\n"));
+		exit(0);
+	}
+
+	if (xfs_sb_version_hasbigtime(&mp->m_sb)) {
+		printf(_("Filesystem already supports large timestamps.\n"));
+		exit(0);
+	}
+
+	printf(_("Adding large timestamp support to filesystem.\n"));
+	mp->m_sb.sb_features_incompat |= (XFS_SB_FEAT_INCOMPAT_NEEDSREPAIR |
+					  XFS_SB_FEAT_INCOMPAT_BIGTIME);
+	return true;
+}
+
 /* Perform the user's requested upgrades on filesystem. */
 static void
 upgrade_filesystem(
@@ -169,6 +190,8 @@ upgrade_filesystem(
 
 	if (add_inobtcount)
 		dirty |= set_inobtcount(mp);
+	if (add_bigtime)
+		dirty |= set_bigtime(mp);
 
         if (no_modify || !dirty)
                 return;
