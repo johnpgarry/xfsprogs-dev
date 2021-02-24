@@ -751,6 +751,104 @@ clear_needsrepair(
 		libxfs_buf_relse(bp);
 }
 
+static void
+update_sb_crc_only(
+	struct xfs_buf		*bp)
+{
+	xfs_buf_update_cksum(bp, XFS_SB_CRC_OFF);
+}
+
+/* Forcibly write the primary superblock with the NEEDSREPAIR flag set. */
+static void
+force_needsrepair(
+	struct xfs_mount	*mp)
+{
+	struct xfs_buf_ops	fake_ops;
+	struct xfs_buf		*bp;
+	int			error;
+
+	if (!xfs_sb_version_hascrc(&mp->m_sb) ||
+	    xfs_sb_version_needsrepair(&mp->m_sb))
+		return;
+
+	bp = libxfs_getsb(mp);
+	if (!bp || bp->b_error) {
+		do_log(
+	_("couldn't get superblock to set needsrepair, err=%d\n"),
+				bp ? bp->b_error : ENOMEM);
+	} else {
+		/*
+		 * It's possible that we need to set NEEDSREPAIR before we've
+		 * had a chance to fix the summary counters in the primary sb.
+		 * With the exception of those counters, phase 1 already
+		 * ensured that the geometry makes sense.
+		 *
+		 * Bad summary counters in the primary super can cause the
+		 * write verifier to fail, so substitute a dummy that only sets
+		 * the CRC.  In the event of a crash, NEEDSREPAIR will prevent
+		 * the kernel from mounting our potentially damaged filesystem
+		 * until repair is run again, so it's ok to bypass the usual
+		 * verification in this one case.
+		 */
+		fake_ops = xfs_sb_buf_ops; /* struct copy */
+		fake_ops.verify_write = update_sb_crc_only;
+
+		mp->m_sb.sb_features_incompat |=
+				XFS_SB_FEAT_INCOMPAT_NEEDSREPAIR;
+		libxfs_sb_to_disk(bp->b_addr, &mp->m_sb);
+
+		/* Force the primary super to disk immediately. */
+		bp->b_ops = &fake_ops;
+		error = -libxfs_bwrite(bp);
+		bp->b_ops = &xfs_sb_buf_ops;
+		if (error)
+			do_log(_("couldn't force needsrepair, err=%d\n"), error);
+	}
+	if (bp)
+		libxfs_buf_relse(bp);
+}
+
+/*
+ * Intercept the first non-super write to the filesystem so we can set
+ * NEEDSREPAIR to protect the filesystem from mount in case of a crash.
+ */
+static void
+repair_capture_writeback(
+	struct xfs_buf		*bp)
+{
+	struct xfs_mount	*mp = bp->b_mount;
+	static pthread_mutex_t	wb_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+	/*
+	 * This write hook ignores any buffer that looks like a superblock to
+	 * avoid hook recursion when setting NEEDSREPAIR.  Higher level code
+	 * modifying an sb must control the flag manually.
+	 */
+	if (bp->b_ops == &xfs_sb_buf_ops || bp->b_bn == XFS_SB_DADDR)
+		return;
+
+	pthread_mutex_lock(&wb_mutex);
+
+	/*
+	 * If someone else already dropped the hook, then needsrepair has
+	 * already been set on the filesystem and we can unlock.
+	 */
+	if (mp->m_buf_writeback_fn != repair_capture_writeback)
+		goto unlock;
+
+	/*
+	 * If we get here, the buffer being written is not a superblock, and
+	 * needsrepair needs to be set.  The hook is kept in place to plug all
+	 * other writes until the sb write finishes.
+	 */
+	force_needsrepair(mp);
+
+	/* We only set needsrepair once, so clear the hook now. */
+	mp->m_buf_writeback_fn = NULL;
+unlock:
+	pthread_mutex_unlock(&wb_mutex);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -846,6 +944,10 @@ main(int argc, char **argv)
 	/* Spit out function & line on these corruption macros */
 	if (verbose > 2)
 		mp->m_flags |= LIBXFS_MOUNT_WANT_CORRUPTED;
+
+	/* Capture the first writeback so that we can set needsrepair. */
+	if (xfs_sb_version_hascrc(&mp->m_sb))
+		mp->m_buf_writeback_fn = repair_capture_writeback;
 
 	/*
 	 * set XFS-independent status vars from the mount/sb structure

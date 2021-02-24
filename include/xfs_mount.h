@@ -11,6 +11,8 @@ struct xfs_inode;
 struct xfs_buftarg;
 struct xfs_da_geometry;
 
+typedef void (*buf_writeback_fn)(struct xfs_buf *bp);
+
 /*
  * Define a user-level mount structure with all we need
  * in order to make use of the numerous XFS_* macros.
@@ -94,6 +96,8 @@ typedef struct xfs_mount {
 	struct {
 		int	qi_dqperchunk;
 	}			*m_quotainfo;
+
+	buf_writeback_fn	m_buf_writeback_fn;
 
 	/*
 	 * xlog is defined in libxlog and thus is not intialized by libxfs. This

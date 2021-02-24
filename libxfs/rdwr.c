@@ -812,6 +812,10 @@ libxfs_bwrite(
 		return bp->b_error;
 	}
 
+	/* Trigger the writeback hook if there is one. */
+	if (bp->b_mount->m_buf_writeback_fn)
+		bp->b_mount->m_buf_writeback_fn(bp);
+
 	/*
 	 * clear any pre-existing error status on the buffer. This can occur if
 	 * the buffer is corrupt on disk and the repair process doesn't clear
