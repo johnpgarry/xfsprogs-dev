@@ -223,6 +223,13 @@ of calculating and checking the CRCs is not noticeable in normal operation.
 By default,
 .B mkfs.xfs
 will enable metadata CRCs.
+.IP
+Formatting a filesystem without CRCs selects the V4 format, which is deprecated
+and will be removed from upstream in September 2030.
+Distributors may choose to withdraw support for the V4 format earlier than
+this date.
+Several other options, noted below, are only tunable on V4 formats, and will
+be removed along with the V4 format itself.
 .TP
 .BI finobt= value
 This option enables the use of a separate free inode btree index in each
@@ -592,6 +599,8 @@ This option can be used to turn off inode alignment when the
 filesystem needs to be mountable by a version of IRIX
 that does not have the inode alignment feature
 (any release of IRIX before 6.2, and IRIX 6.2 without XFS patches).
+.IP
+This option is only tunable on the deprecated V4 format.
 .TP
 .BI attr= value
 This is used to specify the version of extended attribute inline
@@ -602,6 +611,8 @@ between attribute and extent data.
 The previous version 1, which has fixed regions for attribute and
 extent data, is kept for backwards compatibility with kernels older
 than version 2.6.16.
+.IP
+This option is only tunable on the deprecated V4 format.
 .TP
 .BI projid32bit[= value ]
 This is used to enable 32bit quota project identifiers. The
@@ -609,6 +620,8 @@ This is used to enable 32bit quota project identifiers. The
 is either 0 or 1, with 1 signifying that 32bit projid are to be enabled.
 If the value is omitted, 1 is assumed.  (This default changed
 in release version 3.2.0.)
+.IP
+This option is only tunable on the deprecated V4 format.
 .TP
 .BI sparse[= value ]
 Enable sparse inode chunk allocation. The
@@ -690,6 +703,8 @@ stripe-aligned log writes (see the sunit and su options, below).
 The previous version 1, which is limited to 32k log buffers and does
 not support stripe-aligned writes, is kept for backwards compatibility
 with very old 2.4 kernels.
+.IP
+This option is only tunable on the deprecated V4 format.
 .TP
 .BI sunit= value
 This specifies the alignment to be used for log writes. The
@@ -744,6 +759,8 @@ is 1 (on) so you must specify
 .B lazy-count=0
 if you want to disable this feature for older kernels which don't support
 it.
+.IP
+This option is only tunable on the deprecated V4 format.
 .RE
 .PP
 .PD 0
@@ -802,6 +819,8 @@ will be stored in the directory structure.  The default value is 1.
 
 When CRCs are enabled (the default), the ftype functionality is always
 enabled, and cannot be turned off.
+.IP
+In other words, this option is only tunable on the deprecated V4 format.
 .IP
 .RE
 .TP
