@@ -2475,28 +2475,22 @@ _("both data su and data sw options must be specified\n"));
 			usage();
 		}
 
-		if (dsu % cfg->sectorsize) {
-			fprintf(stderr,
-_("data su must be a multiple of the sector size (%d)\n"), cfg->sectorsize);
-			usage();
-		}
-
-		dsunit  = (int)BTOBBT(dsu);
-		big_dswidth = (long long int)dsunit * dsw;
-		if (big_dswidth > INT_MAX) {
+		big_dswidth = (long long int)dsu * dsw;
+		if (BTOBBT(big_dswidth) > INT_MAX) {
 			fprintf(stderr,
 _("data stripe width (%lld) is too large of a multiple of the data stripe unit (%d)\n"),
-				big_dswidth, dsunit);
+				big_dswidth, dsu);
 			usage();
 		}
-		dswidth = big_dswidth;
-	}
 
-	if ((dsunit && !dswidth) || (!dsunit && dswidth) ||
-	    (dsunit && (dswidth % dsunit != 0))) {
-		fprintf(stderr,
-_("data stripe width (%d) must be a multiple of the data stripe unit (%d)\n"),
-			dswidth, dsunit);
+		if (!libxfs_validate_stripe_geometry(NULL, dsu, big_dswidth,
+						     cfg->sectorsize, false))
+			usage();
+
+		dsunit = BTOBBT(dsu);
+		dswidth = BTOBBT(big_dswidth);
+	} else if (!libxfs_validate_stripe_geometry(NULL, BBTOB(dsunit),
+			BBTOB(dswidth), cfg->sectorsize, false)) {
 		usage();
 	}
 
@@ -2514,11 +2508,12 @@ _("data stripe width (%d) must be a multiple of the data stripe unit (%d)\n"),
 
 	/* if no stripe config set, use the device default */
 	if (!dsunit) {
-		/* Ignore nonsense from device.  XXX add more validation */
-		if (ft->dsunit && ft->dswidth == 0) {
+		/* Ignore nonsense from device report. */
+		if (!libxfs_validate_stripe_geometry(NULL, BBTOB(ft->dsunit),
+				BBTOB(ft->dswidth), 0, true)) {
 			fprintf(stderr,
-_("%s: Volume reports stripe unit of %d bytes and stripe width of 0, ignoring.\n"),
-				progname, BBTOB(ft->dsunit));
+_("%s: Volume reports invalid stripe unit (%d) and stripe width (%d), ignoring.\n"),
+				progname, BBTOB(ft->dsunit), BBTOB(ft->dswidth));
 			ft->dsunit = 0;
 			ft->dswidth = 0;
 		} else {
