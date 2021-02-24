@@ -870,7 +870,7 @@ _("%s: Flushing the %s failed, err=%d!\n"),
  * Flush all dirty buffers to stable storage and report on writes that didn't
  * make it to stable storage.
  */
-static int
+int
 libxfs_flush_mount(
 	struct xfs_mount	*mp)
 {
@@ -878,13 +878,13 @@ libxfs_flush_mount(
 	int			err2;
 
 	/*
-	 * Purge the buffer cache to write all dirty buffers to disk and free
-	 * all incore buffers.  Buffers that fail write verification will cause
-	 * the CORRUPT_WRITE flag to be set in the buftarg.  Buffers that
-	 * cannot be written will cause the LOST_WRITE flag to be set in the
-	 * buftarg.
+	 * Flush the buffer cache to write all dirty buffers to disk.  Buffers
+	 * that fail write verification will cause the CORRUPT_WRITE flag to be
+	 * set in the buftarg.  Buffers that cannot be written will cause the
+	 * LOST_WRITE flag to be set in the buftarg.  Once that's done,
+	 * instruct the disks to persist their write caches.
 	 */
-	libxfs_bcache_purge();
+	libxfs_bcache_flush();
 
 	/* Flush all kernel and disk write caches, and report failures. */
 	if (mp->m_ddev_targp) {
@@ -923,6 +923,12 @@ libxfs_umount(
 
 	libxfs_rtmount_destroy(mp);
 
+	/*
+	 * Purge the buffer cache to write all dirty buffers to disk and free
+	 * all incore buffers, then pick up the outcome when we tell the disks
+	 * to persist their write caches.
+	 */
+	libxfs_bcache_purge();
 	error = libxfs_flush_mount(mp);
 
 	for (agno = 0; agno < mp->m_maxagi; agno++) {

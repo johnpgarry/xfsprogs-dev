@@ -712,6 +712,45 @@ check_fs_vs_host_sectsize(
 	}
 }
 
+/* Clear needsrepair after a successful repair run. */
+void
+clear_needsrepair(
+	struct xfs_mount	*mp)
+{
+	struct xfs_buf		*bp;
+	int			error;
+
+	/*
+	 * If we're going to clear NEEDSREPAIR, we need to make absolutely sure
+	 * that everything is ok with the ondisk filesystem.  Make sure any
+	 * dirty buffers are sent to disk and that the disks have persisted
+	 * writes to stable storage.  If that fails, leave NEEDSREPAIR in
+	 * place.
+	 */
+	error = -libxfs_flush_mount(mp);
+	if (error) {
+		do_warn(
+	_("Cannot clear needsrepair due to flush failure, err=%d.\n"),
+			error);
+		return;
+	}
+
+	/* Clear needsrepair from the superblock. */
+	bp = libxfs_getsb(mp);
+	if (!bp || bp->b_error) {
+		do_warn(
+	_("Cannot clear needsrepair from primary super, err=%d.\n"),
+			bp ? bp->b_error : ENOMEM);
+	} else {
+		mp->m_sb.sb_features_incompat &=
+				~XFS_SB_FEAT_INCOMPAT_NEEDSREPAIR;
+		libxfs_sb_to_disk(bp->b_addr, &mp->m_sb);
+		libxfs_buf_mark_dirty(bp);
+	}
+	if (bp)
+		libxfs_buf_relse(bp);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1127,6 +1166,9 @@ _("Note - stripe unit (%d) and width (%d) were copied from a backup superblock.\
 	 */
 	libxfs_bcache_flush();
 	format_log_max_lsn(mp);
+
+	if (xfs_sb_version_needsrepair(&mp->m_sb))
+		clear_needsrepair(mp);
 
 	/* Report failure if anything failed to get written to our fs. */
 	error = -libxfs_umount(mp);
