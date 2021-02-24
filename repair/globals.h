@@ -162,4 +162,7 @@ extern uint64_t		*prog_rpt_done;
 extern int		ag_stride;
 extern int		thread_count;
 
+/* If nonzero, simulate failure after this phase. */
+extern int		fail_after_phase;
+
 #endif /* _XFS_REPAIR_GLOBAL_H */

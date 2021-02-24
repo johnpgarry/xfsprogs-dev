@@ -117,3 +117,6 @@ uint64_t	*prog_rpt_done;
 
 int		ag_stride;
 int		thread_count;
+
+/* If nonzero, simulate failure after this phase. */
+int		fail_after_phase;
