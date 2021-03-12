@@ -51,17 +51,9 @@ case $# in
 		fi
 		if [ -n "$REPAIR_OPTS" ]
 		then
-			# Hide normal repair output which is sent to stderr
-			# assuming the filesystem is fine when a user is
-			# running xfs_admin.
-			# Ideally, we need to improve the output behaviour
-			# of repair for this purpose (say a "quiet" mode).
-			eval xfs_repair $REPAIR_DEV_OPTS $REPAIR_OPTS "$1" 2> /dev/null
+			echo "Running xfs_repair to upgrade filesystem."
+			eval xfs_repair $REPAIR_DEV_OPTS $REPAIR_OPTS "$1"
 			status=`expr $? + $status`
-			if [ $status -ne 0 ]
-			then
-				echo "Conversion failed, is the filesystem unmounted?"
-			fi
 		fi
 		;;
 	*)	echo $USAGE 1>&2
