@@ -1,3 +1,10 @@
+xfsprogs (5.11.0-rc0-1) experimental; urgency=medium
+
+  [ Steve Langasek ]
+  * Regenerate config.guess using debhelper
+
+ -- Bastian Germann <bastiangermann@fishpost.de>  Sat, 20 Feb 2021 11:57:31 +0100
+
 xfsprogs (5.10.0-3) unstable; urgency=medium
 
   * Drop unused dh-python from Build-Depends (Closes: #981361)
