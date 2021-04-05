@@ -3464,7 +3464,6 @@ xfs_bmap_compute_alignments(
 	struct xfs_mount	*mp = args->mp;
 	xfs_extlen_t		align = 0; /* minimum allocation alignment */
 	int			stripe_align = 0;
-	int			error;
 
 	/* stripe alignment for allocation is determined by mount parameters */
 	if (mp->m_swidth && (mp->m_flags & XFS_MOUNT_SWALLOC))
@@ -3477,10 +3476,10 @@ xfs_bmap_compute_alignments(
 	else if (ap->datatype & XFS_ALLOC_USERDATA)
 		align = xfs_get_extsz_hint(ap->ip);
 	if (align) {
-		error = xfs_bmap_extsize_align(mp, &ap->got, &ap->prev,
-						align, 0, ap->eof, 0, ap->conv,
-						&ap->offset, &ap->length);
-		ASSERT(!error);
+		if (xfs_bmap_extsize_align(mp, &ap->got, &ap->prev, align, 0,
+					ap->eof, 0, ap->conv, &ap->offset,
+					&ap->length))
+			ASSERT(0);
 		ASSERT(ap->length);
 	}
 
