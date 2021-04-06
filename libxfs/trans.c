@@ -1009,6 +1009,7 @@ libxfs_trans_alloc_inode(
 	struct xfs_inode	*ip,
 	struct xfs_trans_res	*resv,
 	unsigned int		dblocks,
+	unsigned int		rblocks,
 	bool			force,
 	struct xfs_trans	**tpp)
 {
@@ -1016,7 +1017,8 @@ libxfs_trans_alloc_inode(
 	struct xfs_mount	*mp = ip->i_mount;
 	int			error;
 
-	error = libxfs_trans_alloc(mp, resv, dblocks, 0,
+	error = libxfs_trans_alloc(mp, resv, dblocks,
+			rblocks / mp->m_sb.sb_rextsize,
 			force ? XFS_TRANS_RESERVE : 0, &tp);
 	if (error)
 		return error;
