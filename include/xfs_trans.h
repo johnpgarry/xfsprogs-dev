@@ -85,6 +85,8 @@ int	xfs_trans_roll(struct xfs_trans **);
 int	libxfs_trans_alloc(struct xfs_mount *mp, struct xfs_trans_res *resp,
 			   uint blocks, uint rtextents, uint flags,
 			   struct xfs_trans **tpp);
+int	libxfs_trans_alloc_inode(struct xfs_inode *ip, struct xfs_trans_res *resv,
+			unsigned int dblocks, bool force, struct xfs_trans **tpp);
 int	libxfs_trans_alloc_rollable(struct xfs_mount *mp, uint blocks,
 				    struct xfs_trans **tpp);
 int	libxfs_trans_alloc_empty(struct xfs_mount *mp, struct xfs_trans **tpp);
