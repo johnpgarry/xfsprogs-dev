@@ -42,8 +42,8 @@ extern void	*kmem_alloc_large(size_t, int);
 extern void	*kmem_zalloc(size_t, int);
 
 static inline void
-kmem_free(void *ptr) {
-	free(ptr);
+kmem_free(const void *ptr) {
+	free((void *)ptr);
 }
 
 extern void	*krealloc(void *, size_t, int);
