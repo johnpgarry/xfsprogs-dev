@@ -8,7 +8,7 @@ status=0
 DB_OPTS=""
 REPAIR_OPTS=""
 REPAIR_DEV_OPTS=""
-DB_LOG_OPTS=""
+LOG_OPTS=""
 USAGE="Usage: xfs_admin [-efjlpuV] [-c 0|1] [-L label] [-O v5_feature] [-r rtdev] [-U uuid] device [logdev]"
 
 while getopts "c:efjlL:O:pr:uU:V" c
@@ -40,19 +40,18 @@ case $# in
 	1|2)
 		# Pick up the log device, if present
 		if [ -n "$2" ]; then
-			DB_OPTS=$DB_OPTS" -l '$2'"
-			REPAIR_DEV_OPTS=$REPAIR_DEV_OPTS" -l '$2'"
+			LOG_OPTS=" -l '$2'"
 		fi
 
 		if [ -n "$DB_OPTS" ]
 		then
-			eval xfs_db -x -p xfs_admin $DB_OPTS "$1"
+			eval xfs_db -x -p xfs_admin $LOG_OPTS $DB_OPTS "$1"
 			status=$?
 		fi
 		if [ -n "$REPAIR_OPTS" ]
 		then
 			echo "Running xfs_repair to upgrade filesystem."
-			eval xfs_repair $REPAIR_DEV_OPTS $REPAIR_OPTS "$1"
+			eval xfs_repair $LOG_OPTS $REPAIR_DEV_OPTS $REPAIR_OPTS "$1"
 			status=`expr $? + $status`
 		fi
 		;;
