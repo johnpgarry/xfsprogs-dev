@@ -139,6 +139,23 @@ by the filesystem.
 CRC enabled filesystems always use the attr2 format, and so
 will reject the noattr2 mount option if it is set.
 .TP
+.BR dax=value
+Set CPU direct access (DAX) behavior for the current filesystem. This mount
+option accepts the following values:
+
+"dax=inode" DAX will be enabled only on regular files with FS_XFLAG_DAX applied.
+
+"dax=never" DAX will not be enabled for any files. FS_XFLAG_DAX will be ignored.
+
+"dax=always" DAX will be enabled for all regular files, regardless of the
+FS_XFLAG_DAX state.
+
+If no option is used when mounting a filesystem stored on a DAX capable device,
+dax=inode will be used as default.
+
+For details regarding DAX behavior in kernel, please refer to kernel's
+documentation at filesystems/dax.txt
+.TP
 .BR discard | nodiscard
 Enable/disable the issuing of commands to let the block
 device reclaim space freed by the filesystem.  This is
