@@ -18,6 +18,7 @@
 #include <endian.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <signal.h>
 #include <asm/types.h>
 #include <mntent.h>
 #include <fcntl.h>
