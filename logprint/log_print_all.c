@@ -186,18 +186,18 @@ xlog_recover_print_quotaoff(
 	struct xlog_recover_item *item)
 {
 	xfs_qoff_logformat_t	*qoff_f;
-	char			str[32] = { 0 };
 
 	qoff_f = (xfs_qoff_logformat_t *)item->ri_buf[0].i_addr;
+
 	ASSERT(qoff_f);
+	printf(_("\tQUOTAOFF: #regs:%d   type:"), qoff_f->qf_size);
 	if (qoff_f->qf_flags & XFS_UQUOTA_ACCT)
-		strcat(str, "USER QUOTA");
+		printf(" USER");
 	if (qoff_f->qf_flags & XFS_GQUOTA_ACCT)
-		strcat(str, "GROUP QUOTA");
+		printf(" GROUP");
 	if (qoff_f->qf_flags & XFS_PQUOTA_ACCT)
-		strcat(str, "PROJECT QUOTA");
-	printf(_("\tQUOTAOFF: #regs:%d   type:%s\n"),
-	       qoff_f->qf_size, str);
+		printf(" PROJECT");
+	printf("\n");
 }
 
 STATIC void
