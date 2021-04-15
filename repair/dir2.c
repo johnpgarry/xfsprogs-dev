@@ -20,40 +20,50 @@
  * Known bad inode list.  These are seen when the leaf and node
  * block linkages are incorrect.
  */
-typedef struct dir2_bad {
+struct dir2_bad {
 	xfs_ino_t	ino;
 	struct dir2_bad	*next;
-} dir2_bad_t;
+};
 
-static dir2_bad_t *dir2_bad_list;
+static struct dir2_bad	*dir2_bad_list;
+pthread_mutex_t		dir2_bad_list_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static void
 dir2_add_badlist(
 	xfs_ino_t	ino)
 {
-	dir2_bad_t	*l;
+	struct dir2_bad	*l;
 
-	if ((l = malloc(sizeof(dir2_bad_t))) == NULL) {
+	l = malloc(sizeof(*l));
+	if (!l) {
 		do_error(
 _("malloc failed (%zu bytes) dir2_add_badlist:ino %" PRIu64 "\n"),
-			sizeof(dir2_bad_t), ino);
+			sizeof(*l), ino);
 		exit(1);
 	}
+	pthread_mutex_lock(&dir2_bad_list_lock);
 	l->next = dir2_bad_list;
 	dir2_bad_list = l;
 	l->ino = ino;
+	pthread_mutex_unlock(&dir2_bad_list_lock);
 }
 
-int
+bool
 dir2_is_badino(
 	xfs_ino_t	ino)
 {
-	dir2_bad_t	*l;
+	struct dir2_bad	*l;
+	bool		ret = false;
 
-	for (l = dir2_bad_list; l; l = l->next)
-		if (l->ino == ino)
-			return 1;
-	return 0;
+	pthread_mutex_lock(&dir2_bad_list_lock);
+	for (l = dir2_bad_list; l; l = l->next) {
+		if (l->ino == ino) {
+			ret = true;
+			break;
+		}
+	}
+	pthread_mutex_unlock(&dir2_bad_list_lock);
+	return ret;
 }
 
 /*

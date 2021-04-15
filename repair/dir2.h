@@ -27,7 +27,7 @@ process_sf_dir2_fixi8(
 	struct xfs_dir2_sf_hdr	*sfp,
 	xfs_dir2_sf_entry_t	**next_sfep);
 
-int
+bool
 dir2_is_badino(
 	xfs_ino_t	ino);
 
