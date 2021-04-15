@@ -66,8 +66,7 @@ add_dotdot_update(
  * and whether their leaf entry has been seen. Also used for name
  * duplicate checking and rebuilding step if required.
  */
-typedef struct dir_hash_ent {
-	struct dir_hash_ent	*nextbyaddr;	/* next in addr bucket */
+struct dir_hash_ent {
 	struct dir_hash_ent	*nextbyhash;	/* next in name bucket */
 	struct dir_hash_ent	*nextbyorder;	/* next in order added */
 	xfs_dahash_t		hashval;	/* hash value of name */
@@ -77,18 +76,19 @@ typedef struct dir_hash_ent {
 	short			seen;		/* have seen leaf entry */
 	struct xfs_name		name;
 	unsigned char		namebuf[];
-} dir_hash_ent_t;
+};
 
-typedef struct dir_hash_tab {
+struct dir_hash_tab {
 	int			size;		/* size of hash tables */
-	dir_hash_ent_t		*first;		/* ptr to first added entry */
-	dir_hash_ent_t		*last;		/* ptr to last added entry */
-	dir_hash_ent_t		**byhash;	/* ptr to name hash buckets */
-	dir_hash_ent_t		**byaddr;	/* ptr to addr hash buckets */
-} dir_hash_tab_t;
+	struct dir_hash_ent	*first;		/* ptr to first added entry */
+	struct dir_hash_ent	*last;		/* ptr to last added entry */
+	struct dir_hash_ent	**byhash;	/* ptr to name hash buckets */
+#define HT_UNSEEN		1
+	struct radix_tree_root	byaddr;
+};
 
 #define	DIR_HASH_TAB_SIZE(n)	\
-	(sizeof(dir_hash_tab_t) + (sizeof(dir_hash_ent_t *) * (n) * 2))
+	(sizeof(struct dir_hash_tab) + (sizeof(struct dir_hash_ent *) * (n)))
 #define	DIR_HASH_FUNC(t,a)	((a) % (t)->size)
 
 /*
@@ -155,8 +155,8 @@ dir_read_buf(
  */
 static int
 dir_hash_add(
-	xfs_mount_t		*mp,
-	dir_hash_tab_t		*hashtab,
+	struct xfs_mount	*mp,
+	struct dir_hash_tab	*hashtab,
 	uint32_t		addr,
 	xfs_ino_t		inum,
 	int			namelen,
@@ -164,19 +164,18 @@ dir_hash_add(
 	uint8_t			ftype)
 {
 	xfs_dahash_t		hash = 0;
-	int			byaddr;
 	int			byhash = 0;
-	dir_hash_ent_t		*p;
+	struct dir_hash_ent	*p;
 	int			dup;
 	short			junk;
 	struct xfs_name		xname;
+	int			error;
 
 	xname.name = name;
 	xname.len = namelen;
 	xname.type = ftype;
 
 	junk = name[0] == '/';
-	byaddr = DIR_HASH_FUNC(hashtab, addr);
 	dup = 0;
 
 	if (!junk) {
@@ -206,8 +205,14 @@ dir_hash_add(
 		do_error(_("malloc failed in dir_hash_add (%zu bytes)\n"),
 			sizeof(*p));
 
-	p->nextbyaddr = hashtab->byaddr[byaddr];
-	hashtab->byaddr[byaddr] = p;
+	error = radix_tree_insert(&hashtab->byaddr, addr, p);
+	if (error == EEXIST) {
+		do_warn(_("duplicate addrs %u in directory!\n"), addr);
+		free(p);
+		return 0;
+	}
+	radix_tree_tag_set(&hashtab->byaddr, addr, HT_UNSEEN);
+
 	if (hashtab->last)
 		hashtab->last->nextbyorder = p;
 	else
@@ -232,33 +237,14 @@ dir_hash_add(
 	return !dup;
 }
 
-/*
- * checks to see if any data entries are not in the leaf blocks
- */
-static int
-dir_hash_unseen(
-	dir_hash_tab_t	*hashtab)
-{
-	int		i;
-	dir_hash_ent_t	*p;
-
-	for (i = 0; i < hashtab->size; i++) {
-		for (p = hashtab->byaddr[i]; p; p = p->nextbyaddr) {
-			if (p->seen == 0)
-				return 1;
-		}
-	}
-	return 0;
-}
-
 static int
 dir_hash_check(
-	dir_hash_tab_t	*hashtab,
-	xfs_inode_t	*ip,
-	int		seeval)
+	struct dir_hash_tab	*hashtab,
+	struct xfs_inode	*ip,
+	int			seeval)
 {
-	static char	*seevalstr[DIR_HASH_CK_TOTAL];
-	static int	done;
+	static char		*seevalstr[DIR_HASH_CK_TOTAL];
+	static int		done;
 
 	if (!done) {
 		seevalstr[DIR_HASH_CK_OK] = _("ok");
@@ -270,7 +256,8 @@ dir_hash_check(
 		done = 1;
 	}
 
-	if (seeval == DIR_HASH_CK_OK && dir_hash_unseen(hashtab))
+	if (seeval == DIR_HASH_CK_OK &&
+	    radix_tree_tagged(&hashtab->byaddr, HT_UNSEEN))
 		seeval = DIR_HASH_CK_NOLEAF;
 	if (seeval == DIR_HASH_CK_OK)
 		return 0;
@@ -285,27 +272,28 @@ dir_hash_check(
 
 static void
 dir_hash_done(
-	dir_hash_tab_t	*hashtab)
+	struct dir_hash_tab	*hashtab)
 {
-	int		i;
-	dir_hash_ent_t	*n;
-	dir_hash_ent_t	*p;
+	int			i;
+	struct dir_hash_ent	*n;
+	struct dir_hash_ent	*p;
 
 	for (i = 0; i < hashtab->size; i++) {
-		for (p = hashtab->byaddr[i]; p; p = n) {
-			n = p->nextbyaddr;
+		for (p = hashtab->byhash[i]; p; p = n) {
+			n = p->nextbyhash;
+			radix_tree_delete(&hashtab->byaddr, p->address);
 			free(p);
 		}
 	}
 	free(hashtab);
 }
 
-static dir_hash_tab_t *
+static struct dir_hash_tab *
 dir_hash_init(
-	xfs_fsize_t	size)
+	xfs_fsize_t		size)
 {
-	dir_hash_tab_t	*hashtab;
-	int		hsize;
+	struct dir_hash_tab	*hashtab;
+	int			hsize;
 
 	hsize = size / (16 * 4);
 	if (hsize > 65536)
@@ -315,51 +303,43 @@ dir_hash_init(
 	if ((hashtab = calloc(DIR_HASH_TAB_SIZE(hsize), 1)) == NULL)
 		do_error(_("calloc failed in dir_hash_init\n"));
 	hashtab->size = hsize;
-	hashtab->byhash = (dir_hash_ent_t**)((char *)hashtab +
-		sizeof(dir_hash_tab_t));
-	hashtab->byaddr = (dir_hash_ent_t**)((char *)hashtab +
-		sizeof(dir_hash_tab_t) + sizeof(dir_hash_ent_t*) * hsize);
+	hashtab->byhash = (struct dir_hash_ent **)((char *)hashtab +
+		sizeof(struct dir_hash_tab));
+	INIT_RADIX_TREE(&hashtab->byaddr, 0);
 	return hashtab;
 }
 
 static int
 dir_hash_see(
-	dir_hash_tab_t		*hashtab,
+	struct dir_hash_tab	*hashtab,
 	xfs_dahash_t		hash,
 	xfs_dir2_dataptr_t	addr)
 {
-	int			i;
-	dir_hash_ent_t		*p;
+	struct dir_hash_ent	*p;
 
-	i = DIR_HASH_FUNC(hashtab, addr);
-	for (p = hashtab->byaddr[i]; p; p = p->nextbyaddr) {
-		if (p->address != addr)
-			continue;
-		if (p->seen)
-			return DIR_HASH_CK_DUPLEAF;
-		if (p->junkit == 0 && p->hashval != hash)
-			return DIR_HASH_CK_BADHASH;
-		p->seen = 1;
-		return DIR_HASH_CK_OK;
-	}
-	return DIR_HASH_CK_NODATA;
+	p = radix_tree_lookup(&hashtab->byaddr, addr);
+	if (!p)
+		return DIR_HASH_CK_NODATA;
+	if (!radix_tree_tag_get(&hashtab->byaddr, addr, HT_UNSEEN))
+		return DIR_HASH_CK_DUPLEAF;
+	if (p->junkit == 0 && p->hashval != hash)
+		return DIR_HASH_CK_BADHASH;
+	radix_tree_tag_clear(&hashtab->byaddr, addr, HT_UNSEEN);
+	return DIR_HASH_CK_OK;
 }
 
 static void
 dir_hash_update_ftype(
-	dir_hash_tab_t		*hashtab,
+	struct dir_hash_tab	*hashtab,
 	xfs_dir2_dataptr_t	addr,
 	uint8_t			ftype)
 {
-	int			i;
-	dir_hash_ent_t		*p;
+	struct dir_hash_ent	*p;
 
-	i = DIR_HASH_FUNC(hashtab, addr);
-	for (p = hashtab->byaddr[i]; p; p = p->nextbyaddr) {
-		if (p->address != addr)
-			continue;
-		p->name.type = ftype;
-	}
+	p = radix_tree_lookup(&hashtab->byaddr, addr);
+	if (!p)
+		return;
+	p->name.type = ftype;
 }
 
 /*
@@ -368,7 +348,7 @@ dir_hash_update_ftype(
  */
 static int
 dir_hash_see_all(
-	dir_hash_tab_t		*hashtab,
+	struct dir_hash_tab	*hashtab,
 	xfs_dir2_leaf_entry_t	*ents,
 	int			count,
 	int			stale)
@@ -1222,19 +1202,19 @@ dir_binval(
 
 static void
 longform_dir2_rebuild(
-	xfs_mount_t		*mp,
+	struct xfs_mount	*mp,
 	xfs_ino_t		ino,
-	xfs_inode_t		*ip,
-	ino_tree_node_t		*irec,
+	struct xfs_inode	*ip,
+	struct ino_tree_node	*irec,
 	int			ino_offset,
-	dir_hash_tab_t		*hashtab)
+	struct dir_hash_tab	*hashtab)
 {
 	int			error;
 	int			nres;
-	xfs_trans_t		*tp;
+	struct xfs_trans	*tp;
 	xfs_fileoff_t		lastblock;
-	xfs_inode_t		pip;
-	dir_hash_ent_t		*p;
+	struct xfs_inode	pip;
+	struct dir_hash_ent	*p;
 	int			done = 0;
 
 	/*
@@ -1393,14 +1373,14 @@ _("directory shrink failed (%d)\n"), error);
  */
 static void
 longform_dir2_entry_check_data(
-	xfs_mount_t		*mp,
-	xfs_inode_t		*ip,
+	struct xfs_mount	*mp,
+	struct xfs_inode	*ip,
 	int			*num_illegal,
 	int			*need_dot,
-	ino_tree_node_t		*current_irec,
+	struct ino_tree_node	*current_irec,
 	int			current_ino_offset,
 	struct xfs_buf		*bp,
-	dir_hash_tab_t		*hashtab,
+	struct dir_hash_tab	*hashtab,
 	freetab_t		**freetabp,
 	xfs_dablk_t		da_bno,
 	int			isblock)
@@ -1927,10 +1907,10 @@ check_dir3_header(
  */
 static int
 longform_dir2_check_leaf(
-	xfs_mount_t		*mp,
-	xfs_inode_t		*ip,
-	dir_hash_tab_t		*hashtab,
-	freetab_t		*freetab)
+	struct xfs_mount	*mp,
+	struct xfs_inode	*ip,
+	struct dir_hash_tab	*hashtab,
+	struct freetab		*freetab)
 {
 	int			badtail;
 	__be16			*bestsp;
@@ -2012,10 +1992,10 @@ longform_dir2_check_leaf(
  */
 static int
 longform_dir2_check_node(
-	xfs_mount_t		*mp,
-	xfs_inode_t		*ip,
-	dir_hash_tab_t		*hashtab,
-	freetab_t		*freetab)
+	struct xfs_mount	*mp,
+	struct xfs_inode	*ip,
+	struct dir_hash_tab	*hashtab,
+	struct freetab		*freetab)
 {
 	struct xfs_buf		*bp;
 	xfs_dablk_t		da_bno;
@@ -2187,14 +2167,15 @@ longform_dir2_check_node(
  * (ie. get libxfs to do all the grunt work)
  */
 static void
-longform_dir2_entry_check(xfs_mount_t	*mp,
-			xfs_ino_t	ino,
-			xfs_inode_t	*ip,
-			int		*num_illegal,
-			int		*need_dot,
-			ino_tree_node_t	*irec,
-			int		ino_offset,
-			dir_hash_tab_t	*hashtab)
+longform_dir2_entry_check(
+	struct xfs_mount	*mp,
+	xfs_ino_t		ino,
+	struct xfs_inode	*ip,
+	int			*num_illegal,
+	int			*need_dot,
+	struct ino_tree_node	*irec,
+	int			ino_offset,
+	struct dir_hash_tab	*hashtab)
 {
 	struct xfs_buf		*bp;
 	xfs_dablk_t		da_bno;
@@ -2397,13 +2378,14 @@ shortform_dir2_junk(
 }
 
 static void
-shortform_dir2_entry_check(xfs_mount_t	*mp,
-			xfs_ino_t	ino,
-			xfs_inode_t	*ip,
-			int		*ino_dirty,
-			ino_tree_node_t	*current_irec,
-			int		current_ino_offset,
-			dir_hash_tab_t	*hashtab)
+shortform_dir2_entry_check(
+	struct xfs_mount	*mp,
+	xfs_ino_t		ino,
+	struct xfs_inode	*ip,
+	int			*ino_dirty,
+	struct ino_tree_node	*current_irec,
+	int			current_ino_offset,
+	struct dir_hash_tab	*hashtab)
 {
 	xfs_ino_t		lino;
 	xfs_ino_t		parent;
@@ -2745,15 +2727,15 @@ _("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name"),
  */
 static void
 process_dir_inode(
-	xfs_mount_t 		*mp,
+	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno,
-	ino_tree_node_t		*irec,
+	struct ino_tree_node	*irec,
 	int			ino_offset)
 {
 	xfs_ino_t		ino;
-	xfs_inode_t		*ip;
-	xfs_trans_t		*tp;
-	dir_hash_tab_t		*hashtab;
+	struct xfs_inode	*ip;
+	struct xfs_trans	*tp;
+	struct dir_hash_tab	*hashtab;
 	int			need_dot;
 	int			dirty, num_illegal, error, nres;
 
