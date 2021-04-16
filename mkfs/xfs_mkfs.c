@@ -1898,8 +1898,14 @@ validate_sectorsize(
 		if (!ft->lsectorsize)
 			ft->lsectorsize = dft->sectorsize;
 
-		/* Older kernels may not have physical/logical distinction */
-		if (!ft->psectorsize)
+		/*
+		 * Older kernels may not have physical/logical distinction.
+		 *
+		 * Some architectures have a page size > XFS_MAX_SECTORSIZE.
+		 * In that case, a ramdisk or persistent memory device may
+		 * advertise a physical sector size that is too big to use.
+		 */
+		if (!ft->psectorsize || ft->psectorsize > XFS_MAX_SECTORSIZE)
 			ft->psectorsize = ft->lsectorsize;
 
 		cfg->sectorsize = ft->psectorsize;
