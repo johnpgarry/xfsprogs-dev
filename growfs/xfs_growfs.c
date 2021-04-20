@@ -246,12 +246,11 @@ main(int argc, char **argv)
 			error = 1;
 		}
 
-		if (!error && dsize < geo.datablocks) {
-			fprintf(stderr, _("data size %lld too small,"
-				" old size is %lld\n"),
+		if (!error && dsize < geo.datablocks)
+			fprintf(stderr,
+_("[EXPERIMENTAL] try to shrink unused space %lld, old size is %lld\n"),
 				(long long)dsize, (long long)geo.datablocks);
-			error = 1;
-		} else if (!error &&
+		if (!error &&
 			   dsize == geo.datablocks && maxpct == geo.imaxpct) {
 			if (dflag)
 				fprintf(stderr, _(
