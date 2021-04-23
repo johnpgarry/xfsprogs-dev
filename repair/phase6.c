@@ -2195,7 +2195,7 @@ longform_dir2_entry_check(
 	int			ino_offset,
 	struct dir_hash_tab	*hashtab)
 {
-	struct xfs_buf		*bp;
+	struct xfs_buf		*bp = NULL;
 	xfs_dablk_t		da_bno;
 	freetab_t		*freetab;
 	int			i;
