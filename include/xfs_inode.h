@@ -90,7 +90,7 @@ typedef struct xfs_inode {
 	uint8_t			i_forkoff;	/* attr fork offset >> 3 */
 	uint16_t		i_diflags;	/* XFS_DIFLAG_... */
 	uint64_t		i_diflags2;	/* XFS_DIFLAG2_... */
-	struct xfs_icdinode	i_d;		/* most of ondisk inode */
+	struct timespec64	i_crtime;	/* time created */
 
 	xfs_extnum_t		i_cnextents;	/* # of extents in cow fork */
 	unsigned int		i_cformat;	/* format of cow fork */
