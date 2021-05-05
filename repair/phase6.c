@@ -448,6 +448,7 @@ reset_inode_fields(struct xfs_inode *ip)
 	ip->i_cowextsize = 0;
 	ip->i_flushiter = 0;
 	ip->i_forkoff = 0;
+	ip->i_diflags = 0;
 }
 
 static void
