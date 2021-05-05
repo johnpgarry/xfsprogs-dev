@@ -267,7 +267,7 @@ libxfs_init_new_inode(
 	set_nlink(VFS_I(ip), nlink);
 	i_uid_write(VFS_I(ip), cr->cr_uid);
 	i_gid_write(VFS_I(ip), cr->cr_gid);
-	ip->i_d.di_projid = pip ? 0 : fsx->fsx_projid;
+	ip->i_projid = pip ? 0 : fsx->fsx_projid;
 	xfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD);
 
 	if (pip && (VFS_I(pip)->i_mode & S_ISGID)) {
