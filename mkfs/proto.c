@@ -208,7 +208,7 @@ rsvfile(
 
 	libxfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_MOD | XFS_ICHGTIME_CHG);
 
-	ip->i_d.di_flags |= XFS_DIFLAG_PREALLOC;
+	ip->i_diflags |= XFS_DIFLAG_PREALLOC;
 
 	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 	error = -libxfs_trans_commit(tp);
@@ -652,7 +652,7 @@ rtinit(
 	 */
 	mp->m_sb.sb_rbmino = rbmip->i_ino;
 	rbmip->i_disk_size = mp->m_sb.sb_rbmblocks * mp->m_sb.sb_blocksize;
-	rbmip->i_d.di_flags = XFS_DIFLAG_NEWRTBM;
+	rbmip->i_diflags = XFS_DIFLAG_NEWRTBM;
 	*(uint64_t *)&VFS_I(rbmip)->i_atime = 0;
 	libxfs_trans_log_inode(tp, rbmip, XFS_ILOG_CORE);
 	libxfs_log_sb(tp);

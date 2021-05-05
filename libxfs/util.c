@@ -156,7 +156,7 @@ xfs_flags2diflags(
 {
 	/* can't set PREALLOC this way, just preserve it */
 	uint16_t		di_flags =
-		(ip->i_d.di_flags & XFS_DIFLAG_PREALLOC);
+		(ip->i_diflags & XFS_DIFLAG_PREALLOC);
 
 	if (xflags & FS_XFLAG_IMMUTABLE)
 		di_flags |= XFS_DIFLAG_IMMUTABLE;
@@ -218,24 +218,24 @@ xfs_inode_propagate_flags(
 	umode_t			mode = VFS_I(ip)->i_mode;
 
 	if ((mode & S_IFMT) == S_IFDIR) {
-		if (pip->i_d.di_flags & XFS_DIFLAG_RTINHERIT)
+		if (pip->i_diflags & XFS_DIFLAG_RTINHERIT)
 			di_flags |= XFS_DIFLAG_RTINHERIT;
-		if (pip->i_d.di_flags & XFS_DIFLAG_EXTSZINHERIT) {
+		if (pip->i_diflags & XFS_DIFLAG_EXTSZINHERIT) {
 			di_flags |= XFS_DIFLAG_EXTSZINHERIT;
 			ip->i_extsize = pip->i_extsize;
 		}
 	} else {
-		if ((pip->i_d.di_flags & XFS_DIFLAG_RTINHERIT) &&
+		if ((pip->i_diflags & XFS_DIFLAG_RTINHERIT) &&
 		    xfs_sb_version_hasrealtime(&ip->i_mount->m_sb))
 			di_flags |= XFS_DIFLAG_REALTIME;
-		if (pip->i_d.di_flags & XFS_DIFLAG_EXTSZINHERIT) {
+		if (pip->i_diflags & XFS_DIFLAG_EXTSZINHERIT) {
 			di_flags |= XFS_DIFLAG_EXTSIZE;
 			ip->i_extsize = pip->i_extsize;
 		}
 	}
-	if (pip->i_d.di_flags & XFS_DIFLAG_PROJINHERIT)
+	if (pip->i_diflags & XFS_DIFLAG_PROJINHERIT)
 		di_flags |= XFS_DIFLAG_PROJINHERIT;
-	ip->i_d.di_flags |= di_flags;
+	ip->i_diflags |= di_flags;
 }
 
 /*
@@ -280,7 +280,7 @@ libxfs_init_new_inode(
 	ip->i_df.if_nextents = 0;
 	ASSERT(ip->i_nblocks == 0);
 	ip->i_extsize = pip ? 0 : fsx->fsx_extsize;
-	ip->i_d.di_flags = pip ? 0 : xfs_flags2diflags(ip, fsx->fsx_xflags);
+	ip->i_diflags = pip ? 0 : xfs_flags2diflags(ip, fsx->fsx_xflags);
 
 	if (xfs_sb_version_has_v3inode(&ip->i_mount->m_sb)) {
 		ASSERT(ip->i_d.di_ino == ino);
@@ -307,7 +307,7 @@ libxfs_init_new_inode(
 		break;
 	case S_IFREG:
 	case S_IFDIR:
-		if (pip && (pip->i_d.di_flags & XFS_DIFLAG_ANY))
+		if (pip && (pip->i_diflags & XFS_DIFLAG_ANY))
 			xfs_inode_propagate_flags(ip, pip);
 		/* FALLTHROUGH */
 	case S_IFLNK:
