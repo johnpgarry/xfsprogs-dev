@@ -283,12 +283,10 @@ libxfs_init_new_inode(
 	ip->i_diflags = pip ? 0 : xfs_flags2diflags(ip, fsx->fsx_xflags);
 
 	if (xfs_sb_version_has_v3inode(&ip->i_mount->m_sb)) {
-		ASSERT(ip->i_d.di_ino == ino);
-		ASSERT(uuid_equal(&ip->i_d.di_uuid, &mp->m_sb.sb_meta_uuid));
 		VFS_I(ip)->i_version = 1;
 		ip->i_diflags2 = pip ? ip->i_mount->m_ino_geo.new_diflags2 :
 				xfs_flags2diflags2(ip, fsx->fsx_xflags);
-		ip->i_d.di_crtime = VFS_I(ip)->i_mtime; /* struct copy */
+		ip->i_crtime = VFS_I(ip)->i_mtime; /* struct copy */
 		ip->i_cowextsize = pip ? 0 : fsx->fsx_cowextsize;
 	}
 
@@ -351,7 +349,6 @@ libxfs_iflush_int(
 	/* set *dip = inode's place in the buffer */
 	dip = xfs_buf_offset(bp, ip->i_imap.im_boffset);
 
-	ASSERT(ip->i_d.di_magic == XFS_DINODE_MAGIC);
 	if (XFS_ISREG(ip)) {
 		ASSERT( (ip->i_df.if_format == XFS_DINODE_FMT_EXTENTS) ||
 			(ip->i_df.if_format == XFS_DINODE_FMT_BTREE) );
