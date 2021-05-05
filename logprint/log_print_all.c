@@ -240,6 +240,11 @@ STATIC void
 xlog_recover_print_inode_core(
 	struct xfs_log_dinode	*di)
 {
+	uint16_t		flushiter = 0;
+
+	if (di->di_version < 3)
+		flushiter = di->di_flushiter;
+
 	printf(_("	CORE inode:\n"));
 	if (!print_inode)
 		return;
@@ -253,7 +258,7 @@ xlog_recover_print_inode_core(
 			xlog_extract_dinode_ts(di->di_atime),
 			xlog_extract_dinode_ts(di->di_mtime),
 			xlog_extract_dinode_ts(di->di_ctime));
-	printf(_("		flushiter:%d\n"), di->di_flushiter);
+	printf(_("		flushiter:%d\n"), flushiter);
 	printf(_("		size:0x%llx  nblks:0x%llx  exsize:%d  "
 	     "nextents:%d  anextents:%d\n"), (unsigned long long)
 	       di->di_size, (unsigned long long)di->di_nblocks,
