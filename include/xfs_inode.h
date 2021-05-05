@@ -173,4 +173,8 @@ extern int	libxfs_iget(struct xfs_mount *, struct xfs_trans *, xfs_ino_t,
 				uint, struct xfs_inode **);
 extern void	libxfs_irele(struct xfs_inode *ip);
 
+/* stubs for inode state flags */
+#define XFS_IPRESERVE_DM_FIELDS		(0) /* has legacy DMAPI fields set */
+#define xfs_iflags_set(ip, flag)	((void)0)
+
 #endif /* __XFS_INODE_H__ */
