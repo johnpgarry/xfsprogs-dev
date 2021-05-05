@@ -413,11 +413,9 @@ bmap_next_offset(
 		return EIO;
 	}
 
-	if (!(ip->i_df.if_flags & XFS_IFEXTENTS)) {
-		error = -libxfs_iread_extents(NULL, ip, XFS_DATA_FORK);
-		if (error)
-			return error;
-	}
+	error = -libxfs_iread_extents(NULL, ip, XFS_DATA_FORK);
+	if (error)
+		return error;
 
 	bno = *bnop + 1;
 	if (!libxfs_iext_lookup_extent(ip, &ip->i_df, bno, &icur, &got))
@@ -501,7 +499,6 @@ mk_rbmino(xfs_mount_t *mp)
 	/*
 	 * now the ifork
 	 */
-	ip->i_df.if_flags = XFS_IFEXTENTS;
 	ip->i_df.if_bytes = 0;
 	ip->i_df.if_u1.if_root = NULL;
 
@@ -742,7 +739,6 @@ mk_rsumino(xfs_mount_t *mp)
 	/*
 	 * now the ifork
 	 */
-	ip->i_df.if_flags = XFS_IFEXTENTS;
 	ip->i_df.if_bytes = 0;
 	ip->i_df.if_u1.if_root = NULL;
 
@@ -844,7 +840,6 @@ mk_root_dir(xfs_mount_t *mp)
 	/*
 	 * now the ifork
 	 */
-	ip->i_df.if_flags = XFS_IFEXTENTS;
 	ip->i_df.if_bytes = 0;
 	ip->i_df.if_u1.if_root = NULL;
 
