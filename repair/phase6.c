@@ -440,7 +440,6 @@ res_failed(
 static inline void
 reset_inode_fields(struct xfs_inode *ip)
 {
-	memset(&ip->i_d, 0, sizeof(ip->i_d));
 	ip->i_projid = 0;
 	ip->i_disk_size = 0;
 	ip->i_nblocks = 0;
@@ -450,6 +449,8 @@ reset_inode_fields(struct xfs_inode *ip)
 	ip->i_forkoff = 0;
 	ip->i_diflags = 0;
 	ip->i_diflags2 = 0;
+	ip->i_crtime.tv_sec = 0;
+	ip->i_crtime.tv_nsec = 0;
 }
 
 static void
