@@ -743,7 +743,7 @@ xlog_print_trans_icreate(
 
 time64_t
 xlog_extract_dinode_ts(
-	const xfs_ictimestamp_t		its)
+	const xfs_log_timestamp_t	its)
 {
 	struct xfs_legacy_ictimestamp	*lits;
 
