@@ -165,15 +165,13 @@ qc_count_rtblocks(
 	struct xfs_ifork	*ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
 	int			error;
 
-	if (!(ifp->if_flags & XFS_IFEXTENTS)) {
-		error = -libxfs_iread_extents(NULL, ip, XFS_DATA_FORK);
-		if (error) {
-			do_warn(
+	error = -libxfs_iread_extents(NULL, ip, XFS_DATA_FORK);
+	if (error) {
+		do_warn(
 _("could not read ino %"PRIu64" extents, err=%d\n"),
 				ip->i_ino, error);
-			chkd_flags = 0;
-			return 0;
-		}
+		chkd_flags = 0;
+		return 0;
 	}
 
 	for_each_xfs_iext(ifp, &icur, &got)
@@ -438,15 +436,13 @@ quotacheck_verify(
 	}
 
 	ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
-	if (!(ifp->if_flags & XFS_IFEXTENTS)) {
-		error = -libxfs_iread_extents(NULL, ip, XFS_DATA_FORK);
-		if (error) {
-			do_warn(
+	error = -libxfs_iread_extents(NULL, ip, XFS_DATA_FORK);
+	if (error) {
+		do_warn(
 	_("could not read %s inode %"PRIu64" extents, err=%d\n"),
 				qflags_typestr(type), ip->i_ino, error);
-			chkd_flags = 0;
-			goto err;
-		}
+		chkd_flags = 0;
+		goto err;
 	}
 
 	/* Walk each extent of the quota inode and compare counters. */

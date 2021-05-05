@@ -58,7 +58,6 @@ xfs_init_local_fork(
 	}
 
 	ifp->if_bytes = size;
-	ifp->if_flags &= ~XFS_IFEXTENTS;
 }
 
 /*
@@ -148,7 +147,6 @@ xfs_iformat_extents(
 			xfs_iext_next(ifp, &icur);
 		}
 	}
-	ifp->if_flags |= XFS_IFEXTENTS;
 	return 0;
 }
 
@@ -210,7 +208,6 @@ xfs_iformat_btree(
 	 */
 	xfs_bmdr_to_bmbt(ip, dfp, XFS_DFORK_SIZE(dip, ip->i_mount, whichfork),
 			 ifp->if_broot, size);
-	ifp->if_flags &= ~XFS_IFEXTENTS;
 
 	ifp->if_bytes = 0;
 	ifp->if_u1.if_root = NULL;
@@ -620,8 +617,6 @@ xfs_iflush_fork(
 		break;
 
 	case XFS_DINODE_FMT_EXTENTS:
-		ASSERT((ifp->if_flags & XFS_IFEXTENTS) ||
-		       !(iip->ili_fields & extflag[whichfork]));
 		if ((iip->ili_fields & extflag[whichfork]) &&
 		    (ifp->if_bytes > 0)) {
 			ASSERT(ifp->if_nextents > 0);
@@ -681,7 +676,6 @@ xfs_ifork_init_cow(
 
 	ip->i_cowfp = kmem_cache_zalloc(xfs_ifork_zone,
 				       GFP_NOFS | __GFP_NOFAIL);
-	ip->i_cowfp->if_flags = XFS_IFEXTENTS;
 	ip->i_cowfp->if_format = XFS_DINODE_FMT_EXTENTS;
 }
 
