@@ -449,6 +449,7 @@ reset_inode_fields(struct xfs_inode *ip)
 	ip->i_flushiter = 0;
 	ip->i_forkoff = 0;
 	ip->i_diflags = 0;
+	ip->i_diflags2 = 0;
 }
 
 static void
@@ -491,7 +492,7 @@ mk_rbmino(xfs_mount_t *mp)
 	times = XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD;
 	if (xfs_sb_version_has_v3inode(&mp->m_sb)) {
 		VFS_I(ip)->i_version = 1;
-		ip->i_d.di_flags2 = 0;
+		ip->i_diflags2 = 0;
 		times |= XFS_ICHGTIME_CREATE;
 	}
 	libxfs_trans_ichgtime(tp, ip, times);
@@ -732,7 +733,7 @@ mk_rsumino(xfs_mount_t *mp)
 	times = XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD;
 	if (xfs_sb_version_has_v3inode(&mp->m_sb)) {
 		VFS_I(ip)->i_version = 1;
-		ip->i_d.di_flags2 = 0;
+		ip->i_diflags2 = 0;
 		times |= XFS_ICHGTIME_CREATE;
 	}
 	libxfs_trans_ichgtime(tp, ip, times);
@@ -832,7 +833,7 @@ mk_root_dir(xfs_mount_t *mp)
 	times = XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD;
 	if (xfs_sb_version_has_v3inode(&mp->m_sb)) {
 		VFS_I(ip)->i_version = 1;
-		ip->i_d.di_flags2 = 0;
+		ip->i_diflags2 = 0;
 		times |= XFS_ICHGTIME_CREATE;
 	}
 	libxfs_trans_ichgtime(tp, ip, times);
