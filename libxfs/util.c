@@ -289,7 +289,7 @@ libxfs_init_new_inode(
 		ip->i_d.di_flags2 = pip ? ip->i_mount->m_ino_geo.new_diflags2 :
 				xfs_flags2diflags2(ip, fsx->fsx_xflags);
 		ip->i_d.di_crtime = VFS_I(ip)->i_mtime; /* struct copy */
-		ip->i_d.di_cowextsize = pip ? 0 : fsx->fsx_cowextsize;
+		ip->i_cowextsize = pip ? 0 : fsx->fsx_cowextsize;
 	}
 
 	flags = XFS_ILOG_CORE;
