@@ -1060,7 +1060,6 @@ libxfs_iget(
 	struct xfs_inode	**ipp)
 {
 	struct xfs_inode	*ip;
-	struct xfs_dinode	*dip;
 	struct xfs_buf		*bp;
 	int			error = 0;
 
@@ -1075,11 +1074,12 @@ libxfs_iget(
 	if (error)
 		goto out_destroy;
 
-	error = xfs_imap_to_bp(mp, tp, &ip->i_imap, &dip, &bp, 0);
+	error = xfs_imap_to_bp(mp, tp, &ip->i_imap, &bp);
 	if (error)
 		goto out_destroy;
 
-	error = xfs_inode_from_disk(ip, dip);
+	error = xfs_inode_from_disk(ip,
+			xfs_buf_offset(bp, ip->i_imap.im_boffset));
 	if (!error)
 		xfs_buf_set_ref(bp, XFS_INO_REF);
 	xfs_trans_brelse(tp, bp);
