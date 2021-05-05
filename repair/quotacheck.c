@@ -222,7 +222,7 @@ quotacheck_adjust(
 	/* Count the file's blocks. */
 	if (XFS_IS_REALTIME_INODE(ip))
 		rtblks = qc_count_rtblocks(ip);
-	blocks = ip->i_d.di_nblocks - rtblks;
+	blocks = ip->i_nblocks - rtblks;
 
 	if (user_dquots)
 		qc_adjust(user_dquots, i_uid_read(VFS_I(ip)), blocks, rtblks);
