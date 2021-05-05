@@ -197,8 +197,8 @@ xfs_flags2diflags2(
 	unsigned int		xflags)
 {
 	uint64_t		di_flags2 =
-		(ip->i_d.di_flags2 & (XFS_DIFLAG2_REFLINK |
-				      XFS_DIFLAG2_BIGTIME));
+		(ip->i_diflags2 & (XFS_DIFLAG2_REFLINK |
+				   XFS_DIFLAG2_BIGTIME));
 
 	if (xflags & FS_XFLAG_DAX)
 		di_flags2 |= XFS_DIFLAG2_DAX;
@@ -286,7 +286,7 @@ libxfs_init_new_inode(
 		ASSERT(ip->i_d.di_ino == ino);
 		ASSERT(uuid_equal(&ip->i_d.di_uuid, &mp->m_sb.sb_meta_uuid));
 		VFS_I(ip)->i_version = 1;
-		ip->i_d.di_flags2 = pip ? ip->i_mount->m_ino_geo.new_diflags2 :
+		ip->i_diflags2 = pip ? ip->i_mount->m_ino_geo.new_diflags2 :
 				xfs_flags2diflags2(ip, fsx->fsx_xflags);
 		ip->i_d.di_crtime = VFS_I(ip)->i_mtime; /* struct copy */
 		ip->i_cowextsize = pip ? 0 : fsx->fsx_cowextsize;
