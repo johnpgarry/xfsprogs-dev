@@ -276,7 +276,7 @@ libxfs_init_new_inode(
 			VFS_I(ip)->i_mode |= S_ISGID;
 	}
 
-	ip->i_d.di_size = 0;
+	ip->i_disk_size = 0;
 	ip->i_df.if_nextents = 0;
 	ASSERT(ip->i_d.di_nblocks == 0);
 	ip->i_d.di_extsize = pip ? 0 : fsx->fsx_extsize;
