@@ -442,6 +442,7 @@ reset_inode_fields(struct xfs_inode *ip)
 {
 	memset(&ip->i_d, 0, sizeof(ip->i_d));
 	ip->i_projid = 0;
+	ip->i_disk_size = 0;
 }
 
 static void
@@ -496,7 +497,7 @@ mk_rbmino(xfs_mount_t *mp)
 	ip->i_df.if_bytes = 0;
 	ip->i_df.if_u1.if_root = NULL;
 
-	ip->i_d.di_size = mp->m_sb.sb_rbmblocks * mp->m_sb.sb_blocksize;
+	ip->i_disk_size = mp->m_sb.sb_rbmblocks * mp->m_sb.sb_blocksize;
 
 	/*
 	 * commit changes
@@ -737,7 +738,7 @@ mk_rsumino(xfs_mount_t *mp)
 	ip->i_df.if_bytes = 0;
 	ip->i_df.if_u1.if_root = NULL;
 
-	ip->i_d.di_size = mp->m_rsumsize;
+	ip->i_disk_size = mp->m_rsumsize;
 
 	/*
 	 * commit changes
@@ -2214,14 +2215,14 @@ longform_dir2_entry_check(
 	struct xfs_da_args	args;
 
 	*need_dot = 1;
-	freetab = malloc(FREETAB_SIZE(ip->i_d.di_size / mp->m_dir_geo->blksize));
+	freetab = malloc(FREETAB_SIZE(ip->i_disk_size / mp->m_dir_geo->blksize));
 	if (!freetab) {
 		do_error(_("malloc failed in %s (%" PRId64 " bytes)\n"),
 			__func__,
-			FREETAB_SIZE(ip->i_d.di_size / mp->m_dir_geo->blksize));
+			FREETAB_SIZE(ip->i_disk_size / mp->m_dir_geo->blksize));
 		exit(1);
 	}
-	freetab->naents = ip->i_d.di_size / mp->m_dir_geo->blksize;
+	freetab->naents = ip->i_disk_size / mp->m_dir_geo->blksize;
 	freetab->nents = 0;
 	for (i = 0; i < freetab->naents; i++) {
 		freetab->ents[i].v = NULLDATAOFF;
@@ -2434,7 +2435,7 @@ shortform_dir2_entry_check(
 	bytes_deleted = 0;
 
 	max_size = ifp->if_bytes;
-	ASSERT(ip->i_d.di_size <= ifp->if_bytes);
+	ASSERT(ip->i_disk_size <= ifp->if_bytes);
 
 	/*
 	 * if just rebuild a directory due to a "..", update and return
@@ -2498,7 +2499,7 @@ shortform_dir2_entry_check(
 			bad_sfnamelen = 1;
 
 			if (i == sfp->count - 1)  {
-				namelen = ip->i_d.di_size -
+				namelen = ip->i_disk_size -
 					((intptr_t) &sfep->name[0] -
 					 (intptr_t) sfp);
 			} else  {
@@ -2510,11 +2511,11 @@ shortform_dir2_entry_check(
 			}
 		} else if (no_modify && (intptr_t) sfep - (intptr_t) sfp +
 				+ libxfs_dir2_sf_entsize(mp, sfp, sfep->namelen)
-				> ip->i_d.di_size)  {
+				> ip->i_disk_size)  {
 			bad_sfnamelen = 1;
 
 			if (i == sfp->count - 1)  {
-				namelen = ip->i_d.di_size -
+				namelen = ip->i_disk_size -
 					((intptr_t) &sfep->name[0] -
 					 (intptr_t) sfp);
 			} else  {
@@ -2732,17 +2733,17 @@ _("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name"),
 	if (*ino_dirty && bytes_deleted > 0)  {
 		ASSERT(!no_modify);
 		libxfs_idata_realloc(ip, -bytes_deleted, XFS_DATA_FORK);
-		ip->i_d.di_size -= bytes_deleted;
+		ip->i_disk_size -= bytes_deleted;
 	}
 
-	if (ip->i_d.di_size != ip->i_df.if_bytes)  {
+	if (ip->i_disk_size != ip->i_df.if_bytes)  {
 		ASSERT(ip->i_df.if_bytes == (xfs_fsize_t)
 				((intptr_t) next_sfep - (intptr_t) sfp));
-		ip->i_d.di_size = (xfs_fsize_t)
+		ip->i_disk_size = (xfs_fsize_t)
 				((intptr_t) next_sfep - (intptr_t) sfp);
 		do_warn(
 	_("setting size to %" PRId64 " bytes to reflect junked entries\n"),
-			ip->i_d.di_size);
+			ip->i_disk_size);
 		*ino_dirty = 1;
 	}
 }
@@ -2816,7 +2817,7 @@ process_dir_inode(
 
 	add_inode_refchecked(irec, ino_offset);
 
-	hashtab = dir_hash_init(ip->i_d.di_size);
+	hashtab = dir_hash_init(ip->i_disk_size);
 
 	/*
 	 * look for bogus entries
