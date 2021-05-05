@@ -280,8 +280,6 @@ libxfs_init_new_inode(
 	ip->i_df.if_nextents = 0;
 	ASSERT(ip->i_d.di_nblocks == 0);
 	ip->i_d.di_extsize = pip ? 0 : fsx->fsx_extsize;
-	ip->i_d.di_dmevmask = 0;
-	ip->i_d.di_dmstate = 0;
 	ip->i_d.di_flags = pip ? 0 : xfs_flags2diflags(ip, fsx->fsx_xflags);
 
 	if (xfs_sb_version_has_v3inode(&ip->i_mount->m_sb)) {
