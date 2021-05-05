@@ -30,6 +30,9 @@ typedef struct xfs_mount {
 	uint8_t			m_fs_checked;
 	uint8_t			m_fs_sick;
 
+	/* dummy variable used by the kernel to avoid ENOSPC */
+	uint8_t			m_allocbt_blks;
+
 	char			*m_fsname;	/* filesystem name */
 	int			m_bsize;	/* fs logical block size */
 	xfs_agnumber_t		m_agfrotor;	/* last ag where space found */
