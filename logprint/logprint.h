@@ -18,7 +18,7 @@ extern int	print_no_data;
 extern int	print_no_print;
 
 /* exports */
-extern time64_t xlog_extract_dinode_ts(const xfs_ictimestamp_t);
+extern time64_t xlog_extract_dinode_ts(const xfs_log_timestamp_t);
 extern void xlog_print_lseek(struct xlog *, int, xfs_daddr_t, int);
 
 extern void xfs_log_copy(struct xlog *, int, char *);
