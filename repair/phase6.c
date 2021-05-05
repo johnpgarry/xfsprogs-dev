@@ -437,6 +437,12 @@ res_failed(
 		do_error(_("xfs_trans_reserve returned %d\n"), err);
 }
 
+static inline void
+reset_inode_fields(struct xfs_inode *ip)
+{
+	memset(&ip->i_d, 0, sizeof(ip->i_d));
+}
+
 static void
 mk_rbmino(xfs_mount_t *mp)
 {
@@ -465,7 +471,7 @@ mk_rbmino(xfs_mount_t *mp)
 			error);
 	}
 
-	memset(&ip->i_d, 0, sizeof(ip->i_d));
+	reset_inode_fields(ip);
 
 	VFS_I(ip)->i_mode = S_IFREG;
 	ip->i_df.if_format = XFS_DINODE_FMT_EXTENTS;
@@ -706,7 +712,7 @@ mk_rsumino(xfs_mount_t *mp)
 			error);
 	}
 
-	memset(&ip->i_d, 0, sizeof(ip->i_d));
+	reset_inode_fields(ip);
 
 	VFS_I(ip)->i_mode = S_IFREG;
 	ip->i_df.if_format = XFS_DINODE_FMT_EXTENTS;
@@ -806,7 +812,7 @@ mk_root_dir(xfs_mount_t *mp)
 	/*
 	 * take care of the core -- initialization from xfs_ialloc()
 	 */
-	memset(&ip->i_d, 0, sizeof(ip->i_d));
+	reset_inode_fields(ip);
 
 	VFS_I(ip)->i_mode = mode|S_IFDIR;
 	ip->i_df.if_format = XFS_DINODE_FMT_EXTENTS;
