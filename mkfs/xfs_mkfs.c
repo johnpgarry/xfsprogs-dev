@@ -2164,13 +2164,6 @@ _("inode btree counters not supported without finobt support\n"));
 		cli->sb_feat.inobtcnt = false;
 	}
 
-	if ((cli->fsx.fsx_xflags & FS_XFLAG_COWEXTSIZE) &&
-	    !cli->sb_feat.reflink) {
-		fprintf(stderr,
-_("cowextsize not supported without reflink support\n"));
-		usage();
-	}
-
 	if (cli->xi->rtname) {
 		if (cli->sb_feat.reflink && cli_opt_set(&mopts, M_REFLINK)) {
 			fprintf(stderr,
@@ -2185,6 +2178,13 @@ _("rmapbt not supported with realtime devices\n"));
 			usage();
 		}
 		cli->sb_feat.rmapbt = false;
+	}
+
+	if ((cli->fsx.fsx_xflags & FS_XFLAG_COWEXTSIZE) &&
+	    !cli->sb_feat.reflink) {
+		fprintf(stderr,
+_("cowextsize not supported without reflink support\n"));
+		usage();
 	}
 
 	/*
