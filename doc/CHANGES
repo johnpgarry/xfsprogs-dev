@@ -1,3 +1,15 @@
+xfsprogs-5.12.0-rc1 (07 May 2021)
+	- mkfs: don't default to too-large physical sector size (Jeff Moyer)
+	- repair: phase 6 speedups (Dave Chinner, Gao Xiang)
+	- man: Add dax mount option to man xfs(5) (Carlos Maiolino)
+	- xfs_admin: pick up log arguments correctly (Darrick Wong)
+	- xfs_growfs: support shrinking unused space (Gao Xiang)
+	- libfrog: report inobtcount in geometry (Darrick Wong)
+	- xfs_logprint: Fix buffer overflow printing quotaoff (Carlos Maiolino)
+	- xfsprogs: include <signal.h> for platform_crash (Leah Neukirchen)
+	- xfsprogs: remove BMV_IF_NO_DMAPI_READ flag (Anthony Iliopoulos)
+	- workqueue: bound maximum queue depth (Dave Chinner)
+
 xfsprogs-5.12.0-rc0 (12 Apr 2021)
 	- libxfs changes merged from kernel 5.12
 
