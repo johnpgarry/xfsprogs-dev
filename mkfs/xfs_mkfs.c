@@ -2384,10 +2384,11 @@ _("illegal extent size hint %lld, must be less than %u.\n"),
 	}
 
 	/*
-	 * Now we do it again with a realtime file so that we know the hint and
-	 * flag that get passed on to realtime files will be correct.
+	 * If the value is to be passed on to realtime files, revalidate with
+	 * a realtime file so that we know the hint and flag that get passed on
+	 * to realtime files will be correct.
 	 */
-	if (mp->m_sb.sb_rextsize == 0)
+	if (!(cli->fsx.fsx_xflags & FS_XFLAG_RTINHERIT))
 		return;
 
 	flags = XFS_DIFLAG_REALTIME;
