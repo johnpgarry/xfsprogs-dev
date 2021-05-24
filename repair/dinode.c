@@ -2178,6 +2178,31 @@ _("Bad %s nsec %u on inode %" PRIu64 ", "), name, be32_to_cpu(t->t_nsec), lino);
 		*dirty = 1;
 	}
 }
+/*
+ * Inode verifiers on older kernels don't check that the extent size hint is an
+ * integer multiple of the rt extent size on a directory with both rtinherit
+ * and extszinherit flags set.  If we encounter a directory that is
+ * misconfigured in this way, or a regular file that inherited a bad hint from
+ * a directory, clear the hint.
+ */
+static bool
+zap_bad_rt_extsize_hint(
+	struct xfs_mount	*mp,
+	struct xfs_dinode	*dino)
+{
+	uint16_t		diflags = be16_to_cpu(dino->di_flags);
+
+	if (!(diflags & XFS_DIFLAG_REALTIME) &&
+	    !(diflags & XFS_DIFLAG_RTINHERIT))
+		return false;
+
+	if (!(diflags & XFS_DIFLAG_EXTSIZE) &&
+	    !(diflags & XFS_DIFLAG_EXTSZINHERIT))
+		return false;
+
+	return (be32_to_cpu(dino->di_extsize) % mp->m_sb.sb_rextsize) != 0;
+}
+
 
 /*
  * returns 0 if the inode is ok, 1 if the inode is corrupt
@@ -2694,7 +2719,8 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 	 * only regular files with REALTIME or EXTSIZE flags set can have
 	 * extsize set, or directories with EXTSZINHERIT.
 	 */
-	if (libxfs_inode_validate_extsize(mp,
+	if (zap_bad_rt_extsize_hint(mp, dino) ||
+	    libxfs_inode_validate_extsize(mp,
 			be32_to_cpu(dino->di_extsize),
 			be16_to_cpu(dino->di_mode),
 			be16_to_cpu(dino->di_flags)) != NULL) {
