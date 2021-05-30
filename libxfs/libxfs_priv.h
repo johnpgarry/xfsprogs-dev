@@ -123,6 +123,21 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 #define xfs_warn(mp,fmt,args...)	cmn_err(CE_WARN, _(fmt), ## args)
 #define xfs_err(mp,fmt,args...)		cmn_err(CE_ALERT, _(fmt), ## args)
 #define xfs_alert(mp,fmt,args...)	cmn_err(CE_ALERT, _(fmt), ## args)
+#define xfs_info(mp,fmt,args...)	cmn_err(CE_CONT, _(fmt), ## args)
+
+#define xfs_printk_once(func, dev, fmt, ...)			\
+({								\
+	static bool __print_once;				\
+	bool __ret_print_once = !__print_once;			\
+								\
+	if (!__print_once) {					\
+		__print_once = true;				\
+		func(dev, fmt, ##__VA_ARGS__);			\
+	}							\
+	unlikely(__ret_print_once);				\
+})
+#define xfs_info_once(dev, fmt, ...)				\
+	xfs_printk_once(xfs_info, dev, fmt, ##__VA_ARGS__)
 
 #define xfs_buf_ioerror_alert(bp,f)	((void) 0);
 
