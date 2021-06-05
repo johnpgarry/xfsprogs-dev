@@ -116,7 +116,8 @@ dump_map_machine(
 	struct fsmap		*p;
 	char			*fork;
 
-	printf(_("EXT,MAJOR,MINOR,PSTART,PEND,OWNER,OSTART,OEND,LENGTH\n"));
+	if (*nr == 0)
+		printf(_("EXT,MAJOR,MINOR,PSTART,PEND,OWNER,OSTART,OEND,LENGTH\n"));
 	for (i = 0, p = head->fmh_recs; i < head->fmh_entries; i++, p++) {
 		printf("%llu,%u,%u,%lld,%lld,", i + (*nr),
 			major(p->fmr_device), minor(p->fmr_device),
