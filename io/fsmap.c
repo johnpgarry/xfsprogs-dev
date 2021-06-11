@@ -372,13 +372,11 @@ fsmap_f(
 	char			**argv)
 {
 	struct fsmap		*p;
-	struct fsmap_head	*nhead;
 	struct fsmap_head	*head;
 	struct fsmap		*l, *h;
 	struct xfs_fsop_geom	fsgeo;
 	long long		start = 0;
 	long long		end = -1;
-	int			nmap_size;
 	int			map_size;
 	int			nflag = 0;
 	int			vflag = 0;
@@ -491,34 +489,6 @@ fsmap_f(
 	h->fmr_owner = ULLONG_MAX;
 	h->fmr_flags = UINT_MAX;
 	h->fmr_offset = ULLONG_MAX;
-
-	/* Count mappings */
-	if (!nflag) {
-		head->fmh_count = 0;
-		i = ioctl(file->fd, FS_IOC_GETFSMAP, head);
-		if (i < 0) {
-			fprintf(stderr, _("%s: xfsctl(XFS_IOC_GETFSMAP)"
-				" iflags=0x%x [\"%s\"]: %s\n"),
-				progname, head->fmh_iflags, file->name,
-				strerror(errno));
-			exitcode = 1;
-			free(head);
-			return 0;
-		}
-		if (head->fmh_entries > map_size + 2) {
-			map_size = 11ULL * head->fmh_entries / 10;
-			nmap_size = map_size > (1 << 24) ? (1 << 24) : map_size;
-			nhead = realloc(head, fsmap_sizeof(nmap_size));
-			if (nhead == NULL) {
-				fprintf(stderr,
-					_("%s: cannot realloc %zu bytes\n"),
-					progname, fsmap_sizeof(nmap_size));
-			} else {
-				head = nhead;
-				map_size = nmap_size;
-			}
-		}
-	}
 
 	/*
 	 * If this is an XFS filesystem, remember the data device.
