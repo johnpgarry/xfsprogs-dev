@@ -43,6 +43,7 @@ static cmdinfo_t fpunch_cmd;
 static cmdinfo_t fcollapse_cmd;
 static cmdinfo_t finsert_cmd;
 static cmdinfo_t fzero_cmd;
+static cmdinfo_t funshare_cmd;
 #endif
 
 static int
@@ -467,14 +468,14 @@ prealloc_init(void)
 	_("zeroes space and eliminates holes by preallocating");
 	add_command(&fzero_cmd);
 
-	fzero_cmd.name = "funshare";
-	fzero_cmd.cfunc = funshare_f;
-	fzero_cmd.argmin = 2;
-	fzero_cmd.argmax = 2;
-	fzero_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
-	fzero_cmd.args = _("off len");
-	fzero_cmd.oneline =
+	funshare_cmd.name = "funshare";
+	funshare_cmd.cfunc = funshare_f;
+	funshare_cmd.argmin = 2;
+	funshare_cmd.argmax = 2;
+	funshare_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
+	funshare_cmd.args = _("off len");
+	funshare_cmd.oneline =
 	_("unshares shared blocks within the range");
-	add_command(&fzero_cmd);
+	add_command(&funshare_cmd);
 #endif	/* HAVE_FALLOCATE */
 }
