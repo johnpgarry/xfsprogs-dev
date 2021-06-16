@@ -346,16 +346,24 @@ funshare_f(
 	char		**argv)
 {
 	xfs_flock64_t	segment;
+	int		c;
 	int		mode = FALLOC_FL_UNSHARE_RANGE;
-	int		index = 1;
 
-	if (!offset_length(argv[index], argv[index + 1], &segment)) {
+	while ((c = getopt(argc, argv, "")) != EOF) {
+		switch (c) {
+		default:
+			command_usage(&funshare_cmd);
+		}
+	}
+	if (optind != argc - 2)
+		return command_usage(&funshare_cmd);
+
+	if (!offset_length(argv[optind], argv[optind + 1], &segment)) {
 		exitcode = 1;
 		return 0;
 	}
 
-	if (fallocate(file->fd, mode,
-			segment.l_start, segment.l_len)) {
+	if (fallocate(file->fd, mode, segment.l_start, segment.l_len)) {
 		perror("fallocate");
 		exitcode = 1;
 		return 0;
