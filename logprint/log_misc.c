@@ -745,9 +745,9 @@ time64_t
 xlog_extract_dinode_ts(
 	const xfs_log_timestamp_t	its)
 {
-	struct xfs_legacy_ictimestamp	*lits;
+	struct xfs_log_legacy_timestamp	*lits;
 
-	lits = (struct xfs_legacy_ictimestamp *)&its;
+	lits = (struct xfs_log_legacy_timestamp *)&its;
 	return (time64_t)lits->t_sec;
 }
 
