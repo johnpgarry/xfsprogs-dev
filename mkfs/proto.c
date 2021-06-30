@@ -281,7 +281,7 @@ newfile(
 			libxfs_buf_relse(bp);
 		}
 	}
-	ip->i_d.di_size = len;
+	ip->i_disk_size = len;
 	return flags;
 }
 
@@ -651,7 +651,7 @@ rtinit(
 	 * commit the transaction in which rbmip was allocated.
 	 */
 	mp->m_sb.sb_rbmino = rbmip->i_ino;
-	rbmip->i_d.di_size = mp->m_sb.sb_rbmblocks * mp->m_sb.sb_blocksize;
+	rbmip->i_disk_size = mp->m_sb.sb_rbmblocks * mp->m_sb.sb_blocksize;
 	rbmip->i_d.di_flags = XFS_DIFLAG_NEWRTBM;
 	*(uint64_t *)&VFS_I(rbmip)->i_atime = 0;
 	libxfs_trans_log_inode(tp, rbmip, XFS_ILOG_CORE);
@@ -663,7 +663,7 @@ rtinit(
 		fail(_("Realtime summary inode allocation failed"), error);
 	}
 	mp->m_sb.sb_rsumino = rsumip->i_ino;
-	rsumip->i_d.di_size = mp->m_rsumsize;
+	rsumip->i_disk_size = mp->m_rsumsize;
 	libxfs_trans_log_inode(tp, rsumip, XFS_ILOG_CORE);
 	libxfs_log_sb(tp);
 	error = -libxfs_trans_commit(tp);

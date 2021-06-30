@@ -78,6 +78,7 @@ typedef struct xfs_inode {
 	struct xfs_ifork	i_df;		/* data fork */
 	struct xfs_inode_log_item *i_itemp;	/* logging information */
 	unsigned int		i_delayed_blks;	/* count of delay alloc blks */
+	xfs_fsize_t		i_disk_size;	/* number of bytes in file */
 	prid_t			i_projid;	/* owner's project id */
 	struct xfs_icdinode	i_d;		/* most of ondisk inode */
 
@@ -128,7 +129,7 @@ static inline xfs_fsize_t XFS_ISIZE(struct xfs_inode *ip)
 {
 	if (XFS_ISREG(ip))
 		return ip->i_size;
-	return ip->i_d.di_size;
+	return ip->i_disk_size;
 }
 #define XFS_IS_REALTIME_INODE(ip) ((ip)->i_d.di_flags & XFS_DIFLAG_REALTIME)
 
