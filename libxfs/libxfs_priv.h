@@ -119,6 +119,7 @@ extern char    *progname;
 extern void cmn_err(int, char *, ...);
 enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 
+#define xfs_info(mp,fmt,args...)	cmn_err(CE_CONT, _(fmt), ## args)
 #define xfs_notice(mp,fmt,args...)	cmn_err(CE_NOTE, _(fmt), ## args)
 #define xfs_warn(mp,fmt,args...)	cmn_err(CE_WARN, _(fmt), ## args)
 #define xfs_err(mp,fmt,args...)		cmn_err(CE_ALERT, _(fmt), ## args)
@@ -165,6 +166,23 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 #define XFS_STATS_DEC(mp, count, x)	do { (mp) = (mp); } while (0)
 #define XFS_STATS_ADD(mp, count, x)	do { (mp) = (mp); } while (0)
 #define XFS_TEST_ERROR(expr,a,b)	( expr )
+
+#define __section(section)	__attribute__((__section__(section)))
+
+#define xfs_printk_once(func, dev, fmt, ...)			\
+({								\
+	static bool __section(".data.once") __print_once;	\
+	bool __ret_print_once = !__print_once;			\
+								\
+	if (!__print_once) {					\
+		__print_once = true;				\
+		func(dev, fmt, ##__VA_ARGS__);			\
+	}							\
+	unlikely(__ret_print_once);				\
+})
+
+#define xfs_info_once(dev, fmt, ...)				\
+	xfs_printk_once(xfs_info, dev, fmt, ##__VA_ARGS__)
 
 #ifdef __GNUC__
 #define __return_address	__builtin_return_address(0)
