@@ -88,6 +88,7 @@ typedef struct xfs_inode {
 		uint16_t	i_flushiter;	/* incremented on flush */
 	};
 	uint8_t			i_forkoff;	/* attr fork offset >> 3 */
+	uint16_t		i_diflags;	/* XFS_DIFLAG_... */
 	struct xfs_icdinode	i_d;		/* most of ondisk inode */
 
 	xfs_extnum_t		i_cnextents;	/* # of extents in cow fork */
@@ -139,7 +140,7 @@ static inline xfs_fsize_t XFS_ISIZE(struct xfs_inode *ip)
 		return ip->i_size;
 	return ip->i_disk_size;
 }
-#define XFS_IS_REALTIME_INODE(ip) ((ip)->i_d.di_flags & XFS_DIFLAG_REALTIME)
+#define XFS_IS_REALTIME_INODE(ip) ((ip)->i_diflags & XFS_DIFLAG_REALTIME)
 
 /* inode link counts */
 static inline void set_nlink(struct inode *inode, uint32_t nlink)
