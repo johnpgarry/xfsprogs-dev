@@ -229,7 +229,7 @@ quotacheck_adjust(
 	if (group_dquots)
 		qc_adjust(group_dquots, i_gid_read(VFS_I(ip)), blocks, rtblks);
 	if (proj_dquots)
-		qc_adjust(proj_dquots, ip->i_d.di_projid, blocks, rtblks);
+		qc_adjust(proj_dquots, ip->i_projid, blocks, rtblks);
 
 	libxfs_irele(ip);
 }

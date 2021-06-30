@@ -441,6 +441,7 @@ static inline void
 reset_inode_fields(struct xfs_inode *ip)
 {
 	memset(&ip->i_d, 0, sizeof(ip->i_d));
+	ip->i_projid = 0;
 }
 
 static void
