@@ -384,11 +384,9 @@ list_leafdir(
 	int			error = 0;
 
 	/* Read extent map. */
-	if (!(ifp->if_flags & XFS_IFEXTENTS)) {
-		error = -libxfs_iread_extents(NULL, dp, XFS_DATA_FORK);
-		if (error)
-			return error;
-	}
+	error = -libxfs_iread_extents(NULL, dp, XFS_DATA_FORK);
+	if (error)
+		return error;
 
 	while (dabno < geo->leafblk) {
 		unsigned int	offset;
