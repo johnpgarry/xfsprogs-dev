@@ -20,5 +20,8 @@ typedef	int64_t	atomic64_t;
 
 #define atomic64_read(x)	*(x)
 #define atomic64_set(x, v)	(*(x) = v)
+#define atomic64_add(v, x)	(*(x) += v)
+#define atomic64_inc(x)		((*(x))++)
+#define atomic64_dec(x)		((*(x))--)
 
 #endif /* __ATOMIC_H__ */

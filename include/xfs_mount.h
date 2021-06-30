@@ -105,6 +105,14 @@ typedef struct xfs_mount {
 	 * if warranted.
 	 */
 	struct xlog		*m_log;		/* log specific stuff */
+
+        /*
+	 * Global count of allocation btree blocks in use across all AGs. Only
+	 * used when perag reservation is enabled. Helps prevent block
+	 * reservation from attempting to reserve allocation btree blocks.
+	 */
+	atomic64_t		m_allocbt_blks;
+
 } xfs_mount_t;
 
 #define M_IGEO(mp)		(&(mp)->m_ino_geo)
