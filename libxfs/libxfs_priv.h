@@ -700,4 +700,7 @@ int xfs_bmap_last_extent(struct xfs_trans *tp, struct xfs_inode *ip,
 			 int whichfork, struct xfs_bmbt_irec *rec,
 			 int *is_empty);
 
+/* xfs_inode.h */
+#define xfs_iflags_set(ip, flags)	do { } while (0)
+
 #endif	/* __LIBXFS_INTERNAL_XFS_H__ */
