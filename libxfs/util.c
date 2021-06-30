@@ -361,7 +361,7 @@ libxfs_iflush_int(
 			(ip->i_df.if_format == XFS_DINODE_FMT_LOCAL) );
 	}
 	ASSERT(ip->i_df.if_nextents+ip->i_afp->if_nextents <= ip->i_nblocks);
-	ASSERT(ip->i_d.di_forkoff <= mp->m_sb.sb_inodesize);
+	ASSERT(ip->i_forkoff <= mp->m_sb.sb_inodesize);
 
 	/* bump the change count on v3 inodes */
 	if (xfs_sb_version_has_v3inode(&mp->m_sb))
