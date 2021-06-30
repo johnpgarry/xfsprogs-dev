@@ -444,6 +444,7 @@ reset_inode_fields(struct xfs_inode *ip)
 	ip->i_projid = 0;
 	ip->i_disk_size = 0;
 	ip->i_nblocks = 0;
+	ip->i_extsize = 0;
 }
 
 static void
