@@ -439,9 +439,6 @@ void __xfs_buf_mark_corrupt(struct xfs_buf *bp, xfs_failaddr_t fa);
 #define XFS_MOUNT_BAD_SUMMARY		0	/* ignored in userspace */
 
 #define xfs_trans_set_sync(tp)		((void) 0)
-#define	xfs_trans_agblocks_delta(tp, d)
-#define	xfs_trans_agflist_delta(tp, d)
-#define	xfs_trans_agbtree_delta(tp, d)
 #define xfs_trans_buf_set_type(tp, bp, t)	({	\
 	int __t = (t);					\
 	__t = __t; /* no set-but-unused warning */	\
