@@ -9,7 +9,6 @@
 #include "xfs_format.h"
 #include "xfs_log_format.h"
 #include "xfs_trans_resv.h"
-#include "xfs_sb.h"
 #include "xfs_mount.h"
 #include "xfs_btree.h"
 #include "xfs_btree_staging.h"
@@ -17,6 +16,7 @@
 #include "xfs_alloc.h"
 #include "xfs_trace.h"
 #include "xfs_trans.h"
+#include "xfs_ag.h"
 
 
 STATIC struct xfs_btree_cur *
