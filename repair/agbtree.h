@@ -35,7 +35,7 @@ struct bt_rebuild {
 
 void finish_rebuild(struct xfs_mount *mp, struct bt_rebuild *btr,
 		struct bitmap *lost_blocks);
-void init_freespace_cursors(struct repair_ctx *sc, xfs_agnumber_t agno,
+void init_freespace_cursors(struct repair_ctx *sc, struct xfs_perag *pag,
 		unsigned int free_space, unsigned int *nr_extents,
 		int *extra_blocks, struct bt_rebuild *btr_bno,
 		struct bt_rebuild *btr_cnt);
