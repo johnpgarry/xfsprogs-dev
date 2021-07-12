@@ -645,10 +645,11 @@ get_refcountbt_record(
 void
 init_refc_cursor(
 	struct repair_ctx	*sc,
-	xfs_agnumber_t		agno,
+	struct xfs_perag	*pag,
 	unsigned int		free_space,
 	struct bt_rebuild	*btr)
 {
+	xfs_agnumber_t		agno = pag->pag_agno;
 	int			error;
 
 	if (!xfs_sb_version_hasreflink(&sc->mp->m_sb))
@@ -656,7 +657,7 @@ init_refc_cursor(
 
 	init_rebuild(sc, &XFS_RMAP_OINFO_REFC, free_space, btr);
 	btr->cur = libxfs_refcountbt_stage_cursor(sc->mp, &btr->newbt.afake,
-			agno);
+			pag);
 
 	btr->bload.get_record = get_refcountbt_record;
 	btr->bload.claim_block = rebuild_claim_block;
