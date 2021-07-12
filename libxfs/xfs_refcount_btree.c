@@ -25,7 +25,7 @@ xfs_refcountbt_dup_cursor(
 	struct xfs_btree_cur	*cur)
 {
 	return xfs_refcountbt_init_cursor(cur->bc_mp, cur->bc_tp,
-			cur->bc_ag.agbp, cur->bc_ag.agno);
+			cur->bc_ag.agbp, cur->bc_ag.agno, cur->bc_ag.pag);
 }
 
 STATIC void
@@ -315,7 +315,8 @@ static struct xfs_btree_cur *
 xfs_refcountbt_init_common(
 	struct xfs_mount	*mp,
 	struct xfs_trans	*tp,
-	xfs_agnumber_t		agno)
+	xfs_agnumber_t		agno,
+	struct xfs_perag	*pag)
 {
 	struct xfs_btree_cur	*cur;
 
@@ -331,6 +332,11 @@ xfs_refcountbt_init_common(
 
 	cur->bc_ag.agno = agno;
 	cur->bc_flags |= XFS_BTREE_CRC_BLOCKS;
+	if (pag) {
+		/* take a reference for the cursor */
+		atomic_inc(&pag->pag_ref);
+	}
+	cur->bc_ag.pag = pag;
 
 	cur->bc_ag.refc.nr_ops = 0;
 	cur->bc_ag.refc.shape_changes = 0;
@@ -344,12 +350,13 @@ xfs_refcountbt_init_cursor(
 	struct xfs_mount	*mp,
 	struct xfs_trans	*tp,
 	struct xfs_buf		*agbp,
-	xfs_agnumber_t		agno)
+	xfs_agnumber_t		agno,
+	struct xfs_perag	*pag)
 {
 	struct xfs_agf		*agf = agbp->b_addr;
 	struct xfs_btree_cur	*cur;
 
-	cur = xfs_refcountbt_init_common(mp, tp, agno);
+	cur = xfs_refcountbt_init_common(mp, tp, agno, pag);
 	cur->bc_nlevels = be32_to_cpu(agf->agf_refcount_level);
 	cur->bc_ag.agbp = agbp;
 	return cur;
@@ -364,7 +371,7 @@ xfs_refcountbt_stage_cursor(
 {
 	struct xfs_btree_cur	*cur;
 
-	cur = xfs_refcountbt_init_common(mp, NULL, agno);
+	cur = xfs_refcountbt_init_common(mp, NULL, agno, NULL);
 	xfs_btree_stage_afakeroot(cur, afake);
 	return cur;
 }
