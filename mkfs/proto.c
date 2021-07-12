@@ -7,6 +7,7 @@
 #include "libxfs.h"
 #include <sys/stat.h>
 #include "libfrog/convert.h"
+#include "proto.h"
 
 /*
  * Prototypes for internal functions.
