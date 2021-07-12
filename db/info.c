@@ -66,19 +66,20 @@ print_agresv_info(
 {
 	struct xfs_buf	*bp;
 	struct xfs_agf	*agf;
+	struct xfs_perag *pag = xfs_perag_get(mp, agno);
 	xfs_extlen_t	ask = 0;
 	xfs_extlen_t	used = 0;
 	xfs_extlen_t	free = 0;
 	xfs_extlen_t	length = 0;
 	int		error;
 
-	error = -libxfs_refcountbt_calc_reserves(mp, NULL, agno, &ask, &used);
+	error = -libxfs_refcountbt_calc_reserves(mp, NULL, pag, &ask, &used);
 	if (error)
 		xfrog_perror(error, "refcountbt");
-	error = -libxfs_finobt_calc_reserves(mp, NULL, agno, &ask, &used);
+	error = -libxfs_finobt_calc_reserves(mp, NULL, pag, &ask, &used);
 	if (error)
 		xfrog_perror(error, "finobt");
-	error = -libxfs_rmapbt_calc_reserves(mp, NULL, agno, &ask, &used);
+	error = -libxfs_rmapbt_calc_reserves(mp, NULL, pag, &ask, &used);
 	if (error)
 		xfrog_perror(error, "rmapbt");
 
@@ -96,6 +97,7 @@ print_agresv_info(
 	if (ask - used > free)
 		printf(" <not enough space>");
 	printf("\n");
+	xfs_perag_put(pag);
 }
 
 static int
