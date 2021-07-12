@@ -18,6 +18,7 @@
 #include "xfs_trace.h"
 #include "xfs_alloc.h"
 #include "xfs_btree_staging.h"
+#include "xfs_ag.h"
 
 /*
  * Cursor allocation zone.
