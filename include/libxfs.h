@@ -213,5 +213,6 @@ int libxfs_rtfree_extent(struct xfs_trans *, xfs_rtblock_t, xfs_extlen_t);
 bool libxfs_verify_rtbno(struct xfs_mount *mp, xfs_rtblock_t rtbno);
 
 #include "xfs_attr.h"
+#include "topology.h"
 
 #endif	/* __LIBXFS_H__ */
