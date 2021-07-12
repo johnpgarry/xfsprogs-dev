@@ -226,13 +226,14 @@ get_bnobt_record(
 void
 init_freespace_cursors(
 	struct repair_ctx	*sc,
-	xfs_agnumber_t		agno,
+	struct xfs_perag	*pag,
 	unsigned int		free_space,
 	unsigned int		*nr_extents,
 	int			*extra_blocks,
 	struct bt_rebuild	*btr_bno,
 	struct bt_rebuild	*btr_cnt)
 {
+	xfs_agnumber_t		agno = pag->pag_agno;
 	unsigned int		agfl_goal;
 	int			error;
 
@@ -242,9 +243,9 @@ init_freespace_cursors(
 	init_rebuild(sc, &XFS_RMAP_OINFO_AG, free_space, btr_cnt);
 
 	btr_bno->cur = libxfs_allocbt_stage_cursor(sc->mp,
-			&btr_bno->newbt.afake, agno, XFS_BTNUM_BNO);
+			&btr_bno->newbt.afake, pag, XFS_BTNUM_BNO);
 	btr_cnt->cur = libxfs_allocbt_stage_cursor(sc->mp,
-			&btr_cnt->newbt.afake, agno, XFS_BTNUM_CNT);
+			&btr_cnt->newbt.afake, pag, XFS_BTNUM_CNT);
 
 	btr_bno->bload.get_record = get_bnobt_record;
 	btr_bno->bload.claim_block = rebuild_claim_block;

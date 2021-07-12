@@ -507,7 +507,7 @@ _("unable to rebuild AG %u.  Not enough free space in on-disk AG.\n"),
 	/*
 	 * track blocks that we might really lose
 	 */
-	init_freespace_cursors(&sc, agno, num_freeblocks, &num_extents,
+	init_freespace_cursors(&sc, pag, num_freeblocks, &num_extents,
 			&extra_blocks, &btr_bno, &btr_cnt);
 
 	/*
