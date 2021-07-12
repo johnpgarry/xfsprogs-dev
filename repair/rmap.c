@@ -976,14 +976,14 @@ rmaps_verify_btree(
 	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno)
 {
+	struct xfs_rmap_irec	tmp;
 	struct xfs_slab_cursor	*rm_cur;
 	struct xfs_btree_cur	*bt_cur = NULL;
-	int			error;
-	int			have;
 	struct xfs_buf		*agbp = NULL;
 	struct xfs_rmap_irec	*rm_rec;
-	struct xfs_rmap_irec	tmp;
-	struct xfs_perag	*pag;		/* per allocation group data */
+	struct xfs_perag	*pag = NULL;
+	int			have;
+	int			error;
 
 	if (!xfs_sb_version_hasrmapbt(&mp->m_sb))
 		return 0;
@@ -1005,9 +1005,8 @@ rmaps_verify_btree(
 	/* Leave the per-ag data "uninitialized" since we rewrite it later */
 	pag = libxfs_perag_get(mp, agno);
 	pag->pagf_init = 0;
-	libxfs_perag_put(pag);
 
-	bt_cur = libxfs_rmapbt_init_cursor(mp, NULL, agbp, agno);
+	bt_cur = libxfs_rmapbt_init_cursor(mp, NULL, agbp, agno, pag);
 	if (!bt_cur) {
 		error = -ENOMEM;
 		goto err;
@@ -1081,6 +1080,8 @@ next_loop:
 err:
 	if (bt_cur)
 		libxfs_btree_del_cursor(bt_cur, XFS_BTREE_NOERROR);
+	if (pag)
+		libxfs_perag_put(pag);
 	if (agbp)
 		libxfs_buf_relse(agbp);
 	free_slab_cursor(&rm_cur);
@@ -1333,18 +1334,18 @@ refcount_avoid_check(void)
  */
 int
 check_refcounts(
-	struct xfs_mount	*mp,
-	xfs_agnumber_t		agno)
+	struct xfs_mount		*mp,
+	xfs_agnumber_t			agno)
 {
-	struct xfs_slab_cursor	*rl_cur;
-	struct xfs_btree_cur	*bt_cur = NULL;
-	int			error;
-	int			have;
-	int			i;
-	struct xfs_buf		*agbp = NULL;
-	struct xfs_refcount_irec	*rl_rec;
 	struct xfs_refcount_irec	tmp;
-	struct xfs_perag	*pag;		/* per allocation group data */
+	struct xfs_slab_cursor		*rl_cur;
+	struct xfs_btree_cur		*bt_cur = NULL;
+	struct xfs_buf			*agbp = NULL;
+	struct xfs_perag		*pag = NULL;
+	struct xfs_refcount_irec	*rl_rec;
+	int				have;
+	int				i;
+	int				error;
 
 	if (!xfs_sb_version_hasreflink(&mp->m_sb))
 		return 0;
@@ -1366,9 +1367,8 @@ check_refcounts(
 	/* Leave the per-ag data "uninitialized" since we rewrite it later */
 	pag = libxfs_perag_get(mp, agno);
 	pag->pagf_init = 0;
-	libxfs_perag_put(pag);
 
-	bt_cur = libxfs_refcountbt_init_cursor(mp, NULL, agbp, agno);
+	bt_cur = libxfs_refcountbt_init_cursor(mp, NULL, agbp, agno, pag);
 	if (!bt_cur) {
 		error = -ENOMEM;
 		goto err;
@@ -1417,6 +1417,8 @@ err:
 	if (bt_cur)
 		libxfs_btree_del_cursor(bt_cur, error ? XFS_BTREE_ERROR :
 							XFS_BTREE_NOERROR);
+	if (pag)
+		libxfs_perag_put(pag);
 	if (agbp)
 		libxfs_buf_relse(agbp);
 	free_slab_cursor(&rl_cur);

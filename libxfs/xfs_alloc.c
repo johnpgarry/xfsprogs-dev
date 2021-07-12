@@ -772,7 +772,8 @@ xfs_alloc_cur_setup(
 	 */
 	if (!acur->cnt)
 		acur->cnt = xfs_allocbt_init_cursor(args->mp, args->tp,
-					args->agbp, args->agno, XFS_BTNUM_CNT);
+						args->agbp, args->agno,
+						args->pag, XFS_BTNUM_CNT);
 	error = xfs_alloc_lookup_ge(acur->cnt, 0, args->maxlen, &i);
 	if (error)
 		return error;
@@ -782,10 +783,12 @@ xfs_alloc_cur_setup(
 	 */
 	if (!acur->bnolt)
 		acur->bnolt = xfs_allocbt_init_cursor(args->mp, args->tp,
-					args->agbp, args->agno, XFS_BTNUM_BNO);
+						args->agbp, args->agno,
+						args->pag, XFS_BTNUM_BNO);
 	if (!acur->bnogt)
 		acur->bnogt = xfs_allocbt_init_cursor(args->mp, args->tp,
-					args->agbp, args->agno, XFS_BTNUM_BNO);
+						args->agbp, args->agno,
+						args->pag, XFS_BTNUM_BNO);
 	return i == 1 ? 0 : -ENOSPC;
 }
 
@@ -1213,7 +1216,7 @@ xfs_alloc_ag_vextent_exact(
 	 * Allocate/initialize a cursor for the by-number freespace btree.
 	 */
 	bno_cur = xfs_allocbt_init_cursor(args->mp, args->tp, args->agbp,
-					  args->agno, XFS_BTNUM_BNO);
+					  args->agno, args->pag, XFS_BTNUM_BNO);
 
 	/*
 	 * Lookup bno and minlen in the btree (minlen is irrelevant, really).
@@ -1273,7 +1276,7 @@ xfs_alloc_ag_vextent_exact(
 	 * Allocate/initialize a cursor for the by-size btree.
 	 */
 	cnt_cur = xfs_allocbt_init_cursor(args->mp, args->tp, args->agbp,
-		args->agno, XFS_BTNUM_CNT);
+					args->agno, args->pag, XFS_BTNUM_CNT);
 	ASSERT(args->agbno + args->len <= be32_to_cpu(agf->agf_length));
 	error = xfs_alloc_fixup_trees(cnt_cur, bno_cur, fbno, flen, args->agbno,
 				      args->len, XFSA_FIXUP_BNO_OK);
@@ -1670,7 +1673,7 @@ restart:
 	 * Allocate and initialize a cursor for the by-size btree.
 	 */
 	cnt_cur = xfs_allocbt_init_cursor(args->mp, args->tp, args->agbp,
-		args->agno, XFS_BTNUM_CNT);
+					args->agno, args->pag, XFS_BTNUM_CNT);
 	bno_cur = NULL;
 	busy = false;
 
@@ -1833,7 +1836,7 @@ restart:
 	 * Allocate and initialize a cursor for the by-block tree.
 	 */
 	bno_cur = xfs_allocbt_init_cursor(args->mp, args->tp, args->agbp,
-		args->agno, XFS_BTNUM_BNO);
+					args->agno, args->pag, XFS_BTNUM_BNO);
 	if ((error = xfs_alloc_fixup_trees(cnt_cur, bno_cur, fbno, flen,
 			rbno, rlen, XFSA_FIXUP_CNT_OK)))
 		goto error0;
@@ -1905,7 +1908,8 @@ xfs_free_ag_extent(
 	/*
 	 * Allocate and initialize a cursor for the by-block btree.
 	 */
-	bno_cur = xfs_allocbt_init_cursor(mp, tp, agbp, agno, XFS_BTNUM_BNO);
+	bno_cur = xfs_allocbt_init_cursor(mp, tp, agbp, agno,
+					NULL, XFS_BTNUM_BNO);
 	/*
 	 * Look for a neighboring block on the left (lower block numbers)
 	 * that is contiguous with this space.
@@ -1975,7 +1979,8 @@ xfs_free_ag_extent(
 	/*
 	 * Now allocate and initialize a cursor for the by-size tree.
 	 */
-	cnt_cur = xfs_allocbt_init_cursor(mp, tp, agbp, agno, XFS_BTNUM_CNT);
+	cnt_cur = xfs_allocbt_init_cursor(mp, tp, agbp, agno,
+					NULL, XFS_BTNUM_CNT);
 	/*
 	 * Have both left and right contiguous neighbors.
 	 * Merge all three into a single free block.
@@ -2486,7 +2491,7 @@ xfs_exact_minlen_extent_available(
 	int			error = 0;
 
 	cnt_cur = xfs_allocbt_init_cursor(args->mp, args->tp, agbp,
-			args->agno, XFS_BTNUM_CNT);
+					args->agno, args->pag, XFS_BTNUM_CNT);
 	error = xfs_alloc_lookup_ge(cnt_cur, 0, args->minlen, stat);
 	if (error)
 		goto out;

@@ -15,6 +15,7 @@
 typedef	int32_t	atomic_t;
 typedef	int64_t	atomic64_t;
 
+#define atomic_inc(x)		((*(x))++)
 #define atomic_inc_return(x)	(++(*(x)))
 #define atomic_dec_return(x)	(--(*(x)))
 
