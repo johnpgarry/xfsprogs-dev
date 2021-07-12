@@ -433,7 +433,7 @@ keep_fsinos(xfs_mount_t *mp)
 static void
 phase5_func(
 	struct xfs_mount	*mp,
-	xfs_agnumber_t		agno,
+	struct xfs_perag	*pag,
 	struct bitmap		*lost_blocks)
 {
 	struct repair_ctx	sc = { .mp = mp, };
@@ -443,6 +443,7 @@ phase5_func(
 	struct bt_rebuild	btr_fino;
 	struct bt_rebuild	btr_rmap;
 	struct bt_rebuild	btr_refc;
+	xfs_agnumber_t		agno = pag->pag_agno;
 	int			extra_blocks = 0;
 	uint			num_freeblocks;
 	xfs_agblock_t		num_extents;
@@ -476,7 +477,7 @@ _("unable to rebuild AG %u.  Not enough free space in on-disk AG.\n"),
 	init_ino_cursors(&sc, agno, num_freeblocks, &sb_icount_ag[agno],
 			&sb_ifree_ag[agno], &btr_ino, &btr_fino);
 
-	init_rmapbt_cursor(&sc, agno, num_freeblocks, &btr_rmap);
+	init_rmapbt_cursor(&sc, pag, num_freeblocks, &btr_rmap);
 
 	init_refc_cursor(&sc, agno, num_freeblocks, &btr_refc);
 
@@ -605,6 +606,7 @@ void
 phase5(xfs_mount_t *mp)
 {
 	struct bitmap		*lost_blocks = NULL;
+	struct xfs_perag	*pag;
 	xfs_agnumber_t		agno;
 	int			error;
 
@@ -651,8 +653,8 @@ phase5(xfs_mount_t *mp)
 	if (error)
 		do_error(_("cannot alloc lost block bitmap\n"));
 
-	for (agno = 0; agno < mp->m_sb.sb_agcount; agno++)
-		phase5_func(mp, agno, lost_blocks);
+	for_each_perag(mp, agno, pag)
+		phase5_func(mp, pag, lost_blocks);
 
 	print_final_rpt();
 
