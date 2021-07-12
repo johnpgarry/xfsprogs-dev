@@ -209,10 +209,9 @@ xfs_inobt_insert(
  * Verify that the number of free inodes in the AGI is correct.
  */
 #ifdef DEBUG
-STATIC int
+static int
 xfs_check_agi_freecount(
-	struct xfs_btree_cur	*cur,
-	struct xfs_agi		*agi)
+	struct xfs_btree_cur	*cur)
 {
 	if (cur->bc_nlevels == 1) {
 		xfs_inobt_rec_incore_t rec;
@@ -238,12 +237,12 @@ xfs_check_agi_freecount(
 		} while (i == 1);
 
 		if (!XFS_FORCED_SHUTDOWN(cur->bc_mp))
-			ASSERT(freecount == be32_to_cpu(agi->agi_freecount));
+			ASSERT(freecount == cur->bc_ag.pag->pagi_freecount);
 	}
 	return 0;
 }
 #else
-#define xfs_check_agi_freecount(cur, agi)	0
+#define xfs_check_agi_freecount(cur)	0
 #endif
 
 /*
@@ -1009,7 +1008,7 @@ xfs_dialloc_ag_inobt(
 	if (!pagino)
 		pagino = be32_to_cpu(agi->agi_newino);
 
-	error = xfs_check_agi_freecount(cur, agi);
+	error = xfs_check_agi_freecount(cur);
 	if (error)
 		goto error0;
 
@@ -1229,7 +1228,7 @@ alloc_inode:
 	xfs_ialloc_log_agi(tp, agbp, XFS_AGI_FREECOUNT);
 	pag->pagi_freecount--;
 
-	error = xfs_check_agi_freecount(cur, agi);
+	error = xfs_check_agi_freecount(cur);
 	if (error)
 		goto error0;
 
@@ -1456,7 +1455,7 @@ xfs_dialloc_ag(
 
 	cur = xfs_inobt_init_cursor(mp, tp, agbp, pag, XFS_BTNUM_FINO);
 
-	error = xfs_check_agi_freecount(cur, agi);
+	error = xfs_check_agi_freecount(cur);
 	if (error)
 		goto error_cur;
 
@@ -1499,7 +1498,7 @@ xfs_dialloc_ag(
 	 */
 	icur = xfs_inobt_init_cursor(mp, tp, agbp, pag, XFS_BTNUM_INO);
 
-	error = xfs_check_agi_freecount(icur, agi);
+	error = xfs_check_agi_freecount(icur);
 	if (error)
 		goto error_icur;
 
@@ -1517,10 +1516,10 @@ xfs_dialloc_ag(
 
 	xfs_trans_mod_sb(tp, XFS_TRANS_SB_IFREE, -1);
 
-	error = xfs_check_agi_freecount(icur, agi);
+	error = xfs_check_agi_freecount(icur);
 	if (error)
 		goto error_icur;
-	error = xfs_check_agi_freecount(cur, agi);
+	error = xfs_check_agi_freecount(cur);
 	if (error)
 		goto error_icur;
 
@@ -1906,7 +1905,7 @@ xfs_difree_inobt(
 	 */
 	cur = xfs_inobt_init_cursor(mp, tp, agbp, pag, XFS_BTNUM_INO);
 
-	error = xfs_check_agi_freecount(cur, agi);
+	error = xfs_check_agi_freecount(cur);
 	if (error)
 		goto error0;
 
@@ -1999,7 +1998,7 @@ xfs_difree_inobt(
 		xfs_trans_mod_sb(tp, XFS_TRANS_SB_IFREE, 1);
 	}
 
-	error = xfs_check_agi_freecount(cur, agi);
+	error = xfs_check_agi_freecount(cur);
 	if (error)
 		goto error0;
 
@@ -2024,7 +2023,6 @@ xfs_difree_finobt(
 	xfs_agino_t			agino,
 	struct xfs_inobt_rec_incore	*ibtrec) /* inobt record */
 {
-	struct xfs_agi			*agi = agbp->b_addr;
 	struct xfs_btree_cur		*cur;
 	struct xfs_inobt_rec_incore	rec;
 	int				offset = agino - ibtrec->ir_startino;
@@ -2109,7 +2107,7 @@ xfs_difree_finobt(
 	}
 
 out:
-	error = xfs_check_agi_freecount(cur, agi);
+	error = xfs_check_agi_freecount(cur);
 	if (error)
 		goto error;
 
