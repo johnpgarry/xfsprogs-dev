@@ -545,6 +545,7 @@ rmap_store_ag_btree_rec(
 	rm_rec = pop_slab_cursor(rm_cur);
 	while (rm_rec) {
 		struct xfs_owner_info	oinfo = {};
+		struct xfs_perag	*pag;
 
 		error = -libxfs_trans_alloc_rollable(mp, 16, &tp);
 		if (error)
@@ -556,8 +557,10 @@ rmap_store_ag_btree_rec(
 
 		ASSERT(XFS_RMAP_NON_INODE_OWNER(rm_rec->rm_owner));
 		oinfo.oi_owner = rm_rec->rm_owner;
-		error = -libxfs_rmap_alloc(tp, agbp, agno, rm_rec->rm_startblock,
+		pag = libxfs_perag_get(mp, agno);
+		error = -libxfs_rmap_alloc(tp, agbp, pag, rm_rec->rm_startblock,
 				rm_rec->rm_blockcount, &oinfo);
+		libxfs_perag_put(pag);
 		if (error)
 			goto err_trans;
 
@@ -1006,7 +1009,7 @@ rmaps_verify_btree(
 	pag = libxfs_perag_get(mp, agno);
 	pag->pagf_init = 0;
 
-	bt_cur = libxfs_rmapbt_init_cursor(mp, NULL, agbp, agno, pag);
+	bt_cur = libxfs_rmapbt_init_cursor(mp, NULL, agbp, pag);
 	if (!bt_cur) {
 		error = -ENOMEM;
 		goto err;
