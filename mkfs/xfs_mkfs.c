@@ -9,7 +9,6 @@
 #include "xfs_multidisk.h"
 #include "libxcmd.h"
 #include "libfrog/fsgeom.h"
-#include "libfrog/topology.h"
 #include "libfrog/convert.h"
 #include "proto.h"
 #include <ini.h>

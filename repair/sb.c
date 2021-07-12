@@ -12,7 +12,6 @@
 #include "protos.h"
 #include "err_protos.h"
 #include "xfs_multidisk.h"
-#include "libfrog/topology.h"
 
 #define BSIZE	(1024 * 1024)
 
