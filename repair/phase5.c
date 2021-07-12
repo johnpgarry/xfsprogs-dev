@@ -479,7 +479,7 @@ _("unable to rebuild AG %u.  Not enough free space in on-disk AG.\n"),
 
 	init_rmapbt_cursor(&sc, pag, num_freeblocks, &btr_rmap);
 
-	init_refc_cursor(&sc, agno, num_freeblocks, &btr_refc);
+	init_refc_cursor(&sc, pag, num_freeblocks, &btr_refc);
 
 	num_extents = count_bno_extents_blocks(agno, &num_freeblocks);
 	/*

@@ -1371,7 +1371,7 @@ check_refcounts(
 	pag = libxfs_perag_get(mp, agno);
 	pag->pagf_init = 0;
 
-	bt_cur = libxfs_refcountbt_init_cursor(mp, NULL, agbp, agno, pag);
+	bt_cur = libxfs_refcountbt_init_cursor(mp, NULL, agbp, pag);
 	if (!bt_cur) {
 		error = -ENOMEM;
 		goto err;

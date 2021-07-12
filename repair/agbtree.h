@@ -54,7 +54,7 @@ void init_rmapbt_cursor(struct repair_ctx *sc, struct xfs_perag *pag,
 void build_rmap_tree(struct repair_ctx *sc, xfs_agnumber_t agno,
 		struct bt_rebuild *btr);
 
-void init_refc_cursor(struct repair_ctx *sc, xfs_agnumber_t agno,
+void init_refc_cursor(struct repair_ctx *sc, struct xfs_perag *pag,
 		unsigned int free_space, struct bt_rebuild *btr);
 void build_refcount_tree(struct repair_ctx *sc, xfs_agnumber_t agno,
 		struct bt_rebuild *btr);
