@@ -193,7 +193,7 @@ get_bno_rec(
 	struct xfs_btree_cur	*cur,
 	struct extent_tree_node	*prev_value)
 {
-	xfs_agnumber_t		agno = cur->bc_ag.agno;
+	xfs_agnumber_t		agno = cur->bc_ag.pag->pag_agno;
 
 	if (cur->bc_btnum == XFS_BTNUM_BNO) {
 		if (!prev_value)
@@ -355,7 +355,7 @@ get_ino_rec(
 	struct xfs_btree_cur	*cur,
 	struct ino_tree_node	*prev_value)
 {
-	xfs_agnumber_t		agno = cur->bc_ag.agno;
+	xfs_agnumber_t		agno = cur->bc_ag.pag->pag_agno;
 
 	if (cur->bc_btnum == XFS_BTNUM_INO) {
 		if (!prev_value)

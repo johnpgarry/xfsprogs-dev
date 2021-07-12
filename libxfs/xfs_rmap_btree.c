@@ -462,7 +462,6 @@ xfs_rmapbt_init_common(
 	/* take a reference for the cursor */
 	atomic_inc(&pag->pag_ref);
 	cur->bc_ag.pag = pag;
-	cur->bc_ag.agno = pag->pag_agno;
 
 	return cur;
 }
