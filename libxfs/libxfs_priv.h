@@ -486,8 +486,8 @@ void __xfs_buf_mark_corrupt(struct xfs_buf *bp, xfs_failaddr_t fa);
 
 #define xfs_extent_busy_reuse(mp,ag,bno,len,user)	((void) 0)
 /* avoid unused variable warning */
-#define xfs_extent_busy_insert(tp,ag,bno,len,flags)({ 	\
-	xfs_agnumber_t __foo = ag; 			\
+#define xfs_extent_busy_insert(tp,pag,bno,len,flags)({ 	\
+	struct xfs_perag *__foo = pag;			\
 	__foo = __foo; /* no set-but-unused warning */	\
 })
 #define xfs_extent_busy_trim(args,bno,len,busy_gen) 	({	\
