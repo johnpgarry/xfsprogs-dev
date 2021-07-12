@@ -42,7 +42,7 @@ void init_freespace_cursors(struct repair_ctx *sc, struct xfs_perag *pag,
 void build_freespace_btrees(struct repair_ctx *sc, xfs_agnumber_t agno,
 		struct bt_rebuild *btr_bno, struct bt_rebuild *btr_cnt);
 
-void init_ino_cursors(struct repair_ctx *sc, xfs_agnumber_t agno,
+void init_ino_cursors(struct repair_ctx *sc, struct xfs_perag *pag,
 		unsigned int free_space, uint64_t *num_inos,
 		uint64_t *num_free_inos, struct bt_rebuild *btr_ino,
 		struct bt_rebuild *btr_fino);
