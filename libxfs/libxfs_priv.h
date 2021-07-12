@@ -547,7 +547,6 @@ int xfs_attr_rmtval_get(struct xfs_da_args *);
 void xfs_bmap_del_free(struct xfs_bmap_free *, struct xfs_bmap_free_item *);
 
 /* xfs_mount.c */
-int xfs_initialize_perag_data(struct xfs_mount *, xfs_agnumber_t);
 void xfs_mount_common(struct xfs_mount *, struct xfs_sb *);
 
 /*
@@ -665,6 +664,15 @@ static inline int test_and_set_bit(int nr, volatile unsigned long *addr)
 	set_bit(nr, addr);
 	return 0;
 }
+
+static inline int xfs_buf_hash_init(struct xfs_perag *pag) { return 0; }
+static inline void xfs_buf_hash_destroy(struct xfs_perag *pag) { }
+
+static inline int xfs_iunlink_init(struct xfs_perag *pag) { return 0; }
+static inline void xfs_iunlink_destroy(struct xfs_perag *pag) { }
+
+xfs_agnumber_t xfs_set_inode_alloc(struct xfs_mount *mp,
+		xfs_agnumber_t agcount);
 
 /* Keep static checkers quiet about nonstatic functions by exporting */
 int xfs_rtbuf_get(struct xfs_mount *mp, struct xfs_trans *tp,

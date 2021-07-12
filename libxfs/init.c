@@ -569,60 +569,6 @@ xfs_set_inode_alloc(
 	return (mp->m_flags & XFS_MOUNT_32BITINODES) ? maxagi : agcount;
 }
 
-static int
-libxfs_initialize_perag(
-	xfs_mount_t	*mp,
-	xfs_agnumber_t	agcount,
-	xfs_agnumber_t	*maxagi)
-{
-	xfs_agnumber_t	index;
-	xfs_agnumber_t	first_initialised = 0;
-	xfs_perag_t	*pag;
-	int		error = -ENOMEM;
-
-	/*
-	 * Walk the current per-ag tree so we don't try to initialise AGs
-	 * that already exist (growfs case). Allocate and insert all the
-	 * AGs we don't find ready for initialisation.
-	 */
-	for (index = 0; index < agcount; index++) {
-		pag = xfs_perag_get(mp, index);
-		if (pag) {
-			xfs_perag_put(pag);
-			continue;
-		}
-		if (!first_initialised)
-			first_initialised = index;
-
-		pag = kmem_zalloc(sizeof(*pag), KM_MAYFAIL);
-		if (!pag)
-			goto out_unwind;
-		pag->pag_agno = index;
-		pag->pag_mount = mp;
-
-		if (radix_tree_insert(&mp->m_perag_tree, index, pag)) {
-			error = -EEXIST;
-			goto out_unwind;
-		}
-	}
-
-	index = xfs_set_inode_alloc(mp, agcount);
-
-	if (maxagi)
-		*maxagi = index;
-
-	mp->m_ag_prealloc_blocks = xfs_prealloc_blocks(mp);
-	return 0;
-
-out_unwind:
-	kmem_free(pag);
-	for (; index > first_initialised; index--) {
-		pag = radix_tree_delete(&mp->m_perag_tree, index);
-		kmem_free(pag);
-	}
-	return error;
-}
-
 static struct xfs_buftarg *
 libxfs_buftarg_alloc(
 	struct xfs_mount	*mp,
@@ -1013,8 +959,6 @@ int
 libxfs_umount(
 	struct xfs_mount	*mp)
 {
-	struct xfs_perag	*pag;
-	int			agno;
 	int			error;
 
 	libxfs_rtmount_destroy(mp);
@@ -1027,10 +971,7 @@ libxfs_umount(
 	libxfs_bcache_purge();
 	error = libxfs_flush_mount(mp);
 
-	for (agno = 0; agno < mp->m_maxagi; agno++) {
-		pag = radix_tree_delete(&mp->m_perag_tree, agno);
-		kmem_free(pag);
-	}
+	libxfs_free_perag(mp);
 
 	kmem_free(mp->m_attr_geo);
 	kmem_free(mp->m_dir_geo);
