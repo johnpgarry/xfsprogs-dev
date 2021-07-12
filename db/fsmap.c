@@ -74,8 +74,7 @@ fsmap(
 			return;
 		}
 
-		bt_cur = libxfs_rmapbt_init_cursor(mp, NULL, agbp,
-				pag->pag_agno, pag);
+		bt_cur = libxfs_rmapbt_init_cursor(mp, NULL, agbp, pag);
 		if (!bt_cur) {
 			libxfs_buf_relse(agbp);
 			libxfs_perag_put(pag);
