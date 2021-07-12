@@ -438,7 +438,7 @@ get_inobt_record(
 void
 init_ino_cursors(
 	struct repair_ctx	*sc,
-	xfs_agnumber_t		agno,
+	struct xfs_perag	*pag,
 	unsigned int		free_space,
 	uint64_t		*num_inos,
 	uint64_t		*num_free_inos,
@@ -446,6 +446,7 @@ init_ino_cursors(
 	struct bt_rebuild	*btr_fino)
 {
 	struct ino_tree_node	*ino_rec;
+	xfs_agnumber_t		agno = pag->pag_agno;
 	unsigned int		ino_recs = 0;
 	unsigned int		fino_recs = 0;
 	bool			finobt;
@@ -487,7 +488,7 @@ init_ino_cursors(
 	}
 
 	btr_ino->cur = libxfs_inobt_stage_cursor(sc->mp, &btr_ino->newbt.afake,
-			agno, XFS_BTNUM_INO);
+			pag, XFS_BTNUM_INO);
 
 	btr_ino->bload.get_record = get_inobt_record;
 	btr_ino->bload.claim_block = rebuild_claim_block;
@@ -507,7 +508,7 @@ _("Unable to compute inode btree geometry, error %d.\n"), error);
 
 	init_rebuild(sc, &XFS_RMAP_OINFO_INOBT, free_space, btr_fino);
 	btr_fino->cur = libxfs_inobt_stage_cursor(sc->mp,
-			&btr_fino->newbt.afake, agno, XFS_BTNUM_FINO);
+			&btr_fino->newbt.afake, pag, XFS_BTNUM_FINO);
 
 	btr_fino->bload.get_record = get_inobt_record;
 	btr_fino->bload.claim_block = rebuild_claim_block;
