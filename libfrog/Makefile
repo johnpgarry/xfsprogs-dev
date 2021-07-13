@@ -41,6 +41,7 @@ crc32defs.h \
 crc32table.h \
 fsgeom.h \
 logging.h \
+mockups.h \
 paths.h \
 projects.h \
 ptvar.h \
