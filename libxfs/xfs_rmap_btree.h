@@ -4,7 +4,7 @@
  * All Rights Reserved.
  */
 #ifndef __XFS_RMAP_BTREE_H__
-#define	__XFS_RMAP_BTREE_H__
+#define __XFS_RMAP_BTREE_H__
 
 struct xfs_buf;
 struct xfs_btree_cur;
