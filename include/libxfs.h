@@ -17,6 +17,7 @@
 #include "bitops.h"
 #include "kmem.h"
 #include "libfrog/radix-tree.h"
+#include "libfrog/mockups.h"
 #include "atomic.h"
 
 #include "xfs_types.h"
