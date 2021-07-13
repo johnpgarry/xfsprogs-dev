@@ -88,7 +88,7 @@ uint32_t xfs_btree_magic(int crc, xfs_btnum_t btnum);
  */
 #define XFS_BTREE_STATS_INC(cur, stat)	\
 	XFS_STATS_INC_OFF((cur)->bc_mp, (cur)->bc_statoff + __XBTS_ ## stat)
-#define XFS_BTREE_STATS_ADD(cur, stat, val)    \
+#define XFS_BTREE_STATS_ADD(cur, stat, val)	\
 	XFS_STATS_ADD_OFF((cur)->bc_mp, (cur)->bc_statoff + __XBTS_ ## stat, val)
 
 #define	XFS_BTREE_MAXLEVELS	9	/* max of all btrees */
