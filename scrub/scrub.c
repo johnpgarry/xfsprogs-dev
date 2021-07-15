@@ -164,7 +164,7 @@ _("Filesystem is shut down, aborting."));
 		 * and the other two should be reported via sm_flags.
 		 */
 		str_liberror(ctx, error, _("Kernel bug"));
-		/* fall through */
+		fallthrough;
 	default:
 		/* Operational error. */
 		str_errno(ctx, descr_render(&dsc));
@@ -316,7 +316,7 @@ scrub_meta_type(
 		ret = scrub_save_repair(ctx, alist, &meta);
 		if (ret)
 			return ret;
-		/* fall through */
+		fallthrough;
 	case CHECK_DONE:
 		return 0;
 	default:
@@ -741,7 +741,7 @@ _("Filesystem is shut down, aborting."));
 		if (is_unoptimized(&oldm) ||
 		    debug_tweak_on("XFS_SCRUB_FORCE_REPAIR"))
 			return CHECK_DONE;
-		/* fall through */
+		fallthrough;
 	case EINVAL:
 		/* Kernel doesn't know how to repair this? */
 		str_corrupt(ctx, descr_render(&dsc),
@@ -761,7 +761,7 @@ _("Read-only filesystem; cannot make changes."));
 		/* Don't care if preen fails due to low resources. */
 		if (is_unoptimized(&oldm) && !needs_repair(&oldm))
 			return CHECK_DONE;
-		/* fall through */
+		fallthrough;
 	default:
 		/*
 		 * Operational error.  If the caller doesn't want us
