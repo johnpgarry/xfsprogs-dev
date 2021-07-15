@@ -531,7 +531,7 @@ _("Fatal error: inode %" PRIu64 " - blkmap_set_ext(): %s\n"
 				do_warn(
 _("%s fork in ino %" PRIu64 " claims free block %" PRIu64 "\n"),
 					forkname, ino, (uint64_t) b);
-				/* fall through ... */
+				fallthrough;
 			case XR_E_INUSE1:	/* seen by rmap */
 			case XR_E_UNKNOWN:
 				break;
@@ -543,7 +543,7 @@ _("%s fork in ino %" PRIu64 " claims free block %" PRIu64 "\n"),
 			case XR_E_INO1:
 			case XR_E_INUSE_FS1:
 				do_warn(_("rmap claims metadata use!\n"));
-				/* fall through */
+				fallthrough;
 			case XR_E_FS_MAP:
 			case XR_E_INO:
 			case XR_E_INUSE_FS:
@@ -1674,9 +1674,9 @@ _("directory inode %" PRIu64 " has bad size %" PRId64 "\n"),
 		}
 		break;
 
-	case XR_INO_CHRDEV:	/* fall through to FIFO case ... */
-	case XR_INO_BLKDEV:	/* fall through to FIFO case ... */
-	case XR_INO_SOCK:	/* fall through to FIFO case ... */
+	case XR_INO_CHRDEV:
+	case XR_INO_BLKDEV:
+	case XR_INO_SOCK:
 	case XR_INO_FIFO:
 		if (process_misc_ino_types(mp, dino, lino, type))
 			return 1;
@@ -1751,8 +1751,8 @@ _("bad attr fork offset %d in dev inode %" PRIu64 ", should be %d\n"),
 			return 1;
 		}
 		break;
-	case XFS_DINODE_FMT_LOCAL:	/* fall through ... */
-	case XFS_DINODE_FMT_EXTENTS:	/* fall through ... */
+	case XFS_DINODE_FMT_LOCAL:
+	case XFS_DINODE_FMT_EXTENTS:
 	case XFS_DINODE_FMT_BTREE:
 		if (dino->di_forkoff >= (XFS_LITINO(mp) >> 3)) {
 			do_warn(
@@ -1908,7 +1908,7 @@ process_inode_data_fork(
 			totblocks, nextents, dblkmap, XFS_DATA_FORK,
 			check_dups);
 		break;
-	case XFS_DINODE_FMT_DEV:	/* fall through */
+	case XFS_DINODE_FMT_DEV:
 		err = 0;
 		break;
 	default:
@@ -1946,7 +1946,7 @@ process_inode_data_fork(
 				dirty, totblocks, nextents, dblkmap,
 				XFS_DATA_FORK, 0);
 			break;
-		case XFS_DINODE_FMT_DEV:	/* fall through */
+		case XFS_DINODE_FMT_DEV:
 			err = 0;
 			break;
 		default:
