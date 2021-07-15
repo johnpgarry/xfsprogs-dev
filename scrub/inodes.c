@@ -204,7 +204,7 @@ _("Changed too many times during scan; giving up."));
 			}
 			case ECANCELED:
 				error = 0;
-				/* fall thru */
+				fallthrough;
 			default:
 				goto err;
 			}
