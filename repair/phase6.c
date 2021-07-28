@@ -237,6 +237,21 @@ dir_hash_add(
 	return !dup;
 }
 
+/* Mark an existing directory hashtable entry as junk. */
+static void
+dir_hash_junkit(
+	struct dir_hash_tab	*hashtab,
+	xfs_dir2_dataptr_t	addr)
+{
+	struct dir_hash_ent	*p;
+
+	p = radix_tree_lookup(&hashtab->byaddr, addr);
+	assert(p != NULL);
+
+	p->junkit = 1;
+	p->namebuf[0] = '/';
+}
+
 static int
 dir_hash_check(
 	struct dir_hash_tab	*hashtab,
@@ -1729,6 +1744,7 @@ longform_dir2_entry_check_data(
 				if (entry_junked(
 	_("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is not in the the first block"), fname,
 						inum, ip->i_ino)) {
+					dir_hash_junkit(hashtab, addr);
 					dep->name[0] = '/';
 					libxfs_dir2_data_log_entry(&da, bp, dep);
 				}
@@ -1756,6 +1772,7 @@ longform_dir2_entry_check_data(
 				if (entry_junked(
 	_("entry \"%s\" in dir %" PRIu64 " is not the first entry"),
 						fname, inum, ip->i_ino)) {
+					dir_hash_junkit(hashtab, addr);
 					dep->name[0] = '/';
 					libxfs_dir2_data_log_entry(&da, bp, dep);
 				}
@@ -1844,6 +1861,7 @@ _("entry \"%s\" in dir inode %" PRIu64 " inconsistent with .. value (%" PRIu64 "
 				orphanage_ino = 0;
 			nbad++;
 			if (!no_modify)  {
+				dir_hash_junkit(hashtab, addr);
 				dep->name[0] = '/';
 				libxfs_dir2_data_log_entry(&da, bp, dep);
 				if (verbose)
