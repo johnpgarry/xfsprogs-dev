@@ -2179,6 +2179,56 @@ _("Bad %s nsec %u on inode %" PRIu64 ", "), name, be32_to_cpu(t->t_nsec), lino);
 	}
 }
 
+static void
+validate_extsize(
+	struct xfs_mount	*mp,
+	struct xfs_dinode	*dino,
+	xfs_ino_t		lino,
+	int			*dirty)
+{
+	uint16_t		flags = be16_to_cpu(dino->di_flags);
+	unsigned int		value = be32_to_cpu(dino->di_extsize);
+	bool			misaligned = false;
+	bool			bad;
+
+	/*
+	 * XFS allows a sysadmin to change the rt extent size when adding a rt
+	 * section to a filesystem after formatting.  If there are any
+	 * directories with extszinherit and rtinherit set, the hint could
+	 * become misaligned with the new rextsize.  The verifier doesn't check
+	 * this, because we allow rtinherit directories even without an rt
+	 * device.
+	 */
+	if ((flags & XFS_DIFLAG_EXTSZINHERIT) &&
+	    (flags & XFS_DIFLAG_RTINHERIT) &&
+	    value % mp->m_sb.sb_rextsize > 0)
+		misaligned = true;
+
+	/*
+	 * Complain if the verifier fails.
+	 *
+	 * Old kernels didn't check the alignment of extsize hints when copying
+	 * them to new regular realtime files.  The inode verifier now checks
+	 * the alignment (because misaligned hints cause misbehavior in the rt
+	 * allocator), so we have to complain and fix them.
+	 */
+	bad = libxfs_inode_validate_extsize(mp, value,
+			be16_to_cpu(dino->di_mode), flags) != NULL;
+	if (bad || misaligned) {
+		do_warn(
+_("Bad extent size hint %u on inode %" PRIu64 ", "),
+				value, lino);
+		if (!no_modify)  {
+			do_warn(_("resetting to zero\n"));
+			dino->di_extsize = 0;
+			dino->di_flags &= ~cpu_to_be16(XFS_DIFLAG_EXTSIZE |
+						       XFS_DIFLAG_EXTSZINHERIT);
+			*dirty = 1;
+		} else
+			do_warn(_("would reset to zero\n"));
+	}
+}
+
 /*
  * returns 0 if the inode is ok, 1 if the inode is corrupt
  * check_dups can be set to 1 *only* when called by the
@@ -2690,26 +2740,7 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 	if (process_check_sb_inodes(mp, dino, lino, &type, dirty) != 0)
 		goto clear_bad_out;
 
-	/*
-	 * only regular files with REALTIME or EXTSIZE flags set can have
-	 * extsize set, or directories with EXTSZINHERIT.
-	 */
-	if (libxfs_inode_validate_extsize(mp,
-			be32_to_cpu(dino->di_extsize),
-			be16_to_cpu(dino->di_mode),
-			be16_to_cpu(dino->di_flags)) != NULL) {
-		do_warn(
-_("Bad extent size %u on inode %" PRIu64 ", "),
-				be32_to_cpu(dino->di_extsize), lino);
-		if (!no_modify)  {
-			do_warn(_("resetting to zero\n"));
-			dino->di_extsize = 0;
-			dino->di_flags &= ~cpu_to_be16(XFS_DIFLAG_EXTSIZE |
-						       XFS_DIFLAG_EXTSZINHERIT);
-			*dirty = 1;
-		} else
-			do_warn(_("would reset to zero\n"));
-	}
+	validate_extsize(mp, dino, lino, dirty);
 
 	/*
 	 * Only (regular files and directories) with COWEXTSIZE flags
