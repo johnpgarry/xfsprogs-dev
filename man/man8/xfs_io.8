@@ -1235,11 +1235,29 @@ down, matching XFS behavior when critical corruption is encountered.
 .PD
 .RE
 .TP
-.B statfs
-Selected statistics from
+.B statfs [ -c ] [ -g ] [ -s ]
+Report selected statistics on the filesystem where the current file resides.
+The default behavior is to enable all three reporting options:
+.RS 1.0i
+.PD 0
+.TP
+.BI \-c
+Display
+.B XFS_IOC_FSCOUNTERS
+summary counter data.
+.TP
+.BI \-g
+Display
+.B XFS_IOC_FSGEOMETRY
+filesystem geometry data.
+.TP
+.BI \-s
+Display
 .BR statfs (2)
-and the XFS_IOC_FSGEOMETRY
-system call on the filesystem where the current file resides.
+data.
+.TP
+.RE
+.PD
 .TP
 .BI "inode  [ [ -n ] " number " ] [ -v ]"
 The inode command queries physical information about an inode. With
