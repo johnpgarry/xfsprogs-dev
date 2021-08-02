@@ -1,4 +1,15 @@
-xfsprogs-5.12.0 (01 Jul 2021)
+xfsprogs-5.13.0-rc1 (28 Jul 2021)
+	- mkfs: validate rtextsz hint when rtinherit is set (Darrick J. Wong)
+	- xfs_repair: invalidate dirhash when junking dirent (Darrick J. Wong)
+	- xfs_repair: validate inherited rtextsz hint alignmt (Darrick J. Wong)
+	- xfs_quota: allow truncate of grp & prj quota files (Darrick J. Wong)
+	- xfs_io: allow callers to dump fs stats individually (Darrick J. Wong)
+	- xfs_io: don't count fsmaps before querying fsmaps (Darrick J. Wong)
+	- xfs_io: print header once when dumping fsmap in csv (Darrick J. Wong)
+	- xfs_io: clean up the funshare command a bit (Darrick J. Wong)
+	- xfs_io: fix broken funshare_cmd usage (Darrick J. Wong)
+
+xfsprogs-5.13.0-rc0 (01 Jul 2021)
 	- libxfs changes merged from kernel 5.13
 
 xfsprogs-5.12.0 (21 May 2021)
