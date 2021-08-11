@@ -2104,6 +2104,15 @@ _("Directory ftype field always enabled on CRC enabled filesystems\n"));
 
 	} else {	/* !crcs_enabled */
 		/*
+		 * The V4 filesystem format is deprecated in the upstream Linux
+		 * kernel.  In September 2025 it will be turned off by default
+		 * in the kernel and in September 2030 support will be removed
+		 * entirely.
+		 */
+		fprintf(stdout,
+_("V4 filesystems are deprecated and will not be supported by future versions.\n"));
+
+		/*
 		 * The kernel doesn't support crc=0,finobt=1 filesystems.
 		 * If crcs are not enabled and the user has not explicitly
 		 * turned finobt on, then silently turn it off to avoid an
