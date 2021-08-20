@@ -1,4 +1,7 @@
-xfsprogs-5.13.0-rc1 (28 Jul 2021)
+xfsprogs-5.13.0 (20 Aug 2021)
+	- No further changes
+
+xfsprogs-5.13.0-rc1 (02 Aug 2021)
 	- mkfs: validate rtextsz hint when rtinherit is set (Darrick J. Wong)
 	- xfs_repair: invalidate dirhash when junking dirent (Darrick J. Wong)
 	- xfs_repair: validate inherited rtextsz hint alignmt (Darrick J. Wong)
