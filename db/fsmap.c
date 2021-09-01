@@ -16,11 +16,11 @@ struct fsmap_info {
 
 static int
 fsmap_fn(
-	struct xfs_btree_cur	*cur,
-	struct xfs_rmap_irec	*rec,
-	void			*priv)
+	struct xfs_btree_cur		*cur,
+	const struct xfs_rmap_irec	*rec,
+	void				*priv)
 {
-	struct fsmap_info	*info = priv;
+	struct fsmap_info		*info = priv;
 
 	dbprintf(_("%llu: %u/%u len %u owner %lld offset %llu bmbt %d attrfork %d extflag %d\n"),
 		info->nr, info->agno, rec->rm_startblock,
