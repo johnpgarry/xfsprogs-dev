@@ -682,7 +682,7 @@ version_string(
 		strcat(s, ",ATTR2");
 	if (xfs_sb_version_haslazysbcount(&mp->m_sb))
 		strcat(s, ",LAZYSBCOUNT");
-	if (xfs_sb_version_hasprojid32bit(&mp->m_sb))
+	if (xfs_sb_version_hasprojid32(&mp->m_sb))
 		strcat(s, ",PROJID32BIT");
 	if (xfs_sb_version_hascrc(&mp->m_sb))
 		strcat(s, ",CRC");
