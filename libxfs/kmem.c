@@ -76,9 +76,11 @@ kmem_alloc(size_t size, int flags)
 }
 
 void *
-kmem_alloc_large(size_t size, int flags)
+kvmalloc(size_t size, gfp_t flags)
 {
-	return kmem_alloc(size, flags);
+	if (flags & __GFP_ZERO)
+		return kmem_zalloc(size, 0);
+	return kmem_alloc(size, 0);
 }
 
 void *
