@@ -242,6 +242,7 @@ static inline bool xfs_is_ ## name (struct xfs_mount *mp) \
 	return false; \
 }
 __XFS_UNSUPP_OPSTATE(readonly)
+__XFS_UNSUPP_OPSTATE(shutdown)
 
 #define LIBXFS_MOUNT_DEBUGGER		0x0001
 #define LIBXFS_MOUNT_32BITINODES	0x0002
