@@ -4038,7 +4038,7 @@ main(
 	if (!quiet || dry_run) {
 		struct xfs_fsop_geom	geo;
 
-		libxfs_fs_geometry(sbp, &geo, XFS_FS_GEOM_MAX_STRUCT_VER);
+		libxfs_fs_geometry(mp, &geo, XFS_FS_GEOM_MAX_STRUCT_VER);
 		xfs_report_geom(&geo, dfile, logfile, rtfile);
 		if (dry_run)
 			exit(0);
