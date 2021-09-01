@@ -603,9 +603,9 @@ struct xfs_rtalloc_rec {
 };
 
 typedef int (*xfs_rtalloc_query_range_fn)(
-	struct xfs_trans	*tp,
-	struct xfs_rtalloc_rec	*rec,
-	void			*priv);
+	struct xfs_trans		*tp,
+	const struct xfs_rtalloc_rec	*rec,
+	void				*priv);
 
 int libxfs_zero_extent(struct xfs_inode *ip, xfs_fsblock_t start_fsb,
                         xfs_off_t count_fsb);
@@ -699,8 +699,8 @@ int xfs_rtfree_range(struct xfs_mount *mp, struct xfs_trans *tp,
 		     xfs_rtblock_t start, xfs_extlen_t len,
 		     struct xfs_buf **rbpp, xfs_fsblock_t *rsb);
 int xfs_rtalloc_query_range(struct xfs_trans *tp,
-			    struct xfs_rtalloc_rec *low_rec,
-			    struct xfs_rtalloc_rec *high_rec,
+			    const struct xfs_rtalloc_rec *low_rec,
+			    const struct xfs_rtalloc_rec *high_rec,
 			    xfs_rtalloc_query_range_fn fn,
 			    void *priv);
 int xfs_rtalloc_query_all(struct xfs_trans *tp,
