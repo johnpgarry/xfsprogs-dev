@@ -213,6 +213,7 @@ upgrade_filesystem(
                         do_error(
 	_("filesystem feature upgrade failed, err=%d\n"),
                                         error);
+		mp->m_features |= libxfs_sb_version_to_features(&mp->m_sb);
         }
         if (bp)
                 libxfs_buf_relse(bp);

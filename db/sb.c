@@ -720,6 +720,7 @@ version_f(
 {
 	uint16_t	version = 0;
 	uint32_t	features = 0;
+	unsigned long	old_mfeatures = 0;
 	xfs_agnumber_t	ag;
 
 	if (argc == 2) {	/* WRITE VERSION */
@@ -802,7 +803,7 @@ version_f(
 			version = mp->m_sb.sb_versionnum;
 			features = mp->m_sb.sb_features2;
 		} else if (!strcasecmp(argv[1], "projid32bit")) {
-			xfs_sb_version_addprojid32bit(&mp->m_sb);
+			xfs_sb_version_addprojid32(&mp->m_sb);
 			version = mp->m_sb.sb_versionnum;
 			features = mp->m_sb.sb_features2;
 		} else {
@@ -821,6 +822,8 @@ version_f(
 				}
 			mp->m_sb.sb_versionnum = version;
 			mp->m_sb.sb_features2 = features;
+			mp->m_features &= ~XFS_FEAT_ATTR2;
+			mp->m_features |= libxfs_sb_version_to_features(&mp->m_sb);
 		}
 	}
 
@@ -831,6 +834,8 @@ version_f(
 		features = mp->m_sb.sb_features2;
 		mp->m_sb.sb_versionnum = strtoul(argv[1], &sp, 0);
 		mp->m_sb.sb_features2 = strtoul(argv[2], &sp, 0);
+		old_mfeatures = mp->m_features;
+		mp->m_features = libxfs_sb_version_to_features(&mp->m_sb);
 	}
 
 	dbprintf(_("versionnum [0x%x+0x%x] = %s\n"), mp->m_sb.sb_versionnum,
@@ -839,6 +844,7 @@ version_f(
 	if (argc == 3) {	/* now reset... */
 		mp->m_sb.sb_versionnum = version;
 		mp->m_sb.sb_features2 = features;
+		mp->m_features = old_mfeatures;
 		return 0;
 	}
 
