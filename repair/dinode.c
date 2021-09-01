@@ -2329,7 +2329,7 @@ process_dinode_int(xfs_mount_t *mp,
 		}
 	}
 
-	if (!libxfs_dinode_good_version(&mp->m_sb, dino->di_version)) {
+	if (!libxfs_dinode_good_version(mp, dino->di_version)) {
 		retval = 1;
 		if (!uncertain)
 			do_warn(_("bad version number 0x%x on inode %" PRIu64 "%c"),
