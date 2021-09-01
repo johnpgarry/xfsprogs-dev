@@ -80,6 +80,7 @@ logstat(xfs_mount_t *mp)
 		 */
 		sb = &mp->m_sb;
 		libxfs_sb_from_disk(sb, (xfs_dsb_t *)buf);
+		mp->m_features |= libxfs_sb_version_to_features(&mp->m_sb);
 		mp->m_blkbb_log = sb->sb_blocklog - BBSHIFT;
 
 		x.logBBsize = XFS_FSB_TO_BB(mp, sb->sb_logblocks);
