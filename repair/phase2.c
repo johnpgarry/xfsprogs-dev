@@ -34,7 +34,7 @@ zero_log(
 	x.logBBsize = XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
 	x.logBBstart = XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart);
 	x.lbsize = BBSIZE;
-	if (xfs_sb_version_hassector(&mp->m_sb))
+	if (xfs_has_sector(mp))
 		x.lbsize <<= (mp->m_sb.sb_logsectlog - BBSHIFT);
 
 	log->l_dev = mp->m_logdev_targp;
@@ -42,13 +42,13 @@ zero_log(
 	log->l_logBBstart = x.logBBstart;
 	log->l_sectBBsize  = BTOBB(x.lbsize);
 	log->l_mp = mp;
-	if (xfs_sb_version_hassector(&mp->m_sb)) {
+	if (xfs_has_sector(mp)) {
 		log->l_sectbb_log = mp->m_sb.sb_logsectlog - BBSHIFT;
 		ASSERT(log->l_sectbb_log <= mp->m_sectbb_log);
 		/* for larger sector sizes, must have v2 or external log */
 		ASSERT(log->l_sectbb_log == 0 ||
 			log->l_logBBstart == 0 ||
-			xfs_sb_version_haslogv2(&mp->m_sb));
+			xfs_has_logv2(mp));
 		ASSERT(mp->m_sb.sb_logsectlog >= BBSHIFT);
 	}
 	log->l_sectbb_mask = (1 << log->l_sectbb_log) - 1;
@@ -111,7 +111,7 @@ zero_log(
 			XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart),
 			(xfs_extlen_t)XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks),
 			&mp->m_sb.sb_uuid,
-			xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1,
+			xfs_has_logv2(mp) ? 2 : 1,
 			mp->m_sb.sb_logsunit, XLOG_FMT, XLOG_INIT_CYCLE, true);
 
 		/* update the log data structure with new state */
@@ -127,7 +127,7 @@ zero_log(
 	 * Finally, seed the max LSN from the current state of the log if this
 	 * is a v5 filesystem.
 	 */
-	if (xfs_sb_version_hascrc(&mp->m_sb))
+	if (xfs_has_crc(mp))
 		libxfs_max_lsn = atomic64_read(&log->l_last_sync_lsn);
 }
 
@@ -135,19 +135,19 @@ static bool
 set_inobtcount(
 	struct xfs_mount	*mp)
 {
-	if (!xfs_sb_version_hascrc(&mp->m_sb)) {
+	if (!xfs_has_crc(mp)) {
 		printf(
 	_("Inode btree count feature only supported on V5 filesystems.\n"));
 		exit(0);
 	}
 
-	if (!xfs_sb_version_hasfinobt(&mp->m_sb)) {
+	if (!xfs_has_finobt(mp)) {
 		printf(
 	_("Inode btree count feature requires free inode btree.\n"));
 		exit(0);
 	}
 
-	if (xfs_sb_version_hasinobtcounts(&mp->m_sb)) {
+	if (xfs_has_inobtcounts(mp)) {
 		printf(_("Filesystem already has inode btree counts.\n"));
 		exit(0);
 	}
@@ -162,13 +162,13 @@ static bool
 set_bigtime(
 	struct xfs_mount	*mp)
 {
-	if (!xfs_sb_version_hascrc(&mp->m_sb)) {
+	if (!xfs_has_crc(mp)) {
 		printf(
 	_("Large timestamp feature only supported on V5 filesystems.\n"));
 		exit(0);
 	}
 
-	if (xfs_sb_version_hasbigtime(&mp->m_sb)) {
+	if (xfs_has_bigtime(mp)) {
 		printf(_("Filesystem already supports large timestamps.\n"));
 		exit(0);
 	}

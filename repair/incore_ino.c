@@ -211,7 +211,7 @@ alloc_ftypes_array(
 {
 	uint8_t		*ptr;
 
-	if (!xfs_sb_version_hasftype(&mp->m_sb))
+	if (!xfs_has_ftype(mp))
 		return NULL;
 
 	ptr = calloc(XFS_INODES_PER_CHUNK, sizeof(*ptr));

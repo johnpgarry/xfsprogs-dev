@@ -806,7 +806,7 @@ ino_issparse(
 	struct xfs_inobt_rec	*rp,
 	int			offset)
 {
-	if (!xfs_sb_version_hassparseinodes(&mp->m_sb))
+	if (!xfs_has_sparseinodes(mp))
 		return false;
 
 	return xfs_inobt_is_sparse_disk(rp, offset);
@@ -908,7 +908,7 @@ _("in use block (%d,%d-%d) mismatch in %s tree, state - %d,%" PRIx64 "\n"),
 		 * multiple inode owners are ok with
 		 * reflink enabled
 		 */
-		if (xfs_sb_version_hasreflink(&mp->m_sb) &&
+		if (xfs_has_reflink(mp) &&
 		    !XFS_RMAP_NON_INODE_OWNER(owner))
 			break;
 		fallthrough;
@@ -1125,7 +1125,7 @@ advance:
 			} else {
 				bool bad;
 
-				if (xfs_sb_version_hasreflink(&mp->m_sb))
+				if (xfs_has_reflink(mp))
 					bad = !rmap_in_order(b, laststartblock,
 							owner, lastowner,
 							offset, lastoffset);
@@ -1762,7 +1762,7 @@ _("ir_freecount/free mismatch, inode chunk %d/%u, freecount %d nfree %d\n"),
 	}
 
 	/* verify sparse record formats have a valid inode count */
-	if (xfs_sb_version_hassparseinodes(&mp->m_sb) &&
+	if (xfs_has_sparseinodes(mp) &&
 	    ninodes != rp->ir_u.sp.ir_count) {
 		do_warn(
 _("invalid inode count, inode chunk %d/%u, count %d ninodes %d\n"),
@@ -1938,7 +1938,7 @@ _("finobt record with no free inodes, inode chunk %d/%u\n"), agno, ino);
 	}
 
 	/* verify sparse record formats have a valid inode count */
-	if (xfs_sb_version_hassparseinodes(&mp->m_sb) &&
+	if (xfs_has_sparseinodes(mp) &&
 	    ninodes != rp->ir_u.sp.ir_count) {
 		do_warn(
 _("invalid inode count, inode chunk %d/%u, count %d ninodes %d\n"),
@@ -2104,7 +2104,7 @@ _("%sbt btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 				 * ir_count holds the inode count for all
 				 * records on fs' with sparse inode support
 				 */
-				if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+				if (xfs_has_sparseinodes(mp))
 					icount = rp[i].ir_u.sp.ir_count;
 
 				agcnts->agicount += icount;
@@ -2264,7 +2264,7 @@ validate_agf(
 
 	bno = be32_to_cpu(agf->agf_roots[XFS_BTNUM_BNO]);
 	if (libxfs_verify_agbno(mp, agno, bno)) {
-		magic = xfs_sb_version_hascrc(&mp->m_sb) ? XFS_ABTB_CRC_MAGIC
+		magic = xfs_has_crc(mp) ? XFS_ABTB_CRC_MAGIC
 							 : XFS_ABTB_MAGIC;
 		scan_sbtree(bno, be32_to_cpu(agf->agf_levels[XFS_BTNUM_BNO]),
 			    agno, 0, scan_allocbt, 1, magic, agcnts,
@@ -2276,7 +2276,7 @@ validate_agf(
 
 	bno = be32_to_cpu(agf->agf_roots[XFS_BTNUM_CNT]);
 	if (libxfs_verify_agbno(mp, agno, bno)) {
-		magic = xfs_sb_version_hascrc(&mp->m_sb) ? XFS_ABTC_CRC_MAGIC
+		magic = xfs_has_crc(mp) ? XFS_ABTC_CRC_MAGIC
 							 : XFS_ABTC_MAGIC;
 		scan_sbtree(bno, be32_to_cpu(agf->agf_levels[XFS_BTNUM_CNT]),
 			    agno, 0, scan_allocbt, 1, magic, agcnts,
@@ -2286,7 +2286,7 @@ validate_agf(
 			bno, agno);
 	}
 
-	if (xfs_sb_version_hasrmapbt(&mp->m_sb)) {
+	if (xfs_has_rmapbt(mp)) {
 		struct rmap_priv	priv;
 		unsigned int		levels;
 
@@ -2319,7 +2319,7 @@ validate_agf(
 		}
 	}
 
-	if (xfs_sb_version_hasreflink(&mp->m_sb)) {
+	if (xfs_has_reflink(mp)) {
 		unsigned int	levels;
 
 		levels = be32_to_cpu(agf->agf_refcount_level);
@@ -2358,7 +2358,7 @@ validate_agf(
 			be32_to_cpu(agf->agf_longest), agcnts->agflongest, agno);
 	}
 
-	if (xfs_sb_version_haslazysbcount(&mp->m_sb) &&
+	if (xfs_has_lazysbcount(mp) &&
 	    be32_to_cpu(agf->agf_btreeblks) != agcnts->agfbtreeblks) {
 		do_warn(_("agf_btreeblks %u, counted %" PRIu64 " in ag %u\n"),
 			be32_to_cpu(agf->agf_btreeblks), agcnts->agfbtreeblks, agno);
@@ -2381,7 +2381,7 @@ validate_agi(
 
 	bno = be32_to_cpu(agi->agi_root);
 	if (libxfs_verify_agbno(mp, agno, bno)) {
-		magic = xfs_sb_version_hascrc(&mp->m_sb) ? XFS_IBT_CRC_MAGIC
+		magic = xfs_has_crc(mp) ? XFS_IBT_CRC_MAGIC
 							 : XFS_IBT_MAGIC;
 		scan_sbtree(bno, be32_to_cpu(agi->agi_level),
 			    agno, 0, scan_inobt, 1, magic, &priv,
@@ -2391,10 +2391,10 @@ validate_agi(
 			be32_to_cpu(agi->agi_root), agno);
 	}
 
-	if (xfs_sb_version_hasfinobt(&mp->m_sb)) {
+	if (xfs_has_finobt(mp)) {
 		bno = be32_to_cpu(agi->agi_free_root);
 		if (libxfs_verify_agbno(mp, agno, bno)) {
-			magic = xfs_sb_version_hascrc(&mp->m_sb) ?
+			magic = xfs_has_crc(mp) ?
 					XFS_FIBT_CRC_MAGIC : XFS_FIBT_MAGIC;
 			scan_sbtree(bno, be32_to_cpu(agi->agi_free_level),
 				    agno, 0, scan_inobt, 1, magic, &priv,
@@ -2405,7 +2405,7 @@ validate_agi(
 		}
 	}
 
-	if (xfs_sb_version_hasinobtcounts(&mp->m_sb)) {
+	if (xfs_has_inobtcounts(mp)) {
 		if (be32_to_cpu(agi->agi_iblocks) != priv.ino_blocks)
 			do_warn(_("bad inobt block count %u, saw %u\n"),
 					be32_to_cpu(agi->agi_iblocks),
@@ -2426,7 +2426,7 @@ validate_agi(
 			be32_to_cpu(agi->agi_freecount), agcnts->agifreecount, agno);
 	}
 
-	if (xfs_sb_version_hasfinobt(&mp->m_sb) &&
+	if (xfs_has_finobt(mp) &&
 	    be32_to_cpu(agi->agi_freecount) != agcnts->fibtfreecount) {
 		do_warn(_("agi_freecount %u, counted %u in ag %u finobt\n"),
 			be32_to_cpu(agi->agi_freecount), agcnts->fibtfreecount,

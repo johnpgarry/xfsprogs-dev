@@ -159,7 +159,7 @@ dump_inode(
 
 	if (attrfork)
 		prefix = "a.bmbt";
-	else if (xfs_sb_version_hascrc(&mp->m_sb))
+	else if (xfs_has_crc(mp))
 		prefix = "u3.bmbt";
 	else
 		prefix = "u.bmbt";
@@ -448,7 +448,7 @@ btdump_f(
 {
 	bool		aflag = false;
 	bool		iflag = false;
-	bool		crc = xfs_sb_version_hascrc(&mp->m_sb);
+	bool		crc = xfs_has_crc(mp);
 	int		c;
 
 	if (cur_typ == NULL) {
