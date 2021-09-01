@@ -505,7 +505,7 @@ mk_rbmino(xfs_mount_t *mp)
 	set_nlink(VFS_I(ip), 1);	/* account for sb ptr */
 
 	times = XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD;
-	if (xfs_sb_version_has_v3inode(&mp->m_sb)) {
+	if (xfs_has_v3inodes(mp)) {
 		VFS_I(ip)->i_version = 1;
 		ip->i_diflags2 = 0;
 		times |= XFS_ICHGTIME_CREATE;
@@ -745,7 +745,7 @@ mk_rsumino(xfs_mount_t *mp)
 	set_nlink(VFS_I(ip), 1);	/* account for sb ptr */
 
 	times = XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD;
-	if (xfs_sb_version_has_v3inode(&mp->m_sb)) {
+	if (xfs_has_v3inodes(mp)) {
 		VFS_I(ip)->i_version = 1;
 		ip->i_diflags2 = 0;
 		times |= XFS_ICHGTIME_CREATE;
@@ -844,7 +844,7 @@ mk_root_dir(xfs_mount_t *mp)
 	set_nlink(VFS_I(ip), 2);	/* account for . and .. */
 
 	times = XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD;
-	if (xfs_sb_version_has_v3inode(&mp->m_sb)) {
+	if (xfs_has_v3inodes(mp)) {
 		VFS_I(ip)->i_version = 1;
 		ip->i_diflags2 = 0;
 		times |= XFS_ICHGTIME_CREATE;
@@ -1474,13 +1474,13 @@ longform_dir2_entry_check_data(
 		endptr = (char *)blp;
 		if (endptr > (char *)btp)
 			endptr = (char *)btp;
-		if (xfs_sb_version_hascrc(&mp->m_sb))
+		if (xfs_has_crc(mp))
 			wantmagic = XFS_DIR3_BLOCK_MAGIC;
 		else
 			wantmagic = XFS_DIR2_BLOCK_MAGIC;
 	} else {
 		endptr = (char *)d + mp->m_dir_geo->blksize;
-		if (xfs_sb_version_hascrc(&mp->m_sb))
+		if (xfs_has_crc(mp))
 			wantmagic = XFS_DIR3_DATA_MAGIC;
 		else
 			wantmagic = XFS_DIR2_DATA_MAGIC;
@@ -1787,7 +1787,7 @@ longform_dir2_entry_check_data(
 			continue;
 
 		/* validate ftype field if supported */
-		if (xfs_sb_version_hasftype(&mp->m_sb)) {
+		if (xfs_has_ftype(mp)) {
 			uint8_t dir_ftype;
 			uint8_t ino_ftype;
 
@@ -2684,7 +2684,7 @@ _("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name"),
 		}
 
 		/* validate ftype field if supported */
-		if (xfs_sb_version_hasftype(&mp->m_sb)) {
+		if (xfs_has_ftype(mp)) {
 			uint8_t dir_ftype;
 			uint8_t ino_ftype;
 

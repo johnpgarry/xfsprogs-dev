@@ -252,7 +252,7 @@ qc_dquot_check_type(
 	 * expect an exact match for user dquots and for non-root group and
 	 * project dquots.
 	 */
-	if (xfs_sb_version_hascrc(&mp->m_sb) || type == XFS_DQTYPE_USER || id)
+	if (xfs_has_crc(mp) || type == XFS_DQTYPE_USER || id)
 		return ddq_type == type;
 
 	/*
@@ -325,7 +325,7 @@ qc_check_dquot(
 	}
 
 	if ((ddq->d_type & XFS_DQTYPE_BIGTIME) &&
-	    !xfs_sb_version_hasbigtime(&mp->m_sb)) {
+	    !xfs_has_bigtime(mp)) {
 		do_warn(
 	_("%s id %u is marked bigtime but file system does not support large timestamps\n"),
 				qflags_typestr(dquots->type), id);

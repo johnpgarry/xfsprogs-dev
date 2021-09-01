@@ -112,7 +112,7 @@ fsmap_f(
 	xfs_fsblock_t		start_fsb = 0;
 	xfs_fsblock_t		end_fsb = NULLFSBLOCK;
 
-	if (!xfs_sb_version_hasrmapbt(&mp->m_sb)) {
+	if (!xfs_has_rmapbt(mp)) {
 		dbprintf(_("Filesystem does not support reverse mapping btree.\n"));
 		return 0;
 	}

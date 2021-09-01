@@ -29,7 +29,7 @@ static const cmdinfo_t crc_cmd =
 void
 crc_init(void)
 {
-	if (xfs_sb_version_hascrc(&mp->m_sb))
+	if (xfs_has_crc(mp))
 		add_command(&crc_cmd);
 }
 

@@ -120,7 +120,7 @@ block_to_bt(
 	}
 
 	/* Magic is invalid/unknown.  Guess based on iocur type */
-	crc = xfs_sb_version_hascrc(&mp->m_sb);
+	crc = xfs_has_crc(mp);
 	switch (iocur_top->typ->typnm) {
 	case TYP_BMAPBTA:
 	case TYP_BMAPBTD:

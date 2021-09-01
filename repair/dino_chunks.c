@@ -628,7 +628,7 @@ process_inode_chunk(
 	if (cluster_count == 0)
 		cluster_count = 1;
 
-	if (xfs_sb_version_hassparseinodes(&mp->m_sb) &&
+	if (xfs_has_sparseinodes(mp) &&
 	    M_IGEO(mp)->inodes_per_cluster >= XFS_INODES_PER_HOLEMASK_BIT)
 		can_punch_sparse = true;
 

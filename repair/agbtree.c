@@ -401,7 +401,7 @@ get_inobt_record(
 	irec->ir_count = inocnt;
 	irec->ir_freecount = finocnt;
 
-	if (xfs_sb_version_hassparseinodes(&cur->bc_mp->m_sb)) {
+	if (xfs_has_sparseinodes(cur->bc_mp)) {
 		uint64_t		sparse;
 		int			spmask;
 		uint16_t		holemask;
@@ -452,7 +452,7 @@ init_ino_cursors(
 	bool			finobt;
 	int			error;
 
-	finobt = xfs_sb_version_hasfinobt(&sc->mp->m_sb);
+	finobt = xfs_has_finobt(sc->mp);
 	init_rebuild(sc, &XFS_RMAP_OINFO_INOBT, free_space, btr_ino);
 
 	/* Compute inode statistics. */
@@ -543,7 +543,7 @@ _("Error %d while creating inobt btree for AG %u.\n"), error, agno);
 	/* Since we're not writing the AGI yet, no need to commit the cursor */
 	libxfs_btree_del_cursor(btr_ino->cur, 0);
 
-	if (!xfs_sb_version_hasfinobt(&sc->mp->m_sb))
+	if (!xfs_has_finobt(sc->mp))
 		return;
 
 	/* Add all observed finobt records. */
@@ -583,7 +583,7 @@ init_rmapbt_cursor(
 	xfs_agnumber_t		agno = pag->pag_agno;
 	int			error;
 
-	if (!xfs_sb_version_hasrmapbt(&sc->mp->m_sb))
+	if (!xfs_has_rmapbt(sc->mp))
 		return;
 
 	init_rebuild(sc, &XFS_RMAP_OINFO_AG, free_space, btr);
@@ -654,7 +654,7 @@ init_refc_cursor(
 	xfs_agnumber_t		agno = pag->pag_agno;
 	int			error;
 
-	if (!xfs_sb_version_hasreflink(&sc->mp->m_sb))
+	if (!xfs_has_reflink(sc->mp))
 		return;
 
 	init_rebuild(sc, &XFS_RMAP_OINFO_REFC, free_space, btr);

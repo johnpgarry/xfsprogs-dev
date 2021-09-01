@@ -474,7 +474,7 @@ scanfunc_ino(
 	int			ioff;
 	struct xfs_ino_geometry *igeo = M_IGEO(mp);
 
-	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+	if (xfs_has_sparseinodes(mp))
 		blks_per_buf = igeo->blocks_per_cluster;
 	else
 		blks_per_buf = igeo->ialloc_blks;

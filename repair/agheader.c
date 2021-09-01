@@ -97,7 +97,7 @@ verify_set_agf(xfs_mount_t *mp, xfs_agf_t *agf, xfs_agnumber_t i)
 
 	/* don't check freespace btrees -- will be checked by caller */
 
-	if (!xfs_sb_version_hascrc(&mp->m_sb))
+	if (!xfs_has_crc(mp))
 		return retval;
 
 	if (platform_uuid_compare(&agf->agf_uuid, &mp->m_sb.sb_meta_uuid)) {
@@ -176,7 +176,7 @@ verify_set_agi(xfs_mount_t *mp, xfs_agi_t *agi, xfs_agnumber_t agno)
 
 	/* don't check inode btree -- will be checked by caller */
 
-	if (!xfs_sb_version_hascrc(&mp->m_sb))
+	if (!xfs_has_crc(mp))
 		return retval;
 
 	if (platform_uuid_compare(&agi->agi_uuid, &mp->m_sb.sb_meta_uuid)) {
@@ -376,7 +376,7 @@ secondary_sb_whack(
 	 * superblocks. If it is anything other than 0 it is considered garbage
 	 * data beyond the valid sb and explicitly zeroed above.
 	 */
-	if (xfs_sb_version_haspquotino(&mp->m_sb) &&
+	if (xfs_has_pquotino(mp) &&
 	    sb->sb_inprogress == 1 && sb->sb_pquotino != NULLFSINO)  {
 		if (!no_modify) {
 			sb->sb_pquotino = 0;
