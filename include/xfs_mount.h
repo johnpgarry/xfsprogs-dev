@@ -197,6 +197,17 @@ __XFS_HAS_FEAT(inobtcounts, INOBTCNT)
 __XFS_HAS_FEAT(bigtime, BIGTIME)
 __XFS_HAS_FEAT(needsrepair, NEEDSREPAIR)
 
+/* Kernel mount features that we don't support */
+#define __XFS_UNSUPP_FEAT(name) \
+static inline bool xfs_has_ ## name (struct xfs_mount *mp) \
+{ \
+	return false; \
+}
+__XFS_UNSUPP_FEAT(wsync)
+__XFS_UNSUPP_FEAT(noattr2)
+__XFS_UNSUPP_FEAT(ikeep)
+__XFS_UNSUPP_FEAT(swalloc)
+
 #define LIBXFS_MOUNT_DEBUGGER		0x0001
 #define LIBXFS_MOUNT_32BITINODES	0x0002
 #define LIBXFS_MOUNT_32BITINOOPT	0x0004
