@@ -715,6 +715,7 @@ libxfs_mount(
 	bool			debugger = (flags & LIBXFS_MOUNT_DEBUGGER);
 	int			error;
 
+	mp->m_features = xfs_sb_version_to_features(sb);
 	libxfs_buftarg_init(mp, dev, logdev, rtdev);
 
 	mp->m_finobt_nores = true;
