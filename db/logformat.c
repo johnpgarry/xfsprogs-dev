@@ -24,7 +24,7 @@ logformat_f(int argc, char **argv)
 	int		error;
 	int		c;
 
-	logversion = xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1;
+	logversion = xfs_has_logv2(mp) ? 2 : 1;
 
 	while ((c = getopt(argc, argv, "c:s:")) != EOF) {
 		switch (c) {
@@ -64,7 +64,7 @@ logformat_f(int argc, char **argv)
 	mp->m_log->l_logBBsize = XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
 	mp->m_log->l_logBBstart = XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart);
 	mp->m_log->l_sectBBsize = BBSIZE;
-	if (xfs_sb_version_hassector(&mp->m_sb))
+	if (xfs_has_sector(mp))
 		mp->m_log->l_sectBBsize <<= (mp->m_sb.sb_logsectlog - BBSHIFT);
 	mp->m_log->l_sectBBsize = BTOBB(mp->m_log->l_sectBBsize);
 

@@ -733,7 +733,7 @@ libxfs_mount(
 	/*
 	 * Set whether we're using stripe alignment.
 	 */
-	if (xfs_sb_version_hasdalign(&mp->m_sb)) {
+	if (xfs_has_dalign(mp)) {
 		mp->m_dalign = sbp->sb_unit;
 		mp->m_swidth = sbp->sb_width;
 	}
@@ -786,7 +786,7 @@ libxfs_mount(
 
 	xfs_da_mount(mp);
 
-	if (xfs_sb_version_hasattr2(&mp->m_sb))
+	if (xfs_has_attr2(mp))
 		mp->m_flags |= LIBXFS_MOUNT_ATTR2;
 
 	/* Initialize the precomputed transaction reservations values */

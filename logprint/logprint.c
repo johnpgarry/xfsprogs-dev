@@ -86,7 +86,7 @@ logstat(xfs_mount_t *mp)
 		x.logBBsize = XFS_FSB_TO_BB(mp, sb->sb_logblocks);
 		x.logBBstart = XFS_FSB_TO_DADDR(mp, sb->sb_logstart);
 		x.lbsize = BBSIZE;
-		if (xfs_sb_version_hassector(&mp->m_sb))
+		if (xfs_has_sector(mp))
 			x.lbsize <<= (sb->sb_logsectlog - BBSHIFT);
 
 		if (!x.logname && sb->sb_logstart == 0) {

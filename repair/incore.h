@@ -647,7 +647,7 @@ inorec_get_freecount(
 	struct xfs_mount	*mp,
 	struct xfs_inobt_rec	*rp)
 {
-	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+	if (xfs_has_sparseinodes(mp))
 		return rp->ir_u.sp.ir_freecount;
 	return be32_to_cpu(rp->ir_u.f.ir_freecount);
 }
@@ -658,7 +658,7 @@ inorec_set_freecount(
 	struct xfs_inobt_rec	*rp,
 	int			freecount)
 {
-	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+	if (xfs_has_sparseinodes(mp))
 		rp->ir_u.sp.ir_freecount = freecount;
 	else
 		rp->ir_u.f.ir_freecount = cpu_to_be32(freecount);
