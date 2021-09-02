@@ -979,7 +979,7 @@ main(int argc, char **argv)
 
 	/* Spit out function & line on these corruption macros */
 	if (verbose > 2)
-		mp->m_flags |= LIBXFS_MOUNT_WANT_CORRUPTED;
+		xfs_set_reporting_corruption(mp);
 
 	/* Capture the first writeback so that we can set needsrepair. */
 	if (xfs_has_crc(mp))
