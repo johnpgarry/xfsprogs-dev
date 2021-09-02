@@ -213,6 +213,8 @@ __XFS_UNSUPP_FEAT(readonly)
  * XXX: need real atomic bit ops!
  */
 #define XFS_OPSTATE_INODE32		0	/* inode32 allocator active */
+#define XFS_OPSTATE_DEBUGGER		1	/* is this the debugger? */
+#define XFS_OPSTATE_REPORT_CORRUPTION	2	/* report buffer corruption? */
 
 #define __XFS_IS_OPSTATE(name, NAME) \
 static inline bool xfs_is_ ## name (struct xfs_mount *mp) \
@@ -235,6 +237,8 @@ static inline bool xfs_set_ ## name (struct xfs_mount *mp) \
 }
 
 __XFS_IS_OPSTATE(inode32, INODE32)
+__XFS_IS_OPSTATE(debugger, DEBUGGER)
+__XFS_IS_OPSTATE(reporting_corruption, REPORT_CORRUPTION)
 
 #define __XFS_UNSUPP_OPSTATE(name) \
 static inline bool xfs_is_ ## name (struct xfs_mount *mp) \
