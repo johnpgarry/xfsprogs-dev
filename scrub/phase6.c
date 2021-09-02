@@ -10,6 +10,7 @@
 #include "handle.h"
 #include "libfrog/paths.h"
 #include "libfrog/workqueue.h"
+#include "libfrog/fsmap.h"
 #include "xfs_scrub.h"
 #include "common.h"
 #include "libfrog/bitmap.h"

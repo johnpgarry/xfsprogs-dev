@@ -40,6 +40,7 @@ crc32cselftest.h \
 crc32defs.h \
 crc32table.h \
 fsgeom.h \
+fsmap.h \
 logging.h \
 paths.h \
 projects.h \
