@@ -153,7 +153,7 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 } while (0)
 
 #define XFS_WARN_CORRUPT(mp, expr) \
-	( ((mp)->m_flags & LIBXFS_MOUNT_WANT_CORRUPTED) ? \
+	( xfs_is_reporting_corruption(mp) ? \
 	   (printf("%s: XFS_WARN_CORRUPT at %s:%d", #expr, \
 		   __func__, __LINE__), true) : true)
 
