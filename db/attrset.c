@@ -107,7 +107,6 @@ attr_set_f(
 			break;
 
 		case 'n':
-			mp->m_flags |= LIBXFS_MOUNT_COMPAT_ATTR;
 			break;
 
 		/* value length */
@@ -169,7 +168,6 @@ attr_set_f(
 	set_cur_inode(iocur_top->ino);
 
 out:
-	mp->m_flags &= ~LIBXFS_MOUNT_COMPAT_ATTR;
 	if (args.dp)
 		libxfs_irele(args.dp);
 	if (args.value)
@@ -211,7 +209,6 @@ attr_remove_f(
 			break;
 
 		case 'n':
-			mp->m_flags |= LIBXFS_MOUNT_COMPAT_ATTR;
 			break;
 
 		default:
@@ -254,7 +251,6 @@ attr_remove_f(
 	set_cur_inode(iocur_top->ino);
 
 out:
-	mp->m_flags &= ~LIBXFS_MOUNT_COMPAT_ATTR;
 	if (args.dp)
 		libxfs_irele(args.dp);
 	return 0;

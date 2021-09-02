@@ -443,16 +443,6 @@ void __xfs_buf_mark_corrupt(struct xfs_buf *bp, xfs_failaddr_t fa);
 #define xfs_buf_mark_corrupt(bp) __xfs_buf_mark_corrupt((bp), __this_address)
 
 /* mount stuff */
-#define XFS_MOUNT_32BITINODES		LIBXFS_MOUNT_32BITINODES
-#define XFS_MOUNT_ATTR2			LIBXFS_MOUNT_ATTR2
-#define XFS_MOUNT_SMALL_INUMS		0	/* ignored in userspace */
-#define XFS_MOUNT_WSYNC			0	/* ignored in userspace */
-#define XFS_MOUNT_NOALIGN		0	/* ignored in userspace */
-#define XFS_MOUNT_IKEEP			0	/* ignored in userspace */
-#define XFS_MOUNT_SWALLOC		0	/* ignored in userspace */
-#define XFS_MOUNT_RDONLY		0	/* ignored in userspace */
-#define XFS_MOUNT_BAD_SUMMARY		0	/* ignored in userspace */
-
 #define xfs_trans_set_sync(tp)		((void) 0)
 #define xfs_trans_buf_set_type(tp, bp, t)	({	\
 	int __t = (t);					\

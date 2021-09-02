@@ -827,7 +827,6 @@ xlog_find_tail(
 			 * superblock counters from the perag headers if we
 			 * have a filesystem using non-persistent counters.
 			 */
-			log->l_mp->m_flags |= XFS_MOUNT_WAS_CLEAN;
 		}
 	}
 
