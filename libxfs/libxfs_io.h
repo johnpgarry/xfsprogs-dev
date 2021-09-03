@@ -116,7 +116,10 @@ typedef unsigned int xfs_buf_flags_t;
 #define xfs_buf_offset(bp, offset)	((bp)->b_addr + (offset))
 #define XFS_BUF_ADDR(bp)		((bp)->b_bn)
 
-#define XFS_BUF_SET_ADDR(bp,blk)	((bp)->b_bn = (blk))
+static inline void xfs_buf_set_daddr(struct xfs_buf *bp, xfs_daddr_t blkno)
+{
+	bp->b_bn = blkno;
+}
 
 void libxfs_buf_set_priority(struct xfs_buf *bp, int priority);
 int libxfs_buf_priority(struct xfs_buf *bp);
