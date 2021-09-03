@@ -935,14 +935,14 @@ __check_attr_header(
 		do_warn(
 _("expected owner inode %" PRIu64 ", got %llu, attr block %" PRIu64 "\n"),
 			ino, (unsigned long long)be64_to_cpu(info->owner),
-			bp->b_bn);
+			xfs_buf_daddr(bp));
 		return 1;
 	}
 	/* verify block number */
-	if (be64_to_cpu(info->blkno) != bp->b_bn) {
+	if (be64_to_cpu(info->blkno) != xfs_buf_daddr(bp)) {
 		do_warn(
 _("expected block %" PRIu64 ", got %llu, inode %" PRIu64 "attr block\n"),
-			bp->b_bn, (unsigned long long)be64_to_cpu(info->blkno),
+			xfs_buf_daddr(bp), (unsigned long long)be64_to_cpu(info->blkno),
 			ino);
 		return 1;
 	}
@@ -950,7 +950,7 @@ _("expected block %" PRIu64 ", got %llu, inode %" PRIu64 "attr block\n"),
 	if (platform_uuid_compare(&info->uuid, &mp->m_sb.sb_meta_uuid) != 0) {
 		do_warn(
 _("wrong FS UUID, inode %" PRIu64 " attr block %" PRIu64 "\n"),
-			ino, bp->b_bn);
+			ino, xfs_buf_daddr(bp));
 		return 1;
 	}
 

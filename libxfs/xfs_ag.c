@@ -311,7 +311,6 @@ xfs_get_aghdr_buf(
 	if (error)
 		return error;
 
-	bp->b_bn = blkno;
 	bp->b_maps[0].bm_bn = blkno;
 	bp->b_ops = ops;
 
