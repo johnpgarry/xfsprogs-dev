@@ -515,9 +515,9 @@ write_wbuf(void)
 
 static void
 sb_update_uuid(
-	xfs_sb_t	*sb,		/* Original fs superblock */
-	ag_header_t	*ag_hdr,	/* AG hdr to update for this copy */
-	thread_args	*tcarg)		/* Args for this thread, with UUID */
+	struct xfs_mount	*mp,
+	ag_header_t		*ag_hdr, /* AG hdr to update for this copy */
+	thread_args		*tcarg)	 /* Args for this thread, with UUID */
 {
 	/*
 	 * If this filesystem has CRCs, the original UUID is stamped into
@@ -526,24 +526,25 @@ sb_update_uuid(
 	 * we must copy the original sb_uuid to the sb_meta_uuid slot and set
 	 * the incompat flag for the feature on this copy.
 	 */
-	if (xfs_sb_version_hascrc(sb) && !xfs_sb_version_hasmetauuid(sb) &&
-	    !uuid_equal(&tcarg->uuid, &sb->sb_uuid)) {
+	if (xfs_sb_version_hascrc(&mp->m_sb) &&
+	    !xfs_sb_version_hasmetauuid(&mp->m_sb) &&
+	    !uuid_equal(&tcarg->uuid, &mp->m_sb.sb_uuid)) {
 		uint32_t feat;
 
 		feat = be32_to_cpu(ag_hdr->xfs_sb->sb_features_incompat);
 		feat |= XFS_SB_FEAT_INCOMPAT_META_UUID;
 		ag_hdr->xfs_sb->sb_features_incompat = cpu_to_be32(feat);
 		platform_uuid_copy(&ag_hdr->xfs_sb->sb_meta_uuid,
-				   &sb->sb_uuid);
+				   &mp->m_sb.sb_uuid);
 	}
 
 	/* Copy the (possibly new) fs-identifier UUID into sb_uuid */
 	platform_uuid_copy(&ag_hdr->xfs_sb->sb_uuid, &tcarg->uuid);
 
 	/* We may have changed the UUID, so update the superblock CRC */
-	if (xfs_sb_version_hascrc(sb))
-		xfs_update_cksum((char *)ag_hdr->xfs_sb, sb->sb_sectsize,
-							 XFS_SB_CRC_OFF);
+	if (xfs_sb_version_hascrc(&mp->m_sb))
+		xfs_update_cksum((char *)ag_hdr->xfs_sb, mp->m_sb.sb_sectsize,
+				XFS_SB_CRC_OFF);
 }
 
 int
@@ -1224,7 +1225,7 @@ main(int argc, char **argv)
 			/* do each thread in turn, each has its own UUID */
 
 			for (j = 0, tcarg = targ; j < num_targets; j++)  {
-				sb_update_uuid(sb, &ag_hdr, tcarg);
+				sb_update_uuid(mp, &ag_hdr, tcarg);
 				do_write(tcarg, NULL);
 				tcarg++;
 			}
