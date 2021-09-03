@@ -251,9 +251,11 @@ __initbuf(struct xfs_buf *bp, struct xfs_buftarg *btp, xfs_daddr_t bno,
 	bp->b_ops = NULL;
 	INIT_LIST_HEAD(&bp->b_li_list);
 
-	if (!bp->b_maps) {
-		bp->b_nmaps = 1;
+	if (!bp->b_maps)
 		bp->b_maps = &bp->__b_map;
+
+	if (bp->b_maps == &bp->__b_map) {
+		bp->b_nmaps = 1;
 		bp->b_maps[0].bm_bn = bp->b_bn;
 		bp->b_maps[0].bm_len = bp->b_length;
 	}
