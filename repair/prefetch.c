@@ -153,7 +153,7 @@ pf_queue_io(
 
 	pftrace("getbuf %c %p (%llu) in AG %d (fsbno = %lu) added to queue"
 		"(inode_bufs_queued = %d, last_bno = %lu)", B_IS_INODE(flag) ?
-		'I' : 'M', bp, (long long)XFS_BUF_ADDR(bp), args->agno, fsbno,
+		'I' : 'M', bp, (long long)xfs_buf_daddr(bp), args->agno, fsbno,
 		args->inode_bufs_queued, args->last_bno_read);
 
 	pf_start_processing(args);
@@ -523,12 +523,12 @@ pf_batch_read(
 		 * otherwise, find as many close together blocks and
 		 * read them in one read
 		 */
-		first_off = LIBXFS_BBTOOFF64(XFS_BUF_ADDR(bplist[0]));
-		last_off = LIBXFS_BBTOOFF64(XFS_BUF_ADDR(bplist[num-1])) +
+		first_off = LIBXFS_BBTOOFF64(xfs_buf_daddr(bplist[0]));
+		last_off = LIBXFS_BBTOOFF64(xfs_buf_daddr(bplist[num-1])) +
 			BBTOB(bplist[num-1]->b_length);
 		while (num > 1 && last_off - first_off > pf_max_bytes) {
 			num--;
-			last_off = LIBXFS_BBTOOFF64(XFS_BUF_ADDR(bplist[num-1])) +
+			last_off = LIBXFS_BBTOOFF64(xfs_buf_daddr(bplist[num-1])) +
 				BBTOB(bplist[num-1]->b_length);
 		}
 		if (num < ((last_off - first_off) >> (mp->m_sb.sb_blocklog + 3))) {
@@ -538,7 +538,7 @@ pf_batch_read(
 			 */
 			last_off = first_off + BBTOB(bplist[0]->b_length);
 			for (i = 1; i < num; i++) {
-				next_off = LIBXFS_BBTOOFF64(XFS_BUF_ADDR(bplist[i])) +
+				next_off = LIBXFS_BBTOOFF64(xfs_buf_daddr(bplist[i])) +
 						BBTOB(bplist[i]->b_length);
 				if (next_off - last_off > pf_batch_bytes)
 					break;
@@ -549,7 +549,7 @@ pf_batch_read(
 
 		for (i = 0; i < num; i++) {
 			if (btree_delete(args->io_queue, XFS_DADDR_TO_FSB(mp,
-					XFS_BUF_ADDR(bplist[i]))) == NULL)
+					xfs_buf_daddr(bplist[i]))) == NULL)
 				do_error(_("prefetch corruption\n"));
 		}
 
@@ -565,8 +565,8 @@ pf_batch_read(
 		}
 #ifdef XR_PF_TRACE
 		pftrace("reading bbs %llu to %llu (%d bufs) from %s queue in AG %d (last_bno = %lu, inode_bufs = %d)",
-			(long long)XFS_BUF_ADDR(bplist[0]),
-			(long long)XFS_BUF_ADDR(bplist[num-1]), num,
+			(long long)xfs_buf_daddr(bplist[0]),
+			(long long)xfs_buf_daddr(bplist[num-1]), num,
 			(which != PF_SECONDARY) ? "pri" : "sec", args->agno,
 			args->last_bno_read, args->inode_bufs_queued);
 #endif
@@ -597,7 +597,7 @@ pf_batch_read(
 			 */
 			for (i = 0; i < num; i++) {
 
-				pbuf = ((char *)buf) + (LIBXFS_BBTOOFF64(XFS_BUF_ADDR(bplist[i])) - first_off);
+				pbuf = ((char *)buf) + (LIBXFS_BBTOOFF64(xfs_buf_daddr(bplist[i])) - first_off);
 				size = BBTOB(bplist[i]->b_length);
 				if (len < size)
 					break;
@@ -619,7 +619,7 @@ pf_batch_read(
 			pftrace("putbuf %c %p (%llu) in AG %d",
 				B_IS_INODE(libxfs_buf_priority(bplist[i])) ?
 								      'I' : 'M',
-				bplist[i], (long long)XFS_BUF_ADDR(bplist[i]),
+				bplist[i], (long long)xfs_buf_daddr(bplist[i]),
 				args->agno);
 			libxfs_buf_relse(bplist[i]);
 		}
