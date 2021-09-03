@@ -205,7 +205,7 @@ libxfs_bcompare(struct cache_node *node, cache_key_t key)
 	struct xfs_bufkey	*bkey = (struct xfs_bufkey *)key;
 
 	if (bp->b_target->bt_bdev == bkey->buftarg->bt_bdev &&
-	    bp->b_bn == bkey->blkno) {
+	    bp->b_cache_key == bkey->blkno) {
 		if (bp->b_length == bkey->bblen)
 			return CACHE_HIT;
 #ifdef IO_BCOMPARE_CHECK
@@ -214,7 +214,7 @@ libxfs_bcompare(struct cache_node *node, cache_key_t key)
 	"%lx: Badness in key lookup (length)\n"
 	"bp=(bno 0x%llx, len %u bytes) key=(bno 0x%llx, len %u bytes)\n",
 				pthread_self(),
-				(unsigned long long)bp->b_bn, 
+				(unsigned long long)xfs_buf_daddr(bp),
 				BBTOB(bp->b_length),
 				(unsigned long long)bkey->blkno,
 				BBTOB(bkey->bblen));
@@ -230,7 +230,7 @@ __initbuf(struct xfs_buf *bp, struct xfs_buftarg *btp, xfs_daddr_t bno,
 		unsigned int bytes)
 {
 	bp->b_flags = 0;
-	bp->b_bn = bno;
+	bp->b_cache_key = bno;
 	bp->b_length = BTOBB(bytes);
 	bp->b_target = btp;
 	bp->b_mount = btp->bt_mount;
@@ -256,7 +256,7 @@ __initbuf(struct xfs_buf *bp, struct xfs_buftarg *btp, xfs_daddr_t bno,
 
 	if (bp->b_maps == &bp->__b_map) {
 		bp->b_nmaps = 1;
-		bp->b_maps[0].bm_bn = bp->b_bn;
+		bp->b_maps[0].bm_bn = bno;
 		bp->b_maps[0].bm_len = bp->b_length;
 	}
 }
@@ -591,7 +591,7 @@ libxfs_readbufr(struct xfs_buftarg *btp, xfs_daddr_t blkno, struct xfs_buf *bp,
 	error = __read_buf(fd, bp->b_addr, bytes, LIBXFS_BBTOOFF64(blkno), flags);
 	if (!error &&
 	    bp->b_target->bt_bdev == btp->bt_bdev &&
-	    bp->b_bn == blkno &&
+	    bp->b_cache_key == blkno &&
 	    bp->b_length == len)
 		bp->b_flags |= LIBXFS_B_UPTODATE;
 	bp->b_error = error;
@@ -833,14 +833,14 @@ libxfs_bwrite(
 			fprintf(stderr,
 	_("%s: write verifier failed on %s bno 0x%llx/0x%x\n"),
 				__func__, bp->b_ops->name,
-				(long long)bp->b_bn, bp->b_length);
+				(long long)xfs_buf_daddr(bp), bp->b_length);
 			return bp->b_error;
 		}
 	}
 
 	if (!(bp->b_flags & LIBXFS_B_DISCONTIG)) {
 		bp->b_error = __write_buf(fd, bp->b_addr, BBTOB(bp->b_length),
-				    LIBXFS_BBTOOFF64(bp->b_bn), bp->b_flags);
+				    LIBXFS_BBTOOFF64(xfs_buf_daddr(bp)), bp->b_flags);
 	} else {
 		int	i;
 		void	*buf = bp->b_addr;
@@ -861,7 +861,7 @@ libxfs_bwrite(
 		fprintf(stderr,
 	_("%s: write failed on %s bno 0x%llx/0x%x, err=%d\n"),
 			__func__, bp->b_ops ? bp->b_ops->name : "(unknown)",
-			(long long)bp->b_bn, bp->b_length, -bp->b_error);
+			(long long)xfs_buf_daddr(bp), bp->b_length, -bp->b_error);
 	} else {
 		bp->b_flags |= LIBXFS_B_UPTODATE;
 		bp->b_flags &= ~(LIBXFS_B_DIRTY | LIBXFS_B_UNCHECKED);
