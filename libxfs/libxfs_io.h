@@ -114,11 +114,21 @@ typedef unsigned int xfs_buf_flags_t;
 #define XFS_BUF_DADDR_NULL		((xfs_daddr_t) (-1LL))
 
 #define xfs_buf_offset(bp, offset)	((bp)->b_addr + (offset))
-#define XFS_BUF_ADDR(bp)		((bp)->b_bn)
+
+static inline xfs_daddr_t xfs_buf_daddr(struct xfs_buf *bp)
+{
+	/* XXX remove me */
+	if (bp->b_bn != bp->b_maps[0].bm_bn && bp->b_bn != -1ULL) {
+		fprintf(stderr, "FARTS buf %p bn %lx bmbn %lx intmap? %d\n", bp, bp->b_bn, bp->b_maps[0].bm_bn, bp->b_maps == &bp->__b_map);
+		abort();
+	}
+	return bp->b_maps[0].bm_bn;
+}
 
 static inline void xfs_buf_set_daddr(struct xfs_buf *bp, xfs_daddr_t blkno)
 {
-	bp->b_bn = blkno;
+	assert(bp->b_bn == XFS_BUF_DADDR_NULL);
+	bp->b_maps[0].bm_bn = blkno;
 }
 
 void libxfs_buf_set_priority(struct xfs_buf *bp, int priority);
