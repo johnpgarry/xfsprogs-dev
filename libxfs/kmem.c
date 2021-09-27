@@ -3,6 +3,18 @@
 
 #include "libxfs_priv.h"
 
+static bool leaked;
+
+void kmem_start_leak_check(void)
+{
+	leaked = false;
+}
+
+bool kmem_found_leaks(void)
+{
+	return leaked;
+}
+
 /*
  * Simple memory interface
  */
@@ -27,18 +39,15 @@ kmem_cache_create(const char *name, unsigned int size, unsigned int align,
 	return ptr;
 }
 
-int
-kmem_zone_destroy(kmem_zone_t *zone)
+void
+kmem_cache_destroy(kmem_zone_t *zone)
 {
-	int	leaked = 0;
-
 	if (getenv("LIBXFS_LEAK_CHECK") && zone->allocated) {
-		leaked = 1;
+		leaked = true;
 		fprintf(stderr, "zone %s freed with %d items allocated\n",
 				zone->zone_name, zone->allocated);
 	}
 	free(zone);
-	return leaked;
 }
 
 void *
