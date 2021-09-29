@@ -11,6 +11,7 @@
 #include "libfrog/fsgeom.h"
 #include "libfrog/topology.h"
 #include "libfrog/convert.h"
+#include "proto.h"
 #include <ini.h>
 
 #define TERABYTES(count, blog)	((uint64_t)(count) << (40 - (blog)))
