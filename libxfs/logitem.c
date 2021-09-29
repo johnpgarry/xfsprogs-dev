@@ -144,6 +144,8 @@ xfs_inode_item_init(
 		ip->i_ino, iip);
 #endif
 
-	xfs_log_item_init(mp, &iip->ili_item, XFS_LI_INODE);
+	spin_lock_init(&iip->ili_lock);
+
+        xfs_log_item_init(mp, &iip->ili_item, XFS_LI_INODE);
 	iip->ili_inode = ip;
 }

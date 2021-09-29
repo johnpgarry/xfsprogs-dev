@@ -43,6 +43,7 @@ struct inode {
 	struct timespec64	i_atime;
 	struct timespec64	i_mtime;
 	struct timespec64	i_ctime;
+	spinlock_t		i_lock;
 };
 
 static inline uint32_t i_uid_read(struct inode *inode)

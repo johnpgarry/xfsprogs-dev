@@ -1070,6 +1070,8 @@ libxfs_iget(
 	VFS_I(ip)->i_count = 1;
 	ip->i_ino = ino;
 	ip->i_mount = mp;
+	spin_lock_init(&VFS_I(ip)->i_lock);
+
 	error = xfs_imap(mp, tp, ip->i_ino, &ip->i_imap, 0);
 	if (error)
 		goto out_destroy;

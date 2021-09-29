@@ -35,6 +35,7 @@ struct xfs_inode_log_item {
 	unsigned int		ili_last_fields;	/* fields when flushed*/
 	unsigned int		ili_fields;		/* fields to be logged */
 	unsigned int		ili_fsync_fields;	/* ignored by userspace */
+	spinlock_t		ili_lock;
 };
 
 typedef struct xfs_buf_log_item {

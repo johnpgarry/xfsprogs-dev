@@ -18,6 +18,7 @@
 #include "kmem.h"
 #include "libfrog/radix-tree.h"
 #include "atomic.h"
+#include "spinlock.h"
 
 #include "xfs_types.h"
 #include "xfs_fs.h"

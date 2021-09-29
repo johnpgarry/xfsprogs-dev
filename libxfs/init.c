@@ -743,7 +743,9 @@ libxfs_mount(
 	mp->m_flags = (LIBXFS_MOUNT_32BITINODES|LIBXFS_MOUNT_32BITINOOPT);
 	mp->m_sb = *sb;
 	INIT_RADIX_TREE(&mp->m_perag_tree, GFP_KERNEL);
-	sbp = &(mp->m_sb);
+	sbp = &mp->m_sb;
+	spin_lock_init(&mp->m_sb_lock);
+	spin_lock_init(&mp->m_agirotor_lock);
 
 	xfs_sb_mount_common(mp, sb);
 

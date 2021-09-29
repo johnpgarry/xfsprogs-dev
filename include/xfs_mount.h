@@ -22,6 +22,7 @@ typedef struct xfs_mount {
 #define m_icount	m_sb.sb_icount
 #define m_ifree		m_sb.sb_ifree
 #define m_fdblocks	m_sb.sb_fdblocks
+	spinlock_t		m_sb_lock;
 
 	/*
 	 * Bitsets of per-fs metadata that have been checked and/or are sick.
@@ -32,6 +33,7 @@ typedef struct xfs_mount {
 
 	char			*m_fsname;	/* filesystem name */
 	int			m_bsize;	/* fs logical block size */
+	spinlock_t		m_agirotor_lock;
 	xfs_agnumber_t		m_agfrotor;	/* last ag where space found */
 	xfs_agnumber_t		m_agirotor;	/* last ag dir inode alloced */
 	xfs_agnumber_t		m_maxagi;	/* highest inode alloc group */
