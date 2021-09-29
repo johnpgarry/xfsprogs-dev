@@ -310,6 +310,8 @@ libxfs_init(libxfs_init_t *a)
 	fd = -1;
 	flags = (a->isreadonly | a->isdirect);
 
+	rcu_init();
+	rcu_register_thread();
 	radix_tree_init();
 
 	if (a->volname) {
@@ -1023,6 +1025,7 @@ libxfs_destroy(
 	libxfs_bcache_free();
 	cache_destroy(libxfs_bcache);
 	leaked = destroy_zones();
+	rcu_unregister_thread();
 	if (getenv("LIBXFS_LEAK_CHECK") && leaked)
 		exit(1);
 }

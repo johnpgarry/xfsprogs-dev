@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <assert.h>
+#include <urcu.h>
 #include "workqueue.h"
 
 /* Main processing thread */
@@ -24,6 +25,7 @@ workqueue_thread(void *arg)
 	 * Loop pulling work from the passed in work queue.
 	 * Check for notification to exit after every chunk of work.
 	 */
+	rcu_register_thread();
 	while (1) {
 		pthread_mutex_lock(&wq->lock);
 
@@ -60,6 +62,7 @@ workqueue_thread(void *arg)
 		(wi->function)(wi->queue, wi->index, wi->arg);
 		free(wi);
 	}
+	rcu_unregister_thread();
 
 	return NULL;
 }

@@ -116,6 +116,7 @@ progress_report_thread(void *arg)
 	struct timespec		abstime;
 	int			ret;
 
+	rcu_register_thread();
 	pthread_mutex_lock(&pt.lock);
 	while (1) {
 		uint64_t	progress_val;
@@ -139,6 +140,7 @@ progress_report_thread(void *arg)
 			progress_report(progress_val);
 	}
 	pthread_mutex_unlock(&pt.lock);
+	rcu_unregister_thread();
 	return NULL;
 }
 
