@@ -732,7 +732,7 @@ _("%s freespace btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 							     XR_E_FREE);
 						break;
 					}
-					/* fall through */
+					fallthrough;
 				default:
 					do_warn(
 	_("block (%d,%d-%d) multiply claimed by %s space tree, state - %d\n"),
@@ -911,7 +911,7 @@ _("in use block (%d,%d-%d) mismatch in %s tree, state - %d,%" PRIx64 "\n"),
 		if (xfs_sb_version_hasreflink(&mp->m_sb) &&
 		    !XFS_RMAP_NON_INODE_OWNER(owner))
 			break;
-		/* fall through */
+		fallthrough;
 	default:
 		do_warn(
 _("unknown block (%d,%d-%d) mismatch on %s tree, state - %d,%" PRIx64 "\n"),

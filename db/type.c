@@ -307,7 +307,7 @@ handle_text(
 {
 	switch (action) {
 	case DB_FUZZ:
-		/* fall through */
+		fallthrough;
 	case DB_WRITE:
 		dbprintf(_("text writing/fuzzing not supported.\n"));
 		break;

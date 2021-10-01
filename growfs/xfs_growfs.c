@@ -78,7 +78,7 @@ main(int argc, char **argv)
 		switch (c) {
 		case 'D':
 			dsize = strtoll(optarg, NULL, 10);
-			/* fall through */
+			fallthrough;
 		case 'd':
 			dflag = 1;
 			break;
@@ -91,7 +91,7 @@ main(int argc, char **argv)
 			break;
 		case 'L':
 			lsize = strtoll(optarg, NULL, 10);
-			/* fall through */
+			fallthrough;
 		case 'l':
 			lflag = 1;
 			break;
@@ -107,7 +107,7 @@ main(int argc, char **argv)
 			break;
 		case 'R':
 			rsize = strtoll(optarg, NULL, 10);
-			/* fall through */
+			fallthrough;
 		case 'r':
 			rflag = 1;
 			break;
