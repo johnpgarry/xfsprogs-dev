@@ -725,7 +725,7 @@ libxfs_mount(
 	mp->m_features = xfs_sb_version_to_features(sb);
 	if (flags & LIBXFS_MOUNT_DEBUGGER)
 		xfs_set_debugger(mp);
-	if (flags & LIBXFS_MOUNT_WANT_CORRUPTED)
+	if (flags & LIBXFS_MOUNT_REPORT_CORRUPTION)
 		xfs_set_reporting_corruption(mp);
 	libxfs_buftarg_init(mp, dev, logdev, rtdev);
 
