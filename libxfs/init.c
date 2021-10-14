@@ -912,6 +912,7 @@ libxfs_mount(
 			progname);
 		exit(1);
 	}
+	mp->m_flags |= LIBXFS_MOUNT_PERAG_DATA_LOADED;
 
 	return mp;
 }
@@ -1031,9 +1032,15 @@ libxfs_umount(
 	libxfs_bcache_purge();
 	error = libxfs_flush_mount(mp);
 
-	for (agno = 0; agno < mp->m_maxagi; agno++) {
-		pag = radix_tree_delete(&mp->m_perag_tree, agno);
-		kmem_free(pag);
+	/*
+	 * Only try to free the per-AG structures if we set them up in the
+	 * first place.
+	 */
+	if (mp->m_flags & LIBXFS_MOUNT_PERAG_DATA_LOADED) {
+		for (agno = 0; agno < mp->m_maxagi; agno++) {
+			pag = radix_tree_delete(&mp->m_perag_tree, agno);
+			kmem_free(pag);
+		}
 	}
 
 	kmem_free(mp->m_attr_geo);
