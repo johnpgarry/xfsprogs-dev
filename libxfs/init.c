@@ -407,8 +407,10 @@ done:
 		unlink(rtpath);
 	if (fd >= 0)
 		close(fd);
-	if (!rval)
+	if (!rval) {
 		libxfs_close_devices(a);
+		rcu_unregister_thread();
+	}
 
 	return rval;
 }
