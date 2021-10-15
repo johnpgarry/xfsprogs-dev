@@ -474,7 +474,7 @@ _("unable to rebuild AG %u.  Not enough free space in on-disk AG.\n"),
 			agno);
 	}
 
-	init_ino_cursors(&sc, agno, num_freeblocks, &sb_icount_ag[agno],
+	init_ino_cursors(&sc, pag, num_freeblocks, &sb_icount_ag[agno],
 			&sb_ifree_ag[agno], &btr_ino, &btr_fino);
 
 	init_rmapbt_cursor(&sc, pag, num_freeblocks, &btr_rmap);
