@@ -62,11 +62,11 @@ agresv_help(void)
 
 static void
 print_agresv_info(
-	xfs_agnumber_t	agno)
+	struct xfs_perag *pag)
 {
 	struct xfs_buf	*bp;
 	struct xfs_agf	*agf;
-	struct xfs_perag *pag = libxfs_perag_get(mp, agno);
+	xfs_agnumber_t	agno = pag->pag_agno;
 	xfs_extlen_t	ask = 0;
 	xfs_extlen_t	used = 0;
 	xfs_extlen_t	free = 0;
@@ -97,7 +97,6 @@ print_agresv_info(
 	if (ask - used > free)
 		printf(" <not enough space>");
 	printf("\n");
-	libxfs_perag_put(pag);
 }
 
 static int
@@ -105,6 +104,7 @@ agresv_f(
 	int			argc,
 	char			**argv)
 {
+	struct xfs_perag	*pag;
 	xfs_agnumber_t		agno;
 	int			i;
 
@@ -127,13 +127,15 @@ agresv_f(
 				continue;
 			}
 
-			print_agresv_info(a);
+			pag = libxfs_perag_get(mp, a);
+			print_agresv_info(pag);
+			libxfs_perag_put(pag);
 		}
 		return 0;
 	}
 
-	for (agno = 0; agno < mp->m_sb.sb_agcount; agno++)
-		print_agresv_info(agno);
+	for_each_perag(mp, agno, pag)
+		print_agresv_info(pag);
 
 	return 0;
 }
