@@ -24,6 +24,7 @@
 #include "xfs_attr_leaf.h"
 #include "xfs_trace.h"
 #include "xfs_dir2.h"
+#include "xfs_ag.h"
 
 
 /*

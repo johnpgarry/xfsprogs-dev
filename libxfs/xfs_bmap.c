@@ -26,6 +26,7 @@
 #include "xfs_attr_leaf.h"
 #include "xfs_quota_defs.h"
 #include "xfs_rmap.h"
+#include "xfs_ag.h"
 #include "xfs_ag_resv.h"
 #include "xfs_refcount.h"
 
