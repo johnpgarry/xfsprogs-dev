@@ -574,17 +574,18 @@ get_rmapbt_record(
 void
 init_rmapbt_cursor(
 	struct repair_ctx	*sc,
-	xfs_agnumber_t		agno,
+	struct xfs_perag	*pag,
 	unsigned int		free_space,
 	struct bt_rebuild	*btr)
 {
+	xfs_agnumber_t		agno = pag->pag_agno;
 	int			error;
 
 	if (!xfs_sb_version_hasrmapbt(&sc->mp->m_sb))
 		return;
 
 	init_rebuild(sc, &XFS_RMAP_OINFO_AG, free_space, btr);
-	btr->cur = libxfs_rmapbt_stage_cursor(sc->mp, &btr->newbt.afake, agno);
+	btr->cur = libxfs_rmapbt_stage_cursor(sc->mp, &btr->newbt.afake, pag);
 
 	btr->bload.get_record = get_rmapbt_record;
 	btr->bload.claim_block = rebuild_claim_block;
