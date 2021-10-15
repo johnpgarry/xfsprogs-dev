@@ -50,7 +50,7 @@ xfs_rmapbt_dup_cursor(
 	struct xfs_btree_cur	*cur)
 {
 	return xfs_rmapbt_init_cursor(cur->bc_mp, cur->bc_tp,
-			cur->bc_ag.agbp, cur->bc_ag.agno);
+			cur->bc_ag.agbp, cur->bc_ag.agno, cur->bc_ag.pag);
 }
 
 STATIC void
@@ -447,7 +447,8 @@ static struct xfs_btree_cur *
 xfs_rmapbt_init_common(
 	struct xfs_mount	*mp,
 	struct xfs_trans	*tp,
-	xfs_agnumber_t		agno)
+	xfs_agnumber_t		agno,
+	struct xfs_perag	*pag)
 {
 	struct xfs_btree_cur	*cur;
 
@@ -461,6 +462,11 @@ xfs_rmapbt_init_common(
 	cur->bc_statoff = XFS_STATS_CALC_INDEX(xs_rmap_2);
 	cur->bc_ag.agno = agno;
 	cur->bc_ops = &xfs_rmapbt_ops;
+	if (pag) {
+		/* take a reference for the cursor */
+		atomic_inc(&pag->pag_ref);
+	}
+	cur->bc_ag.pag = pag;
 
 	return cur;
 }
@@ -471,12 +477,13 @@ xfs_rmapbt_init_cursor(
 	struct xfs_mount	*mp,
 	struct xfs_trans	*tp,
 	struct xfs_buf		*agbp,
-	xfs_agnumber_t		agno)
+	xfs_agnumber_t		agno,
+	struct xfs_perag	*pag)
 {
 	struct xfs_agf		*agf = agbp->b_addr;
 	struct xfs_btree_cur	*cur;
 
-	cur = xfs_rmapbt_init_common(mp, tp, agno);
+	cur = xfs_rmapbt_init_common(mp, tp, agno, pag);
 	cur->bc_nlevels = be32_to_cpu(agf->agf_levels[XFS_BTNUM_RMAP]);
 	cur->bc_ag.agbp = agbp;
 	return cur;
@@ -491,7 +498,7 @@ xfs_rmapbt_stage_cursor(
 {
 	struct xfs_btree_cur	*cur;
 
-	cur = xfs_rmapbt_init_common(mp, NULL, agno);
+	cur = xfs_rmapbt_init_common(mp, NULL, agno, NULL);
 	xfs_btree_stage_afakeroot(cur, afake);
 	return cur;
 }
