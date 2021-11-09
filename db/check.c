@@ -3461,7 +3461,7 @@ process_quota(
 {
 	xfs_fsblock_t	bno;
 	int		cb;
-	xfs_dqblk_t	*dqb;
+	struct xfs_dqblk	*dqb;
 	xfs_dqid_t	dqid;
 	uint8_t		exp_flags = 0;
 	uint		i;

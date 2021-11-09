@@ -32,8 +32,8 @@ const field_t	dqblk_hfld[] = {
 	{ NULL }
 };
 
-#define	DDOFF(f)	bitize(offsetof(xfs_dqblk_t, dd_ ## f))
-#define	DDSZC(f)	szcount(xfs_dqblk_t, dd_ ## f)
+#define	DDOFF(f)	bitize(offsetof(struct xfs_dqblk, dd_ ## f))
+#define	DDSZC(f)	szcount(struct xfs_dqblk, dd_ ## f)
 const field_t	dqblk_flds[] = {
 	{ "diskdq", FLDT_DISK_DQUOT, OI(DDOFF(diskdq)), C1, 0, TYP_NONE },
 	{ "fill", FLDT_CHARS, OI(DDOFF(fill)), CI(DDSZC(fill)), FLD_SKIPALL,
@@ -138,7 +138,7 @@ dquot_f(
 		dbprintf(_("bad %s id for dquot %s\n"), s, argv[optind]);
 		return 0;
 	}
-	perblock = (int)(mp->m_sb.sb_blocksize / sizeof(xfs_dqblk_t));
+	perblock = (int)(mp->m_sb.sb_blocksize / sizeof(struct xfs_dqblk));
 	qbno = (xfs_fileoff_t)id / perblock;
 	qoff = (int)(id % perblock);
 	push_cur();
@@ -153,7 +153,7 @@ dquot_f(
 	set_cur(&typtab[TYP_DQBLK], XFS_FSB_TO_DADDR(mp, bm.startblock), blkbb,
 		DB_RING_IGN, NULL);
 	iocur_top->dquot_buf = 1;
-	off_cur(qoff * (int)sizeof(xfs_dqblk_t), sizeof(xfs_dqblk_t));
+	off_cur(qoff * (int)sizeof(struct xfs_dqblk), sizeof(struct xfs_dqblk));
 	ring_add();
 	return 0;
 }
