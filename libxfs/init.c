@@ -253,6 +253,12 @@ init_caches(void)
 		abort();
 	}
 
+	error = xfs_defer_init_item_caches();
+	if (error) {
+		fprintf(stderr, "Could not allocate defer work item caches.\n");
+		abort();
+	}
+
 	xfs_bmap_free_item_cache = kmem_cache_create("xfs_bmap_free_item",
 			sizeof(struct xfs_extent_free_item), 0, 0, NULL);
 	xfs_trans_cache = kmem_cache_create("xfs_trans",
@@ -268,6 +274,7 @@ destroy_kmem_caches(void)
 	kmem_cache_destroy(xfs_ifork_cache);
 	kmem_cache_destroy(xfs_buf_item_cache);
 	kmem_cache_destroy(xfs_da_state_cache);
+	xfs_defer_destroy_item_caches();
 	xfs_btree_destroy_cur_caches();
 	kmem_cache_destroy(xfs_bmap_free_item_cache);
 	kmem_cache_destroy(xfs_trans_cache);
