@@ -238,13 +238,13 @@ init_zones(void)
 			sizeof(struct xfs_buf), 0, 0, NULL);
 	xfs_inode_zone = kmem_cache_create("xfs_inode",
 			sizeof(struct xfs_inode), 0, 0, NULL);
-	xfs_ifork_zone = kmem_cache_create("xfs_ifork",
+	xfs_ifork_cache = kmem_cache_create("xfs_ifork",
 			sizeof(struct xfs_ifork), 0, 0, NULL);
 	xfs_ili_zone = kmem_cache_create("xfs_inode_log_item",
 			sizeof(struct xfs_inode_log_item), 0, 0, NULL);
 	xfs_buf_item_zone = kmem_cache_create("xfs_buf_log_item",
 			sizeof(struct xfs_buf_log_item), 0, 0, NULL);
-	xfs_da_state_zone = kmem_cache_create("xfs_da_state",
+	xfs_da_state_cache = kmem_cache_create("xfs_da_state",
 			sizeof(struct xfs_da_state), 0, 0, NULL);
 
 	error = xfs_btree_init_cur_caches();
@@ -253,7 +253,7 @@ init_zones(void)
 		abort();
 	}
 
-	xfs_bmap_free_item_zone = kmem_cache_create("xfs_bmap_free_item",
+	xfs_bmap_free_item_cache = kmem_cache_create("xfs_bmap_free_item",
 			sizeof(struct xfs_extent_free_item), 0, 0, NULL);
 	xfs_trans_zone = kmem_cache_create("xfs_trans",
 			sizeof(struct xfs_trans), 0, 0, NULL);
@@ -265,11 +265,11 @@ destroy_kmem_caches(void)
 	kmem_cache_destroy(xfs_buf_zone);
 	kmem_cache_destroy(xfs_ili_zone);
 	kmem_cache_destroy(xfs_inode_zone);
-	kmem_cache_destroy(xfs_ifork_zone);
+	kmem_cache_destroy(xfs_ifork_cache);
 	kmem_cache_destroy(xfs_buf_item_zone);
-	kmem_cache_destroy(xfs_da_state_zone);
+	kmem_cache_destroy(xfs_da_state_cache);
 	xfs_btree_destroy_cur_caches();
-	kmem_cache_destroy(xfs_bmap_free_item_zone);
+	kmem_cache_destroy(xfs_bmap_free_item_cache);
 	kmem_cache_destroy(xfs_trans_zone);
 }
 
