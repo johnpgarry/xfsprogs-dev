@@ -6,9 +6,9 @@
 /*
  * Simple memory interface
  */
-
 kmem_zone_t *
-kmem_zone_init(int size, char *name)
+kmem_cache_create(const char *name, unsigned int size, unsigned int align,
+		  unsigned int slab_flags, void (*ctor)(void *))
 {
 	kmem_zone_t	*ptr = malloc(sizeof(kmem_zone_t));
 
@@ -21,6 +21,9 @@ kmem_zone_init(int size, char *name)
 	ptr->zone_unitsize = size;
 	ptr->zone_name = name;
 	ptr->allocated = 0;
+	ptr->align = align;
+	ptr->ctor = ctor;
+
 	return ptr;
 }
 
@@ -41,7 +44,17 @@ kmem_zone_destroy(kmem_zone_t *zone)
 void *
 kmem_cache_alloc(kmem_zone_t *zone, gfp_t flags)
 {
-	void	*ptr = malloc(zone->zone_unitsize);
+	void	*ptr = NULL;
+
+	if (zone->align) {
+		int ret;
+
+		ret = posix_memalign(&ptr, zone->align, zone->zone_unitsize);
+		if (ret)
+			errno = ret;
+	} else {
+		ptr = malloc(zone->zone_unitsize);
+	}
 
 	if (ptr == NULL) {
 		fprintf(stderr, _("%s: zone alloc failed (%s, %d bytes): %s\n"),
@@ -49,6 +62,9 @@ kmem_cache_alloc(kmem_zone_t *zone, gfp_t flags)
 			strerror(errno));
 		exit(1);
 	}
+
+	if (zone->ctor)
+		zone->ctor(ptr);
 	zone->allocated++;
 	return ptr;
 }
