@@ -30,7 +30,7 @@ static int __xfs_trans_commit(struct xfs_trans *tp, bool regrant);
  * Simple transaction interface
  */
 
-kmem_zone_t	*xfs_trans_zone;
+struct kmem_cache	*xfs_trans_zone;
 
 /*
  * Initialize the precomputed transaction reservation values
@@ -867,7 +867,7 @@ buf_item_done(
 {
 	struct xfs_buf		*bp;
 	int			hold;
-	extern kmem_zone_t	*xfs_buf_item_zone;
+	extern struct kmem_cache	*xfs_buf_item_zone;
 
 	bp = bip->bli_buf;
 	ASSERT(bp != NULL);
