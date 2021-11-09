@@ -57,7 +57,7 @@ get_forkname(int whichfork)
  */
 
 static int
-clear_dinode_attr(xfs_mount_t *mp, xfs_dinode_t *dino, xfs_ino_t ino_num)
+clear_dinode_attr(xfs_mount_t *mp, struct xfs_dinode *dino, xfs_ino_t ino_num)
 {
 	ASSERT(dino->di_forkoff != 0);
 
@@ -106,7 +106,7 @@ _("would have cleared inode %" PRIu64 " attributes\n"), ino_num);
 }
 
 static void
-clear_dinode_core(struct xfs_mount *mp, xfs_dinode_t *dinoc, xfs_ino_t ino_num)
+clear_dinode_core(struct xfs_mount *mp, struct xfs_dinode *dinoc, xfs_ino_t ino_num)
 {
 	memset(dinoc, 0, sizeof(*dinoc));
 	dinoc->di_magic = cpu_to_be16(XFS_DINODE_MAGIC);
@@ -126,7 +126,7 @@ clear_dinode_core(struct xfs_mount *mp, xfs_dinode_t *dinoc, xfs_ino_t ino_num)
 }
 
 static void
-clear_dinode_unlinked(xfs_mount_t *mp, xfs_dinode_t *dino)
+clear_dinode_unlinked(xfs_mount_t *mp, struct xfs_dinode *dino)
 {
 
 	dino->di_next_unlinked = cpu_to_be32(NULLAGINO);
@@ -137,7 +137,7 @@ clear_dinode_unlinked(xfs_mount_t *mp, xfs_dinode_t *dino)
  * until after the agi unlinked lists are walked in phase 3.
  */
 static void
-clear_dinode(xfs_mount_t *mp, xfs_dinode_t *dino, xfs_ino_t ino_num)
+clear_dinode(xfs_mount_t *mp, struct xfs_dinode *dino, xfs_ino_t ino_num)
 {
 	clear_dinode_core(mp, dino, ino_num);
 	clear_dinode_unlinked(mp, dino);
@@ -744,7 +744,7 @@ process_btinode(
 	xfs_mount_t		*mp,
 	xfs_agnumber_t		agno,
 	xfs_agino_t		ino,
-	xfs_dinode_t		*dip,
+	struct xfs_dinode		*dip,
 	int			type,
 	int			*dirty,
 	xfs_rfsblock_t		*tot,
@@ -919,7 +919,7 @@ process_exinode(
 	xfs_mount_t		*mp,
 	xfs_agnumber_t		agno,
 	xfs_agino_t		ino,
-	xfs_dinode_t		*dip,
+	struct xfs_dinode		*dip,
 	int			type,
 	int			*dirty,
 	xfs_rfsblock_t		*tot,
@@ -974,7 +974,7 @@ process_lclinode(
 	xfs_mount_t			*mp,
 	xfs_agnumber_t			agno,
 	xfs_agino_t			ino,
-	xfs_dinode_t			*dip,
+	struct xfs_dinode			*dip,
 	int				whichfork)
 {
 	struct xfs_attr_shortform	*asf;
@@ -1010,7 +1010,7 @@ process_lclinode(
 }
 
 static int
-process_symlink_extlist(xfs_mount_t *mp, xfs_ino_t lino, xfs_dinode_t *dino)
+process_symlink_extlist(xfs_mount_t *mp, xfs_ino_t lino, struct xfs_dinode *dino)
 {
 	xfs_fileoff_t		expected_offset;
 	xfs_bmbt_rec_t		*rp;
@@ -1324,7 +1324,7 @@ static int
 process_symlink(
 	xfs_mount_t	*mp,
 	xfs_ino_t	lino,
-	xfs_dinode_t	*dino,
+	struct xfs_dinode	*dino,
 	blkmap_t 	*blkmap)
 {
 	char			*symlink;
@@ -1388,7 +1388,7 @@ _("found illegal null character in symlink inode %" PRIu64 "\n"),
  */
 static int
 process_misc_ino_types(xfs_mount_t	*mp,
-			xfs_dinode_t	*dino,
+			struct xfs_dinode	*dino,
 			xfs_ino_t	lino,
 			int		type)
 {
@@ -1480,14 +1480,14 @@ _("size of fifo inode %" PRIu64 " != 0 (%" PRIu64 " blocks)\n"),
 
 static inline int
 dinode_fmt(
-	xfs_dinode_t *dino)
+	struct xfs_dinode *dino)
 {
 	return be16_to_cpu(dino->di_mode) & S_IFMT;
 }
 
 static inline void
 change_dinode_fmt(
-	xfs_dinode_t	*dino,
+	struct xfs_dinode	*dino,
 	int		new_fmt)
 {
 	int		mode = be16_to_cpu(dino->di_mode);
@@ -1501,7 +1501,7 @@ change_dinode_fmt(
 
 static int
 check_dinode_mode_format(
-	xfs_dinode_t *dinoc)
+	struct xfs_dinode *dinoc)
 {
 	if (dinoc->di_format >= XFS_DINODE_FMT_UUID)
 		return -1;	/* FMT_UUID is not used */
@@ -1538,7 +1538,7 @@ check_dinode_mode_format(
 static int
 process_check_sb_inodes(
 	xfs_mount_t	*mp,
-	xfs_dinode_t	*dinoc,
+	struct xfs_dinode	*dinoc,
 	xfs_ino_t	lino,
 	int		*type,
 	int		*dirty)
@@ -1643,7 +1643,7 @@ _("bad # of extents (%u) for realtime bitmap inode %" PRIu64 "\n"),
 static int
 process_check_inode_sizes(
 	xfs_mount_t	*mp,
-	xfs_dinode_t	*dino,
+	struct xfs_dinode	*dino,
 	xfs_ino_t	lino,
 	int		type)
 {
@@ -1735,7 +1735,7 @@ _("realtime summary inode %" PRIu64 " has bad size %" PRId64 " (should be %d)\n"
 static int
 process_check_inode_forkoff(
 	xfs_mount_t	*mp,
-	xfs_dinode_t	*dino,
+	struct xfs_dinode	*dino,
 	xfs_ino_t	lino)
 {
 	if (dino->di_forkoff == 0)
@@ -1773,7 +1773,7 @@ _("bad attr fork offset %d in inode %" PRIu64 ", max=%zu\n"),
  */
 static int
 process_inode_blocks_and_extents(
-	xfs_dinode_t	*dino,
+	struct xfs_dinode	*dino,
 	xfs_rfsblock_t	nblocks,
 	uint64_t	nextents,
 	uint64_t	anextents,
@@ -1862,7 +1862,7 @@ process_inode_data_fork(
 	xfs_mount_t	*mp,
 	xfs_agnumber_t	agno,
 	xfs_agino_t	ino,
-	xfs_dinode_t	*dino,
+	struct xfs_dinode	*dino,
 	int		type,
 	int		*dirty,
 	xfs_rfsblock_t	*totblocks,
@@ -1971,7 +1971,7 @@ process_inode_attr_fork(
 	xfs_mount_t	*mp,
 	xfs_agnumber_t	agno,
 	xfs_agino_t	ino,
-	xfs_dinode_t	*dino,
+	struct xfs_dinode	*dino,
 	int		type,
 	int		*dirty,
 	xfs_rfsblock_t	*atotblocks,
@@ -2125,7 +2125,7 @@ process_inode_attr_fork(
 
 static int
 process_check_inode_nlink_version(
-	xfs_dinode_t	*dino,
+	struct xfs_dinode	*dino,
 	xfs_ino_t	lino)
 {
 	int		dirty = 0;
@@ -2240,7 +2240,7 @@ _("Bad extent size hint %u on inode %" PRIu64 ", "),
  */
 static int
 process_dinode_int(xfs_mount_t *mp,
-		xfs_dinode_t *dino,
+		struct xfs_dinode *dino,
 		xfs_agnumber_t agno,
 		xfs_agino_t ino,
 		int was_free,		/* 1 if inode is currently free */
@@ -2922,7 +2922,7 @@ bad_out:
 int
 process_dinode(
 	xfs_mount_t	*mp,
-	xfs_dinode_t	*dino,
+	struct xfs_dinode	*dino,
 	xfs_agnumber_t	agno,
 	xfs_agino_t	ino,
 	int		was_free,
@@ -2954,7 +2954,7 @@ process_dinode(
 int
 verify_dinode(
 	xfs_mount_t	*mp,
-	xfs_dinode_t	*dino,
+	struct xfs_dinode	*dino,
 	xfs_agnumber_t	agno,
 	xfs_agino_t	ino)
 {
@@ -2980,7 +2980,7 @@ verify_dinode(
 int
 verify_uncertain_dinode(
 	xfs_mount_t	*mp,
-	xfs_dinode_t	*dino,
+	struct xfs_dinode	*dino,
 	xfs_agnumber_t	agno,
 	xfs_agino_t	ino)
 {
