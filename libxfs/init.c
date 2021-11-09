@@ -229,20 +229,20 @@ check_open(char *path, int flags, char **rawfile, char **blockfile)
  * Initialize/destroy all of the zone allocators we use.
  */
 static void
-init_zones(void)
+init_caches(void)
 {
 	int		error;
 
 	/* initialise zone allocation */
-	xfs_buf_zone = kmem_cache_create("xfs_buffer",
+	xfs_buf_cache = kmem_cache_create("xfs_buffer",
 			sizeof(struct xfs_buf), 0, 0, NULL);
-	xfs_inode_zone = kmem_cache_create("xfs_inode",
+	xfs_inode_cache = kmem_cache_create("xfs_inode",
 			sizeof(struct xfs_inode), 0, 0, NULL);
 	xfs_ifork_cache = kmem_cache_create("xfs_ifork",
 			sizeof(struct xfs_ifork), 0, 0, NULL);
-	xfs_ili_zone = kmem_cache_create("xfs_inode_log_item",
+	xfs_ili_cache = kmem_cache_create("xfs_inode_log_item",
 			sizeof(struct xfs_inode_log_item), 0, 0, NULL);
-	xfs_buf_item_zone = kmem_cache_create("xfs_buf_log_item",
+	xfs_buf_item_cache = kmem_cache_create("xfs_buf_log_item",
 			sizeof(struct xfs_buf_log_item), 0, 0, NULL);
 	xfs_da_state_cache = kmem_cache_create("xfs_da_state",
 			sizeof(struct xfs_da_state), 0, 0, NULL);
@@ -255,22 +255,22 @@ init_zones(void)
 
 	xfs_bmap_free_item_cache = kmem_cache_create("xfs_bmap_free_item",
 			sizeof(struct xfs_extent_free_item), 0, 0, NULL);
-	xfs_trans_zone = kmem_cache_create("xfs_trans",
+	xfs_trans_cache = kmem_cache_create("xfs_trans",
 			sizeof(struct xfs_trans), 0, 0, NULL);
 }
 
 static void
 destroy_kmem_caches(void)
 {
-	kmem_cache_destroy(xfs_buf_zone);
-	kmem_cache_destroy(xfs_ili_zone);
-	kmem_cache_destroy(xfs_inode_zone);
+	kmem_cache_destroy(xfs_buf_cache);
+	kmem_cache_destroy(xfs_ili_cache);
+	kmem_cache_destroy(xfs_inode_cache);
 	kmem_cache_destroy(xfs_ifork_cache);
-	kmem_cache_destroy(xfs_buf_item_zone);
+	kmem_cache_destroy(xfs_buf_item_cache);
 	kmem_cache_destroy(xfs_da_state_cache);
 	xfs_btree_destroy_cur_caches();
 	kmem_cache_destroy(xfs_bmap_free_item_cache);
-	kmem_cache_destroy(xfs_trans_zone);
+	kmem_cache_destroy(xfs_trans_cache);
 }
 
 static void
@@ -405,7 +405,7 @@ libxfs_init(libxfs_init_t *a)
 				   &libxfs_bcache_operations);
 	use_xfs_buf_lock = a->usebuflock;
 	xfs_dir_startup();
-	init_zones();
+	init_caches();
 	rval = 1;
 done:
 	if (dpath[0])
