@@ -1,3 +1,11 @@
+xfsprogs-5.14.0-rc1 (12 Nov 2021)
+	- xfsprogs: introduce liburcu support (Dave Chinner)
+	- xfsprogs: convert atomic to uatomic (Dave Chinner)
+	- xfsprogs: convert utilities to use "fallthrough;" (Darrick J. Wong)
+	- libxfs: port xfs_set_inode_alloc from kernel (Darrick J. Wong)
+	- mkfs: warn about V4 deprecation (Darrick J. Wong)
+	- xfs_db: convert agresv to use for_each_perag (Darrick J. Wong)
+
 xfsprogs-5.13.0 (20 Aug 2021)
 	- No further changes
 
