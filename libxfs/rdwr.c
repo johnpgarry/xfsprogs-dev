@@ -887,11 +887,19 @@ libxfs_buf_mark_dirty(
 	bp->b_flags |= LIBXFS_B_DIRTY;
 }
 
-/* Complain about (and remember) dropping dirty buffers. */
-static void
-libxfs_whine_dirty_buf(
+/* Prepare a buffer to be sent to the MRU list. */
+static inline void
+libxfs_buf_prepare_mru(
 	struct xfs_buf		*bp)
 {
+	if (bp->b_pag)
+		xfs_perag_put(bp->b_pag);
+	bp->b_pag = NULL;
+
+	if (!(bp->b_flags & LIBXFS_B_DIRTY))
+		return;
+
+	/* Complain about (and remember) dropping dirty buffers. */
 	fprintf(stderr, _("%s: Releasing dirty buffer to free list!\n"),
 			progname);
 
@@ -909,11 +917,7 @@ libxfs_brelse(
 
 	if (!bp)
 		return;
-	if (bp->b_flags & LIBXFS_B_DIRTY)
-		libxfs_whine_dirty_buf(bp);
-	if (bp->b_pag)
-		xfs_perag_put(bp->b_pag);
-	bp->b_pag = NULL;
+	libxfs_buf_prepare_mru(bp);
 
 	pthread_mutex_lock(&xfs_buf_freelist.cm_mutex);
 	list_add(&bp->b_node.cn_mru, &xfs_buf_freelist.cm_list);
@@ -932,8 +936,7 @@ libxfs_bulkrelse(
 		return 0 ;
 
 	list_for_each_entry(bp, list, b_node.cn_mru) {
-		if (bp->b_flags & LIBXFS_B_DIRTY)
-			libxfs_whine_dirty_buf(bp);
+		libxfs_buf_prepare_mru(bp);
 		count++;
 	}
 
