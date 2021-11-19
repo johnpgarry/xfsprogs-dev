@@ -1,3 +1,18 @@
+xfsprogs (5.14.0-rc1-1) unstable; urgency=medium
+
+  [ Dave Chinner ]
+  * New build dependency: liburcu-dev
+
+  [ Helmut Grohne ]
+  * Fix FTCBFS (Closes: #794158)
+    + Pass --build and --host to configure
+
+  [ Boian Bonev ]
+  * Fix FTBFS (Closes: #997656)
+    + Keep custom install-sh after autogen
+
+ -- Bastian Germann <bage@debian.org>  Sun, 14 Nov 2021 23:18:22 +0100
+
 xfsprogs (5.13.0-1) unstable; urgency=medium
 
   * New upstream release
