@@ -1,3 +1,8 @@
+xfsprogs-5.14.0 (19 Nov 2021)
+	- debian: Fix FTBFS (Boian Bonev)
+	- debian: Pass --build and --host to configure (Bastian Germann)
+	- debian: Update Uploaders list (Bastian Germann)
+
 xfsprogs-5.14.0-rc1 (12 Nov 2021)
 	- xfsprogs: introduce liburcu support (Dave Chinner)
 	- xfsprogs: convert atomic to uatomic (Dave Chinner)
