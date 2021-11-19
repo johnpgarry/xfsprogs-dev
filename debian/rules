@@ -50,6 +50,7 @@ config: .census
 	AUTOHEADER=/bin/true dh_autoreconf
 	dh_update_autotools_config
 	$(options) $(MAKE) $(PMAKEFLAGS) include/platform_defs.h
+	cp -f include/install-sh .
 	touch .census
 
 dibuild:
