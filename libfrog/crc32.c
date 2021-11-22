@@ -29,10 +29,15 @@
  * match the hardware acceleration available on Intel CPUs.
  */
 
+/*
+ * Do not include platform_defs.h here; this will break cross builds if the
+ * build host does not have liburcu-dev installed.
+ */
+#include <stdio.h>
+#include <sys/types.h>
 #include <inttypes.h>
 #include <asm/types.h>
 #include <sys/time.h>
-#include "platform_defs.h"
 /* For endian conversion routines */
 #include "xfs_arch.h"
 #include "crc32defs.h"
