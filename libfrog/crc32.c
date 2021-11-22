@@ -202,7 +202,7 @@ int main(int argc, char **argv)
 
 	printf("CRC_LE_BITS = %d\n", CRC_LE_BITS);
 
-	errors = crc32c_test();
+	errors = crc32c_test(0);
 
 	return errors != 0;
 }

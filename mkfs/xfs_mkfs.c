@@ -10,6 +10,7 @@
 #include "libxcmd.h"
 #include "libfrog/fsgeom.h"
 #include "libfrog/convert.h"
+#include "libfrog/crc32cselftest.h"
 #include "proto.h"
 #include <ini.h>
 
@@ -4042,6 +4043,13 @@ main(
 		xfs_report_geom(&geo, dfile, logfile, rtfile);
 		if (dry_run)
 			exit(0);
+	}
+
+	/* Make sure our checksum algorithm really works. */
+	if (crc32c_test(CRC32CTEST_QUIET) != 0) {
+		fprintf(stderr,
+ _("crc32c self-test failed, will not create a filesystem here.\n"));
+		return 1;
 	}
 
 	/*

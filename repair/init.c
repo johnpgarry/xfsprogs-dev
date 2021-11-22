@@ -14,6 +14,7 @@
 #include "bmap.h"
 #include "incore.h"
 #include "prefetch.h"
+#include "libfrog/crc32cselftest.h"
 #include <sys/resource.h>
 
 static void
@@ -100,4 +101,8 @@ _("Unmount or use the dangerous (-d) option to repair a read-only mounted filesy
 	ts_create();
 	increase_rlimit();
 	pftrace_init();
+
+	if (crc32c_test(CRC32CTEST_QUIET) != 0)
+		do_error(
+ _("crc32c self-test failed, will not examine filesystem.\n"));
 }
