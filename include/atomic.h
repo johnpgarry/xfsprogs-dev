@@ -60,11 +60,57 @@ static inline bool atomic_dec_and_lock(atomic_t *a, spinlock_t *lock)
 	return 0;
 }
 
+#ifdef HAVE_LIBURCU_ATOMIC64
+/*
+ * On most (64-bit) platforms, liburcu can handle 64-bit atomic counter
+ * updates, so we preferentially use that.
+ */
 #define atomic64_read(a)	uatomic_read(a)
 #define atomic64_set(a, v)	uatomic_set(a, v)
 #define atomic64_add(v, a)	uatomic_add(a, v)
 #define atomic64_sub(v, a)	uatomic_sub(a, v)
 #define atomic64_inc(a)		uatomic_inc(a)
 #define atomic64_dec(a)		uatomic_dec(a)
+#else
+/*
+ * If we don't detect support for that, emulate it with a lock.  Currently
+ * there are only three atomic64_t counters in userspace and none of them are
+ * performance critical, so we serialize them all with a single mutex since
+ * the kernel atomic64_t API doesn't have an _init call.
+ */
+extern pthread_mutex_t	atomic64_lock;
+
+static inline int64_t
+atomic64_read(atomic64_t *a)
+{
+	int64_t	ret;
+
+	pthread_mutex_lock(&atomic64_lock);
+	ret = *a;
+	pthread_mutex_unlock(&atomic64_lock);
+	return ret;
+}
+
+static inline void
+atomic64_add(int v, atomic64_t *a)
+{
+	pthread_mutex_lock(&atomic64_lock);
+	(*a) += v;
+	pthread_mutex_unlock(&atomic64_lock);
+}
+
+static inline void
+atomic64_set(atomic64_t *a, int64_t v)
+{
+	pthread_mutex_lock(&atomic64_lock);
+	(*a) = v;
+	pthread_mutex_unlock(&atomic64_lock);
+}
+
+#define atomic64_inc(a)		atomic64_add(1, (a))
+#define atomic64_dec(a)		atomic64_add(-1, (a))
+#define atomic64_sub(v, a)	atomic64_add(-(v), (a))
+
+#endif /* HAVE_URCU_ATOMIC64 */
 
 #endif /* __ATOMIC_H__ */

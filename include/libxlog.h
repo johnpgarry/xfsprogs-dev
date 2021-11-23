@@ -11,8 +11,8 @@
  * the need to define any exotic kernel types in userland.
  */
 struct xlog {
-	xfs_lsn_t	l_tail_lsn;     /* lsn of 1st LR w/ unflush buffers */
-	xfs_lsn_t	l_last_sync_lsn;/* lsn of last LR on disk */
+	atomic64_t	l_tail_lsn;     /* lsn of 1st LR w/ unflush buffers */
+	atomic64_t	l_last_sync_lsn;/* lsn of last LR on disk */
 	xfs_mount_t	*l_mp;	        /* mount point */
 	struct xfs_buftarg *l_dev;	        /* dev_t of log */
 	xfs_daddr_t	l_logBBstart;   /* start block of log */
