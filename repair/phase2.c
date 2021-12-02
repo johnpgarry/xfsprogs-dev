@@ -128,7 +128,7 @@ zero_log(
 	 * is a v5 filesystem.
 	 */
 	if (xfs_sb_version_hascrc(&mp->m_sb))
-		libxfs_max_lsn = log->l_last_sync_lsn;
+		libxfs_max_lsn = atomic64_read(&log->l_last_sync_lsn);
 }
 
 static bool

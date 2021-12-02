@@ -25,6 +25,10 @@
 
 #include "libxfs.h"		/* for now */
 
+#ifndef HAVE_LIBURCU_ATOMIC64
+pthread_mutex_t	atomic64_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 char *progname = "libxfs";	/* default, changed by each tool */
 
 struct cache *libxfs_bcache;	/* global buffer cache */
