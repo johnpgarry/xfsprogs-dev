@@ -1,3 +1,10 @@
+xfsprogs (5.14.2-1) unstable; urgency=medium
+
+  * New upstream release
+    - Move rogue fallthrough macro out of linux.h (Closes: #1000974)
+
+ -- Nathan Scott <nathans@debian.org>  Mon, 06 Dec 2021 14:26:57 -0500
+
 xfsprogs (5.14.1-1) unstable; urgency=medium
 
   * New upstream release

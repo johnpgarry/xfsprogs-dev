@@ -1,3 +1,6 @@
+xfsprogs-5.14.2 (06 Dec 2021)
+	- libxfs: move rogue fallthrough macro out of linux.h (Darrick J. Wong)
+
 xfsprogs-5.14.1 (02 Dec 2021)
 	- libxfs: fix atomic64_t for 32-bit architectures (Darrick J. Wong)
 	- libfrog: fix crc32c self test code on cross builds (Darrick J. Wong)
