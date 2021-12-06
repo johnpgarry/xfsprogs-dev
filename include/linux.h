@@ -5,6 +5,11 @@
 #ifndef __XFS_LINUX_H__
 #define __XFS_LINUX_H__
 
+/*
+ * Reminder: anything added to this file will be compiled into downstream
+ * userspace projects!
+ */
+
 #include <uuid/uuid.h>
 #include <sys/vfs.h>
 #include <sys/ioctl.h>
@@ -360,24 +365,8 @@ fsmap_advance(
 #endif /* HAVE_MAP_SYNC */
 
 /*
- * Add the pseudo keyword 'fallthrough' so case statement blocks
- * must end with any of these keywords:
- *   break;
- *   fallthrough;
- *   continue;
- *   goto <label>;
- *   return [expression];
- *
- *  gcc: https://gcc.gnu.org/onlinedocs/gcc/Statement-Attributes.html#Statement-Attributes
+ * Reminder: anything added to this file will be compiled into downstream
+ * userspace projects!
  */
-#if defined __has_attribute
-#  if __has_attribute(__fallthrough__)
-#    define fallthrough                    __attribute__((__fallthrough__))
-#  else
-#    define fallthrough                    do {} while (0)  /* fallthrough */
-#  endif
-#else
-#    define fallthrough                    do {} while (0)  /* fallthrough */
-#endif
 
 #endif	/* __XFS_LINUX_H__ */
