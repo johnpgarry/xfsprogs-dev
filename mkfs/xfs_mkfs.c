@@ -1443,7 +1443,7 @@ getstr(
 	/* empty strings for string options are not valid */
 	if (!str || *str == '\0')
 		reqval(opts->name, opts->subopts, index);
-	return (char *)str;
+	return strdup(str);
 }
 
 static int
