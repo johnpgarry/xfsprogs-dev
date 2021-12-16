@@ -9,19 +9,23 @@ LTCOMMAND = mkfs.xfs
 
 HFILES =
 CFILES = proto.c xfs_mkfs.c
+CFGFILES = lts_4.19.conf lts_5.10.conf lts_5.15.conf
 
 LLDLIBS += $(LIBXFS) $(LIBXCMD) $(LIBFROG) $(LIBRT) $(LIBPTHREAD) $(LIBBLKID) \
 	$(LIBUUID) $(LIBINIH) $(LIBURCU)
 LTDEPENDENCIES += $(LIBXFS) $(LIBXCMD) $(LIBFROG)
 LLDFLAGS = -static-libtool-libs
 
-default: depend $(LTCOMMAND)
+default: depend $(LTCOMMAND) $(CFGFILES)
 
 include $(BUILDRULES)
 
 install: default
 	$(INSTALL) -m 755 -d $(PKG_ROOT_SBIN_DIR)
 	$(LTINSTALL) -m 755 $(LTCOMMAND) $(PKG_ROOT_SBIN_DIR)
+	$(INSTALL) -m 755 -d $(PKG_DATA_DIR)/mkfs
+	$(INSTALL) -m 644 $(CFGFILES) $(PKG_DATA_DIR)/mkfs
+
 install-dev:
 
 -include .dep
