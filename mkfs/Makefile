@@ -9,7 +9,7 @@ LTCOMMAND = mkfs.xfs
 
 HFILES =
 CFILES = proto.c xfs_mkfs.c
-CFGFILES = lts_4.19.conf lts_5.10.conf lts_5.15.conf
+CFGFILES = dax_x86_64.conf lts_4.19.conf lts_5.10.conf lts_5.15.conf
 
 LLDLIBS += $(LIBXFS) $(LIBXCMD) $(LIBFROG) $(LIBRT) $(LIBPTHREAD) $(LIBBLKID) \
 	$(LIBUUID) $(LIBINIH) $(LIBURCU)
