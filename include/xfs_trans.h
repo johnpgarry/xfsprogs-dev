@@ -58,9 +58,6 @@ typedef struct xfs_qoff_logitem {
 	xfs_qoff_logformat_t	qql_format;	/* logged structure */
 } xfs_qoff_logitem_t;
 
-#define XFS_DEFER_OPS_NR_INODES	2	/* join up to two inodes */
-#define XFS_DEFER_OPS_NR_BUFS	2	/* join up to two buffers */
-
 typedef struct xfs_trans {
 	unsigned int		t_log_res;	/* amt of log space resvd */
 	unsigned int		t_log_count;	/* count for perm log res */
