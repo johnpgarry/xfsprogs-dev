@@ -121,6 +121,10 @@ If the size of the block or sector is not specified, the default sizes
 .PP
 Many feature options allow an optional argument of 0 or 1, to explicitly
 disable or enable the functionality.
+
+The correctness of the crc32c checksum implementation will be tested
+before formatting the filesystem.
+If the test fails, the format will abort.
 .SH OPTIONS
 Options may be specified either on the command line or in a configuration file.
 Not all command line options can be specified in configuration files; only the

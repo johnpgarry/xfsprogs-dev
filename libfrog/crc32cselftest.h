@@ -661,18 +661,22 @@ static struct crc_test {
 	{0xb18a0319, 0x00000026, 0x000007db, 0x9dc0bb48},
 };
 
+/* Don't print anything to stdout. */
+#define CRC32CTEST_QUIET	(1U << 0)
+
 static int
-crc32c_test(void)
+crc32c_test(
+	unsigned int	flags)
 {
-	int i;
-	int errors = 0;
-	int bytes = 0;
-	struct timeval start, stop;
-	uint64_t usec;
+	int		i;
+	int		errors = 0;
+	int		bytes = 0;
+	struct timeval	start, stop;
+	uint64_t	usec;
 
 	/* keep static to prevent cache warming code from
 	 * getting eliminated by the compiler */
-	static uint32_t crc;
+	static uint32_t	crc;
 
 	/* pre-warm the cache */
 	for (i = 0; i < 100; i++) {
@@ -692,6 +696,9 @@ crc32c_test(void)
 
 	usec = stop.tv_usec - start.tv_usec +
 		1000000 * (stop.tv_sec - start.tv_sec);
+
+	if (flags & CRC32CTEST_QUIET)
+		return errors;
 
 	if (errors)
 		printf("crc32c: %d self tests failed\n", errors);
