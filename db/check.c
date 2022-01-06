@@ -276,7 +276,7 @@ static void		process_bmbt_reclist(xfs_bmbt_rec_t *rp, int numrecs,
 					     dbm_t type, inodata_t *id,
 					     xfs_rfsblock_t *tot,
 					     blkmap_t **blkmapp);
-static void		process_btinode(inodata_t *id, xfs_dinode_t *dip,
+static void		process_btinode(inodata_t *id, struct xfs_dinode *dip,
 					dbm_t type, xfs_rfsblock_t *totd,
 					xfs_rfsblock_t *toti, xfs_extnum_t *nex,
 					blkmap_t **blkmapp, int whichfork);
@@ -287,18 +287,18 @@ static xfs_ino_t	process_data_dir_v2(int *dot, int *dotdot,
 static xfs_dir2_data_free_t *process_data_dir_v2_freefind(
 					struct xfs_dir2_data_hdr *data,
 					struct xfs_dir2_data_unused *dup);
-static void		process_dir(xfs_dinode_t *dip, blkmap_t *blkmap,
+static void		process_dir(struct xfs_dinode *dip, blkmap_t *blkmap,
 				    inodata_t *id);
-static int		process_dir_v2(xfs_dinode_t *dip, blkmap_t *blkmap,
+static int		process_dir_v2(struct xfs_dinode *dip, blkmap_t *blkmap,
 				       int *dot, int *dotdot, inodata_t *id,
 				       xfs_ino_t *parent);
-static void		process_exinode(inodata_t *id, xfs_dinode_t *dip,
+static void		process_exinode(inodata_t *id, struct xfs_dinode *dip,
 					dbm_t type, xfs_rfsblock_t *totd,
 					xfs_rfsblock_t *toti, xfs_extnum_t *nex,
 					blkmap_t **blkmapp, int whichfork);
 static void		process_inode(xfs_agf_t *agf, xfs_agino_t agino,
-				      xfs_dinode_t *dip, int isfree);
-static void		process_lclinode(inodata_t *id, xfs_dinode_t *dip,
+				      struct xfs_dinode *dip, int isfree);
+static void		process_lclinode(inodata_t *id, struct xfs_dinode *dip,
 					 dbm_t type, xfs_rfsblock_t *totd,
 					 xfs_rfsblock_t *toti, xfs_extnum_t *nex,
 					 blkmap_t **blkmapp, int whichfork);
@@ -315,7 +315,7 @@ static void		process_quota(qtype_t qtype, inodata_t *id,
 				      blkmap_t *blkmap);
 static void		process_rtbitmap(blkmap_t *blkmap);
 static void		process_rtsummary(blkmap_t *blkmap);
-static xfs_ino_t	process_sf_dir_v2(xfs_dinode_t *dip, int *dot,
+static xfs_ino_t	process_sf_dir_v2(struct xfs_dinode *dip, int *dot,
 					  int *dotdot, inodata_t *id);
 static void		quota_add(xfs_dqid_t *p, xfs_dqid_t *g, xfs_dqid_t *u,
 				  int dq, xfs_qcnt_t bc, xfs_qcnt_t ic,
@@ -2272,7 +2272,7 @@ process_bmbt_reclist(
 static void
 process_btinode(
 	inodata_t		*id,
-	xfs_dinode_t		*dip,
+	struct xfs_dinode		*dip,
 	dbm_t			type,
 	xfs_rfsblock_t		*totd,
 	xfs_rfsblock_t		*toti,
@@ -2626,7 +2626,7 @@ process_data_dir_v2_freefind(
 
 static void
 process_dir(
-	xfs_dinode_t	*dip,
+	struct xfs_dinode	*dip,
 	blkmap_t	*blkmap,
 	inodata_t	*id)
 {
@@ -2665,7 +2665,7 @@ process_dir(
 
 static int
 process_dir_v2(
-	xfs_dinode_t	*dip,
+	struct xfs_dinode	*dip,
 	blkmap_t	*blkmap,
 	int		*dot,
 	int		*dotdot,
@@ -2702,7 +2702,7 @@ process_dir_v2(
 static void
 process_exinode(
 	inodata_t		*id,
-	xfs_dinode_t		*dip,
+	struct xfs_dinode		*dip,
 	dbm_t			type,
 	xfs_rfsblock_t		*totd,
 	xfs_rfsblock_t		*toti,
@@ -2729,7 +2729,7 @@ static void
 process_inode(
 	xfs_agf_t		*agf,
 	xfs_agino_t		agino,
-	xfs_dinode_t		*dip,
+	struct xfs_dinode		*dip,
 	int			isfree)
 {
 	blkmap_t		*blkmap;
@@ -3038,7 +3038,7 @@ process_inode(
 static void
 process_lclinode(
 	inodata_t			*id,
-	xfs_dinode_t			*dip,
+	struct xfs_dinode			*dip,
 	dbm_t				type,
 	xfs_rfsblock_t			*totd,
 	xfs_rfsblock_t			*toti,
@@ -3697,7 +3697,7 @@ process_rtsummary(
 
 static xfs_ino_t
 process_sf_dir_v2(
-	xfs_dinode_t		*dip,
+	struct xfs_dinode		*dip,
 	int			*dot,
 	int			*dotdot,
 	inodata_t		*id)
@@ -4576,7 +4576,7 @@ scanfunc_ino(
 					isfree = XFS_INOBT_IS_FREE_DISK(&rp[i], ioff + j);
 					if (isfree)
 						nfree++;
-					dip = (xfs_dinode_t *)((char *)iocur_top->data +
+					dip = (struct xfs_dinode *)((char *)iocur_top->data +
 						((off + j) << mp->m_sb.sb_inodelog));
 					process_inode(agf, agino + ioff + j, dip, isfree);
 				}

@@ -14,7 +14,7 @@ int
 process_dir2(
 	xfs_mount_t	*mp,
 	xfs_ino_t	ino,
-	xfs_dinode_t	*dip,
+	struct xfs_dinode	*dip,
 	int		ino_discovery,
 	int		*dirty,
 	char		*dirname,
