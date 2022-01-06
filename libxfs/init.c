@@ -259,8 +259,6 @@ init_caches(void)
 		abort();
 	}
 
-	xfs_bmap_free_item_cache = kmem_cache_create("xfs_bmap_free_item",
-			sizeof(struct xfs_extent_free_item), 0, 0, NULL);
 	xfs_trans_cache = kmem_cache_create("xfs_trans",
 			sizeof(struct xfs_trans), 0, 0, NULL);
 }
@@ -276,7 +274,6 @@ destroy_kmem_caches(void)
 	kmem_cache_destroy(xfs_da_state_cache);
 	xfs_defer_destroy_item_caches();
 	xfs_btree_destroy_cur_caches();
-	kmem_cache_destroy(xfs_bmap_free_item_cache);
 	kmem_cache_destroy(xfs_trans_cache);
 }
 
