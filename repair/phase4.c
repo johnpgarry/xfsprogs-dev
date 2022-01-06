@@ -240,7 +240,7 @@ process_rmap_data(
 		queue_work(&wq, check_rmap_btrees, i, NULL);
 	destroy_work_queue(&wq);
 
-	if (!xfs_sb_version_hasreflink(&mp->m_sb))
+	if (!xfs_has_reflink(mp))
 		return;
 
 	create_work_queue(&wq, mp, platform_nproc());

@@ -574,7 +574,7 @@ copy_rmap_btree(
 	xfs_agblock_t	root;
 	int		levels;
 
-	if (!xfs_sb_version_hasrmapbt(&mp->m_sb))
+	if (!xfs_has_rmapbt(mp))
 		return 1;
 
 	root = be32_to_cpu(agf->agf_roots[XFS_BTNUM_RMAP]);
@@ -646,7 +646,7 @@ copy_refcount_btree(
 	xfs_agblock_t	root;
 	int		levels;
 
-	if (!xfs_sb_version_hasreflink(&mp->m_sb))
+	if (!xfs_has_reflink(mp))
 		return 1;
 
 	root = be32_to_cpu(agf->agf_refcount_root);
@@ -1536,13 +1536,13 @@ process_dir_data_block(
 			blp = (xfs_dir2_leaf_entry_t *)btp;
 
 		end_of_data = (char *)blp - block;
-		if (xfs_sb_version_hascrc(&mp->m_sb))
+		if (xfs_has_crc(mp))
 			wantmagic = XFS_DIR3_BLOCK_MAGIC;
 		else
 			wantmagic = XFS_DIR2_BLOCK_MAGIC;
 	} else { /* leaf/node format */
 		end_of_data = mp->m_dir_geo->fsbcount << mp->m_sb.sb_blocklog;
-		if (xfs_sb_version_hascrc(&mp->m_sb))
+		if (xfs_has_crc(mp))
 			wantmagic = XFS_DIR3_DATA_MAGIC;
 		else
 			wantmagic = XFS_DIR2_DATA_MAGIC;
@@ -1664,7 +1664,7 @@ process_symlink_block(
 	}
 	link = iocur_top->data;
 
-	if (xfs_sb_version_hascrc(&(mp)->m_sb))
+	if (xfs_has_crc((mp)))
 		link += sizeof(struct xfs_dsymlink_hdr);
 
 	if (obfuscate)
@@ -1675,7 +1675,7 @@ process_symlink_block(
 
 		linklen = strlen(link);
 		zlen = mp->m_sb.sb_blocksize - linklen;
-		if (xfs_sb_version_hascrc(&mp->m_sb))
+		if (xfs_has_crc(mp))
 			zlen -= sizeof(struct xfs_dsymlink_hdr);
 		if (zlen < mp->m_sb.sb_blocksize)
 			memset(link + linklen, 0, zlen);
@@ -2476,7 +2476,7 @@ copy_inode_chunk(
 	 * Also make sure that that we don't process more than the single record
 	 * we've been passed (large block sizes can hold multiple inode chunks).
 	 */
-	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+	if (xfs_has_sparseinodes(mp))
 		blks_per_buf = igeo->blocks_per_cluster;
 	else
 		blks_per_buf = igeo->ialloc_blks;
@@ -2509,7 +2509,7 @@ copy_inode_chunk(
 	if ((mp->m_sb.sb_inopblock <= XFS_INODES_PER_CHUNK && off != 0) ||
 			(mp->m_sb.sb_inopblock > XFS_INODES_PER_CHUNK &&
 					off % XFS_INODES_PER_CHUNK != 0) ||
-			(xfs_sb_version_hasalign(&mp->m_sb) &&
+			(xfs_has_align(mp) &&
 					mp->m_sb.sb_inoalignmt != 0 &&
 					agbno % mp->m_sb.sb_inoalignmt != 0)) {
 		if (show_warnings)
@@ -2660,7 +2660,7 @@ copy_inodes(
 	if (!scan_btree(agno, root, levels, TYP_INOBT, &finobt, scanfunc_ino))
 		return 0;
 
-	if (xfs_sb_version_hasfinobt(&mp->m_sb)) {
+	if (xfs_has_finobt(mp)) {
 		root = be32_to_cpu(agi->agi_free_root);
 		levels = be32_to_cpu(agi->agi_free_level);
 
@@ -2891,8 +2891,8 @@ copy_log(void)
 
 		logstart = XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart);
 		logblocks = XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
-		logversion = xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1;
-		if (xfs_sb_version_hascrc(&mp->m_sb))
+		logversion = xfs_has_logv2(mp) ? 2 : 1;
+		if (xfs_has_crc(mp))
 			cycle = log.l_curr_cycle + 1;
 
 		libxfs_log_clear(NULL, iocur_top->data, logstart, logblocks,

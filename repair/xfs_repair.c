@@ -640,7 +640,7 @@ format_log_max_lsn(
 	xfs_daddr_t		logblocks;
 	int			logversion;
 
-	if (!xfs_sb_version_hascrc(&mp->m_sb))
+	if (!xfs_has_crc(mp))
 		return;
 
 	/*
@@ -660,7 +660,7 @@ format_log_max_lsn(
 	new_cycle = max_cycle + 3;
 	logstart = XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart);
 	logblocks = XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
-	logversion = xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1;
+	logversion = xfs_has_logv2(mp) ? 2 : 1;
 
 	do_warn(_("Maximum metadata LSN (%d:%d) is ahead of log (%d:%d).\n"),
 		max_cycle, max_block, log->l_curr_cycle, log->l_curr_block);
@@ -793,7 +793,7 @@ force_needsrepair(
 	struct xfs_buf		*bp;
 	int			error;
 
-	if (!xfs_sb_version_hascrc(&mp->m_sb) ||
+	if (!xfs_has_crc(mp) ||
 	    xfs_sb_version_needsrepair(&mp->m_sb))
 		return;
 
@@ -982,7 +982,7 @@ main(int argc, char **argv)
 		mp->m_flags |= LIBXFS_MOUNT_WANT_CORRUPTED;
 
 	/* Capture the first writeback so that we can set needsrepair. */
-	if (xfs_sb_version_hascrc(&mp->m_sb))
+	if (xfs_has_crc(mp))
 		mp->m_buf_writeback_fn = repair_capture_writeback;
 
 	/*

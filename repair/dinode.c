@@ -110,7 +110,7 @@ clear_dinode_core(struct xfs_mount *mp, xfs_dinode_t *dinoc, xfs_ino_t ino_num)
 {
 	memset(dinoc, 0, sizeof(*dinoc));
 	dinoc->di_magic = cpu_to_be16(XFS_DINODE_MAGIC);
-	if (xfs_sb_version_hascrc(&mp->m_sb))
+	if (xfs_has_crc(mp))
 		dinoc->di_version = 3;
 	else
 		dinoc->di_version = 2;
@@ -556,7 +556,7 @@ _("%s fork in inode %" PRIu64 " claims metadata block %" PRIu64 "\n"),
 			case XR_E_INUSE:
 			case XR_E_MULT:
 				if (type == XR_INO_DATA &&
-				    xfs_sb_version_hasreflink(&mp->m_sb))
+				    xfs_has_reflink(mp))
 					break;
 				do_warn(
 _("%s fork in %s inode %" PRIu64 " claims used block %" PRIu64 "\n"),
@@ -725,7 +725,7 @@ get_agino_buf(
 	}
 
 	*dipp = xfs_make_iptr(mp, bp, agino - cluster_agino);
-	ASSERT(!xfs_sb_version_hascrc(&mp->m_sb) ||
+	ASSERT(!xfs_has_crc(mp) ||
 			XFS_AGINO_TO_INO(mp, agno, agino) ==
 			be64_to_cpu((*dipp)->di_ino));
 	return bp;
@@ -771,7 +771,7 @@ process_btinode(
 	*tot = 0;
 	*nex = 0;
 
-	magic = xfs_sb_version_hascrc(&mp->m_sb) ? XFS_BMAP_CRC_MAGIC
+	magic = xfs_has_crc(mp) ? XFS_BMAP_CRC_MAGIC
 						 : XFS_BMAP_MAGIC;
 
 	level = be16_to_cpu(dib->bb_level);
@@ -1164,7 +1164,7 @@ _("cannot read inode %" PRIu64 ", file block %" PRIu64 ", disk block %" PRIu64 "
 			int		bad_dqb = 0;
 
 			/* We only print the first problem we find */
-			if (xfs_sb_version_hascrc(&mp->m_sb)) {
+			if (xfs_has_crc(mp)) {
 				if (!libxfs_verify_cksum((char *)dqb,
 							sizeof(*dqb),
 							XFS_DQUOT_CRC_OFF)) {
@@ -1288,7 +1288,7 @@ _("Bad symlink buffer CRC, block %" PRIu64 ", inode %" PRIu64 ".\n"
 		byte_cnt = min(pathlen, byte_cnt);
 
 		src = bp->b_addr;
-		if (xfs_sb_version_hascrc(&mp->m_sb)) {
+		if (xfs_has_crc(mp)) {
 			if (!libxfs_symlink_hdr_ok(lino, offset,
 						   byte_cnt, bp)) {
 				do_warn(
@@ -2297,7 +2297,7 @@ process_dinode_int(xfs_mount_t *mp,
 	 * Of course if we make any modifications after this, the inode gets
 	 * rewritten, and the CRC is updated automagically.
 	 */
-	if (xfs_sb_version_hascrc(&mp->m_sb) &&
+	if (xfs_has_crc(mp) &&
 	    !libxfs_verify_cksum((char *)dino, mp->m_sb.sb_inodesize,
 				XFS_DINODE_CRC_OFF)) {
 		retval = 1;
@@ -2339,7 +2339,7 @@ process_dinode_int(xfs_mount_t *mp,
 			if (!no_modify) {
 				do_warn(_(" resetting version number\n"));
 				dino->di_version =
-					xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 2;
+					xfs_has_crc(mp) ? 3 : 2;
 				*dirty = 1;
 			} else
 				do_warn(_(" would reset version number\n"));
@@ -2368,7 +2368,7 @@ process_dinode_int(xfs_mount_t *mp,
 	 * we are called here that the inode has not already been modified in
 	 * memory and hence invalidated the CRC.
 	 */
-	if (xfs_sb_version_hascrc(&mp->m_sb)) {
+	if (xfs_has_crc(mp)) {
 		if (be64_to_cpu(dino->di_ino) != lino) {
 			if (!uncertain)
 				do_warn(
@@ -2573,7 +2573,7 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 		}
 
 		if ((flags2 & XFS_DIFLAG2_REFLINK) &&
-		    !xfs_sb_version_hasreflink(&mp->m_sb)) {
+		    !xfs_has_reflink(mp)) {
 			if (!uncertain) {
 				do_warn(
 	_("inode %" PRIu64 " is marked reflinked but file system does not support reflink\n"),
@@ -2605,7 +2605,7 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 		}
 
 		if ((flags2 & XFS_DIFLAG2_COWEXTSIZE) &&
-		    !xfs_sb_version_hasreflink(&mp->m_sb)) {
+		    !xfs_has_reflink(mp)) {
 			if (!uncertain) {
 				do_warn(
 	_("inode %" PRIu64 " has CoW extent size hint but file system does not support reflink\n"),
@@ -2637,7 +2637,7 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 		}
 
 		if (xfs_dinode_has_bigtime(dino) &&
-		    !xfs_sb_version_hasbigtime(&mp->m_sb)) {
+		    !xfs_has_bigtime(mp)) {
 			if (!uncertain) {
 				do_warn(
 	_("inode %" PRIu64 " is marked bigtime but file system does not support large timestamps\n"),

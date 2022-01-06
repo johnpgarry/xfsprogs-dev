@@ -526,8 +526,7 @@ sb_update_uuid(
 	 * we must copy the original sb_uuid to the sb_meta_uuid slot and set
 	 * the incompat flag for the feature on this copy.
 	 */
-	if (xfs_sb_version_hascrc(&mp->m_sb) &&
-	    !xfs_sb_version_hasmetauuid(&mp->m_sb) &&
+	if (xfs_has_crc(mp) && !xfs_has_metauuid(mp) &&
 	    !uuid_equal(&tcarg->uuid, &mp->m_sb.sb_uuid)) {
 		uint32_t feat;
 
@@ -542,7 +541,7 @@ sb_update_uuid(
 	platform_uuid_copy(&ag_hdr->xfs_sb->sb_uuid, &tcarg->uuid);
 
 	/* We may have changed the UUID, so update the superblock CRC */
-	if (xfs_sb_version_hascrc(&mp->m_sb))
+	if (xfs_has_crc(mp))
 		xfs_update_cksum((char *)ag_hdr->xfs_sb, mp->m_sb.sb_sectsize,
 				XFS_SB_CRC_OFF);
 }
@@ -1043,7 +1042,7 @@ main(int argc, char **argv)
 				  pos - btree_buf.position);
 
 			if (be32_to_cpu(block->bb_magic) !=
-			    (xfs_sb_version_hascrc(&mp->m_sb) ?
+			    (xfs_has_crc(mp) ?
 			     XFS_ABTB_CRC_MAGIC : XFS_ABTB_MAGIC)) {
 				do_log(_("Bad btree magic 0x%x\n"),
 				        be32_to_cpu(block->bb_magic));
@@ -1281,7 +1280,7 @@ write_log_header(int fd, wbuf *buf, xfs_mount_t *mp)
 	}
 
 	offset = libxfs_log_header(p, &buf->owner->uuid,
-			xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1,
+			xfs_has_logv2(mp) ? 2 : 1,
 			mp->m_sb.sb_logsunit, XLOG_FMT, NULLCOMMITLSN,
 			NULLCOMMITLSN, next_log_chunk, buf);
 	do_write(buf->owner, NULL);
@@ -1366,7 +1365,7 @@ format_log(
 	 * all existing metadata LSNs are valid (behind the current LSN) on the
 	 * target fs.
 	 */
-	if (xfs_sb_version_hascrc(&mp->m_sb))
+	if (xfs_has_crc(mp))
 		cycle = mp->m_log->l_curr_cycle + 1;
 
 	/*
@@ -1374,7 +1373,7 @@ format_log(
 	 * write fails, mark the target inactive so the failure is reported.
 	 */
 	libxfs_log_clear(NULL, buf->data, logstart, length, &buf->owner->uuid,
-			 xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1,
+			 xfs_has_logv2(mp) ? 2 : 1,
 			 mp->m_sb.sb_logsunit, XLOG_FMT, cycle, true);
 	if (do_write(buf->owner, buf))
 		target[tcarg->id].state = INACTIVE;
@@ -1389,7 +1388,7 @@ format_logs(
 	wbuf			logbuf;
 	int			logsize;
 
-	if (xfs_sb_version_hascrc(&mp->m_sb)) {
+	if (xfs_has_crc(mp)) {
 		logsize = XFS_FSB_TO_B(mp, mp->m_sb.sb_logblocks);
 		if (!wbuf_init(&logbuf, logsize, w_buf.data_align,
 			       w_buf.min_io_size, w_buf.id))
@@ -1397,14 +1396,14 @@ format_logs(
 	}
 
 	for (i = 0, tcarg = targ; i < num_targets; i++)  {
-		if (xfs_sb_version_hascrc(&mp->m_sb))
+		if (xfs_has_crc(mp))
 			format_log(mp, tcarg, &logbuf);
 		else
 			clear_log(mp, tcarg);
 		tcarg++;
 	}
 
-	if (xfs_sb_version_hascrc(&mp->m_sb))
+	if (xfs_has_crc(mp))
 		free(logbuf.data);
 
 	return 0;

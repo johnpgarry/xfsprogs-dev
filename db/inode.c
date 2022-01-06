@@ -560,7 +560,7 @@ inode_u_sfdir2_count(
 	ASSERT((char *)XFS_DFORK_DPTR(dip) - (char *)dip == byteize(startoff));
 	return dip->di_format == XFS_DINODE_FMT_LOCAL &&
 	       (be16_to_cpu(dip->di_mode) & S_IFMT) == S_IFDIR &&
-	       !xfs_sb_version_hasftype(&mp->m_sb);
+	       !xfs_has_ftype(mp);
 }
 
 static int
@@ -576,7 +576,7 @@ inode_u_sfdir3_count(
 	ASSERT((char *)XFS_DFORK_DPTR(dip) - (char *)dip == byteize(startoff));
 	return dip->di_format == XFS_DINODE_FMT_LOCAL &&
 	       (be16_to_cpu(dip->di_mode) & S_IFMT) == S_IFDIR &&
-	       xfs_sb_version_hasftype(&mp->m_sb);
+	       xfs_has_ftype(mp);
 }
 
 int
@@ -691,7 +691,7 @@ set_cur_inode(
 	if ((iocur_top->mode & S_IFMT) == S_IFDIR)
 		iocur_top->dirino = ino;
 
-	if (xfs_sb_version_hascrc(&mp->m_sb)) {
+	if (xfs_has_crc(mp)) {
 		iocur_top->ino_crc_ok = libxfs_verify_cksum((char *)dip,
 						    mp->m_sb.sb_inodesize,
 						    XFS_DINODE_CRC_OFF);

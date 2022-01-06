@@ -231,7 +231,7 @@ get_dstr(
 	struct xfs_mount	*mp,
 	uint8_t			filetype)
 {
-	if (!xfs_sb_version_hasftype(&mp->m_sb))
+	if (!xfs_has_ftype(mp))
 		return filetype_strings[XFS_DIR3_FT_UNKNOWN];
 
 	if (filetype >= XFS_DIR3_FT_MAX)
