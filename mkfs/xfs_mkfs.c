@@ -3875,6 +3875,10 @@ main(
 			.nodalign = false,
 			.nortalign = false,
 			.bigtime = false,
+			/*
+			 * When we decide to enable a new feature by default,
+			 * please remember to update the mkfs conf files.
+			 */
 		},
 	};
 
