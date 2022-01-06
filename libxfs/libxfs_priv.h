@@ -75,6 +75,8 @@ extern struct kmem_cache *xfs_trans_cache;
 /* fake up kernel's iomap, (not) used in xfs_bmap.[ch] */
 struct iomap;
 
+#define cancel_delayed_work_sync(work) do { } while(0)
+
 #include "xfs_cksum.h"
 
 /*
