@@ -10,6 +10,7 @@ LTCOMMAND = mkfs.xfs
 HFILES =
 CFILES = proto.c xfs_mkfs.c
 CFGFILES = \
+	dax_x86_64.conf \
 	lts_4.19.conf \
 	lts_5.4.conf \
 	lts_5.10.conf \
