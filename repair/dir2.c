@@ -118,7 +118,7 @@ process_sf_dir2_fixi8(
 static void
 process_sf_dir2_fixoff(
 	xfs_mount_t	*mp,
-	xfs_dinode_t	*dip)
+	struct xfs_dinode	*dip)
 {
 	int			i;
 	int			offset;
@@ -147,7 +147,7 @@ static int
 process_sf_dir2(
 	xfs_mount_t	*mp,
 	xfs_ino_t	ino,
-	xfs_dinode_t	*dip,
+	struct xfs_dinode	*dip,
 	int		ino_discovery,
 	int		*dino_dirty,	/* out - 1 if dinode buffer dirty */
 	char		*dirname,	/* directory pathname */
@@ -566,7 +566,7 @@ static int
 process_dir2_data(
 	xfs_mount_t	*mp,
 	xfs_ino_t	ino,
-	xfs_dinode_t	*dip,
+	struct xfs_dinode	*dip,
 	int		ino_discovery,
 	char		*dirname,	/* directory pathname */
 	xfs_ino_t	*parent,	/* out - NULLFSINO if entry not exist */
@@ -962,7 +962,7 @@ static int
 process_block_dir2(
 	xfs_mount_t	*mp,
 	xfs_ino_t	ino,
-	xfs_dinode_t	*dip,
+	struct xfs_dinode	*dip,
 	int		ino_discovery,
 	int		*dino_dirty,	/* out - 1 if dinode buffer dirty */
 	char		*dirname,	/* directory pathname */
@@ -1249,7 +1249,7 @@ static int
 process_node_dir2(
 	xfs_mount_t	*mp,
 	xfs_ino_t	ino,
-	xfs_dinode_t	*dip,
+	struct xfs_dinode	*dip,
 	blkmap_t	*blkmap,
 	int		*repair)
 {
@@ -1309,7 +1309,7 @@ static int
 process_leaf_node_dir2(
 	xfs_mount_t	*mp,
 	xfs_ino_t	ino,
-	xfs_dinode_t	*dip,
+	struct xfs_dinode	*dip,
 	int		ino_discovery,
 	char		*dirname,	/* directory pathname */
 	xfs_ino_t	*parent,	/* out - NULLFSINO if entry not exist */
@@ -1407,7 +1407,7 @@ int
 process_dir2(
 	xfs_mount_t	*mp,
 	xfs_ino_t	ino,
-	xfs_dinode_t	*dip,
+	struct xfs_dinode	*dip,
 	int		ino_discovery,
 	int		*dino_dirty,
 	char		*dirname,

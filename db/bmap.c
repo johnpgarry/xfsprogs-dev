@@ -38,7 +38,7 @@ bmap(
 	struct xfs_btree_block	*block;
 	xfs_fsblock_t		bno;
 	xfs_fileoff_t		curoffset;
-	xfs_dinode_t		*dip;
+	struct xfs_dinode		*dip;
 	xfs_fileoff_t		eoffset;
 	xfs_bmbt_rec_t		*ep;
 	enum xfs_dinode_fmt	fmt;
@@ -129,7 +129,7 @@ bmap_f(
 	int		c;
 	xfs_fileoff_t	co, cosave;
 	int		dfork = 0;
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 	xfs_fileoff_t	eo;
 	xfs_filblks_t	len;
 	int		nex;

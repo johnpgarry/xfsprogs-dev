@@ -44,7 +44,7 @@ update_rootino(xfs_mount_t *mp);
 
 int
 process_dinode(xfs_mount_t *mp,
-		xfs_dinode_t *dino,
+		struct xfs_dinode *dino,
 		xfs_agnumber_t agno,
 		xfs_agino_t ino,
 		int was_free,
@@ -58,13 +58,13 @@ process_dinode(xfs_mount_t *mp,
 
 int
 verify_dinode(xfs_mount_t *mp,
-		xfs_dinode_t *dino,
+		struct xfs_dinode *dino,
 		xfs_agnumber_t agno,
 		xfs_agino_t ino);
 
 int
 verify_uncertain_dinode(xfs_mount_t *mp,
-		xfs_dinode_t *dino,
+		struct xfs_dinode *dino,
 		xfs_agnumber_t agno,
 		xfs_agino_t ino);
 
