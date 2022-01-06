@@ -18,15 +18,15 @@ bool kmem_found_leaks(void)
 /*
  * Simple memory interface
  */
-kmem_zone_t *
+struct kmem_cache *
 kmem_cache_create(const char *name, unsigned int size, unsigned int align,
 		  unsigned int slab_flags, void (*ctor)(void *))
 {
-	kmem_zone_t	*ptr = malloc(sizeof(kmem_zone_t));
+	struct kmem_cache	*ptr = malloc(sizeof(struct kmem_cache));
 
 	if (ptr == NULL) {
 		fprintf(stderr, _("%s: zone init failed (%s, %d bytes): %s\n"),
-			progname, name, (int)sizeof(kmem_zone_t),
+			progname, name, (int)sizeof(struct kmem_cache),
 			strerror(errno));
 		exit(1);
 	}
@@ -40,7 +40,7 @@ kmem_cache_create(const char *name, unsigned int size, unsigned int align,
 }
 
 void
-kmem_cache_destroy(kmem_zone_t *zone)
+kmem_cache_destroy(struct kmem_cache *zone)
 {
 	if (getenv("LIBXFS_LEAK_CHECK") && zone->allocated) {
 		leaked = true;
@@ -51,7 +51,7 @@ kmem_cache_destroy(kmem_zone_t *zone)
 }
 
 void *
-kmem_cache_alloc(kmem_zone_t *zone, gfp_t flags)
+kmem_cache_alloc(struct kmem_cache *zone, gfp_t flags)
 {
 	void	*ptr = NULL;
 
@@ -79,7 +79,7 @@ kmem_cache_alloc(kmem_zone_t *zone, gfp_t flags)
 }
 
 void *
-kmem_cache_zalloc(kmem_zone_t *zone, gfp_t flags)
+kmem_cache_zalloc(struct kmem_cache *zone, gfp_t flags)
 {
 	void	*ptr = kmem_cache_alloc(zone, flags);
 
