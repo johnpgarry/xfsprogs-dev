@@ -25,13 +25,13 @@ kmem_cache_create(const char *name, unsigned int size, unsigned int align,
 	struct kmem_cache	*ptr = malloc(sizeof(struct kmem_cache));
 
 	if (ptr == NULL) {
-		fprintf(stderr, _("%s: zone init failed (%s, %d bytes): %s\n"),
+		fprintf(stderr, _("%s: cache init failed (%s, %d bytes): %s\n"),
 			progname, name, (int)sizeof(struct kmem_cache),
 			strerror(errno));
 		exit(1);
 	}
-	ptr->zone_unitsize = size;
-	ptr->zone_name = name;
+	ptr->cache_unitsize = size;
+	ptr->cache_name = name;
 	ptr->allocated = 0;
 	ptr->align = align;
 	ptr->ctor = ctor;
@@ -40,50 +40,50 @@ kmem_cache_create(const char *name, unsigned int size, unsigned int align,
 }
 
 void
-kmem_cache_destroy(struct kmem_cache *zone)
+kmem_cache_destroy(struct kmem_cache *cache)
 {
-	if (getenv("LIBXFS_LEAK_CHECK") && zone->allocated) {
+	if (getenv("LIBXFS_LEAK_CHECK") && cache->allocated) {
 		leaked = true;
-		fprintf(stderr, "zone %s freed with %d items allocated\n",
-				zone->zone_name, zone->allocated);
+		fprintf(stderr, "cache %s freed with %d items allocated\n",
+				cache->cache_name, cache->allocated);
 	}
-	free(zone);
+	free(cache);
 }
 
 void *
-kmem_cache_alloc(struct kmem_cache *zone, gfp_t flags)
+kmem_cache_alloc(struct kmem_cache *cache, gfp_t flags)
 {
 	void	*ptr = NULL;
 
-	if (zone->align) {
+	if (cache->align) {
 		int ret;
 
-		ret = posix_memalign(&ptr, zone->align, zone->zone_unitsize);
+		ret = posix_memalign(&ptr, cache->align, cache->cache_unitsize);
 		if (ret)
 			errno = ret;
 	} else {
-		ptr = malloc(zone->zone_unitsize);
+		ptr = malloc(cache->cache_unitsize);
 	}
 
 	if (ptr == NULL) {
-		fprintf(stderr, _("%s: zone alloc failed (%s, %d bytes): %s\n"),
-			progname, zone->zone_name, zone->zone_unitsize,
+		fprintf(stderr, _("%s: cache alloc failed (%s, %d bytes): %s\n"),
+			progname, cache->cache_name, cache->cache_unitsize,
 			strerror(errno));
 		exit(1);
 	}
 
-	if (zone->ctor)
-		zone->ctor(ptr);
-	zone->allocated++;
+	if (cache->ctor)
+		cache->ctor(ptr);
+	cache->allocated++;
 	return ptr;
 }
 
 void *
-kmem_cache_zalloc(struct kmem_cache *zone, gfp_t flags)
+kmem_cache_zalloc(struct kmem_cache *cache, gfp_t flags)
 {
-	void	*ptr = kmem_cache_alloc(zone, flags);
+	void	*ptr = kmem_cache_alloc(cache, flags);
 
-	memset(ptr, 0, zone->zone_unitsize);
+	memset(ptr, 0, cache->cache_unitsize);
 	return ptr;
 }
 
