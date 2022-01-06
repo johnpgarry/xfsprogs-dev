@@ -16,8 +16,8 @@
 #include "xfs_inode.h"
 #include "xfs_trans.h"
 
-kmem_zone_t	*xfs_buf_item_zone;
-kmem_zone_t	*xfs_ili_zone;		/* inode log item zone */
+struct kmem_cache	*xfs_buf_item_zone;
+struct kmem_cache	*xfs_ili_zone;		/* inode log item zone */
 
 /*
  * Following functions from fs/xfs/xfs_trans_buf.c
