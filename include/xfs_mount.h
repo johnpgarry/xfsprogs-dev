@@ -79,7 +79,6 @@ typedef struct xfs_mount {
 	uint			m_alloc_set_aside; /* space we can't use */
 	uint			m_ag_max_usable; /* max space per AG */
 	struct radix_tree_root	m_perag_tree;
-	uint			m_flags;	/* global mount flags */
 	uint64_t		m_features;	/* active filesystem features */
 	unsigned long		m_opstate;	/* dynamic state flags */
 	bool			m_finobt_nores; /* no per-AG finobt resv. */
@@ -250,16 +249,12 @@ __XFS_UNSUPP_OPSTATE(readonly)
 __XFS_UNSUPP_OPSTATE(shutdown)
 
 #define LIBXFS_MOUNT_DEBUGGER		0x0001
-#define LIBXFS_MOUNT_32BITINODES	0x0002
-#define LIBXFS_MOUNT_32BITINOOPT	0x0004
-#define LIBXFS_MOUNT_COMPAT_ATTR	0x0008
-#define LIBXFS_MOUNT_ATTR2		0x0010
 #define LIBXFS_MOUNT_WANT_CORRUPTED	0x0020
 
 #define LIBXFS_BHASHSIZE(sbp) 		(1<<10)
 
-extern xfs_mount_t	*libxfs_mount (xfs_mount_t *, xfs_sb_t *,
-				dev_t, dev_t, dev_t, int);
+struct xfs_mount *libxfs_mount(struct xfs_mount *mp, struct xfs_sb *sb,
+		dev_t dev, dev_t logdev, dev_t rtdev, unsigned int flags);
 int libxfs_flush_mount(struct xfs_mount *mp);
 int		libxfs_umount(struct xfs_mount *mp);
 extern void	libxfs_rtmount_destroy (xfs_mount_t *);

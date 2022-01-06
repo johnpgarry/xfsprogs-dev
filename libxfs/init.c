@@ -540,13 +540,10 @@ xfs_set_inode_alloc(
 	 * sufficiently large, set XFS_MOUNT_32BITINODES if we must alter
 	 * the allocator to accommodate the request.
 	 */
-	if ((mp->m_flags & XFS_MOUNT_SMALL_INUMS) && ino > XFS_MAXINUMBER_32) {
+	if (ino > XFS_MAXINUMBER_32)
 		xfs_set_inode32(mp);
-		mp->m_flags |= XFS_MOUNT_32BITINODES;
-	} else {
+	else
 		xfs_clear_inode32(mp);
-		mp->m_flags &= ~XFS_MOUNT_32BITINODES;
-	}
 
 	for (index = 0; index < agcount; index++) {
 		struct xfs_perag	*pag;
@@ -718,7 +715,7 @@ libxfs_mount(
 	dev_t			dev,
 	dev_t			logdev,
 	dev_t			rtdev,
-	int			flags)
+	unsigned int		flags)
 {
 	struct xfs_buf		*bp;
 	struct xfs_sb		*sbp;
@@ -733,7 +730,6 @@ libxfs_mount(
 	libxfs_buftarg_init(mp, dev, logdev, rtdev);
 
 	mp->m_finobt_nores = true;
-	mp->m_flags = (LIBXFS_MOUNT_32BITINODES|LIBXFS_MOUNT_32BITINOOPT);
 	xfs_set_inode32(mp);
 	mp->m_sb = *sb;
 	INIT_RADIX_TREE(&mp->m_perag_tree, GFP_KERNEL);
@@ -798,9 +794,6 @@ libxfs_mount(
 	}
 
 	xfs_da_mount(mp);
-
-	if (xfs_has_attr2(mp))
-		mp->m_flags |= LIBXFS_MOUNT_ATTR2;
 
 	/* Initialize the precomputed transaction reservations values */
 	xfs_trans_init(mp);
