@@ -161,7 +161,7 @@ libxfs_getsb(
 	return bp;
 }
 
-struct kmem_cache			*xfs_buf_zone;
+struct kmem_cache			*xfs_buf_cache;
 
 static struct cache_mru		xfs_buf_freelist =
 	{{&xfs_buf_freelist.cm_list, &xfs_buf_freelist.cm_list},
@@ -327,7 +327,7 @@ __libxfs_getbufr(int blen)
 			bp->b_maps = NULL;
 		}
 	} else
-		bp = kmem_cache_zalloc(xfs_buf_zone, 0);
+		bp = kmem_cache_zalloc(xfs_buf_cache, 0);
 	pthread_mutex_unlock(&xfs_buf_freelist.cm_mutex);
 	bp->b_ops = NULL;
 	if (bp->b_flags & LIBXFS_B_DIRTY)
@@ -964,7 +964,7 @@ libxfs_bcache_free(void)
 		free(bp->b_addr);
 		if (bp->b_maps != &bp->__b_map)
 			free(bp->b_maps);
-		kmem_cache_free(xfs_buf_zone, bp);
+		kmem_cache_free(xfs_buf_cache, bp);
 	}
 }
 
@@ -1056,8 +1056,8 @@ xfs_verify_magic16(
  * Inode cache stubs.
  */
 
-struct kmem_cache		*xfs_inode_zone;
-extern struct kmem_cache	*xfs_ili_zone;
+struct kmem_cache		*xfs_inode_cache;
+extern struct kmem_cache	*xfs_ili_cache;
 
 int
 libxfs_iget(
@@ -1071,7 +1071,7 @@ libxfs_iget(
 	struct xfs_buf		*bp;
 	int			error = 0;
 
-	ip = kmem_cache_zalloc(xfs_inode_zone, 0);
+	ip = kmem_cache_zalloc(xfs_inode_cache, 0);
 	if (!ip)
 		return -ENOMEM;
 
@@ -1101,7 +1101,7 @@ libxfs_iget(
 	return 0;
 
 out_destroy:
-	kmem_cache_free(xfs_inode_zone, ip);
+	kmem_cache_free(xfs_inode_cache, ip);
 	*ipp = NULL;
 	return error;
 }
@@ -1135,7 +1135,7 @@ libxfs_irele(
 	if (VFS_I(ip)->i_count == 0) {
 		ASSERT(ip->i_itemp == NULL);
 		libxfs_idestroy(ip);
-		kmem_cache_free(xfs_inode_zone, ip);
+		kmem_cache_free(xfs_inode_cache, ip);
 	}
 }
 
