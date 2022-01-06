@@ -350,7 +350,7 @@ pf_scanfunc_bmap(
 static void
 pf_read_btinode(
 	prefetch_args_t		*args,
-	xfs_dinode_t		*dino,
+	struct xfs_dinode		*dino,
 	int			isadir)
 {
 	xfs_bmdr_block_t	*dib;
@@ -390,7 +390,7 @@ pf_read_btinode(
 static void
 pf_read_exinode(
 	prefetch_args_t		*args,
-	xfs_dinode_t		*dino)
+	struct xfs_dinode		*dino)
 {
 	pf_read_bmbt_reclist(args, (xfs_bmbt_rec_t *)XFS_DFORK_DPTR(dino),
 			be32_to_cpu(dino->di_nextents));
@@ -401,7 +401,7 @@ pf_read_inode_dirs(
 	prefetch_args_t		*args,
 	struct xfs_buf		*bp)
 {
-	xfs_dinode_t		*dino;
+	struct xfs_dinode		*dino;
 	int			icnt = 0;
 	int			hasdir = 0;
 	int			isadir;
