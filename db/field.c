@@ -290,7 +290,7 @@ const ftattr_t	ftattrtab[] = {
 	  fa_dirblock, NULL },
 	{ FLDT_DISK_DQUOT, "disk_dquot", NULL, (char *)disk_dquot_flds,
 	  SI(bitsz(struct xfs_disk_dquot)), 0, NULL, disk_dquot_flds },
-	{ FLDT_DQBLK, "dqblk", NULL, (char *)dqblk_flds, SI(bitsz(xfs_dqblk_t)),
+	{ FLDT_DQBLK, "dqblk", NULL, (char *)dqblk_flds, SI(bitsz(struct xfs_dqblk)),
 	  0, NULL, dqblk_flds },
 	{ FLDT_DQID, "dqid", fp_num, "%d", SI(bitsz(xfs_dqid_t)), 0, NULL,
 	  NULL },
