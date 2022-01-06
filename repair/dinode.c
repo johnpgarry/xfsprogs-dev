@@ -1142,7 +1142,7 @@ process_quota_inode(
 	qbno = NULLFILEOFF;
 
 	while ((qbno = blkmap_next_off(blkmap, qbno, &t)) != NULLFILEOFF) {
-		xfs_dqblk_t	*dqb;
+		struct xfs_dqblk	*dqb;
 		int		writebuf = 0;
 
 		fsbno = blkmap_get(blkmap, qbno);
