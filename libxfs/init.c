@@ -449,7 +449,7 @@ rtmount_init(
 		return -1;
 	}
 
-	if (mp->m_rtdev_targp->bt_bdev == 0 && !(flags & LIBXFS_MOUNT_DEBUGGER)) {
+	if (mp->m_rtdev_targp->bt_bdev == 0 && !xfs_is_debugger(mp)) {
 		fprintf(stderr, _("%s: filesystem has a realtime subvolume\n"),
 			progname);
 		return -1;
@@ -464,7 +464,7 @@ rtmount_init(
 	/*
 	 * Allow debugger to be run without the realtime device present.
 	 */
-	if (flags & LIBXFS_MOUNT_DEBUGGER)
+	if (xfs_is_debugger(mp))
 		return 0;
 
 	/*
@@ -723,10 +723,13 @@ libxfs_mount(
 	struct xfs_buf		*bp;
 	struct xfs_sb		*sbp;
 	xfs_daddr_t		d;
-	bool			debugger = (flags & LIBXFS_MOUNT_DEBUGGER);
 	int			error;
 
 	mp->m_features = xfs_sb_version_to_features(sb);
+	if (flags & LIBXFS_MOUNT_DEBUGGER)
+		xfs_set_debugger(mp);
+	if (flags & LIBXFS_MOUNT_WANT_CORRUPTED)
+		xfs_set_reporting_corruption(mp);
 	libxfs_buftarg_init(mp, dev, logdev, rtdev);
 
 	mp->m_finobt_nores = true;
@@ -761,7 +764,7 @@ libxfs_mount(
 	d = (xfs_daddr_t) XFS_FSB_TO_BB(mp, mp->m_sb.sb_dblocks);
 	if (XFS_BB_TO_FSB(mp, d) != mp->m_sb.sb_dblocks) {
 		fprintf(stderr, _("%s: size check failed\n"), progname);
-		if (!(flags & LIBXFS_MOUNT_DEBUGGER))
+		if (!xfs_is_debugger(mp))
 			return NULL;
 	}
 
@@ -810,7 +813,7 @@ libxfs_mount(
 			XFS_FSS_TO_BB(mp, 1), 0, &bp, NULL);
 	if (error) {
 		fprintf(stderr, _("%s: data size check failed\n"), progname);
-		if (!debugger)
+		if (!xfs_is_debugger(mp))
 			return NULL;
 	} else
 		libxfs_buf_relse(bp);
@@ -824,7 +827,7 @@ libxfs_mount(
 				0, &bp, NULL)) {
 			fprintf(stderr, _("%s: log size checks failed\n"),
 					progname);
-			if (!debugger)
+			if (!xfs_is_debugger(mp))
 				return NULL;
 		}
 		if (bp)
@@ -852,7 +855,7 @@ libxfs_mount(
 		if (error) {
 			fprintf(stderr, _("%s: read of AG %u failed\n"),
 						progname, sbp->sb_agcount);
-			if (!debugger)
+			if (!xfs_is_debugger(mp))
 				return NULL;
 			fprintf(stderr, _("%s: limiting reads to AG 0\n"),
 								progname);
@@ -867,7 +870,7 @@ libxfs_mount(
 			progname);
 		exit(1);
 	}
-	mp->m_flags |= LIBXFS_MOUNT_PERAG_DATA_LOADED;
+	xfs_set_perag_data_loaded(mp);
 
 	return mp;
 }
@@ -989,7 +992,7 @@ libxfs_umount(
 	 * Only try to free the per-AG structures if we set them up in the
 	 * first place.
 	 */
-	if (mp->m_flags & LIBXFS_MOUNT_PERAG_DATA_LOADED)
+	if (xfs_is_perag_data_loaded(mp))
 		libxfs_free_perag(mp);
 
 	kmem_free(mp->m_attr_geo);

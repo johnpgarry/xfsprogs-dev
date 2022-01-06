@@ -212,6 +212,9 @@ __XFS_UNSUPP_FEAT(readonly)
 
 /* Operational mount state flags */
 #define XFS_OPSTATE_INODE32		0	/* inode32 allocator active */
+#define XFS_OPSTATE_DEBUGGER		1	/* is this the debugger? */
+#define XFS_OPSTATE_REPORT_CORRUPTION	2	/* report buffer corruption? */
+#define XFS_OPSTATE_PERAG_DATA_LOADED	3	/* per-AG data initialized? */
 
 #define __XFS_IS_OPSTATE(name, NAME) \
 static inline bool xfs_is_ ## name (struct xfs_mount *mp) \
@@ -234,6 +237,9 @@ static inline bool xfs_set_ ## name (struct xfs_mount *mp) \
 }
 
 __XFS_IS_OPSTATE(inode32, INODE32)
+__XFS_IS_OPSTATE(debugger, DEBUGGER)
+__XFS_IS_OPSTATE(reporting_corruption, REPORT_CORRUPTION)
+__XFS_IS_OPSTATE(perag_data_loaded, PERAG_DATA_LOADED)
 
 #define __XFS_UNSUPP_OPSTATE(name) \
 static inline bool xfs_is_ ## name (struct xfs_mount *mp) \
@@ -249,7 +255,6 @@ __XFS_UNSUPP_OPSTATE(shutdown)
 #define LIBXFS_MOUNT_COMPAT_ATTR	0x0008
 #define LIBXFS_MOUNT_ATTR2		0x0010
 #define LIBXFS_MOUNT_WANT_CORRUPTED	0x0020
-#define LIBXFS_MOUNT_PERAG_DATA_LOADED	0x0040
 
 #define LIBXFS_BHASHSIZE(sbp) 		(1<<10)
 
