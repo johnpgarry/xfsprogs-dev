@@ -2297,7 +2297,7 @@ validate_agf(
 		priv.nr_blocks = 0;
 
 		levels = be32_to_cpu(agf->agf_levels[XFS_BTNUM_RMAP]);
-		if (levels >= XFS_BTREE_MAXLEVELS) {
+		if (levels == 0 || levels > XFS_BTREE_MAXLEVELS) {
 			do_warn(_("bad levels %u for rmapbt root, agno %d\n"),
 				levels, agno);
 			rmap_avoid_check();
@@ -2323,7 +2323,7 @@ validate_agf(
 		unsigned int	levels;
 
 		levels = be32_to_cpu(agf->agf_refcount_level);
-		if (levels >= XFS_BTREE_MAXLEVELS) {
+		if (levels == 0 || levels > XFS_BTREE_MAXLEVELS) {
 			do_warn(_("bad levels %u for refcountbt root, agno %d\n"),
 				levels, agno);
 			refcount_avoid_check();
