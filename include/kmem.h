@@ -15,10 +15,10 @@ bool kmem_found_leaks(void);
 #define KM_NOLOCKDEP	0x0020u
 
 struct kmem_cache {
-	int		zone_unitsize;	/* Size in bytes of zone unit */
+	int		cache_unitsize;	/* Size in bytes of cache unit */
 	int		allocated;	/* debug: How many allocated? */
 	unsigned int	align;
-	const char	*zone_name;	/* tag name */
+	const char	*cache_name;	/* tag name */
 	void		(*ctor)(void *);
 };
 
@@ -40,9 +40,9 @@ extern void	*kmem_cache_alloc(struct kmem_cache *, gfp_t);
 extern void	*kmem_cache_zalloc(struct kmem_cache *, gfp_t);
 
 static inline void
-kmem_cache_free(struct kmem_cache *zone, void *ptr)
+kmem_cache_free(struct kmem_cache *cache, void *ptr)
 {
-	zone->allocated--;
+	cache->allocated--;
 	free(ptr);
 }
 
