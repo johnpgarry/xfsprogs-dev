@@ -167,12 +167,7 @@ extern void		readdir_init(void);
 extern void		reflink_init(void);
 
 extern void		cowextsize_init(void);
-
-#ifdef HAVE_GETFSMAP
 extern void		fsmap_init(void);
-#else
-# define fsmap_init()	do { } while (0)
-#endif
 
 #ifdef HAVE_DEVMAPPER
 extern void		log_writes_init(void);

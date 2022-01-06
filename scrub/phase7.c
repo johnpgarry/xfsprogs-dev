@@ -9,6 +9,7 @@
 #include <sys/statvfs.h>
 #include "libfrog/paths.h"
 #include "libfrog/ptvar.h"
+#include "libfrog/fsmap.h"
 #include "list.h"
 #include "xfs_scrub.h"
 #include "common.h"

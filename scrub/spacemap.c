@@ -10,6 +10,7 @@
 #include <sys/statvfs.h>
 #include "libfrog/workqueue.h"
 #include "libfrog/paths.h"
+#include "libfrog/fsmap.h"
 #include "xfs_scrub.h"
 #include "common.h"
 #include "spacemap.h"
