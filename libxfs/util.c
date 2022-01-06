@@ -556,7 +556,7 @@ xfs_verifier_error(
 	xfs_alert(NULL, "Metadata %s detected at %p, %s block 0x%llx/0x%x",
 		  bp->b_error == -EFSBADCRC ? "CRC error" : "corruption",
 		  failaddr ? failaddr : __return_address,
-		  bp->b_ops->name, bp->b_bn, BBTOB(bp->b_length));
+		  bp->b_ops->name, xfs_buf_daddr(bp), BBTOB(bp->b_length));
 }
 
 /*
@@ -589,7 +589,7 @@ xfs_buf_corruption_error(
 	xfs_failaddr_t		fa)
 {
 	xfs_alert(NULL, "Metadata corruption detected at %p, %s block 0x%llx",
-		  fa, bp->b_ops->name, bp->b_bn);
+		  fa, bp->b_ops->name, xfs_buf_daddr(bp));
 }
 
 /*
