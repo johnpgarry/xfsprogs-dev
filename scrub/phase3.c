@@ -59,16 +59,27 @@ scrub_inode(
 	agno = cvt_ino_to_agno(&ctx->mnt, bstat->bs_ino);
 	background_sleep();
 
-	/* Try to open the inode to pin it. */
+	/*
+	 * Open this regular file to pin it in memory.  Avoiding the use of
+	 * scan-by-handle means that the in-kernel scrubber doesn't pay the
+	 * cost of opening the handle (looking up the inode in the inode btree,
+	 * grabbing the inode, checking the generation) with every scrub call.
+	 *
+	 * Note: We cannot use this same trick for directories because the VFS
+	 * will try to reconnect directory file handles to the root directory
+	 * by walking '..' entries upwards, and loops in the dirent index
+	 * btree will cause livelocks.
+	 *
+	 * ESTALE means we scan the whole cluster again.
+	 */
 	if (S_ISREG(bstat->bs_mode)) {
 		fd = scrub_open_handle(handle);
-		/* Stale inode means we scan the whole cluster again. */
 		if (fd < 0 && errno == ESTALE)
 			return ESTALE;
 	}
 
 	/* Scrub the inode. */
-	error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_INODE, &alist);
+	error = scrub_file(ctx, fd, bstat, XFS_SCRUB_TYPE_INODE, &alist);
 	if (error)
 		goto out;
 
@@ -77,13 +88,13 @@ scrub_inode(
 		goto out;
 
 	/* Scrub all block mappings. */
-	error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_BMBTD, &alist);
+	error = scrub_file(ctx, fd, bstat, XFS_SCRUB_TYPE_BMBTD, &alist);
 	if (error)
 		goto out;
-	error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_BMBTA, &alist);
+	error = scrub_file(ctx, fd, bstat, XFS_SCRUB_TYPE_BMBTA, &alist);
 	if (error)
 		goto out;
-	error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_BMBTC, &alist);
+	error = scrub_file(ctx, fd, bstat, XFS_SCRUB_TYPE_BMBTC, &alist);
 	if (error)
 		goto out;
 
@@ -93,21 +104,22 @@ scrub_inode(
 
 	if (S_ISLNK(bstat->bs_mode)) {
 		/* Check symlink contents. */
-		error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_SYMLINK, &alist);
+		error = scrub_file(ctx, fd, bstat, XFS_SCRUB_TYPE_SYMLINK,
+				&alist);
 	} else if (S_ISDIR(bstat->bs_mode)) {
 		/* Check the directory entries. */
-		error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_DIR, &alist);
+		error = scrub_file(ctx, fd, bstat, XFS_SCRUB_TYPE_DIR, &alist);
 	}
 	if (error)
 		goto out;
 
 	/* Check all the extended attributes. */
-	error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_XATTR, &alist);
+	error = scrub_file(ctx, fd, bstat, XFS_SCRUB_TYPE_XATTR, &alist);
 	if (error)
 		goto out;
 
 	/* Check parent pointers. */
-	error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_PARENT, &alist);
+	error = scrub_file(ctx, fd, bstat, XFS_SCRUB_TYPE_PARENT, &alist);
 	if (error)
 		goto out;
 
