@@ -2664,6 +2664,21 @@ copy_inodes(
 		root = be32_to_cpu(agi->agi_free_root);
 		levels = be32_to_cpu(agi->agi_free_level);
 
+		if (root == 0 || root > mp->m_sb.sb_agblocks) {
+			if (show_warnings)
+				print_warning("invalid block number (%u) in "
+						"finobt root in agi %u", root,
+						agno);
+			return 1;
+		}
+
+		if (levels > XFS_BTREE_MAXLEVELS) {
+			if (show_warnings)
+				print_warning("invalid level (%u) in finobt "
+						"root in agi %u", levels, agno);
+			return 1;
+		}
+
 		finobt = 1;
 		if (!scan_btree(agno, root, levels, TYP_FINOBT, &finobt,
 				scanfunc_ino))
