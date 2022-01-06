@@ -2264,7 +2264,7 @@ validate_agf(
 	unsigned int		levels;
 
 	levels = be32_to_cpu(agf->agf_levels[XFS_BTNUM_BNO]);
-	if (levels == 0 || levels > XFS_BTREE_MAXLEVELS) {
+	if (levels == 0 || levels > mp->m_alloc_maxlevels) {
 		do_warn(_("bad levels %u for btbno root, agno %d\n"),
 			levels, agno);
 	}
@@ -2282,7 +2282,7 @@ validate_agf(
 	}
 
 	levels = be32_to_cpu(agf->agf_levels[XFS_BTNUM_CNT]);
-	if (levels == 0 || levels > XFS_BTREE_MAXLEVELS) {
+	if (levels == 0 || levels > mp->m_alloc_maxlevels) {
 		do_warn(_("bad levels %u for btbcnt root, agno %d\n"),
 			levels, agno);
 	}
@@ -2309,7 +2309,7 @@ validate_agf(
 		priv.nr_blocks = 0;
 
 		levels = be32_to_cpu(agf->agf_levels[XFS_BTNUM_RMAP]);
-		if (levels == 0 || levels > XFS_BTREE_MAXLEVELS) {
+		if (levels == 0 || levels > mp->m_rmap_maxlevels) {
 			do_warn(_("bad levels %u for rmapbt root, agno %d\n"),
 				levels, agno);
 			rmap_avoid_check();
@@ -2333,7 +2333,7 @@ validate_agf(
 
 	if (xfs_has_reflink(mp)) {
 		levels = be32_to_cpu(agf->agf_refcount_level);
-		if (levels == 0 || levels > XFS_BTREE_MAXLEVELS) {
+		if (levels == 0 || levels > mp->m_refc_maxlevels) {
 			do_warn(_("bad levels %u for refcountbt root, agno %d\n"),
 				levels, agno);
 			refcount_avoid_check();
@@ -2391,7 +2391,7 @@ validate_agi(
 	unsigned int		levels;
 
 	levels = be32_to_cpu(agi->agi_level);
-	if (levels == 0 || levels > XFS_BTREE_MAXLEVELS) {
+	if (levels == 0 || levels > M_IGEO(mp)->inobt_maxlevels) {
 		do_warn(_("bad levels %u for inobt root, agno %d\n"),
 			levels, agno);
 	}
@@ -2410,7 +2410,7 @@ validate_agi(
 
 	if (xfs_has_finobt(mp)) {
 		levels = be32_to_cpu(agi->agi_free_level);
-		if (levels == 0 || levels > XFS_BTREE_MAXLEVELS) {
+		if (levels == 0 || levels > M_IGEO(mp)->inobt_maxlevels) {
 			do_warn(_("bad levels %u for finobt root, agno %d\n"),
 				levels, agno);
 		}
