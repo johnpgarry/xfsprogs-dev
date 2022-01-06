@@ -82,6 +82,9 @@ update_sb_version(
 
 	if (!fs_aligned_inodes && xfs_sb_version_hasalign(&mp->m_sb))
 		mp->m_sb.sb_versionnum &= ~XFS_SB_VERSION_ALIGNBIT;
+
+	mp->m_features &= ~(XFS_FEAT_QUOTA | XFS_FEAT_ALIGN);
+	mp->m_features |= libxfs_sb_version_to_features(&mp->m_sb);
 }
 
 /*

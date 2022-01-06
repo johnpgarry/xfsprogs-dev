@@ -3425,6 +3425,7 @@ start_superblock_setup(
 	/* log reservation calculations depend on rt geometry */
 	sbp->sb_rblocks = cfg->rtblocks;
 	sbp->sb_rextsize = cfg->rtextblocks;
+	mp->m_features |= libxfs_sb_version_to_features(sbp);
 }
 
 static void
@@ -3484,6 +3485,7 @@ finish_superblock_setup(
 	sbp->sb_qflags = 0;
 	sbp->sb_unit = cfg->dsunit;
 	sbp->sb_width = cfg->dswidth;
+	mp->m_features |= libxfs_sb_version_to_features(sbp);
 
 }
 
