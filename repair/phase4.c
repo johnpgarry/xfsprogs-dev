@@ -173,11 +173,7 @@ _("unable to add AG %u metadata reverse-mapping data.\n"), agno);
 		do_error(
 _("unable to merge AG %u metadata reverse-mapping data.\n"), agno);
 
-	error = rmaps_verify_btree(wq->wq_ctx, agno);
-	if (error)
-		do_error(
-_("%s while checking reverse-mappings"),
-			 strerror(-error));
+	rmaps_verify_btree(wq->wq_ctx, agno);
 }
 
 static void
@@ -212,17 +208,11 @@ _("%s while fixing inode reflink flags.\n"),
 
 static void
 check_refcount_btrees(
-	struct workqueue*wq,
-	xfs_agnumber_t	agno,
-	void		*arg)
+	struct workqueue	*wq,
+	xfs_agnumber_t		agno,
+	void			*arg)
 {
-	int		error;
-
-	error = check_refcounts(wq->wq_ctx, agno);
-	if (error)
-		do_error(
-_("%s while checking reference counts"),
-			 strerror(-error));
+	check_refcounts(wq->wq_ctx, agno);
 }
 
 static void
