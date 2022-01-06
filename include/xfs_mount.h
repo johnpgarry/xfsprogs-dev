@@ -81,6 +81,7 @@ typedef struct xfs_mount {
 	struct radix_tree_root	m_perag_tree;
 	uint			m_flags;	/* global mount flags */
 	uint64_t		m_features;	/* active filesystem features */
+	unsigned long		m_opstate;	/* dynamic state flags */
 	bool			m_finobt_nores; /* no per-AG finobt resv. */
 	uint			m_qflags;	/* quota status flags */
 	uint			m_attroffset;	/* inode attribute offset */
@@ -207,6 +208,39 @@ __XFS_UNSUPP_FEAT(wsync)
 __XFS_UNSUPP_FEAT(noattr2)
 __XFS_UNSUPP_FEAT(ikeep)
 __XFS_UNSUPP_FEAT(swalloc)
+__XFS_UNSUPP_FEAT(readonly)
+
+/* Operational mount state flags */
+#define XFS_OPSTATE_INODE32		0	/* inode32 allocator active */
+
+#define __XFS_IS_OPSTATE(name, NAME) \
+static inline bool xfs_is_ ## name (struct xfs_mount *mp) \
+{ \
+	return (mp)->m_opstate & (1UL << XFS_OPSTATE_ ## NAME); \
+} \
+static inline bool xfs_clear_ ## name (struct xfs_mount *mp) \
+{ \
+	bool	ret = xfs_is_ ## name(mp); \
+\
+	(mp)->m_opstate &= ~(1UL << XFS_OPSTATE_ ## NAME); \
+	return ret; \
+} \
+static inline bool xfs_set_ ## name (struct xfs_mount *mp) \
+{ \
+	bool	ret = xfs_is_ ## name(mp); \
+\
+	(mp)->m_opstate |= (1UL << XFS_OPSTATE_ ## NAME); \
+	return ret; \
+}
+
+__XFS_IS_OPSTATE(inode32, INODE32)
+
+#define __XFS_UNSUPP_OPSTATE(name) \
+static inline bool xfs_is_ ## name (struct xfs_mount *mp) \
+{ \
+	return false; \
+}
+__XFS_UNSUPP_OPSTATE(readonly)
 
 #define LIBXFS_MOUNT_DEBUGGER		0x0001
 #define LIBXFS_MOUNT_32BITINODES	0x0002
