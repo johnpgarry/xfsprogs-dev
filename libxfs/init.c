@@ -255,22 +255,18 @@ init_zones(void)
 			sizeof(struct xfs_trans), "xfs_trans");
 }
 
-static int
-destroy_zones(void)
+static void
+destroy_kmem_caches(void)
 {
-	int	leaked = 0;
-
-	leaked += kmem_zone_destroy(xfs_buf_zone);
-	leaked += kmem_zone_destroy(xfs_ili_zone);
-	leaked += kmem_zone_destroy(xfs_inode_zone);
-	leaked += kmem_zone_destroy(xfs_ifork_zone);
-	leaked += kmem_zone_destroy(xfs_buf_item_zone);
-	leaked += kmem_zone_destroy(xfs_da_state_zone);
+	kmem_cache_destroy(xfs_buf_zone);
+	kmem_cache_destroy(xfs_ili_zone);
+	kmem_cache_destroy(xfs_inode_zone);
+	kmem_cache_destroy(xfs_ifork_zone);
+	kmem_cache_destroy(xfs_buf_item_zone);
+	kmem_cache_destroy(xfs_da_state_zone);
 	xfs_btree_destroy_cur_caches();
-	leaked += kmem_zone_destroy(xfs_bmap_free_item_zone);
-	leaked += kmem_zone_destroy(xfs_trans_zone);
-
-	return leaked;
+	kmem_cache_destroy(xfs_bmap_free_item_zone);
+	kmem_cache_destroy(xfs_trans_zone);
 }
 
 static void
@@ -1027,17 +1023,17 @@ void
 libxfs_destroy(
 	struct libxfs_xinit	*li)
 {
-	int			leaked;
-
+	kmem_start_leak_check();
 	libxfs_close_devices(li);
 
 	/* Free everything from the buffer cache before freeing buffer zone */
 	libxfs_bcache_purge();
 	libxfs_bcache_free();
 	cache_destroy(libxfs_bcache);
-	leaked = destroy_zones();
+	destroy_kmem_caches();
 	rcu_unregister_thread();
-	if (getenv("LIBXFS_LEAK_CHECK") && leaked)
+
+	if (kmem_found_leaks())
 		exit(1);
 }
 
