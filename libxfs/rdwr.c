@@ -1118,11 +1118,11 @@ libxfs_idestroy(xfs_inode_t *ip)
 	}
 	if (ip->i_afp) {
 		libxfs_idestroy_fork(ip->i_afp);
-		kmem_cache_free(xfs_ifork_zone, ip->i_afp);
+		kmem_cache_free(xfs_ifork_cache, ip->i_afp);
 	}
 	if (ip->i_cowfp) {
 		libxfs_idestroy_fork(ip->i_cowfp);
-		kmem_cache_free(xfs_ifork_zone, ip->i_cowfp);
+		kmem_cache_free(xfs_ifork_cache, ip->i_cowfp);
 	}
 }
 
