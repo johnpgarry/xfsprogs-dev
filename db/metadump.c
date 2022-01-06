@@ -1234,7 +1234,7 @@ generate_obfuscated_name(
 
 static void
 process_sf_dir(
-	xfs_dinode_t		*dip)
+	struct xfs_dinode		*dip)
 {
 	struct xfs_dir2_sf_hdr	*sfp;
 	xfs_dir2_sf_entry_t	*sfep;
@@ -1339,7 +1339,7 @@ obfuscate_path_components(
 
 static void
 process_sf_symlink(
-	xfs_dinode_t		*dip)
+	struct xfs_dinode		*dip)
 {
 	uint64_t		len;
 	char			*buf;
@@ -1363,7 +1363,7 @@ process_sf_symlink(
 
 static void
 process_sf_attr(
-	xfs_dinode_t			*dip)
+	struct xfs_dinode			*dip)
 {
 	/*
 	 * with extended attributes, obfuscate the names and fill the actual
@@ -2193,7 +2193,7 @@ scanfunc_bmap(
 
 static int
 process_btinode(
-	xfs_dinode_t 		*dip,
+	struct xfs_dinode 		*dip,
 	typnm_t			itype)
 {
 	xfs_bmdr_block_t	*dib;
@@ -2273,7 +2273,7 @@ process_btinode(
 
 static int
 process_exinode(
-	xfs_dinode_t 		*dip,
+	struct xfs_dinode 		*dip,
 	typnm_t			itype)
 {
 	int			whichfork;
@@ -2303,7 +2303,7 @@ process_exinode(
 
 static int
 process_inode_data(
-	xfs_dinode_t		*dip,
+	struct xfs_dinode		*dip,
 	typnm_t			itype)
 {
 	switch (dip->di_format) {
@@ -2333,7 +2333,7 @@ process_inode_data(
 
 static int
 process_dev_inode(
-	xfs_dinode_t		*dip)
+	struct xfs_dinode		*dip)
 {
 	if (XFS_DFORK_NEXTENTS(dip, XFS_DATA_FORK)) {
 		if (show_warnings)
@@ -2362,7 +2362,7 @@ static int
 process_inode(
 	xfs_agnumber_t		agno,
 	xfs_agino_t 		agino,
-	xfs_dinode_t 		*dip,
+	struct xfs_dinode 		*dip,
 	bool			free_inode)
 {
 	int			success;
@@ -2534,9 +2534,9 @@ copy_inode_chunk(
 		}
 
 		for (i = 0; i < inodes_per_buf; i++) {
-			xfs_dinode_t	*dip;
+			struct xfs_dinode	*dip;
 
-			dip = (xfs_dinode_t *)((char *)iocur_top->data +
+			dip = (struct xfs_dinode *)((char *)iocur_top->data +
 					((off + i) << mp->m_sb.sb_inodelog));
 
 			/* process_inode handles free inodes, too */

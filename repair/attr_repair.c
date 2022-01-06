@@ -207,7 +207,7 @@ static int
 process_shortform_attr(
 	struct xfs_mount		*mp,
 	xfs_ino_t			ino,
-	xfs_dinode_t			*dip,
+	struct xfs_dinode			*dip,
 	int				*repair)
 {
 	struct xfs_attr_shortform	*asf;
@@ -881,7 +881,7 @@ static int
 process_node_attr(
 	xfs_mount_t	*mp,
 	xfs_ino_t	ino,
-	xfs_dinode_t	*dip,
+	struct xfs_dinode	*dip,
 	blkmap_t	*blkmap)
 {
 	xfs_dablk_t			bno;
@@ -1205,7 +1205,7 @@ int
 process_attributes(
 	xfs_mount_t	*mp,
 	xfs_ino_t	ino,
-	xfs_dinode_t	*dip,
+	struct xfs_dinode	*dip,
 	blkmap_t	*blkmap,
 	int		*repair)  /* returned if we did repair */
 {

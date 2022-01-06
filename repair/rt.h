@@ -21,7 +21,7 @@ check_summary(xfs_mount_t	*mp);
 
 void
 process_rtbitmap(xfs_mount_t	*mp,
-		xfs_dinode_t	*dino,
+		struct xfs_dinode	*dino,
 		struct blkmap	*blkmap);
 
 void
