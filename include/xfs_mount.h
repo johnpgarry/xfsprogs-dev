@@ -248,8 +248,10 @@ static inline bool xfs_is_ ## name (struct xfs_mount *mp) \
 __XFS_UNSUPP_OPSTATE(readonly)
 __XFS_UNSUPP_OPSTATE(shutdown)
 
-#define LIBXFS_MOUNT_DEBUGGER		0x0001
-#define LIBXFS_MOUNT_WANT_CORRUPTED	0x0020
+/* don't fail on device size or AG count checks */
+#define LIBXFS_MOUNT_DEBUGGER		(1U << 0)
+/* report metadata corruption to stdout */
+#define LIBXFS_MOUNT_REPORT_CORRUPTION	(1U << 1)
 
 #define LIBXFS_BHASHSIZE(sbp) 		(1<<10)
 
