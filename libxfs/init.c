@@ -226,14 +226,14 @@ check_open(char *path, int flags, char **rawfile, char **blockfile)
 }
 
 /*
- * Initialize/destroy all of the zone allocators we use.
+ * Initialize/destroy all of the cache allocators we use.
  */
 static void
 init_caches(void)
 {
 	int		error;
 
-	/* initialise zone allocation */
+	/* initialise cache allocation */
 	xfs_buf_cache = kmem_cache_create("xfs_buffer",
 			sizeof(struct xfs_buf), 0, 0, NULL);
 	xfs_inode_cache = kmem_cache_create("xfs_inode",
@@ -1030,7 +1030,7 @@ libxfs_destroy(
 	kmem_start_leak_check();
 	libxfs_close_devices(li);
 
-	/* Free everything from the buffer cache before freeing buffer zone */
+	/* Free everything from the buffer cache before freeing buffer cache */
 	libxfs_bcache_purge();
 	libxfs_bcache_free();
 	cache_destroy(libxfs_bcache);
