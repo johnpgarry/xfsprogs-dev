@@ -487,7 +487,7 @@ copy_free_bno_btree(
 					"root in agf %u", root, agno);
 		return 1;
 	}
-	if (levels >= XFS_BTREE_MAXLEVELS) {
+	if (levels > XFS_BTREE_MAXLEVELS) {
 		if (show_warnings)
 			print_warning("invalid level (%u) in bnobt root "
 					"in agf %u", levels, agno);
@@ -515,7 +515,7 @@ copy_free_cnt_btree(
 					"root in agf %u", root, agno);
 		return 1;
 	}
-	if (levels >= XFS_BTREE_MAXLEVELS) {
+	if (levels > XFS_BTREE_MAXLEVELS) {
 		if (show_warnings)
 			print_warning("invalid level (%u) in cntbt root "
 					"in agf %u", levels, agno);
@@ -587,7 +587,7 @@ copy_rmap_btree(
 					"root in agf %u", root, agno);
 		return 1;
 	}
-	if (levels >= XFS_BTREE_MAXLEVELS) {
+	if (levels > XFS_BTREE_MAXLEVELS) {
 		if (show_warnings)
 			print_warning("invalid level (%u) in rmapbt root "
 					"in agf %u", levels, agno);
@@ -659,7 +659,7 @@ copy_refcount_btree(
 					"root in agf %u", root, agno);
 		return 1;
 	}
-	if (levels >= XFS_BTREE_MAXLEVELS) {
+	if (levels > XFS_BTREE_MAXLEVELS) {
 		if (show_warnings)
 			print_warning("invalid level (%u) in refcntbt root "
 					"in agf %u", levels, agno);
@@ -2650,7 +2650,7 @@ copy_inodes(
 					"root in agi %u", root, agno);
 		return 1;
 	}
-	if (levels >= XFS_BTREE_MAXLEVELS) {
+	if (levels > XFS_BTREE_MAXLEVELS) {
 		if (show_warnings)
 			print_warning("invalid level (%u) in inobt root "
 					"in agi %u", levels, agno);
