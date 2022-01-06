@@ -318,13 +318,30 @@ void
 libxfs_trans_cancel(
 	struct xfs_trans	*tp)
 {
+	bool			dirty;
+
 	trace_xfs_trans_cancel(tp, _RET_IP_);
 
 	if (tp == NULL)
 		return;
+	dirty = (tp->t_flags & XFS_TRANS_DIRTY);
 
-	if (tp->t_flags & XFS_TRANS_PERM_LOG_RES)
+	/*
+	 * It's never valid to cancel a transaction with deferred ops attached,
+	 * because the transaction is effectively dirty.  Complain about this
+	 * loudly before freeing the in-memory defer items.
+	 */
+	if (!list_empty(&tp->t_dfops)) {
+		ASSERT(list_empty(&tp->t_dfops));
+		ASSERT(tp->t_flags & XFS_TRANS_PERM_LOG_RES);
+		dirty = true;
 		xfs_defer_cancel(tp);
+	}
+
+	if (dirty) {
+		fprintf(stderr, _("Cancelling dirty transaction!\n"));
+		abort();
+	}
 
 	xfs_trans_free_items(tp);
 	xfs_trans_free(tp);
