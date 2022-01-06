@@ -234,25 +234,29 @@ init_zones(void)
 	int		error;
 
 	/* initialise zone allocation */
-	xfs_buf_zone = kmem_zone_init(sizeof(struct xfs_buf), "xfs_buffer");
-	xfs_inode_zone = kmem_zone_init(sizeof(struct xfs_inode), "xfs_inode");
-	xfs_ifork_zone = kmem_zone_init(sizeof(struct xfs_ifork), "xfs_ifork");
-	xfs_ili_zone = kmem_zone_init(
-			sizeof(struct xfs_inode_log_item),"xfs_inode_log_item");
-	xfs_buf_item_zone = kmem_zone_init(
-			sizeof(struct xfs_buf_log_item), "xfs_buf_log_item");
-	xfs_da_state_zone = kmem_zone_init(
-			sizeof(struct xfs_da_state), "xfs_da_state");
+	xfs_buf_zone = kmem_cache_create("xfs_buffer",
+			sizeof(struct xfs_buf), 0, 0, NULL);
+	xfs_inode_zone = kmem_cache_create("xfs_inode",
+			sizeof(struct xfs_inode), 0, 0, NULL);
+	xfs_ifork_zone = kmem_cache_create("xfs_ifork",
+			sizeof(struct xfs_ifork), 0, 0, NULL);
+	xfs_ili_zone = kmem_cache_create("xfs_inode_log_item",
+			sizeof(struct xfs_inode_log_item), 0, 0, NULL);
+	xfs_buf_item_zone = kmem_cache_create("xfs_buf_log_item",
+			sizeof(struct xfs_buf_log_item), 0, 0, NULL);
+	xfs_da_state_zone = kmem_cache_create("xfs_da_state",
+			sizeof(struct xfs_da_state), 0, 0, NULL);
+
 	error = xfs_btree_init_cur_caches();
 	if (error) {
 		fprintf(stderr, "Could not allocate btree cursor caches.\n");
 		abort();
 	}
-	xfs_bmap_free_item_zone = kmem_zone_init(
-			sizeof(struct xfs_extent_free_item),
-			"xfs_bmap_free_item");
-	xfs_trans_zone = kmem_zone_init(
-			sizeof(struct xfs_trans), "xfs_trans");
+
+	xfs_bmap_free_item_zone = kmem_cache_create("xfs_bmap_free_item",
+			sizeof(struct xfs_extent_free_item), 0, 0, NULL);
+	xfs_trans_zone = kmem_cache_create("xfs_trans",
+			sizeof(struct xfs_trans), 0, 0, NULL);
 }
 
 static void
