@@ -34,13 +34,6 @@ typedef unsigned int __bitwise gfp_t;
 kmem_zone_t * kmem_cache_create(const char *name, unsigned int size,
 		unsigned int align, unsigned int slab_flags,
 		void (*ctor)(void *));
-
-static inline kmem_zone_t *
-kmem_zone_init(unsigned int size, const char *name)
-{
-	return kmem_cache_create(name, size, 0, 0, NULL);
-}
-
 void kmem_cache_destroy(kmem_zone_t *);
 
 extern void	*kmem_cache_alloc(kmem_zone_t *, gfp_t);
