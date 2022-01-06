@@ -172,7 +172,7 @@ xlog_recover_print_buffer(
 			printf(_("		UIDs 0x%lx-0x%lx\n"),
 			       (unsigned long)be32_to_cpu(ddq->d_id),
 			       (unsigned long)be32_to_cpu(ddq->d_id) +
-			       (BBTOB(f->blf_len) / sizeof(xfs_dqblk_t)) - 1);
+			       (BBTOB(f->blf_len) / sizeof(struct xfs_dqblk)) - 1);
 		} else {
 			printf(_("	BUF DATA\n"));
 			if (!print_buffer) continue;
