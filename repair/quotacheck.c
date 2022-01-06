@@ -306,21 +306,24 @@ qc_check_dquot(
 	if (be64_to_cpu(ddq->d_bcount) != qrec->bcount) {
 		do_warn(_("%s id %u has bcount %llu, expected %"PRIu64"\n"),
 				qflags_typestr(dquots->type), id,
-				be64_to_cpu(ddq->d_bcount), qrec->bcount);
+				(unsigned long long)be64_to_cpu(ddq->d_bcount),
+				qrec->bcount);
 		chkd_flags = 0;
 	}
 
 	if (be64_to_cpu(ddq->d_rtbcount) != qrec->rtbcount) {
 		do_warn(_("%s id %u has rtbcount %llu, expected %"PRIu64"\n"),
 				qflags_typestr(dquots->type), id,
-				be64_to_cpu(ddq->d_rtbcount), qrec->rtbcount);
+				(unsigned long long)be64_to_cpu(ddq->d_rtbcount),
+				qrec->rtbcount);
 		chkd_flags = 0;
 	}
 
 	if (be64_to_cpu(ddq->d_icount) != qrec->icount) {
 		do_warn(_("%s id %u has icount %llu, expected %"PRIu64"\n"),
 				qflags_typestr(dquots->type), id,
-				be64_to_cpu(ddq->d_icount), qrec->icount);
+				(unsigned long long)be64_to_cpu(ddq->d_icount),
+				qrec->icount);
 		chkd_flags = 0;
 	}
 
