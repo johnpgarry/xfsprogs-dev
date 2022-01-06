@@ -34,7 +34,7 @@ bool can_scrub_symlink(struct scrub_ctx *ctx);
 bool can_scrub_parent(struct scrub_ctx *ctx);
 bool xfs_can_repair(struct scrub_ctx *ctx);
 
-int scrub_file(struct scrub_ctx *ctx, const struct xfs_bulkstat *bstat,
+int scrub_file(struct scrub_ctx *ctx, int fd, const struct xfs_bulkstat *bstat,
 		unsigned int type, struct action_list *alist);
 
 /* Repair parameters are the scrub inputs and retry count. */

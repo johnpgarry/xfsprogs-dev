@@ -122,6 +122,7 @@ scrub_warn_incomplete_scrub(
 static enum check_outcome
 xfs_check_metadata(
 	struct scrub_ctx		*ctx,
+	struct xfs_fd			*xfdp,
 	struct xfs_scrub_metadata	*meta,
 	bool				is_inode)
 {
@@ -135,7 +136,7 @@ xfs_check_metadata(
 
 	dbg_printf("check %s flags %xh\n", descr_render(&dsc), meta->sm_flags);
 retry:
-	error = -xfrog_scrub_metadata(&ctx->mnt, meta);
+	error = -xfrog_scrub_metadata(xfdp, meta);
 	if (debug_tweak_on("XFS_SCRUB_FORCE_REPAIR") && !error)
 		meta->sm_flags |= XFS_SCRUB_OFLAG_CORRUPT;
 	switch (error) {
@@ -316,7 +317,7 @@ scrub_meta_type(
 	background_sleep();
 
 	/* Check the item. */
-	fix = xfs_check_metadata(ctx, &meta, false);
+	fix = xfs_check_metadata(ctx, &ctx->mnt, &meta, false);
 	progress_add(1);
 
 	switch (fix) {
@@ -452,11 +453,14 @@ scrub_estimate_ag_work(
 int
 scrub_file(
 	struct scrub_ctx		*ctx,
+	int				fd,
 	const struct xfs_bulkstat	*bstat,
 	unsigned int			type,
 	struct action_list		*alist)
 {
 	struct xfs_scrub_metadata	meta = {0};
+	struct xfs_fd			xfd;
+	struct xfs_fd			*xfdp = &ctx->mnt;
 	enum check_outcome		fix;
 
 	assert(type < XFS_SCRUB_TYPE_NR);
@@ -466,8 +470,19 @@ scrub_file(
 	meta.sm_ino = bstat->bs_ino;
 	meta.sm_gen = bstat->bs_gen;
 
+	/*
+	 * If the caller passed us a file descriptor for a scrub, use it
+	 * instead of scrub-by-handle because this enables the kernel to skip
+	 * costly inode btree lookups.
+	 */
+	if (fd >= 0) {
+		memcpy(&xfd, xfdp, sizeof(xfd));
+		xfd.fd = fd;
+		xfdp = &xfd;
+	}
+
 	/* Scrub the piece of metadata. */
-	fix = xfs_check_metadata(ctx, &meta, true);
+	fix = xfs_check_metadata(ctx, xfdp, &meta, true);
 	if (fix == CHECK_ABORT)
 		return ECANCELED;
 	if (fix == CHECK_DONE)
