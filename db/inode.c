@@ -52,7 +52,7 @@ const field_t	inode_crc_hfld[] = {
 };
 
 /* XXX: fix this up! */
-#define	OFF(f)	bitize(offsetof(xfs_dinode_t, di_ ## f))
+#define	OFF(f)	bitize(offsetof(struct xfs_dinode, di_ ## f))
 const field_t	inode_flds[] = {
 	{ "core", FLDT_DINODE_CORE, OI(OFF(magic)), C1, 0, TYP_NONE },
 	{ "next_unlinked", FLDT_AGINO, OI(OFF(next_unlinked)), C1, 0,
@@ -74,7 +74,7 @@ const field_t	inode_crc_flds[] = {
 };
 
 
-#define	COFF(f)	bitize(offsetof(xfs_dinode_t, di_ ## f))
+#define	COFF(f)	bitize(offsetof(struct xfs_dinode, di_ ## f))
 const field_t	inode_core_flds[] = {
 	{ "magic", FLDT_UINT16X, OI(COFF(magic)), C1, 0, TYP_NONE },
 	{ "mode", FLDT_UINT16O, OI(COFF(mode)), C1, 0, TYP_NONE },
@@ -250,7 +250,7 @@ inode_a_bmbt_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
@@ -266,7 +266,7 @@ inode_a_bmx_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
@@ -283,7 +283,7 @@ inode_a_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 
 	ASSERT(startoff == 0);
 	dip = obj;
@@ -296,7 +296,7 @@ inode_a_offset(
 	int		startoff,
 	int		idx)
 {
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 
 	ASSERT(startoff == 0);
 	ASSERT(idx == 0);
@@ -310,7 +310,7 @@ inode_a_sfattr_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
@@ -328,7 +328,7 @@ inode_a_size(
 	int				idx)
 {
 	struct xfs_attr_shortform	*asf;
-	xfs_dinode_t			*dip;
+	struct xfs_dinode			*dip;
 
 	ASSERT(startoff == 0);
 	ASSERT(idx == 0);
@@ -352,7 +352,7 @@ inode_core_nlinkv1_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dic;
+	struct xfs_dinode	*dic;
 
 	ASSERT(startoff == 0);
 	ASSERT(obj == iocur_top->data);
@@ -365,7 +365,7 @@ inode_core_nlinkv2_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dic;
+	struct xfs_dinode	*dic;
 
 	ASSERT(startoff == 0);
 	ASSERT(obj == iocur_top->data);
@@ -378,7 +378,7 @@ inode_core_onlink_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dic;
+	struct xfs_dinode	*dic;
 
 	ASSERT(startoff == 0);
 	ASSERT(obj == iocur_top->data);
@@ -391,7 +391,7 @@ inode_core_projid_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dic;
+	struct xfs_dinode	*dic;
 
 	ASSERT(startoff == 0);
 	ASSERT(obj == iocur_top->data);
@@ -466,7 +466,7 @@ inode_u_offset(
 	int		startoff,
 	int		idx)
 {
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 
 	ASSERT(startoff == 0);
 	ASSERT(idx == 0);
@@ -479,7 +479,7 @@ inode_u_bmbt_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
@@ -493,7 +493,7 @@ inode_u_bmx_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
@@ -508,7 +508,7 @@ inode_u_c_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
@@ -524,7 +524,7 @@ inode_u_dev_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
@@ -538,7 +538,7 @@ inode_u_muuid_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
@@ -552,7 +552,7 @@ inode_u_sfdir2_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
@@ -568,7 +568,7 @@ inode_u_sfdir3_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
@@ -585,7 +585,7 @@ inode_u_size(
 	int		startoff,
 	int		idx)
 {
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 
 	ASSERT(startoff == 0);
 	ASSERT(idx == 0);
@@ -612,7 +612,7 @@ inode_u_symlink_count(
 	void		*obj,
 	int		startoff)
 {
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 
 	ASSERT(bitoffs(startoff) == 0);
 	ASSERT(obj == iocur_top->data);
@@ -638,7 +638,7 @@ set_cur_inode(
 	xfs_agblock_t	agbno;
 	xfs_agino_t	agino;
 	xfs_agnumber_t	agno;
-	xfs_dinode_t	*dip;
+	struct xfs_dinode	*dip;
 	int		offset;
 	int		numblks = blkbb;
 	xfs_agblock_t	cluster_agbno;
