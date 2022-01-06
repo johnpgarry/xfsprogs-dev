@@ -161,7 +161,7 @@ libxfs_getsb(
 	return bp;
 }
 
-kmem_zone_t			*xfs_buf_zone;
+struct kmem_cache			*xfs_buf_zone;
 
 static struct cache_mru		xfs_buf_freelist =
 	{{&xfs_buf_freelist.cm_list, &xfs_buf_freelist.cm_list},
@@ -1056,8 +1056,8 @@ xfs_verify_magic16(
  * Inode cache stubs.
  */
 
-kmem_zone_t		*xfs_inode_zone;
-extern kmem_zone_t	*xfs_ili_zone;
+struct kmem_cache		*xfs_inode_zone;
+extern struct kmem_cache	*xfs_ili_zone;
 
 int
 libxfs_iget(
