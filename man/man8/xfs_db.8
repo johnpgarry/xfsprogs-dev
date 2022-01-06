@@ -402,7 +402,7 @@ If the cursor points at an inode, dump the extended attribute block mapping btre
 Dump all keys and pointers in intermediate btree nodes, and all records in leaf btree nodes.
 .RE
 .TP
-.BI "btheight [\-b " blksz "] [\-n " recs "] [\-w " max "|\-w " min "] btree types..."
+.BI "btheight [\-b " blksz "] [\-n " recs "] [\-w " max "|" min "|" absmax "] btree types..."
 For a given number of btree records and a btree type, report the number of
 records and blocks for each level of the btree, and the total number of blocks.
 The btree type must be given after the options.
@@ -434,6 +434,9 @@ The default is the filesystem block size.
 .B \-n
 is used to specify the number of records to store.
 This argument is required.
+.TP
+.B \-w absmax
+shows the maximum possible height for the given btree types.
 .TP
 .B \-w max
 shows only the best case scenario, which is when the btree blocks are
