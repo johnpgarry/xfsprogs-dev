@@ -118,7 +118,7 @@ xlog_bread_noalign(
 	bp->b_length = nbblks;
 	bp->b_error = 0;
 
-	return libxfs_readbufr(log->l_dev, XFS_BUF_ADDR(bp), bp, nbblks, 0);
+	return libxfs_readbufr(log->l_dev, xfs_buf_daddr(bp), bp, nbblks, 0);
 }
 
 int
