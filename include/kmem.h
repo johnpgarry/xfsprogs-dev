@@ -6,6 +6,9 @@
 #ifndef __KMEM_H__
 #define __KMEM_H__
 
+void kmem_start_leak_check(void);
+bool kmem_found_leaks(void);
+
 #define KM_NOFS		0x0004u
 #define KM_MAYFAIL	0x0008u
 #define KM_LARGE	0x0010u
@@ -38,17 +41,10 @@ kmem_zone_init(unsigned int size, const char *name)
 	return kmem_cache_create(name, size, 0, 0, NULL);
 }
 
+void kmem_cache_destroy(kmem_zone_t *);
+
 extern void	*kmem_cache_alloc(kmem_zone_t *, gfp_t);
 extern void	*kmem_cache_zalloc(kmem_zone_t *, gfp_t);
-extern int	kmem_zone_destroy(kmem_zone_t *);
-
-
-static inline void
-kmem_cache_destroy(kmem_zone_t *zone)
-{
-	kmem_zone_destroy(zone);
-}
-
 
 static inline void
 kmem_cache_free(kmem_zone_t *zone, void *ptr)
