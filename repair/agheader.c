@@ -221,6 +221,92 @@ compare_sb(xfs_mount_t *mp, xfs_sb_t *sb)
 }
 
 /*
+ * If the fs feature bits on a secondary superblock don't match the
+ * primary, we need to update them.
+ */
+static inline int
+check_v5_feature_mismatch(
+	struct xfs_mount	*mp,
+	xfs_agnumber_t		agno,
+	struct xfs_sb		*sb)
+{
+	bool			dirty = false;
+
+	if (!xfs_has_crc(mp) || agno == 0)
+		return 0;
+
+	if (mp->m_sb.sb_features_compat != sb->sb_features_compat) {
+		if (no_modify) {
+			do_warn(
+	_("would fix compat feature mismatch in AG %u super, 0x%x != 0x%x\n"),
+					agno, mp->m_sb.sb_features_compat,
+					sb->sb_features_compat);
+		} else {
+			do_warn(
+	_("will fix compat feature mismatch in AG %u super, 0x%x != 0x%x\n"),
+					agno, mp->m_sb.sb_features_compat,
+					sb->sb_features_compat);
+			dirty = true;
+		}
+	}
+
+	if ((mp->m_sb.sb_features_incompat ^ sb->sb_features_incompat) &
+			~XFS_SB_FEAT_INCOMPAT_NEEDSREPAIR) {
+		if (no_modify) {
+			do_warn(
+	_("would fix incompat feature mismatch in AG %u super, 0x%x != 0x%x\n"),
+					agno, mp->m_sb.sb_features_incompat,
+					sb->sb_features_incompat);
+		} else {
+			do_warn(
+	_("will fix incompat feature mismatch in AG %u super, 0x%x != 0x%x\n"),
+					agno, mp->m_sb.sb_features_incompat,
+					sb->sb_features_incompat);
+			dirty = true;
+		}
+	}
+
+	if (mp->m_sb.sb_features_ro_compat != sb->sb_features_ro_compat) {
+		if (no_modify) {
+			do_warn(
+	_("would fix ro compat feature mismatch in AG %u super, 0x%x != 0x%x\n"),
+					agno, mp->m_sb.sb_features_ro_compat,
+					sb->sb_features_ro_compat);
+		} else {
+			do_warn(
+	_("will fix ro compat feature mismatch in AG %u super, 0x%x != 0x%x\n"),
+					agno, mp->m_sb.sb_features_ro_compat,
+					sb->sb_features_ro_compat);
+			dirty = true;
+		}
+	}
+
+	if (mp->m_sb.sb_features_log_incompat != sb->sb_features_log_incompat) {
+		if (no_modify) {
+			do_warn(
+	_("would fix log incompat feature mismatch in AG %u super, 0x%x != 0x%x\n"),
+					agno, mp->m_sb.sb_features_log_incompat,
+					sb->sb_features_log_incompat);
+		} else {
+			do_warn(
+	_("will fix log incompat feature mismatch in AG %u super, 0x%x != 0x%x\n"),
+					agno, mp->m_sb.sb_features_log_incompat,
+					sb->sb_features_log_incompat);
+			dirty = true;
+		}
+	}
+
+	if (!dirty)
+		return 0;
+
+	sb->sb_features_compat = mp->m_sb.sb_features_compat;
+	sb->sb_features_ro_compat = mp->m_sb.sb_features_ro_compat;
+	sb->sb_features_incompat = mp->m_sb.sb_features_incompat;
+	sb->sb_features_log_incompat = mp->m_sb.sb_features_log_incompat;
+	return XR_AG_SB_SEC;
+}
+
+/*
  * Possible fields that may have been set at mkfs time,
  * sb_inoalignmt, sb_unit, sb_width and sb_dirblklog.
  * The quota inode fields in the secondaries should be zero.
@@ -451,6 +537,8 @@ secondary_sb_whack(
 		} else
 			rval |= XR_AG_SB_SEC;
 	}
+
+	rval |= check_v5_feature_mismatch(mp, i, sb);
 
 	if (xfs_sb_version_needsrepair(sb)) {
 		if (i == 0) {
