@@ -102,6 +102,7 @@ This command is restricted to root or to processes with device
 management capabilities.
 Its sole purpose is to allow backup and restore programs to restore the
 aforementioned critical on-disk inode fields.
+This ioctl is not supported as of Linux 5.5.
 
 .TP
 .B XFS_IOC_DIOINFO
@@ -316,6 +317,7 @@ functions (see
 .BR open_by_handle (3)).
 They are all subject to change and should not be called directly
 by applications.
+XFS_IOC_FSSETDM_BY_HANDLE is not supported as of Linux 5.5.
 
 .SS Filesystem Operations
 In order to effect one of the following operations, the pathname
