@@ -70,6 +70,17 @@ offset_length(
 	return 1;
 }
 
+/*
+ * These ioctls were withdrawn in Linux 5.17, but we'll keep them around for
+ * a few releases.
+ */
+#ifndef XFS_IOC_ALLOCSP64
+# define XFS_IOC_ALLOCSP64	_IOW ('X', 36, struct xfs_flock64)
+#endif
+#ifndef XFS_IOC_FREESP64
+# define XFS_IOC_FREESP64	_IOW ('X', 37, struct xfs_flock64)
+#endif
+
 static int
 allocsp_f(
 	int		argc,
