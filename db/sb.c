@@ -633,76 +633,76 @@ do_version(xfs_agnumber_t agno, uint16_t version, uint32_t features)
 
 static char *
 version_string(
-	xfs_sb_t	*sbp)
+	struct xfs_mount	*mp)
 {
-	static char	s[1024];
+	static char		s[1024];
 
-	if (XFS_SB_VERSION_NUM(sbp) == XFS_SB_VERSION_1)
+	if (XFS_SB_VERSION_NUM(&mp->m_sb) == XFS_SB_VERSION_1)
 		strcpy(s, "V1");
-	else if (XFS_SB_VERSION_NUM(sbp) == XFS_SB_VERSION_2)
+	else if (XFS_SB_VERSION_NUM(&mp->m_sb) == XFS_SB_VERSION_2)
 		strcpy(s, "V2");
-	else if (XFS_SB_VERSION_NUM(sbp) == XFS_SB_VERSION_3)
+	else if (XFS_SB_VERSION_NUM(&mp->m_sb) == XFS_SB_VERSION_3)
 		strcpy(s, "V3");
-	else if (XFS_SB_VERSION_NUM(sbp) == XFS_SB_VERSION_4)
+	else if (XFS_SB_VERSION_NUM(&mp->m_sb) == XFS_SB_VERSION_4)
 		strcpy(s, "V4");
-	else if (XFS_SB_VERSION_NUM(sbp) == XFS_SB_VERSION_5)
+	else if (XFS_SB_VERSION_NUM(&mp->m_sb) == XFS_SB_VERSION_5)
 		strcpy(s, "V5");
 
 	/*
 	 * We assume the state of these features now, so macros don't exist for
 	 * them any more.
 	 */
-	if (sbp->sb_versionnum & XFS_SB_VERSION_NLINKBIT)
+	if (mp->m_sb.sb_versionnum & XFS_SB_VERSION_NLINKBIT)
 		strcat(s, ",NLINK");
-	if (sbp->sb_versionnum & XFS_SB_VERSION_SHAREDBIT)
+	if (mp->m_sb.sb_versionnum & XFS_SB_VERSION_SHAREDBIT)
 		strcat(s, ",SHARED");
-	if (sbp->sb_versionnum & XFS_SB_VERSION_DIRV2BIT)
+	if (mp->m_sb.sb_versionnum & XFS_SB_VERSION_DIRV2BIT)
 		strcat(s, ",DIRV2");
 
-	if (xfs_sb_version_hasattr(sbp))
+	if (xfs_sb_version_hasattr(&mp->m_sb))
 		strcat(s, ",ATTR");
-	if (xfs_sb_version_hasquota(sbp))
+	if (xfs_sb_version_hasquota(&mp->m_sb))
 		strcat(s, ",QUOTA");
-	if (xfs_sb_version_hasalign(sbp))
+	if (xfs_sb_version_hasalign(&mp->m_sb))
 		strcat(s, ",ALIGN");
-	if (xfs_sb_version_hasdalign(sbp))
+	if (xfs_sb_version_hasdalign(&mp->m_sb))
 		strcat(s, ",DALIGN");
-	if (xfs_sb_version_haslogv2(sbp))
+	if (xfs_sb_version_haslogv2(&mp->m_sb))
 		strcat(s, ",LOGV2");
 	/* This feature is required now as well */
-	if (sbp->sb_versionnum & XFS_SB_VERSION_EXTFLGBIT)
+	if (mp->m_sb.sb_versionnum & XFS_SB_VERSION_EXTFLGBIT)
 		strcat(s, ",EXTFLG");
-	if (xfs_sb_version_hassector(sbp))
+	if (xfs_sb_version_hassector(&mp->m_sb))
 		strcat(s, ",SECTOR");
-	if (xfs_sb_version_hasasciici(sbp))
+	if (xfs_sb_version_hasasciici(&mp->m_sb))
 		strcat(s, ",ASCII_CI");
-	if (xfs_sb_version_hasmorebits(sbp))
+	if (xfs_sb_version_hasmorebits(&mp->m_sb))
 		strcat(s, ",MOREBITS");
-	if (xfs_sb_version_hasattr2(sbp))
+	if (xfs_sb_version_hasattr2(&mp->m_sb))
 		strcat(s, ",ATTR2");
-	if (xfs_sb_version_haslazysbcount(sbp))
+	if (xfs_sb_version_haslazysbcount(&mp->m_sb))
 		strcat(s, ",LAZYSBCOUNT");
-	if (xfs_sb_version_hasprojid32bit(sbp))
+	if (xfs_sb_version_hasprojid32bit(&mp->m_sb))
 		strcat(s, ",PROJID32BIT");
-	if (xfs_sb_version_hascrc(sbp))
+	if (xfs_sb_version_hascrc(&mp->m_sb))
 		strcat(s, ",CRC");
-	if (xfs_sb_version_hasftype(sbp))
+	if (xfs_sb_version_hasftype(&mp->m_sb))
 		strcat(s, ",FTYPE");
-	if (xfs_sb_version_hasfinobt(sbp))
+	if (xfs_sb_version_hasfinobt(&mp->m_sb))
 		strcat(s, ",FINOBT");
-	if (xfs_sb_version_hassparseinodes(sbp))
+	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
 		strcat(s, ",SPARSE_INODES");
-	if (xfs_sb_version_hasmetauuid(sbp))
+	if (xfs_sb_version_hasmetauuid(&mp->m_sb))
 		strcat(s, ",META_UUID");
-	if (xfs_sb_version_hasrmapbt(sbp))
+	if (xfs_sb_version_hasrmapbt(&mp->m_sb))
 		strcat(s, ",RMAPBT");
-	if (xfs_sb_version_hasreflink(sbp))
+	if (xfs_sb_version_hasreflink(&mp->m_sb))
 		strcat(s, ",REFLINK");
-	if (xfs_sb_version_hasinobtcounts(sbp))
+	if (xfs_sb_version_hasinobtcounts(&mp->m_sb))
 		strcat(s, ",INOBTCNT");
-	if (xfs_sb_version_hasbigtime(sbp))
+	if (xfs_sb_version_hasbigtime(&mp->m_sb))
 		strcat(s, ",BIGTIME");
-	if (xfs_sb_version_needsrepair(sbp))
+	if (xfs_sb_version_needsrepair(&mp->m_sb))
 		strcat(s, ",NEEDSREPAIR");
 	return s;
 }
@@ -834,7 +834,7 @@ version_f(
 	}
 
 	dbprintf(_("versionnum [0x%x+0x%x] = %s\n"), mp->m_sb.sb_versionnum,
-			mp->m_sb.sb_features2, version_string(&mp->m_sb));
+			mp->m_sb.sb_features2, version_string(mp));
 
 	if (argc == 3) {	/* now reset... */
 		mp->m_sb.sb_versionnum = version;

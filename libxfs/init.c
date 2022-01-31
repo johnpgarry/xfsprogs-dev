@@ -429,22 +429,20 @@ rtmount_init(
 	int		flags)
 {
 	struct xfs_buf	*bp;	/* buffer for last block of subvolume */
-	struct xfs_sb	*sbp;	/* filesystem superblock copy in mount */
 	xfs_daddr_t	d;	/* address of last block of subvolume */
 	int		error;
 
-	sbp = &mp->m_sb;
-	if (sbp->sb_rblocks == 0)
+	if (mp->m_sb.sb_rblocks == 0)
 		return 0;
 
-	if (xfs_sb_version_hasreflink(sbp)) {
+	if (xfs_sb_version_hasreflink(&mp->m_sb)) {
 		fprintf(stderr,
 	_("%s: Reflink not compatible with realtime device. Please try a newer xfsprogs.\n"),
 				progname);
 		return -1;
 	}
 
-	if (xfs_sb_version_hasrmapbt(sbp)) {
+	if (xfs_sb_version_hasrmapbt(&mp->m_sb)) {
 		fprintf(stderr,
 	_("%s: Reverse mapping btree not compatible with realtime device. Please try a newer xfsprogs.\n"),
 				progname);
@@ -456,11 +454,11 @@ rtmount_init(
 			progname);
 		return -1;
 	}
-	mp->m_rsumlevels = sbp->sb_rextslog + 1;
+	mp->m_rsumlevels = mp->m_sb.sb_rextslog + 1;
 	mp->m_rsumsize =
 		(uint)sizeof(xfs_suminfo_t) * mp->m_rsumlevels *
-		sbp->sb_rbmblocks;
-	mp->m_rsumsize = roundup(mp->m_rsumsize, sbp->sb_blocksize);
+		mp->m_sb.sb_rbmblocks;
+	mp->m_rsumsize = roundup(mp->m_rsumsize, mp->m_sb.sb_blocksize);
 	mp->m_rbmip = mp->m_rsumip = NULL;
 
 	/*

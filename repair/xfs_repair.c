@@ -1155,7 +1155,7 @@ main(int argc, char **argv)
 	/* initialize random globals now that we know the fs geometry */
 	inodes_per_block = mp->m_sb.sb_inopblock;
 
-	if (parse_sb_version(&mp->m_sb))  {
+	if (parse_sb_version(mp))  {
 		do_warn(
 	_("Found unsupported filesystem features.  Exiting now.\n"));
 		return(1);
