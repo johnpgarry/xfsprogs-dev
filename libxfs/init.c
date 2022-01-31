@@ -435,14 +435,14 @@ rtmount_init(
 	if (mp->m_sb.sb_rblocks == 0)
 		return 0;
 
-	if (xfs_sb_version_hasreflink(&mp->m_sb)) {
+	if (xfs_has_reflink(mp)) {
 		fprintf(stderr,
 	_("%s: Reflink not compatible with realtime device. Please try a newer xfsprogs.\n"),
 				progname);
 		return -1;
 	}
 
-	if (xfs_sb_version_hasrmapbt(&mp->m_sb)) {
+	if (xfs_has_rmapbt(mp)) {
 		fprintf(stderr,
 	_("%s: Reverse mapping btree not compatible with realtime device. Please try a newer xfsprogs.\n"),
 				progname);
