@@ -192,8 +192,11 @@ upgrade_filesystem(
 		dirty |= set_inobtcount(mp);
 	if (add_bigtime)
 		dirty |= set_bigtime(mp);
+	if (!dirty)
+		return;
 
-        if (no_modify || !dirty)
+	mp->m_features |= libxfs_sb_version_to_features(&mp->m_sb);
+        if (no_modify)
                 return;
 
         bp = libxfs_getsb(mp);
