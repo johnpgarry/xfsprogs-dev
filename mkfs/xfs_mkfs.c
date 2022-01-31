@@ -3507,7 +3507,6 @@ alloc_write_buf(
 	}
 
 	xfs_buf_set_daddr(bp, daddr);
-	bp->b_maps[0].bm_bn = daddr;
 	return bp;
 }
 
