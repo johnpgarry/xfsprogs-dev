@@ -22,6 +22,7 @@ typedef unsigned int __bitwise gfp_t;
 #define GFP_KERNEL	((__force gfp_t)0)
 #define GFP_NOFS	((__force gfp_t)0)
 #define __GFP_NOFAIL	((__force gfp_t)0)
+#define __GFP_NOLOCKDEP	((__force gfp_t)0)
 
 #define __GFP_ZERO	(__force gfp_t)1
 
@@ -38,7 +39,7 @@ kmem_cache_free(kmem_zone_t *zone, void *ptr)
 }
 
 extern void	*kmem_alloc(size_t, int);
-extern void	*kmem_alloc_large(size_t, int);
+extern void	*kvmalloc(size_t, gfp_t);
 extern void	*kmem_zalloc(size_t, int);
 
 static inline void
