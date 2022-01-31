@@ -891,21 +891,21 @@ blockget_f(
 		error++;
 	}
 	if ((sbversion & XFS_SB_VERSION_ATTRBIT) &&
-					!xfs_sb_version_hasattr(&mp->m_sb)) {
+					!xfs_has_attr(mp)) {
 		if (!sflag)
 			dbprintf(_("sb versionnum missing attr bit %x\n"),
 				XFS_SB_VERSION_ATTRBIT);
 		error++;
 	}
 	if ((sbversion & XFS_SB_VERSION_QUOTABIT) &&
-					!xfs_sb_version_hasquota(&mp->m_sb)) {
+					!xfs_has_quota(mp)) {
 		if (!sflag)
 			dbprintf(_("sb versionnum missing quota bit %x\n"),
 				XFS_SB_VERSION_QUOTABIT);
 		error++;
 	}
 	if (!(sbversion & XFS_SB_VERSION_ALIGNBIT) &&
-					xfs_sb_version_hasalign(&mp->m_sb)) {
+					xfs_has_align(mp)) {
 		if (!sflag)
 			dbprintf(_("sb versionnum extra align bit %x\n"),
 				XFS_SB_VERSION_ALIGNBIT);
@@ -1628,7 +1628,7 @@ static bool
 is_reflink(
 	dbm_t		type2)
 {
-	if (!xfs_sb_version_hasreflink(&mp->m_sb))
+	if (!xfs_has_reflink(mp))
 		return false;
 	if (type2 == DBM_DATA || type2 == DBM_RLDATA)
 		return true;
@@ -1988,7 +1988,7 @@ init(
 	 * at least one full inode record per block. Check this case explicitly.
 	 */
 	if (mp->m_sb.sb_inoalignmt ||
-	    (xfs_sb_version_hasalign(&mp->m_sb) &&
+	    (xfs_has_align(mp) &&
 	     mp->m_sb.sb_inopblock >= XFS_INODES_PER_CHUNK))
 		sbversion |= XFS_SB_VERSION_ALIGNBIT;
 	if ((mp->m_sb.sb_uquotino && mp->m_sb.sb_uquotino != NULLFSINO) ||
@@ -2814,7 +2814,7 @@ process_inode(
 	uid = be32_to_cpu(dip->di_uid);
 	gid = be32_to_cpu(dip->di_gid);
 	diflags = be16_to_cpu(dip->di_flags);
-	if (xfs_sb_version_has_v3inode(&mp->m_sb))
+	if (xfs_has_v3inodes(mp))
 		diflags2 = be64_to_cpu(dip->di_flags2);
 	if (isfree) {
 		if (be64_to_cpu(dip->di_nblocks) != 0) {
@@ -4497,7 +4497,7 @@ scanfunc_ino(
 	int			ioff;
 	struct xfs_ino_geometry	*igeo = M_IGEO(mp);
 
-	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+	if (xfs_has_sparseinodes(mp))
 		blks_per_buf = igeo->blocks_per_cluster;
 	else
 		blks_per_buf = igeo->ialloc_blks;
@@ -4586,7 +4586,7 @@ next_buf:
 				ioff += inodes_per_buf;
 			}
 
-			if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+			if (xfs_has_sparseinodes(mp))
 				freecount = rp[i].ir_u.sp.ir_freecount;
 			else
 				freecount = be32_to_cpu(rp[i].ir_u.f.ir_freecount);
@@ -4641,7 +4641,7 @@ scanfunc_fino(
 	int			ioff;
 	struct xfs_ino_geometry	*igeo = M_IGEO(mp);
 
-	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+	if (xfs_has_sparseinodes(mp))
 		blks_per_buf = igeo->blocks_per_cluster;
 	else
 		blks_per_buf = igeo->ialloc_blks;

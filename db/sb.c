@@ -266,7 +266,7 @@ sb_logzero(uuid_t *uuidp)
 	 * The log must always move forward on v5 superblocks. Bump it to the
 	 * next cycle.
 	 */
-	if (xfs_sb_version_hascrc(&mp->m_sb))
+	if (xfs_has_crc(mp))
 		cycle = mp->m_log->l_curr_cycle + 1;
 
 	dbprintf(_("Clearing log and setting UUID\n"));
@@ -275,7 +275,7 @@ sb_logzero(uuid_t *uuidp)
 			XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart),
 			(xfs_extlen_t)XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks),
 			uuidp,
-			xfs_sb_version_haslogv2(&mp->m_sb) ? 2 : 1,
+			xfs_has_logv2(mp) ? 2 : 1,
 			mp->m_sb.sb_logsunit, XLOG_FMT, cycle, true);
 	if (error) {
 		dbprintf(_("ERROR: cannot clear the log\n"));
@@ -652,57 +652,57 @@ version_string(
 	 * We assume the state of these features now, so macros don't exist for
 	 * them any more.
 	 */
-	if (mp->m_sb.sb_versionnum & XFS_SB_VERSION_NLINKBIT)
+	if (xfs_has_nlink(mp))
 		strcat(s, ",NLINK");
 	if (mp->m_sb.sb_versionnum & XFS_SB_VERSION_SHAREDBIT)
 		strcat(s, ",SHARED");
 	if (mp->m_sb.sb_versionnum & XFS_SB_VERSION_DIRV2BIT)
 		strcat(s, ",DIRV2");
 
-	if (xfs_sb_version_hasattr(&mp->m_sb))
+	if (xfs_has_attr(mp))
 		strcat(s, ",ATTR");
-	if (xfs_sb_version_hasquota(&mp->m_sb))
+	if (xfs_has_quota(mp))
 		strcat(s, ",QUOTA");
-	if (xfs_sb_version_hasalign(&mp->m_sb))
+	if (xfs_has_align(mp))
 		strcat(s, ",ALIGN");
-	if (xfs_sb_version_hasdalign(&mp->m_sb))
+	if (xfs_has_dalign(mp))
 		strcat(s, ",DALIGN");
-	if (xfs_sb_version_haslogv2(&mp->m_sb))
+	if (xfs_has_logv2(mp))
 		strcat(s, ",LOGV2");
 	/* This feature is required now as well */
-	if (mp->m_sb.sb_versionnum & XFS_SB_VERSION_EXTFLGBIT)
+	if (xfs_has_extflg(mp))
 		strcat(s, ",EXTFLG");
-	if (xfs_sb_version_hassector(&mp->m_sb))
+	if (xfs_has_sector(mp))
 		strcat(s, ",SECTOR");
-	if (xfs_sb_version_hasasciici(&mp->m_sb))
+	if (xfs_has_asciici(mp))
 		strcat(s, ",ASCII_CI");
-	if (xfs_sb_version_hasmorebits(&mp->m_sb))
+	if (mp->m_sb.sb_versionnum & XFS_SB_VERSION_MOREBITSBIT)
 		strcat(s, ",MOREBITS");
-	if (xfs_sb_version_hasattr2(&mp->m_sb))
+	if (xfs_has_attr2(mp))
 		strcat(s, ",ATTR2");
-	if (xfs_sb_version_haslazysbcount(&mp->m_sb))
+	if (xfs_has_lazysbcount(mp))
 		strcat(s, ",LAZYSBCOUNT");
-	if (xfs_sb_version_hasprojid32(&mp->m_sb))
+	if (xfs_has_projid32(mp))
 		strcat(s, ",PROJID32BIT");
-	if (xfs_sb_version_hascrc(&mp->m_sb))
+	if (xfs_has_crc(mp))
 		strcat(s, ",CRC");
-	if (xfs_sb_version_hasftype(&mp->m_sb))
+	if (xfs_has_ftype(mp))
 		strcat(s, ",FTYPE");
-	if (xfs_sb_version_hasfinobt(&mp->m_sb))
+	if (xfs_has_finobt(mp))
 		strcat(s, ",FINOBT");
-	if (xfs_sb_version_hassparseinodes(&mp->m_sb))
+	if (xfs_has_sparseinodes(mp))
 		strcat(s, ",SPARSE_INODES");
-	if (xfs_sb_version_hasmetauuid(&mp->m_sb))
+	if (xfs_has_metauuid(mp))
 		strcat(s, ",META_UUID");
-	if (xfs_sb_version_hasrmapbt(&mp->m_sb))
+	if (xfs_has_rmapbt(mp))
 		strcat(s, ",RMAPBT");
-	if (xfs_sb_version_hasreflink(&mp->m_sb))
+	if (xfs_has_reflink(mp))
 		strcat(s, ",REFLINK");
-	if (xfs_sb_version_hasinobtcounts(&mp->m_sb))
+	if (xfs_has_inobtcounts(mp))
 		strcat(s, ",INOBTCNT");
-	if (xfs_sb_version_hasbigtime(&mp->m_sb))
+	if (xfs_has_bigtime(mp))
 		strcat(s, ",BIGTIME");
-	if (xfs_sb_version_needsrepair(&mp->m_sb))
+	if (xfs_has_needsrepair(mp))
 		strcat(s, ",NEEDSREPAIR");
 	return s;
 }
@@ -769,7 +769,7 @@ version_f(
 				version = 0x0034 | XFS_SB_VERSION_LOGV2BIT;
 				break;
 			case XFS_SB_VERSION_4:
-				if (xfs_sb_version_haslogv2(&mp->m_sb))
+				if (xfs_has_logv2(mp))
 					dbprintf(
 		_("version 2 log format is already in use\n"));
 				else
@@ -788,7 +788,7 @@ version_f(
 			return 0;
 		} else if (!strcasecmp(argv[1], "attr1")) {
 
-			if (xfs_sb_version_hasattr2(&mp->m_sb)) {
+			if (xfs_has_attr2(mp)) {
 				if (!(mp->m_sb.sb_features2 &=
 						~XFS_SB_VERSION2_ATTR2BIT))
 					mp->m_sb.sb_versionnum &=

@@ -49,8 +49,8 @@ bool
 rmap_needs_work(
 	struct xfs_mount	*mp)
 {
-	return xfs_sb_version_hasreflink(&mp->m_sb) ||
-	       xfs_sb_version_hasrmapbt(&mp->m_sb);
+	return xfs_has_reflink(mp) ||
+	       xfs_has_rmapbt(mp);
 }
 
 /*
@@ -387,7 +387,7 @@ rmap_add_fixed_ag_rec(
 	/* inodes */
 	ino_rec = findfirst_inode_rec(agno);
 	for (; ino_rec != NULL; ino_rec = next_ino_rec(ino_rec)) {
-		if (xfs_sb_version_hassparseinodes(&mp->m_sb)) {
+		if (xfs_has_sparseinodes(mp)) {
 			startidx = find_first_zero_bit(ino_rec->ir_sparse);
 			nr = XFS_INODES_PER_CHUNK - popcnt(ino_rec->ir_sparse);
 		} else {
@@ -455,7 +455,7 @@ rmap_store_ag_btree_rec(
 	struct bitmap		*own_ag_bitmap = NULL;
 	int			error = 0;
 
-	if (!xfs_sb_version_hasrmapbt(&mp->m_sb))
+	if (!xfs_has_rmapbt(mp))
 		return 0;
 
 	/* Release the ar_rmaps; they were put into the rmapbt during p5. */
@@ -761,7 +761,7 @@ compute_refcounts(
 	size_t			old_stack_nr;
 	int			error;
 
-	if (!xfs_sb_version_hasreflink(&mp->m_sb))
+	if (!xfs_has_reflink(mp))
 		return 0;
 
 	rmaps = ag_rmaps[agno].ar_rmaps;
@@ -988,7 +988,7 @@ rmaps_verify_btree(
 	int			have;
 	int			error;
 
-	if (!xfs_sb_version_hasrmapbt(&mp->m_sb))
+	if (!xfs_has_rmapbt(mp))
 		return 0;
 	if (rmapbt_suspect) {
 		if (no_modify && agno == 0)
@@ -1025,7 +1025,7 @@ rmaps_verify_btree(
 		 * the regular lookup doesn't find anything or if it doesn't
 		 * match the observed rmap.
 		 */
-		if (xfs_sb_version_hasreflink(&bt_cur->bc_mp->m_sb) &&
+		if (xfs_has_reflink(bt_cur->bc_mp) &&
 				(!have || !rmap_is_good(rm_rec, &tmp))) {
 			error = rmap_lookup_overlapped(bt_cur, rm_rec,
 					&tmp, &have);
@@ -1350,7 +1350,7 @@ check_refcounts(
 	int				i;
 	int				error;
 
-	if (!xfs_sb_version_hasreflink(&mp->m_sb))
+	if (!xfs_has_reflink(mp))
 		return 0;
 	if (refcbt_suspect) {
 		if (no_modify && agno == 0)

@@ -33,10 +33,10 @@ void
 update_sb_version(
 	struct xfs_mount	*mp)
 {
-	if (fs_attributes && !xfs_sb_version_hasattr(&mp->m_sb))
+	if (fs_attributes && !xfs_has_attr(mp))
 		xfs_sb_version_addattr(&mp->m_sb);
 
-	if (fs_attributes2 && !xfs_sb_version_hasattr2(&mp->m_sb))
+	if (fs_attributes2 && !xfs_has_attr2(mp))
 		xfs_sb_version_addattr2(&mp->m_sb);
 
 	/* V2 inode conversion is now always going to happen */
@@ -49,7 +49,7 @@ update_sb_version(
 	 * have quotas.
 	 */
 	if (fs_quotas)  {
-		if (!xfs_sb_version_hasquota(&mp->m_sb))
+		if (!xfs_has_quota(mp))
 			xfs_sb_version_addquota(&mp->m_sb);
 
 		/*
@@ -74,13 +74,13 @@ update_sb_version(
 	} else  {
 		mp->m_sb.sb_qflags = 0;
 
-		if (xfs_sb_version_hasquota(&mp->m_sb))  {
+		if (xfs_has_quota(mp))  {
 			lost_quotas = 1;
 			mp->m_sb.sb_versionnum &= ~XFS_SB_VERSION_QUOTABIT;
 		}
 	}
 
-	if (!fs_aligned_inodes && xfs_sb_version_hasalign(&mp->m_sb))
+	if (!fs_aligned_inodes && xfs_has_align(mp))
 		mp->m_sb.sb_versionnum &= ~XFS_SB_VERSION_ALIGNBIT;
 
 	mp->m_features &= ~(XFS_FEAT_QUOTA | XFS_FEAT_ALIGN);
@@ -142,10 +142,10 @@ _("Superblock has unknown compat/rocompat/incompat features (0x%x/0x%x/0x%x).\n"
 		return 1;
 	}
 
-	if (xfs_sb_version_hasattr(&mp->m_sb))
+	if (xfs_has_attr(mp))
 		fs_attributes = 1;
 
-	if (xfs_sb_version_hasattr2(&mp->m_sb))
+	if (xfs_has_attr2(mp))
 		fs_attributes2 = 1;
 
 	if (!(mp->m_sb.sb_versionnum & XFS_SB_VERSION_NLINKBIT)) {
@@ -162,7 +162,7 @@ _("WARNING: you have a V1 inode filesystem. It would be converted to a\n"
 		}
 	}
 
-	if (xfs_sb_version_hasquota(&mp->m_sb))  {
+	if (xfs_has_quota(mp))  {
 		fs_quotas = 1;
 
 		if (mp->m_sb.sb_uquotino != 0 && mp->m_sb.sb_uquotino != NULLFSINO)
@@ -175,7 +175,7 @@ _("WARNING: you have a V1 inode filesystem. It would be converted to a\n"
 			have_pquotino = 1;
 	}
 
-	if (xfs_sb_version_hasalign(&mp->m_sb))  {
+	if (xfs_has_align(mp))  {
 		fs_aligned_inodes = 1;
 		fs_ino_alignment = mp->m_sb.sb_inoalignmt;
 	}

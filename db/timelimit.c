@@ -113,7 +113,7 @@ timelimit_f(
 	}
 
 	if (whatkind == SHOW_AUTO) {
-		if (xfs_sb_version_hasbigtime(&mp->m_sb))
+		if (xfs_has_bigtime(mp))
 			whatkind = SHOW_BIGTIME;
 		else
 			whatkind = SHOW_CLASSIC;

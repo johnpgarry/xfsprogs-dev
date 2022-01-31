@@ -1019,7 +1019,7 @@ xfs_verify_magic(
 	struct xfs_mount	*mp = bp->b_mount;
 	int			idx;
 
-	idx = xfs_sb_version_hascrc(&mp->m_sb);
+	idx = xfs_has_crc(mp);
 	if (unlikely(WARN_ON(!bp->b_ops || !bp->b_ops->magic[idx])))
 		return false;
 	return dmagic == bp->b_ops->magic[idx];
@@ -1038,7 +1038,7 @@ xfs_verify_magic16(
 	struct xfs_mount	*mp = bp->b_mount;
 	int			idx;
 
-	idx = xfs_sb_version_hascrc(&mp->m_sb);
+	idx = xfs_has_crc(mp);
 	if (unlikely(WARN_ON(!bp->b_ops || !bp->b_ops->magic16[idx])))
 		return false;
 	return dmagic == bp->b_ops->magic16[idx];

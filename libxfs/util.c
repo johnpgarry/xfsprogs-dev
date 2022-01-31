@@ -44,7 +44,7 @@ xfs_log_calc_unit_res(
 	int			iclog_size;
 	uint			num_headers;
 
-	if (xfs_sb_version_haslogv2(&mp->m_sb)) {
+	if (xfs_has_logv2(mp)) {
 		iclog_size = XLOG_MAX_RECORD_BSIZE;
 		iclog_header_size = BBTOB(iclog_size / XLOG_HEADER_CYCLE_SIZE);
 	} else {
@@ -125,7 +125,7 @@ xfs_log_calc_unit_res(
 	unit_bytes += iclog_header_size;
 
 	/* for roundoff padding for transaction data and one for commit record */
-	if (xfs_sb_version_haslogv2(&mp->m_sb) && mp->m_sb.sb_logsunit > 1) {
+	if (xfs_has_logv2(mp) && mp->m_sb.sb_logsunit > 1) {
 		/* log su roundoff */
 		unit_bytes += 2 * mp->m_sb.sb_logsunit;
 	} else {
@@ -226,7 +226,7 @@ xfs_inode_propagate_flags(
 		}
 	} else {
 		if ((pip->i_diflags & XFS_DIFLAG_RTINHERIT) &&
-		    xfs_sb_version_hasrealtime(&ip->i_mount->m_sb))
+		    xfs_has_realtime(ip->i_mount))
 			di_flags |= XFS_DIFLAG_REALTIME;
 		if (pip->i_diflags & XFS_DIFLAG_EXTSZINHERIT) {
 			di_flags |= XFS_DIFLAG_EXTSIZE;
@@ -282,7 +282,7 @@ libxfs_init_new_inode(
 	ip->i_extsize = pip ? 0 : fsx->fsx_extsize;
 	ip->i_diflags = pip ? 0 : xfs_flags2diflags(ip, fsx->fsx_xflags);
 
-	if (xfs_sb_version_has_v3inode(&ip->i_mount->m_sb)) {
+	if (xfs_has_v3inodes(ip->i_mount)) {
 		VFS_I(ip)->i_version = 1;
 		ip->i_diflags2 = pip ? ip->i_mount->m_ino_geo.new_diflags2 :
 				xfs_flags2diflags2(ip, fsx->fsx_xflags);
@@ -360,7 +360,7 @@ libxfs_iflush_int(
 	ASSERT(ip->i_forkoff <= mp->m_sb.sb_inodesize);
 
 	/* bump the change count on v3 inodes */
-	if (xfs_sb_version_has_v3inode(&mp->m_sb))
+	if (xfs_has_v3inodes(mp))
 		VFS_I(ip)->i_version++;
 
 	/*
