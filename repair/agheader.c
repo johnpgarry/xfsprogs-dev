@@ -376,7 +376,7 @@ secondary_sb_whack(
 	 * superblocks. If it is anything other than 0 it is considered garbage
 	 * data beyond the valid sb and explicitly zeroed above.
 	 */
-	if (xfs_sb_version_has_pquotino(&mp->m_sb) &&
+	if (xfs_sb_version_haspquotino(&mp->m_sb) &&
 	    sb->sb_inprogress == 1 && sb->sb_pquotino != NULLFSINO)  {
 		if (!no_modify) {
 			sb->sb_pquotino = 0;
