@@ -114,7 +114,7 @@ xlog_bread_noalign(
 	ASSERT(nbblks > 0);
 	ASSERT(nbblks <= bp->b_length);
 
-	XFS_BUF_SET_ADDR(bp, log->l_logBBstart + blk_no);
+	xfs_buf_set_daddr(bp, log->l_logBBstart + blk_no);
 	bp->b_length = nbblks;
 	bp->b_error = 0;
 
