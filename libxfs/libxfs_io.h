@@ -79,7 +79,7 @@ struct xfs_buf_ops {
 struct xfs_buf {
 	struct cache_node	b_node;
 	unsigned int		b_flags;
-	xfs_daddr_t		b_bn;
+	xfs_daddr_t		b_cache_key;	/* buffer cache index */
 	unsigned int		b_length;
 	struct xfs_buftarg	*b_target;
 	pthread_mutex_t		b_lock;
@@ -122,7 +122,7 @@ static inline xfs_daddr_t xfs_buf_daddr(struct xfs_buf *bp)
 
 static inline void xfs_buf_set_daddr(struct xfs_buf *bp, xfs_daddr_t blkno)
 {
-	assert(bp->b_bn == XFS_BUF_DADDR_NULL);
+	assert(bp->b_cache_key == XFS_BUF_DADDR_NULL);
 	bp->b_maps[0].bm_bn = blkno;
 }
 
