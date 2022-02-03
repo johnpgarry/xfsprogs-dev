@@ -1,3 +1,6 @@
+xfsprogs-5.15.0-rc0 (03 Feb 2022)
+	- libxfs changes merged from kernel 5.15
+
 xfsprogs-5.14.2 (06 Dec 2021)
 	- libxfs: move rogue fallthrough macro out of linux.h (Darrick J. Wong)
 
