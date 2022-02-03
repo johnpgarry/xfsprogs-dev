@@ -850,7 +850,7 @@ repair_capture_writeback(
 	 * avoid hook recursion when setting NEEDSREPAIR.  Higher level code
 	 * modifying an sb must control the flag manually.
 	 */
-	if (bp->b_ops == &xfs_sb_buf_ops || bp->b_bn == XFS_SB_DADDR)
+	if (bp->b_ops == &xfs_sb_buf_ops || xfs_buf_daddr(bp) == XFS_SB_DADDR)
 		return;
 
 	pthread_mutex_lock(&wb_mutex);

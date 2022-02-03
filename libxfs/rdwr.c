@@ -214,7 +214,7 @@ libxfs_bcompare(struct cache_node *node, cache_key_t key)
 	"%lx: Badness in key lookup (length)\n"
 	"bp=(bno 0x%llx, len %u bytes) key=(bno 0x%llx, len %u bytes)\n",
 				pthread_self(),
-				(unsigned long long)bp->b_bn, 
+				(unsigned long long)xfs_buf_daddr(bp),
 				BBTOB(bp->b_length),
 				(unsigned long long)bkey->blkno,
 				BBTOB(bkey->bblen));
@@ -833,14 +833,16 @@ libxfs_bwrite(
 			fprintf(stderr,
 	_("%s: write verifier failed on %s bno 0x%llx/0x%x\n"),
 				__func__, bp->b_ops->name,
-				(long long)bp->b_bn, bp->b_length);
+				(unsigned long long)xfs_buf_daddr(bp),
+				bp->b_length);
 			return bp->b_error;
 		}
 	}
 
 	if (!(bp->b_flags & LIBXFS_B_DISCONTIG)) {
 		bp->b_error = __write_buf(fd, bp->b_addr, BBTOB(bp->b_length),
-				    LIBXFS_BBTOOFF64(bp->b_bn), bp->b_flags);
+				    LIBXFS_BBTOOFF64(xfs_buf_daddr(bp)),
+				    bp->b_flags);
 	} else {
 		int	i;
 		void	*buf = bp->b_addr;
@@ -861,7 +863,8 @@ libxfs_bwrite(
 		fprintf(stderr,
 	_("%s: write failed on %s bno 0x%llx/0x%x, err=%d\n"),
 			__func__, bp->b_ops ? bp->b_ops->name : "(unknown)",
-			(long long)bp->b_bn, bp->b_length, -bp->b_error);
+			(unsigned long long)xfs_buf_daddr(bp),
+			bp->b_length, -bp->b_error);
 	} else {
 		bp->b_flags |= LIBXFS_B_UPTODATE;
 		bp->b_flags &= ~(LIBXFS_B_DIRTY | LIBXFS_B_UNCHECKED);
