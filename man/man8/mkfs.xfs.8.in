@@ -7,6 +7,9 @@ mkfs.xfs \- construct an XFS filesystem
 .B \-b
 .I block_size_options
 ] [
+.B \-c
+.I config_file_options
+] [
 .B \-m
 .I global_metadata_options
 ] [
@@ -159,6 +162,7 @@ The configuration options will be sourced from the file specified by the
 option string.
 This option can be use either an absolute or relative path to the configuration
 file to be read.
+Sample configuration files can be found in @mkfs_cfg_dir@.
 .RE
 .PP
 .PD 0
