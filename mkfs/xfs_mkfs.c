@@ -103,6 +103,7 @@ enum {
 	L_FILE,
 	L_NAME,
 	L_LAZYSBCNTR,
+	L_CONCURRENCY,
 	L_MAX_OPTS,
 };
 
@@ -519,6 +520,7 @@ static struct opt_params lopts = {
 		[L_FILE] = "file",
 		[L_NAME] = "name",
 		[L_LAZYSBCNTR] = "lazy-count",
+		[L_CONCURRENCY] = "concurrency",
 	},
 	.subopt_params = {
 		{ .index = L_AGNUM,
@@ -538,7 +540,8 @@ static struct opt_params lopts = {
 		  .defaultval = 1,
 		},
 		{ .index = L_SIZE,
-		  .conflicts = { { NULL, LAST_CONFLICT } },
+		  .conflicts = { { &lopts, L_CONCURRENCY },
+				 { NULL, LAST_CONFLICT } },
 		  .convert = true,
 		  .minval = 2 * 1024 * 1024LL,	/* XXX: XFS_MIN_LOG_BYTES */
 		  .maxval = XFS_MAX_LOG_BYTES,
@@ -569,6 +572,7 @@ static struct opt_params lopts = {
 		  .conflicts = { { &lopts, L_AGNUM },
 				 { &lopts, L_NAME },
 				 { &lopts, L_INTERNAL },
+				 { &lopts, L_CONCURRENCY },
 				 { NULL, LAST_CONFLICT } },
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
@@ -583,6 +587,7 @@ static struct opt_params lopts = {
 		},
 		{ .index = L_FILE,
 		  .conflicts = { { &lopts, L_INTERNAL },
+				 { &lopts, L_CONCURRENCY },
 				 { NULL, LAST_CONFLICT } },
 		  .minval = 0,
 		  .maxval = 1,
@@ -599,6 +604,15 @@ static struct opt_params lopts = {
 		  .conflicts = { { NULL, LAST_CONFLICT } },
 		  .minval = 0,
 		  .maxval = 1,
+		  .defaultval = 1,
+		},
+		{ .index = L_CONCURRENCY,
+		  .conflicts = { { &lopts, L_SIZE },
+				 { &lopts, L_FILE },
+				 { &lopts, L_DEV },
+				 { NULL, LAST_CONFLICT } },
+		  .minval = 0,
+		  .maxval = INT_MAX,
 		  .defaultval = 1,
 		},
 	},
@@ -852,6 +866,7 @@ struct cli_params {
 	int	lsunit;
 	int	has_warranty;
 	int	data_concurrency;
+	int	log_concurrency;
 
 	/* parameters where 0 is not a valid value */
 	int64_t	agcount;
@@ -960,7 +975,8 @@ usage( void )
 			    projid32bit=0|1,sparse=0|1]\n\
 /* no discard */	[-K]\n\
 /* log subvol */	[-l agnum=n,internal,size=num,logdev=xxx,version=n\n\
-			    sunit=value|su=num,sectsize=num,lazy-count=0|1]\n\
+			    sunit=value|su=num,sectsize=num,lazy-count=0|1,\n\
+			    concurrency=num]\n\
 /* label */		[-L label (maximum 12 characters)]\n\
 /* naming */		[-n size=num,version=2|ci,ftype=0|1]\n\
 /* no-op info only */	[-N]\n\
@@ -1663,6 +1679,30 @@ inode_opts_parser(
 	return 0;
 }
 
+static void
+set_log_concurrency(
+	struct opt_params	*opts,
+	int			subopt,
+	const char		*value,
+	struct cli_params	*cli)
+{
+	long long		optnum;
+
+	/*
+	 * "nr_cpus" or 1 means set the concurrency level to the CPU count.  If
+	 * this cannot be determined, fall back to the default computation.
+	 */
+	if (!strcmp(value, "nr_cpus"))
+		optnum = 1;
+	else
+		optnum = getnum(value, opts, subopt);
+
+	if (optnum == 1)
+		cli->log_concurrency = nr_cpus();
+	else
+		cli->log_concurrency = optnum;
+}
+
 static int
 log_opts_parser(
 	struct opt_params	*opts,
@@ -1702,6 +1742,9 @@ log_opts_parser(
 		break;
 	case L_LAZYSBCNTR:
 		cli->sb_feat.lazy_sb_counters = getnum(value, opts, subopt);
+		break;
+	case L_CONCURRENCY:
+		set_log_concurrency(opts, subopt, value, cli);
 		break;
 	default:
 		return -EINVAL;
@@ -3499,6 +3542,45 @@ calc_realistic_log_size(
 }
 
 static void
+calc_log_concurrency_size(
+	struct mkfs_params	*cfg,
+	struct cli_params	*cli,
+	struct libxfs_xinit	*xi,
+	unsigned int		max_tx_bytes)
+{
+	uint64_t		log_bytes;
+	unsigned int		new_logblocks;
+
+	if (cli->log_concurrency < 0) {
+		if (!ddev_is_solidstate(xi))
+			return;
+
+		cli->log_concurrency = nr_cpus();
+	}
+	if (cli->log_concurrency == 0)
+		return;
+
+	/*
+	 * If this filesystem is smaller than a gigabyte, there's little to be
+	 * gained from making the log larger.
+	 */
+	if (cfg->dblocks < GIGABYTES(1, cfg->blocklog))
+		return;
+
+	/*
+	 * Create a log that is large enough to handle simultaneous maximally
+	 * sized transactions at the concurrency level specified by the user
+	 * without blocking for space.  Increase the figure by 50% so that
+	 * background threads can also run.
+	 */
+	log_bytes = max_tx_bytes * 3 * cli->log_concurrency / 2;
+	new_logblocks = min(XFS_MAX_LOG_BYTES >> cfg->blocklog,
+				log_bytes >> cfg->blocklog);
+
+	cfg->logblocks = max(cfg->logblocks, new_logblocks);
+}
+
+static void
 clamp_internal_log_size(
 	struct mkfs_params	*cfg,
 	struct xfs_mount	*mp,
@@ -3533,9 +3615,11 @@ static void
 calculate_log_size(
 	struct mkfs_params	*cfg,
 	struct cli_params	*cli,
+	struct libxfs_xinit	*xi,
 	struct xfs_mount	*mp)
 {
 	struct xfs_sb		*sbp = &mp->m_sb;
+	unsigned int		max_tx_bytes = 0;
 	int			min_logblocks;
 	struct xfs_mount	mount;
 
@@ -3544,6 +3628,12 @@ calculate_log_size(
 	mount.m_sb = *sbp;
 	libxfs_mount(&mount, &mp->m_sb, 0, 0, 0, 0);
 	min_logblocks = libxfs_log_calc_minimum_size(&mount);
+	if (cli->log_concurrency != 0) {
+		struct xfs_trans_res	res;
+
+		libxfs_log_get_max_trans_res(&mount, &res);
+		max_tx_bytes = res.tr_logres * res.tr_logcount;
+	}
 	libxfs_umount(&mount);
 
 	ASSERT(min_logblocks);
@@ -3586,6 +3676,9 @@ _("external log device size %lld blocks too small, must be at least %lld blocks\
 		 */
 		cfg->logblocks = (cfg->dblocks << cfg->blocklog) / 2048;
 		cfg->logblocks = cfg->logblocks >> cfg->blocklog;
+
+		if (cli->log_concurrency != 0)
+			calc_log_concurrency_size(cfg, cli, xi, max_tx_bytes);
 
 		calc_realistic_log_size(cfg);
 
@@ -4089,6 +4182,7 @@ main(
 		.loginternal = 1,
 		.has_warranty	= 1,
 		.data_concurrency = -1, /* auto detect non-mechanical storage */
+		.log_concurrency = -1, /* auto detect non-mechanical ddev */
 	};
 	struct mkfs_params	cfg = {};
 
@@ -4295,7 +4389,7 @@ main(
 	 * With the mount set up, we can finally calculate the log size
 	 * constraints and do default size calculations and final validation
 	 */
-	calculate_log_size(&cfg, &cli, mp);
+	calculate_log_size(&cfg, &cli, &xi, mp);
 
 	finish_superblock_setup(&cfg, mp, sbp);
 
