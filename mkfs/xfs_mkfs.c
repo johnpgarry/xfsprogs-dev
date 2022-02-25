@@ -1438,12 +1438,21 @@ getstr(
 	struct opt_params	*opts,
 	int			index)
 {
+	char			*ret;
+
 	check_opt(opts, index, true);
 
 	/* empty strings for string options are not valid */
 	if (!str || *str == '\0')
 		reqval(opts->name, opts->subopts, index);
-	return (char *)str;
+
+	ret = strdup(str);
+	if (!ret) {
+		fprintf(stderr, _("Out of memory while saving suboptions.\n"));
+		exit(1);
+	}
+
+	return ret;
 }
 
 static int
