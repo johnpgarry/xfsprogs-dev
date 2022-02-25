@@ -56,6 +56,8 @@ DK_INC_DIR	= @includedir@/disk
 PKG_MAN_DIR	= @mandir@
 PKG_DOC_DIR	= @datadir@/doc/@pkg_name@
 PKG_LOCALE_DIR	= @datadir@/locale
+PKG_DATA_DIR	= @datadir@/@pkg_name@
+MKFS_CFG_DIR	= @datadir@/@pkg_name@/mkfs
 
 CC		= @cc@
 BUILD_CC	= @BUILD_CC@
