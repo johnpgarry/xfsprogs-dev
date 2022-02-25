@@ -3870,11 +3870,11 @@ main(
 			.spinodes = true,
 			.rmapbt = false,
 			.reflink = true,
-			.inobtcnt = false,
+			.inobtcnt = true,
 			.parent_pointers = false,
 			.nodalign = false,
 			.nortalign = false,
-			.bigtime = false,
+			.bigtime = true,
 			/*
 			 * When we decide to enable a new feature by default,
 			 * please remember to update the mkfs conf files.
