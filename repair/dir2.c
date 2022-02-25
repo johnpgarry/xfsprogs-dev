@@ -1358,7 +1358,7 @@ _("can't read block %" PRIu64 " for directory inode %" PRIu64 "\n"),
 		}
 		if (bp->b_error == -EFSCORRUPTED) {
 			do_warn(
-_("corrupt directory data block %lu for inode %" PRIu64 "\n"),
+_("corrupt directory data block %" PRIu64 " for inode %" PRIu64 "\n"),
 				dbno, ino);
 			libxfs_buf_relse(bp);
 			continue;
