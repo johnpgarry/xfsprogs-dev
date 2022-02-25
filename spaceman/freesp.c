@@ -8,6 +8,7 @@
 
 #include "libxfs.h"
 #include <linux/fiemap.h>
+#include <linux/fsmap.h>
 #include "libfrog/fsgeom.h"
 #include "command.h"
 #include "init.h"

@@ -104,10 +104,9 @@ LLDLIBS += $(LIBDEVMAPPER)
 LCFLAGS += -DHAVE_DEVMAPPER
 endif
 
-# On linux we get fsmap from the system or define it ourselves
-# so include this unconditionally.  If this reverts to only
-# the autoconf check w/o local definition, test HAVE_GETFSMAP
+ifeq ($(HAVE_GETFSMAP),yes)
 CFILES += fsmap.c
+endif
 
 ifeq ($(HAVE_STATFS_FLAGS),yes)
 LCFLAGS += -DHAVE_STATFS_FLAGS

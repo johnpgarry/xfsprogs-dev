@@ -4,6 +4,7 @@
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
 #include "platform_defs.h"
+#include <linux/fsmap.h>
 #include "command.h"
 #include "init.h"
 #include "libfrog/paths.h"

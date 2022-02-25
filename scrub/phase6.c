@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <dirent.h>
 #include <sys/statvfs.h>
+#include <linux/fsmap.h>
 #include "handle.h"
 #include "libfrog/paths.h"
 #include "libfrog/workqueue.h"

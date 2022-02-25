@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/statvfs.h>
+#include <linux/fsmap.h>
 #include "libfrog/paths.h"
 #include "libfrog/ptvar.h"
 #include "list.h"
