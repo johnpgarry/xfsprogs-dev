@@ -218,6 +218,7 @@ upgrade_filesystem(
 				error);
 
 	libxfs_buf_relse(bp);
+	features_changed = true;
 }
 
 /*

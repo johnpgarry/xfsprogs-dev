@@ -1298,6 +1298,21 @@ _("Note - stripe unit (%d) and width (%d) were copied from a backup superblock.\
 	libxfs_buf_relse(sbp);
 
 	/*
+	 * If we upgraded V5 filesystem features, we need to update the
+	 * secondary superblocks to include the new feature bits.  Don't set
+	 * NEEDSREPAIR on the secondaries.
+	 */
+	if (features_changed) {
+		mp->m_sb.sb_features_incompat &=
+				~XFS_SB_FEAT_INCOMPAT_NEEDSREPAIR;
+		error = -libxfs_update_secondary_sbs(mp);
+		if (error)
+			do_error(_("upgrading features of secondary supers"));
+		mp->m_sb.sb_features_incompat |=
+				XFS_SB_FEAT_INCOMPAT_NEEDSREPAIR;
+	}
+
+	/*
 	 * Done. Flush all cached buffers and inodes first to ensure all
 	 * verifiers are run (where we discover the max metadata LSN), reformat
 	 * the log if necessary and unmount.
