@@ -582,6 +582,13 @@ report_outcome(
 	}
 }
 
+/* Compile-time features discoverable via version strings */
+#ifdef HAVE_LIBICU
+# define XFS_SCRUB_HAVE_UNICODE	"+"
+#else
+# define XFS_SCRUB_HAVE_UNICODE	"-"
+#endif
+
 int
 main(
 	int			argc,
@@ -592,6 +599,7 @@ main(
 	char			*mtab = NULL;
 	FILE			*progress_fp = NULL;
 	struct fs_path		*fsp;
+	int			vflag = 0;
 	int			c;
 	int			fd;
 	int			ret = SCRUB_RET_SUCCESS;
@@ -670,16 +678,26 @@ main(
 			verbose = true;
 			break;
 		case 'V':
-			fprintf(stdout, _("%s version %s\n"), progname,
-					VERSION);
-			fflush(stdout);
-			return SCRUB_RET_SUCCESS;
+			vflag++;
+			break;
 		case 'x':
 			scrub_data = true;
 			break;
 		default:
 			usage();
 		}
+	}
+
+	if (vflag) {
+		if (vflag == 1)
+			fprintf(stdout, _("%s version %s\n"),
+					progname, VERSION);
+		else
+			fprintf(stdout, _("%s version %s %sUnicode\n"),
+					progname, VERSION,
+					XFS_SCRUB_HAVE_UNICODE);
+		fflush(stdout);
+		return SCRUB_RET_SUCCESS;
 	}
 
 	/* Override thread count if debugger */
