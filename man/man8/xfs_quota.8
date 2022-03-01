@@ -446,7 +446,14 @@ option reports state on all filesystems and not just the current path.
 .I name
 .br
 Set quota block limits (bhard/bsoft), inode count limits (ihard/isoft)
-and/or realtime block limits (rtbhard/rtbsoft). The
+and/or realtime block limits (rtbhard/rtbsoft) to N, where N is a
+number representing bytes or inodes.
+For block limits, a number with a s/b/k/m/g/t/p/e multiplication suffix
+as described in
+.BR mkfs.xfs (8)
+is also accepted.
+For inode limits, no suffixes are allowed.
+The
 .B \-d
 option (defaults) can be used to set the default value
 that will be used, otherwise a specific
