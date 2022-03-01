@@ -1400,6 +1400,48 @@ dir2_kill_block(
 _("directory shrink failed (%d)\n"), error);
 }
 
+static inline void
+check_longform_ftype(
+	struct xfs_mount	*mp,
+	struct xfs_inode	*ip,
+	xfs_dir2_data_entry_t	*dep,
+	ino_tree_node_t		*irec,
+	int			ino_offset,
+	struct dir_hash_tab	*hashtab,
+	xfs_dir2_dataptr_t	addr,
+	struct xfs_da_args	*da,
+	struct xfs_buf		*bp)
+{
+	xfs_ino_t		inum = be64_to_cpu(dep->inumber);
+	uint8_t			dir_ftype;
+	uint8_t			ino_ftype;
+
+	if (!xfs_has_ftype(mp))
+		return;
+
+	dir_ftype = libxfs_dir2_data_get_ftype(mp, dep);
+	ino_ftype = get_inode_ftype(irec, ino_offset);
+
+	if (dir_ftype == ino_ftype)
+		return;
+
+	if (no_modify) {
+		do_warn(
+_("would fix ftype mismatch (%d/%d) in directory/child inode %" PRIu64 "/%" PRIu64 "\n"),
+			dir_ftype, ino_ftype,
+			ip->i_ino, inum);
+		return;
+	}
+
+	do_warn(
+_("fixing ftype mismatch (%d/%d) in directory/child inode %" PRIu64 "/%" PRIu64 "\n"),
+		dir_ftype, ino_ftype,
+		ip->i_ino, inum);
+	libxfs_dir2_data_put_ftype(mp, dep, ino_ftype);
+	libxfs_dir2_data_log_entry(da, bp, dep);
+	dir_hash_update_ftype(hashtab, addr, ino_ftype);
+}
+
 /*
  * process a data block, also checks for .. entry
  * and corrects it to match what we think .. should be
@@ -1737,6 +1779,11 @@ longform_dir2_entry_check_data(
 					libxfs_dir2_data_log_entry(&da, bp, dep);
 				}
 			}
+
+			if (!nbad)
+				check_longform_ftype(mp, ip, dep, irec,
+						ino_offset, hashtab, addr, &da,
+						bp);
 			continue;
 		}
 		ASSERT(no_modify || libxfs_verify_dir_ino(mp, inum));
@@ -1765,6 +1812,11 @@ longform_dir2_entry_check_data(
 					libxfs_dir2_data_log_entry(&da, bp, dep);
 				}
 			}
+
+			if (!nbad)
+				check_longform_ftype(mp, ip, dep, irec,
+						ino_offset, hashtab, addr, &da,
+						bp);
 			*need_dot = 0;
 			continue;
 		}
@@ -1775,31 +1827,8 @@ longform_dir2_entry_check_data(
 			continue;
 
 		/* validate ftype field if supported */
-		if (xfs_has_ftype(mp)) {
-			uint8_t dir_ftype;
-			uint8_t ino_ftype;
-
-			dir_ftype = libxfs_dir2_data_get_ftype(mp, dep);
-			ino_ftype = get_inode_ftype(irec, ino_offset);
-
-			if (dir_ftype != ino_ftype) {
-				if (no_modify) {
-					do_warn(
-	_("would fix ftype mismatch (%d/%d) in directory/child inode %" PRIu64 "/%" PRIu64 "\n"),
-						dir_ftype, ino_ftype,
-						ip->i_ino, inum);
-				} else {
-					do_warn(
-	_("fixing ftype mismatch (%d/%d) in directory/child inode %" PRIu64 "/%" PRIu64 "\n"),
-						dir_ftype, ino_ftype,
-						ip->i_ino, inum);
-					libxfs_dir2_data_put_ftype(mp, dep, ino_ftype);
-					libxfs_dir2_data_log_entry(&da, bp, dep);
-					dir_hash_update_ftype(hashtab, addr,
-							      ino_ftype);
-				}
-			}
-		}
+		check_longform_ftype(mp, ip, dep, irec, ino_offset, hashtab,
+				addr, &da, bp);
 
 		/*
 		 * check easy case first, regular inode, just bump
