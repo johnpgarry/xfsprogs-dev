@@ -546,7 +546,7 @@ out_error:
 		progname, strerror(error));
 }
 
-void
+int
 fs_table_insert_project_path(
 	char		*dir,
 	prid_t		prid)
@@ -561,9 +561,5 @@ fs_table_insert_project_path(
 	else
 		error = ENOENT;
 
-	if (error) {
-		fprintf(stderr, _("%s: cannot setup path for project dir %s: %s\n"),
-				progname, dir, strerror(error));
-		exit(1);
-	}
+	return error;
 }
