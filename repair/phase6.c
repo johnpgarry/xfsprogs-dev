@@ -1067,9 +1067,7 @@ mv_orphanage(
 			err = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_rename,
 						  nres, 0, 0, &tp);
 			if (err)
-				do_error(
-	_("space reservation failed (%d), filesystem may be out of space\n"),
-					err);
+				res_failed(err);
 
 			libxfs_trans_ijoin(tp, orphanage_ip, 0);
 			libxfs_trans_ijoin(tp, ino_p, 0);
@@ -1078,8 +1076,7 @@ mv_orphanage(
 						ino, nres);
 			if (err)
 				do_error(
-	_("name create failed in %s (%d), filesystem may be out of space\n"),
-					ORPHANAGE, err);
+	_("name create failed in %s (%d)\n"), ORPHANAGE, err);
 
 			if (irec)
 				add_inode_ref(irec, ino_offset);
@@ -1091,8 +1088,7 @@ mv_orphanage(
 					orphanage_ino, nres);
 			if (err)
 				do_error(
-	_("creation of .. entry failed (%d), filesystem may be out of space\n"),
-					err);
+	_("creation of .. entry failed (%d)\n"), err);
 
 			inc_nlink(VFS_I(ino_p));
 			libxfs_trans_log_inode(tp, ino_p, XFS_ILOG_CORE);
@@ -1104,9 +1100,7 @@ mv_orphanage(
 			err = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_rename,
 						  nres, 0, 0, &tp);
 			if (err)
-				do_error(
-	_("space reservation failed (%d), filesystem may be out of space\n"),
-					err);
+				res_failed(err);
 
 			libxfs_trans_ijoin(tp, orphanage_ip, 0);
 			libxfs_trans_ijoin(tp, ino_p, 0);
@@ -1116,8 +1110,7 @@ mv_orphanage(
 						ino, nres);
 			if (err)
 				do_error(
-	_("name create failed in %s (%d), filesystem may be out of space\n"),
-					ORPHANAGE, err);
+	_("name create failed in %s (%d)\n"), ORPHANAGE, err);
 
 			if (irec)
 				add_inode_ref(irec, ino_offset);
@@ -1135,8 +1128,7 @@ mv_orphanage(
 						nres);
 				if (err)
 					do_error(
-	_("name replace op failed (%d), filesystem may be out of space\n"),
-						err);
+	_("name replace op failed (%d)\n"), err);
 			}
 
 			err = -libxfs_trans_commit(tp);
@@ -1156,9 +1148,7 @@ mv_orphanage(
 		err = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_remove,
 					  nres, 0, 0, &tp);
 		if (err)
-			do_error(
-	_("space reservation failed (%d), filesystem may be out of space\n"),
-				err);
+			res_failed(err);
 
 		libxfs_trans_ijoin(tp, orphanage_ip, 0);
 		libxfs_trans_ijoin(tp, ino_p, 0);
@@ -1167,8 +1157,7 @@ mv_orphanage(
 						nres);
 		if (err)
 			do_error(
-	_("name create failed in %s (%d), filesystem may be out of space\n"),
-				ORPHANAGE, err);
+	_("name create failed in %s (%d)\n"), ORPHANAGE, err);
 		ASSERT(err == 0);
 
 		set_nlink(VFS_I(ino_p), 1);
@@ -1351,8 +1340,7 @@ longform_dir2_rebuild(
 						nres);
 		if (error) {
 			do_warn(
-_("name create failed in ino %" PRIu64 " (%d), filesystem may be out of space\n"),
-				ino, error);
+_("name create failed in ino %" PRIu64 " (%d)\n"), ino, error);
 			goto out_bmap_cancel;
 		}
 
