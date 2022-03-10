@@ -18,14 +18,14 @@ static cmdinfo_t report_cmd;
 static void
 dump_help(void)
 {
-	dump_cmd.args = _("[-g|-p|-u] [-f file]");
-	dump_cmd.oneline = _("dump quota information for backup utilities");
 	printf(_(
 "\n"
 " create a backup file which contains quota limits information\n"
 " -g -- dump out group quota limits\n"
 " -p -- dump out project quota limits\n"
 " -u -- dump out user quota limits (default)\n"
+" -L -- lower ID bound to dump\n"
+" -U -- upper ID bound to dump\n"
 " -f -- write the dump out to the specified file\n"
 "\n"));
 }
@@ -33,8 +33,6 @@ dump_help(void)
 static void
 report_help(void)
 {
-	report_cmd.args = _("[-bir] [-gpu] [-ahntlLNU] [-f file]");
-	report_cmd.oneline = _("report filesystem quota information");
 	printf(_(
 "\n"
 " report used space and inodes, and quota limits, for a filesystem\n"
@@ -757,7 +755,7 @@ report_init(void)
 	dump_cmd.cfunc = dump_f;
 	dump_cmd.argmin = 0;
 	dump_cmd.argmax = -1;
-	dump_cmd.args = _("[-g|-p|-u] [-f file]");
+	dump_cmd.args = _("[-g|-p|-u] [-LU] [-f file]");
 	dump_cmd.oneline = _("dump quota information for backup utilities");
 	dump_cmd.help = dump_help;
 	dump_cmd.flags = CMD_FLAG_FOREIGN_OK;
@@ -767,7 +765,7 @@ report_init(void)
 	report_cmd.cfunc = report_f;
 	report_cmd.argmin = 0;
 	report_cmd.argmax = -1;
-	report_cmd.args = _("[-bir] [-gpu] [-ahnt] [-f file]");
+	report_cmd.args = _("[-bir] [-gpu] [-ahntlLNU] [-f file]");
 	report_cmd.oneline = _("report filesystem quota information");
 	report_cmd.help = report_help;
 	report_cmd.flags = CMD_FLAG_ONESHOT | CMD_FLAG_FOREIGN_OK;

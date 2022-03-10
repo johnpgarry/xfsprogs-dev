@@ -393,7 +393,7 @@ option outputs the numeric ID instead of the name. The
 .B \-L
 and
 .B \-U
-options specify lower and upper ID bounds to report on.  If upper/lower
+options specify lower and/or upper ID bounds to report on.  If upper/lower
 bounds are specified, then by default only the IDs will be displayed
 in output; with the
 .B \-l
@@ -565,6 +565,8 @@ report an error.
 [
 .BR \-g " | " \-p " | " \-u
 ] [
+.BR \-L " | " \-U
+] [
 .B \-f
 .I file
 ]
@@ -572,6 +574,11 @@ report an error.
 Dump out quota limit information for backup utilities, either to
 standard output (default) or to a
 .IR file .
+The
+.B \-L
+and
+.B \-U
+options specify lower and/or upper ID bounds to dump.
 This is only the limits, not the usage information, of course.
 .HP
 .B restore
