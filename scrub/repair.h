@@ -8,7 +8,7 @@
 
 struct action_list {
 	struct list_head	list;
-	size_t			nr;
+	unsigned long long	nr;
 	bool			sorted;
 };
 
@@ -22,7 +22,7 @@ static inline bool action_list_empty(const struct action_list *alist)
 	return list_empty(&alist->list);
 }
 
-size_t action_list_length(struct action_list *alist);
+unsigned long long action_list_length(struct action_list *alist);
 void action_list_add(struct action_list *dest, struct action_item *item);
 void action_list_splice(struct action_list *dest, struct action_list *src);
 
