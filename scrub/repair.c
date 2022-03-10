@@ -189,7 +189,7 @@ action_list_init(
 }
 
 /* Number of repairs in this list. */
-size_t
+unsigned long long
 action_list_length(
 	struct action_list		*alist)
 {
