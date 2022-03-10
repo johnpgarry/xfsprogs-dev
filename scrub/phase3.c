@@ -21,8 +21,14 @@
 /* Phase 3: Scan all inodes. */
 
 struct scrub_inode_ctx {
+	/* Number of inodes scanned. */
 	struct ptcounter	*icount;
+
+	/* Set to true to abort all threads. */
 	bool			aborted;
+
+	/* Set to true if we want to defer file repairs to phase 4. */
+	bool			always_defer_repairs;
 };
 
 /* Report a filesystem error that the vfs fed us on close. */
@@ -131,10 +137,16 @@ scrub_inode(
 	if (error)
 		goto out;
 
-	/* Try to repair the file while it's open. */
-	error = action_list_process_or_defer(ctx, agno, &alist);
-	if (error)
-		goto out;
+	/*
+	 * Try to repair the file while it's open.  If at the start of phase 3
+	 * we already had ag/rt metadata repairs queued up for phase 4, defer
+	 * file repairs until phase 4 as well.
+	 */
+	if (!ictx->always_defer_repairs) {
+		error = action_list_process_or_defer(ctx, agno, &alist);
+		if (error)
+			goto out;
+	}
 
 out:
 	if (error)
@@ -170,12 +182,23 @@ phase3_func(
 {
 	struct scrub_inode_ctx	ictx = { NULL };
 	uint64_t		val;
+	xfs_agnumber_t		agno;
 	int			err;
 
 	err = ptcounter_alloc(scrub_nproc(ctx), &ictx.icount);
 	if (err) {
 		str_liberror(ctx, err, _("creating scanned inode counter"));
 		return err;
+	}
+
+	/*
+	 * If we already have ag/fs metadata to repair from previous phases,
+	 * we would rather not try to repair file metadata until we've tried
+	 * to repair the space metadata.
+	 */
+	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++) {
+		if (!action_list_empty(&ctx->action_lists[agno]))
+			ictx.always_defer_repairs = true;
 	}
 
 	err = scrub_scan_all_inodes(ctx, scrub_inode, &ictx);
