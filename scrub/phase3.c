@@ -24,6 +24,9 @@ struct scrub_inode_ctx {
 	/* Number of inodes scanned. */
 	struct ptcounter	*icount;
 
+	/* per-AG locks to protect the repair lists */
+	pthread_mutex_t		*locks;
+
 	/* Set to true to abort all threads. */
 	bool			aborted;
 
@@ -46,11 +49,31 @@ report_close_error(
 	str_errno(ctx, descr);
 }
 
+/*
+ * Defer all the repairs until phase 4, being careful about locking since the
+ * inode scrub threads are not per-AG.
+ */
+static void
+inode_action_list_defer(
+	struct scrub_ctx	*ctx,
+	struct scrub_inode_ctx	*ictx,
+	xfs_agnumber_t		agno,
+	struct action_list	*alist)
+{
+	if (alist->nr == 0)
+		return;
+
+	pthread_mutex_lock(&ictx->locks[agno]);
+	action_list_defer(ctx, agno, alist);
+	pthread_mutex_unlock(&ictx->locks[agno]);
+}
+
 /* Run actions now and defer unfinished items for later. */
 static int
 inode_action_list_process_or_defer(
 	struct scrub_ctx	*ctx,
 	int			fd,
+	struct scrub_inode_ctx	*ictx,
 	xfs_agnumber_t		agno,
 	struct action_list	*alist)
 {
@@ -61,7 +84,7 @@ inode_action_list_process_or_defer(
 	if (ret)
 		return ret;
 
-	action_list_defer(ctx, agno, alist);
+	inode_action_list_defer(ctx, ictx, agno, alist);
 	return 0;
 }
 
@@ -116,7 +139,7 @@ scrub_inode(
 	if (error)
 		goto out;
 
-	error = inode_action_list_process_or_defer(ctx, fd, agno, &alist);
+	error = inode_action_list_process_or_defer(ctx, fd, ictx, agno, &alist);
 	if (error)
 		goto out;
 
@@ -131,7 +154,7 @@ scrub_inode(
 	if (error)
 		goto out;
 
-	error = inode_action_list_process_or_defer(ctx, fd, agno, &alist);
+	error = inode_action_list_process_or_defer(ctx, fd, ictx, agno, &alist);
 	if (error)
 		goto out;
 
@@ -162,8 +185,8 @@ scrub_inode(
 	 * file repairs until phase 4 as well.
 	 */
 	if (!ictx->always_defer_repairs) {
-		error = inode_action_list_process_or_defer(ctx, fd, agno,
-				&alist);
+		error = inode_action_list_process_or_defer(ctx, fd, ictx,
+				agno, &alist);
 		if (error)
 			goto out;
 	}
@@ -179,7 +202,7 @@ out:
 		ictx->aborted = true;
 	}
 	progress_add(1);
-	action_list_defer(ctx, agno, &alist);
+	inode_action_list_defer(ctx, ictx, agno, &alist);
 	if (fd >= 0) {
 		int	err2;
 
@@ -211,12 +234,21 @@ phase3_func(
 		return err;
 	}
 
+	ictx.locks = calloc(ctx->mnt.fsgeom.agcount, sizeof(pthread_mutex_t));
+	if (!ictx.locks) {
+		str_errno(ctx, _("creating per-AG repair list locks"));
+		err = ENOMEM;
+		goto out_ptcounter;
+	}
+
 	/*
 	 * If we already have ag/fs metadata to repair from previous phases,
 	 * we would rather not try to repair file metadata until we've tried
 	 * to repair the space metadata.
 	 */
 	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++) {
+		pthread_mutex_init(&ictx.locks[agno], NULL);
+
 		if (!action_list_empty(&ctx->action_lists[agno]))
 			ictx.always_defer_repairs = true;
 	}
@@ -225,17 +257,21 @@ phase3_func(
 	if (!err && ictx.aborted)
 		err = ECANCELED;
 	if (err)
-		goto free;
+		goto out_locks;
 
 	scrub_report_preen_triggers(ctx);
 	err = ptcounter_value(ictx.icount, &val);
 	if (err) {
 		str_liberror(ctx, err, _("summing scanned inode counter"));
-		return err;
+		goto out_locks;
 	}
 
 	ctx->inodes_checked = val;
-free:
+out_locks:
+	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++)
+		pthread_mutex_destroy(&ictx.locks[agno]);
+	free(ictx.locks);
+out_ptcounter:
 	ptcounter_free(ictx.icount);
 	return err;
 }
