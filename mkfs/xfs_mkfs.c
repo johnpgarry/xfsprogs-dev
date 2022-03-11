@@ -3432,28 +3432,14 @@ _("external log device size %lld blocks too small, must be at least %lld blocks\
 
 	/* internal log - if no size specified, calculate automatically */
 	if (!cfg->logblocks) {
-		if (cfg->dblocks < GIGABYTES(1, cfg->blocklog)) {
-			/* tiny filesystems get minimum sized logs. */
-			cfg->logblocks = min_logblocks;
-		} else if (cfg->dblocks < GIGABYTES(16, cfg->blocklog)) {
-
-			/*
-			 * For small filesystems, we want to use the
-			 * XFS_MIN_LOG_BYTES for filesystems smaller than 16G if
-			 * at all possible, ramping up to 128MB at 256GB.
-			 */
-			cfg->logblocks = min(XFS_MIN_LOG_BYTES >> cfg->blocklog,
-					min_logblocks * XFS_DFL_LOG_FACTOR);
-		} else {
-			/*
-			 * With a 2GB max log size, default to maximum size
-			 * at 4TB. This keeps the same ratio from the older
-			 * max log size of 128M at 256GB fs size. IOWs,
-			 * the ratio of fs size to log size is 2048:1.
-			 */
-			cfg->logblocks = (cfg->dblocks << cfg->blocklog) / 2048;
-			cfg->logblocks = cfg->logblocks >> cfg->blocklog;
-		}
+		/*
+		 * With a 2GB max log size, default to maximum size at 4TB.
+		 * This keeps the same ratio from the older max log size of
+		 * 128M at 256GB fs size. IOWs, the ratio of fs size to log
+		 * size is 2048:1.
+		 */
+		cfg->logblocks = (cfg->dblocks << cfg->blocklog) / 2048;
+		cfg->logblocks = cfg->logblocks >> cfg->blocklog;
 
 		calc_realistic_log_size(cfg);
 
