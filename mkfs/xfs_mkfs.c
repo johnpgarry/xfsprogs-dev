@@ -19,6 +19,14 @@
 #define MEGABYTES(count, blog)	((uint64_t)(count) << (20 - (blog)))
 
 /*
+ * Realistically, the log should never be smaller than 64MB.  Studies by the
+ * kernel maintainer in early 2022 have shown a dramatic reduction in long tail
+ * latency of the xlog grant head waitqueue when running a heavy metadata
+ * update workload when the log size is at least 64MB.
+ */
+#define XFS_MIN_REALISTIC_LOG_BLOCKS(blog)	(MEGABYTES(64, (blog)))
+
+/*
  * Use this macro before we have superblock and mount structure to
  * convert from basic blocks to filesystem blocks.
  */
@@ -3259,6 +3267,28 @@ validate_log_size(uint64_t logblocks, int blocklog, int min_logblocks)
 	}
 }
 
+/*
+ * Ensure that the log is large enough to provide reasonable performance on a
+ * modern system.
+ */
+static void
+calc_realistic_log_size(
+	struct mkfs_params	*cfg)
+{
+	unsigned int		realistic_log_blocks;
+
+	realistic_log_blocks = XFS_MIN_REALISTIC_LOG_BLOCKS(cfg->blocklog);
+
+	/*
+	 * If the "realistic" size is more than 7/8 of the AG, this is a tiny
+	 * filesystem and we don't care.
+	 */
+	if (realistic_log_blocks > (cfg->agsize * 7 / 8))
+		return;
+
+	cfg->logblocks = max(cfg->logblocks, realistic_log_blocks);
+}
+
 static void
 clamp_internal_log_size(
 	struct mkfs_params	*cfg,
@@ -3361,6 +3391,8 @@ _("external log device size %lld blocks too small, must be at least %lld blocks\
 			cfg->logblocks = (cfg->dblocks << cfg->blocklog) / 2048;
 			cfg->logblocks = cfg->logblocks >> cfg->blocklog;
 		}
+
+		calc_realistic_log_size(cfg);
 
 		clamp_internal_log_size(cfg, mp, min_logblocks);
 
