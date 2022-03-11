@@ -1,3 +1,21 @@
+xfsprogs-5.15.0-rc1 (11 Mar 2022)
+	- mkfs: enable inobtcount and bigtime by default (Darrick J. Wong)
+	- mkfs: prevent corruption of suboption string values (Darrick J. Wong)
+	- mkfs: document sample configuration file location (Darrick J. Wong)
+	- mkfs: add configuration files for a few LTS kernels (Darrick J. Wong)
+	- mkfs: add a config file for x86_64 pmem filesystems (Darrick J. Wong)
+	- xfs_quota: don't exit on "project" cmd failure (Eric Sandeen)
+	- xfs_repair: don't guess about failure reason in phase6 (Eric Sandeen)
+	- xfs_repair: update 2ndary superblocks after upgrades (Darrick J. Wong)
+	- xfs_scrub: fix reporting if we can't open devices (Darrick J. Wong)
+	- xfs_scrub: report optional features in version (Darrick J. Wong)
+	- libxcmd: use emacs mode for command history editing (Darrick J. Wong)
+	- libfrog: always use the kernel GETFSMAP definitions (Darrick J. Wong)
+	- mkfs.xfs(8): fix default inode allocator description (Eric Sandeen)
+	- xfs_quota(8): fix up dump and report documentation (Eric Sandeen)
+	- xfs_quota(8): document units in limit command (Eric Sandeen)
+	- misc: add a crc32c self test to mkfs and repair (Darrick J. Wong)
+
 xfsprogs-5.15.0-rc0 (03 Feb 2022)
 	- libxfs changes merged from kernel 5.15
 
