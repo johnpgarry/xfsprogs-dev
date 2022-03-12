@@ -3260,6 +3260,34 @@ validate_log_size(uint64_t logblocks, int blocklog, int min_logblocks)
 }
 
 static void
+clamp_internal_log_size(
+	struct mkfs_params	*cfg,
+	struct xfs_mount	*mp,
+	int			min_logblocks)
+{
+	/* Ensure the chosen size meets minimum log size requirements */
+	cfg->logblocks = max(min_logblocks, cfg->logblocks);
+
+	/*
+	 * Make sure the log fits wholly within an AG
+	 *
+	 * XXX: If agf->freeblks ends up as 0 because the log uses all
+	 * the free space, it causes the kernel all sorts of problems
+	 * with per-ag reservations. Right now just back it off one
+	 * block, but there's a whole can of worms here that needs to be
+	 * opened to decide what is the valid maximum size of a log in
+	 * an AG.
+	 */
+	cfg->logblocks = min(cfg->logblocks,
+			     libxfs_alloc_ag_max_usable(mp) - 1);
+
+	/* and now clamp the size to the maximum supported size */
+	cfg->logblocks = min(cfg->logblocks, XFS_MAX_LOG_BLOCKS);
+	if ((cfg->logblocks << cfg->blocklog) > XFS_MAX_LOG_BYTES)
+		cfg->logblocks = XFS_MAX_LOG_BYTES >> cfg->blocklog;
+}
+
+static void
 calculate_log_size(
 	struct mkfs_params	*cfg,
 	struct cli_params	*cli,
@@ -3331,26 +3359,7 @@ _("external log device size %lld blocks too small, must be at least %lld blocks\
 			cfg->logblocks = cfg->logblocks >> cfg->blocklog;
 		}
 
-		/* Ensure the chosen size meets minimum log size requirements */
-		cfg->logblocks = max(min_logblocks, cfg->logblocks);
-
-		/*
-		 * Make sure the log fits wholly within an AG
-		 *
-		 * XXX: If agf->freeblks ends up as 0 because the log uses all
-		 * the free space, it causes the kernel all sorts of problems
-		 * with per-ag reservations. Right now just back it off one
-		 * block, but there's a whole can of worms here that needs to be
-		 * opened to decide what is the valid maximum size of a log in
-		 * an AG.
-		 */
-		cfg->logblocks = min(cfg->logblocks,
-				     libxfs_alloc_ag_max_usable(mp) - 1);
-
-		/* and now clamp the size to the maximum supported size */
-		cfg->logblocks = min(cfg->logblocks, XFS_MAX_LOG_BLOCKS);
-		if ((cfg->logblocks << cfg->blocklog) > XFS_MAX_LOG_BYTES)
-			cfg->logblocks = XFS_MAX_LOG_BYTES >> cfg->blocklog;
+		clamp_internal_log_size(cfg, mp, min_logblocks);
 
 		validate_log_size(cfg->logblocks, cfg->blocklog, min_logblocks);
 	}
