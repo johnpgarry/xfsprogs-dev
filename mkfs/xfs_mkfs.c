@@ -3271,6 +3271,49 @@ validate_log_size(uint64_t logblocks, int blocklog, int min_logblocks)
 }
 
 static void
+adjust_ag0_internal_logblocks(
+	struct mkfs_params	*cfg,
+	struct xfs_mount	*mp,
+	int			min_logblocks,
+	int			*max_logblocks)
+{
+	int			backoff = 0;
+	int			ichunk_blocks;
+
+	/*
+	 * mkfs will trip over the write verifiers if the log is allocated in
+	 * AG 0 and consumes enough space that we cannot allocate a non-sparse
+	 * inode chunk for the root directory.  The inode allocator requires
+	 * that the AG have enough free space for the chunk itself plus enough
+	 * to fix up the freelist with aligned blocks if we need to fill the
+	 * allocation from the AGFL.
+	 */
+	ichunk_blocks = XFS_INODES_PER_CHUNK * cfg->inodesize >> cfg->blocklog;
+	backoff = ichunk_blocks * 4;
+
+	/*
+	 * We try to align inode allocations to the data device stripe unit,
+	 * so ensure there's enough space to perform an aligned allocation.
+	 * The inode geometry structure isn't set up yet, so compute this by
+	 * hand.
+	 */
+	backoff = max(backoff, cfg->dsunit * 2);
+
+	*max_logblocks -= backoff;
+
+	/* If the specified log size is too big, complain. */
+	if (cli_opt_set(&lopts, L_SIZE) && cfg->logblocks > *max_logblocks) {
+		fprintf(stderr,
+_("internal log size %lld too large, must be less than %d\n"),
+			(long long)cfg->logblocks,
+			*max_logblocks);
+		usage();
+	}
+
+	cfg->logblocks = min(cfg->logblocks, *max_logblocks);
+}
+
+static void
 calculate_log_size(
 	struct mkfs_params	*cfg,
 	struct cli_params	*cli,
@@ -3381,6 +3424,10 @@ _("log ag number %lld too large, must be less than %lld\n"),
 		cfg->logagno = cli->logagno;
 	} else
 		cfg->logagno = (xfs_agnumber_t)(sbp->sb_agcount / 2);
+
+	if (cfg->logagno == 0)
+		adjust_ag0_internal_logblocks(cfg, mp, min_logblocks,
+				&max_logblocks);
 
 	cfg->logstart = XFS_AGB_TO_FSB(mp, cfg->logagno,
 				       libxfs_prealloc_blocks(mp));
