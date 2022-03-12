@@ -3271,15 +3271,18 @@ clamp_internal_log_size(
 	/*
 	 * Make sure the log fits wholly within an AG
 	 *
-	 * XXX: If agf->freeblks ends up as 0 because the log uses all
-	 * the free space, it causes the kernel all sorts of problems
-	 * with per-ag reservations. Right now just back it off one
-	 * block, but there's a whole can of worms here that needs to be
-	 * opened to decide what is the valid maximum size of a log in
-	 * an AG.
+	 * XXX: If agf->freeblks ends up as 0 because the log uses all the free
+	 * space, it causes the kernel all sorts of problems with per-AG
+	 * reservations.  The reservations are only supposed to take 2% of the
+	 * AG, but there's a further problem that if the log ends up in AG 0,
+	 * we also need space to allocate the root directory inode chunk.
+	 *
+	 * Right now just back it off by 5%, but there's a whole can of worms
+	 * here that needs to be opened to decide what is the valid maximum
+	 * size of a log in an AG.
 	 */
 	cfg->logblocks = min(cfg->logblocks,
-			     libxfs_alloc_ag_max_usable(mp) - 1);
+			     libxfs_alloc_ag_max_usable(mp) * 95 / 100);
 
 	/* and now clamp the size to the maximum supported size */
 	cfg->logblocks = min(cfg->logblocks, XFS_MAX_LOG_BLOCKS);
