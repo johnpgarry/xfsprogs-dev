@@ -223,6 +223,16 @@ _("Optimization is possible."));
 		return CHECK_REPAIR;
 	}
 
+	/*
+	 * This metadata object itself looks ok, but we noticed inconsistencies
+	 * when comparing it with the other filesystem metadata.  If we're in
+	 * repair mode we need to queue it for a "repair" so that phase 4 will
+	 * re-examine the object as repairs progress to see if the kernel will
+	 * deem it completely consistent at some point.
+	 */
+	if (xref_failed(meta) && ctx->mode == SCRUB_MODE_REPAIR)
+		return CHECK_REPAIR;
+
 	/* Everything is ok. */
 	return CHECK_DONE;
 }
@@ -787,6 +797,23 @@ _("Read-only filesystem; cannot make changes."));
 			return CHECK_RETRY;
 		str_corrupt(ctx, descr_render(&dsc),
 _("Repair unsuccessful; offline repair required."));
+	} else if (xref_failed(&meta)) {
+		/*
+		 * This metadata object itself looks ok, but we still noticed
+		 * inconsistencies when comparing it with the other filesystem
+		 * metadata.  If we're in "final warning" mode, advise the
+		 * caller to run xfs_repair; otherwise, we'll keep trying to
+		 * reverify the cross-referencing as repairs progress.
+		 */
+		if (repair_flags & XRM_COMPLAIN_IF_UNFIXED) {
+			str_info(ctx, descr_render(&dsc),
+ _("Seems correct but cross-referencing failed; offline repair recommended."));
+		} else {
+			if (verbose)
+				str_info(ctx, descr_render(&dsc),
+ _("Seems correct but cross-referencing failed; will keep checking."));
+			return CHECK_RETRY;
+		}
 	} else {
 		/* Clean operation, no corruption detected. */
 		if (needs_repair(&oldm))
