@@ -52,9 +52,12 @@ report_close_error(
 static int
 try_inode_repair(
 	struct scrub_inode_ctx	*ictx,
+	int			fd,
 	xfs_agnumber_t		agno,
 	struct action_list	*alist)
 {
+	int			ret;
+
 	/*
 	 * If at the start of phase 3 we already had ag/rt metadata repairs
 	 * queued up for phase 4, leave the action list untouched so that file
@@ -63,7 +66,13 @@ try_inode_repair(
 	if (ictx->always_defer_repairs)
 		return 0;
 
-	return action_list_process_or_defer(ictx->ctx, agno, alist);
+	ret = action_list_process(ictx->ctx, fd, alist,
+			ALP_REPAIR_ONLY | ALP_NOPROGRESS);
+	if (ret)
+		return ret;
+
+	action_list_defer(ictx->ctx, agno, alist);
+	return 0;
 }
 
 /* Verify the contents, xattrs, and extent maps of an inode. */
@@ -117,7 +126,7 @@ scrub_inode(
 	if (error)
 		goto out;
 
-	error = try_inode_repair(ictx, agno, &alist);
+	error = try_inode_repair(ictx, fd, agno, &alist);
 	if (error)
 		goto out;
 
@@ -132,7 +141,7 @@ scrub_inode(
 	if (error)
 		goto out;
 
-	error = try_inode_repair(ictx, agno, &alist);
+	error = try_inode_repair(ictx, fd, agno, &alist);
 	if (error)
 		goto out;
 
@@ -158,7 +167,7 @@ scrub_inode(
 		goto out;
 
 	/* Try to repair the file while it's open. */
-	error = try_inode_repair(ictx, agno, &alist);
+	error = try_inode_repair(ictx, fd, agno, &alist);
 	if (error)
 		goto out;
 

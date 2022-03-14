@@ -57,7 +57,8 @@ struct action_item {
 /* Complain if still broken even after fix. */
 #define XRM_COMPLAIN_IF_UNFIXED	(1U << 1)
 
-enum check_outcome xfs_repair_metadata(struct scrub_ctx *ctx, int fd,
-		struct action_item *aitem, unsigned int repair_flags);
+enum check_outcome xfs_repair_metadata(struct scrub_ctx *ctx,
+		struct xfs_fd *xfdp, struct action_item *aitem,
+		unsigned int repair_flags);
 
 #endif /* XFS_SCRUB_SCRUB_H_ */
