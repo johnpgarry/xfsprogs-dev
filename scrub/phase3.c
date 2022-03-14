@@ -46,6 +46,25 @@ report_close_error(
 	str_errno(ctx, descr);
 }
 
+/* Run actions now and defer unfinished items for later. */
+static int
+inode_action_list_process_or_defer(
+	struct scrub_ctx	*ctx,
+	int			fd,
+	xfs_agnumber_t		agno,
+	struct action_list	*alist)
+{
+	int			ret;
+
+	ret = action_list_process(ctx, fd, alist,
+			ALP_REPAIR_ONLY | ALP_NOPROGRESS);
+	if (ret)
+		return ret;
+
+	action_list_defer(ctx, agno, alist);
+	return 0;
+}
+
 /* Verify the contents, xattrs, and extent maps of an inode. */
 static int
 scrub_inode(
@@ -97,7 +116,7 @@ scrub_inode(
 	if (error)
 		goto out;
 
-	error = action_list_process_or_defer(ctx, agno, &alist);
+	error = inode_action_list_process_or_defer(ctx, fd, agno, &alist);
 	if (error)
 		goto out;
 
@@ -112,7 +131,7 @@ scrub_inode(
 	if (error)
 		goto out;
 
-	error = action_list_process_or_defer(ctx, agno, &alist);
+	error = inode_action_list_process_or_defer(ctx, fd, agno, &alist);
 	if (error)
 		goto out;
 
@@ -143,7 +162,8 @@ scrub_inode(
 	 * file repairs until phase 4 as well.
 	 */
 	if (!ictx->always_defer_repairs) {
-		error = action_list_process_or_defer(ctx, agno, &alist);
+		error = inode_action_list_process_or_defer(ctx, fd, agno,
+				&alist);
 		if (error)
 			goto out;
 	}
