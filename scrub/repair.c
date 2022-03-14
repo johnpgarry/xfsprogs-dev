@@ -230,9 +230,22 @@ action_list_process(
 	struct action_list		*alist,
 	unsigned int			repair_flags)
 {
+	struct xfs_fd			xfd;
+	struct xfs_fd			*xfdp = &ctx->mnt;
 	struct action_item		*aitem;
 	struct action_item		*n;
 	enum check_outcome		fix;
+
+	/*
+	 * If the caller passed us a file descriptor for a scrub, use it
+	 * instead of scrub-by-handle because this enables the kernel to skip
+	 * costly inode btree lookups.
+	 */
+	if (fd >= 0) {
+		memcpy(&xfd, xfdp, sizeof(xfd));
+		xfd.fd = fd;
+		xfdp = &xfd;
+	}
 
 	if (!alist->sorted) {
 		list_sort(NULL, &alist->list, xfs_action_item_compare);
@@ -240,7 +253,7 @@ action_list_process(
 	}
 
 	list_for_each_entry_safe(aitem, n, &alist->list, list) {
-		fix = xfs_repair_metadata(ctx, fd, aitem, repair_flags);
+		fix = xfs_repair_metadata(ctx, xfdp, aitem, repair_flags);
 		switch (fix) {
 		case CHECK_DONE:
 			if (!(repair_flags & ALP_NOPROGRESS))
@@ -284,7 +297,7 @@ action_list_process_or_defer(
 {
 	int				ret;
 
-	ret = action_list_process(ctx, ctx->mnt.fd, alist,
+	ret = action_list_process(ctx, -1, alist,
 			ALP_REPAIR_ONLY | ALP_NOPROGRESS);
 	if (ret)
 		return ret;
