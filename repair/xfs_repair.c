@@ -1174,11 +1174,7 @@ main(int argc, char **argv)
 	phase4(mp);
 	phase_end(4);
 
-	if (no_modify)
-		printf(_("No modify flag set, skipping phase 5\n"));
-	else {
-		phase5(mp);
-	}
+	phase5(mp);
 	phase_end(5);
 
 	/*

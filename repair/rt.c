@@ -111,6 +111,11 @@ generate_rtinfo(xfs_mount_t	*mp,
 		sumcompute[offs]++;
 	}
 
+	if (mp->m_sb.sb_frextents != sb_frextents) {
+		do_warn(_("sb_frextents %" PRIu64 ", counted %" PRIu64 "\n"),
+				mp->m_sb.sb_frextents, sb_frextents);
+	}
+
 	return(0);
 }
 
