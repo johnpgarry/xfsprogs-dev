@@ -616,6 +616,7 @@ phase5(xfs_mount_t *mp)
 		if (mp->m_sb.sb_rblocks) {
 			rtinit(mp);
 			generate_rtinfo(mp, btmcompute, sumcompute);
+			check_rtbitmap(mp);
 		}
 
 		return;
@@ -684,6 +685,7 @@ phase5(xfs_mount_t *mp)
 		_("        - generate realtime summary info and bitmap...\n"));
 		rtinit(mp);
 		generate_rtinfo(mp, btmcompute, sumcompute);
+		check_rtbitmap(mp);
 	}
 
 	do_log(_("        - reset superblock...\n"));
