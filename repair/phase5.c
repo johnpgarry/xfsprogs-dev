@@ -617,6 +617,7 @@ phase5(xfs_mount_t *mp)
 			rtinit(mp);
 			generate_rtinfo(mp, btmcompute, sumcompute);
 			check_rtbitmap(mp);
+			check_rtsummary(mp);
 		}
 
 		return;
@@ -686,6 +687,7 @@ phase5(xfs_mount_t *mp)
 		rtinit(mp);
 		generate_rtinfo(mp, btmcompute, sumcompute);
 		check_rtbitmap(mp);
+		check_rtsummary(mp);
 	}
 
 	do_log(_("        - reset superblock...\n"));

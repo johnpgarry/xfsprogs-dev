@@ -198,71 +198,13 @@ check_rtbitmap(
 			mp->m_sb.sb_rbmblocks);
 }
 
-#if 0
-/*
- * returns 1 if bad, 0 if good
- */
-int
-check_summary(xfs_mount_t *mp)
-{
-	xfs_rfsblock_t	bno;
-	xfs_suminfo_t	*csp;
-	xfs_suminfo_t	*fsp;
-	int		log;
-	int		error = 0;
-
-	error = 0;
-	csp = sumcompute;
-	fsp = sumfile;
-	for (log = 0; log < mp->m_rsumlevels; log++) {
-		for (bno = 0;
-		     bno < mp->m_sb.sb_rbmblocks;
-		     bno++, csp++, fsp++) {
-			if (*csp != *fsp) {
-				do_warn(
-	_("rt summary mismatch, size %d block %llu, file: %d, computed: %d\n"),
-						log, bno, *fsp, *csp);
-				error = 1;
-			}
-		}
-	}
-
-	return(error);
-}
-
-/*
- * copy the real-time summary file data into memory
- */
 void
-process_rtsummary(xfs_mount_t	*mp,
-		struct xfs_dinode	*dino,
-		blkmap_t	*blkmap)
+check_rtsummary(
+	struct xfs_mount	*mp)
 {
-	xfs_fsblock_t	bno;
-	struct xfs_buf	*bp;
-	char		*bytes;
-	int		sumbno;
+	if (need_rsumino)
+		return;
 
-	for (sumbno = 0; sumbno < blkmap->count; sumbno++) {
-		bno = blkmap_get(blkmap, sumbno);
-		if (bno == NULLFSBLOCK) {
-			do_warn(_("block %d for rtsummary inode is missing\n"),
-					sumbno);
-			error++;
-			continue;
-		}
-		error = -libxfs_buf_read(mp->m_dev, XFS_FSB_TO_DADDR(mp, bno),
-				XFS_FSB_TO_BB(mp, 1), 0, NULL, &bp);
-		if (error) {
-			do_warn(_("can't read block %d for rtsummary inode\n"),
-					sumbno);
-			error++;
-			continue;
-		}
-		bytes = bp->b_un.b_addr;
-		memmove((char *)sumfile + sumbno * mp->m_sb.sb_blocksize, bytes,
-			mp->m_sb.sb_blocksize);
-		libxfs_buf_relse(bp);
-	}
+	check_rtfile_contents(mp, "rtsummary", mp->m_sb.sb_rsumino, sumcompute,
+			XFS_B_TO_FSB(mp, mp->m_rsumsize));
 }
-#endif
