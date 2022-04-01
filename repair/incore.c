@@ -209,7 +209,7 @@ init_rt_bmap(
 	if (mp->m_sb.sb_rextents == 0)
 		return;
 
-	rt_bmap_size = roundup(mp->m_sb.sb_rextents / (NBBY / XR_BB),
+	rt_bmap_size = roundup(howmany(mp->m_sb.sb_rextents, (NBBY / XR_BB)),
 			       sizeof(uint64_t));
 
 	rt_bmap = memalign(sizeof(uint64_t), rt_bmap_size);
