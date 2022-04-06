@@ -153,7 +153,7 @@ _("Filesystem is shut down, aborting."));
 	case EIO:
 	case ENOMEM:
 		/* Abort on I/O errors or insufficient memory. */
-		str_errno(ctx, descr_render(&dsc));
+		str_liberror(ctx, error, descr_render(&dsc));
 		return CHECK_ABORT;
 	case EDEADLOCK:
 	case EBUSY:
@@ -164,10 +164,10 @@ _("Filesystem is shut down, aborting."));
 		 * and the other two should be reported via sm_flags.
 		 */
 		str_liberror(ctx, error, _("Kernel bug"));
-		fallthrough;
+		return CHECK_DONE;
 	default:
 		/* Operational error. */
-		str_errno(ctx, descr_render(&dsc));
+		str_liberror(ctx, error, descr_render(&dsc));
 		return CHECK_DONE;
 	}
 
