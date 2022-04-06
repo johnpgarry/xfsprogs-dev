@@ -19,6 +19,14 @@
 #define MEGABYTES(count, blog)	((uint64_t)(count) << (20 - (blog)))
 
 /*
+ * Realistically, the log should never be smaller than 64MB.  Studies by the
+ * kernel maintainer in early 2022 have shown a dramatic reduction in long tail
+ * latency of the xlog grant head waitqueue when running a heavy metadata
+ * update workload when the log size is at least 64MB.
+ */
+#define XFS_MIN_REALISTIC_LOG_BLOCKS(blog)	(MEGABYTES(64, (blog)))
+
+/*
  * Use this macro before we have superblock and mount structure to
  * convert from basic blocks to filesystem blocks.
  */
@@ -3266,7 +3274,7 @@ calculate_log_size(
 	struct xfs_mount	*mp)
 {
 	struct xfs_sb		*sbp = &mp->m_sb;
-	int			min_logblocks;
+	int			min_logblocks;	/* absolute minimum */
 	struct xfs_mount	mount;
 
 	/* we need a temporary mount to calculate the minimum log size. */
@@ -3308,28 +3316,17 @@ _("external log device size %lld blocks too small, must be at least %lld blocks\
 
 	/* internal log - if no size specified, calculate automatically */
 	if (!cfg->logblocks) {
-		if (cfg->dblocks < GIGABYTES(1, cfg->blocklog)) {
-			/* tiny filesystems get minimum sized logs. */
-			cfg->logblocks = min_logblocks;
-		} else if (cfg->dblocks < GIGABYTES(16, cfg->blocklog)) {
+		/* Use a 2048:1 fs:log ratio for most filesystems */
+		cfg->logblocks = (cfg->dblocks << cfg->blocklog) / 2048;
+		cfg->logblocks = cfg->logblocks >> cfg->blocklog;
 
-			/*
-			 * For small filesystems, we want to use the
-			 * XFS_MIN_LOG_BYTES for filesystems smaller than 16G if
-			 * at all possible, ramping up to 128MB at 256GB.
-			 */
-			cfg->logblocks = min(XFS_MIN_LOG_BYTES >> cfg->blocklog,
-					min_logblocks * XFS_DFL_LOG_FACTOR);
-		} else {
-			/*
-			 * With a 2GB max log size, default to maximum size
-			 * at 4TB. This keeps the same ratio from the older
-			 * max log size of 128M at 256GB fs size. IOWs,
-			 * the ratio of fs size to log size is 2048:1.
-			 */
-			cfg->logblocks = (cfg->dblocks << cfg->blocklog) / 2048;
-			cfg->logblocks = cfg->logblocks >> cfg->blocklog;
-		}
+		/* But don't go below a reasonable size */
+		cfg->logblocks = max(cfg->logblocks,
+				XFS_MIN_REALISTIC_LOG_BLOCKS(cfg->blocklog));
+
+		/* And for a tiny filesystem, use the absolute minimum size */
+		if (cfg->dblocks < MEGABYTES(300, cfg->blocklog))
+			cfg->logblocks = min_logblocks;
 
 		/* Ensure the chosen size meets minimum log size requirements */
 		cfg->logblocks = max(min_logblocks, cfg->logblocks);
