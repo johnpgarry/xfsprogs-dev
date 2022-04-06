@@ -1,3 +1,8 @@
+xfsprogs-5.15.0 (06 Apr  2022)
+	- mkfs: increase the min log size to 64MB when possible (Eric Sandeen)
+	- xfs_scrub: retry items that are ok except for XFAIL (Darrick J. Wong)
+	- xfs_scrub: fix xfrog_scrub_metadata error reporting (Darrick J. Wong)
+
 xfsprogs-5.15.0-rc1 (11 Mar 2022)
 	- mkfs: enable inobtcount and bigtime by default (Darrick J. Wong)
 	- mkfs: prevent corruption of suboption string values (Darrick J. Wong)
