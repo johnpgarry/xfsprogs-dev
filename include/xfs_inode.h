@@ -164,10 +164,13 @@ static inline bool xfs_inode_has_bigtime(struct xfs_inode *ip)
 	return ip->i_diflags2 & XFS_DIFLAG2_BIGTIME;
 }
 
-typedef struct cred {
-	uid_t	cr_uid;
-	gid_t	cr_gid;
-} cred_t;
+/* Always set the child's GID to this value, even if the parent is setgid. */
+#define CRED_FORCE_GID	(1U << 0)
+struct cred {
+	uid_t		cr_uid;
+	gid_t		cr_gid;
+	unsigned int	cr_flags;
+};
 
 extern int	libxfs_dir_ialloc (struct xfs_trans **, struct xfs_inode *,
 				mode_t, nlink_t, xfs_dev_t, struct cred *,
