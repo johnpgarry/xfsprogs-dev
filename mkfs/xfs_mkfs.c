@@ -3219,8 +3219,18 @@ align_internal_log(
 	int			max_logblocks)
 {
 	/* round up log start if necessary */
-	if ((cfg->logstart % sunit) != 0)
+	if ((cfg->logstart % sunit) != 0) {
 		cfg->logstart = ((cfg->logstart + (sunit - 1)) / sunit) * sunit;
+
+		/*
+		 * If rounding up logstart to a stripe boundary moves the end
+		 * of the log past the end of the AG, reduce logblocks to get
+		 * it back under EOAG.
+		 */
+		if (!libxfs_verify_fsbext(mp, cfg->logstart, cfg->logblocks) &&
+		    cfg->logblocks > sunit)
+			cfg->logblocks -= sunit;
+	}
 
 	/* If our log start overlaps the next AG's metadata, fail. */
 	if (!libxfs_verify_fsbno(mp, cfg->logstart)) {
