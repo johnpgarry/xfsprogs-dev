@@ -706,6 +706,18 @@ libxfs_buftarg_init(
 	mp->m_rtdev_targp = libxfs_buftarg_alloc(mp, rtdev, rfail);
 }
 
+/* Compute maximum possible height for per-AG btree types for this fs. */
+static inline void
+xfs_agbtree_compute_maxlevels(
+	struct xfs_mount	*mp)
+{
+	unsigned int		levels;
+
+	levels = max(mp->m_alloc_maxlevels, M_IGEO(mp)->inobt_maxlevels);
+	levels = max(levels, mp->m_rmap_maxlevels);
+	mp->m_agbtree_maxlevels = max(levels, mp->m_refc_maxlevels);
+}
+
 /*
  * Mount structure initialization, provides a filled-in xfs_mount_t
  * such that the numerous XFS_* macros can be used.  If dev is zero,
@@ -756,6 +768,8 @@ libxfs_mount(
 	xfs_ialloc_setup_geometry(mp);
 	xfs_rmapbt_compute_maxlevels(mp);
 	xfs_refcountbt_compute_maxlevels(mp);
+
+	xfs_agbtree_compute_maxlevels(mp);
 
 	/*
 	 * Check that the data (and log if separate) are an ok size.
