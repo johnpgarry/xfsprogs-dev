@@ -56,13 +56,13 @@ static int		frag_f(int argc, char **argv);
 static int		init(int argc, char **argv);
 static void		process_bmbt_reclist(xfs_bmbt_rec_t *rp, int numrecs,
 					     extmap_t **extmapp);
-static void		process_btinode(xfs_dinode_t *dip, extmap_t **extmapp,
-					int whichfork);
-static void		process_exinode(xfs_dinode_t *dip, extmap_t **extmapp,
-					int whichfork);
-static void		process_fork(xfs_dinode_t *dip, int whichfork);
+static void		process_btinode(struct xfs_dinode *dip,
+					extmap_t **extmapp, int whichfork);
+static void		process_exinode(struct xfs_dinode *dip,
+					extmap_t **extmapp, int whichfork);
+static void		process_fork(struct xfs_dinode *dip, int whichfork);
 static void		process_inode(xfs_agf_t *agf, xfs_agino_t agino,
-				      xfs_dinode_t *dip);
+				      struct xfs_dinode *dip);
 static void		scan_ag(xfs_agnumber_t agno);
 static void		scan_lbtree(xfs_fsblock_t root, int nlevels,
 				    scan_lbtree_f_t func, extmap_t **extmapp,
@@ -233,7 +233,7 @@ process_bmbt_reclist(
 
 static void
 process_btinode(
-	xfs_dinode_t		*dip,
+	struct xfs_dinode	*dip,
 	extmap_t		**extmapp,
 	int			whichfork)
 {
@@ -257,7 +257,7 @@ process_btinode(
 
 static void
 process_exinode(
-	xfs_dinode_t		*dip,
+	struct xfs_dinode	*dip,
 	extmap_t		**extmapp,
 	int			whichfork)
 {
@@ -269,11 +269,11 @@ process_exinode(
 
 static void
 process_fork(
-	xfs_dinode_t	*dip,
-	int		whichfork)
+	struct xfs_dinode	*dip,
+	int			whichfork)
 {
-	extmap_t	*extmap;
-	int		nex;
+	extmap_t		*extmap;
+	int			nex;
 
 	nex = XFS_DFORK_NEXTENTS(dip, whichfork);
 	if (!nex)
@@ -296,7 +296,7 @@ static void
 process_inode(
 	xfs_agf_t		*agf,
 	xfs_agino_t		agino,
-	xfs_dinode_t		*dip)
+	struct xfs_dinode	*dip)
 {
 	uint64_t		actual;
 	uint64_t		ideal;
@@ -509,7 +509,7 @@ scanfunc_ino(
 				for (j = 0; j < inodes_per_buf; j++) {
 					if (XFS_INOBT_IS_FREE_DISK(&rp[i], ioff + j))
 						continue;
-					dip = (xfs_dinode_t *)((char *)iocur_top->data +
+					dip = (struct xfs_dinode *)((char *)iocur_top->data +
 						((off + j) << mp->m_sb.sb_inodelog));
 					process_inode(agf, agino + ioff + j, dip);
 				}

@@ -630,7 +630,7 @@ typedef struct bm_level_state  {
 typedef struct bm_cursor  {
 	int			num_levels;
 	xfs_ino_t		ino;
-	xfs_dinode_t		*dip;
+	struct xfs_dinode	*dip;
 	bm_level_state_t	level[XR_MAX_BMLEVELS];
 } bmap_cursor_t;
 

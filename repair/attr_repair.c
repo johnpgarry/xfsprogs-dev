@@ -207,7 +207,7 @@ static int
 process_shortform_attr(
 	struct xfs_mount		*mp,
 	xfs_ino_t			ino,
-	xfs_dinode_t			*dip,
+	struct xfs_dinode		*dip,
 	int				*repair)
 {
 	struct xfs_attr_shortform	*asf;
@@ -879,14 +879,14 @@ error_out:
  */
 static int
 process_node_attr(
-	xfs_mount_t	*mp,
-	xfs_ino_t	ino,
-	xfs_dinode_t	*dip,
-	blkmap_t	*blkmap)
+	xfs_mount_t		*mp,
+	xfs_ino_t		ino,
+	struct xfs_dinode	*dip,
+	blkmap_t		*blkmap)
 {
-	xfs_dablk_t			bno;
-	int				error = 0;
-	da_bt_cursor_t			da_cursor;
+	xfs_dablk_t		bno;
+	int			error = 0;
+	da_bt_cursor_t		da_cursor;
 
 	/*
 	 * try again -- traverse down left-side of tree until we hit
@@ -1203,14 +1203,14 @@ xfs_acl_from_disk(
  */
 int
 process_attributes(
-	xfs_mount_t	*mp,
-	xfs_ino_t	ino,
-	xfs_dinode_t	*dip,
-	blkmap_t	*blkmap,
-	int		*repair)  /* returned if we did repair */
+	xfs_mount_t		*mp,
+	xfs_ino_t		ino,
+	struct xfs_dinode	*dip,
+	blkmap_t		*blkmap,
+	int			*repair)  /* returned if we did repair */
 {
-	int		err;
-	__u8		aformat = dip->di_aformat;
+	int			err;
+	__u8			aformat = dip->di_aformat;
 #ifdef DEBUG
 	struct xfs_attr_shortform *asf;
 

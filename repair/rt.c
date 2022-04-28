@@ -153,26 +153,27 @@ check_summary(xfs_mount_t *mp)
  * instead of the realtime bitmap file
  */
 void
-process_rtbitmap(xfs_mount_t	*mp,
-		xfs_dinode_t	*dino,
-		blkmap_t	*blkmap)
+process_rtbitmap(
+	struct xfs_mount	*mp,
+	struct xfs_dinode	*dino,
+	blkmap_t		*blkmap)
 {
-	int		error;
-	int		bit;
-	int		bitsperblock;
-	int		bmbno;
-	int		end_bmbno;
-	xfs_fsblock_t	bno;
-	struct xfs_buf	*bp;
-	xfs_rtblock_t	extno;
-	int		i;
-	int		len;
-	int		log;
-	int		offs;
-	int		prevbit;
-	int		start_bmbno;
-	int		start_bit;
-	xfs_rtword_t	*words;
+	int			error;
+	int			bit;
+	int			bitsperblock;
+	int			bmbno;
+	int			end_bmbno;
+	xfs_fsblock_t		bno;
+	struct xfs_buf		*bp;
+	xfs_rtblock_t		extno;
+	int			i;
+	int			len;
+	int			log;
+	int			offs;
+	int			prevbit;
+	int			start_bmbno;
+	int			start_bit;
+	xfs_rtword_t		*words;
 
 	ASSERT(mp->m_rbmip == NULL);
 
@@ -238,14 +239,15 @@ process_rtbitmap(xfs_mount_t	*mp,
  * copy the real-time summary file data into memory
  */
 void
-process_rtsummary(xfs_mount_t	*mp,
-		xfs_dinode_t	*dino,
-		blkmap_t	*blkmap)
+process_rtsummary(
+	xfs_mount_t		*mp,
+	struct xfs_dinode	*dino,
+	blkmap_t		*blkmap)
 {
-	xfs_fsblock_t	bno;
-	struct xfs_buf	*bp;
-	char		*bytes;
-	int		sumbno;
+	xfs_fsblock_t		bno;
+	struct xfs_buf		*bp;
+	char			*bytes;
+	int			sumbno;
 
 	for (sumbno = 0; sumbno < blkmap->count; sumbno++) {
 		bno = blkmap_get(blkmap, sumbno);

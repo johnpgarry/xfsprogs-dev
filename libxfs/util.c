@@ -336,7 +336,7 @@ libxfs_iflush_int(
 	struct xfs_buf			*bp)
 {
 	struct xfs_inode_log_item	*iip;
-	xfs_dinode_t			*dip;
+	struct xfs_dinode		*dip;
 	xfs_mount_t			*mp;
 
 	ASSERT(ip->i_df.if_format != XFS_DINODE_FMT_BTREE ||

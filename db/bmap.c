@@ -38,7 +38,7 @@ bmap(
 	struct xfs_btree_block	*block;
 	xfs_fsblock_t		bno;
 	xfs_fileoff_t		curoffset;
-	xfs_dinode_t		*dip;
+	struct xfs_dinode	*dip;
 	xfs_fileoff_t		eoffset;
 	xfs_bmbt_rec_t		*ep;
 	enum xfs_dinode_fmt	fmt;
@@ -121,20 +121,20 @@ bmap(
 
 static int
 bmap_f(
-	int		argc,
-	char		**argv)
+	int			argc,
+	char			**argv)
 {
-	int		afork = 0;
-	bmap_ext_t	be;
-	int		c;
-	xfs_fileoff_t	co, cosave;
-	int		dfork = 0;
-	xfs_dinode_t	*dip;
-	xfs_fileoff_t	eo;
-	xfs_filblks_t	len;
-	int		nex;
-	char		*p;
-	int		whichfork;
+	int			afork = 0;
+	bmap_ext_t		be;
+	int			c;
+	xfs_fileoff_t		co, cosave;
+	int			dfork = 0;
+	struct xfs_dinode	*dip;
+	xfs_fileoff_t		eo;
+	xfs_filblks_t		len;
+	int			nex;
+	char			*p;
+	int			whichfork;
 
 	if (iocur_top->ino == NULLFSINO) {
 		dbprintf(_("no current inode\n"));

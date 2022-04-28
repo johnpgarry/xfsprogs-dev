@@ -19,7 +19,7 @@ typedef struct da_bt_cursor {
 	int			active;	/* highest level in tree (# levels-1) */
 	xfs_ino_t		ino;
 	xfs_dablk_t		greatest_bno;
-	xfs_dinode_t		*dip;
+	struct xfs_dinode	*dip;
 	struct da_level_state	level[XFS_DA_NODE_MAXDEPTH];
 	struct blkmap		*blkmap;
 } da_bt_cursor_t;

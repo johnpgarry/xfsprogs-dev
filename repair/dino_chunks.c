@@ -22,16 +22,16 @@
  * means only the basic inode info is checked, no fork checks.
  */
 static int
-check_aginode_block(xfs_mount_t	*mp,
-			xfs_agnumber_t	agno,
-			xfs_agblock_t	agbno)
+check_aginode_block(
+	xfs_mount_t		*mp,
+	xfs_agnumber_t		agno,
+	xfs_agblock_t		agbno)
 {
-
-	xfs_dinode_t	*dino_p;
-	int		i;
-	int		cnt = 0;
-	struct xfs_buf	*bp;
-	int		error;
+	struct xfs_dinode	*dino_p;
+	int			i;
+	int			cnt = 0;
+	struct xfs_buf		*bp;
+	int			error;
 
 	/*
 	 * it's ok to read these possible inode blocks in one at
@@ -598,7 +598,7 @@ process_inode_chunk(
 	xfs_ino_t		parent;
 	ino_tree_node_t		*ino_rec;
 	struct xfs_buf		**bplist;
-	xfs_dinode_t		*dino;
+	struct xfs_dinode	*dino;
 	int			icnt;
 	int			status;
 	int			bp_found;
