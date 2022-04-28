@@ -241,6 +241,11 @@ init_caches(void)
 			sizeof(struct xfs_inode_log_item),"xfs_inode_log_item");
 	xfs_buf_item_cache = kmem_cache_init(
 			sizeof(struct xfs_buf_log_item), "xfs_buf_log_item");
+	error = xfs_defer_init_item_caches();
+	if (error) {
+		fprintf(stderr, "Could not allocate defer init item caches.\n");
+		abort();
+	}
 	xfs_da_state_cache = kmem_cache_init(
 			sizeof(struct xfs_da_state), "xfs_da_state");
 	error = xfs_btree_init_cur_caches();
@@ -266,6 +271,7 @@ destroy_caches(void)
 	leaked += kmem_cache_destroy(xfs_ifork_cache);
 	leaked += kmem_cache_destroy(xfs_buf_item_cache);
 	leaked += kmem_cache_destroy(xfs_da_state_cache);
+	xfs_defer_destroy_item_caches();
 	xfs_btree_destroy_cur_caches();
 	leaked += kmem_cache_destroy(xfs_bmap_free_item_cache);
 	leaked += kmem_cache_destroy(xfs_trans_cache);

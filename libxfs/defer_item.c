@@ -216,7 +216,7 @@ xfs_rmap_update_finish_item(
 			rmap->ri_bmap.br_blockcount,
 			rmap->ri_bmap.br_state,
 			state);
-	kmem_free(rmap);
+	kmem_cache_free(xfs_rmap_intent_cache, rmap);
 	return error;
 }
 
@@ -235,7 +235,7 @@ xfs_rmap_update_cancel_item(
 	struct xfs_rmap_intent		*rmap;
 
 	rmap = container_of(item, struct xfs_rmap_intent, ri_list);
-	kmem_free(rmap);
+	kmem_cache_free(xfs_rmap_intent_cache, rmap);
 }
 
 const struct xfs_defer_op_type xfs_rmap_update_defer_type = {
@@ -319,7 +319,7 @@ xfs_refcount_update_finish_item(
 		refc->ri_blockcount = new_aglen;
 		return -EAGAIN;
 	}
-	kmem_free(refc);
+	kmem_cache_free(xfs_refcount_intent_cache, refc);
 	return error;
 }
 
@@ -338,7 +338,7 @@ xfs_refcount_update_cancel_item(
 	struct xfs_refcount_intent	*refc;
 
 	refc = container_of(item, struct xfs_refcount_intent, ri_list);
-	kmem_free(refc);
+	kmem_cache_free(xfs_refcount_intent_cache, refc);
 }
 
 const struct xfs_defer_op_type xfs_refcount_update_defer_type = {
@@ -418,7 +418,7 @@ xfs_bmap_update_finish_item(
 		bmap->bi_bmap.br_blockcount = count;
 		return -EAGAIN;
 	}
-	kmem_free(bmap);
+	kmem_cache_free(xfs_bmap_intent_cache, bmap);
 	return error;
 }
 
@@ -437,7 +437,7 @@ xfs_bmap_update_cancel_item(
 	struct xfs_bmap_intent		*bmap;
 
 	bmap = container_of(item, struct xfs_bmap_intent, bi_list);
-	kmem_free(bmap);
+	kmem_cache_free(xfs_bmap_intent_cache, bmap);
 }
 
 const struct xfs_defer_op_type xfs_bmap_update_defer_type = {
