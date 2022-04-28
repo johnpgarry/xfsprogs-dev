@@ -231,6 +231,8 @@ check_open(char *path, int flags, char **rawfile, char **blockfile)
 static void
 init_zones(void)
 {
+	int	error;
+
 	/* initialise zone allocation */
 	xfs_buf_zone = kmem_zone_init(sizeof(struct xfs_buf), "xfs_buffer");
 	xfs_inode_zone = kmem_zone_init(sizeof(struct xfs_inode), "xfs_inode");
@@ -241,9 +243,11 @@ init_zones(void)
 			sizeof(struct xfs_buf_log_item), "xfs_buf_log_item");
 	xfs_da_state_zone = kmem_zone_init(
 			sizeof(struct xfs_da_state), "xfs_da_state");
-	xfs_btree_cur_zone = kmem_zone_init(
-			xfs_btree_cur_sizeof(XFS_BTREE_CUR_CACHE_MAXLEVELS),
-			"xfs_btree_cur");
+	error = xfs_btree_init_cur_caches();
+	if (error) {
+		fprintf(stderr, "Could not allocate btree cursor caches.\n");
+		abort();
+	}
 	xfs_bmap_free_item_zone = kmem_zone_init(
 			sizeof(struct xfs_extent_free_item),
 			"xfs_bmap_free_item");
@@ -262,7 +266,7 @@ destroy_zones(void)
 	leaked += kmem_zone_destroy(xfs_ifork_zone);
 	leaked += kmem_zone_destroy(xfs_buf_item_zone);
 	leaked += kmem_zone_destroy(xfs_da_state_zone);
-	leaked += kmem_zone_destroy(xfs_btree_cur_zone);
+	xfs_btree_destroy_cur_caches();
 	leaked += kmem_zone_destroy(xfs_bmap_free_item_zone);
 	leaked += kmem_zone_destroy(xfs_trans_zone);
 

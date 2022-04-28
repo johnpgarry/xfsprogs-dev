@@ -6,9 +6,9 @@
 /*
  * Simple memory interface
  */
-
 kmem_zone_t *
-kmem_zone_init(int size, char *name)
+kmem_cache_create(const char *name, unsigned int size, unsigned int align,
+		unsigned int slab_flags, void (*ctor)(void *))
 {
 	kmem_zone_t	*ptr = malloc(sizeof(kmem_zone_t));
 
@@ -21,6 +21,9 @@ kmem_zone_init(int size, char *name)
 	ptr->zone_unitsize = size;
 	ptr->zone_name = name;
 	ptr->allocated = 0;
+	ptr->align = align;
+	ptr->ctor = ctor;
+
 	return ptr;
 }
 
