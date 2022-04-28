@@ -30,7 +30,7 @@ static int __xfs_trans_commit(struct xfs_trans *tp, bool regrant);
  * Simple transaction interface
  */
 
-struct kmem_cache	*xfs_trans_zone;
+struct kmem_cache	*xfs_trans_cache;
 
 /*
  * Initialize the precomputed transaction reservation values
@@ -124,7 +124,7 @@ static void
 xfs_trans_free(
 	struct xfs_trans	*tp)
 {
-	kmem_cache_free(xfs_trans_zone, tp);
+	kmem_cache_free(xfs_trans_cache, tp);
 }
 
 /*
@@ -141,7 +141,7 @@ xfs_trans_dup(
 {
 	struct xfs_trans	*ntp;
 
-	ntp = kmem_cache_zalloc(xfs_trans_zone, 0);
+	ntp = kmem_cache_zalloc(xfs_trans_cache, 0);
 
 	/*
 	 * Initialize the new transaction structure.
@@ -259,7 +259,7 @@ libxfs_trans_alloc(
 	struct xfs_trans	*tp;
 	int			error;
 
-	tp = kmem_cache_zalloc(xfs_trans_zone, 0);
+	tp = kmem_cache_zalloc(xfs_trans_cache, 0);
 	tp->t_mountp = mp;
 	INIT_LIST_HEAD(&tp->t_items);
 	INIT_LIST_HEAD(&tp->t_dfops);
@@ -354,7 +354,7 @@ xfs_buf_item_put(
 	struct xfs_buf		*bp = bip->bli_buf;
 
 	bp->b_log_item = NULL;
-	kmem_cache_free(xfs_buf_item_zone, bip);
+	kmem_cache_free(xfs_buf_item_cache, bip);
 }
 
 /* from xfs_trans_buf.c */
@@ -816,7 +816,7 @@ xfs_inode_item_put(
 	ip->i_itemp = NULL;
 
 	list_del_init(&iip->ili_item.li_bio_list);
-	kmem_cache_free(xfs_ili_zone, iip);
+	kmem_cache_free(xfs_ili_cache, iip);
 }
 
 
@@ -868,7 +868,7 @@ buf_item_done(
 {
 	struct xfs_buf		*bp;
 	int			hold;
-	extern struct kmem_cache	*xfs_buf_item_zone;
+	extern struct kmem_cache	*xfs_buf_item_cache;
 
 	bp = bip->bli_buf;
 	ASSERT(bp != NULL);

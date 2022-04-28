@@ -59,11 +59,11 @@
 #include <sys/xattr.h>
 
 /* Zones used in libxfs allocations that aren't in shared header files */
-extern struct kmem_cache *xfs_buf_item_zone;
-extern struct kmem_cache *xfs_ili_zone;
-extern struct kmem_cache *xfs_buf_zone;
-extern struct kmem_cache *xfs_inode_zone;
-extern struct kmem_cache *xfs_trans_zone;
+extern struct kmem_cache *xfs_buf_item_cache;
+extern struct kmem_cache *xfs_ili_cache;
+extern struct kmem_cache *xfs_buf_cache;
+extern struct kmem_cache *xfs_inode_cache;
+extern struct kmem_cache *xfs_trans_cache;
 
 /* fake up iomap, (not) used in xfs_bmap.[ch] */
 #define IOMAP_F_SHARED			0x04

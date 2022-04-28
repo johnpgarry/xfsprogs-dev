@@ -16,8 +16,8 @@
 #include "xfs_inode.h"
 #include "xfs_trans.h"
 
-struct kmem_cache	*xfs_buf_item_zone;
-struct kmem_cache	*xfs_ili_zone;		/* inode log item zone */
+struct kmem_cache	*xfs_buf_item_cache;
+struct kmem_cache	*xfs_ili_cache;		/* inode log item cache */
 
 /*
  * Following functions from fs/xfs/xfs_trans_buf.c
@@ -96,7 +96,7 @@ xfs_buf_item_init(
 		}
 	}
 
-	bip = kmem_cache_zalloc(xfs_buf_item_zone, 0);
+	bip = kmem_cache_zalloc(xfs_buf_item_cache, 0);
 #ifdef LI_DEBUG
 	fprintf(stderr, "adding buf item %p for not-logged buffer %p\n",
 		bip, bp);
@@ -138,7 +138,7 @@ xfs_inode_item_init(
 	struct xfs_inode_log_item	*iip;
 
 	ASSERT(ip->i_itemp == NULL);
-	iip = ip->i_itemp = kmem_cache_zalloc(xfs_ili_zone, 0);
+	iip = ip->i_itemp = kmem_cache_zalloc(xfs_ili_cache, 0);
 #ifdef LI_DEBUG
 	fprintf(stderr, "inode_item_init for inode %llu, iip=%p\n",
 		ip->i_ino, iip);

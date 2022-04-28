@@ -226,49 +226,49 @@ check_open(char *path, int flags, char **rawfile, char **blockfile)
 }
 
 /*
- * Initialize/destroy all of the zone allocators we use.
+ * Initialize/destroy all of the cache allocators we use.
  */
 static void
-init_zones(void)
+init_caches(void)
 {
 	int	error;
 
-	/* initialise zone allocation */
-	xfs_buf_zone = kmem_zone_init(sizeof(struct xfs_buf), "xfs_buffer");
-	xfs_inode_zone = kmem_zone_init(sizeof(struct xfs_inode), "xfs_inode");
-	xfs_ifork_zone = kmem_zone_init(sizeof(struct xfs_ifork), "xfs_ifork");
-	xfs_ili_zone = kmem_zone_init(
+	/* initialise cache allocation */
+	xfs_buf_cache = kmem_cache_init(sizeof(struct xfs_buf), "xfs_buffer");
+	xfs_inode_cache = kmem_cache_init(sizeof(struct xfs_inode), "xfs_inode");
+	xfs_ifork_cache = kmem_cache_init(sizeof(struct xfs_ifork), "xfs_ifork");
+	xfs_ili_cache = kmem_cache_init(
 			sizeof(struct xfs_inode_log_item),"xfs_inode_log_item");
-	xfs_buf_item_zone = kmem_zone_init(
+	xfs_buf_item_cache = kmem_cache_init(
 			sizeof(struct xfs_buf_log_item), "xfs_buf_log_item");
-	xfs_da_state_zone = kmem_zone_init(
+	xfs_da_state_cache = kmem_cache_init(
 			sizeof(struct xfs_da_state), "xfs_da_state");
 	error = xfs_btree_init_cur_caches();
 	if (error) {
 		fprintf(stderr, "Could not allocate btree cursor caches.\n");
 		abort();
 	}
-	xfs_bmap_free_item_zone = kmem_zone_init(
+	xfs_bmap_free_item_cache = kmem_cache_init(
 			sizeof(struct xfs_extent_free_item),
 			"xfs_bmap_free_item");
-	xfs_trans_zone = kmem_zone_init(
+	xfs_trans_cache = kmem_cache_init(
 			sizeof(struct xfs_trans), "xfs_trans");
 }
 
 static int
-destroy_zones(void)
+destroy_caches(void)
 {
 	int	leaked = 0;
 
-	leaked += kmem_zone_destroy(xfs_buf_zone);
-	leaked += kmem_zone_destroy(xfs_ili_zone);
-	leaked += kmem_zone_destroy(xfs_inode_zone);
-	leaked += kmem_zone_destroy(xfs_ifork_zone);
-	leaked += kmem_zone_destroy(xfs_buf_item_zone);
-	leaked += kmem_zone_destroy(xfs_da_state_zone);
+	leaked += kmem_cache_destroy(xfs_buf_cache);
+	leaked += kmem_cache_destroy(xfs_ili_cache);
+	leaked += kmem_cache_destroy(xfs_inode_cache);
+	leaked += kmem_cache_destroy(xfs_ifork_cache);
+	leaked += kmem_cache_destroy(xfs_buf_item_cache);
+	leaked += kmem_cache_destroy(xfs_da_state_cache);
 	xfs_btree_destroy_cur_caches();
-	leaked += kmem_zone_destroy(xfs_bmap_free_item_zone);
-	leaked += kmem_zone_destroy(xfs_trans_zone);
+	leaked += kmem_cache_destroy(xfs_bmap_free_item_cache);
+	leaked += kmem_cache_destroy(xfs_trans_cache);
 
 	return leaked;
 }
@@ -405,7 +405,7 @@ libxfs_init(libxfs_init_t *a)
 				   &libxfs_bcache_operations);
 	use_xfs_buf_lock = a->usebuflock;
 	xfs_dir_startup();
-	init_zones();
+	init_caches();
 	rval = 1;
 done:
 	if (dpath[0])
@@ -1031,11 +1031,11 @@ libxfs_destroy(
 
 	libxfs_close_devices(li);
 
-	/* Free everything from the buffer cache before freeing buffer zone */
+	/* Free everything from the buffer cache before freeing buffer cache */
 	libxfs_bcache_purge();
 	libxfs_bcache_free();
 	cache_destroy(libxfs_bcache);
-	leaked = destroy_zones();
+	leaked = destroy_caches();
 	rcu_unregister_thread();
 	if (getenv("LIBXFS_LEAK_CHECK") && leaked)
 		exit(1);
