@@ -3455,21 +3455,21 @@ process_leaf_node_dir_v2_int(
 
 static void
 process_quota(
-	qtype_t		qtype,
-	inodata_t	*id,
-	blkmap_t	*blkmap)
+	qtype_t			qtype,
+	inodata_t		*id,
+	blkmap_t		*blkmap)
 {
-	xfs_fsblock_t	bno;
-	int		cb;
-	xfs_dqblk_t	*dqb;
-	xfs_dqid_t	dqid;
-	uint8_t		exp_flags = 0;
-	uint		i;
-	uint		perblock;
-	xfs_fileoff_t	qbno;
-	char		*s = NULL;
-	int		scicb;
-	int		t = 0;
+	xfs_fsblock_t		bno;
+	int			cb;
+	struct xfs_dqblk	*dqb;
+	xfs_dqid_t		dqid;
+	uint8_t			exp_flags = 0;
+	uint			i;
+	uint			perblock;
+	xfs_fileoff_t		qbno;
+	char			*s = NULL;
+	int			scicb;
+	int			t = 0;
 
 	switch (qtype) {
 	case IS_USER_QUOTA:
