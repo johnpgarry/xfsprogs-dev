@@ -242,7 +242,8 @@ init_zones(void)
 	xfs_da_state_zone = kmem_zone_init(
 			sizeof(struct xfs_da_state), "xfs_da_state");
 	xfs_btree_cur_zone = kmem_zone_init(
-			sizeof(struct xfs_btree_cur), "xfs_btree_cur");
+			xfs_btree_cur_sizeof(XFS_BTREE_MAXLEVELS),
+			"xfs_btree_cur");
 	xfs_bmap_free_item_zone = kmem_zone_init(
 			sizeof(struct xfs_extent_free_item),
 			"xfs_bmap_free_item");
