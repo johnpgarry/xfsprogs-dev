@@ -43,15 +43,15 @@ built: dibuild config
 	$(MAKE) $(PMAKEFLAGS) default
 	touch built
 
-config: .census
-.census:
+config: .gitcensus
+.gitcensus:
 	@echo "== dpkg-buildpackage: configure" 1>&2
 	$(checkdir)
 	AUTOHEADER=/bin/true dh_autoreconf
 	dh_update_autotools_config
 	$(options) $(MAKE) $(PMAKEFLAGS) include/platform_defs.h
 	cp -f include/install-sh .
-	touch .census
+	touch .gitcensus
 
 dibuild:
 	$(checkdir)
@@ -72,7 +72,7 @@ dibuild:
 clean:
 	@echo "== dpkg-buildpackage: clean" 1>&2
 	$(checkdir)
-	-rm -f built .census mkfs/mkfs.xfs-$(bootpkg)
+	-rm -f built .gitcensus mkfs/mkfs.xfs-$(bootpkg)
 	$(MAKE) distclean
 	-rm -rf $(dirme) $(dirdev) $(dirdi)
 	-rm -f debian/*substvars debian/files* debian/*.debhelper
