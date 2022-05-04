@@ -1,7 +1,11 @@
-xfsprogs-5.16.0-rc0 (28 Apr  2022)
+xfsprogs-5.16.0 (04 May 2022)
+	- libxfs: remove kernel stubs from xfs_shared.h (Eric Sandeen)
+	- debian: Generate .gitcensus instead of .census (Bastian Germann))
+
+xfsprogs-5.16.0-rc0 (28 Apr 2022)
 	- libxfs changes merged from kernel 5.16
 
-xfsprogs-5.15.0 (06 Apr  2022)
+xfsprogs-5.15.0 (06 Apr 2022)
 	- mkfs: increase the min log size to 64MB when possible (Eric Sandeen)
 	- xfs_scrub: retry items that are ok except for XFAIL (Darrick J. Wong)
 	- xfs_scrub: fix xfrog_scrub_metadata error reporting (Darrick J. Wong)

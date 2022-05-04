@@ -1,3 +1,12 @@
+xfsprogs (5.16.0-1) unstable; urgency=medium
+
+  * New upstream release
+
+  [ Bastian Germann ]
+  * debian: Generate .gitcensus instead of .census (Closes: #999743)
+
+ -- Nathan Scott <nathans@debian.org>  Wed, 04 May 2022 14:50:48 -0400
+
 xfsprogs (5.15.0-1) unstable; urgency=medium
 
   * New upstream release
@@ -7,7 +16,7 @@ xfsprogs (5.15.0-1) unstable; urgency=medium
 xfsprogs (5.14.2-1) unstable; urgency=medium
 
   * New upstream release
-    - Move rogue fallthrough macro out of linux.h (Closes: #1000974)
+  * Move rogue fallthrough macro out of linux.h (Closes: #1000974)
 
  -- Nathan Scott <nathans@debian.org>  Mon, 06 Dec 2021 14:26:57 -0500
 
