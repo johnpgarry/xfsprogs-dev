@@ -1,3 +1,6 @@
+xfsprogs-5.18.0-rc0 (06 May 2022)
+	- libxfs changes merged from kernels 5.17 and 5.18
+
 xfsprogs-5.16.0 (04 May 2022)
 	- libxfs: remove kernel stubs from xfs_shared.h (Eric Sandeen)
 	- debian: Generate .gitcensus instead of .census (Bastian Germann))
