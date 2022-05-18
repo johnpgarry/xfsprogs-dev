@@ -30,8 +30,8 @@ repair_ag(
 	struct scrub_ctx		*ctx = (struct scrub_ctx *)wq->wq_ctx;
 	bool				*aborted = priv;
 	struct action_list		*alist;
-	size_t				unfixed;
-	size_t				new_unfixed;
+	unsigned long long		unfixed;
+	unsigned long long		new_unfixed;
 	unsigned int			flags = 0;
 	int				ret;
 
@@ -168,7 +168,7 @@ phase4_estimate(
 	int			*rshift)
 {
 	xfs_agnumber_t		agno;
-	size_t			need_fixing = 0;
+	unsigned long long	need_fixing = 0;
 
 	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++)
 		need_fixing += action_list_length(&ctx->action_lists[agno]);
