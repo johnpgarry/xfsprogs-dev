@@ -446,14 +446,13 @@ scrub_estimate_ag_work(
 }
 
 /*
- * Scrub inode metadata.  If errors occur, this function will log them and
- * return nonzero.
+ * Scrub file metadata of some sort.  If errors occur, this function will log
+ * them and return nonzero.
  */
-static int
-__scrub_file(
+int
+scrub_file(
 	struct scrub_ctx		*ctx,
-	uint64_t			ino,
-	uint32_t			gen,
+	const struct xfs_bulkstat	*bstat,
 	unsigned int			type,
 	struct action_list		*alist)
 {
@@ -464,8 +463,8 @@ __scrub_file(
 	assert(xfrog_scrubbers[type].type == XFROG_SCRUB_TYPE_INODE);
 
 	meta.sm_type = type;
-	meta.sm_ino = ino;
-	meta.sm_gen = gen;
+	meta.sm_ino = bstat->bs_ino;
+	meta.sm_gen = bstat->bs_gen;
 
 	/* Scrub the piece of metadata. */
 	fix = xfs_check_metadata(ctx, &meta, true);
@@ -475,86 +474,6 @@ __scrub_file(
 		return 0;
 
 	return scrub_save_repair(ctx, alist, &meta);
-}
-
-int
-scrub_inode_fields(
-	struct scrub_ctx	*ctx,
-	uint64_t		ino,
-	uint32_t		gen,
-	struct action_list	*alist)
-{
-	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_INODE, alist);
-}
-
-int
-scrub_data_fork(
-	struct scrub_ctx	*ctx,
-	uint64_t		ino,
-	uint32_t		gen,
-	struct action_list	*alist)
-{
-	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_BMBTD, alist);
-}
-
-int
-scrub_attr_fork(
-	struct scrub_ctx	*ctx,
-	uint64_t		ino,
-	uint32_t		gen,
-	struct action_list	*alist)
-{
-	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_BMBTA, alist);
-}
-
-int
-scrub_cow_fork(
-	struct scrub_ctx	*ctx,
-	uint64_t		ino,
-	uint32_t		gen,
-	struct action_list	*alist)
-{
-	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_BMBTC, alist);
-}
-
-int
-scrub_dir(
-	struct scrub_ctx	*ctx,
-	uint64_t		ino,
-	uint32_t		gen,
-	struct action_list	*alist)
-{
-	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_DIR, alist);
-}
-
-int
-scrub_attr(
-	struct scrub_ctx	*ctx,
-	uint64_t		ino,
-	uint32_t		gen,
-	struct action_list	*alist)
-{
-	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_XATTR, alist);
-}
-
-int
-scrub_symlink(
-	struct scrub_ctx	*ctx,
-	uint64_t		ino,
-	uint32_t		gen,
-	struct action_list	*alist)
-{
-	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_SYMLINK, alist);
-}
-
-int
-scrub_parent(
-	struct scrub_ctx	*ctx,
-	uint64_t		ino,
-	uint32_t		gen,
-	struct action_list	*alist)
-{
-	return __scrub_file(ctx, ino, gen, XFS_SCRUB_TYPE_PARENT, alist);
 }
 
 /*

@@ -20,22 +20,6 @@
 
 /* Phase 3: Scan all inodes. */
 
-/*
- * Run a per-file metadata scanner.  We use the ino/gen interface to
- * ensure that the inode we're checking matches what the inode scan
- * told us to look at.
- */
-static int
-scrub_fd(
-	struct scrub_ctx	*ctx,
-	int			(*fn)(struct scrub_ctx *ctx, uint64_t ino,
-				      uint32_t gen, struct action_list *a),
-	struct xfs_bulkstat	*bs,
-	struct action_list	*alist)
-{
-	return fn(ctx, bs->bs_ino, bs->bs_gen, alist);
-}
-
 struct scrub_inode_ctx {
 	struct ptcounter	*icount;
 	bool			aborted;
@@ -84,7 +68,7 @@ scrub_inode(
 	}
 
 	/* Scrub the inode. */
-	error = scrub_fd(ctx, scrub_inode_fields, bstat, &alist);
+	error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_INODE, &alist);
 	if (error)
 		goto out;
 
@@ -93,13 +77,13 @@ scrub_inode(
 		goto out;
 
 	/* Scrub all block mappings. */
-	error = scrub_fd(ctx, scrub_data_fork, bstat, &alist);
+	error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_BMBTD, &alist);
 	if (error)
 		goto out;
-	error = scrub_fd(ctx, scrub_attr_fork, bstat, &alist);
+	error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_BMBTA, &alist);
 	if (error)
 		goto out;
-	error = scrub_fd(ctx, scrub_cow_fork, bstat, &alist);
+	error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_BMBTC, &alist);
 	if (error)
 		goto out;
 
@@ -109,22 +93,21 @@ scrub_inode(
 
 	if (S_ISLNK(bstat->bs_mode)) {
 		/* Check symlink contents. */
-		error = scrub_symlink(ctx, bstat->bs_ino, bstat->bs_gen,
-				&alist);
+		error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_SYMLINK, &alist);
 	} else if (S_ISDIR(bstat->bs_mode)) {
 		/* Check the directory entries. */
-		error = scrub_fd(ctx, scrub_dir, bstat, &alist);
+		error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_DIR, &alist);
 	}
 	if (error)
 		goto out;
 
 	/* Check all the extended attributes. */
-	error = scrub_fd(ctx, scrub_attr, bstat, &alist);
+	error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_XATTR, &alist);
 	if (error)
 		goto out;
 
 	/* Check parent pointers. */
-	error = scrub_fd(ctx, scrub_parent, bstat, &alist);
+	error = scrub_file(ctx, bstat, XFS_SCRUB_TYPE_PARENT, &alist);
 	if (error)
 		goto out;
 
