@@ -3218,15 +3218,13 @@ align_internal_log(
 	int			sunit,
 	int			max_logblocks)
 {
-	uint64_t		logend;
-
 	/* round up log start if necessary */
 	if ((cfg->logstart % sunit) != 0)
 		cfg->logstart = ((cfg->logstart + (sunit - 1)) / sunit) * sunit;
 
 	/* If our log start overlaps the next AG's metadata, fail. */
-	if (XFS_FSB_TO_AGBNO(mp, cfg->logstart) <= XFS_AGFL_BLOCK(mp)) {
-			fprintf(stderr,
+	if (!libxfs_verify_fsbno(mp, cfg->logstart)) {
+		fprintf(stderr,
 _("Due to stripe alignment, the internal log start (%lld) cannot be aligned\n"
   "within an allocation group.\n"),
 			(long long) cfg->logstart);
@@ -3237,8 +3235,7 @@ _("Due to stripe alignment, the internal log start (%lld) cannot be aligned\n"
 	align_log_size(cfg, sunit, max_logblocks);
 
 	/* check the aligned log still starts and ends in the same AG. */
-	logend = cfg->logstart + cfg->logblocks - 1;
-	if (XFS_FSB_TO_AGNO(mp, cfg->logstart) != XFS_FSB_TO_AGNO(mp, logend)) {
+	if (!libxfs_verify_fsbext(mp, cfg->logstart, cfg->logblocks)) {
 		fprintf(stderr,
 _("Due to stripe alignment, the internal log size (%lld) is too large.\n"
   "Must fit within an allocation group.\n"),
@@ -3465,6 +3462,7 @@ start_superblock_setup(
 	sbp->sb_agblocks = (xfs_agblock_t)cfg->agsize;
 	sbp->sb_agblklog = (uint8_t)log2_roundup(cfg->agsize);
 	sbp->sb_agcount = (xfs_agnumber_t)cfg->agcount;
+	sbp->sb_dblocks = (xfs_rfsblock_t)cfg->dblocks;
 
 	sbp->sb_inodesize = (uint16_t)cfg->inodesize;
 	sbp->sb_inodelog = (uint8_t)cfg->inodelog;
