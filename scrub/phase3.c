@@ -65,18 +65,26 @@ scrub_inode(
 	 * cost of opening the handle (looking up the inode in the inode btree,
 	 * grabbing the inode, checking the generation) with every scrub call.
 	 *
+	 * Ignore any runtime or corruption related errors here because we can
+	 * fall back to scrubbing by handle.  ESTALE can be ignored for the
+	 * following reasons:
+	 *
+	 *  - If the file has been deleted since bulkstat, there's nothing to
+	 *    check.  Scrub-by-handle returns ENOENT for such inodes.
+	 *  - If the file has been deleted and reallocated since bulkstat,
+	 *    its ondisk metadata have been rewritten and is assumed to be ok.
+	 *    Scrub-by-handle also returns ENOENT if the generation doesn't
+	 *    match.
+	 *  - The file itself is corrupt and cannot be loaded.  In this case,
+	 *    we fall back to scrub-by-handle.
+	 *
 	 * Note: We cannot use this same trick for directories because the VFS
 	 * will try to reconnect directory file handles to the root directory
 	 * by walking '..' entries upwards, and loops in the dirent index
 	 * btree will cause livelocks.
-	 *
-	 * ESTALE means we scan the whole cluster again.
 	 */
-	if (S_ISREG(bstat->bs_mode)) {
+	if (S_ISREG(bstat->bs_mode))
 		fd = scrub_open_handle(handle);
-		if (fd < 0 && errno == ESTALE)
-			return ESTALE;
-	}
 
 	/* Scrub the inode. */
 	error = scrub_file(ctx, fd, bstat, XFS_SCRUB_TYPE_INODE, &alist);
