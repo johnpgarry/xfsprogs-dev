@@ -57,7 +57,7 @@ btheight_help(void)
 "   -w min -- Show only the worst case scenario.\n"
 "\n"
 " Supported btree types:\n"
-"   "
+"   all "
 ));
 	for (i = 0, m = maps; i < ARRAY_SIZE(maps); i++, m++)
 		printf("%s ", m->tag);
@@ -107,7 +107,7 @@ calc_height(
 
 static int
 construct_records_per_block(
-	char		*tag,
+	const char	*tag,
 	int		blocksize,
 	unsigned int	*records_per_block)
 {
@@ -235,7 +235,7 @@ out:
 
 static void
 report(
-	char			*tag,
+	const char		*tag,
 	unsigned int		report_what,
 	unsigned long long	nr_records,
 	unsigned int		blocksize)
@@ -295,6 +295,19 @@ _("%s: worst case per %u-byte block: %u records (leaf) / %u keyptrs (node)\n"),
 
 		calc_height(nr_records, records_per_block);
 	}
+}
+
+static void
+report_all(
+	unsigned int		report_what,
+	unsigned long long	nr_records,
+	unsigned int		blocksize)
+{
+	struct btmap		*m;
+	int			i;
+
+	for (i = 0, m = maps; i < ARRAY_SIZE(maps); i++, m++)
+		report(m->tag, report_what, nr_records, blocksize);
 }
 
 static int
@@ -364,6 +377,13 @@ _("The smallest block size this command will consider is 128 bytes.\n"));
 	if (argc == optind) {
 		btheight_help();
 		return 0;
+	}
+
+	for (i = optind; i < argc; i++) {
+		if (!strcmp(argv[i], "all")) {
+			report_all(report_what, nr_records, blocksize);
+			return 0;
+		}
 	}
 
 	for (i = optind; i < argc; i++)
