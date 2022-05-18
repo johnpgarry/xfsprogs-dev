@@ -210,6 +210,7 @@ scan_ag_bulkstat(
 	struct scan_inodes	*si = ichunk->si;
 	struct xfs_bulkstat	*bs;
 	struct xfs_inumbers	*inumbers = &ireq->inumbers[0];
+	uint64_t		last_ino = 0;
 	int			i;
 	int			error;
 	int			stale_count = 0;
@@ -229,8 +230,14 @@ retry:
 	/* Iterate all the inodes. */
 	bs = &breq->bulkstat[0];
 	for (i = 0; !si->aborted && i < inumbers->xi_alloccount; i++, bs++) {
+		uint64_t	scan_ino = bs->bs_ino;
+
+		/* ensure forward progress if we retried */
+		if (scan_ino < last_ino)
+			continue;
+
 		descr_set(&dsc_bulkstat, bs);
-		handle.ha_fid.fid_ino = bs->bs_ino;
+		handle.ha_fid.fid_ino = scan_ino;
 		handle.ha_fid.fid_gen = bs->bs_gen;
 		error = si->fn(ctx, &handle, bs, si->arg);
 		switch (error) {
@@ -260,6 +267,7 @@ _("Changed too many times during scan; giving up."));
 			si->aborted = true;
 			goto out;
 		}
+		last_ino = scan_ino;
 	}
 
 err:
