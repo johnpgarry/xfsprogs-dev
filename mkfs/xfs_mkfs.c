@@ -3180,9 +3180,10 @@ sb_set_features(
 static void
 align_log_size(
 	struct mkfs_params	*cfg,
-	int			sunit)
+	int			sunit,
+	int			max_logblocks)
 {
-	uint64_t	tmp_logblocks;
+	uint64_t		tmp_logblocks;
 
 	/* nothing to do if it's already aligned. */
 	if ((cfg->logblocks % sunit) == 0)
@@ -3199,7 +3200,8 @@ _("log size %lld is not a multiple of the log stripe unit %d\n"),
 
 	/* If the log is too large, round down instead of round up */
 	if ((tmp_logblocks > XFS_MAX_LOG_BLOCKS) ||
-	    ((tmp_logblocks << cfg->blocklog) > XFS_MAX_LOG_BYTES)) {
+	    ((tmp_logblocks << cfg->blocklog) > XFS_MAX_LOG_BYTES) ||
+	    tmp_logblocks > max_logblocks) {
 		tmp_logblocks = (cfg->logblocks / sunit) * sunit;
 	}
 	cfg->logblocks = tmp_logblocks;
@@ -3213,7 +3215,8 @@ static void
 align_internal_log(
 	struct mkfs_params	*cfg,
 	struct xfs_mount	*mp,
-	int			sunit)
+	int			sunit,
+	int			max_logblocks)
 {
 	uint64_t		logend;
 
@@ -3231,7 +3234,7 @@ _("Due to stripe alignment, the internal log start (%lld) cannot be aligned\n"
 	}
 
 	/* round up/down the log size now */
-	align_log_size(cfg, sunit);
+	align_log_size(cfg, sunit, max_logblocks);
 
 	/* check the aligned log still starts and ends in the same AG. */
 	logend = cfg->logstart + cfg->logblocks - 1;
@@ -3309,7 +3312,7 @@ _("external log device size %lld blocks too small, must be at least %lld blocks\
 		cfg->logstart = 0;
 		cfg->logagno = 0;
 		if (cfg->lsunit)
-			align_log_size(cfg, cfg->lsunit);
+			align_log_size(cfg, cfg->lsunit, XFS_MAX_LOG_BLOCKS);
 
 		validate_log_size(cfg->logblocks, cfg->blocklog, min_logblocks);
 		return;
@@ -3386,9 +3389,9 @@ _("log ag number %lld too large, must be less than %lld\n"),
 	 * Align the logstart at stripe unit boundary.
 	 */
 	if (cfg->lsunit) {
-		align_internal_log(cfg, mp, cfg->lsunit);
+		align_internal_log(cfg, mp, cfg->lsunit, max_logblocks);
 	} else if (cfg->dsunit) {
-		align_internal_log(cfg, mp, cfg->dsunit);
+		align_internal_log(cfg, mp, cfg->dsunit, max_logblocks);
 	}
 	validate_log_size(cfg->logblocks, cfg->blocklog, min_logblocks);
 }
