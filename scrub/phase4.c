@@ -40,7 +40,7 @@ repair_ag(
 
 	/* Repair anything broken until we fail to make progress. */
 	do {
-		ret = action_list_process(ctx, ctx->mnt.fd, alist, flags);
+		ret = action_list_process(ctx, -1, alist, flags);
 		if (ret) {
 			*aborted = true;
 			return;
@@ -55,7 +55,7 @@ repair_ag(
 
 	/* Try once more, but this time complain if we can't fix things. */
 	flags |= ALP_COMPLAIN_IF_UNFIXED;
-	ret = action_list_process(ctx, ctx->mnt.fd, alist, flags);
+	ret = action_list_process(ctx, -1, alist, flags);
 	if (ret)
 		*aborted = true;
 }

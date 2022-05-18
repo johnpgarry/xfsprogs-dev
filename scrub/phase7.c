@@ -121,7 +121,7 @@ phase7_func(
 	error = scrub_fs_summary(ctx, &alist);
 	if (error)
 		return error;
-	error = action_list_process(ctx, ctx->mnt.fd, &alist,
+	error = action_list_process(ctx, -1, &alist,
 			ALP_COMPLAIN_IF_UNFIXED | ALP_NOPROGRESS);
 	if (error)
 		return error;

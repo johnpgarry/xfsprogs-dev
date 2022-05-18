@@ -611,7 +611,7 @@ xfs_can_repair(
 enum check_outcome
 xfs_repair_metadata(
 	struct scrub_ctx		*ctx,
-	int				fd,
+	struct xfs_fd			*xfdp,
 	struct action_item		*aitem,
 	unsigned int			repair_flags)
 {
@@ -649,7 +649,7 @@ xfs_repair_metadata(
 		str_info(ctx, descr_render(&dsc),
 				_("Attempting optimization."));
 
-	error = -xfrog_scrub_metadata(&ctx->mnt, &meta);
+	error = -xfrog_scrub_metadata(xfdp, &meta);
 	switch (error) {
 	case 0:
 		/* No operational errors encountered. */
