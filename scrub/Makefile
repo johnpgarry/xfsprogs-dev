@@ -23,7 +23,7 @@ INSTALL_SCRUB += install-crond
 CRONTABS = xfs_scrub_all.cron
 OPTIONAL_TARGETS += $(CRONTABS)
 # Don't enable the crontab by default for now
-CROND_DIR = $(PKG_LIB_DIR)/$(PKG_NAME)
+CROND_DIR = $(PKG_LIB_SCRIPT_DIR)/$(PKG_NAME)
 endif
 
 endif	# scrub_prereqs
@@ -119,8 +119,9 @@ install: $(INSTALL_SCRUB)
 	@echo "    [SED]    $@"
 	$(Q)$(SED) -e "s|@sbindir@|$(PKG_SBIN_DIR)|g" \
 		   -e "s|@scrub_args@|$(XFS_SCRUB_ARGS)|g" \
-		   -e "s|@pkg_lib_dir@|$(PKG_LIB_DIR)|g" \
-		   -e "s|@pkg_name@|$(PKG_NAME)|g" < $< > $@
+		   -e "s|@pkg_lib_dir@|$(PKG_LIB_SCRIPT_DIR)|g" \
+		   -e "s|@pkg_name@|$(PKG_NAME)|g" \
+		   < $< > $@
 
 %.cron: %.cron.in $(builddefs)
 	@echo "    [SED]    $@"
@@ -129,8 +130,8 @@ install: $(INSTALL_SCRUB)
 install-systemd: default $(SYSTEMD_SERVICES)
 	$(INSTALL) -m 755 -d $(SYSTEMD_SYSTEM_UNIT_DIR)
 	$(INSTALL) -m 644 $(SYSTEMD_SERVICES) $(SYSTEMD_SYSTEM_UNIT_DIR)
-	$(INSTALL) -m 755 -d $(PKG_LIB_DIR)/$(PKG_NAME)
-	$(INSTALL) -m 755 xfs_scrub_fail $(PKG_LIB_DIR)/$(PKG_NAME)
+	$(INSTALL) -m 755 -d $(PKG_LIB_SCRIPT_DIR)/$(PKG_NAME)
+	$(INSTALL) -m 755 xfs_scrub_fail $(PKG_LIB_SCRIPT_DIR)/$(PKG_NAME)
 
 install-crond: default $(CRONTABS)
 	$(INSTALL) -m 755 -d $(CROND_DIR)

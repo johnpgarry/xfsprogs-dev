@@ -51,6 +51,7 @@ PKG_SBIN_DIR	= @sbindir@
 PKG_ROOT_SBIN_DIR = @root_sbindir@
 PKG_ROOT_LIB_DIR= @root_libdir@@libdirsuffix@
 PKG_LIB_DIR	= @libdir@@libdirsuffix@
+PKG_LIB_SCRIPT_DIR	= @libdir@
 PKG_INC_DIR	= @includedir@/xfs
 DK_INC_DIR	= @includedir@/disk
 PKG_MAN_DIR	= @mandir@

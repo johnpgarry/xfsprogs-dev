@@ -60,6 +60,11 @@ AC_ARG_ENABLE(lib64,
 	enable_lib64=yes)
 AC_SUBST(enable_lib64)
 
+AC_ARG_WITH([multiarch],
+[  --with-multiarch=ARCH   Specify the multiarch triplet],
+	multiarch=$withval)
+AC_SUBST(multiarch)
+
 AC_ARG_ENABLE(librt,
 [  --enable-librt=[yes/no]   Enable librt support [default=yes]],,
 	enable_librt=yes)
@@ -110,6 +115,11 @@ lib64)
 esac
 
 #
+# If the user specified a multiarch path then disable lib64
+#
+test -n "$multiarch" && enable_lib64=no
+
+#
 # Some important tools should be installed into the root partitions.
 #
 # Check whether exec_prefix=/usr: and install them to /sbin in that
@@ -143,6 +153,7 @@ AC_SUBST(LOCALIZED_FILES)
 AC_PACKAGE_GLOBALS(xfsprogs)
 AC_PACKAGE_UTILITIES(xfsprogs)
 AC_MULTILIB($enable_lib64)
+AC_MULTIARCH($multiarch)
 AC_RT($enable_librt)
 
 AC_PACKAGE_NEED_INI_H
