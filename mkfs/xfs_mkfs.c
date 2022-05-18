@@ -3234,6 +3234,15 @@ _("Due to stripe alignment, the internal log start (%lld) cannot be aligned\n"
 	/* round up/down the log size now */
 	align_log_size(cfg, sunit, max_logblocks);
 
+	/*
+	 * If the end of the log has been rounded past the end of the AG,
+	 * reduce logblocks by a stripe unit to try to get it back under EOAG.
+	 */
+	if (!libxfs_verify_fsbext(mp, cfg->logstart, cfg->logblocks) &&
+	    cfg->logblocks > sunit) {
+		cfg->logblocks -= sunit;
+	}
+
 	/* check the aligned log still starts and ends in the same AG. */
 	if (!libxfs_verify_fsbext(mp, cfg->logstart, cfg->logblocks)) {
 		fprintf(stderr,
