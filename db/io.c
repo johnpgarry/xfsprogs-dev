@@ -638,7 +638,7 @@ stack_f(
 	char	**argv)
 {
 	int	i;
-	char	tagbuf[8];
+	char	tagbuf[14];
 
 	for (i = iocur_sp; i > 0; i--) {
 		snprintf(tagbuf, sizeof(tagbuf), "%d: ", i);
