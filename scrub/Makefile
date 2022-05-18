@@ -77,6 +77,10 @@ ifeq ($(HAVE_MALLINFO),yes)
 LCFLAGS += -DHAVE_MALLINFO
 endif
 
+ifeq ($(HAVE_MALLINFO2),yes)
+LCFLAGS += -DHAVE_MALLINFO2
+endif
+
 ifeq ($(HAVE_SYNCFS),yes)
 LCFLAGS += -DHAVE_SYNCFS
 endif

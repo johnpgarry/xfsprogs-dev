@@ -282,6 +282,34 @@ phase_start(
 	return error;
 }
 
+static inline unsigned long long
+kbytes(unsigned long long x)
+{
+	return (x + 1023) / 1024;
+}
+
+static void
+report_mem_usage(
+	const char			*phase,
+	const struct phase_rusage	*pi)
+{
+#if defined(HAVE_MALLINFO2) || defined(HAVE_MALLINFO)
+# ifdef HAVE_MALLINFO2
+	struct mallinfo2		mall_now = mallinfo2();
+# else
+	struct mallinfo			mall_now = mallinfo();
+# endif
+	fprintf(stdout, _("%sMemory used: %lluk/%lluk (%lluk/%lluk), "),
+		phase,
+		kbytes(mall_now.arena), kbytes(mall_now.hblkhd),
+		kbytes(mall_now.uordblks), kbytes(mall_now.fordblks));
+#else
+	fprintf(stdout, _("%sMemory used: %lluk, "),
+		phase,
+		kbytes(((char *) sbrk(0)) - ((char *) pi->brk_start)));
+#endif
+}
+
 /* Report usage stats. */
 static int
 phase_end(
@@ -289,9 +317,6 @@ phase_end(
 	unsigned int		phase)
 {
 	struct rusage		ruse_now;
-#ifdef HAVE_MALLINFO
-	struct mallinfo		mall_now;
-#endif
 	struct timeval		time_now;
 	char			phasebuf[DESCR_BUFSZ];
 	double			dt;
@@ -323,21 +348,7 @@ phase_end(
 	else
 		phasebuf[0] = 0;
 
-#define kbytes(x)	(((unsigned long)(x) + 1023) / 1024)
-#ifdef HAVE_MALLINFO
-
-	mall_now = mallinfo();
-	fprintf(stdout, _("%sMemory used: %luk/%luk (%luk/%luk), "),
-		phasebuf,
-		kbytes(mall_now.arena), kbytes(mall_now.hblkhd),
-		kbytes(mall_now.uordblks), kbytes(mall_now.fordblks));
-#else
-	fprintf(stdout, _("%sMemory used: %luk, "),
-		phasebuf,
-		(unsigned long) kbytes(((char *) sbrk(0)) -
-				       ((char *) pi->brk_start)));
-#endif
-#undef kbytes
+	report_mem_usage(phasebuf, pi);
 
 	fprintf(stdout, _("time: %5.2f/%5.2f/%5.2fs\n"),
 		timeval_subtract(&time_now, &pi->time),
