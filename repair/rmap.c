@@ -974,7 +974,7 @@ rmap_is_good(
 /*
  * Compare the observed reverse mappings against what's in the ag btree.
  */
-int
+void
 rmaps_verify_btree(
 	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno)
@@ -989,21 +989,26 @@ rmaps_verify_btree(
 	int			error;
 
 	if (!xfs_has_rmapbt(mp))
-		return 0;
+		return;
 	if (rmapbt_suspect) {
 		if (no_modify && agno == 0)
 			do_warn(_("would rebuild corrupt rmap btrees.\n"));
-		return 0;
+		return;
 	}
 
 	/* Create cursors to refcount structures */
 	error = rmap_init_cursor(agno, &rm_cur);
-	if (error)
-		return error;
+	if (error) {
+		do_warn(_("Not enough memory to check reverse mappings.\n"));
+		return;
+	}
 
 	error = -libxfs_alloc_read_agf(mp, NULL, agno, 0, &agbp);
-	if (error)
+	if (error) {
+		do_warn(_("Could not read AGF %u to check rmap btree.\n"),
+				agno);
 		goto err;
+	}
 
 	/* Leave the per-ag data "uninitialized" since we rewrite it later */
 	pag = libxfs_perag_get(mp, agno);
@@ -1011,15 +1016,20 @@ rmaps_verify_btree(
 
 	bt_cur = libxfs_rmapbt_init_cursor(mp, NULL, agbp, pag);
 	if (!bt_cur) {
-		error = -ENOMEM;
+		do_warn(_("Not enough memory to check reverse mappings.\n"));
 		goto err;
 	}
 
 	rm_rec = pop_slab_cursor(rm_cur);
 	while (rm_rec) {
 		error = rmap_lookup(bt_cur, rm_rec, &tmp, &have);
-		if (error)
+		if (error) {
+			do_warn(
+_("Could not read reverse-mapping record for (%u/%u).\n"),
+					agno, rm_rec->rm_startblock);
 			goto err;
+		}
+
 		/*
 		 * Using the range query is expensive, so only do it if
 		 * the regular lookup doesn't find anything or if it doesn't
@@ -1029,8 +1039,12 @@ rmaps_verify_btree(
 				(!have || !rmap_is_good(rm_rec, &tmp))) {
 			error = rmap_lookup_overlapped(bt_cur, rm_rec,
 					&tmp, &have);
-			if (error)
+			if (error) {
+				do_warn(
+_("Could not read reverse-mapping record for (%u/%u).\n"),
+						agno, rm_rec->rm_startblock);
 				goto err;
+			}
 		}
 		if (!have) {
 			do_warn(
@@ -1088,7 +1102,6 @@ err:
 	if (agbp)
 		libxfs_buf_relse(agbp);
 	free_slab_cursor(&rm_cur);
-	return 0;
 }
 
 /*
@@ -1335,7 +1348,7 @@ refcount_avoid_check(void)
 /*
  * Compare the observed reference counts against what's in the ag btree.
  */
-int
+void
 check_refcounts(
 	struct xfs_mount		*mp,
 	xfs_agnumber_t			agno)
@@ -1351,21 +1364,26 @@ check_refcounts(
 	int				error;
 
 	if (!xfs_has_reflink(mp))
-		return 0;
+		return;
 	if (refcbt_suspect) {
 		if (no_modify && agno == 0)
 			do_warn(_("would rebuild corrupt refcount btrees.\n"));
-		return 0;
+		return;
 	}
 
 	/* Create cursors to refcount structures */
 	error = init_refcount_cursor(agno, &rl_cur);
-	if (error)
-		return error;
+	if (error) {
+		do_warn(_("Not enough memory to check refcount data.\n"));
+		return;
+	}
 
 	error = -libxfs_alloc_read_agf(mp, NULL, agno, 0, &agbp);
-	if (error)
+	if (error) {
+		do_warn(_("Could not read AGF %u to check refcount btree.\n"),
+				agno);
 		goto err;
+	}
 
 	/* Leave the per-ag data "uninitialized" since we rewrite it later */
 	pag = libxfs_perag_get(mp, agno);
@@ -1373,7 +1391,7 @@ check_refcounts(
 
 	bt_cur = libxfs_refcountbt_init_cursor(mp, NULL, agbp, pag);
 	if (!bt_cur) {
-		error = -ENOMEM;
+		do_warn(_("Not enough memory to check refcount data.\n"));
 		goto err;
 	}
 
@@ -1382,8 +1400,12 @@ check_refcounts(
 		/* Look for a refcount record in the btree */
 		error = -libxfs_refcount_lookup_le(bt_cur,
 				rl_rec->rc_startblock, &have);
-		if (error)
+		if (error) {
+			do_warn(
+_("Could not read reference count record for (%u/%u).\n"),
+					agno, rl_rec->rc_startblock);
 			goto err;
+		}
 		if (!have) {
 			do_warn(
 _("Missing reference count record for (%u/%u) len %u count %u\n"),
@@ -1393,8 +1415,12 @@ _("Missing reference count record for (%u/%u) len %u count %u\n"),
 		}
 
 		error = -libxfs_refcount_get_rec(bt_cur, &tmp, &i);
-		if (error)
+		if (error) {
+			do_warn(
+_("Could not read reference count record for (%u/%u).\n"),
+					agno, rl_rec->rc_startblock);
 			goto err;
+		}
 		if (!i) {
 			do_warn(
 _("Missing reference count record for (%u/%u) len %u count %u\n"),
@@ -1425,7 +1451,6 @@ err:
 	if (agbp)
 		libxfs_buf_relse(agbp);
 	free_slab_cursor(&rl_cur);
-	return 0;
 }
 
 /*
