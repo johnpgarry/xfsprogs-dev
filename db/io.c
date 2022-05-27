@@ -73,6 +73,13 @@ io_init(void)
 	add_command(&ring_cmd);
 }
 
+static inline void set_cur_boff(int off)
+{
+	iocur_top->boff = off;
+	iocur_top->off = ((xfs_off_t)iocur_top->bb << BBSHIFT) + off;
+	iocur_top->data = (void *)((char *)iocur_top->buf + off);
+}
+
 void
 off_cur(
 	int	off,
@@ -81,10 +88,8 @@ off_cur(
 	if (iocur_top == NULL || off + len > BBTOB(iocur_top->blen))
 		dbprintf(_("can't set block offset to %d\n"), off);
 	else {
-		iocur_top->boff = off;
-		iocur_top->off = ((xfs_off_t)iocur_top->bb << BBSHIFT) + off;
+		set_cur_boff(off);
 		iocur_top->len = len;
-		iocur_top->data = (void *)((char *)iocur_top->buf + off);
 	}
 }
 
@@ -589,6 +594,7 @@ set_iocur_type(
 	const typ_t	*type)
 {
 	int		bb_count = 1;	/* type's size in basic blocks */
+	int		boff = iocur_top->boff;
 
 	/*
 	 * Inodes are special; verifier checks all inodes in the chunk, the
@@ -613,6 +619,7 @@ set_iocur_type(
 		bb_count = BTOBB(byteize(fsize(type->fields,
 				       iocur_top->data, 0, 0)));
 	set_cur(type, iocur_top->bb, bb_count, DB_RING_IGN, NULL);
+	set_cur_boff(boff);
 }
 
 static void
