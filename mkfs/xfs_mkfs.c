@@ -1714,6 +1714,7 @@ naming_opts_parser(
 		} else {
 			cli->sb_feat.dir_version = getnum(value, opts, subopt);
 		}
+		free((char *)value);
 		break;
 	case N_FTYPE:
 		cli->sb_feat.dirftype = getnum(value, opts, subopt);
