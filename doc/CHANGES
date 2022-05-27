@@ -1,3 +1,26 @@
+xfsprogs-5.18.0-rc1 (27 May 2022)
+	- mkfs: Fix memory leak (Pavel Reichl)
+	- mkfs: don't trample the gid set in the protofile (Darrick J. Wong)
+	- mkfs: various post-log-size-increase fixes (Darrick J. Wong)
+	- xfs_scrub: various enhancements and fixes (Darrick J. Wong)
+	- xfs_scrub: move to mallinfo2 when available (Darrick J. Wong)
+	- metadump: be careful zeroing corrupt inode forks (Dave Chinner)
+	- metadump: handle corruption errors without aborting (Dave Chinner)
+	- metadump: warn about suspicious finobt trees (Darrick J. Wong)
+	- xfs_repair: check ftype of . and . directory entries (Darrick J. Wong)
+	- xfs_repair: detect v5 feature mismatch in backup sb ((Darrick J. Wong)
+	- xfs_repair: fix sizing of the incore rt space usage map calculation
+	- xfs_repair: warn about bad btree levels in AG hdrs (Darrick J. Wong)
+	- xfs_io: add a quiet option to bulkstat (Dave Chinner)
+	- xfs_db: report maxlevels for each btree type (Darrick J. Wong)
+	- xfs_db: support computing btheight for all cursors (Darrick J. Wong)
+	- xfs_db: don't move cursor when switching types (Andrey Albershteyn)
+	- docs: note the removal of XFS_IOC_FSSETDM (Darrick J. Wong)
+	- xfsprogs: autoconf modernisation (Dave Chinner)
+	- debian: support multiarch for libhandle (Darrick J. Wong)
+	- debian: bump compat level to 11 (Darrick J. Wong)
+	- debian: refactor common options (Darrick J. Wong)
+
 xfsprogs-5.18.0-rc0 (06 May 2022)
 	- libxfs changes merged from kernels 5.17 and 5.18
 
