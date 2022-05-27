@@ -1145,7 +1145,7 @@ for the current memory mapping.
 
 .SH FILESYSTEM COMMANDS
 .TP
-.BI "bulkstat [ \-a " agno " ] [ \-d ] [ \-e " endino " ] [ \-n " batchsize " ] [ \-s " startino " ] [ \-v " version" ]
+.BI "bulkstat [ \-a " agno " ] [ \-d ] [ \-e " endino " ] [ \-n " batchsize " ] [ \-q ] [ \-s " startino " ] [ \-v " version" ]
 Display raw stat information about a bunch of inodes in an XFS filesystem.
 Options are as follows:
 .RS 1.0i
@@ -1165,6 +1165,10 @@ Defaults to stopping when the system call stops returning results.
 .BI \-n " batchsize"
 Retrieve at most this many records per call.
 Defaults to 4,096.
+.TP
+.BI \-q
+Run quietly.
+Does not parse or output retrieved bulkstat information.
 .TP
 .BI \-s " startino"
 Display inode allocation records starting with this inode.
