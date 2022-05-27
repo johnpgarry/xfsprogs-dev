@@ -2308,18 +2308,34 @@ process_inode_data(
 {
 	switch (dip->di_format) {
 		case XFS_DINODE_FMT_LOCAL:
-			if (obfuscate || zero_stale_data)
-				switch (itype) {
-					case TYP_DIR2:
-						process_sf_dir(dip);
-						break;
+			if (!(obfuscate || zero_stale_data))
+				break;
 
-					case TYP_SYMLINK:
-						process_sf_symlink(dip);
-						break;
+			/*
+			 * If the fork size is invalid, we can't safely do
+			 * anything with this fork. Leave it alone to preserve
+			 * the information for diagnostic purposes.
+			 */
+			if (XFS_DFORK_DSIZE(dip, mp) > XFS_LITINO(mp)) {
+				print_warning(
+"Invalid data fork size (%d) in inode %llu, preserving contents!",
+						XFS_DFORK_DSIZE(dip, mp),
+						(long long)cur_ino);
+				break;
+			}
 
-					default: ;
-				}
+			switch (itype) {
+				case TYP_DIR2:
+					process_sf_dir(dip);
+					break;
+
+				case TYP_SYMLINK:
+					process_sf_symlink(dip);
+					break;
+
+				default:
+					break;
+			}
 			break;
 
 		case XFS_DINODE_FMT_EXTENTS:
@@ -2341,6 +2357,19 @@ process_dev_inode(
 				      (unsigned long long)cur_ino);
 		return;
 	}
+
+	/*
+	 * If the fork size is invalid, we can't safely do anything with
+	 * this fork. Leave it alone to preserve the information for diagnostic
+	 * purposes.
+	 */
+	if (XFS_DFORK_DSIZE(dip, mp) > XFS_LITINO(mp)) {
+		print_warning(
+"Invalid data fork size (%d) in inode %llu, preserving contents!",
+				XFS_DFORK_DSIZE(dip, mp), (long long)cur_ino);
+		return;
+	}
+
 	if (zero_stale_data) {
 		unsigned int	size = sizeof(xfs_dev_t);
 
