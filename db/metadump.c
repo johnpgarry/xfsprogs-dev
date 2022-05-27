@@ -1645,7 +1645,7 @@ process_symlink_block(
 {
 	struct bbmap	map;
 	char		*link;
-	int		ret = 0;
+	int		rval = 1;
 
 	push_cur();
 	map.nmaps = 1;
@@ -1658,8 +1658,7 @@ process_symlink_block(
 
 		print_warning("cannot read %s block %u/%u (%llu)",
 				typtab[btype].name, agno, agbno, s);
-		if (stop_on_read_error)
-			ret = -1;
+		rval = !stop_on_read_error;
 		goto out_pop;
 	}
 	link = iocur_top->data;
@@ -1682,10 +1681,11 @@ process_symlink_block(
 	}
 
 	iocur_top->need_crc = 1;
-	ret = write_buf(iocur_top);
+	if (write_buf(iocur_top))
+		rval = 0;
 out_pop:
 	pop_cur();
-	return ret;
+	return rval;
 }
 
 #define MAX_REMOTE_VALS		4095
@@ -1843,8 +1843,8 @@ process_single_fsb_objects(
 	typnm_t		btype,
 	xfs_fileoff_t	last)
 {
+	int		rval = 1;
 	char		*dp;
-	int		ret = 0;
 	int		i;
 
 	for (i = 0; i < c; i++) {
@@ -1858,8 +1858,7 @@ process_single_fsb_objects(
 
 			print_warning("cannot read %s block %u/%u (%llu)",
 					typtab[btype].name, agno, agbno, s);
-			if (stop_on_read_error)
-				ret = -EIO;
+			rval = !stop_on_read_error;
 			goto out_pop;
 
 		}
@@ -1925,16 +1924,17 @@ process_single_fsb_objects(
 		}
 
 write:
-		ret = write_buf(iocur_top);
+		if (write_buf(iocur_top))
+			rval = 0;
 out_pop:
 		pop_cur();
-		if (ret)
+		if (!rval)
 			break;
 		o++;
 		s++;
 	}
 
-	return ret;
+	return rval;
 }
 
 /*
@@ -1952,7 +1952,7 @@ process_multi_fsb_dir(
 	xfs_fileoff_t	last)
 {
 	char		*dp;
-	int		ret = 0;
+	int		rval = 1;
 
 	while (c > 0) {
 		unsigned int	bm_len;
@@ -1978,8 +1978,7 @@ process_multi_fsb_dir(
 
 				print_warning("cannot read %s block %u/%u (%llu)",
 						typtab[btype].name, agno, agbno, s);
-				if (stop_on_read_error)
-					ret = -1;
+				rval = !stop_on_read_error;
 				goto out_pop;
 
 			}
@@ -1998,18 +1997,19 @@ process_multi_fsb_dir(
 			}
 			iocur_top->need_crc = 1;
 write:
-			ret = write_buf(iocur_top);
+			if (write_buf(iocur_top))
+				rval = 0;
 out_pop:
 			pop_cur();
 			mfsb_map.nmaps = 0;
-			if (ret)
+			if (!rval)
 				break;
 		}
 		c -= bm_len;
 		s += bm_len;
 	}
 
-	return ret;
+	return rval;
 }
 
 static bool
@@ -2039,15 +2039,15 @@ process_multi_fsb_objects(
 		return process_symlink_block(o, s, c, btype, last);
 	default:
 		print_warning("bad type for multi-fsb object %d", btype);
-		return -EINVAL;
+		return 1;
 	}
 }
 
 /* inode copy routines */
 static int
 process_bmbt_reclist(
-	xfs_bmbt_rec_t 		*rp,
-	int 			numrecs,
+	xfs_bmbt_rec_t		*rp,
+	int			numrecs,
 	typnm_t			btype)
 {
 	int			i;
@@ -2059,7 +2059,7 @@ process_bmbt_reclist(
 	xfs_agnumber_t		agno;
 	xfs_agblock_t		agbno;
 	bool			is_multi_fsb = is_multi_fsb_object(mp, btype);
-	int			error;
+	int			rval = 1;
 
 	if (btype == TYP_DATA)
 		return 1;
@@ -2123,16 +2123,16 @@ process_bmbt_reclist(
 
 		/* multi-extent blocks require special handling */
 		if (is_multi_fsb)
-			error = process_multi_fsb_objects(o, s, c, btype,
+			rval = process_multi_fsb_objects(o, s, c, btype,
 					last);
 		else
-			error = process_single_fsb_objects(o, s, c, btype,
+			rval = process_single_fsb_objects(o, s, c, btype,
 					last);
-		if (error)
-			return 0;
+		if (!rval)
+			break;
 	}
 
-	return 1;
+	return rval;
 }
 
 static int
@@ -2331,7 +2331,7 @@ process_inode_data(
 	return 1;
 }
 
-static int
+static void
 process_dev_inode(
 	struct xfs_dinode		*dip)
 {
@@ -2339,15 +2339,13 @@ process_dev_inode(
 		if (show_warnings)
 			print_warning("inode %llu has unexpected extents",
 				      (unsigned long long)cur_ino);
-		return 0;
-	} else {
-		if (zero_stale_data) {
-			unsigned int	size = sizeof(xfs_dev_t);
+		return;
+	}
+	if (zero_stale_data) {
+		unsigned int	size = sizeof(xfs_dev_t);
 
-			memset(XFS_DFORK_DPTR(dip) + size, 0,
-					XFS_DFORK_DSIZE(dip, mp) - size);
-		}
-		return 1;
+		memset(XFS_DFORK_DPTR(dip) + size, 0,
+				XFS_DFORK_DSIZE(dip, mp) - size);
 	}
 }
 
@@ -2365,11 +2363,10 @@ process_inode(
 	struct xfs_dinode 	*dip,
 	bool			free_inode)
 {
-	int			success;
+	int			rval = 1;
 	bool			crc_was_ok = false; /* no recalc by default */
 	bool			need_new_crc = false;
 
-	success = 1;
 	cur_ino = XFS_AGINO_TO_INO(mp, agno, agino);
 
 	/* we only care about crc recalculation if we will modify the inode. */
@@ -2390,32 +2387,34 @@ process_inode(
 	/* copy appropriate data fork metadata */
 	switch (be16_to_cpu(dip->di_mode) & S_IFMT) {
 		case S_IFDIR:
-			success = process_inode_data(dip, TYP_DIR2);
+			rval = process_inode_data(dip, TYP_DIR2);
 			if (dip->di_format == XFS_DINODE_FMT_LOCAL)
 				need_new_crc = 1;
 			break;
 		case S_IFLNK:
-			success = process_inode_data(dip, TYP_SYMLINK);
+			rval = process_inode_data(dip, TYP_SYMLINK);
 			if (dip->di_format == XFS_DINODE_FMT_LOCAL)
 				need_new_crc = 1;
 			break;
 		case S_IFREG:
-			success = process_inode_data(dip, TYP_DATA);
+			rval = process_inode_data(dip, TYP_DATA);
 			break;
 		case S_IFIFO:
 		case S_IFCHR:
 		case S_IFBLK:
 		case S_IFSOCK:
-			success = process_dev_inode(dip);
+			process_dev_inode(dip);
 			need_new_crc = 1;
 			break;
 		default:
 			break;
 	}
 	nametable_clear();
+	if (!rval)
+		goto done;
 
 	/* copy extended attributes if they exist and forkoff is valid */
-	if (success && XFS_DFORK_DSIZE(dip, mp) < XFS_LITINO(mp)) {
+	if (XFS_DFORK_DSIZE(dip, mp) < XFS_LITINO(mp)) {
 		attr_data.remote_val_count = 0;
 		switch (dip->di_aformat) {
 			case XFS_DINODE_FMT_LOCAL:
@@ -2425,11 +2424,11 @@ process_inode(
 				break;
 
 			case XFS_DINODE_FMT_EXTENTS:
-				success = process_exinode(dip, TYP_ATTR);
+				rval = process_exinode(dip, TYP_ATTR);
 				break;
 
 			case XFS_DINODE_FMT_BTREE:
-				success = process_btinode(dip, TYP_ATTR);
+				rval = process_btinode(dip, TYP_ATTR);
 				break;
 		}
 		nametable_clear();
@@ -2442,7 +2441,8 @@ done:
 
 	if (crc_was_ok && need_new_crc)
 		libxfs_dinode_calc_crc(mp, dip);
-	return success;
+
+	return rval;
 }
 
 static uint32_t	inodes_copied;
@@ -2541,7 +2541,7 @@ copy_inode_chunk(
 
 			/* process_inode handles free inodes, too */
 			if (!process_inode(agno, agino + ioff + i, dip,
-			    XFS_INOBT_IS_FREE_DISK(rp, ioff + i)))
+					XFS_INOBT_IS_FREE_DISK(rp, ioff + i)))
 				goto pop_out;
 
 			inodes_copied++;
@@ -2815,7 +2815,7 @@ copy_ino(
 	xfs_agblock_t		agbno;
 	xfs_agino_t		agino;
 	int			offset;
-	int			rval = 0;
+	int			rval = 1;
 
 	if (ino == 0 || ino == NULLFSINO)
 		return 1;
