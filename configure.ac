@@ -1,13 +1,13 @@
-AC_INIT([xfsprogs], [5.18.0-rc0], [linux-xfs@vger.kernel.org])
-AC_PREREQ(2.50)
+AC_INIT([xfsprogs],[5.18.0-rc0],[linux-xfs@vger.kernel.org])
+AC_PREREQ(2.69)
 AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([include/libxfs.h])
-AC_CONFIG_HEADER(include/platform_defs.h)
+AC_CONFIG_HEADERS([include/platform_defs.h])
 AC_PREFIX_DEFAULT(/usr)
 
 AC_PROG_INSTALL
-AC_PROG_LIBTOOL
+LT_INIT
 
 AC_PROG_CC
 AC_ARG_VAR(BUILD_CC, [C compiler for build tools])
