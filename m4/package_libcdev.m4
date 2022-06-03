@@ -404,13 +404,15 @@ test = mallinfo();
 #
 AC_DEFUN([AC_HAVE_MALLINFO2],
   [ AC_MSG_CHECKING([for mallinfo2 ])
-    AC_TRY_COMPILE([
+    AC_COMPILE_IFELSE(
+    [	AC_LANG_PROGRAM([[
 #include <malloc.h>
-    ], [
-         struct mallinfo2 test;
+        ]], [[
+struct mallinfo2 test;
 
-         test.arena = 0; test.hblkhd = 0; test.uordblks = 0; test.fordblks = 0;
-         test = mallinfo2();
+test.arena = 0; test.hblkhd = 0; test.uordblks = 0; test.fordblks = 0;
+test = mallinfo2();
+        ]])
     ], have_mallinfo2=yes
        AC_MSG_RESULT(yes),
        AC_MSG_RESULT(no))

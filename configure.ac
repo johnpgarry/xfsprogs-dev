@@ -1,5 +1,5 @@
 AC_INIT([xfsprogs],[5.18.0-rc1],[linux-xfs@vger.kernel.org])
-AC_PREREQ(2.69)
+AC_PREREQ([2.69])
 AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([include/libxfs.h])
