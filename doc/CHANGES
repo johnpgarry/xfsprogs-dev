@@ -1,3 +1,6 @@
+xfsprogs-5.18.0 (03 Jun 2022)
+	- xfsprogs: more autoconf modernisation (Darrick J. Wong)
+
 xfsprogs-5.18.0-rc1 (27 May 2022)
 	- mkfs: Fix memory leak (Pavel Reichl)
 	- mkfs: don't trample the gid set in the protofile (Darrick J. Wong)
