@@ -2711,14 +2711,18 @@ process_exinode(
 	int			whichfork)
 {
 	xfs_bmbt_rec_t		*rp;
+	xfs_extnum_t		max_nex;
 
 	rp = (xfs_bmbt_rec_t *)XFS_DFORK_PTR(dip, whichfork);
 	*nex = xfs_dfork_nextents(dip, whichfork);
-	if (*nex < 0 || *nex > XFS_DFORK_SIZE(dip, mp, whichfork) /
+	max_nex = xfs_iext_max_nextents(
+			xfs_dinode_has_large_extent_counts(dip),
+			whichfork);
+	if (*nex > max_nex || *nex > XFS_DFORK_SIZE(dip, mp, whichfork) /
 						sizeof(xfs_bmbt_rec_t)) {
 		if (!sflag || id->ilist)
-			dbprintf(_("bad number of extents %d for inode %lld\n"),
-				*nex, id->ino);
+			dbprintf(_("bad number of extents %llu for inode %lld\n"),
+				(unsigned long long)*nex, id->ino);
 		error++;
 		return;
 	}

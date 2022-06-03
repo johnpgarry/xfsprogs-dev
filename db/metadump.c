@@ -2278,16 +2278,19 @@ process_exinode(
 {
 	int			whichfork;
 	int			used;
-	xfs_extnum_t		nex;
+	xfs_extnum_t		nex, max_nex;
 
 	whichfork = (itype == TYP_ATTR) ? XFS_ATTR_FORK : XFS_DATA_FORK;
 
 	nex = xfs_dfork_nextents(dip, whichfork);
+	max_nex = xfs_iext_max_nextents(
+			xfs_dinode_has_large_extent_counts(dip),
+			whichfork);
 	used = nex * sizeof(xfs_bmbt_rec_t);
-	if (nex < 0 || used > XFS_DFORK_SIZE(dip, mp, whichfork)) {
+	if (nex > max_nex || used > XFS_DFORK_SIZE(dip, mp, whichfork)) {
 		if (show_warnings)
-			print_warning("bad number of extents %d in inode %lld",
-				nex, (long long)cur_ino);
+			print_warning("bad number of extents %llu in inode %lld",
+				(unsigned long long)nex, (long long)cur_ino);
 		return 1;
 	}
 
