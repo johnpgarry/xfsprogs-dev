@@ -62,7 +62,7 @@ xfs_calc_buf_res(
  * Keep in mind that max depth is calculated separately for each type of tree.
  */
 uint
-xfs_allocfree_log_count(
+xfs_allocfree_block_count(
 	struct xfs_mount *mp,
 	uint		num_ops)
 {
@@ -145,7 +145,7 @@ xfs_calc_inobt_res(
 {
 	return xfs_calc_buf_res(M_IGEO(mp)->inobt_maxlevels,
 			XFS_FSB_TO_B(mp, 1)) +
-				xfs_calc_buf_res(xfs_allocfree_log_count(mp, 1),
+				xfs_calc_buf_res(xfs_allocfree_block_count(mp, 1),
 			XFS_FSB_TO_B(mp, 1));
 }
 
@@ -192,7 +192,7 @@ xfs_calc_inode_chunk_res(
 {
 	uint			res, size = 0;
 
-	res = xfs_calc_buf_res(xfs_allocfree_log_count(mp, 1),
+	res = xfs_calc_buf_res(xfs_allocfree_block_count(mp, 1),
 			       XFS_FSB_TO_B(mp, 1));
 	if (alloc) {
 		/* icreate tx uses ordered buffers */
@@ -212,7 +212,7 @@ xfs_calc_inode_chunk_res(
  * extents, as well as the realtime summary block.
  */
 static unsigned int
-xfs_rtalloc_log_count(
+xfs_rtalloc_block_count(
 	struct xfs_mount	*mp,
 	unsigned int		num_ops)
 {
@@ -299,21 +299,21 @@ xfs_calc_write_reservation(
 	t1 = xfs_calc_inode_res(mp, 1) +
 	     xfs_calc_buf_res(XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK), blksz) +
 	     xfs_calc_buf_res(3, mp->m_sb.sb_sectsize) +
-	     xfs_calc_buf_res(xfs_allocfree_log_count(mp, 2), blksz);
+	     xfs_calc_buf_res(xfs_allocfree_block_count(mp, 2), blksz);
 
 	if (xfs_has_realtime(mp)) {
 		t2 = xfs_calc_inode_res(mp, 1) +
 		     xfs_calc_buf_res(XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK),
 				     blksz) +
 		     xfs_calc_buf_res(3, mp->m_sb.sb_sectsize) +
-		     xfs_calc_buf_res(xfs_rtalloc_log_count(mp, 1), blksz) +
-		     xfs_calc_buf_res(xfs_allocfree_log_count(mp, 1), blksz);
+		     xfs_calc_buf_res(xfs_rtalloc_block_count(mp, 1), blksz) +
+		     xfs_calc_buf_res(xfs_allocfree_block_count(mp, 1), blksz);
 	} else {
 		t2 = 0;
 	}
 
 	t3 = xfs_calc_buf_res(5, mp->m_sb.sb_sectsize) +
-	     xfs_calc_buf_res(xfs_allocfree_log_count(mp, 2), blksz);
+	     xfs_calc_buf_res(xfs_allocfree_block_count(mp, 2), blksz);
 
 	/*
 	 * In the early days of reflink, we included enough reservation to log
@@ -380,12 +380,12 @@ xfs_calc_itruncate_reservation(
 	     xfs_calc_buf_res(XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK) + 1, blksz);
 
 	t2 = xfs_calc_buf_res(9, mp->m_sb.sb_sectsize) +
-	     xfs_calc_buf_res(xfs_allocfree_log_count(mp, 4), blksz);
+	     xfs_calc_buf_res(xfs_allocfree_block_count(mp, 4), blksz);
 
 	if (xfs_has_realtime(mp)) {
 		t3 = xfs_calc_buf_res(5, mp->m_sb.sb_sectsize) +
-		     xfs_calc_buf_res(xfs_rtalloc_log_count(mp, 2), blksz) +
-		     xfs_calc_buf_res(xfs_allocfree_log_count(mp, 2), blksz);
+		     xfs_calc_buf_res(xfs_rtalloc_block_count(mp, 2), blksz) +
+		     xfs_calc_buf_res(xfs_allocfree_block_count(mp, 2), blksz);
 	} else {
 		t3 = 0;
 	}
@@ -440,7 +440,7 @@ xfs_calc_rename_reservation(
 		     xfs_calc_buf_res(2 * XFS_DIROP_LOG_COUNT(mp),
 				      XFS_FSB_TO_B(mp, 1))),
 		    (xfs_calc_buf_res(7, mp->m_sb.sb_sectsize) +
-		     xfs_calc_buf_res(xfs_allocfree_log_count(mp, 3),
+		     xfs_calc_buf_res(xfs_allocfree_block_count(mp, 3),
 				      XFS_FSB_TO_B(mp, 1))));
 }
 
@@ -480,7 +480,7 @@ xfs_calc_link_reservation(
 		     xfs_calc_buf_res(XFS_DIROP_LOG_COUNT(mp),
 				      XFS_FSB_TO_B(mp, 1))),
 		    (xfs_calc_buf_res(3, mp->m_sb.sb_sectsize) +
-		     xfs_calc_buf_res(xfs_allocfree_log_count(mp, 1),
+		     xfs_calc_buf_res(xfs_allocfree_block_count(mp, 1),
 				      XFS_FSB_TO_B(mp, 1))));
 }
 
@@ -518,7 +518,7 @@ xfs_calc_remove_reservation(
 		     xfs_calc_buf_res(XFS_DIROP_LOG_COUNT(mp),
 				      XFS_FSB_TO_B(mp, 1))),
 		    (xfs_calc_buf_res(4, mp->m_sb.sb_sectsize) +
-		     xfs_calc_buf_res(xfs_allocfree_log_count(mp, 2),
+		     xfs_calc_buf_res(xfs_allocfree_block_count(mp, 2),
 				      XFS_FSB_TO_B(mp, 1))));
 }
 
@@ -663,7 +663,7 @@ xfs_calc_growdata_reservation(
 	struct xfs_mount	*mp)
 {
 	return xfs_calc_buf_res(3, mp->m_sb.sb_sectsize) +
-		xfs_calc_buf_res(xfs_allocfree_log_count(mp, 1),
+		xfs_calc_buf_res(xfs_allocfree_block_count(mp, 1),
 				 XFS_FSB_TO_B(mp, 1));
 }
 
@@ -685,7 +685,7 @@ xfs_calc_growrtalloc_reservation(
 		xfs_calc_buf_res(XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK),
 				 XFS_FSB_TO_B(mp, 1)) +
 		xfs_calc_inode_res(mp, 1) +
-		xfs_calc_buf_res(xfs_allocfree_log_count(mp, 1),
+		xfs_calc_buf_res(xfs_allocfree_block_count(mp, 1),
 				 XFS_FSB_TO_B(mp, 1));
 }
 
@@ -761,7 +761,7 @@ xfs_calc_addafork_reservation(
 		xfs_calc_buf_res(1, mp->m_dir_geo->blksize) +
 		xfs_calc_buf_res(XFS_DAENTER_BMAP1B(mp, XFS_DATA_FORK) + 1,
 				 XFS_FSB_TO_B(mp, 1)) +
-		xfs_calc_buf_res(xfs_allocfree_log_count(mp, 1),
+		xfs_calc_buf_res(xfs_allocfree_block_count(mp, 1),
 				 XFS_FSB_TO_B(mp, 1));
 }
 
@@ -784,7 +784,7 @@ xfs_calc_attrinval_reservation(
 		    xfs_calc_buf_res(XFS_BM_MAXLEVELS(mp, XFS_ATTR_FORK),
 				     XFS_FSB_TO_B(mp, 1))),
 		   (xfs_calc_buf_res(9, mp->m_sb.sb_sectsize) +
-		    xfs_calc_buf_res(xfs_allocfree_log_count(mp, 4),
+		    xfs_calc_buf_res(xfs_allocfree_block_count(mp, 4),
 				     XFS_FSB_TO_B(mp, 1))));
 }
 
@@ -851,7 +851,7 @@ xfs_calc_attrrm_reservation(
 					XFS_BM_MAXLEVELS(mp, XFS_ATTR_FORK)) +
 		     xfs_calc_buf_res(XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK), 0)),
 		    (xfs_calc_buf_res(5, mp->m_sb.sb_sectsize) +
-		     xfs_calc_buf_res(xfs_allocfree_log_count(mp, 2),
+		     xfs_calc_buf_res(xfs_allocfree_block_count(mp, 2),
 				      XFS_FSB_TO_B(mp, 1))));
 }
 
