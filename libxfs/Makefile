@@ -24,6 +24,7 @@ HFILES = \
 	libxfs_api_defs.h \
 	init.h \
 	libxfs_priv.h \
+	linux-err.h \
 	topology.h \
 	xfs_ag_resv.h \
 	xfs_alloc.h \

@@ -49,6 +49,7 @@
 #include "libfrog/radix-tree.h"
 #include "atomic.h"
 #include "spinlock.h"
+#include "linux-err.h"
 
 #include "xfs_types.h"
 #include "xfs_arch.h"
