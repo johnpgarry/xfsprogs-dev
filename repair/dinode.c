@@ -1812,7 +1812,9 @@ _("bad nblocks %llu for inode %" PRIu64 ", would reset to %" PRIu64 "\n"),
 		}
 	}
 
-	if (nextents > xfs_iext_max_nextents(XFS_DATA_FORK))  {
+	if (nextents > xfs_iext_max_nextents(
+				xfs_dinode_has_large_extent_counts(dino),
+				XFS_DATA_FORK)) {
 		do_warn(
 _("too many data fork extents (%" PRIu64 ") in inode %" PRIu64 "\n"),
 			nextents, lino);
@@ -1833,7 +1835,9 @@ _("bad nextents %" PRIu64 " for inode %" PRIu64 ", would reset to %" PRIu64 "\n"
 		}
 	}
 
-	if (anextents > xfs_iext_max_nextents(XFS_ATTR_FORK))  {
+	if (anextents > xfs_iext_max_nextents(
+				xfs_dinode_has_large_extent_counts(dino),
+				XFS_ATTR_FORK)) {
 		do_warn(
 _("too many attr fork extents (%" PRIu64 ") in inode %" PRIu64 "\n"),
 			anextents, lino);
