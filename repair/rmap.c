@@ -905,18 +905,10 @@ rmap_lookup(
 	struct xfs_rmap_irec	*tmp,
 	int			*have)
 {
-	int			error;
-
 	/* Use the regular btree retrieval routine. */
-	error = -libxfs_rmap_lookup_le(bt_cur, rm_rec->rm_startblock,
-				rm_rec->rm_blockcount,
+	return -libxfs_rmap_lookup_le(bt_cur, rm_rec->rm_startblock,
 				rm_rec->rm_owner, rm_rec->rm_offset,
-				rm_rec->rm_flags, have);
-	if (error)
-		return error;
-	if (*have == 0)
-		return error;
-	return -libxfs_rmap_get_rec(bt_cur, tmp, have);
+				rm_rec->rm_flags, tmp, have);
 }
 
 /* Look for an rmap in the rmapbt that matches a given rmap. */
