@@ -376,6 +376,14 @@ libxfs_getbufr_map(struct xfs_buftarg *btp, xfs_daddr_t blkno, int bblen,
 	return bp;
 }
 
+void
+xfs_buf_lock(
+	struct xfs_buf	*bp)
+{
+	if (use_xfs_buf_lock)
+		pthread_mutex_lock(&bp->b_lock);
+}
+
 static int
 __cache_lookup(
 	struct xfs_bufkey	*key,

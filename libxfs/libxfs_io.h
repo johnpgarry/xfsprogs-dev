@@ -225,6 +225,8 @@ xfs_buf_hold(struct xfs_buf *bp)
 	bp->b_node.cn_count++;
 }
 
+void xfs_buf_lock(struct xfs_buf *bp);
+
 int libxfs_buf_get_uncached(struct xfs_buftarg *targ, size_t bblen, int flags,
 		struct xfs_buf **bpp);
 int libxfs_buf_read_uncached(struct xfs_buftarg *targ, xfs_daddr_t daddr,
