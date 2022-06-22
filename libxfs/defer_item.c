@@ -485,6 +485,15 @@ xfs_attr_create_done(
 	return NULL;
 }
 
+static inline void
+xfs_attr_free_item(
+	struct xfs_attr_item	*attr)
+{
+	if (attr->xattri_da_state)
+		xfs_da_state_free(attr->xattri_da_state);
+	kmem_free(attr);
+}
+
 /* Process an attr. */
 static int
 xfs_attr_finish_item(
@@ -516,7 +525,7 @@ xfs_attr_finish_item(
 		error = -EAGAIN;
 out:
 	if (error != -EAGAIN)
-		kmem_free(attr);
+		xfs_attr_free_item(attr);
 
 	return error;
 }
@@ -529,7 +538,7 @@ xfs_attr_cancel_item(
 	struct xfs_attr_item	*attr;
 
 	attr = container_of(item, struct xfs_attr_item, xattri_list);
-	kmem_free(attr);
+	xfs_attr_free_item(attr);
 }
 
 const struct xfs_defer_op_type xfs_attr_defer_type = {
