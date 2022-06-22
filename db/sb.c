@@ -704,6 +704,8 @@ version_string(
 		strcat(s, ",BIGTIME");
 	if (xfs_has_needsrepair(mp))
 		strcat(s, ",NEEDSREPAIR");
+	if (xfs_has_large_extent_counts(mp))
+		strcat(s, ",NREXT64");
 	return s;
 }
 
