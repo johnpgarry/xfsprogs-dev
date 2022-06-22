@@ -195,6 +195,7 @@
 #define trace_xfs_trans_read_buf(a)		((void) 0)
 #define trace_xfs_trans_commit(a,b)		((void) 0)
 #define trace_xfs_trans_resv_calc_minlogsize(a,b,c) ((void) 0)
+#define trace_xfs_log_get_max_trans_res(a,b)	((void) 0)
 
 #define trace_xfs_defer_cancel(a,b)		((void) 0)
 #define trace_xfs_defer_pending_commit(a,b)	((void) 0)
