@@ -47,6 +47,7 @@
 #define trace_xfs_attr_leaf_addname_return(...)	((void) 0)
 #define trace_xfs_attr_node_addname_return(...)	((void) 0)
 #define trace_xfs_attr_remove_iter_return(...)	((void) 0)
+#define trace_xfs_attr_rmtval_alloc(...)	((void) 0)
 #define trace_xfs_attr_rmtval_remove_return(...) ((void) 0)
 
 #define trace_xfs_log_recover_item_add_cont(a,b,c,d)	((void) 0)
