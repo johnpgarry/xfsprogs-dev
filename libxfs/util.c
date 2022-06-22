@@ -720,4 +720,10 @@ xfs_fs_mark_healthy(
 	spin_unlock(&mp->m_sb_lock);
 }
 
+struct xfs_globals xfs_globals = {
+#ifdef DEBUG
+        .larp                   =       false,  /* log attribute replay */
+#endif
+};
+
 void xfs_ag_geom_health(struct xfs_perag *pag, struct xfs_ag_geometry *ageo) { }

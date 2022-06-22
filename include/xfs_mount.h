@@ -269,4 +269,12 @@ extern void	libxfs_rtmount_destroy (xfs_mount_t *);
 struct xfs_dquot {
 	int		q_type;
 };
+
+struct xfs_globals {
+#ifdef DEBUG
+       bool    larp;           /* log attribute replay */
+#endif
+};
+extern struct xfs_globals      xfs_globals;
+
 #endif	/* __XFS_MOUNT_H__ */
