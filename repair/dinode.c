@@ -388,9 +388,9 @@ process_bmbt_reclist_int(
 			*last_key = irec.br_startoff;
 		if (i > 0 && op + cp > irec.br_startoff)  {
 			do_warn(
-_("bmap rec out of order, inode %" PRIu64" entry %d "
+_("bmap rec out of order, inode %" PRIu64" entry %" PRIu64 " "
   "[o s c] [%" PRIu64 " %" PRIu64 " %" PRIu64 "], "
-  "%d [%" PRIu64 " %" PRIu64 " %" PRIu64 "]\n"),
+  "%" PRIu64 " [%" PRIu64 " %" PRIu64 " %" PRIu64 "]\n"),
 				ino, i, irec.br_startoff, irec.br_startblock,
 				irec.br_blockcount, i - 1, op, sp, cp);
 			goto done;
@@ -1054,7 +1054,7 @@ _("mismatch between format (%d) and size (%" PRId64 ") in symlink inode %" PRIu6
 	 */
 	if (numrecs > max_symlink_blocks)  {
 		do_warn(
-_("bad number of extents (%d) in symlink %" PRIu64 " data fork\n"),
+_("bad number of extents (%" PRIu64 ") in symlink %" PRIu64 " data fork\n"),
 			numrecs, lino);
 		return(1);
 	}
@@ -1066,13 +1066,13 @@ _("bad number of extents (%d) in symlink %" PRIu64 " data fork\n"),
 		libxfs_bmbt_disk_get_all((rp +i), &irec);
 		if (irec.br_startoff != expected_offset)  {
 			do_warn(
-_("bad extent #%d offset (%" PRIu64 ") in symlink %" PRIu64 " data fork\n"),
+_("bad extent #%" PRIu64 " offset (%" PRIu64 ") in symlink %" PRIu64 " data fork\n"),
 				i, irec.br_startoff, lino);
 			return(1);
 		}
 		if (irec.br_blockcount == 0 || irec.br_blockcount > max_blocks) {
 			do_warn(
-_("bad extent #%d count (%" PRIu64 ") in symlink %" PRIu64 " data fork\n"),
+_("bad extent #%" PRIu64 " count (%" PRIu64 ") in symlink %" PRIu64 " data fork\n"),
 				i, irec.br_blockcount, lino);
 			return(1);
 		}
@@ -1612,7 +1612,7 @@ _("realtime summary inode %" PRIu64 " has bad type 0x%x, "),
 		}
 		if (mp->m_sb.sb_rblocks == 0 && dnextents != 0)  {
 			do_warn(
-_("bad # of extents (%u) for realtime summary inode %" PRIu64 "\n"),
+_("bad # of extents (%" PRIu64 ") for realtime summary inode %" PRIu64 "\n"),
 				dnextents, lino);
 			return 1;
 		}
@@ -1633,7 +1633,7 @@ _("realtime bitmap inode %" PRIu64 " has bad type 0x%x, "),
 		}
 		if (mp->m_sb.sb_rblocks == 0 && dnextents != 0)  {
 			do_warn(
-_("bad # of extents (%u) for realtime bitmap inode %" PRIu64 "\n"),
+_("bad # of extents (%" PRIu64 ") for realtime bitmap inode %" PRIu64 "\n"),
 				dnextents, lino);
 			return 1;
 		}
@@ -1822,13 +1822,13 @@ _("too many data fork extents (%" PRIu64 ") in inode %" PRIu64 "\n"),
 	if (nextents != dnextents)  {
 		if (!no_modify)  {
 			do_warn(
-_("correcting nextents for inode %" PRIu64 ", was %d - counted %" PRIu64 "\n"),
+_("correcting nextents for inode %" PRIu64 ", was %" PRIu64 " - counted %" PRIu64 "\n"),
 				lino, dnextents, nextents);
 			dino->di_nextents = cpu_to_be32(nextents);
 			*dirty = 1;
 		} else  {
 			do_warn(
-_("bad nextents %d for inode %" PRIu64 ", would reset to %" PRIu64 "\n"),
+_("bad nextents %" PRIu64 " for inode %" PRIu64 ", would reset to %" PRIu64 "\n"),
 				dnextents, lino, nextents);
 		}
 	}
@@ -1843,13 +1843,13 @@ _("too many attr fork extents (%" PRIu64 ") in inode %" PRIu64 "\n"),
 	if (anextents != danextents)  {
 		if (!no_modify)  {
 			do_warn(
-_("correcting anextents for inode %" PRIu64 ", was %d - counted %" PRIu64 "\n"),
+_("correcting anextents for inode %" PRIu64 ", was %" PRIu64 " - counted %" PRIu64 "\n"),
 				lino, danextents, anextents);
 			dino->di_anextents = cpu_to_be16(anextents);
 			*dirty = 1;
 		} else  {
 			do_warn(
-_("bad anextents %d for inode %" PRIu64 ", would reset to %" PRIu64 "\n"),
+_("bad anextents %" PRIu64 " for inode %" PRIu64 ", would reset to %" PRIu64 "\n"),
 				danextents, lino, anextents);
 		}
 	}
