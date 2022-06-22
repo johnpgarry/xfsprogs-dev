@@ -720,12 +720,4 @@ int xfs_bmap_last_extent(struct xfs_trans *tp, struct xfs_inode *ip,
 /* xfs_inode.h */
 #define xfs_iflags_set(ip, flags)	do { } while (0)
 
-/* xfs_attr_item.h */
-struct xfs_attri_log_item {
-/* intentionally empty to allow build and retain identical libxfs files */
-};
-struct xfs_attrd_log_item {
-/* intentionally empty to allow build and retain identical libxfs files */
-};
-
 #endif	/* __LIBXFS_INTERNAL_XFS_H__ */
