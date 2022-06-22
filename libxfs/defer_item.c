@@ -487,7 +487,7 @@ xfs_attr_create_done(
 
 static inline void
 xfs_attr_free_item(
-	struct xfs_attr_item	*attr)
+	struct xfs_attr_intent	*attr)
 {
 	if (attr->xattri_da_state)
 		xfs_da_state_free(attr->xattri_da_state);
@@ -505,11 +505,11 @@ xfs_attr_finish_item(
 	struct list_head	*item,
 	struct xfs_btree_cur	**state)
 {
-	struct xfs_attr_item	*attr;
+	struct xfs_attr_intent	*attr;
 	int			error;
 	struct xfs_da_args	*args;
 
-	attr = container_of(item, struct xfs_attr_item, xattri_list);
+	attr = container_of(item, struct xfs_attr_intent, xattri_list);
 	args = attr->xattri_da_args;
 
 	/*
@@ -538,9 +538,9 @@ static void
 xfs_attr_cancel_item(
 	struct list_head	*item)
 {
-	struct xfs_attr_item	*attr;
+	struct xfs_attr_intent	*attr;
 
-	attr = container_of(item, struct xfs_attr_item, xattri_list);
+	attr = container_of(item, struct xfs_attr_intent, xattri_list);
 	xfs_attr_free_item(attr);
 }
 

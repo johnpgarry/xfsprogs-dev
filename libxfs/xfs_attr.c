@@ -55,9 +55,9 @@ STATIC int xfs_attr_leaf_try_add(struct xfs_da_args *args, struct xfs_buf *bp);
  */
 STATIC int xfs_attr_node_get(xfs_da_args_t *args);
 STATIC void xfs_attr_restore_rmt_blk(struct xfs_da_args *args);
-static int xfs_attr_node_try_addname(struct xfs_attr_item *attr);
-STATIC int xfs_attr_node_addname_find_attr(struct xfs_attr_item *attr);
-STATIC int xfs_attr_node_remove_attr(struct xfs_attr_item *attr);
+static int xfs_attr_node_try_addname(struct xfs_attr_intent *attr);
+STATIC int xfs_attr_node_addname_find_attr(struct xfs_attr_intent *attr);
+STATIC int xfs_attr_node_remove_attr(struct xfs_attr_intent *attr);
 STATIC int xfs_attr_node_lookup(struct xfs_da_args *args,
 		struct xfs_da_state *state);
 
@@ -374,7 +374,7 @@ xfs_attr_try_sf_addname(
 
 static int
 xfs_attr_sf_addname(
-	struct xfs_attr_item		*attr)
+	struct xfs_attr_intent		*attr)
 {
 	struct xfs_da_args		*args = attr->xattri_da_args;
 	struct xfs_inode		*dp = args->dp;
@@ -420,7 +420,7 @@ out:
  */
 static enum xfs_delattr_state
 xfs_attr_complete_op(
-	struct xfs_attr_item	*attr,
+	struct xfs_attr_intent	*attr,
 	enum xfs_delattr_state	replace_state)
 {
 	struct xfs_da_args	*args = attr->xattri_da_args;
@@ -436,7 +436,7 @@ xfs_attr_complete_op(
 
 static int
 xfs_attr_leaf_addname(
-	struct xfs_attr_item	*attr)
+	struct xfs_attr_intent	*attr)
 {
 	struct xfs_da_args	*args = attr->xattri_da_args;
 	int			error;
@@ -490,7 +490,7 @@ out:
  */
 static int
 xfs_attr_node_addname(
-	struct xfs_attr_item	*attr)
+	struct xfs_attr_intent	*attr)
 {
 	struct xfs_da_args	*args = attr->xattri_da_args;
 	int			error;
@@ -527,7 +527,7 @@ out:
 
 static int
 xfs_attr_rmtval_alloc(
-	struct xfs_attr_item		*attr)
+	struct xfs_attr_intent		*attr)
 {
 	struct xfs_da_args              *args = attr->xattri_da_args;
 	int				error = 0;
@@ -594,7 +594,7 @@ xfs_attr_leaf_mark_incomplete(
 /* Ensure the da state of an xattr deferred work item is ready to go. */
 static inline void
 xfs_attr_item_init_da_state(
-	struct xfs_attr_item	*attr)
+	struct xfs_attr_intent	*attr)
 {
 	struct xfs_da_args	*args = attr->xattri_da_args;
 
@@ -611,7 +611,7 @@ xfs_attr_item_init_da_state(
  */
 static
 int xfs_attr_node_removename_setup(
-	struct xfs_attr_item		*attr)
+	struct xfs_attr_intent		*attr)
 {
 	struct xfs_da_args		*args = attr->xattri_da_args;
 	struct xfs_da_state		*state;
@@ -649,7 +649,7 @@ out:
  */
 static int
 xfs_attr_leaf_remove_attr(
-	struct xfs_attr_item		*attr)
+	struct xfs_attr_intent		*attr)
 {
 	struct xfs_da_args              *args = attr->xattri_da_args;
 	struct xfs_inode		*dp = args->dp;
@@ -714,7 +714,7 @@ xfs_attr_leaf_shrink(
  */
 int
 xfs_attr_set_iter(
-	struct xfs_attr_item		*attr)
+	struct xfs_attr_intent		*attr)
 {
 	struct xfs_da_args              *args = attr->xattri_da_args;
 	int				error = 0;
@@ -891,13 +891,13 @@ xfs_attr_lookup(
 }
 
 static int
-xfs_attr_item_init(
+xfs_attr_intent_init(
 	struct xfs_da_args	*args,
 	unsigned int		op_flags,	/* op flag (set or remove) */
-	struct xfs_attr_item	**attr)		/* new xfs_attr_item */
+	struct xfs_attr_intent	**attr)		/* new xfs_attr_intent */
 {
 
-	struct xfs_attr_item	*new;
+	struct xfs_attr_intent	*new;
 
 	new = kmem_cache_zalloc(xfs_attr_intent_cache, GFP_NOFS | __GFP_NOFAIL);
 	new->xattri_op_flags = op_flags;
@@ -912,10 +912,10 @@ static int
 xfs_attr_defer_add(
 	struct xfs_da_args	*args)
 {
-	struct xfs_attr_item	*new;
+	struct xfs_attr_intent	*new;
 	int			error = 0;
 
-	error = xfs_attr_item_init(args, XFS_ATTRI_OP_FLAGS_SET, &new);
+	error = xfs_attr_intent_init(args, XFS_ATTRI_OP_FLAGS_SET, &new);
 	if (error)
 		return error;
 
@@ -931,10 +931,10 @@ static int
 xfs_attr_defer_replace(
 	struct xfs_da_args	*args)
 {
-	struct xfs_attr_item	*new;
+	struct xfs_attr_intent	*new;
 	int			error = 0;
 
-	error = xfs_attr_item_init(args, XFS_ATTRI_OP_FLAGS_REPLACE, &new);
+	error = xfs_attr_intent_init(args, XFS_ATTRI_OP_FLAGS_REPLACE, &new);
 	if (error)
 		return error;
 
@@ -951,10 +951,10 @@ xfs_attr_defer_remove(
 	struct xfs_da_args	*args)
 {
 
-	struct xfs_attr_item	*new;
+	struct xfs_attr_intent	*new;
 	int			error;
 
-	error  = xfs_attr_item_init(args, XFS_ATTRI_OP_FLAGS_REMOVE, &new);
+	error  = xfs_attr_intent_init(args, XFS_ATTRI_OP_FLAGS_REMOVE, &new);
 	if (error)
 		return error;
 
@@ -1392,7 +1392,7 @@ xfs_attr_node_lookup(
 
 STATIC int
 xfs_attr_node_addname_find_attr(
-	 struct xfs_attr_item	*attr)
+	 struct xfs_attr_intent	*attr)
 {
 	struct xfs_da_args	*args = attr->xattri_da_args;
 	int			error;
@@ -1445,7 +1445,7 @@ error:
  */
 static int
 xfs_attr_node_try_addname(
-	struct xfs_attr_item		*attr)
+	struct xfs_attr_intent		*attr)
 {
 	struct xfs_da_args		*args = attr->xattri_da_args;
 	struct xfs_da_state		*state = attr->xattri_da_state;
@@ -1511,7 +1511,7 @@ xfs_attr_node_removename(
 
 static int
 xfs_attr_node_remove_attr(
-	struct xfs_attr_item		*attr)
+	struct xfs_attr_intent		*attr)
 {
 	struct xfs_da_args		*args = attr->xattri_da_args;
 	struct xfs_da_state		*state = xfs_da_state_alloc(args);
@@ -1614,8 +1614,8 @@ xfs_attr_namecheck(
 int __init
 xfs_attr_intent_init_cache(void)
 {
-	xfs_attr_intent_cache = kmem_cache_create("xfs_attr_item",
-			sizeof(struct xfs_attr_item),
+	xfs_attr_intent_cache = kmem_cache_create("xfs_attr_intent",
+			sizeof(struct xfs_attr_intent),
 			0, 0, NULL);
 
 	return xfs_attr_intent_cache != NULL ? 0 : -ENOMEM;
