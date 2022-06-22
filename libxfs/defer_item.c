@@ -495,13 +495,11 @@ xfs_attr_finish_item(
 {
 	struct xfs_attr_item	*attr;
 	int			error;
-	struct xfs_delattr_context *dac;
 	struct xfs_da_args	*args;
 	unsigned int		op;
 
 	attr = container_of(item, struct xfs_attr_item, xattri_list);
-	dac = &attr->xattri_dac;
-	args = dac->da_args;
+	args = attr->xattri_da_args;
 	op = attr->xattri_op_flags & XFS_ATTR_OP_FLAGS_TYPE_MASK;
 
 	/*
@@ -517,11 +515,11 @@ xfs_attr_finish_item(
 
 	switch (op) {
 	case XFS_ATTR_OP_FLAGS_SET:
-		error = xfs_attr_set_iter(dac);
+		error = xfs_attr_set_iter(attr);
 		break;
 	case XFS_ATTR_OP_FLAGS_REMOVE:
 		ASSERT(XFS_IFORK_Q(args->dp));
-		error = xfs_attr_remove_iter(dac);
+		error = xfs_attr_remove_iter(attr);
 		break;
 	default:
 		error = -EFSCORRUPTED;
