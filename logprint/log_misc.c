@@ -54,11 +54,47 @@ print_stars(void)
 	   "***********************************\n");
 }	/* print_stars */
 
+void
+print_hex_dump(char *ptr, int len) {
+	int i = 0;
+
+	for (i = 0; i < len; i++) {
+		if (i % 16 == 0)
+			printf("%08x ", i);
+
+		printf("%02x", ptr[i]);
+
+		if ((i+1)%16 == 0)
+			printf("\n");
+		else if ((i+1)%2 == 0)
+			printf(" ");
+	}
+	printf("\n");
+}
+
+bool
+is_printable(char *ptr, int len) {
+	int i = 0;
+
+	for (i = 0; i < len; i++)
+		if (!isprint(ptr[i]) )
+			return false;
+	return true;
+}
+
+void
+print_or_dump(char *ptr, int len) {
+	if (is_printable(ptr, len))
+		printf("%.*s\n", len, ptr);
+	else
+		print_hex_dump(ptr, len);
+}
+
 /*
  * Given a pointer to a data segment, print out the data as if it were
  * a log operation header.
  */
-static void
+void
 xlog_print_op_header(xlog_op_header_t	*op_head,
 		     int		i,
 		     char		**ptr)
@@ -969,6 +1005,17 @@ xlog_print_record(
 		    }
 		    case XFS_LI_EFD: {
 			skip = xlog_print_trans_efd(&ptr,
+					be32_to_cpu(op_head->oh_len));
+			break;
+		    }
+		    case XFS_LI_ATTRI: {
+			skip = xlog_print_trans_attri(&ptr,
+					be32_to_cpu(op_head->oh_len),
+					&i);
+			break;
+		    }
+		    case XFS_LI_ATTRD: {
+			skip = xlog_print_trans_attrd(&ptr,
 					be32_to_cpu(op_head->oh_len));
 			break;
 		    }
