@@ -334,7 +334,8 @@ const ftattr_t	ftattrtab[] = {
 	  FTARG_SIGNED, NULL, NULL },
 	{ FLDT_QCNT, "qcnt", fp_num, "%llu", SI(bitsz(xfs_qcnt_t)), 0, NULL,
 	  NULL },
-	{ FLDT_QWARNCNT, "qwarncnt", fp_num, "%u", SI(bitsz(xfs_qwarncnt_t)), 0,
+	/* warning counter field removed */
+	{ FLDT_QWARNCNT, "qwarncnt", fp_num, "%u", SI(bitsz(uint16_t)), 0,
 	  NULL, NULL },
 	{ FLDT_SB, "sb", NULL, (char *)sb_flds, sb_size, FTARG_SIZE, NULL,
 	  sb_flds },
