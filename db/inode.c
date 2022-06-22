@@ -27,6 +27,16 @@ static int	inode_core_nlinkv2_count(void *obj, int startoff);
 static int	inode_core_onlink_count(void *obj, int startoff);
 static int	inode_core_projid_count(void *obj, int startoff);
 static int	inode_core_nlinkv1_count(void *obj, int startoff);
+static int	inode_core_v3_pad_count(void *obj, int startoff);
+static int	inode_core_v2_pad_count(void *obj, int startoff);
+static int	inode_core_flushiter_count(void *obj, int startoff);
+static int	inode_core_nrext64_pad_count(void *obj, int startoff);
+static int	inode_core_nextents_offset(void *obj, int startoff, int idx);
+static int	inode_core_nextents32_count(void *obj, int startoff);
+static int	inode_core_nextents64_count(void *obj, int startoff);
+static int	inode_core_anextents_offset(void *obj, int startoff, int idx);
+static int	inode_core_anextents16_count(void *obj, int startoff);
+static int	inode_core_anextents32_count(void *obj, int startoff);
 static int	inode_f(int argc, char **argv);
 static int	inode_u_offset(void *obj, int startoff, int idx);
 static int	inode_u_bmbt_count(void *obj, int startoff);
@@ -82,26 +92,42 @@ const field_t	inode_core_flds[] = {
 	{ "format", FLDT_DINODE_FMT, OI(COFF(format)), C1, 0, TYP_NONE },
 	{ "nlinkv1", FLDT_UINT16D, OI(COFF(onlink)), inode_core_nlinkv1_count,
 	  FLD_COUNT, TYP_NONE },
-	{ "nlinkv2", FLDT_UINT32D, OI(COFF(nlink)), inode_core_nlinkv2_count,
-	  FLD_COUNT, TYP_NONE },
 	{ "onlink", FLDT_UINT16D, OI(COFF(onlink)), inode_core_onlink_count,
+	  FLD_COUNT, TYP_NONE },
+	{ "uid", FLDT_UINT32D, OI(COFF(uid)), C1, 0, TYP_NONE },
+	{ "gid", FLDT_UINT32D, OI(COFF(gid)), C1, 0, TYP_NONE },
+	{ "nlinkv2", FLDT_UINT32D, OI(COFF(nlink)), inode_core_nlinkv2_count,
 	  FLD_COUNT, TYP_NONE },
 	{ "projid_lo", FLDT_UINT16D, OI(COFF(projid_lo)),
 	  inode_core_projid_count, FLD_COUNT, TYP_NONE },
 	{ "projid_hi", FLDT_UINT16D, OI(COFF(projid_hi)),
 	  inode_core_projid_count, FLD_COUNT, TYP_NONE },
-	{ "pad", FLDT_UINT8X, OI(OFF(pad)), CI(6), FLD_ARRAY|FLD_SKIPALL, TYP_NONE },
-	{ "uid", FLDT_UINT32D, OI(COFF(uid)), C1, 0, TYP_NONE },
-	{ "gid", FLDT_UINT32D, OI(COFF(gid)), C1, 0, TYP_NONE },
-	{ "flushiter", FLDT_UINT16D, OI(COFF(flushiter)), C1, 0, TYP_NONE },
+	/* union 1 */
+	{ "nextents", FLDT_UINT64D, inode_core_nextents_offset,
+	  inode_core_nextents64_count, FLD_OFFSET|FLD_COUNT, TYP_NONE },
+	{ "v3_pad", FLDT_UINT64D, OI(OFF(v3_pad)),
+	  inode_core_v3_pad_count, FLD_COUNT|FLD_SKIPALL, TYP_NONE },
+	{ "v2_pad", FLDT_UINT8X, OI(OFF(v2_pad)),
+	  inode_core_v2_pad_count, FLD_ARRAY|FLD_COUNT|FLD_SKIPALL, TYP_NONE },
+	{ "flushiter", FLDT_UINT16D, OI(COFF(flushiter)),
+	  inode_core_flushiter_count, FLD_COUNT, TYP_NONE },
+	/* -- */
 	{ "atime", FLDT_TIMESTAMP, OI(COFF(atime)), C1, 0, TYP_NONE },
 	{ "mtime", FLDT_TIMESTAMP, OI(COFF(mtime)), C1, 0, TYP_NONE },
 	{ "ctime", FLDT_TIMESTAMP, OI(COFF(ctime)), C1, 0, TYP_NONE },
 	{ "size", FLDT_FSIZE, OI(COFF(size)), C1, 0, TYP_NONE },
 	{ "nblocks", FLDT_DRFSBNO, OI(COFF(nblocks)), C1, 0, TYP_NONE },
 	{ "extsize", FLDT_EXTLEN, OI(COFF(extsize)), C1, 0, TYP_NONE },
-	{ "nextents", FLDT_EXTNUM, OI(COFF(nextents)), C1, 0, TYP_NONE },
-	{ "naextents", FLDT_AEXTNUM, OI(COFF(anextents)), C1, 0, TYP_NONE },
+	/* union 2 */
+	{ "nextents", FLDT_UINT32D, inode_core_nextents_offset,
+	  inode_core_nextents32_count, FLD_OFFSET|FLD_COUNT, TYP_NONE },
+	{ "naextents", FLDT_UINT16D, inode_core_anextents_offset,
+	  inode_core_anextents16_count, FLD_OFFSET|FLD_COUNT, TYP_NONE },
+	{ "naextents", FLDT_UINT32D, inode_core_anextents_offset,
+	  inode_core_anextents32_count, FLD_OFFSET|FLD_COUNT, TYP_NONE },
+	{ "nrext64_pad", FLDT_UINT16D, OI(COFF(nrext64_pad)),
+	  inode_core_nrext64_pad_count, FLD_COUNT|FLD_SKIPALL, TYP_NONE },
+	/* -- */
 	{ "forkoff", FLDT_UINT8D, OI(COFF(forkoff)), C1, 0, TYP_NONE },
 	{ "aformat", FLDT_DINODE_FMT, OI(COFF(aformat)), C1, 0, TYP_NONE },
 	{ "dmevmask", FLDT_UINT32X, OI(COFF(dmevmask)), C1, 0, TYP_NONE },
@@ -399,6 +425,181 @@ inode_core_projid_count(
 	ASSERT(obj == iocur_top->data);
 	dic = obj;
 	return dic->di_version >= 2;
+}
+
+static int
+inode_core_v3_pad_count(
+	void			*obj,
+	int			startoff)
+{
+	struct xfs_dinode	*dic;
+
+	ASSERT(startoff == 0);
+	ASSERT(obj == iocur_top->data);
+	dic = obj;
+
+	if ((dic->di_version == 3)
+		&& !(dic->di_flags2 & cpu_to_be64(XFS_DIFLAG2_NREXT64)))
+		return 1;
+
+	return 0;
+}
+
+static int
+inode_core_v2_pad_count(
+	void			*obj,
+	int			startoff)
+{
+	struct xfs_dinode	*dic;
+
+	ASSERT(startoff == 0);
+	ASSERT(obj == iocur_top->data);
+	dic = obj;
+
+	if (dic->di_version == 3)
+		return 0;
+
+	return 6;
+}
+
+static int
+inode_core_flushiter_count(
+	void			*obj,
+	int			startoff)
+{
+	struct xfs_dinode	*dic;
+
+	ASSERT(startoff == 0);
+	ASSERT(obj == iocur_top->data);
+	dic = obj;
+
+	if (dic->di_version == 3)
+		return 0;
+
+	return 1;
+}
+
+static int
+inode_core_nrext64_pad_count(
+	void			*obj,
+	int			startoff)
+{
+	struct xfs_dinode	*dic;
+
+	ASSERT(startoff == 0);
+	ASSERT(obj == iocur_top->data);
+	dic = obj;
+
+	if (xfs_dinode_has_large_extent_counts(dic))
+		return 1;
+
+	return 0;
+}
+
+static int
+inode_core_nextents_offset(
+	void			*obj,
+	int			startoff,
+	int			idx)
+{
+	struct xfs_dinode	*dic;
+
+	ASSERT(startoff == 0);
+	ASSERT(idx == 0);
+	ASSERT(obj == iocur_top->data);
+	dic = obj;
+
+	if (xfs_dinode_has_large_extent_counts(dic))
+		return COFF(big_nextents);
+
+	return COFF(nextents);
+}
+
+static int
+inode_core_nextents32_count(
+	void			*obj,
+	int			startoff)
+{
+	struct xfs_dinode	*dic;
+
+	ASSERT(startoff == 0);
+	ASSERT(obj == iocur_top->data);
+	dic = obj;
+
+	if (xfs_dinode_has_large_extent_counts(dic))
+		return 0;
+
+	return 1;
+}
+
+static int
+inode_core_nextents64_count(
+	void			*obj,
+	int			startoff)
+{
+	struct xfs_dinode	*dic;
+
+	ASSERT(startoff == 0);
+	ASSERT(obj == iocur_top->data);
+	dic = obj;
+
+	if (xfs_dinode_has_large_extent_counts(dic))
+		return 1;
+
+	return 0;
+}
+
+static int
+inode_core_anextents_offset(
+	void			*obj,
+	int			startoff,
+	int			idx)
+{
+	struct xfs_dinode	*dic;
+
+	ASSERT(startoff == 0);
+	ASSERT(idx == 0);
+	ASSERT(obj == iocur_top->data);
+	dic = obj;
+
+	if (xfs_dinode_has_large_extent_counts(dic))
+		return COFF(big_anextents);
+
+	return COFF(anextents);
+}
+
+static int
+inode_core_anextents16_count(
+	void			*obj,
+	int			startoff)
+{
+	struct xfs_dinode	*dic;
+
+	ASSERT(startoff == 0);
+	ASSERT(obj == iocur_top->data);
+	dic = obj;
+
+	if (xfs_dinode_has_large_extent_counts(dic))
+		return 0;
+
+	return 1;
+}
+
+static int
+inode_core_anextents32_count(
+	void			*obj,
+	int			startoff)
+{
+	struct xfs_dinode	*dic;
+
+	ASSERT(startoff == 0);
+	ASSERT(obj == iocur_top->data);
+	dic = obj;
+
+	if (xfs_dinode_has_large_extent_counts(dic))
+		return 1;
+
+	return 0;
 }
 
 static int
