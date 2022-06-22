@@ -272,9 +272,9 @@ static int		ncheck_f(int argc, char **argv);
 static char		*prepend_path(char *oldpath, char *parent);
 static xfs_ino_t	process_block_dir_v2(blkmap_t *blkmap, int *dot,
 					     int *dotdot, inodata_t *id);
-static void		process_bmbt_reclist(xfs_bmbt_rec_t *rp, int numrecs,
-					     dbm_t type, inodata_t *id,
-					     xfs_rfsblock_t *tot,
+static void		process_bmbt_reclist(xfs_bmbt_rec_t *rp,
+					     xfs_extnum_t numrecs, dbm_t type,
+					     inodata_t *id, xfs_rfsblock_t *tot,
 					     blkmap_t **blkmapp);
 static void		process_btinode(inodata_t *id, struct xfs_dinode *dip,
 					dbm_t type, xfs_rfsblock_t *totd,
@@ -2176,7 +2176,7 @@ process_block_dir_v2(
 static void
 process_bmbt_reclist(
 	xfs_bmbt_rec_t		*rp,
-	int			numrecs,
+	xfs_extnum_t		numrecs,
 	dbm_t			type,
 	inodata_t		*id,
 	xfs_rfsblock_t		*tot,
@@ -2188,7 +2188,7 @@ process_bmbt_reclist(
 	xfs_filblks_t		c;
 	xfs_filblks_t		cp;
 	int			f;
-	int			i;
+	xfs_extnum_t		i;
 	xfs_agblock_t		iagbno;
 	xfs_agnumber_t		iagno;
 	xfs_fileoff_t		o;

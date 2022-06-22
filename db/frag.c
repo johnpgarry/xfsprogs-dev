@@ -273,7 +273,7 @@ process_fork(
 	int			whichfork)
 {
 	extmap_t		*extmap;
-	int			nex;
+	xfs_extnum_t		nex;
 
 	nex = XFS_DFORK_NEXTENTS(dip, whichfork);
 	if (!nex)

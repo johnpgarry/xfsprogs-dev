@@ -92,7 +92,7 @@ dquot_f(
 	int		doprj;
 	xfs_dqid_t	id;
 	xfs_ino_t	ino;
-	int		nex;
+	xfs_extnum_t	nex;
 	char		*p;
 	int		perblock;
 	xfs_fileoff_t	qbno;

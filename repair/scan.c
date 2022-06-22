@@ -133,7 +133,7 @@ scan_lbtree(
 				xfs_fsblock_t		bno,
 				xfs_ino_t		ino,
 				xfs_rfsblock_t		*tot,
-				uint64_t		*nex,
+				xfs_extnum_t		*nex,
 				blkmap_t		**blkmapp,
 				bmap_cursor_t		*bm_cursor,
 				int			isroot,
@@ -144,7 +144,7 @@ scan_lbtree(
 	int		whichfork,
 	xfs_ino_t	ino,
 	xfs_rfsblock_t	*tot,
-	uint64_t	*nex,
+	xfs_extnum_t	*nex,
 	blkmap_t	**blkmapp,
 	bmap_cursor_t	*bm_cursor,
 	int		isroot,
@@ -204,7 +204,7 @@ scan_bmapbt(
 	xfs_fsblock_t		bno,
 	xfs_ino_t		ino,
 	xfs_rfsblock_t		*tot,
-	uint64_t		*nex,
+	xfs_extnum_t		*nex,
 	blkmap_t		**blkmapp,
 	bmap_cursor_t		*bm_cursor,
 	int			isroot,
@@ -220,7 +220,7 @@ scan_bmapbt(
 	xfs_fileoff_t		first_key;
 	xfs_fileoff_t		last_key;
 	char			*forkname = get_forkname(whichfork);
-	int			numrecs;
+	xfs_extnum_t		numrecs;
 	xfs_agnumber_t		agno;
 	xfs_agblock_t		agbno;
 	int			state;

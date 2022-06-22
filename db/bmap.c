@@ -19,7 +19,7 @@
 static int		bmap_f(int argc, char **argv);
 static int		bmap_one_extent(xfs_bmbt_rec_t *ep,
 					xfs_fileoff_t *offp, xfs_fileoff_t eoff,
-					int *idxp, bmap_ext_t *bep);
+					xfs_extnum_t *idxp, bmap_ext_t *bep);
 static xfs_fsblock_t	select_child(xfs_fileoff_t off, xfs_bmbt_key_t *kp,
 				     xfs_bmbt_ptr_t *pp, int nrecs);
 
@@ -32,7 +32,7 @@ bmap(
 	xfs_fileoff_t		offset,
 	xfs_filblks_t		len,
 	int			whichfork,
-	int			*nexp,
+	xfs_extnum_t		*nexp,
 	bmap_ext_t		*bep)
 {
 	struct xfs_btree_block	*block;
@@ -44,10 +44,10 @@ bmap(
 	enum xfs_dinode_fmt	fmt;
 	int			fsize;
 	xfs_bmbt_key_t		*kp;
-	int			n;
+	xfs_extnum_t		n;
 	int			nex;
 	xfs_fsblock_t		nextbno;
-	int			nextents;
+	xfs_extnum_t		nextents;
 	xfs_bmbt_ptr_t		*pp;
 	xfs_bmdr_block_t	*rblock;
 	typnm_t			typ;
@@ -132,7 +132,7 @@ bmap_f(
 	struct xfs_dinode	*dip;
 	xfs_fileoff_t		eo;
 	xfs_filblks_t		len;
-	int			nex;
+	xfs_extnum_t		nex;
 	char			*p;
 	int			whichfork;
 
@@ -223,13 +223,13 @@ bmap_one_extent(
 	xfs_bmbt_rec_t		*ep,
 	xfs_fileoff_t		*offp,
 	xfs_fileoff_t		eoff,
-	int			*idxp,
+	xfs_extnum_t		*idxp,
 	bmap_ext_t		*bep)
 {
 	xfs_filblks_t		c;
 	xfs_fileoff_t		curoffset;
 	int			f;
-	int			idx;
+	xfs_extnum_t		idx;
 	xfs_fileoff_t		o;
 	xfs_fsblock_t		s;
 
@@ -276,10 +276,10 @@ convert_extent(
 void
 make_bbmap(
 	bbmap_t		*bbmap,
-	int		nex,
+	xfs_extnum_t	nex,
 	bmap_ext_t	*bmp)
 {
-	int		i;
+	xfs_extnum_t	i;
 
 	for (i = 0; i < nex; i++) {
 		bbmap->b[i].bm_bn = XFS_FSB_TO_DADDR(mp, bmp[i].startblock);

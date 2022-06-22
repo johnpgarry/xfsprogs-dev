@@ -348,7 +348,7 @@ static int
 process_bmbt_reclist_int(
 	xfs_mount_t		*mp,
 	xfs_bmbt_rec_t		*rp,
-	int			*numrecs,
+	xfs_extnum_t		*numrecs,
 	int			type,
 	xfs_ino_t		ino,
 	xfs_rfsblock_t		*tot,
@@ -365,7 +365,7 @@ process_bmbt_reclist_int(
 	xfs_fsblock_t		b;
 	char			*ftype;
 	char			*forkname = get_forkname(whichfork);
-	int			i;
+	xfs_extnum_t		i;
 	int			state;
 	xfs_agnumber_t		agno;
 	xfs_agblock_t		agbno;
@@ -651,7 +651,7 @@ int
 process_bmbt_reclist(
 	xfs_mount_t		*mp,
 	xfs_bmbt_rec_t		*rp,
-	int			*numrecs,
+	xfs_extnum_t		*numrecs,
 	int			type,
 	xfs_ino_t		ino,
 	xfs_rfsblock_t		*tot,
@@ -672,7 +672,7 @@ int
 scan_bmbt_reclist(
 	xfs_mount_t		*mp,
 	xfs_bmbt_rec_t		*rp,
-	int			*numrecs,
+	xfs_extnum_t		*numrecs,
 	int			type,
 	xfs_ino_t		ino,
 	xfs_rfsblock_t		*tot,
@@ -754,7 +754,7 @@ process_btinode(
 	int			type,
 	int			*dirty,
 	xfs_rfsblock_t		*tot,
-	uint64_t		*nex,
+	xfs_extnum_t		*nex,
 	blkmap_t		**blkmapp,
 	int			whichfork,
 	int			check_dups)
@@ -895,7 +895,7 @@ _("bad key in bmbt root (is %" PRIu64 ", would reset to %" PRIu64 ") in inode "
 			sizeof(xfs_bmbt_rec_t)) {
 		do_warn(
 	_("extent count for ino %" PRIu64 " %s fork too low (%" PRIu64 ") for file format\n"),
-				lino, forkname, *nex);
+				lino, forkname, (uint64_t)*nex);
 		return(1);
 	}
 	/*
@@ -929,7 +929,7 @@ process_exinode(
 	int			type,
 	int			*dirty,
 	xfs_rfsblock_t		*tot,
-	uint64_t		*nex,
+	xfs_extnum_t		*nex,
 	blkmap_t		**blkmapp,
 	int			whichfork,
 	int			check_dups)
@@ -938,7 +938,7 @@ process_exinode(
 	xfs_bmbt_rec_t		*rp;
 	xfs_fileoff_t		first_key;
 	xfs_fileoff_t		last_key;
-	int32_t			numrecs;
+	xfs_extnum_t		numrecs;
 	int			ret;
 
 	lino = XFS_AGINO_TO_INO(mp, agno, ino);
@@ -1024,8 +1024,8 @@ process_symlink_extlist(
 	xfs_fileoff_t		expected_offset;
 	xfs_bmbt_rec_t		*rp;
 	xfs_bmbt_irec_t		irec;
-	int			numrecs;
-	int			i;
+	xfs_extnum_t		numrecs;
+	xfs_extnum_t		i;
 	int			max_blocks;
 
 	if (be64_to_cpu(dino->di_size) <= XFS_DFORK_DSIZE(dino, mp)) {
@@ -1876,13 +1876,13 @@ process_inode_data_fork(
 	int			type,
 	int			*dirty,
 	xfs_rfsblock_t		*totblocks,
-	uint64_t		*nextents,
+	xfs_extnum_t		*nextents,
 	blkmap_t		**dblkmap,
 	int			check_dups)
 {
 	xfs_ino_t		lino = XFS_AGINO_TO_INO(mp, agno, ino);
 	int			err = 0;
-	int			nex;
+	xfs_extnum_t		nex;
 
 	/*
 	 * extent count on disk is only valid for positive values. The kernel
@@ -1985,7 +1985,7 @@ process_inode_attr_fork(
 	int			type,
 	int			*dirty,
 	xfs_rfsblock_t		*atotblocks,
-	uint64_t		*anextents,
+	xfs_extnum_t		*anextents,
 	int			check_dups,
 	int			extra_attr_check,
 	int			*retval)
@@ -2270,8 +2270,8 @@ process_dinode_int(xfs_mount_t *mp,
 	int			di_mode;
 	int			type;
 	int			retval = 0;
-	uint64_t		nextents;
-	uint64_t		anextents;
+	xfs_extnum_t		nextents;
+	xfs_extnum_t		anextents;
 	xfs_ino_t		lino;
 	const int		is_free = 0;
 	const int		is_used = 1;
