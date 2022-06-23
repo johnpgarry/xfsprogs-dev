@@ -267,7 +267,7 @@ xlog_recover_print_inode_core(
 			xlog_extract_dinode_ts(di->di_ctime));
 	printf(_("		flushiter:%d\n"), di->di_flushiter);
 	printf(_("		size:0x%llx  nblks:0x%llx  exsize:%d  "
-	     "nextents:" PRIu64 "  anextents:%u\n"), (unsigned long long)
+	     "nextents:%" PRIu64 "  anextents:%" PRIu32 "\n"), (unsigned long long)
 	       di->di_size, (unsigned long long)di->di_nblocks,
 	       di->di_extsize, nextents, anextents);
 	printf(_("		forkoff:%d  dmevmask:0x%x  dmstate:%d  flags:0x%x  "
