@@ -270,11 +270,4 @@ struct xfs_dquot {
 	int		q_type;
 };
 
-struct xfs_globals {
-#ifdef DEBUG
-       bool    larp;           /* log attribute replay */
-#endif
-};
-extern struct xfs_globals      xfs_globals;
-
 #endif	/* __XFS_MOUNT_H__ */
