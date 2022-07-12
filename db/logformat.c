@@ -160,8 +160,10 @@ logres_f(
 	end_res = (struct xfs_trans_res *)(M_RES(mp) + 1);
 	for (i = 0; res < end_res; i++, res++)
 		print_logres(i, res);
+
 	libxfs_log_get_max_trans_res(mp, &resv);
-	print_logres(-1, &resv);
+	dbprintf(_("minlogsize logres %u logcount %d\n"),
+			resv.tr_logres, resv.tr_logcount);
 
 	return 0;
 }
