@@ -286,8 +286,10 @@ libxfs_init_new_inode(
 
 	if (xfs_has_v3inodes(ip->i_mount)) {
 		VFS_I(ip)->i_version = 1;
-		ip->i_diflags2 = pip ? ip->i_mount->m_ino_geo.new_diflags2 :
-				xfs_flags2diflags2(ip, fsx->fsx_xflags);
+		ip->i_diflags2 = ip->i_mount->m_ino_geo.new_diflags2;
+		if (!pip)
+			ip->i_diflags2 = xfs_flags2diflags2(ip,
+							fsx->fsx_xflags);
 		ip->i_crtime = VFS_I(ip)->i_mtime; /* struct copy */
 		ip->i_cowextsize = pip ? 0 : fsx->fsx_cowextsize;
 	}
