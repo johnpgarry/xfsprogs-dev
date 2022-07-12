@@ -211,7 +211,7 @@ December 1901 to January 2038, and quota timers from January 1970 to February
 .IP
 By default,
 .B mkfs.xfs
-will not enable this feature.
+will enable this feature.
 If the option
 .B \-m crc=0
 is used, the large timestamp feature is not supported and is disabled.
@@ -264,7 +264,7 @@ This can be used to reduce mount times when the free inode btree is enabled.
 .IP
 By default,
 .B mkfs.xfs
-will not enable this option.
+will enable this option.
 This feature is only available for filesystems created with the (default)
 .B \-m finobt=1
 option set.
