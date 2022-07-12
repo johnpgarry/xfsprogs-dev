@@ -748,7 +748,7 @@ main(int argc, char **argv)
 	/* Do it again, now with proper length and verifier */
 	libxfs_buf_relse(sbp);
 
-	error = -libxfs_buf_read(mbuf.m_ddev_targp, XFS_SB_DADDR,
+	error = -libxfs_buf_read_uncached(mbuf.m_ddev_targp, XFS_SB_DADDR,
 			1 << (sb->sb_sectlog - BBSHIFT), 0, &sbp,
 			&xfs_sb_buf_ops);
 	if (error) {
