@@ -2703,6 +2703,26 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 				*dirty = 1;
 		}
 
+		if (xfs_dinode_has_large_extent_counts(dino)) {
+			if (dino->di_nrext64_pad) {
+				if (!no_modify) {
+					do_warn(_("fixing bad nrext64_pad.\n"));
+					dino->di_nrext64_pad = 0;
+					*dirty = 1;
+				} else
+					do_warn(_("would fix bad nrext64_pad.\n"));
+			}
+		} else if (dino->di_version >= 3) {
+			if (dino->di_v3_pad) {
+				if (!no_modify) {
+					do_warn(_("fixing bad v3_pad.\n"));
+					dino->di_v3_pad = 0;
+					*dirty = 1;
+				} else
+					do_warn(_("would fix bad v3_pad.\n"));
+			}
+		}
+
 		if (!verify_mode && flags2 != be64_to_cpu(dino->di_flags2)) {
 			if (!no_modify) {
 				do_warn(_("fixing bad flags2.\n"));
