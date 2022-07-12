@@ -942,7 +942,7 @@ process_exinode(
 	xfs_bmbt_rec_t		*rp;
 	xfs_fileoff_t		first_key;
 	xfs_fileoff_t		last_key;
-	xfs_extnum_t		numrecs;
+	xfs_extnum_t		numrecs, max_numrecs;
 	int			ret;
 
 	lino = XFS_AGINO_TO_INO(mp, agno, ino);
@@ -956,7 +956,10 @@ process_exinode(
 	 * be in the range of valid on-disk numbers, which is:
 	 *	0 < numrecs < 2^31 - 1
 	 */
-	if (numrecs < 0)
+	max_numrecs = xfs_iext_max_nextents(
+			xfs_dinode_has_large_extent_counts(dip),
+			whichfork);
+	if (numrecs > max_numrecs)
 		numrecs = *nex;
 
 	/*
@@ -1899,7 +1902,7 @@ process_inode_data_fork(
 {
 	xfs_ino_t		lino = XFS_AGINO_TO_INO(mp, agno, ino);
 	int			err = 0;
-	xfs_extnum_t		nex;
+	xfs_extnum_t		nex, max_nex;
 
 	/*
 	 * extent count on disk is only valid for positive values. The kernel
@@ -1907,7 +1910,10 @@ process_inode_data_fork(
 	 * here, trash it!
 	 */
 	nex = xfs_dfork_data_extents(dino);
-	if (nex < 0)
+	max_nex = xfs_iext_max_nextents(
+			xfs_dinode_has_large_extent_counts(dino),
+			XFS_DATA_FORK);
+	if (nex > max_nex)
 		*nextents = 1;
 	else
 		*nextents = nex;
