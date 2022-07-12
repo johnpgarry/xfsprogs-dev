@@ -552,6 +552,14 @@ secondary_sb_whack(
 			else
 				do_warn(
 	_("would clear needsrepair flag and regenerate metadata\n"));
+			/*
+			 * If needsrepair is set on the primary super, there's
+			 * a possibility that repair crashed during an upgrade.
+			 * Set features_changed to ensure that the secondary
+			 * supers are rewritten with the new feature bits once
+			 * we've finished the upgrade.
+			 */
+			features_changed = true;
 		} else {
 			/*
 			 * Quietly clear needsrepair on the secondary supers as
