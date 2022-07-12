@@ -285,15 +285,24 @@ check_v5_feature_mismatch(
 		}
 	}
 
+	/*
+	 * Log incompat feature bits are set and cleared from the primary super
+	 * as needed to protect against log replay on old kernels finding log
+	 * records that they cannot handle.  Secondary sb resyncs performed as
+	 * part of a geometry update to the primary sb (e.g. growfs, label/uuid
+	 * changes) will copy the log incompat feature bits, but it's not a
+	 * corruption for a secondary to have a bit set that is clear in the
+	 * primary super.
+	 */
 	if (mp->m_sb.sb_features_log_incompat != sb->sb_features_log_incompat) {
 		if (no_modify) {
-			do_warn(
-	_("would fix log incompat feature mismatch in AG %u super, 0x%x != 0x%x\n"),
+			do_log(
+	_("would sync log incompat feature in AG %u super, 0x%x != 0x%x\n"),
 					agno, mp->m_sb.sb_features_log_incompat,
 					sb->sb_features_log_incompat);
 		} else {
 			do_warn(
-	_("will fix log incompat feature mismatch in AG %u super, 0x%x != 0x%x\n"),
+	_("will sync log incompat feature in AG %u super, 0x%x != 0x%x\n"),
 					agno, mp->m_sb.sb_features_log_incompat,
 					sb->sb_features_log_incompat);
 			dirty = true;
