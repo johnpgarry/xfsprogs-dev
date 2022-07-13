@@ -608,6 +608,7 @@ check_rtmetadata(
 {
 	rtinit(mp);
 	generate_rtinfo(mp, btmcompute, sumcompute);
+	check_rtbitmap(mp);
 }
 
 void
