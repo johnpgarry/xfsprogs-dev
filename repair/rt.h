@@ -17,15 +17,6 @@ generate_rtinfo(xfs_mount_t	*mp,
 		xfs_suminfo_t	*sumcompute);
 
 void check_rtbitmap(struct xfs_mount *mp);
-
-#if 0
-
-int
-check_summary(xfs_mount_t	*mp);
-
-void
-process_rtsummary(xfs_mount_t	*mp,
-		struct blkmap	*blkmap);
-#endif
+void check_rtsummary(struct xfs_mount *mp);
 
 #endif /* _XFS_REPAIR_RT_H_ */
