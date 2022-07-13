@@ -36,6 +36,7 @@ void	phase1(struct xfs_mount *);
 void	phase2(struct xfs_mount *, int);
 void	phase3(struct xfs_mount *, int);
 void	phase4(struct xfs_mount *);
+void	check_rtmetadata(struct xfs_mount *mp);
 void	phase5(struct xfs_mount *);
 void	phase6(struct xfs_mount *);
 void	phase7(struct xfs_mount *, int);

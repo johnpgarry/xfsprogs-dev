@@ -603,6 +603,14 @@ inject_lost_extent(
 }
 
 void
+check_rtmetadata(
+	struct xfs_mount	*mp)
+{
+	rtinit(mp);
+	generate_rtinfo(mp, btmcompute, sumcompute);
+}
+
+void
 phase5(xfs_mount_t *mp)
 {
 	struct bitmap		*lost_blocks = NULL;
@@ -671,8 +679,7 @@ phase5(xfs_mount_t *mp)
 	if (mp->m_sb.sb_rblocks)  {
 		do_log(
 		_("        - generate realtime summary info and bitmap...\n"));
-		rtinit(mp);
-		generate_rtinfo(mp, btmcompute, sumcompute);
+		check_rtmetadata(mp);
 	}
 
 	do_log(_("        - reset superblock...\n"));
