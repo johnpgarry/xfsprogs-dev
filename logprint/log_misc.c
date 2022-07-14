@@ -482,7 +482,7 @@ xlog_print_trans_inode_core(
     printf(_("magic 0x%hx mode 0%ho version %d format %d\n"),
 	   ip->di_magic, ip->di_mode, (int)ip->di_version,
 	   (int)ip->di_format);
-    printf(_("nlink %hd uid %d gid %d\n"),
+    printf(_("nlink %" PRIu32 " uid %d gid %d\n"),
 	   ip->di_nlink, ip->di_uid, ip->di_gid);
     printf(_("atime 0x%llx mtime 0x%llx ctime 0x%llx\n"),
 		xlog_extract_dinode_ts(ip->di_atime),
