@@ -140,8 +140,11 @@ enum {
 	M_MAX_OPTS,
 };
 
-/* Just define the max options array size manually right now */
-#define MAX_SUBOPTS	D_MAX_OPTS
+/*
+ * Just define the max options array size manually to the largest
+ * enum right now, leaving room for a NULL terminator at the end
+ */
+#define MAX_SUBOPTS	(D_MAX_OPTS + 1)
 
 #define SUBOPT_NEEDS_VAL	(-1LL)
 #define MAX_CONFLICTS	8
@@ -251,6 +254,7 @@ static struct opt_params bopts = {
 	.ini_section = "block",
 	.subopts = {
 		[B_SIZE] = "size",
+		[B_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
 		{ .index = B_SIZE,
@@ -277,6 +281,7 @@ static struct opt_params copts = {
 	.name = 'c',
 	.subopts = {
 		[C_OPTFILE] = "options",
+		[C_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
 		{ .index = C_OPTFILE,
@@ -306,6 +311,7 @@ static struct opt_params dopts = {
 		[D_EXTSZINHERIT] = "extszinherit",
 		[D_COWEXTSIZE] = "cowextsize",
 		[D_DAXINHERIT] = "daxinherit",
+		[D_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
 		{ .index = D_AGCOUNT,
@@ -443,6 +449,7 @@ static struct opt_params iopts = {
 		[I_PROJID32BIT] = "projid32bit",
 		[I_SPINODES] = "sparse",
 		[I_NREXT64] = "nrext64",
+		[I_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
 		{ .index = I_ALIGN,
@@ -515,6 +522,7 @@ static struct opt_params lopts = {
 		[L_FILE] = "file",
 		[L_NAME] = "name",
 		[L_LAZYSBCNTR] = "lazy-count",
+		[L_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
 		{ .index = L_AGNUM,
@@ -607,6 +615,7 @@ static struct opt_params nopts = {
 		[N_SIZE] = "size",
 		[N_VERSION] = "version",
 		[N_FTYPE] = "ftype",
+		[N_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
 		{ .index = N_SIZE,
@@ -642,6 +651,7 @@ static struct opt_params ropts = {
 		[R_FILE] = "file",
 		[R_NAME] = "name",
 		[R_NOALIGN] = "noalign",
+		[R_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
 		{ .index = R_EXTSIZE,
@@ -689,6 +699,7 @@ static struct opt_params sopts = {
 	.subopts = {
 		[S_SIZE] = "size",
 		[S_SECTSIZE] = "sectsize",
+		[S_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
 		{ .index = S_SIZE,
@@ -725,6 +736,7 @@ static struct opt_params mopts = {
 		[M_REFLINK] = "reflink",
 		[M_INOBTCNT] = "inobtcount",
 		[M_BIGTIME] = "bigtime",
+		[M_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
 		{ .index = M_CRC,
