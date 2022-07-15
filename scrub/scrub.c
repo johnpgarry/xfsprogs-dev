@@ -34,21 +34,21 @@ format_scrub_descr(
 	struct xfs_scrub_metadata	*meta = where;
 	const struct xfrog_scrub_descr	*sc = &xfrog_scrubbers[meta->sm_type];
 
-	switch (sc->type) {
-	case XFROG_SCRUB_TYPE_AGHEADER:
-	case XFROG_SCRUB_TYPE_PERAG:
+	switch (sc->group) {
+	case XFROG_SCRUB_GROUP_AGHEADER:
+	case XFROG_SCRUB_GROUP_PERAG:
 		return snprintf(buf, buflen, _("AG %u %s"), meta->sm_agno,
 				_(sc->descr));
 		break;
-	case XFROG_SCRUB_TYPE_INODE:
+	case XFROG_SCRUB_GROUP_INODE:
 		return scrub_render_ino_descr(ctx, buf, buflen,
 				meta->sm_ino, meta->sm_gen, "%s",
 				_(sc->descr));
 		break;
-	case XFROG_SCRUB_TYPE_FS:
+	case XFROG_SCRUB_GROUP_FS:
 		return snprintf(buf, buflen, _("%s"), _(sc->descr));
 		break;
-	case XFROG_SCRUB_TYPE_NONE:
+	case XFROG_SCRUB_GROUP_NONE:
 		assert(0);
 		break;
 	}
@@ -276,12 +276,12 @@ scrub_save_repair(
 	memset(aitem, 0, sizeof(*aitem));
 	aitem->type = meta->sm_type;
 	aitem->flags = meta->sm_flags;
-	switch (xfrog_scrubbers[meta->sm_type].type) {
-	case XFROG_SCRUB_TYPE_AGHEADER:
-	case XFROG_SCRUB_TYPE_PERAG:
+	switch (xfrog_scrubbers[meta->sm_type].group) {
+	case XFROG_SCRUB_GROUP_AGHEADER:
+	case XFROG_SCRUB_GROUP_PERAG:
 		aitem->agno = meta->sm_agno;
 		break;
-	case XFROG_SCRUB_TYPE_INODE:
+	case XFROG_SCRUB_GROUP_INODE:
 		aitem->ino = meta->sm_ino;
 		aitem->gen = meta->sm_gen;
 		break;
@@ -336,14 +336,14 @@ scrub_meta_type(
 }
 
 /*
- * Scrub all metadata types that are assigned to the given XFROG_SCRUB_TYPE_*,
+ * Scrub all metadata types that are assigned to the given XFROG_SCRUB_GROUP_*,
  * saving corruption reports for later.  This should not be used for
- * XFROG_SCRUB_TYPE_INODE or for checking summary metadata.
+ * XFROG_SCRUB_GROUP_INODE or for checking summary metadata.
  */
 static bool
-scrub_all_types(
+scrub_group(
 	struct scrub_ctx		*ctx,
-	enum xfrog_scrub_type		scrub_type,
+	enum xfrog_scrub_group		group,
 	xfs_agnumber_t			agno,
 	struct action_list		*alist)
 {
@@ -354,7 +354,7 @@ scrub_all_types(
 	for (type = 0; type < XFS_SCRUB_TYPE_NR; type++, sc++) {
 		int			ret;
 
-		if (sc->type != scrub_type)
+		if (sc->group != group)
 			continue;
 		if (sc->flags & XFROG_SCRUB_DESCR_SUMMARY)
 			continue;
@@ -388,7 +388,7 @@ scrub_ag_headers(
 	xfs_agnumber_t			agno,
 	struct action_list		*alist)
 {
-	return scrub_all_types(ctx, XFROG_SCRUB_TYPE_AGHEADER, agno, alist);
+	return scrub_group(ctx, XFROG_SCRUB_GROUP_AGHEADER, agno, alist);
 }
 
 /* Scrub each AG's metadata btrees. */
@@ -398,7 +398,7 @@ scrub_ag_metadata(
 	xfs_agnumber_t			agno,
 	struct action_list		*alist)
 {
-	return scrub_all_types(ctx, XFROG_SCRUB_TYPE_PERAG, agno, alist);
+	return scrub_group(ctx, XFROG_SCRUB_GROUP_PERAG, agno, alist);
 }
 
 /* Scrub whole-FS metadata btrees. */
@@ -407,7 +407,7 @@ scrub_fs_metadata(
 	struct scrub_ctx		*ctx,
 	struct action_list		*alist)
 {
-	return scrub_all_types(ctx, XFROG_SCRUB_TYPE_FS, 0, alist);
+	return scrub_group(ctx, XFROG_SCRUB_GROUP_FS, 0, alist);
 }
 
 /* Scrub FS summary metadata. */
@@ -430,12 +430,12 @@ scrub_estimate_ag_work(
 
 	sc = xfrog_scrubbers;
 	for (type = 0; type < XFS_SCRUB_TYPE_NR; type++, sc++) {
-		switch (sc->type) {
-		case XFROG_SCRUB_TYPE_AGHEADER:
-		case XFROG_SCRUB_TYPE_PERAG:
+		switch (sc->group) {
+		case XFROG_SCRUB_GROUP_AGHEADER:
+		case XFROG_SCRUB_GROUP_PERAG:
 			estimate += ctx->mnt.fsgeom.agcount;
 			break;
-		case XFROG_SCRUB_TYPE_FS:
+		case XFROG_SCRUB_GROUP_FS:
 			estimate++;
 			break;
 		default:
@@ -463,7 +463,7 @@ scrub_file(
 	enum check_outcome		fix;
 
 	assert(type < XFS_SCRUB_TYPE_NR);
-	assert(xfrog_scrubbers[type].type == XFROG_SCRUB_TYPE_INODE);
+	assert(xfrog_scrubbers[type].group == XFROG_SCRUB_GROUP_INODE);
 
 	meta.sm_type = type;
 	meta.sm_ino = bstat->bs_ino;
@@ -625,12 +625,12 @@ xfs_repair_metadata(
 	meta.sm_flags = aitem->flags | XFS_SCRUB_IFLAG_REPAIR;
 	if (use_force_rebuild)
 		meta.sm_flags |= XFS_SCRUB_IFLAG_FORCE_REBUILD;
-	switch (xfrog_scrubbers[aitem->type].type) {
-	case XFROG_SCRUB_TYPE_AGHEADER:
-	case XFROG_SCRUB_TYPE_PERAG:
+	switch (xfrog_scrubbers[aitem->type].group) {
+	case XFROG_SCRUB_GROUP_AGHEADER:
+	case XFROG_SCRUB_GROUP_PERAG:
 		meta.sm_agno = aitem->agno;
 		break;
-	case XFROG_SCRUB_TYPE_INODE:
+	case XFROG_SCRUB_GROUP_INODE:
 		meta.sm_ino = aitem->ino;
 		meta.sm_gen = aitem->gen;
 		break;

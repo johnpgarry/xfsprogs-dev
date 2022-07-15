@@ -166,23 +166,23 @@ parse_args(
 	meta->sm_type = type;
 	meta->sm_flags = flags;
 
-	switch (d->type) {
-	case XFROG_SCRUB_TYPE_INODE:
+	switch (d->group) {
+	case XFROG_SCRUB_GROUP_INODE:
 		if (!parse_inode(argc, argv, optind, &meta->sm_ino,
 						     &meta->sm_gen)) {
 			exitcode = 1;
 			return command_usage(cmdinfo);
 		}
 		break;
-	case XFROG_SCRUB_TYPE_AGHEADER:
-	case XFROG_SCRUB_TYPE_PERAG:
+	case XFROG_SCRUB_GROUP_AGHEADER:
+	case XFROG_SCRUB_GROUP_PERAG:
 		if (!parse_agno(argc, argv, optind, &meta->sm_agno)) {
 			exitcode = 1;
 			return command_usage(cmdinfo);
 		}
 		break;
-	case XFROG_SCRUB_TYPE_FS:
-	case XFROG_SCRUB_TYPE_NONE:
+	case XFROG_SCRUB_GROUP_FS:
+	case XFROG_SCRUB_GROUP_NONE:
 		if (!parse_none(argc, optind)) {
 			exitcode = 1;
 			return command_usage(cmdinfo);
