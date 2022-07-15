@@ -1209,7 +1209,7 @@ dir_binval(
 		return 0;
 
 	geo = tp->t_mountp->m_dir_geo;
-	ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
+	ifp = xfs_ifork_ptr(ip, XFS_DATA_FORK);
 	for_each_xfs_iext(ifp, &icur, &rec) {
 		for (dabno = roundup(rec.br_startoff, geo->fsbcount);
 		     dabno < rec.br_startoff + rec.br_blockcount;
