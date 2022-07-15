@@ -410,9 +410,11 @@ xlog_recover_print_logitem(
 	case XFS_LI_INODE:
 		xlog_recover_print_inode(item);
 		break;
+	case XFS_LI_EFD_RT:
 	case XFS_LI_EFD:
 		xlog_recover_print_efd(item);
 		break;
+	case XFS_LI_EFI_RT:
 	case XFS_LI_EFI:
 		xlog_recover_print_efi(item);
 		break;
@@ -473,6 +475,12 @@ xlog_recover_print_item(
 		break;
 	case XFS_LI_INODE:
 		printf("INO");
+		break;
+	case XFS_LI_EFD_RT:
+		printf("EFD_RT");
+		break;
+	case XFS_LI_EFI_RT:
+		printf("EFI_RT");
 		break;
 	case XFS_LI_EFD:
 		printf("EFD");

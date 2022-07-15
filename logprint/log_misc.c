@@ -997,12 +997,14 @@ xlog_print_record(
 					&i, num_ops);
 			break;
 		    }
+		    case XFS_LI_EFI_RT:
 		    case XFS_LI_EFI: {
 			skip = xlog_print_trans_efi(&ptr,
 					be32_to_cpu(op_head->oh_len),
 					continued);
 			break;
 		    }
+		    case XFS_LI_EFD_RT:
 		    case XFS_LI_EFD: {
 			skip = xlog_print_trans_efd(&ptr,
 					be32_to_cpu(op_head->oh_len));
