@@ -645,7 +645,7 @@ init_rmapbt_cursor(
 
 	/* Compute how many blocks we'll need. */
 	error = -libxfs_btree_bload_compute_geometry(btr->cur, &btr->bload,
-			rmap_record_count(sc->mp, agno));
+			rmap_record_count(sc->mp, false, agno));
 	if (error)
 		do_error(
 _("Unable to compute rmap btree geometry, error %d.\n"), error);
@@ -662,7 +662,8 @@ build_rmap_tree(
 {
 	int			error;
 
-	error = rmap_init_mem_cursor(sc->mp, NULL, agno, &btr->rmapbt_cursor);
+	error = rmap_init_mem_cursor(sc->mp, NULL, false, agno,
+			&btr->rmapbt_cursor);
 	if (error)
 		do_error(
 _("Insufficient memory to construct rmap cursor.\n"));
