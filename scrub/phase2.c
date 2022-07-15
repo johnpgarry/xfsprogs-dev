@@ -61,8 +61,6 @@ scan_ag_metadata(
 	struct scrub_item		fix_now;
 	struct scrub_ctx		*ctx = (struct scrub_ctx *)wq->wq_ctx;
 	struct scan_ctl			*sctl = arg;
-	struct action_list		alist;
-	struct action_list		immediate_alist;
 	char				descr[DESCR_BUFSZ];
 	unsigned int			difficulty;
 	int				ret;
@@ -71,15 +69,13 @@ scan_ag_metadata(
 		return;
 
 	scrub_item_init_ag(&sri, agno);
-	action_list_init(&alist);
-	action_list_init(&immediate_alist);
 	snprintf(descr, DESCR_BUFSZ, _("AG %u"), agno);
 
 	/*
 	 * First we scrub and fix the AG headers, because we need
 	 * them to work well enough to check the AG btrees.
 	 */
-	ret = scrub_ag_headers(ctx, agno, &alist, &sri);
+	ret = scrub_ag_headers(ctx, &sri);
 	if (ret)
 		goto err;
 
@@ -89,7 +85,7 @@ scan_ag_metadata(
 		goto err;
 
 	/* Now scrub the AG btrees. */
-	ret = scrub_ag_metadata(ctx, agno, &alist, &sri);
+	ret = scrub_ag_metadata(ctx, &sri);
 	if (ret)
 		goto err;
 
@@ -126,7 +122,6 @@ scan_fs_metadata(
 	void			*arg)
 {
 	struct scrub_item	sri;
-	struct action_list	alist;
 	struct scrub_ctx	*ctx = (struct scrub_ctx *)wq->wq_ctx;
 	struct scan_ctl		*sctl = arg;
 	unsigned int		difficulty;
@@ -136,8 +131,7 @@ scan_fs_metadata(
 		goto out;
 
 	scrub_item_init_fs(&sri);
-	action_list_init(&alist);
-	ret = scrub_fs_metadata(ctx, type, &alist, &sri);
+	ret = scrub_fs_metadata(ctx, type, &sri);
 	if (ret) {
 		sctl->aborted = true;
 		goto out;
@@ -172,7 +166,6 @@ phase2_func(
 		.aborted	= false,
 		.rbm_done	= false,
 	};
-	struct action_list	alist;
 	struct scrub_item	sri;
 	const struct xfrog_scrub_descr *sc = xfrog_scrubbers;
 	xfs_agnumber_t		agno;
@@ -196,8 +189,7 @@ phase2_func(
 	 * If errors occur, this function will log them and return nonzero.
 	 */
 	scrub_item_init_ag(&sri, 0);
-	action_list_init(&alist);
-	ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_SB, 0, &alist, &sri);
+	ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_SB, &sri);
 	if (ret)
 		goto out_wq;
 	ret = repair_item_completely(ctx, &sri);

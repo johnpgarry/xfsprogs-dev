@@ -386,7 +386,6 @@ out:
 
 struct fs_scan_item {
 	struct scrub_item	sri;
-	struct action_list	alist;
 	bool			*abortedp;
 	unsigned int		scrub_type;
 };
@@ -413,16 +412,14 @@ fs_scan_worker(
 		nanosleep(&tv, NULL);
 	}
 
-	ret = scrub_meta_type(ctx, item->scrub_type, 0, &item->alist,
-			&item->sri);
+	ret = scrub_meta_type(ctx, item->scrub_type, &item->sri);
 	if (ret) {
 		str_liberror(ctx, ret, _("checking fs scan metadata"));
 		*item->abortedp = true;
 		goto out;
 	}
 
-	ret = action_list_process(ctx, &item->alist,
-			XRM_FINAL_WARNING | XRM_NOPROGRESS);
+	ret = repair_item_completely(ctx, &item->sri);
 	if (ret) {
 		str_liberror(ctx, ret, _("repairing fs scan metadata"));
 		*item->abortedp = true;
@@ -453,7 +450,6 @@ queue_fs_scan(
 		return ret;
 	}
 	scrub_item_init_fs(&item->sri);
-	action_list_init(&item->alist);
 	item->scrub_type = scrub_type;
 	item->abortedp = abortedp;
 

@@ -100,7 +100,6 @@ phase7_func(
 {
 	struct summary_counts	totalcount = {0};
 	struct scrub_item	sri;
-	struct action_list	alist;
 	struct ptvar		*ptvar;
 	unsigned long long	used_data;
 	unsigned long long	used_rt;
@@ -119,8 +118,7 @@ phase7_func(
 
 	/* Check and fix the summary metadata. */
 	scrub_item_init_fs(&sri);
-	action_list_init(&alist);
-	error = scrub_summary_metadata(ctx, &alist, &sri);
+	error = scrub_summary_metadata(ctx, &sri);
 	if (error)
 		return error;
 	error = repair_item_completely(ctx, &sri);

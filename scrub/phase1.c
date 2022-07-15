@@ -53,7 +53,6 @@ report_to_kernel(
 	struct scrub_ctx	*ctx)
 {
 	struct scrub_item	sri;
-	struct action_list	alist;
 	int			ret;
 
 	if (!ctx->scrub_setup_succeeded || ctx->corruptions_found ||
@@ -62,8 +61,7 @@ report_to_kernel(
 		return 0;
 
 	scrub_item_init_fs(&sri);
-	action_list_init(&alist);
-	ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_HEALTHY, 0, &alist, &sri);
+	ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_HEALTHY, &sri);
 	if (ret)
 		return ret;
 
@@ -74,7 +72,6 @@ report_to_kernel(
 	if (repair_item_count_needsrepair(&sri) != 0 &&
 	    !debug_tweak_on("XFS_SCRUB_FORCE_REPAIR")) {
 		str_info(ctx, _("Couldn't upload clean bill of health."), NULL);
-		action_list_discard(&alist);
 	}
 
 	return 0;
