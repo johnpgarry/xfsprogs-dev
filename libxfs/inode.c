@@ -31,7 +31,7 @@
 
 /* Propagate di_flags from a parent inode to a child inode. */
 static void
-xfs_inode_propagate_flags(
+xfs_inode_inherit_flags(
 	struct xfs_inode	*ip,
 	const struct xfs_inode	*pip)
 {
@@ -99,31 +99,47 @@ xfs_inode_init(
 	struct xfs_inode	*ip)
 {
 	struct xfs_inode	*pip = args->pip;
+	struct inode		*dir = pip ? VFS_I(pip) : NULL;
+	struct xfs_mount	*mp = tp->t_mountp;
+	struct inode		*inode = VFS_I(ip);
 	unsigned int		flags;
 	int			times = XFS_ICHGTIME_MOD | XFS_ICHGTIME_CHG |
 					XFS_ICHGTIME_ACCESS;
 
-	VFS_I(ip)->i_mode = args->mode;
-	set_nlink(VFS_I(ip), args->nlink);
-	VFS_I(ip)->i_uid = args->uid;
+	set_nlink(inode, args->nlink);
+	inode->i_rdev = args->rdev;
 	ip->i_projid = args->prid;
 
-	if (pip && (VFS_I(pip)->i_mode & S_ISGID)) {
-		if (!(args->flags & XFS_ICREATE_ARGS_FORCE_GID))
-			VFS_I(ip)->i_gid = VFS_I(pip)->i_gid;
-		if ((VFS_I(pip)->i_mode & S_ISGID) && S_ISDIR(args->mode))
-			VFS_I(ip)->i_mode |= S_ISGID;
-	} else
-		VFS_I(ip)->i_gid = args->gid;
+	if (dir && !(dir->i_mode & S_ISGID) &&
+	    xfs_has_grpid(mp)) {
+		inode->i_uid = args->uid;
+		inode->i_gid = dir->i_gid;
+		inode->i_mode = args->mode;
+	} else {
+		inode_init_owner(args->idmap, inode, dir, args->mode);
+	}
+
+	/* struct copies */
+	if (args->flags & XFS_ICREATE_ARGS_FORCE_UID)
+		inode->i_uid = args->uid;
+	else
+		ASSERT(uid_eq(inode->i_uid, args->uid));
+	if (args->flags & XFS_ICREATE_ARGS_FORCE_GID)
+		inode->i_gid = args->gid;
+	else if (!pip || !XFS_INHERIT_GID(pip))
+		ASSERT(gid_eq(inode->i_gid, args->gid));
+	if (args->flags & XFS_ICREATE_ARGS_FORCE_MODE)
+		inode->i_mode = args->mode;
 
 	ip->i_disk_size = 0;
 	ip->i_df.if_nextents = 0;
 	ASSERT(ip->i_nblocks == 0);
+
 	ip->i_extsize = 0;
 	ip->i_diflags = 0;
+
 	if (xfs_has_v3inodes(ip->i_mount)) {
 		VFS_I(ip)->i_version = 1;
-		ip->i_diflags2 = ip->i_mount->m_ino_geo.new_diflags2;
 		ip->i_cowextsize = 0;
 		times |= XFS_ICHGTIME_CREATE;
 	}
@@ -138,12 +154,11 @@ xfs_inode_init(
 	case S_IFBLK:
 		ip->i_df.if_format = XFS_DINODE_FMT_DEV;
 		flags |= XFS_ILOG_DEV;
-		VFS_I(ip)->i_rdev = args->rdev;
 		break;
 	case S_IFREG:
 	case S_IFDIR:
 		if (pip && (pip->i_diflags & XFS_DIFLAG_ANY))
-			xfs_inode_propagate_flags(ip, pip);
+			xfs_inode_inherit_flags(ip, pip);
 		if (pip && (pip->i_diflags2 & XFS_DIFLAG2_ANY))
 			xfs_inode_inherit_flags2(ip, pip);
 		/* FALLTHROUGH */
@@ -165,7 +180,8 @@ xfs_inode_init(
 	 * this saves us from needing to run a separate transaction to set the
 	 * fork offset in the immediate future.
 	 */
-	if (xfs_has_parent(tp->t_mountp) && xfs_has_attr(tp->t_mountp)) {
+	if ((args->flags & XFS_ICREATE_ARGS_INIT_XATTRS) &&
+	    xfs_has_attr(mp)) {
 		ip->i_forkoff = xfs_default_attroffset(ip) >> 3;
 		xfs_ifork_init_attr(ip, XFS_DINODE_FMT_EXTENTS, 0);
 	}
@@ -293,14 +309,14 @@ libxfs_dir_ialloc(
 		.nlink		= nlink,
 		.rdev		= rdev,
 		.mode		= mode,
+		.flags		= XFS_ICREATE_ARGS_FORCE_UID |
+				  XFS_ICREATE_ARGS_FORCE_GID |
+				  XFS_ICREATE_ARGS_FORCE_MODE,
 	};
 	struct xfs_inode	*ip;
 	xfs_ino_t		parent_ino = dp ? dp->i_ino : 0;
 	xfs_ino_t		ino;
 	int			error;
-
-	if (cr->cr_flags & CRED_FORCE_GID)
-		args.flags |= XFS_ICREATE_ARGS_FORCE_GID;
 
 	if (dp && xfs_has_parent(dp->i_mount))
 		args.flags |= XFS_ICREATE_ARGS_INIT_XATTRS;
@@ -361,6 +377,7 @@ libxfs_iget(
 	VFS_I(ip)->i_count = 1;
 	ip->i_ino = ino;
 	ip->i_mount = mp;
+	ip->i_diflags2 = mp->m_ino_geo.new_diflags2;
 	ip->i_af.if_format = XFS_DINODE_FMT_EXTENTS;
 	spin_lock_init(&VFS_I(ip)->i_lock);
 
@@ -441,4 +458,31 @@ libxfs_irele(
 		libxfs_idestroy(ip);
 		kmem_cache_free(xfs_inode_cache, ip);
 	}
+}
+
+static inline void inode_fsuid_set(struct inode *inode,
+				   struct mnt_idmap *idmap)
+{
+	inode->i_uid = make_kuid(0);
+}
+
+static inline void inode_fsgid_set(struct inode *inode,
+				   struct mnt_idmap *idmap)
+{
+	inode->i_gid = make_kgid(0);
+}
+
+void inode_init_owner(struct mnt_idmap *idmap, struct inode *inode,
+		      const struct inode *dir, umode_t mode)
+{
+	inode_fsuid_set(inode, idmap);
+	if (dir && dir->i_mode & S_ISGID) {
+		inode->i_gid = dir->i_gid;
+
+		/* Directories are special, and always inherit S_ISGID */
+		if (S_ISDIR(mode))
+			mode |= S_ISGID;
+	} else
+		inode_fsgid_set(inode, idmap);
+	inode->i_mode = mode;
 }

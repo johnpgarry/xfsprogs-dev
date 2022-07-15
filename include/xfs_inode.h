@@ -398,4 +398,6 @@ extern void	libxfs_irele(struct xfs_inode *ip);
 
 #define XFS_DEFAULT_COWEXTSZ_HINT 32
 
+#define XFS_INHERIT_GID(pip)		(VFS_I(pip)->i_mode & S_ISGID)
+
 #endif /* __XFS_INODE_H__ */
