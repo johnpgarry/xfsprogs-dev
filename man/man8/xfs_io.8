@@ -1322,6 +1322,94 @@ Only available in expert mode and requires privileges.
 .B thaw
 Undo the effects of a filesystem freeze operation.
 Only available in expert mode and requires privileges.
+
+.TP
+.BI "fsrefcounts [ \-d | \-l | \-r ] [ \-m | \-v ] [ \-n " nx " ] [ \-o " min_owners " ] [ \-O " max_owners " ] [ " start " ] [ " end " ]
+Prints the number of owners of disk extents used by the filesystem hosting the
+current file.
+The listing does not include free blocks.
+Each line of the listings takes the following form:
+.PP
+.RS
+.IR extent ": " major ":" minor " [" startblock .. endblock "]: " owners " " length
+.PP
+All blocks, offsets, and lengths are specified in units of 512-byte
+blocks, no matter what the filesystem's block size is.
+The optional
+.I start
+and
+.I end
+arguments can be used to constrain the output to a particular range of
+disk blocks.
+If these two options are specified, exactly one of
+.BR "-d" ", " "-l" ", or " "-r"
+must also be set.
+.RE
+.RS 1.0i
+.PD 0
+.TP
+.BI \-d
+Display only extents from the data device.
+This option only applies for XFS filesystems.
+.TP
+.BI \-l
+Display only extents from the external log device.
+This option only applies to XFS filesystems.
+.TP
+.BI \-r
+Display only extents from the realtime device.
+This option only applies to XFS filesystems.
+.TP
+.BI \-m
+Display results in a machine readable format (CSV).
+This option is not compatible with the
+.B \-v
+flag.
+The columns of the output are: extent number, device major, device minor,
+physical start, physical end, number of owners, length.
+The start, end, and length numbers are provided in units of 512b.
+
+.TP
+.BI \-n " num_extents"
+If this option is given,
+.B fsrefcounts
+obtains the extent list of the file in groups of
+.I num_extents
+extents.
+In the absence of
+.BR "-n" ", " "fsrefcounts"
+queries the system for extents in groups of 131,072 records.
+.TP
+.BI \-o " min_owners"
+Only print extents having at least this many owners.
+This argument must be in the range 1 to 2^64-1.
+The default value is 1.
+.TP
+.BI \-O " max_owners"
+Only print extents having this many or fewer owners.
+This argument must be in the range 1 to 2^64-1.
+There is no limit by default.
+.TP
+.B \-v
+Shows verbose information.
+When this flag is specified, additional AG specific information is
+appended to each line in the following form:
+.IP
+.RS 1.2i
+.IR agno " (" startagblock .. endagblock ") " nblocks " " flags
+.RE
+.IP
+A second
+.B \-v
+option will print out the
+.I flags
+legend.
+This option is not compatible with the
+.B \-m
+flag.
+.RE
+.PD
+
 .TP
 .BI "inject [ " tag " ]"
 Inject errors into a filesystem to observe filesystem behavior at

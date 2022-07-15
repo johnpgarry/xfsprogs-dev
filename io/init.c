@@ -59,6 +59,7 @@ init_commands(void)
 	freeze_init();
 	fsmap_init();
 	fsuuid_init();
+	fsrefcounts_init();
 	fsync_init();
 	getrusage_init();
 	help_init();
