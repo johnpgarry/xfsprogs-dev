@@ -67,7 +67,7 @@ fsmap(
 		if (pag->pag_agno == end_ag)
 			high.rm_startblock = XFS_FSB_TO_AGBNO(mp, end_fsb);
 
-		error = -libxfs_alloc_read_agf(mp, NULL, pag->pag_agno, 0, &agbp);
+		error = -libxfs_alloc_read_agf(pag, NULL, 0, &agbp);
 		if (error) {
 			libxfs_perag_put(pag);
 			dbprintf(_("Error %d while reading AGF.\n"), error);

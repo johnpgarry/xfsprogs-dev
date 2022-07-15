@@ -23,6 +23,7 @@
 #include "xfs_inode.h"
 #include "xfs_da_btree.h"
 #include "xfs_attr.h"
+#include "xfs_ag.h"
 
 /* Dummy defer item ops, since we don't do logging. */
 
@@ -135,6 +136,7 @@ xfs_agfl_free_finish_item(
 	struct xfs_mount		*mp = tp->t_mountp;
 	struct xfs_extent_free_item	*free;
 	struct xfs_buf			*agbp;
+	struct xfs_perag		*pag;
 	int				error;
 	xfs_agnumber_t			agno;
 	xfs_agblock_t			agbno;
@@ -145,9 +147,11 @@ xfs_agfl_free_finish_item(
 	agbno = XFS_FSB_TO_AGBNO(mp, free->xefi_startblock);
 	oinfo.oi_owner = free->xefi_owner;
 
-	error = xfs_alloc_read_agf(mp, tp, agno, 0, &agbp);
+	pag = libxfs_perag_get(mp, agno);
+	error = xfs_alloc_read_agf(pag, tp, 0, &agbp);
 	if (!error)
 		error = xfs_free_agfl_block(tp, agno, agbno, agbp, &oinfo);
+	libxfs_perag_put(pag);
 	kmem_cache_free(xfs_extfree_item_cache, free);
 	return error;
 }
