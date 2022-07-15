@@ -421,13 +421,14 @@ static void
 keep_fsinos(xfs_mount_t *mp)
 {
 	ino_tree_node_t		*irec;
-	int			i;
 
 	irec = find_inode_rec(mp, XFS_INO_TO_AGNO(mp, mp->m_sb.sb_rootino),
 			XFS_INO_TO_AGINO(mp, mp->m_sb.sb_rootino));
 
-	for (i = 0; i < 3; i++)
-		set_inode_used(irec, i);
+	set_inode_used(irec, 0);	/* root dir */
+	set_inode_used(irec, 1);	/* rt bitmap or metadata dir root */
+	if (!xfs_has_metadir(mp))
+		set_inode_used(irec, 2);	/* rt summary */
 }
 
 static void
