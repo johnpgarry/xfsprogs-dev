@@ -499,8 +499,8 @@ mk_rbmino(xfs_mount_t *mp)
 
 	VFS_I(ip)->i_mode = S_IFREG;
 	ip->i_df.if_format = XFS_DINODE_FMT_EXTENTS;
-	if (ip->i_afp)
-		ip->i_afp->if_format = XFS_DINODE_FMT_EXTENTS;
+	if (ip->i_af.if_present)
+		libxfs_ifork_zap_attr(ip);
 
 	set_nlink(VFS_I(ip), 1);	/* account for sb ptr */
 
@@ -739,8 +739,8 @@ mk_rsumino(xfs_mount_t *mp)
 
 	VFS_I(ip)->i_mode = S_IFREG;
 	ip->i_df.if_format = XFS_DINODE_FMT_EXTENTS;
-	if (ip->i_afp)
-		ip->i_afp->if_format = XFS_DINODE_FMT_EXTENTS;
+	if (ip->i_af.if_present)
+		libxfs_ifork_zap_attr(ip);
 
 	set_nlink(VFS_I(ip), 1);	/* account for sb ptr */
 
@@ -838,8 +838,8 @@ mk_root_dir(xfs_mount_t *mp)
 
 	VFS_I(ip)->i_mode = mode|S_IFDIR;
 	ip->i_df.if_format = XFS_DINODE_FMT_EXTENTS;
-	if (ip->i_afp)
-		ip->i_afp->if_format = XFS_DINODE_FMT_EXTENTS;
+	if (ip->i_af.if_present)
+		libxfs_ifork_zap_attr(ip);
 
 	set_nlink(VFS_I(ip), 2);	/* account for . and .. */
 
