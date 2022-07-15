@@ -101,6 +101,7 @@
 #define xfs_da_shrink_inode		libxfs_da_shrink_inode
 #define xfs_defer_cancel		libxfs_defer_cancel
 #define xfs_defer_finish		libxfs_defer_finish
+#define xfs_dialloc			libxfs_dialloc
 #define xfs_dinode_calc_crc		libxfs_dinode_calc_crc
 #define xfs_dinode_good_version		libxfs_dinode_good_version
 #define xfs_dinode_verify		libxfs_dinode_verify

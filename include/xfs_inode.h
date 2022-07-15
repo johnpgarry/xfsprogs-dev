@@ -371,17 +371,6 @@ static inline bool xfs_is_always_cow_inode(struct xfs_inode *ip)
 	return false;
 }
 
-/* Always set the child's GID to this value, even if the parent is setgid. */
-#define CRED_FORCE_GID	(1U << 0)
-struct cred {
-	uid_t		cr_uid;
-	gid_t		cr_gid;
-	unsigned int	cr_flags;
-};
-
-extern int	libxfs_dir_ialloc (struct xfs_trans **, struct xfs_inode *,
-				mode_t, nlink_t, xfs_dev_t, struct cred *,
-				struct fsxattr *, struct xfs_inode **);
 extern void	libxfs_trans_inode_alloc_buf (struct xfs_trans *,
 				struct xfs_buf *);
 
@@ -390,6 +379,11 @@ extern void	libxfs_trans_ichgtime(struct xfs_trans *,
 extern int	libxfs_iflush_int (struct xfs_inode *, struct xfs_buf *);
 
 void libxfs_bumplink(struct xfs_trans *tp, struct xfs_inode *ip);
+
+int libxfs_icreate(struct xfs_trans *tp, xfs_ino_t ino,
+		const struct xfs_icreate_args *args, struct xfs_inode **ipp);
+void libxfs_icreate_args_rootfile(struct xfs_icreate_args *args,
+		struct xfs_mount *mp, umode_t mode, bool init_xattrs);
 
 /* Inode Cache Interfaces */
 extern int	libxfs_iget(struct xfs_mount *, struct xfs_trans *, xfs_ino_t,

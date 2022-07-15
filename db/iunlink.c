@@ -309,10 +309,15 @@ static int
 create_unlinked(
 	struct xfs_mount	*mp)
 {
-	struct cred		cr = { };
-	struct fsxattr		fsx = { };
+	struct xfs_icreate_args	args = {
+		.mode		= S_IFREG | 0600,
+		.flags		= XFS_ICREATE_ARGS_FORCE_UID |
+				  XFS_ICREATE_ARGS_FORCE_GID |
+				  XFS_ICREATE_ARGS_FORCE_MODE,
+	};
 	struct xfs_inode	*ip;
 	struct xfs_trans	*tp;
+	xfs_ino_t		ino;
 	unsigned int		resblks;
 	int			error;
 
@@ -324,8 +329,13 @@ create_unlinked(
 		return error;
 	}
 
-	error = -libxfs_dir_ialloc(&tp, NULL, S_IFREG | 0600, 0, 0, &cr, &fsx,
-			&ip);
+	error = -libxfs_dialloc(&tp, 0, args.mode, &ino);
+	if (error) {
+		dbprintf(_("alloc inode: %s\n"), strerror(error));
+		goto out_cancel;
+	}
+
+	error = -libxfs_icreate(tp, ino, &args, &ip);
 	if (error) {
 		dbprintf(_("create inode: %s\n"), strerror(error));
 		goto out_cancel;
