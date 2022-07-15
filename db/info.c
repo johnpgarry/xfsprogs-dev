@@ -83,7 +83,7 @@ print_agresv_info(
 	if (error)
 		xfrog_perror(error, "rmapbt");
 
-	error = -libxfs_read_agf(mp, NULL, agno, 0, &bp);
+	error = -libxfs_read_agf(pag, NULL, 0, &bp);
 	if (error)
 		xfrog_perror(error, "AGF");
 	agf = bp->b_addr;
