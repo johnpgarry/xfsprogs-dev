@@ -949,43 +949,14 @@ static void
 rtbitmap_init(
 	struct xfs_mount	*mp)
 {
-	struct xfs_bmbt_irec	map[XFS_BMAP_MAX_NMAP];
-	struct xfs_trans	*tp;
-	struct xfs_bmbt_irec	*ep;
-	xfs_fileoff_t		bno;
-	uint			blocks;
-	int			i;
-	int			nmap;
 	int			error;
 
-	blocks = mp->m_sb.sb_rbmblocks +
-			XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK) - 1;
-	error = -libxfs_trans_alloc_rollable(mp, blocks, &tp);
+	error = -libxfs_alloc_file_space(mp->m_rbmip, 0,
+			mp->m_sb.sb_rbmblocks << mp->m_sb.sb_blocklog,
+			XFS_BMAPI_ZERO);
 	if (error)
-		res_failed(error);
-
-	libxfs_trans_ijoin(tp, mp->m_rbmip, 0);
-	bno = 0;
-	while (bno < mp->m_sb.sb_rbmblocks) {
-		nmap = XFS_BMAP_MAX_NMAP;
-		error = -libxfs_bmapi_write(tp, mp->m_rbmip, bno,
-				(xfs_extlen_t)(mp->m_sb.sb_rbmblocks - bno),
-				0, mp->m_sb.sb_rbmblocks, map, &nmap);
-		if (error)
-			fail(_("Allocation of the realtime bitmap failed"),
-				error);
-
-		for (i = 0, ep = map; i < nmap; i++, ep++) {
-			libxfs_device_zero(mp->m_ddev_targp,
-				XFS_FSB_TO_DADDR(mp, ep->br_startblock),
-				XFS_FSB_TO_BB(mp, ep->br_blockcount));
-			bno += ep->br_blockcount;
-		}
-	}
-
-	error = -libxfs_trans_commit(tp);
-	if (error)
-		fail(_("Block allocation of the realtime bitmap inode failed"),
+		fail(
+	_("Block allocation of the realtime bitmap inode failed"),
 				error);
 
 	if (xfs_has_rtgroups(mp)) {
@@ -1001,43 +972,13 @@ static void
 rtsummary_init(
 	struct xfs_mount	*mp)
 {
-	struct xfs_bmbt_irec	map[XFS_BMAP_MAX_NMAP];
-	struct xfs_trans	*tp;
-	struct xfs_bmbt_irec	*ep;
-	xfs_fileoff_t		bno;
-	xfs_extlen_t		nsumblocks;
-	uint			blocks;
-	int			i;
-	int			nmap;
 	int			error;
 
-	nsumblocks = mp->m_rsumsize >> mp->m_sb.sb_blocklog;
-	blocks = nsumblocks + XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK) - 1;
-	error = -libxfs_trans_alloc_rollable(mp, blocks, &tp);
+	error = -libxfs_alloc_file_space(mp->m_rsumip, 0, mp->m_rsumsize,
+			XFS_BMAPI_ZERO);
 	if (error)
-		res_failed(error);
-	libxfs_trans_ijoin(tp, mp->m_rsumip, 0);
-
-	bno = 0;
-	while (bno < nsumblocks) {
-		nmap = XFS_BMAP_MAX_NMAP;
-		error = -libxfs_bmapi_write(tp, mp->m_rsumip, bno,
-				(xfs_extlen_t)(nsumblocks - bno),
-				0, nsumblocks, map, &nmap);
-		if (error)
-			fail(_("Allocation of the realtime summary failed"),
-				error);
-
-		for (i = 0, ep = map; i < nmap; i++, ep++) {
-			libxfs_device_zero(mp->m_ddev_targp,
-				XFS_FSB_TO_DADDR(mp, ep->br_startblock),
-				XFS_FSB_TO_BB(mp, ep->br_blockcount));
-			bno += ep->br_blockcount;
-		}
-	}
-	error = -libxfs_trans_commit(tp);
-	if (error)
-		fail(_("Block allocation of the realtime summary inode failed"),
+		fail(
+	_("Block allocation of the realtime summary inode failed"),
 				error);
 
 	if (xfs_has_rtgroups(mp)) {
@@ -1142,6 +1083,9 @@ rtinit(
 		if (xfs_has_rtrmapbt(mp))
 			rtrmapbt_create(rtg);
 	}
+
+	if (mp->m_sb.sb_rbmblocks == 0)
+		return;
 
 	rtbitmap_init(mp);
 	rtsummary_init(mp);
