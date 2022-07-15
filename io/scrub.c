@@ -131,11 +131,15 @@ parse_args(
 {
 	int				type = -1;
 	int				i, c;
+	uint32_t			flags = 0;
 	const struct xfrog_scrub_descr	*d = NULL;
 
 	memset(meta, 0, sizeof(struct xfs_scrub_metadata));
-	while ((c = getopt(argc, argv, "")) != EOF) {
+	while ((c = getopt(argc, argv, "R")) != EOF) {
 		switch (c) {
+		case 'R':
+			flags |= XFS_SCRUB_IFLAG_FORCE_REBUILD;
+			break;
 		default:
 			exitcode = 1;
 			return command_usage(cmdinfo);
@@ -160,6 +164,7 @@ parse_args(
 	optind++;
 
 	meta->sm_type = type;
+	meta->sm_flags = flags;
 
 	switch (d->type) {
 	case XFROG_SCRUB_TYPE_INODE:
@@ -248,11 +253,13 @@ repair_help(void)
 " or (optionally) take an inode number and generation number to act upon as\n"
 " the second and third parameters.\n"
 "\n"
+" Flags are -R to force rebuilding metadata.\n"
+"\n"
 " Example:\n"
 " 'repair inobt 3' - repairs the inode btree in AG 3.\n"
 " 'repair bmapbtd 128 13525' - repairs the extent map of inode 128 gen 13525.\n"
 "\n"
-" Known metadata repairs types are:"));
+" Known metadata repair types are:"));
 	for (i = 0, d = xfrog_scrubbers; i < XFS_SCRUB_TYPE_NR; i++, d++)
 		printf(" %s", d->name);
 	printf("\n");
