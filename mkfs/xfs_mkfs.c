@@ -2467,24 +2467,6 @@ _("parent pointers not supported on v4 filesystems\n"));
 	}
 
 	if (cli->xi->rt.name) {
-		if (cli->rtextsize && cli->sb_feat.reflink) {
-			if (cli_opt_set(&mopts, M_REFLINK)) {
-				fprintf(stderr,
-_("reflink not supported on realtime devices with rt extent size specified\n"));
-				usage();
-			}
-			cli->sb_feat.reflink = false;
-		}
-		if (cli->blocksize < XFS_MIN_RTEXTSIZE && cli->sb_feat.reflink) {
-			if (cli_opt_set(&mopts, M_REFLINK)) {
-				fprintf(stderr,
-_("reflink not supported on realtime devices with blocksize %d < %d\n"),
-						cli->blocksize,
-						XFS_MIN_RTEXTSIZE);
-				usage();
-			}
-			cli->sb_feat.reflink = false;
-		}
 		if (!cli->sb_feat.rtgroups && cli->sb_feat.reflink) {
 			if (cli_opt_set(&mopts, M_REFLINK) &&
 			    cli_opt_set(&ropts, R_RTGROUPS)) {
@@ -2664,19 +2646,6 @@ validate_rtextsize(
 			usage();
 		}
 		cfg->rtextblocks = (xfs_extlen_t)(rtextbytes >> cfg->blocklog);
-	} else if (cli->sb_feat.reflink && cli->xi->rt.name) {
-		/*
-		 * reflink doesn't support rt extent size > 1FSB yet, so set
-		 * an extent size of 1FSB.  Make sure we still satisfy the
-		 * minimum rt extent size.
-		 */
-		if (cfg->blocksize < XFS_MIN_RTEXTSIZE) {
-			fprintf(stderr,
-		_("reflink not supported on rt volume with blocksize %d\n"),
-				cfg->blocksize);
-			usage();
-		}
-		cfg->rtextblocks = 1;
 	} else {
 		/*
 		 * If realtime extsize has not been specified by the user,
@@ -2708,12 +2677,6 @@ validate_rtextsize(
 		}
 	}
 	ASSERT(cfg->rtextblocks);
-
-	if (cli->sb_feat.reflink && cfg->rtblocks > 0 && cfg->rtextblocks > 1) {
-		fprintf(stderr,
-_("reflink not supported on realtime with extent sizes > 1\n"));
-		usage();
-	}
 }
 
 /* Validate the incoming extsize hint. */
