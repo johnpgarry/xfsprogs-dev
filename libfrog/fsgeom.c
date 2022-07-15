@@ -102,6 +102,19 @@ xfrog_geometry(
 	return -errno;
 }
 
+/* Compute conversion factors of an xfs_fd structure. */
+static void
+xfd_compute_conversion_factors(
+	struct xfs_fd		*xfd)
+{
+	xfd->agblklog = log2_roundup(xfd->fsgeom.agblocks);
+	xfd->blocklog = highbit32(xfd->fsgeom.blocksize);
+	xfd->inodelog = highbit32(xfd->fsgeom.inodesize);
+	xfd->inopblog = xfd->blocklog - xfd->inodelog;
+	xfd->aginolog = xfd->agblklog + xfd->inopblog;
+	xfd->blkbb_log = xfd->blocklog - BBSHIFT;
+}
+
 /*
  * Prepare xfs_fd structure for future ioctl operations by computing the xfs
  * geometry for @xfd->fd.  Returns zero or a negative error code.
@@ -116,13 +129,21 @@ xfd_prepare_geometry(
 	if (ret)
 		return ret;
 
-	xfd->agblklog = log2_roundup(xfd->fsgeom.agblocks);
-	xfd->blocklog = highbit32(xfd->fsgeom.blocksize);
-	xfd->inodelog = highbit32(xfd->fsgeom.inodesize);
-	xfd->inopblog = xfd->blocklog - xfd->inodelog;
-	xfd->aginolog = xfd->agblklog + xfd->inopblog;
-	xfd->blkbb_log = xfd->blocklog - BBSHIFT;
+	xfd_compute_conversion_factors(xfd);
 	return 0;
+}
+
+/*
+ * Prepare xfs_fd structure for future ioctl operations by computing the xfs
+ * geometry for @xfd->fd.  Returns zero or a negative error code.
+ */
+void
+xfd_install_geometry(
+	struct xfs_fd		*xfd,
+	struct xfs_fsop_geom	*fsgeom)
+{
+	memcpy(&xfd->fsgeom, fsgeom, sizeof(*fsgeom));
+	xfd_compute_conversion_factors(xfd);
 }
 
 /* Open a file on an XFS filesystem.  Returns zero or a negative error code. */
