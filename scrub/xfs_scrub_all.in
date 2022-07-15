@@ -19,6 +19,7 @@ from io import TextIOWrapper
 
 retcode = 0
 terminate = False
+scrub_media = False
 
 def DEVNULL():
 	'''Return /dev/null in subprocess writable format.'''
@@ -88,11 +89,15 @@ def run_killable(cmd, stdout, killfuncs):
 # systemd doesn't like unit instance names with slashes in them, so it
 # replaces them with dashes when it invokes the service.  Filesystem paths
 # need a special --path argument so that dashes do not get mangled.
-def path_to_serviceunit(path):
+def path_to_serviceunit(path, scrub_media):
 	'''Convert a pathname into a systemd service unit name.'''
 
-	cmd = ['systemd-escape', '--template', '@scrub_svcname@',
-	       '--path', path]
+	if scrub_media:
+		svcname = '@scrub_media_svcname@'
+	else:
+		svcname = '@scrub_svcname@'
+	cmd = ['systemd-escape', '--template', svcname, '--path', path]
+
 	try:
 		proc = subprocess.Popen(cmd, stdout = subprocess.PIPE)
 		proc.wait()
@@ -153,7 +158,7 @@ def systemctl_start(unitname, killfuncs):
 
 def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 	'''Run a scrub process.'''
-	global retcode, terminate
+	global retcode, terminate, scrub_media
 
 	print("Scrubbing %s..." % mnt)
 	sys.stdout.flush()
@@ -164,7 +169,7 @@ def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 
 		# Run per-mount systemd xfs_scrub service only if we ourselves
 		# are running as a systemd service.
-		unitname = path_to_serviceunit(path)
+		unitname = path_to_serviceunit(path, scrub_media)
 		if unitname is not None and 'SERVICE_MODE' in os.environ:
 			ret = systemctl_start(unitname, killfuncs)
 			if ret == 0 or ret == 1:
@@ -183,6 +188,8 @@ def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 		if 'SERVICE_MODE' in os.environ:
 			cmd += '@scrub_service_args@'.split()
 		cmd += '@scrub_args@'.split()
+		if scrub_media:
+			cmd += '-x'
 		cmd += [mnt]
 		ret = run_killable(cmd, None, killfuncs)
 		if ret >= 0:
@@ -247,17 +254,21 @@ def main():
 		a = (mnt, cond, running_devs, devs, killfuncs)
 		thr = threading.Thread(target = run_scrub, args = a)
 		thr.start()
-	global retcode, terminate
+	global retcode, terminate, scrub_media
 
 	parser = argparse.ArgumentParser( \
 			description = "Scrub all mounted XFS filesystems.")
 	parser.add_argument("-V", help = "Report version and exit.", \
+			action = "store_true")
+	parser.add_argument("-x", help = "Scrub file data after filesystem metadata.", \
 			action = "store_true")
 	args = parser.parse_args()
 
 	if args.V:
 		print("xfs_scrub_all version @pkg_version@")
 		sys.exit(0)
+
+	scrub_media = args.x
 
 	fs = find_mounts()
 

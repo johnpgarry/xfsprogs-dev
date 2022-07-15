@@ -4,7 +4,7 @@ xfs_scrub_all \- scrub all mounted XFS filesystems
 .SH SYNOPSIS
 .B xfs_scrub_all
 [
-.B \-hV
+.B \-hxV
 ]
 .SH DESCRIPTION
 .B xfs_scrub_all
@@ -20,6 +20,9 @@ the same device simultaneously.
 .TP
 .B \-h
 Display help.
+.TP
+.B \-x
+Read all file data extents to look for disk errors.
 .TP
 .B \-V
 Prints the version number and exits.

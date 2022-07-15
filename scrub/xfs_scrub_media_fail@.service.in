@@ -1,16 +1,16 @@
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-2.0
 #
-# Copyright (C) 2018-2024 Oracle.  All Rights Reserved.
+# Copyright (c) 2018-2024 Oracle.  All Rights Reserved.
 # Author: Darrick J. Wong <djwong@kernel.org>
 
 [Unit]
-Description=Online XFS Metadata Check Failure Reporting for %f
+Description=Online XFS Metadata and Media Check Failure Reporting for %f
 Documentation=man:xfs_scrub(8)
 
 [Service]
 Type=oneshot
 Environment=EMAIL_ADDR=root
-ExecStart=@pkg_libexec_dir@/xfs_scrub_fail "${EMAIL_ADDR}" xfs_scrub %f
+ExecStart=@pkg_libexec_dir@/xfs_scrub_fail "${EMAIL_ADDR}" xfs_scrub_media %f
 User=mail
 Group=mail
 SupplementaryGroups=systemd-journal
@@ -22,7 +22,8 @@ Slice=system-xfs_scrub.slice
 # No realtime scheduling
 RestrictRealtime=true
 
-# Make the entire filesystem readonly and /home inaccessible.
+# Make the entire filesystem readonly and /home inaccessible, then bind mount
+# the filesystem we're supposed to be checking into our private /tmp dir.
 ProtectSystem=full
 ProtectHome=yes
 PrivateTmp=true
