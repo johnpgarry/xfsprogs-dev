@@ -911,6 +911,12 @@ repair_capture_writeback(
 	struct xfs_mount	*mp = bp->b_mount;
 	static pthread_mutex_t	wb_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+	/* We only care about ondisk metadata. */
+	if (bp->b_target != mp->m_ddev_targp &&
+	    bp->b_target != mp->m_logdev_targp &&
+	    bp->b_target != mp->m_rtdev_targp)
+		return;
+
 	/*
 	 * This write hook ignores any buffer that looks like a superblock to
 	 * avoid hook recursion when setting NEEDSREPAIR.  Higher level code

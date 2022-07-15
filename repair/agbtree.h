@@ -20,6 +20,7 @@ struct bt_rebuild {
 	/* Tree-specific data. */
 	union {
 		struct xfs_slab_cursor	*slab_cursor;
+		struct xfs_btree_cur	*rmapbt_cursor;
 		struct {
 			struct extent_tree_node	*bno_rec;
 			unsigned int		freeblks;

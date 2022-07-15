@@ -104,7 +104,8 @@ reserve_agblocks(
 			do_error(_("could not set up btree reservation: %s\n"),
 				strerror(-error));
 
-		error = rmap_add_ag_rec(mp, agno, ext_ptr->ex_startblock, len,
+		error = rmap_add_agbtree_mapping(mp, agno,
+				ext_ptr->ex_startblock, len,
 				btr->newbt.oinfo.oi_owner);
 		if (error)
 			do_error(_("could not set up btree rmaps: %s\n"),
@@ -601,14 +602,19 @@ get_rmapbt_records(
 	unsigned int			nr_wanted,
 	void				*priv)
 {
-	struct xfs_rmap_irec		*rec;
 	struct bt_rebuild		*btr = priv;
 	union xfs_btree_rec		*block_rec;
 	unsigned int			loaded;
+	int				ret;
 
 	for (loaded = 0; loaded < nr_wanted; loaded++, idx++) {
-		rec = pop_slab_cursor(btr->slab_cursor);
-		memcpy(&cur->bc_rec.r, rec, sizeof(struct xfs_rmap_irec));
+		ret = rmap_get_mem_rec(btr->rmapbt_cursor, &cur->bc_rec.r);
+		if (ret < 0)
+			return ret;
+		if (ret == 0)
+			do_error(
+ _("ran out of records while rebuilding AG %u rmap btree\n"),
+					cur->bc_ag.pag->pag_agno);
 
 		block_rec = libxfs_btree_rec_addr(cur, idx, block);
 		cur->bc_ops->init_rec_from_cur(cur, block_rec);
@@ -656,7 +662,7 @@ build_rmap_tree(
 {
 	int			error;
 
-	error = rmap_init_cursor(agno, &btr->slab_cursor);
+	error = rmap_init_mem_cursor(sc->mp, NULL, agno, &btr->rmapbt_cursor);
 	if (error)
 		do_error(
 _("Insufficient memory to construct rmap cursor.\n"));
@@ -669,7 +675,7 @@ _("Error %d while creating rmap btree for AG %u.\n"), error, agno);
 
 	/* Since we're not writing the AGF yet, no need to commit the cursor */
 	libxfs_btree_del_cursor(btr->cur, 0);
-	free_slab_cursor(&btr->slab_cursor);
+	libxfs_btree_del_cursor(btr->rmapbt_cursor, 0);
 }
 
 /* rebuild the refcount tree */

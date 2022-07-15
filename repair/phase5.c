@@ -714,7 +714,7 @@ phase5(xfs_mount_t *mp)
 	 * the superblock counters.
 	 */
 	for (agno = 0; agno < mp->m_sb.sb_agcount; agno++) {
-		error = rmap_store_ag_btree_rec(mp, agno);
+		error = rmap_commit_agbtree_mappings(mp, agno);
 		if (error)
 			do_error(
 _("unable to add AG %u reverse-mapping data to btree.\n"), agno);

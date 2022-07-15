@@ -274,3 +274,36 @@ platform_physmem(void)
 	}
 	return (si.totalram >> 10) * si.mem_unit;	/* kilobytes */
 }
+
+char *kvasprintf(const char *fmt, va_list ap)
+{
+	unsigned int first, second;
+	char *p;
+	va_list aq;
+
+	va_copy(aq, ap);
+	first = vsnprintf(NULL, 0, fmt, aq);
+	va_end(aq);
+
+	p = malloc(first + 1);
+	if (!p)
+		return NULL;
+
+	second = vsnprintf(p, first + 1, fmt, ap);
+	if (first != second) /* shut up gcc */
+		assert(first == second);
+
+	return p;
+}
+
+char *kasprintf(const char *fmt, ...)
+{
+	va_list ap;
+	char *p;
+
+	va_start(ap, fmt);
+	p = kvasprintf(fmt, ap);
+	va_end(ap);
+
+	return p;
+}

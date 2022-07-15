@@ -620,3 +620,11 @@ xfbtree_trans_cancel(
 	tp->t_flags = (tp->t_flags & ~XFS_TRANS_DIRTY) |
 			(tp_dirty ? XFS_TRANS_DIRTY : 0);
 }
+
+/* How many bytes does this xfbtree consume? */
+unsigned long long
+xfbtree_bytes(
+	struct xfbtree	*xfbt)
+{
+	return xfile_bytes(xfbt->target->bt_xfile);
+}
