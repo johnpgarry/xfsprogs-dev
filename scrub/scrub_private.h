@@ -8,6 +8,26 @@
 
 /* Shared code between scrub.c and repair.c. */
 
+/*
+ * Declare a structure big enough to handle all scrub types + barriers, and
+ * an iteration pointer.  So far we only need two barriers.
+ */
+struct scrubv_head {
+	struct xfs_scrub_vec_head	head;
+	struct xfs_scrub_vec		__vecs[XFS_SCRUB_TYPE_NR + 2];
+	unsigned int			i;
+};
+
+#define foreach_bighead_vec(bh, v) \
+	for ((bh)->i = 0, (v) = (bh)->head.svh_vecs; \
+	     (bh)->i < (bh)->head.svh_nr; \
+	     (bh)->i++, (v)++)
+
+void scrub_item_to_vhead(struct scrubv_head *bighead,
+		const struct scrub_item *sri);
+void scrub_vhead_add(struct scrubv_head *bighead, const struct scrub_item *sri,
+		unsigned int scrub_type);
+
 int format_scrub_descr(struct scrub_ctx *ctx, char *buf, size_t buflen,
 		void *where);
 
@@ -104,5 +124,6 @@ scrub_item_schedule_retry(struct scrub_item *sri, unsigned int scrub_type)
 bool scrub_item_call_kernel_again(struct scrub_item *sri,
 		unsigned int scrub_type, uint8_t work_mask,
 		const struct scrub_item *old);
+bool scrub_item_schedule_work(struct scrub_item *sri, uint8_t state_flags);
 
 #endif /* XFS_SCRUB_SCRUB_PRIVATE_H_ */

@@ -216,6 +216,8 @@ _("Kernel metadata scrubbing facility is not available."));
 		return ECANCELED;
 	}
 
+	check_scrubv(ctx);
+
 	/*
 	 * Normally, callers are required to pass -n if the provided path is a
 	 * readonly filesystem or the kernel wasn't built with online repair
