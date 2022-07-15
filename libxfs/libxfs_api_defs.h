@@ -134,6 +134,7 @@
 #define xfs_dir2_shrink_inode		libxfs_dir2_shrink_inode
 
 #define xfs_dir_createname		libxfs_dir_createname
+#define xfs_dir_create_child		libxfs_dir_create_child
 #define xfs_dir_init			libxfs_dir_init
 #define xfs_dir_ino_validate		libxfs_dir_ino_validate
 #define xfs_dir_lookup			libxfs_dir_lookup
