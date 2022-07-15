@@ -516,6 +516,24 @@ mark_ino_inuse(
 		set_inode_isadir(irec, ino_offset);
 }
 
+/*
+ * Mark a newly allocated inode as metadata in the incore bitmap.  Callers
+ * must have already called mark_ino_inuse to ensure there is an incore record.
+ */
+static void
+mark_ino_metadata(
+	struct xfs_mount	*mp,
+	xfs_ino_t		ino)
+{
+	struct ino_tree_node	*irec;
+	int			ino_offset;
+
+	irec = find_inode_rec(mp, XFS_INO_TO_AGNO(mp, ino),
+			XFS_INO_TO_AGINO(mp, ino));
+	ino_offset = get_inode_offset(mp, ino, irec);
+	set_inode_is_meta(irec, ino_offset);
+}
+
 /* Make sure this metadata directory path exists. */
 static int
 ensure_imeta_dirpath(
@@ -557,6 +575,7 @@ ensure_imeta_dirpath(
 		}
 
 		mark_ino_inuse(mp, ino, S_IFDIR, parent);
+		mark_ino_metadata(mp, ino);
 		parent = ino;
 	}
 
@@ -664,6 +683,7 @@ ensure_rtino_metadir(
 
 		mark_ino_inuse(mp, upd->ip->i_ino, S_IFREG,
 				lookup_imeta_path_dirname(mp, path));
+		mark_ino_metadata(mp, upd->ip->i_ino);
 		return;
 	}
 
@@ -1108,6 +1128,7 @@ mk_metadir(
 
 	libxfs_trans_ijoin(tp, mp->m_metadirip, 0);
 	libxfs_imeta_set_iflag(tp, mp->m_metadirip);
+	mark_ino_metadata(mp, mp->m_metadirip->i_ino);
 
 	error = -libxfs_trans_commit(tp);
 	if (error)
