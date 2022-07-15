@@ -188,7 +188,7 @@
 #define xfs_imeta_link_space_res	libxfs_imeta_link_space_res
 #define xfs_imeta_lookup		libxfs_imeta_lookup
 #define xfs_imeta_mount			libxfs_imeta_mount
-#define xfs_imeta_set_metaflag		libxfs_imeta_set_metaflag
+#define xfs_imeta_set_iflag		libxfs_imeta_set_iflag
 #define xfs_imeta_start_create		libxfs_imeta_start_create
 #define xfs_imeta_start_link		libxfs_imeta_start_link
 #define xfs_imeta_start_unlink		libxfs_imeta_start_unlink

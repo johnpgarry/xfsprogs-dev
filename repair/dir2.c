@@ -146,6 +146,10 @@ is_meta_ino(
 {
 	char			*reason = NULL;
 
+	/* in metadir land we don't have static metadata inodes anymore */
+	if (xfs_has_metadir(mp))
+		return false;
+
 	if (lino == mp->m_sb.sb_rbmino)
 		reason = _("realtime bitmap");
 	else if (lino == mp->m_sb.sb_rsumino)
@@ -159,6 +163,16 @@ is_meta_ino(
 	else if (dip->di_version >= 3 &&
 		 (dip->di_flags2 & cpu_to_be64(XFS_DIFLAG2_METADIR)))
 		reason = _("metadata directory file");
+
+	if (xfs_has_metadir(mp) &&
+	    dirino == mp->m_sb.sb_metadirino) {
+		if (reason == NULL) {
+			/* no regular files in the metadir */
+			*junkreason = _("non-metadata inode");
+			return true;
+		}
+		return false;
+	}
 
 	if (reason)
 		*junkreason = reason;
@@ -583,7 +597,8 @@ _("corrected root directory %" PRIu64 " .. entry, was %" PRIu64 ", now %" PRIu64
 _("would have corrected root directory %" PRIu64 " .. entry from %" PRIu64" to %" PRIu64 "\n"),
 				ino, *parent, ino);
 		}
-	} else if (ino == *parent && ino != mp->m_sb.sb_rootino)  {
+	} else if (ino == *parent && ino != mp->m_sb.sb_rootino &&
+		   ino != mp->m_sb.sb_metadirino)  {
 		/*
 		 * likewise, non-root directories can't have .. pointing
 		 * to .
@@ -879,7 +894,8 @@ _("entry at block %u offset %" PRIdPTR " in directory inode %" PRIu64 " has ille
 				 * NULLFSINO otherwise.
 				 */
 				if (ino == ent_ino &&
-						ino != mp->m_sb.sb_rootino) {
+				    ino != mp->m_sb.sb_rootino &&
+				    ino != mp->m_sb.sb_metadirino) {
 					*parent = NULLFSINO;
 					do_warn(
 _("bad .. entry in directory inode %" PRIu64 ", points to self: "),
@@ -1520,9 +1536,14 @@ process_dir2(
 	} else if (dotdot == 0 && ino == mp->m_sb.sb_rootino) {
 		do_warn(_("no .. entry for root directory %" PRIu64 "\n"), ino);
 		need_root_dotdot = 1;
+	} else if (dotdot == 0 && ino == mp->m_sb.sb_metadirino) {
+		do_warn(_("no .. entry for metaino directory %" PRIu64 "\n"), ino);
+		need_metadir_dotdot = 1;
 	}
 
 	ASSERT((ino != mp->m_sb.sb_rootino && ino != *parent) ||
+		(ino == mp->m_sb.sb_metadirino &&
+			(ino == *parent || need_metadir_dotdot == 1)) ||
 		(ino == mp->m_sb.sb_rootino &&
 			(ino == *parent || need_root_dotdot == 1)));
 

@@ -48,6 +48,8 @@ phase1(xfs_mount_t *mp)
 	primary_sb_modified = 0;
 	need_root_inode = 0;
 	need_root_dotdot = 0;
+	need_metadir_inode = false;
+	need_metadir_dotdot = 0;
 	need_rbmino = 0;
 	need_rsumino = 0;
 	lost_quotas = 0;

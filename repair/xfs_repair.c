@@ -640,6 +640,70 @@ fix:
 }
 
 /*
+ * Check that the metadata directory inode comes immediately after the root
+ * directory inode and that it seems to look like a metadata directory.
+ */
+STATIC void
+check_metadir_inode(
+	struct xfs_mount	*mp,
+	xfs_ino_t		rootino)
+{
+	int			error;
+
+	validate_sb_ino(&mp->m_sb.sb_metadirino, rootino + 1,
+			_("metadata root directory"));
+
+	/* If we changed the metadir inode, try reloading it. */
+	if (!mp->m_metadirip ||
+	    mp->m_metadirip->i_ino != mp->m_sb.sb_metadirino) {
+		struct xfs_trans	*tp;
+
+		if (mp->m_metadirip)
+			libxfs_irele(mp->m_metadirip);
+
+		error = -libxfs_trans_alloc_empty(mp, &tp);
+		if (error)
+			do_error(
+ _("could not allocate transaction to load metadir inode"));
+
+		error = -libxfs_imeta_iget(tp, mp->m_sb.sb_metadirino,
+				XFS_DIR3_FT_DIR, &mp->m_metadirip);
+		if (error) {
+			libxfs_trans_cancel(tp);
+			need_metadir_inode = true;
+			goto done;
+		}
+
+		error = -libxfs_imeta_mount(tp);
+		if (error)
+			need_metadir_inode = true;
+
+		libxfs_trans_cancel(tp);
+	}
+
+done:
+	if (need_metadir_inode) {
+		if (!no_modify)
+			do_warn(_("will reset metadata root directory\n"));
+		else
+			do_warn(_("would reset metadata root directory\n"));
+		if (mp->m_metadirip)
+			libxfs_irele(mp->m_metadirip);
+		mp->m_metadirip = NULL;
+	}
+
+	/*
+	 * Since these two realtime inodes are no longer fixed, we must
+	 * remember to regenerate them if we still haven't gotten a pointer to
+	 * a valid realtime inode.
+	 */
+	if (!libxfs_verify_ino(mp, mp->m_sb.sb_rbmino))
+		need_rbmino = 1;
+	if (!libxfs_verify_ino(mp, mp->m_sb.sb_rsumino))
+		need_rsumino = 1;
+}
+
+/*
  * Make sure that the first 3 inodes in the filesystem are the root directory,
  * the realtime bitmap, and the realtime summary, in that order.
  */
@@ -668,10 +732,19 @@ _("sb root inode value %" PRIu64 " valid but in unaligned location (expected %"P
 
 	validate_sb_ino(&mp->m_sb.sb_rootino, rootino,
 			_("root"));
-	validate_sb_ino(&mp->m_sb.sb_rbmino, rootino + 1,
-			_("realtime bitmap"));
-	validate_sb_ino(&mp->m_sb.sb_rsumino, rootino + 2,
-			_("realtime summary"));
+
+	if (xfs_has_metadir(mp)) {
+		check_metadir_inode(mp, rootino);
+	} else {
+		/*
+		 * The realtime bitmap and summary inodes only comes after the
+		 * root directory when the metadir feature is not enabled.
+		 */
+		validate_sb_ino(&mp->m_sb.sb_rbmino, rootino + 1,
+				_("realtime bitmap"));
+		validate_sb_ino(&mp->m_sb.sb_rsumino, rootino + 2,
+				_("realtime summary"));
+	}
 }
 
 /*

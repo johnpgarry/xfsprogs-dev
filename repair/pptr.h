@@ -14,4 +14,6 @@ void add_parent_ptr(xfs_ino_t ino, const unsigned char *fname,
 
 void check_parent_ptrs(struct xfs_mount *mp);
 
+void try_erase_parent_ptrs(struct xfs_inode *ip);
+
 #endif /* __REPAIR_PPTR_H__ */

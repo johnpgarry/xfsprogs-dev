@@ -264,6 +264,22 @@ phase4(xfs_mount_t *mp)
 			do_warn(_("root inode lost\n"));
 	}
 
+	/*
+	 * If metadata directory trees are enabled, the metadata root directory
+	 * always comes immediately after the regular root directory, even if
+	 * it's free.
+	 */
+	if (xfs_has_metadir(mp) &&
+	    (is_inode_free(irec, 1) || !inode_isadir(irec, 1))) {
+		need_metadir_inode = true;
+		if (no_modify)
+			do_warn(
+	_("metadata directory root inode would be lost\n"));
+		else
+			do_warn(
+	_("metadata directory root inode lost\n"));
+	}
+
 	for (i = 0; i < mp->m_sb.sb_agcount; i++)  {
 		ag_end = (i < mp->m_sb.sb_agcount - 1) ? mp->m_sb.sb_agblocks :
 			mp->m_sb.sb_dblocks -

@@ -646,8 +646,11 @@ phase2(
 	 * make sure we know about the root inode chunk
 	 */
 	if ((ino_rec = find_inode_rec(mp, 0, mp->m_sb.sb_rootino)) == NULL)  {
-		ASSERT(mp->m_sb.sb_rbmino == mp->m_sb.sb_rootino + 1 &&
-			mp->m_sb.sb_rsumino == mp->m_sb.sb_rootino + 2);
+		ASSERT(!xfs_has_metadir(mp) ||
+		       mp->m_sb.sb_metadirino == mp->m_sb.sb_rootino + 1);
+		ASSERT(xfs_has_metadir(mp) ||
+		       (mp->m_sb.sb_rbmino == mp->m_sb.sb_rootino + 1 &&
+			mp->m_sb.sb_rsumino == mp->m_sb.sb_rootino + 2));
 		do_warn(_("root inode chunk not found\n"));
 
 		/*
