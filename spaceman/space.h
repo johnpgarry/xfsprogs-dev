@@ -39,5 +39,7 @@ extern void	clearfree_init(void);
 extern void	info_init(void);
 extern void	health_init(void);
 void		move_inode_init(void);
+void		find_owner_init(void);
+void		resolve_owner_init(void);
 
 #endif /* XFS_SPACEMAN_SPACE_H_ */

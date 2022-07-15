@@ -28,7 +28,7 @@ do {									\
 } while (0)
 
 #ifdef RADIX_TREE_TAGS
-#define RADIX_TREE_MAX_TAGS 2
+#define RADIX_TREE_MAX_TAGS 3
 #endif
 
 int radix_tree_insert(struct radix_tree_root *, unsigned long, void *);

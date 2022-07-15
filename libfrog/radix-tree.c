@@ -377,6 +377,8 @@ void *radix_tree_tag_set(struct radix_tree_root *root,
 	unsigned int height, shift;
 	struct radix_tree_node *slot;
 
+	ASSERT(tag < RADIX_TREE_MAX_TAGS);
+
 	height = root->height;
 	if (index > radix_tree_maxindex(height))
 		return NULL;

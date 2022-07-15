@@ -10,6 +10,7 @@
 #include "input.h"
 #include "init.h"
 #include "libfrog/paths.h"
+#include "libfrog/radix-tree.h"
 #include "space.h"
 
 char	*progname;
@@ -37,6 +38,8 @@ init_commands(void)
 	health_init();
 	clearfree_init();
 	move_inode_init();
+	find_owner_init();
+	resolve_owner_init();
 }
 
 static int
@@ -71,6 +74,7 @@ init(
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
+	radix_tree_init();
 
 	fs_table_initialise(0, NULL, 0, NULL);
 	while ((c = getopt(argc, argv, "c:p:V")) != EOF) {

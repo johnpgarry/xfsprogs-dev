@@ -42,6 +42,14 @@ If the
 .B -v
 option is given, print what's happening every step of the way.
 .TP
+.BI "find_owner \-a agno"
+Create an internal structure to map physical space in the given allocation
+group to file paths.
+This enables space reorganization on a mounted filesystem by enabling
+us to find files.
+Unclear why we can't just use FSMAP and BULKSTAT to open by handle.
+
+.TP
 .BI "freesp [ \-dgrs ] [-a agno]... [ \-b | \-e bsize | \-h bsize | \-m factor ]"
 With no arguments,
 .B freesp
@@ -194,6 +202,9 @@ Wait for removal to complete.
 .TP
 .B print
 Display a list of all open files.
+.TP
+.B resolve_owner
+Resolves space in the filesystem to file paths, maybe?
 .TP
 .B quit
 Exit

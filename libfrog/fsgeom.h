@@ -103,6 +103,25 @@ cvt_ino_to_agino(
 	return ino & ((1ULL << xfd->aginolog) - 1);
 }
 
+/* Convert an AG block to an AG inode number. */
+static inline uint32_t
+cvt_agbno_to_agino(
+	const struct xfs_fd	*xfd,
+	xfs_agblock_t		agbno)
+{
+	return agbno << xfd->inopblog;
+}
+
+/* Calculate the number of inodes in a byte range */
+static inline uint32_t
+cvt_b_to_inode_count(
+	const struct xfs_fd	*xfd,
+	uint64_t		bytes)
+{
+	return (bytes >> xfd->blocklog) << xfd->inopblog;
+}
+
+
 /*
  * Convert a linear fs block offset number into bytes.  This is the runtime
  * equivalent of XFS_FSB_TO_B, which means that it is /not/ for segmented fsbno
