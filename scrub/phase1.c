@@ -27,6 +27,7 @@
 #include "scrub.h"
 #include "repair.h"
 #include "libfrog/fsgeom.h"
+#include "xfs_errortag.h"
 
 /* Phase 1: Find filesystem geometry (and clean up after) */
 
@@ -65,6 +66,27 @@ scrub_cleanup(
 		str_liberror(ctx, error, _("closing mountpoint fd"));
 	fs_table_destroy();
 
+	return error;
+}
+
+/* Decide if we're using FORCE_REBUILD or injecting FORCE_REPAIR. */
+static int
+enable_force_repair(
+	struct scrub_ctx		*ctx)
+{
+	struct xfs_error_injection	inject = {
+		.fd			= ctx->mnt.fd,
+		.errtag			= XFS_ERRTAG_FORCE_SCRUB_REPAIR,
+	};
+	int				error;
+
+	use_force_rebuild = can_force_rebuild(ctx);
+	if (use_force_rebuild)
+		return 0;
+
+	error = ioctl(ctx->mnt.fd, XFS_IOC_ERROR_INJECTION, &inject);
+	if (error)
+		str_errno(ctx, _("force_repair"));
 	return error;
 }
 
@@ -154,6 +176,12 @@ _("Kernel metadata scrubbing facility is not available."));
 		str_error(ctx, ctx->mntpoint,
 _("Kernel metadata repair facility is not available.  Use -n to scrub."));
 		return ECANCELED;
+	}
+
+	if (debug_tweak_on("XFS_SCRUB_FORCE_REPAIR")) {
+		error = enable_force_repair(ctx);
+		if (error)
+			return error;
 	}
 
 	/* Did we find the log and rt devices, if they're present? */
