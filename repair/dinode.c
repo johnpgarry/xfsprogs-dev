@@ -277,7 +277,8 @@ _("bad state in rt extent map %" PRIu64 "\n"),
 			break;
 		case XR_E_INUSE:
 		case XR_E_MULT:
-			if (xfs_has_rtreflink(mp))
+			if (xfs_has_rtreflink(mp) &&
+			    irec->br_state == XFS_EXT_NORM)
 				break;
 			set_rtbmap(ext, XR_E_MULT);
 			break;
@@ -353,8 +354,14 @@ _("data fork in rt inode %" PRIu64 " found rt metadata extent %" PRIu64 " in rt 
 			return 1;
 		case XR_E_INUSE:
 		case XR_E_MULT:
-			if (xfs_has_rtreflink(mp))
-				break;
+			if (xfs_has_rtreflink(mp)) {
+				if (irec->br_state == XFS_EXT_NORM)
+					break;
+				do_warn(
+_("data fork in rt inode %" PRIu64 " claims shared unwritten rt extent %" PRIu64 "\n"),
+					ino, b);
+				return 1;
+			}
 			do_warn(
 _("data fork in rt inode %" PRIu64 " claims used rt extent %" PRIu64 "\n"),
 				ino, b);
@@ -671,8 +678,14 @@ _("%s fork in inode %" PRIu64 " claims metadata block %" PRIu64 "\n"),
 			case XR_E_INUSE:
 			case XR_E_MULT:
 				if (type == XR_INO_DATA &&
-				    xfs_has_reflink(mp))
-					break;
+				    xfs_has_reflink(mp)) {
+					if (irec.br_state == XFS_EXT_NORM)
+						break;
+					do_warn(
+_("%s fork in %s inode %" PRIu64 " claims shared unwritten block %" PRIu64 "\n"),
+						forkname, ftype, ino, b);
+					goto done;
+				}
 				do_warn(
 _("%s fork in %s inode %" PRIu64 " claims used block %" PRIu64 "\n"),
 					forkname, ftype, ino, b);
