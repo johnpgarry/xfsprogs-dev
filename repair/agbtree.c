@@ -729,7 +729,7 @@ init_refc_cursor(
 
 	/* Compute how many blocks we'll need. */
 	error = -libxfs_btree_bload_compute_geometry(btr->cur, &btr->bload,
-			refcount_record_count(sc->mp, agno));
+			refcount_record_count(sc->mp, false, agno));
 	if (error)
 		do_error(
 _("Unable to compute refcount btree geometry, error %d.\n"), error);

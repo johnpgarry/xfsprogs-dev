@@ -39,7 +39,8 @@ extern void rmap_high_key_from_rec(struct xfs_rmap_irec *rec,
 		struct xfs_rmap_irec *key);
 
 int compute_refcounts(struct xfs_mount *mp, bool isrt, xfs_agnumber_t agno);
-uint64_t refcount_record_count(struct xfs_mount *mp, xfs_agnumber_t agno);
+uint64_t refcount_record_count(struct xfs_mount *mp, bool isrt,
+		xfs_agnumber_t agno);
 int init_refcount_cursor(bool isrt, xfs_agnumber_t agno,
 		struct xfs_slab_cursor **pcur);
 extern void refcount_avoid_check(struct xfs_mount *mp);
@@ -69,5 +70,9 @@ xfs_filblks_t estimate_rtrmapbt_blocks(struct xfs_rtgroup *rtg);
 xfs_rgnumber_t rtgroup_for_rtrefcount_inode(struct xfs_mount *mp,
 		xfs_ino_t ino);
 bool is_rtrefcount_ino(xfs_ino_t ino);
+xfs_ino_t rtgroup_refcount_ino(struct xfs_rtgroup *rtg);
+int populate_rtgroup_refcountbt(struct xfs_rtgroup *rtg, struct xfs_inode *ip,
+		xfs_filblks_t fdblocks);
+xfs_filblks_t estimate_rtrefcountbt_blocks(struct xfs_rtgroup *rtg);
 
 #endif /* RMAP_H_ */
