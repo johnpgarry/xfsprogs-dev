@@ -18,6 +18,7 @@ bitmap.c \
 bulkstat.c \
 convert.c \
 crc32.c \
+file_exchange.c \
 fsgeom.c \
 list_sort.c \
 linux.c \
@@ -42,6 +43,7 @@ crc32defs.h \
 crc32table.h \
 dahashselftest.h \
 div64.h \
+file_exchange.h \
 fsgeom.h \
 logging.h \
 paths.h \
