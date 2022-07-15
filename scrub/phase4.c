@@ -129,6 +129,7 @@ phase4_func(
 	struct scrub_ctx	*ctx)
 {
 	struct xfs_fsop_geom	fsgeom;
+	struct action_list	alist;
 	int			ret;
 
 	if (!have_action_items(ctx))
@@ -136,11 +137,13 @@ phase4_func(
 
 	/*
 	 * Check the summary counters early.  Normally we do this during phase
-	 * seven, but some of the cross-referencing requires fairly-accurate
-	 * counters, so counter repairs have to be put on the list now so that
-	 * they get fixed before we stop retrying unfixed metadata repairs.
+	 * seven, but some of the cross-referencing requires fairly accurate
+	 * summary counters.  Check and try to repair them now to minimize the
+	 * chance that repairs of primary metadata fail due to secondary
+	 * metadata.  If repairs fails, we'll come back during phase 7.
 	 */
-	ret = scrub_fs_counters(ctx, &ctx->action_lists[0]);
+	action_list_init(&alist);
+	ret = scrub_fs_counters(ctx, &alist);
 	if (ret)
 		return ret;
 
@@ -155,10 +158,17 @@ phase4_func(
 		return ret;
 
 	if (fsgeom.sick & XFS_FSOP_GEOM_SICK_QUOTACHECK) {
-		ret = scrub_quotacheck(ctx, &ctx->action_lists[0]);
+		ret = scrub_quotacheck(ctx, &alist);
 		if (ret)
 			return ret;
 	}
+
+	/* Repair counters before starting on the rest. */
+	ret = action_list_process(ctx, -1, &alist,
+			XRM_REPAIR_ONLY | XRM_NOPROGRESS);
+	if (ret)
+		return ret;
+	action_list_discard(&alist);
 
 	ret = repair_everything(ctx);
 	if (ret)
