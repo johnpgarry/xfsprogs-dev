@@ -210,7 +210,7 @@ _("Kernel metadata scrubbing facility is not available."));
 	}
 
 	/* Do we need kernel-assisted metadata repair? */
-	if (ctx->mode != SCRUB_MODE_DRY_RUN && !xfs_can_repair(ctx)) {
+	if (ctx->mode != SCRUB_MODE_DRY_RUN && !can_repair(ctx)) {
 		str_error(ctx, ctx->mntpoint,
 _("Kernel metadata repair facility is not available.  Use -n to scrub."));
 		return ECANCELED;

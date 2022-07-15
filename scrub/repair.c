@@ -10,11 +10,180 @@
 #include <sys/statvfs.h>
 #include "list.h"
 #include "libfrog/paths.h"
+#include "libfrog/fsgeom.h"
+#include "libfrog/scrub.h"
 #include "xfs_scrub.h"
 #include "common.h"
 #include "scrub.h"
 #include "progress.h"
 #include "repair.h"
+#include "descr.h"
+#include "scrub_private.h"
+
+/* General repair routines. */
+
+/* Repair some metadata. */
+static enum check_outcome
+xfs_repair_metadata(
+	struct scrub_ctx		*ctx,
+	struct xfs_fd			*xfdp,
+	struct action_item		*aitem,
+	unsigned int			repair_flags)
+{
+	struct xfs_scrub_metadata	meta = { 0 };
+	struct xfs_scrub_metadata	oldm;
+	DEFINE_DESCR(dsc, ctx, format_scrub_descr);
+	int				error;
+
+	assert(aitem->type < XFS_SCRUB_TYPE_NR);
+	assert(!debug_tweak_on("XFS_SCRUB_NO_KERNEL"));
+	meta.sm_type = aitem->type;
+	meta.sm_flags = aitem->flags | XFS_SCRUB_IFLAG_REPAIR;
+	if (use_force_rebuild)
+		meta.sm_flags |= XFS_SCRUB_IFLAG_FORCE_REBUILD;
+	switch (xfrog_scrubbers[aitem->type].group) {
+	case XFROG_SCRUB_GROUP_AGHEADER:
+	case XFROG_SCRUB_GROUP_PERAG:
+		meta.sm_agno = aitem->agno;
+		break;
+	case XFROG_SCRUB_GROUP_INODE:
+		meta.sm_ino = aitem->ino;
+		meta.sm_gen = aitem->gen;
+		break;
+	default:
+		break;
+	}
+
+	if (!is_corrupt(&meta) && (repair_flags & XRM_REPAIR_ONLY))
+		return CHECK_RETRY;
+
+	memcpy(&oldm, &meta, sizeof(oldm));
+	descr_set(&dsc, &oldm);
+
+	if (needs_repair(&meta))
+		str_info(ctx, descr_render(&dsc), _("Attempting repair."));
+	else if (debug || verbose)
+		str_info(ctx, descr_render(&dsc),
+				_("Attempting optimization."));
+
+	error = -xfrog_scrub_metadata(xfdp, &meta);
+	switch (error) {
+	case 0:
+		/* No operational errors encountered. */
+		break;
+	case EDEADLOCK:
+	case EBUSY:
+		/* Filesystem is busy, try again later. */
+		if (debug || verbose)
+			str_info(ctx, descr_render(&dsc),
+_("Filesystem is busy, deferring repair."));
+		return CHECK_RETRY;
+	case ESHUTDOWN:
+		/* Filesystem is already shut down, abort. */
+		str_error(ctx, descr_render(&dsc),
+_("Filesystem is shut down, aborting."));
+		return CHECK_ABORT;
+	case ENOTTY:
+	case EOPNOTSUPP:
+		/*
+		 * If the kernel cannot perform the optimization that we
+		 * requested; or we forced a repair but the kernel doesn't know
+		 * how to perform the repair, don't requeue the request.  Mark
+		 * it done and move on.
+		 */
+		if (is_unoptimized(&oldm) ||
+		    debug_tweak_on("XFS_SCRUB_FORCE_REPAIR"))
+			return CHECK_DONE;
+		/*
+		 * If we're in no-complain mode, requeue the check for
+		 * later.  It's possible that an error in another
+		 * component caused us to flag an error in this
+		 * component.  Even if the kernel didn't think it
+		 * could fix this, it's at least worth trying the scan
+		 * again to see if another repair fixed it.
+		 */
+		if (!(repair_flags & XRM_FINAL_WARNING))
+			return CHECK_RETRY;
+		fallthrough;
+	case EINVAL:
+		/* Kernel doesn't know how to repair this? */
+		str_corrupt(ctx, descr_render(&dsc),
+_("Don't know how to fix; offline repair required."));
+		return CHECK_DONE;
+	case EROFS:
+		/* Read-only filesystem, can't fix. */
+		if (verbose || debug || needs_repair(&oldm))
+			str_error(ctx, descr_render(&dsc),
+_("Read-only filesystem; cannot make changes."));
+		return CHECK_ABORT;
+	case ENOENT:
+		/* Metadata not present, just skip it. */
+		return CHECK_DONE;
+	case ENOMEM:
+	case ENOSPC:
+		/* Don't care if preen fails due to low resources. */
+		if (is_unoptimized(&oldm) && !needs_repair(&oldm))
+			return CHECK_DONE;
+		fallthrough;
+	default:
+		/*
+		 * Operational error.  If the caller doesn't want us
+		 * to complain about repair failures, tell the caller
+		 * to requeue the repair for later and don't say a
+		 * thing.  Otherwise, print error and bail out.
+		 */
+		if (!(repair_flags & XRM_FINAL_WARNING))
+			return CHECK_RETRY;
+		str_liberror(ctx, error, descr_render(&dsc));
+		return CHECK_DONE;
+	}
+
+	if (repair_flags & XRM_FINAL_WARNING)
+		scrub_warn_incomplete_scrub(ctx, &dsc, &meta);
+	if (needs_repair(&meta)) {
+		/*
+		 * Still broken; if we've been told not to complain then we
+		 * just requeue this and try again later.  Otherwise we
+		 * log the error loudly and don't try again.
+		 */
+		if (!(repair_flags & XRM_FINAL_WARNING))
+			return CHECK_RETRY;
+		str_corrupt(ctx, descr_render(&dsc),
+_("Repair unsuccessful; offline repair required."));
+	} else if (xref_failed(&meta)) {
+		/*
+		 * This metadata object itself looks ok, but we still noticed
+		 * inconsistencies when comparing it with the other filesystem
+		 * metadata.  If we're in "final warning" mode, advise the
+		 * caller to run xfs_repair; otherwise, we'll keep trying to
+		 * reverify the cross-referencing as repairs progress.
+		 */
+		if (repair_flags & XRM_FINAL_WARNING) {
+			str_info(ctx, descr_render(&dsc),
+ _("Seems correct but cross-referencing failed; offline repair recommended."));
+		} else {
+			if (verbose)
+				str_info(ctx, descr_render(&dsc),
+ _("Seems correct but cross-referencing failed; will keep checking."));
+			return CHECK_RETRY;
+		}
+	} else {
+		/* Clean operation, no corruption detected. */
+		if (is_corrupt(&oldm))
+			record_repair(ctx, descr_render(&dsc),
+ _("Repairs successful."));
+		else if (xref_disagrees(&oldm))
+			record_repair(ctx, descr_render(&dsc),
+ _("Repairs successful after discrepancy in cross-referencing."));
+		else if (xref_failed(&oldm))
+			record_repair(ctx, descr_render(&dsc),
+ _("Repairs successful after cross-referencing failure."));
+		else
+			record_preen(ctx, descr_render(&dsc),
+ _("Optimization successful."));
+	}
+	return CHECK_DONE;
+}
 
 /*
  * Prioritize action items in order of how long we can wait.
