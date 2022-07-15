@@ -240,7 +240,6 @@ resolve_owner_cb(
 	struct FTW		*data)
 {
 	struct inode_path	*ipath, *slot_ipath;
-	int			pathlen;
 	struct inode_path	**slot;
 
 	/*
@@ -260,17 +259,9 @@ _("Failed to obtain stat(2) information from path %s. Aborting\n"),
 	}
 
 	/* Allocate a new inode path and record the path in it. */
-	pathlen = strlen(path);
-	ipath = calloc(1, sizeof(*ipath) + pathlen + 1);
-	if (!ipath) {
-		fprintf(stderr,
-_("Aborting: Storing path %s for inode 0x%lx failed: %s\n"),
-			path, stat->st_ino, strerror(ENOMEM));
+	ipath = ipath_alloc(path, stat);
+	if (!ipath)
 		return -ENOMEM;
-	}
-	INIT_LIST_HEAD(&ipath->path_list);
-	memcpy(&ipath->path[0], path, pathlen);
-	ipath->ino = stat->st_ino;
 
 	/*
 	 * If the slot contains the inode number we just looked up, then we

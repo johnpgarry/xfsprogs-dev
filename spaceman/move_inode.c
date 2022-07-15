@@ -36,12 +36,14 @@ create_tmpfile(
 	struct xfs_fd	*xfd,
 	xfs_agnumber_t	agno,
 	char		**tmpfile,
-	int		*tmpfd)
+	int		*tmpfd,
+	int		link_count)
 {
 	char		name[PATH_MAX + 1];
+	char		linkname[PATH_MAX + 1];
 	mode_t		mask;
 	int		fd;
-	int		i;
+	int		i, j;
 	int		ret;
 
 	/* construct tmpdir */
@@ -105,7 +107,21 @@ create_tmpfile(
 		fprintf(stderr, _("cannot create tmpfile: %s: %s\n"),
 		       name, strerror(errno));
 		ret = -errno;
+		goto out_cleanup_dir;
 	}
+
+	/* Create hard links to temporary file. */
+	for (j = link_count; j > 1; i--) {
+		snprintf(linkname, PATH_MAX, "%s/.spaceman/dir%d/tmpfile.%d.hardlink.%d", mnt, i, getpid(), j);
+		ret = link(name, linkname);
+		if (ret < 0) {
+			fprintf(stderr, _("cannot create hardlink: %s: %s\n"),
+			       linkname, strerror(errno));
+			ret = -errno;
+			goto out_cleanup_links;
+		}
+	}
+
 
 	/* return name and fd */
 	(void)umask(mask);
@@ -113,6 +129,14 @@ create_tmpfile(
 	*tmpfile = strdup(name);
 
 	return 0;
+
+out_cleanup_links:
+	for (; j <= link_count; j++) {
+		snprintf(linkname, PATH_MAX, "%s/.spaceman/dir%d/tmpfile.%d.hardlink.%d", mnt, i, getpid(), j);
+		unlink(linkname);
+	}
+	close(fd);
+	unlink(name);
 out_cleanup_dir:
 	snprintf(name, PATH_MAX, "%s/.spaceman", mnt);
 	rmdir(name);
@@ -405,21 +429,53 @@ exchange_inodes(
 	return 0;
 }
 
+static int
+exchange_hardlinks(
+	struct inode_path	*ipath,
+	const char		*tmpfile)
+{
+	char			linkname[PATH_MAX];
+	struct inode_path	*linkpath;
+	int			i = 2;
+	int			ret;
+
+	list_for_each_entry(linkpath, &ipath->path_list, path_list) {
+		if (i++ > ipath->link_count) {
+			fprintf(stderr, "ipath link count mismatch!\n");
+			return 0;
+		}
+
+		snprintf(linkname, PATH_MAX, "%s.hardlink.%d", tmpfile, i);
+		ret = renameat2(AT_FDCWD, linkname,
+				AT_FDCWD, linkpath->path, RENAME_EXCHANGE);
+		if (ret) {
+			fprintf(stderr,
+		"failed to exchange hard link %s with %s: %s\n",
+				linkname, linkpath->path, strerror(errno));
+			return -errno;
+		}
+	}
+	return 0;
+}
+
 int
 relocate_file_to_ag(
 	const char		*mnt,
-	const char		*path,
+	struct inode_path	*ipath,
 	struct xfs_fd		*xfd,
 	xfs_agnumber_t		agno)
 {
 	int			ret;
 	int			tmpfd = -1;
 	char			*tmpfile = NULL;
+	int			i;
 
-	fprintf(stderr, "move mnt %s, path %s, agno %d\n", mnt, path, agno);
+	fprintf(stderr, "move mnt %s, path %s, agno %d\n",
+			mnt, ipath->path, agno);
 
 	/* create temporary file in agno */
-	ret = create_tmpfile(mnt, xfd, agno, &tmpfile, &tmpfd);
+	ret = create_tmpfile(mnt, xfd, agno, &tmpfile, &tmpfd,
+				ipath->link_count);
 	if (ret)
 		return ret;
 
@@ -444,12 +500,28 @@ relocate_file_to_ag(
 		goto out_cleanup;
 
 	/* swap the inodes over */
-	ret = exchange_inodes(xfd, tmpfd, tmpfile, path);
+	ret = exchange_inodes(xfd, tmpfd, tmpfile, ipath->path);
+	if (ret)
+		goto out_cleanup;
+
+	/* swap the hard links over */
+	ret = exchange_hardlinks(ipath, tmpfile);
+	if (ret)
+		goto out_cleanup;
 
 out_cleanup:
 	if (ret == -1)
 		ret = -errno;
 
+	/* remove old hard links */
+	for (i = 2; i <= ipath->link_count; i++) {
+		char linkname[PATH_MAX + 256]; // anti-warning-crap
+
+		snprintf(linkname, PATH_MAX + 256, "%s.hardlink.%d", tmpfile, i);
+		unlink(linkname);
+	}
+
+	/* remove tmpfile */
 	close(tmpfd);
 	if (tmpfile)
 		unlink(tmpfile);
@@ -459,10 +531,31 @@ out_cleanup:
 }
 
 static int
+build_ipath(
+	const char		*path,
+	struct stat		*st,
+	struct inode_path	**ipathp)
+{
+	struct inode_path	*ipath;
+
+	*ipathp = NULL;
+
+	ipath = ipath_alloc(path, st);
+	if (!ipath)
+		return -ENOMEM;
+
+	/* we only move a single path with move_inode */
+	ipath->link_count = 1;
+	*ipathp = ipath;
+	return 0;
+}
+
+static int
 move_inode_f(
 	int			argc,
 	char			**argv)
 {
+	struct inode_path	*ipath = NULL;
 	void			*fshandle;
 	size_t			fshdlen;
 	xfs_agnumber_t		agno = 0;
@@ -511,24 +604,30 @@ _("Destination AG %d does not exist. Filesystem only has %d AGs\n"),
 		goto exit_fail;
 	}
 
-	if (S_ISREG(st.st_mode)) {
-		ret = relocate_file_to_ag(file->fs_path.fs_dir, file->name,
-				&file->xfd, agno);
-	} else {
+	if (!S_ISREG(st.st_mode)) {
 		fprintf(stderr, _("Unsupported: %s is not a regular file.\n"),
 			file->name);
 		goto exit_fail;
 	}
 
+	ret = build_ipath(file->name, &st, &ipath);
+	if (ret)
+		goto exit_fail;
+
+	ret = relocate_file_to_ag(file->fs_path.fs_dir, ipath,
+				&file->xfd, agno);
 	if (ret) {
 		fprintf(stderr, _("Failed to move inode to AG %d: %s\n"),
 			agno, strerror(-ret));
 		goto exit_fail;
 	}
+	free(ipath);
 	fshandle_destroy();
 	return 0;
 
 exit_fail:
+	if (ipath)
+		free(ipath);
 	fshandle_destroy();
 	exitcode = 1;
 	return 0;
