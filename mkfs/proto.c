@@ -745,27 +745,15 @@ parse_proto(
 	parseproto(mp, NULL, fsx, pp, NULL);
 }
 
-/*
- * Allocate the realtime bitmap and summary inodes, and fill in data if any.
- */
+/* Create the realtime bitmap inode. */
 static void
-rtinit(
+rtbitmap_create(
 	struct xfs_mount	*mp)
 {
 	struct xfs_imeta_update	upd;
-	struct xfs_bmbt_irec	map[XFS_BMAP_MAX_NMAP];
 	struct xfs_inode	*rbmip;
-	struct xfs_inode	*rsumip;
-	struct xfs_trans	*tp;
-	struct xfs_bmbt_irec	*ep;
-	xfs_fileoff_t		bno;
-	xfs_extlen_t		nsumblocks;
-	uint			blocks;
-	int			i;
-	int			nmap;
 	int			error;
 
-	/* Create the realtime bitmap inode. */
 	error = -libxfs_imeta_start_create(mp, &XFS_IMETA_RTBITMAP, &upd);
 	if (error)
 		res_failed(error);
@@ -777,15 +765,24 @@ rtinit(
 	rbmip->i_disk_size = mp->m_sb.sb_rbmblocks * mp->m_sb.sb_blocksize;
 	rbmip->i_diflags |= XFS_DIFLAG_NEWRTBM;
 	inode_set_atime(VFS_I(rbmip), 0, 0);
-	libxfs_trans_log_inode(tp, rbmip, XFS_ILOG_CORE);
+	libxfs_trans_log_inode(upd.tp, rbmip, XFS_ILOG_CORE);
 
 	error = -libxfs_imeta_commit_update(&upd);
 	if (error)
 		fail(_("Completion of the realtime bitmap inode failed"),
 				error);
 	mp->m_rbmip = rbmip;
+}
 
-	/* Create the realtime summary inode. */
+/* Create the realtime summary inode. */
+static void
+rtsummary_create(
+	struct xfs_mount	*mp)
+{
+	struct xfs_imeta_update	upd;
+	struct xfs_inode	*rsumip;
+	int			error;
+
 	error = -libxfs_imeta_start_create(mp, &XFS_IMETA_RTSUMMARY, &upd);
 	if (error)
 		res_failed(error);
@@ -795,26 +792,40 @@ rtinit(
 		fail(_("Realtime summary inode allocation failed"), error);
 
 	rsumip->i_disk_size = mp->m_rsumsize;
-	libxfs_trans_log_inode(tp, rsumip, XFS_ILOG_CORE);
+	libxfs_trans_log_inode(upd.tp, rsumip, XFS_ILOG_CORE);
 
 	error = -libxfs_imeta_commit_update(&upd);
 	if (error)
 		fail(_("Completion of the realtime summary inode failed"),
 				error);
 	mp->m_rsumip = rsumip;
+}
 
-	/* Zero the realtime bitmap. */
+/* Zero the realtime bitmap. */
+static void
+rtbitmap_init(
+	struct xfs_mount	*mp)
+{
+	struct xfs_bmbt_irec	map[XFS_BMAP_MAX_NMAP];
+	struct xfs_trans	*tp;
+	struct xfs_bmbt_irec	*ep;
+	xfs_fileoff_t		bno;
+	uint			blocks;
+	int			i;
+	int			nmap;
+	int			error;
+
 	blocks = mp->m_sb.sb_rbmblocks +
 			XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK) - 1;
 	error = -libxfs_trans_alloc_rollable(mp, blocks, &tp);
 	if (error)
 		res_failed(error);
 
-	libxfs_trans_ijoin(tp, rbmip, 0);
+	libxfs_trans_ijoin(tp, mp->m_rbmip, 0);
 	bno = 0;
 	while (bno < mp->m_sb.sb_rbmblocks) {
 		nmap = XFS_BMAP_MAX_NMAP;
-		error = -libxfs_bmapi_write(tp, rbmip, bno,
+		error = -libxfs_bmapi_write(tp, mp->m_rbmip, bno,
 				(xfs_extlen_t)(mp->m_sb.sb_rbmblocks - bno),
 				0, mp->m_sb.sb_rbmblocks, map, &nmap);
 		if (error)
@@ -833,19 +844,34 @@ rtinit(
 	if (error)
 		fail(_("Block allocation of the realtime bitmap inode failed"),
 				error);
+}
 
-	/* Zero the summary file. */
+/* Zero the realtime summary file. */
+static void
+rtsummary_init(
+	struct xfs_mount	*mp)
+{
+	struct xfs_bmbt_irec	map[XFS_BMAP_MAX_NMAP];
+	struct xfs_trans	*tp;
+	struct xfs_bmbt_irec	*ep;
+	xfs_fileoff_t		bno;
+	xfs_extlen_t		nsumblocks;
+	uint			blocks;
+	int			i;
+	int			nmap;
+	int			error;
+
 	nsumblocks = mp->m_rsumsize >> mp->m_sb.sb_blocklog;
 	blocks = nsumblocks + XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK) - 1;
 	error = -libxfs_trans_alloc_rollable(mp, blocks, &tp);
 	if (error)
 		res_failed(error);
-	libxfs_trans_ijoin(tp, rsumip, 0);
+	libxfs_trans_ijoin(tp, mp->m_rsumip, 0);
 
 	bno = 0;
 	while (bno < nsumblocks) {
 		nmap = XFS_BMAP_MAX_NMAP;
-		error = -libxfs_bmapi_write(tp, rsumip, bno,
+		error = -libxfs_bmapi_write(tp, mp->m_rsumip, bno,
 				(xfs_extlen_t)(nsumblocks - bno),
 				0, nsumblocks, map, &nmap);
 		if (error)
@@ -863,8 +889,6 @@ rtinit(
 	if (error)
 		fail(_("Block allocation of the realtime summary inode failed"),
 				error);
-
-	rtfreesp_init(mp);
 }
 
 /*
@@ -901,6 +925,21 @@ rtfreesp_init(
 			fail(_("Initialization of the realtime space failed"),
 					error);
 	}
+}
+
+/*
+ * Allocate the realtime bitmap and summary inodes, and fill in data if any.
+ */
+static void
+rtinit(
+	struct xfs_mount	*mp)
+{
+	rtbitmap_create(mp);
+	rtsummary_create(mp);
+
+	rtbitmap_init(mp);
+	rtsummary_init(mp);
+	rtfreesp_init(mp);
 }
 
 static long
