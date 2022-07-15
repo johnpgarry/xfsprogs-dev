@@ -38,8 +38,11 @@ enum error_action {
 struct scrub_ctx {
 	/* Immutable scrub state. */
 
-	/* Strings we need for presentation */
+	/* Mountpoint we use for presentation */
 	char			*mntpoint;
+
+	/* Actual VFS path to the filesystem */
+	char			*actual_mntpoint;
 
 	/* Mountpoint info */
 	struct stat		mnt_sb;

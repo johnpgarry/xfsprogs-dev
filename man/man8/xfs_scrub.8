@@ -4,7 +4,7 @@ xfs_scrub \- check and repair the contents of a mounted XFS filesystem
 .SH SYNOPSIS
 .B xfs_scrub
 [
-.B \-abCemnTvx
+.B \-abCeMmnTvx
 ]
 .I mount-point
 .br
@@ -78,6 +78,13 @@ behavior.
 .TP
 .B \-k
 Do not call TRIM on the free space.
+.TP
+.BI \-M " real-mount-point"
+Open the this path for issuing scrub system calls to the kernel.
+The positional
+.I mount-point
+parameter will be used for displaying informational messages and logging.
+This parameter exists to enable process sandboxing for service mode.
 .TP
 .BI \-m " file"
 Search this file for mounted filesystems instead of /etc/mtab.
