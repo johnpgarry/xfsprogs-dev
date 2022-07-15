@@ -28,7 +28,7 @@ int rmap_commit_agbtree_mappings(struct xfs_mount *mp, xfs_agnumber_t agno);
 
 uint64_t rmap_record_count(struct xfs_mount *mp, bool isrt,
 		xfs_agnumber_t agno);
-extern void rmap_avoid_check(void);
+extern void rmap_avoid_check(struct xfs_mount *mp);
 void rmaps_verify_btree(struct xfs_mount *mp, xfs_agnumber_t agno);
 
 extern int64_t rmap_diffkeys(struct xfs_rmap_irec *kp1,
@@ -55,5 +55,8 @@ xfs_extlen_t estimate_refcountbt_blocks(struct xfs_perag *pag);
 int rmap_init_mem_cursor(struct xfs_mount *mp, struct xfs_trans *tp,
 		bool isrt, xfs_agnumber_t agno, struct xfs_btree_cur **rmcurp);
 int rmap_get_mem_rec(struct xfs_btree_cur *rmcur, struct xfs_rmap_irec *irec);
+
+bool is_rtrmap_inode(xfs_ino_t ino);
+xfs_ino_t rtgroup_rmap_ino(struct xfs_rtgroup *rtg);
 
 #endif /* RMAP_H_ */

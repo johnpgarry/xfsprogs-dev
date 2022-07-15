@@ -153,6 +153,9 @@ clear_dinode(xfs_mount_t *mp, struct xfs_dinode *dino, xfs_ino_t ino_num)
 	clear_dinode_core(mp, dino, ino_num);
 	clear_dinode_unlinked(mp, dino);
 
+	if (is_rtrmap_inode(ino_num))
+		rmap_avoid_check(mp);
+
 	/* and clear the forks */
 	memset(XFS_DFORK_DPTR(dino), 0, XFS_LITINO(mp));
 	return;
@@ -823,10 +826,19 @@ process_rtrmap(
 
 	lino = XFS_AGINO_TO_INO(mp, agno, ino);
 
-	/* This rmap btree inode must be a metadata inode. */
+	/*
+	 * This rmap btree inode must be a metadata inode reachable via
+	 * /realtime/$rgno.rmap in the metadata directory tree.
+	 */
 	if (!(dip->di_flags2 & be64_to_cpu(XFS_DIFLAG2_METADIR))) {
 		do_warn(
 _("rtrmap inode %" PRIu64 " not flagged as metadata\n"),
+			lino);
+		return 1;
+	}
+	if (type != XR_INO_RTRMAP) {
+		do_warn(
+_("rtrmap inode %" PRIu64 " was not found in the metadata directory tree\n"),
 			lino);
 		return 1;
 	}
@@ -867,7 +879,7 @@ _("computed size of rtrmapbt root (%zu bytes) is greater than space in "
 		error = process_rtrmap_reclist(mp, rp, numrecs,
 				&priv.last_rec, NULL, "rtrmapbt root");
 		if (error) {
-			rmap_avoid_check();
+			rmap_avoid_check(mp);
 			return 1;
 		}
 		return 0;
@@ -1829,6 +1841,9 @@ process_check_sb_inodes(
 	if (lino == mp->m_sb.sb_rbmino)
 		return process_check_rt_inode(mp, dinoc, lino, type, dirty,
 				XR_INO_RTBITMAP, _("realtime bitmap"));
+	if (is_rtrmap_inode(lino))
+		return process_check_rt_inode(mp, dinoc, lino, type, dirty,
+				XR_INO_RTRMAP, _("realtime rmap btree"));
 	return 0;
 }
 
@@ -1926,6 +1941,18 @@ _("realtime summary inode %" PRIu64 " has bad size %" PRId64 " (should be %d)\n"
 		}
 		break;
 
+	case XR_INO_RTRMAP:
+		/*
+		 * if we have no rmapbt, any inode claiming
+		 * to be a real-time file is bogus
+		 */
+		if (!xfs_has_rmapbt(mp)) {
+			do_warn(
+_("found inode %" PRIu64 " claiming to be a rtrmapbt file, but rmapbt is disabled\n"), lino);
+			return 1;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -1954,6 +1981,14 @@ _("bad attr fork offset %d in dev inode %" PRIu64 ", should be %d\n"),
 			return 1;
 		}
 		break;
+	case XFS_DINODE_FMT_RMAP:
+		if (!(xfs_has_metadir(mp) && xfs_has_parent(mp))) {
+			do_warn(
+_("metadata inode %" PRIu64 " type %d cannot have attr fork\n"),
+				lino, dino->di_format);
+			return 1;
+		}
+		fallthrough;
 	case XFS_DINODE_FMT_LOCAL:
 	case XFS_DINODE_FMT_EXTENTS:
 	case XFS_DINODE_FMT_BTREE:
@@ -3050,6 +3085,8 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 			type = XR_INO_GQUOTA;
 		else if (lino == mp->m_sb.sb_pquotino)
 			type = XR_INO_PQUOTA;
+		else if (is_rtrmap_inode(lino))
+			type = XR_INO_RTRMAP;
 		else
 			type = XR_INO_DATA;
 		break;
@@ -3155,6 +3192,7 @@ _("Bad CoW extent size %u on inode %" PRIu64 ", "),
 		case XR_INO_UQUOTA:
 		case XR_INO_GQUOTA:
 		case XR_INO_PQUOTA:
+		case XR_INO_RTRMAP:
 			/*
 			 * This inode was recognized as being filesystem
 			 * metadata, so preserve the inode and its contents for
