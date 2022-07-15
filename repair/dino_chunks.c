@@ -950,6 +950,15 @@ next_readbuf:
 			clear_inode_isadir(ino_rec, irec_offset);
 		}
 
+		/*
+		 * We always reinitialize the rt bitmap and summary inodes if
+		 * the metadata directory feature is enabled.
+		 */
+		if (xfs_has_metadir(mp) && !no_modify) {
+			need_rbmino = -1;
+			need_rsumino = -1;
+		}
+
 		if (status)  {
 			if (mp->m_sb.sb_rootino == ino) {
 				need_root_inode = 1;
