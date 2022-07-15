@@ -54,6 +54,23 @@ xfrog_file_exchange_prep_freshness(
 	return 0;
 }
 
+/*
+ * Enable checking that the target (or destination) file has not been modified
+ * since a particular point in time.
+ */
+void
+xfrog_file_exchange_require_file2_fresh(
+	struct xfs_exch_range	*req,
+	struct xfs_bulkstat	*bulkstat)
+{
+	req->flags |= XFS_EXCH_RANGE_FILE2_FRESH;
+	req->file2_ino = bulkstat->bs_ino;
+	req->file2_mtime = bulkstat->bs_mtime;
+	req->file2_ctime = bulkstat->bs_ctime;
+	req->file2_mtime_nsec = bulkstat->bs_mtime_nsec;
+	req->file2_ctime_nsec = bulkstat->bs_ctime_nsec;
+}
+
 /* Prepare an extent swap request. */
 int
 xfrog_file_exchange_prep(
