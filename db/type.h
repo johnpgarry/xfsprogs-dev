@@ -20,6 +20,7 @@ typedef enum typnm
 	TYP_BNOBT,
 	TYP_CNTBT,
 	TYP_RMAPBT,
+	TYP_RTRMAPBT,
 	TYP_REFCBT,
 	TYP_DATA,
 	TYP_DIR2,

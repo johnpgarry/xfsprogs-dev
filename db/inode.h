@@ -23,3 +23,6 @@ extern int	inode_size(void *obj, int startoff, int idx);
 extern int	inode_u_size(void *obj, int startoff, int idx);
 extern void	xfs_inode_set_crc(struct xfs_buf *);
 extern void	set_cur_inode(xfs_ino_t ino);
+
+int init_rtmeta_inode_bitmaps(struct xfs_mount *mp);
+bool is_rtrmap_inode(xfs_ino_t ino);
