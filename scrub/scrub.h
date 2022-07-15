@@ -6,6 +6,8 @@
 #ifndef XFS_SCRUB_SCRUB_H_
 #define XFS_SCRUB_SCRUB_H_
 
+enum xfrog_scrub_group;
+
 /* Online scrub and repair. */
 enum check_outcome {
 	CHECK_DONE,	/* no further processing needed */
@@ -32,6 +34,9 @@ enum check_outcome {
 #define SCRUB_ITEM_PREEN	(XFS_SCRUB_OFLAG_PREEN)		/* (1 << 2) */
 #define SCRUB_ITEM_XFAIL	(XFS_SCRUB_OFLAG_XFAIL)		/* (1 << 3) */
 #define SCRUB_ITEM_XCORRUPT	(XFS_SCRUB_OFLAG_XCORRUPT)	/* (1 << 4) */
+
+/* This scrub type needs to be checked. */
+#define SCRUB_ITEM_NEEDSCHECK	(1 << 5)
 
 /* All of the state flags that we need to prioritize repair work. */
 #define SCRUB_ITEM_REPAIR_ANY	(SCRUB_ITEM_CORRUPT | \
@@ -96,13 +101,24 @@ scrub_item_init_file(struct scrub_item *sri, const struct xfs_bulkstat *bstat)
 void scrub_item_dump(struct scrub_item *sri, unsigned int group_mask,
 		const char *tag);
 
+static inline void
+scrub_item_schedule(struct scrub_item *sri, unsigned int scrub_type)
+{
+	sri->sri_state[scrub_type] = SCRUB_ITEM_NEEDSCHECK;
+}
+
+void scrub_item_schedule_group(struct scrub_item *sri,
+		enum xfrog_scrub_group group);
+int scrub_item_check_file(struct scrub_ctx *ctx, struct scrub_item *sri,
+		int override_fd);
+
+static inline int
+scrub_item_check(struct scrub_ctx *ctx, struct scrub_item *sri)
+{
+	return scrub_item_check_file(ctx, sri, -1);
+}
+
 void scrub_report_preen_triggers(struct scrub_ctx *ctx);
-int scrub_ag_headers(struct scrub_ctx *ctx, struct scrub_item *sri);
-int scrub_ag_metadata(struct scrub_ctx *ctx, struct scrub_item *sri);
-int scrub_iscan_metadata(struct scrub_ctx *ctx, struct scrub_item *sri);
-int scrub_summary_metadata(struct scrub_ctx *ctx, struct scrub_item *sri);
-int scrub_meta_type(struct scrub_ctx *ctx, unsigned int type,
-		struct scrub_item *sri);
 
 bool can_scrub_fs_metadata(struct scrub_ctx *ctx);
 bool can_scrub_inode(struct scrub_ctx *ctx);

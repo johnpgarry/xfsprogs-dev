@@ -387,7 +387,6 @@ out:
 struct fs_scan_item {
 	struct scrub_item	sri;
 	bool			*abortedp;
-	unsigned int		scrub_type;
 };
 
 /* Run one full-fs scan scrubber in this thread. */
@@ -412,7 +411,7 @@ fs_scan_worker(
 		nanosleep(&tv, NULL);
 	}
 
-	ret = scrub_meta_type(ctx, item->scrub_type, &item->sri);
+	ret = scrub_item_check(ctx, &item->sri);
 	if (ret) {
 		str_liberror(ctx, ret, _("checking fs scan metadata"));
 		*item->abortedp = true;
@@ -450,7 +449,7 @@ queue_fs_scan(
 		return ret;
 	}
 	scrub_item_init_fs(&item->sri);
-	item->scrub_type = scrub_type;
+	scrub_item_schedule(&item->sri, scrub_type);
 	item->abortedp = abortedp;
 
 	ret = -workqueue_add(wq, fs_scan_worker, nr, item);

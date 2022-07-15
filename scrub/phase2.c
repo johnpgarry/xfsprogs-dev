@@ -75,7 +75,8 @@ scan_ag_metadata(
 	 * First we scrub and fix the AG headers, because we need
 	 * them to work well enough to check the AG btrees.
 	 */
-	ret = scrub_ag_headers(ctx, &sri);
+	scrub_item_schedule_group(&sri, XFROG_SCRUB_GROUP_AGHEADER);
+	ret = scrub_item_check(ctx, &sri);
 	if (ret)
 		goto err;
 
@@ -85,7 +86,8 @@ scan_ag_metadata(
 		goto err;
 
 	/* Now scrub the AG btrees. */
-	ret = scrub_ag_metadata(ctx, &sri);
+	scrub_item_schedule_group(&sri, XFROG_SCRUB_GROUP_PERAG);
+	ret = scrub_item_check(ctx, &sri);
 	if (ret)
 		goto err;
 
@@ -131,7 +133,8 @@ scan_fs_metadata(
 		goto out;
 
 	scrub_item_init_fs(&sri);
-	ret = scrub_meta_type(ctx, type, &sri);
+	scrub_item_schedule(&sri, type);
+	ret = scrub_item_check(ctx, &sri);
 	if (ret) {
 		sctl->aborted = true;
 		goto out;
@@ -189,7 +192,8 @@ phase2_func(
 	 * If errors occur, this function will log them and return nonzero.
 	 */
 	scrub_item_init_ag(&sri, 0);
-	ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_SB, &sri);
+	scrub_item_schedule(&sri, XFS_SCRUB_TYPE_SB);
+	ret = scrub_item_check(ctx, &sri);
 	if (ret)
 		goto out_wq;
 	ret = repair_item_completely(ctx, &sri);

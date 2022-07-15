@@ -143,9 +143,7 @@ phase4_func(
 	 * metadata.  If repairs fails, we'll come back during phase 7.
 	 */
 	scrub_item_init_fs(&sri);
-	ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_FSCOUNTERS, &sri);
-	if (ret)
-		return ret;
+	scrub_item_schedule(&sri, XFS_SCRUB_TYPE_FSCOUNTERS);
 
 	/*
 	 * Repair possibly bad quota counts before starting other repairs,
@@ -157,13 +155,13 @@ phase4_func(
 	if (ret)
 		return ret;
 
-	if (fsgeom.sick & XFS_FSOP_GEOM_SICK_QUOTACHECK) {
-		ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_QUOTACHECK, &sri);
-		if (ret)
-			return ret;
-	}
+	if (fsgeom.sick & XFS_FSOP_GEOM_SICK_QUOTACHECK)
+		scrub_item_schedule(&sri, XFS_SCRUB_TYPE_QUOTACHECK);
 
-	/* Repair counters before starting on the rest. */
+	/* Check and repair counters before starting on the rest. */
+	ret = scrub_item_check(ctx, &sri);
+	if (ret)
+		return ret;
 	ret = repair_item_corruption(ctx, &sri);
 	if (ret)
 		return ret;

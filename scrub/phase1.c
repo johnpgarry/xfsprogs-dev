@@ -61,7 +61,8 @@ report_to_kernel(
 		return 0;
 
 	scrub_item_init_fs(&sri);
-	ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_HEALTHY, &sri);
+	scrub_item_schedule(&sri, XFS_SCRUB_TYPE_HEALTHY);
+	ret = scrub_item_check(ctx, &sri);
 	if (ret)
 		return ret;
 

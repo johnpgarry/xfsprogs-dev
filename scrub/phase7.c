@@ -10,6 +10,8 @@
 #include <linux/fsmap.h>
 #include "libfrog/paths.h"
 #include "libfrog/ptvar.h"
+#include "libfrog/fsgeom.h"
+#include "libfrog/scrub.h"
 #include "list.h"
 #include "xfs_scrub.h"
 #include "common.h"
@@ -118,7 +120,8 @@ phase7_func(
 
 	/* Check and fix the summary metadata. */
 	scrub_item_init_fs(&sri);
-	error = scrub_summary_metadata(ctx, &sri);
+	scrub_item_schedule_group(&sri, XFROG_SCRUB_GROUP_SUMMARY);
+	error = scrub_item_check(ctx, &sri);
 	if (error)
 		return error;
 	error = repair_item_completely(ctx, &sri);

@@ -86,9 +86,11 @@ xfs_check_metadata(
 	bool				is_inode)
 {
 	DEFINE_DESCR(dsc, ctx, format_scrub_descr);
+	enum xfrog_scrub_group		group;
 	unsigned int			tries = 0;
 	int				error;
 
+	group = xfrog_scrubbers[meta->sm_type].group;
 	assert(!debug_tweak_on("XFS_SCRUB_NO_KERNEL"));
 	assert(meta->sm_type < XFS_SCRUB_TYPE_NR);
 	descr_set(&dsc, meta);
@@ -165,7 +167,7 @@ _("Repairs are required."));
 	 */
 	if (is_unoptimized(meta)) {
 		if (ctx->mode != SCRUB_MODE_REPAIR) {
-			if (!is_inode) {
+			if (group != XFROG_SCRUB_GROUP_INODE) {
 				/* AG or FS metadata, always warn. */
 				str_info(ctx, descr_render(&dsc),
 _("Optimization is possible."));
@@ -223,9 +225,10 @@ _("Optimizations of %s are possible."), _(xfrog_scrubbers[i].descr));
  * Returns 0 for success.  If errors occur, this function will log them and
  * return a positive error code.
  */
-int
+static int
 scrub_meta_type(
 	struct scrub_ctx		*ctx,
+	struct xfs_fd			*xfdp,
 	unsigned int			type,
 	struct scrub_item		*sri)
 {
@@ -243,16 +246,20 @@ scrub_meta_type(
 		break;
 	case XFROG_SCRUB_GROUP_FS:
 	case XFROG_SCRUB_GROUP_SUMMARY:
+	case XFROG_SCRUB_GROUP_ISCAN:
 	case XFROG_SCRUB_GROUP_NONE:
 		break;
-	default:
-		assert(0);
+	case XFROG_SCRUB_GROUP_INODE:
+		meta.sm_ino = sri->sri_ino;
+		meta.sm_gen = sri->sri_gen;
 		break;
 	}
 
 	/* Check the item. */
-	fix = xfs_check_metadata(ctx, &ctx->mnt, &meta, false);
-	progress_add(1);
+	fix = xfs_check_metadata(ctx, xfdp, &meta, false);
+
+	if (xfrog_scrubbers[type].group != XFROG_SCRUB_GROUP_INODE)
+		progress_add(1);
 
 	switch (fix) {
 	case CHECK_ABORT:
@@ -269,60 +276,54 @@ scrub_meta_type(
 	}
 }
 
-/*
- * Scrub all metadata types that are assigned to the given XFROG_SCRUB_GROUP_*,
- * saving corruption reports for later.  This should not be used for
- * XFROG_SCRUB_GROUP_INODE or for checking summary metadata.
- */
-static bool
-scrub_group(
-	struct scrub_ctx		*ctx,
-	enum xfrog_scrub_group		group,
-	struct scrub_item		*sri)
+/* Schedule scrub for all metadata of a given group. */
+void
+scrub_item_schedule_group(
+	struct scrub_item		*sri,
+	enum xfrog_scrub_group		group)
 {
-	const struct xfrog_scrub_descr	*sc;
-	unsigned int			type;
+	unsigned int			scrub_type;
 
-	sc = xfrog_scrubbers;
-	for (type = 0; type < XFS_SCRUB_TYPE_NR; type++, sc++) {
-		int			ret;
-
-		if (sc->group != group)
+	foreach_scrub_type(scrub_type) {
+		if (xfrog_scrubbers[scrub_type].group != group)
 			continue;
+		scrub_item_schedule(sri, scrub_type);
+	}
+}
 
-		ret = scrub_meta_type(ctx, type, sri);
-		if (ret)
-			return ret;
+/* Run all the incomplete scans on this scrub principal. */
+int
+scrub_item_check_file(
+	struct scrub_ctx		*ctx,
+	struct scrub_item		*sri,
+	int				override_fd)
+{
+	struct xfs_fd			xfd;
+	struct xfs_fd			*xfdp = &ctx->mnt;
+	unsigned int			scrub_type;
+	int				error;
+
+	/*
+	 * If the caller passed us a file descriptor for a scrub, use it
+	 * instead of scrub-by-handle because this enables the kernel to skip
+	 * costly inode btree lookups.
+	 */
+	if (override_fd >= 0) {
+		memcpy(&xfd, xfdp, sizeof(xfd));
+		xfd.fd = override_fd;
+		xfdp = &xfd;
 	}
 
-	return 0;
-}
+	foreach_scrub_type(scrub_type) {
+		if (!(sri->sri_state[scrub_type] & SCRUB_ITEM_NEEDSCHECK))
+			continue;
 
-/* Scrub each AG's header blocks. */
-int
-scrub_ag_headers(
-	struct scrub_ctx		*ctx,
-	struct scrub_item		*sri)
-{
-	return scrub_group(ctx, XFROG_SCRUB_GROUP_AGHEADER, sri);
-}
+		error = scrub_meta_type(ctx, xfdp, scrub_type, sri);
+		if (error)
+			break;
+	}
 
-/* Scrub each AG's metadata btrees. */
-int
-scrub_ag_metadata(
-	struct scrub_ctx		*ctx,
-	struct scrub_item		*sri)
-{
-	return scrub_group(ctx, XFROG_SCRUB_GROUP_PERAG, sri);
-}
-
-/* Scrub all FS summary metadata. */
-int
-scrub_summary_metadata(
-	struct scrub_ctx		*ctx,
-	struct scrub_item		*sri)
-{
-	return scrub_group(ctx, XFROG_SCRUB_GROUP_SUMMARY, sri);
+	return error;
 }
 
 /* How many items do we have to check? */
@@ -372,54 +373,6 @@ scrub_estimate_iscan_work(
 	}
 
 	return estimate;
-}
-
-/*
- * Scrub file metadata of some sort.  If errors occur, this function will log
- * them and return nonzero.
- */
-int
-scrub_file(
-	struct scrub_ctx		*ctx,
-	int				fd,
-	const struct xfs_bulkstat	*bstat,
-	unsigned int			type,
-	struct scrub_item		*sri)
-{
-	struct xfs_scrub_metadata	meta = {0};
-	struct xfs_fd			xfd;
-	struct xfs_fd			*xfdp = &ctx->mnt;
-	enum check_outcome		fix;
-
-	assert(type < XFS_SCRUB_TYPE_NR);
-	assert(xfrog_scrubbers[type].group == XFROG_SCRUB_GROUP_INODE);
-
-	meta.sm_type = type;
-	meta.sm_ino = bstat->bs_ino;
-	meta.sm_gen = bstat->bs_gen;
-
-	/*
-	 * If the caller passed us a file descriptor for a scrub, use it
-	 * instead of scrub-by-handle because this enables the kernel to skip
-	 * costly inode btree lookups.
-	 */
-	if (fd >= 0) {
-		memcpy(&xfd, xfdp, sizeof(xfd));
-		xfd.fd = fd;
-		xfdp = &xfd;
-	}
-
-	/* Scrub the piece of metadata. */
-	fix = xfs_check_metadata(ctx, xfdp, &meta, true);
-	if (fix == CHECK_ABORT)
-		return ECANCELED;
-	if (fix == CHECK_DONE) {
-		scrub_item_clean_state(sri, type);
-		return 0;
-	}
-
-	scrub_item_save_state(sri, type, meta.sm_flags);
-	return 0;
 }
 
 /* Dump a scrub item for debugging purposes. */
