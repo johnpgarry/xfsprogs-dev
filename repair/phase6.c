@@ -736,15 +736,9 @@ mk_rbmino(
 	struct xfs_mount	*mp)
 {
 	struct xfs_imeta_update	upd = { };
-	struct xfs_trans	*tp = NULL;
 	struct xfs_inode	*ip = NULL;
-	struct xfs_bmbt_irec	*ep;
 	int			i;
-	int			nmap;
 	int			error;
-	xfs_fileoff_t		bno;
-	struct xfs_bmbt_irec	map[XFS_BMAP_MAX_NMAP];
-	uint			blocks;
 
 	/* Reset the realtime bitmap inode. */
 	if (!xfs_has_metadir(mp)) {
@@ -779,36 +773,15 @@ mk_rbmino(
 	 * then allocate blocks for file and fill with zeroes (stolen
 	 * from mkfs)
 	 */
-	blocks = mp->m_sb.sb_rbmblocks +
-			XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK) - 1;
-	error = -libxfs_trans_alloc_rollable(mp, blocks, &tp);
-	if (error)
-		res_failed(error);
-
-	libxfs_trans_ijoin(tp, ip, 0);
-	bno = 0;
-	while (bno < mp->m_sb.sb_rbmblocks) {
-		nmap = XFS_BMAP_MAX_NMAP;
-		error = -libxfs_bmapi_write(tp, ip, bno,
-			  (xfs_extlen_t)(mp->m_sb.sb_rbmblocks - bno),
-			  0, mp->m_sb.sb_rbmblocks, map, &nmap);
+	if (mp->m_sb.sb_rbmblocks) {
+		error = -libxfs_alloc_file_space(ip, 0,
+				mp->m_sb.sb_rbmblocks << mp->m_sb.sb_blocklog,
+				XFS_BMAPI_ZERO);
 		if (error) {
 			do_error(
-			_("couldn't allocate realtime bitmap, error = %d\n"),
+	_("allocation of the realtime bitmap failed, error = %d\n"),
 				error);
 		}
-		for (i = 0, ep = map; i < nmap; i++, ep++) {
-			libxfs_device_zero(mp->m_ddev_targp,
-				XFS_FSB_TO_DADDR(mp, ep->br_startblock),
-				XFS_FSB_TO_BB(mp, ep->br_blockcount));
-			bno += ep->br_blockcount;
-		}
-	}
-	error = -libxfs_trans_commit(tp);
-	if (error) {
-		do_error(
-		_("allocation of the realtime bitmap failed, error = %d\n"),
-			error);
 	}
 	libxfs_irele(ip);
 }
@@ -996,16 +969,9 @@ mk_rsumino(
 	struct xfs_mount	*mp)
 {
 	struct xfs_imeta_update	upd = { };
-	struct xfs_trans	*tp = NULL;
 	struct xfs_inode	*ip = NULL;
-	struct xfs_bmbt_irec	*ep;
 	int			i;
-	int			nmap;
 	int			error;
-	int			nsumblocks;
-	xfs_fileoff_t		bno;
-	struct xfs_bmbt_irec	map[XFS_BMAP_MAX_NMAP];
-	uint			blocks;
 
 	/* Reset the realtime summary inode. */
 	if (!xfs_has_metadir(mp)) {
@@ -1040,36 +1006,14 @@ mk_rsumino(
 	 * then allocate blocks for file and fill with zeroes (stolen
 	 * from mkfs)
 	 */
-	nsumblocks = mp->m_rsumsize >> mp->m_sb.sb_blocklog;
-	blocks = nsumblocks + XFS_BM_MAXLEVELS(mp, XFS_DATA_FORK) - 1;
-	error = -libxfs_trans_alloc_rollable(mp, blocks, &tp);
-	if (error)
-		res_failed(error);
-
-	libxfs_trans_ijoin(tp, ip, 0);
-	bno = 0;
-	while (bno < nsumblocks) {
-		nmap = XFS_BMAP_MAX_NMAP;
-		error = -libxfs_bmapi_write(tp, ip, bno,
-			  (xfs_extlen_t)(nsumblocks - bno),
-			  0, nsumblocks, map, &nmap);
+	if (mp->m_rsumsize) {
+		error = -libxfs_alloc_file_space(ip, 0, mp->m_rsumsize,
+				XFS_BMAPI_ZERO);
 		if (error) {
 			do_error(
-		_("couldn't allocate realtime summary inode, error = %d\n"),
+	_("allocation of the realtime summary ino failed, error = %d\n"),
 				error);
 		}
-		for (i = 0, ep = map; i < nmap; i++, ep++) {
-			libxfs_device_zero(mp->m_ddev_targp,
-				      XFS_FSB_TO_DADDR(mp, ep->br_startblock),
-				      XFS_FSB_TO_BB(mp, ep->br_blockcount));
-			bno += ep->br_blockcount;
-		}
-	}
-	error = -libxfs_trans_commit(tp);
-	if (error) {
-		do_error(
-	_("allocation of the realtime summary ino failed, error = %d\n"),
-			error);
 	}
 	libxfs_irele(ip);
 }
