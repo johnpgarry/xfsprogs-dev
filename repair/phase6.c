@@ -3633,6 +3633,131 @@ update_missing_dotdot_entries(
 	}
 }
 
+/*
+ * Re-link a quota inode into the metadata directory.  We do not create quota
+ * inodes or abort repair if we cannot relink the inodes, because quota mount
+ * can recreate all the quota metadata.
+ */
+static int
+reattach_quota_inode(
+	struct xfs_mount		*mp,
+	xfs_ino_t			*inop,
+	const struct xfs_imeta_path	*path)
+{
+	struct xfs_imeta_update		upd;
+	struct xfs_trans		*tp;
+	struct xfs_inode		*ip = NULL;
+	xfs_ino_t			ino = *inop;
+	int				error;
+
+	error = ensure_imeta_dirpath(mp, path);
+	if (error) {
+		do_warn(
+ _("Couldn't create quota metadata directory, error %d\n"), error);
+		return error;
+	}
+
+	error = -libxfs_trans_alloc_empty(mp, &tp);
+	if (error)
+		do_error(
+ _("failed to allocate trans to grab quota inode 0x%llx, error %d\n"),
+				(unsigned long long)ino, error);
+	error = -libxfs_imeta_iget(tp, ino, XFS_DIR3_FT_REG_FILE, &ip);
+	libxfs_trans_cancel(tp);
+	if (error) {
+		do_warn(
+ _("Couldn't grab quota inode 0x%llx, error %d\n"),
+				(unsigned long long)ino, error);
+		goto out_rele;
+	}
+
+	/*
+	 * Since we're reattaching this file to the metadata directory tree,
+	 * try to remove all the parent pointers that might be attached.
+	 */
+	try_erase_parent_ptrs(ip);
+
+	error = -libxfs_imeta_start_link(mp, path, ip, &upd);
+	if (error) {
+		do_warn(
+ _("Couldn't allocate transaction to attach quota inode 0x%llx, error %d\n"),
+				(unsigned long long)ino, error);
+		goto out_rele;
+	}
+
+	/* Null out the superblock pointer and re-link this file into it. */
+	*inop = NULLFSINO;
+
+	error = -libxfs_imeta_link(&upd);
+	if (error) {
+		do_warn(
+ _("Couldn't link quota inode 0x%llx, error %d\n"),
+				(unsigned long long)ino, error);
+		goto out_cancel;
+	}
+
+	/* Reset the link count to something sane. */
+	set_nlink(VFS_I(ip), 1);
+	libxfs_trans_log_inode(upd.tp, ip, XFS_ILOG_CORE);
+
+	error = -libxfs_imeta_commit_update(&upd);
+	if (error) {
+		do_warn(
+_("Couldn't commit quota inode 0x%llx reattachment transaction, error %d\n"),
+				(unsigned long long)ino, error);
+	}
+
+	goto out_rele;
+
+out_cancel:
+	libxfs_imeta_cancel_update(&upd, error);
+out_rele:
+	if (ip)
+		libxfs_irele(ip);
+	return error;
+}
+
+/*
+ * Reattach quota inodes to the metadata directory if we rebuilt the metadata
+ * directory tree.
+ */
+static inline void
+reattach_metadir_quota_inodes(
+	struct xfs_mount	*mp)
+{
+	int			error;
+
+	if (!xfs_has_metadir(mp) || no_modify)
+		return;
+
+	if (mp->m_sb.sb_uquotino != NULLFSINO) {
+		error = reattach_quota_inode(mp, &mp->m_sb.sb_uquotino,
+				&XFS_IMETA_USRQUOTA);
+		if (error) {
+			mp->m_sb.sb_uquotino = NULLFSINO;
+			lost_uquotino = 1;
+		}
+	}
+
+	if (mp->m_sb.sb_gquotino != NULLFSINO) {
+		error = reattach_quota_inode(mp, &mp->m_sb.sb_gquotino,
+				&XFS_IMETA_GRPQUOTA);
+		if (error) {
+			mp->m_sb.sb_gquotino = NULLFSINO;
+			lost_gquotino = 1;
+		}
+	}
+
+	if (mp->m_sb.sb_pquotino != NULLFSINO) {
+		error = reattach_quota_inode(mp, &mp->m_sb.sb_pquotino,
+				&XFS_IMETA_PRJQUOTA);
+		if (error) {
+			mp->m_sb.sb_pquotino = NULLFSINO;
+			lost_pquotino = 1;
+		}
+	}
+}
+
 static void
 traverse_ags(
 	struct xfs_mount	*mp)
@@ -3717,6 +3842,8 @@ _("        - resetting contents of realtime bitmap and summary inodes\n"));
 			_("Warning:  realtime bitmap may be inconsistent\n"));
 		}
 	}
+
+	reattach_metadir_quota_inodes(mp);
 
 	mark_standalone_inodes(mp);
 
