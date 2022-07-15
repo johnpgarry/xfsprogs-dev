@@ -136,6 +136,31 @@ process_sf_dir2_fixoff(
 	}
 }
 
+static bool
+is_meta_ino(
+	struct xfs_mount	*mp,
+	xfs_ino_t		dirino,
+	xfs_ino_t		lino,
+	char			**junkreason)
+{
+	char			*reason = NULL;
+
+	if (lino == mp->m_sb.sb_rbmino)
+		reason = _("realtime bitmap");
+	else if (lino == mp->m_sb.sb_rsumino)
+		reason = _("realtime summary");
+	else if (lino == mp->m_sb.sb_uquotino)
+		reason = _("user quota");
+	else if (lino == mp->m_sb.sb_gquotino)
+		reason = _("group quota");
+	else if (lino == mp->m_sb.sb_pquotino)
+		reason = _("project quota");
+
+	if (reason)
+		*junkreason = reason;
+	return reason != NULL;
+}
+
 /*
  * this routine performs inode discovery and tries to fix things
  * in place.  available redundancy -- inode data size should match
@@ -227,21 +252,12 @@ process_sf_dir2(
 		} else if (!libxfs_verify_dir_ino(mp, lino)) {
 			junkit = 1;
 			junkreason = _("invalid");
-		} else if (lino == mp->m_sb.sb_rbmino)  {
+		} else if (is_meta_ino(mp, ino, lino, &junkreason)) {
+			/*
+			 * Directories that are not in the metadir tree should
+			 * not be linking to metadata files.
+			 */
 			junkit = 1;
-			junkreason = _("realtime bitmap");
-		} else if (lino == mp->m_sb.sb_rsumino)  {
-			junkit = 1;
-			junkreason = _("realtime summary");
-		} else if (lino == mp->m_sb.sb_uquotino)  {
-			junkit = 1;
-			junkreason = _("user quota");
-		} else if (lino == mp->m_sb.sb_gquotino)  {
-			junkit = 1;
-			junkreason = _("group quota");
-		} else if (lino == mp->m_sb.sb_pquotino)  {
-			junkit = 1;
-			junkreason = _("project quota");
 		} else if ((irec_p = find_inode_rec(mp,
 					XFS_INO_TO_AGNO(mp, lino),
 					XFS_INO_TO_AGINO(mp, lino))) != NULL) {
@@ -698,16 +714,12 @@ process_dir2_data(
 			 * directory since it's still structurally intact.
 			 */
 			clearreason = _("invalid");
-		} else if (ent_ino == mp->m_sb.sb_rbmino) {
-			clearreason = _("realtime bitmap");
-		} else if (ent_ino == mp->m_sb.sb_rsumino) {
-			clearreason = _("realtime summary");
-		} else if (ent_ino == mp->m_sb.sb_uquotino) {
-			clearreason = _("user quota");
-		} else if (ent_ino == mp->m_sb.sb_gquotino) {
-			clearreason = _("group quota");
-		} else if (ent_ino == mp->m_sb.sb_pquotino) {
-			clearreason = _("project quota");
+		} else if (is_meta_ino(mp, ino, ent_ino, &clearreason)) {
+			/*
+			 * Directories that are not in the metadir tree should
+			 * not be linking to metadata files.
+			 */
+			clearino = 1;
 		} else {
 			irec_p = find_inode_rec(mp,
 						XFS_INO_TO_AGNO(mp, ent_ino),
