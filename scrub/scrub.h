@@ -59,11 +59,20 @@ struct scrub_item {
 	__u32			sri_gen;
 	__u32			sri_agno;
 
+	/* Bitmask of scrub types that were scheduled here. */
+	__u64			sri_selected;
+
 	/* Scrub item state flags, one for each XFS_SCRUB_TYPE. */
 	__u8			sri_state[XFS_SCRUB_TYPE_NR];
 
 	/* Track scrub and repair call retries for each scrub type. */
 	__u8			sri_tries[XFS_SCRUB_TYPE_NR];
+
+	/* Were there any corruption repairs needed? */
+	bool			sri_inconsistent:1;
+
+	/* Are we revalidating after repairs? */
+	bool			sri_revalidate:1;
 };
 
 #define foreach_scrub_type(loopvar) \
@@ -103,6 +112,7 @@ static inline void
 scrub_item_schedule(struct scrub_item *sri, unsigned int scrub_type)
 {
 	sri->sri_state[scrub_type] = SCRUB_ITEM_NEEDSCHECK;
+	sri->sri_selected |= (1ULL << scrub_type);
 }
 
 void scrub_item_schedule_group(struct scrub_item *sri,

@@ -71,6 +71,8 @@ scrub_item_save_state(
 	unsigned  int			scrub_flags)
 {
 	sri->sri_state[scrub_type] = scrub_flags & SCRUB_ITEM_REPAIR_ANY;
+	if (scrub_flags & SCRUB_ITEM_NEEDSREPAIR)
+		sri->sri_inconsistent = true;
 }
 
 static inline void

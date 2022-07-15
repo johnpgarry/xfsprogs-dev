@@ -485,8 +485,10 @@ action_item_try_repair(
 {
 	struct scrub_item	*sri = &aitem->sri;
 	unsigned int		before, after;
+	unsigned int		scrub_type;
 	int			ret;
 
+	BUILD_BUG_ON(sizeof(sri->sri_selected) * NBBY < XFS_SCRUB_TYPE_NR);
 	before = repair_item_count_needsrepair(sri);
 
 	ret = repair_item(ctx, sri, 0);
@@ -504,6 +506,41 @@ action_item_try_repair(
 			*outcome = TR_REQUEUE;
 		else
 			*outcome = TR_NOPROGRESS;
+		return 0;
+	}
+
+	/*
+	 * Nothing in this fs object was marked inconsistent.  This means we
+	 * were merely optimizing metadata and there is no revalidation work to
+	 * be done.
+	 */
+	if (!sri->sri_inconsistent) {
+		*outcome = TR_REPAIRED;
+		return 0;
+	}
+
+	/*
+	 * We fixed inconsistent metadata, so reschedule the entire object for
+	 * immediate revalidation to see if anything else went wrong.
+	 */
+	foreach_scrub_type(scrub_type)
+		if (sri->sri_selected & (1ULL << scrub_type))
+			sri->sri_state[scrub_type] = SCRUB_ITEM_NEEDSCHECK;
+	sri->sri_inconsistent = false;
+	sri->sri_revalidate = true;
+
+	ret = scrub_item_check(ctx, sri);
+	if (ret)
+		return ret;
+
+	after = repair_item_count_needsrepair(sri);
+	if (after > 0) {
+		/*
+		 * Uhoh, we found something else broken.  Tell the caller that
+		 * this item needs to be queued for more repairs.
+		 */
+		sri->sri_revalidate = false;
+		*outcome = TR_REQUEUE;
 		return 0;
 	}
 
