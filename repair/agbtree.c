@@ -746,7 +746,7 @@ build_refcount_tree(
 {
 	int			error;
 
-	error = init_refcount_cursor(agno, &btr->slab_cursor);
+	error = init_refcount_cursor(false, agno, &btr->slab_cursor);
 	if (error)
 		do_error(
 _("Insufficient memory to construct refcount cursor.\n"));

@@ -40,9 +40,11 @@ extern void rmap_high_key_from_rec(struct xfs_rmap_irec *rec,
 
 int compute_refcounts(struct xfs_mount *mp, bool isrt, xfs_agnumber_t agno);
 uint64_t refcount_record_count(struct xfs_mount *mp, xfs_agnumber_t agno);
-extern int init_refcount_cursor(xfs_agnumber_t, struct xfs_slab_cursor **);
+int init_refcount_cursor(bool isrt, xfs_agnumber_t agno,
+		struct xfs_slab_cursor **pcur);
 extern void refcount_avoid_check(struct xfs_mount *mp);
 void check_refcounts(struct xfs_mount *mp, xfs_agnumber_t agno);
+void check_rtrefcounts(struct xfs_mount *mp, xfs_rgnumber_t rgno);
 
 extern void record_inode_reflink_flag(struct xfs_mount *, struct xfs_dinode *,
 	xfs_agnumber_t, xfs_agino_t, xfs_ino_t);

@@ -220,6 +220,15 @@ check_refcount_btrees(
 }
 
 static void
+check_rt_refcount_btrees(
+	struct workqueue	*wq,
+	xfs_agnumber_t		agno,
+	void			*arg)
+{
+	check_rtrefcounts(wq->wq_ctx, agno);
+}
+
+static void
 process_rmap_data(
 	struct xfs_mount	*mp)
 {
@@ -251,6 +260,8 @@ process_rmap_data(
 		queue_work(&wq, process_inode_reflink_flags, i, NULL);
 		queue_work(&wq, check_refcount_btrees, i, NULL);
 	}
+	for (i = 0; i < mp->m_sb.sb_rgcount; i++)
+		queue_work(&wq, check_rt_refcount_btrees, i, NULL);
 	destroy_work_queue(&wq);
 }
 
