@@ -2663,7 +2663,9 @@ process_dir(
 		if (!sflag || id->ilist || CHECK_BLIST(bno))
 			dbprintf(_("no .. entry for directory %lld\n"), id->ino);
 		error++;
-	} else if (parent == id->ino && id->ino != mp->m_sb.sb_rootino) {
+	} else if (parent == id->ino &&
+		   id->ino != mp->m_sb.sb_rootino &&
+		   id->ino != mp->m_sb.sb_metadirino) {
 		if (!sflag || id->ilist || CHECK_BLIST(bno))
 			dbprintf(_(". and .. same for non-root directory %lld\n"),
 				id->ino);
@@ -2672,6 +2674,11 @@ process_dir(
 		if (!sflag || id->ilist || CHECK_BLIST(bno))
 			dbprintf(_("root directory %lld has .. %lld\n"), id->ino,
 				parent);
+		error++;
+	} else if (id->ino == mp->m_sb.sb_metadirino && id->ino != parent) {
+		if (!sflag || id->ilist || CHECK_BLIST(bno))
+			dbprintf(_("metadata directory %lld has .. %lld\n"),
+				id->ino, parent);
 		error++;
 	} else if (parent != NULLFSINO && id->ino != parent)
 		addparent_inode(id, parent);
@@ -2916,6 +2923,9 @@ process_inode(
 		type = DBM_DIR;
 		if (dip->di_format == XFS_DINODE_FMT_LOCAL)
 			break;
+		if (xfs_has_metadir(mp) &&
+		    id->ino == mp->m_sb.sb_metadirino)
+			addlink_inode(id);
 		blkmap = blkmap_alloc(dnextents);
 		break;
 	case S_IFREG:
@@ -2924,18 +2934,21 @@ process_inode(
 		else if (id->ino == mp->m_sb.sb_rbmino) {
 			type = DBM_RTBITMAP;
 			blkmap = blkmap_alloc(dnextents);
-			addlink_inode(id);
+			if (!xfs_has_metadir(mp))
+				addlink_inode(id);
 		} else if (id->ino == mp->m_sb.sb_rsumino) {
 			type = DBM_RTSUM;
 			blkmap = blkmap_alloc(dnextents);
-			addlink_inode(id);
+			if (!xfs_has_metadir(mp))
+				addlink_inode(id);
 		}
 		else if (id->ino == mp->m_sb.sb_uquotino ||
 			 id->ino == mp->m_sb.sb_gquotino ||
 			 id->ino == mp->m_sb.sb_pquotino) {
 			type = DBM_QUOTA;
 			blkmap = blkmap_alloc(dnextents);
-			addlink_inode(id);
+			if (!xfs_has_metadir(mp))
+				addlink_inode(id);
 		}
 		else
 			type = DBM_DATA;
