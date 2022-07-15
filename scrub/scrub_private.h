@@ -26,9 +26,9 @@ struct scrubv_head {
 void scrub_item_to_vhead(struct scrubv_head *bighead,
 		const struct scrub_item *sri);
 void scrub_vhead_add(struct scrubv_head *bighead, const struct scrub_item *sri,
-		unsigned int scrub_type);
+		unsigned int scrub_type, bool repair);
 
-int format_scrub_descr(struct scrub_ctx *ctx, char *buf, size_t buflen,
+int format_scrubv_descr(struct scrub_ctx *ctx, char *buf, size_t buflen,
 		void *where);
 
 /* Predicates for scrub flag state. */
@@ -121,8 +121,7 @@ scrub_item_schedule_retry(struct scrub_item *sri, unsigned int scrub_type)
 	return true;
 }
 
-bool scrub_item_call_kernel_again(struct scrub_item *sri,
-		unsigned int scrub_type, uint8_t work_mask,
+bool scrub_item_call_kernel_again(struct scrub_item *sri, uint8_t work_mask,
 		const struct scrub_item *old);
 bool scrub_item_schedule_work(struct scrub_item *sri, uint8_t state_flags);
 

@@ -25,7 +25,7 @@
 /* Online scrub and repair wrappers. */
 
 /* Describe the current state of a vectored scrub. */
-static int
+int
 format_scrubv_descr(
 	struct scrub_ctx		*ctx,
 	char				*buf,
@@ -45,35 +45,6 @@ format_scrubv_descr(
 	case XFROG_SCRUB_GROUP_INODE:
 		return scrub_render_ino_descr(ctx, buf, buflen,
 				vhead->svh_ino, vhead->svh_gen, "%s",
-				_(sc->descr));
-	case XFROG_SCRUB_GROUP_FS:
-	case XFROG_SCRUB_GROUP_SUMMARY:
-	case XFROG_SCRUB_GROUP_ISCAN:
-	case XFROG_SCRUB_GROUP_NONE:
-		return snprintf(buf, buflen, _("%s"), _(sc->descr));
-	}
-	return -1;
-}
-
-/* Format a scrub description. */
-int
-format_scrub_descr(
-	struct scrub_ctx		*ctx,
-	char				*buf,
-	size_t				buflen,
-	void				*where)
-{
-	struct xfs_scrub_metadata	*meta = where;
-	const struct xfrog_scrub_descr	*sc = &xfrog_scrubbers[meta->sm_type];
-
-	switch (sc->group) {
-	case XFROG_SCRUB_GROUP_AGHEADER:
-	case XFROG_SCRUB_GROUP_PERAG:
-		return snprintf(buf, buflen, _("AG %u %s"), meta->sm_agno,
-				_(sc->descr));
-	case XFROG_SCRUB_GROUP_INODE:
-		return scrub_render_ino_descr(ctx, buf, buflen,
-				meta->sm_ino, meta->sm_gen, "%s",
 				_(sc->descr));
 	case XFROG_SCRUB_GROUP_FS:
 	case XFROG_SCRUB_GROUP_SUMMARY:
@@ -262,13 +233,18 @@ void
 scrub_vhead_add(
 	struct scrubv_head		*bighead,
 	const struct scrub_item		*sri,
-	unsigned int			scrub_type)
+	unsigned int			scrub_type,
+	bool				repair)
 {
 	struct xfs_scrub_vec_head	*vhead = &bighead->head;
 	struct xfs_scrub_vec		*v;
 
 	v = &vhead->svh_vecs[vhead->svh_nr++];
 	v->sv_type = scrub_type;
+	if (repair)
+		v->sv_flags |= XFS_SCRUB_IFLAG_REPAIR;
+	if (repair && use_force_rebuild)
+		v->sv_flags |= XFS_SCRUB_IFLAG_FORCE_REBUILD;
 	bighead->i = v - vhead->svh_vecs;
 }
 
@@ -293,7 +269,7 @@ scrub_call_kernel(
 	foreach_scrub_type(scrub_type) {
 		if (!(sri->sri_state[scrub_type] & SCRUB_ITEM_NEEDSCHECK))
 			continue;
-		scrub_vhead_add(&bh, sri, scrub_type);
+		scrub_vhead_add(&bh, sri, scrub_type, false);
 
 		dbg_printf("check %s flags %xh tries %u\n", descr_render(&dsc),
 				sri->sri_state[scrub_type],
@@ -357,8 +333,8 @@ scrub_item_schedule_group(
 }
 
 /* Decide if we call the kernel again to finish scrub/repair activity. */
-static inline bool
-scrub_item_call_kernel_again_future(
+bool
+scrub_item_call_kernel_again(
 	struct scrub_item	*sri,
 	uint8_t			work_mask,
 	const struct scrub_item	*old)
@@ -374,6 +350,11 @@ scrub_item_call_kernel_again_future(
 	if (!nr)
 		return false;
 
+	/*
+	 * We are willing to go again if the last call had any effect on the
+	 * state of the scrub item that the caller cares about or if the kernel
+	 * asked us to try again.
+	 */
 	foreach_scrub_type(scrub_type) {
 		uint8_t		statex = sri->sri_state[scrub_type] ^
 					 old->sri_state[scrub_type];
@@ -383,34 +364,6 @@ scrub_item_call_kernel_again_future(
 		if (sri->sri_tries[scrub_type] != old->sri_tries[scrub_type])
 			return true;
 	}
-
-	return false;
-}
-
-/* Decide if we call the kernel again to finish scrub/repair activity. */
-bool
-scrub_item_call_kernel_again(
-	struct scrub_item	*sri,
-	unsigned int		scrub_type,
-	uint8_t			work_mask,
-	const struct scrub_item	*old)
-{
-	uint8_t			statex;
-
-	/* If there's nothing to do, we're done. */
-	if (!(sri->sri_state[scrub_type] & work_mask))
-		return false;
-
-	/*
-	 * We are willing to go again if the last call had any effect on the
-	 * state of the scrub item that the caller cares about, if the freeze
-	 * flag got set, or if the kernel asked us to try again...
-	 */
-	statex = sri->sri_state[scrub_type] ^ old->sri_state[scrub_type];
-	if (statex & work_mask)
-		return true;
-	if (sri->sri_tries[scrub_type] != old->sri_tries[scrub_type])
-		return true;
 
 	return false;
 }
@@ -469,7 +422,7 @@ scrub_item_check_file(
 		error = scrub_call_kernel(ctx, xfdp, sri);
 		if (error)
 			return error;
-	} while (scrub_item_call_kernel_again_future(sri, SCRUB_ITEM_NEEDSCHECK,
+	} while (scrub_item_call_kernel_again(sri, SCRUB_ITEM_NEEDSCHECK,
 				&old_sri));
 
 	return 0;
