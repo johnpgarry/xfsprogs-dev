@@ -61,7 +61,7 @@ report_to_kernel(
 		return 0;
 
 	action_list_init(&alist);
-	ret = scrub_clean_health(ctx, &alist);
+	ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_HEALTHY, 0, &alist);
 	if (ret)
 		return ret;
 

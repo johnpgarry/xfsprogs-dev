@@ -136,14 +136,14 @@ phase4_func(
 		goto maybe_trim;
 
 	/*
-	 * Check the summary counters early.  Normally we do this during phase
-	 * seven, but some of the cross-referencing requires fairly accurate
+	 * Check the resource usage counters early.  Normally we do this during
+	 * phase 7, but some of the cross-referencing requires fairly accurate
 	 * summary counters.  Check and try to repair them now to minimize the
 	 * chance that repairs of primary metadata fail due to secondary
 	 * metadata.  If repairs fails, we'll come back during phase 7.
 	 */
 	action_list_init(&alist);
-	ret = scrub_fs_counters(ctx, &alist);
+	ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_FSCOUNTERS, 0, &alist);
 	if (ret)
 		return ret;
 
@@ -158,7 +158,8 @@ phase4_func(
 		return ret;
 
 	if (fsgeom.sick & XFS_FSOP_GEOM_SICK_QUOTACHECK) {
-		ret = scrub_quotacheck(ctx, &alist);
+		ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_QUOTACHECK, 0,
+				&alist);
 		if (ret)
 			return ret;
 	}

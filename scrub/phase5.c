@@ -384,12 +384,10 @@ out:
 	return error;
 }
 
-typedef int (*fs_scan_item_fn)(struct scrub_ctx *, struct action_list *);
-
 struct fs_scan_item {
 	struct action_list	alist;
 	bool			*abortedp;
-	fs_scan_item_fn		scrub_fn;
+	unsigned int		scrub_type;
 };
 
 /* Run one full-fs scan scrubber in this thread. */
@@ -414,7 +412,7 @@ fs_scan_worker(
 		nanosleep(&tv, NULL);
 	}
 
-	ret = item->scrub_fn(ctx, &item->alist);
+	ret = scrub_meta_type(ctx, item->scrub_type, 0, &item->alist);
 	if (ret) {
 		str_liberror(ctx, ret, _("checking fs scan metadata"));
 		*item->abortedp = true;
@@ -440,7 +438,7 @@ queue_fs_scan(
 	struct workqueue	*wq,
 	bool			*abortedp,
 	xfs_agnumber_t		nr,
-	fs_scan_item_fn		scrub_fn)
+	unsigned int		scrub_type)
 {
 	struct fs_scan_item	*item;
 	struct scrub_ctx	*ctx = wq->wq_ctx;
@@ -453,7 +451,7 @@ queue_fs_scan(
 		return ret;
 	}
 	action_list_init(&item->alist);
-	item->scrub_fn = scrub_fn;
+	item->scrub_type = scrub_type;
 	item->abortedp = abortedp;
 
 	ret = -workqueue_add(wq, fs_scan_worker, nr, item);
@@ -485,14 +483,15 @@ run_kernel_fs_scan_scrubbers(
 	 * The nlinks scanner is much faster than quotacheck because it only
 	 * walks directories, so we start it first.
 	 */
-	ret = queue_fs_scan(&wq_fs_scan, &aborted, nr, scrub_nlinks);
+	ret = queue_fs_scan(&wq_fs_scan, &aborted, nr, XFS_SCRUB_TYPE_NLINKS);
 	if (ret)
 		goto wait;
 
 	if (nr_threads > 1)
 		nr++;
 
-	ret = queue_fs_scan(&wq_fs_scan, &aborted, nr, scrub_quotacheck);
+	ret = queue_fs_scan(&wq_fs_scan, &aborted, nr,
+			XFS_SCRUB_TYPE_QUOTACHECK);
 	if (ret)
 		goto wait;
 
