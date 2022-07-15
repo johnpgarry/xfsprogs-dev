@@ -1428,6 +1428,57 @@ inode number and generation number are specified.
 .RE
 .PD
 .TP
+.BI "scrubv [ \-b NN ] [ \-d ] [ \-f ] [ \-r ] [ \-v NN ] [ \-w ms ] " group " [ " agnumber " | " "ino" " " "gen" " ]"
+Scrub a bunch of internal XFS filesystem metadata.
+The
+.BI group
+parameter specifies which group of metadata to scrub.
+Valid groups are
+.IR ag ", " agheader ", " inode ", " iscan ", " fs ", " probe ", " rtgroup ", or " summary .
+
+For
+.BR ag " and " agheader
+metadata, one AG number must be specified.
+For
+.B inode
+metadata, the scrub is applied to the open file unless the
+inode number and generation number are specified.
+For
+.B rtgroup
+metadata, one rt group number must be specified.
+
+.RS 1.0i
+.PD 0
+.TP
+.BI "\-b " NN
+Inject scrub barriers into the vector stream at the given interval.
+Barriers abort vector processing if any previous scrub function found
+corruption.
+.TP
+.BI \-d
+Enables debug mode.
+.TP
+.BI \-f
+Permit the kernel to freeze the filesystem in order to scrub or repair.
+.TP
+.BI \-r
+Repair metadata if corruptions are found.
+This option requires expert mode.
+.TP
+.BI "\-v " NN
+Force a particular API version.
+.B single
+selects XFS_SCRUB_METADATA (one-by-one).
+.B vector
+selects XFS_SCRUBV_METADATA (vectored).
+If no option is specified, vector mode will be used, with a fallback to single
+mode if the kernel doesn't recognize the vector mode ioctl.
+.TP
+.BI "\-w " us
+Wait the given number of microseconds between each scrub function.
+.RE
+.PD
+.TP
 .BI "repair " type " [ " agnumber " | " "ino" " " "gen" " ]"
 Repair internal XFS filesystem metadata.  The
 .BI type
