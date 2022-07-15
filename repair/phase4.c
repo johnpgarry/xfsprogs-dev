@@ -156,6 +156,16 @@ check_rmap_btrees(
 }
 
 static void
+check_rtrmap_btrees(
+	struct workqueue *wq,
+	xfs_agnumber_t	agno,
+	void		*arg)
+{
+	rmap_add_fixed_rtgroup_rec(wq->wq_ctx, agno);
+	rtrmaps_verify_btree(wq->wq_ctx, agno);
+}
+
+static void
 compute_ag_refcounts(
 	struct workqueue*wq,
 	xfs_agnumber_t	agno,
@@ -207,6 +217,8 @@ process_rmap_data(
 	create_work_queue(&wq, mp, platform_nproc());
 	for (i = 0; i < mp->m_sb.sb_agcount; i++)
 		queue_work(&wq, check_rmap_btrees, i, NULL);
+	for (i = 0; i < mp->m_sb.sb_rgcount; i++)
+		queue_work(&wq, check_rtrmap_btrees, i, NULL);
 	destroy_work_queue(&wq);
 
 	if (!xfs_has_reflink(mp))
