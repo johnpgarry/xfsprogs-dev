@@ -71,4 +71,12 @@ scrub_item_clean_state(
 	sri->sri_state[scrub_type] = 0;
 }
 
+static inline bool
+scrub_item_type_boosted(
+	struct scrub_item		*sri,
+	unsigned  int			scrub_type)
+{
+	return sri->sri_state[scrub_type] & SCRUB_ITEM_BOOST_REPAIR;
+}
+
 #endif /* XFS_SCRUB_SCRUB_PRIVATE_H_ */

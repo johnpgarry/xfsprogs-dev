@@ -22,6 +22,29 @@
 
 /* General repair routines. */
 
+/*
+ * Bitmap showing the correctness dependencies between scrub types for repairs.
+ * There are no edges between AG btrees and AG headers because we can't mount
+ * the filesystem if the btree root pointers in the AG headers are wrong.
+ * Dependencies cannot cross scrub groups.
+ */
+#define DEP(x) (1U << (x))
+static const unsigned int repair_deps[XFS_SCRUB_TYPE_NR] = {
+	[XFS_SCRUB_TYPE_BMBTD]		= DEP(XFS_SCRUB_TYPE_INODE),
+	[XFS_SCRUB_TYPE_BMBTA]		= DEP(XFS_SCRUB_TYPE_INODE),
+	[XFS_SCRUB_TYPE_BMBTC]		= DEP(XFS_SCRUB_TYPE_INODE),
+	[XFS_SCRUB_TYPE_DIR]		= DEP(XFS_SCRUB_TYPE_BMBTD),
+	[XFS_SCRUB_TYPE_XATTR]		= DEP(XFS_SCRUB_TYPE_BMBTA),
+	[XFS_SCRUB_TYPE_SYMLINK]	= DEP(XFS_SCRUB_TYPE_BMBTD),
+	[XFS_SCRUB_TYPE_PARENT]		= DEP(XFS_SCRUB_TYPE_DIR) |
+					  DEP(XFS_SCRUB_TYPE_XATTR),
+	[XFS_SCRUB_TYPE_QUOTACHECK]	= DEP(XFS_SCRUB_TYPE_UQUOTA) |
+					  DEP(XFS_SCRUB_TYPE_GQUOTA) |
+					  DEP(XFS_SCRUB_TYPE_PQUOTA),
+	[XFS_SCRUB_TYPE_RTSUM]		= DEP(XFS_SCRUB_TYPE_RTBITMAP),
+};
+#undef DEP
+
 /* Repair some metadata. */
 static enum check_outcome
 xfs_repair_metadata(
@@ -34,7 +57,15 @@ xfs_repair_metadata(
 	struct xfs_scrub_metadata	meta = { 0 };
 	struct xfs_scrub_metadata	oldm;
 	DEFINE_DESCR(dsc, ctx, format_scrub_descr);
+	bool				repair_only;
 	int				error;
+
+	/*
+	 * If the caller boosted the priority of this scrub type on behalf of a
+	 * higher level repair by setting IFLAG_REPAIR, turn off REPAIR_ONLY.
+	 */
+	repair_only = (repair_flags & XRM_REPAIR_ONLY) &&
+			scrub_item_type_boosted(sri, scrub_type);
 
 	assert(scrub_type < XFS_SCRUB_TYPE_NR);
 	assert(!debug_tweak_on("XFS_SCRUB_NO_KERNEL"));
@@ -55,7 +86,7 @@ xfs_repair_metadata(
 		break;
 	}
 
-	if (!is_corrupt(&meta) && (repair_flags & XRM_REPAIR_ONLY))
+	if (!is_corrupt(&meta) && repair_only)
 		return CHECK_RETRY;
 
 	memcpy(&oldm, &meta, sizeof(oldm));
@@ -224,6 +255,60 @@ struct action_item {
 };
 
 /*
+ * The operation of higher level metadata objects depends on the correctness of
+ * lower level metadata objects.  This means that if X depends on Y, we must
+ * investigate and correct all the observed issues with Y before we try to make
+ * a correction to X.  For all scheduled repair activity on X, boost the
+ * priority of repairs on all the Ys to ensure this correctness.
+ */
+static void
+repair_item_boost_priorities(
+	struct scrub_item		*sri)
+{
+	unsigned int			scrub_type;
+
+	foreach_scrub_type(scrub_type) {
+		unsigned int		dep_mask = repair_deps[scrub_type];
+		unsigned int		b;
+
+		if (repair_item_count_needsrepair(sri) == 0 || !dep_mask)
+			continue;
+
+		/*
+		 * Check if the repairs for this scrub type depend on any other
+		 * scrub types that have been flagged with cross-referencing
+		 * errors and are not already tagged for the highest priority
+		 * repair (SCRUB_ITEM_CORRUPT).  If so, boost the priority of
+		 * that scrub type (via SCRUB_ITEM_BOOST_REPAIR) so that any
+		 * problems with the dependencies will (hopefully) be fixed
+		 * before we start repairs on this scrub type.
+		 *
+		 * So far in the history of xfs_scrub we have maintained that
+		 * lower numbered scrub types do not depend on higher numbered
+		 * scrub types, so we need only process the bit mask once.
+		 */
+		for (b = 0; b < XFS_SCRUB_TYPE_NR; b++, dep_mask >>= 1) {
+			if (!dep_mask)
+				break;
+			if (!(dep_mask & 1))
+				continue;
+			if (!(sri->sri_state[b] & SCRUB_ITEM_REPAIR_XREF))
+				continue;
+			if (sri->sri_state[b] & SCRUB_ITEM_CORRUPT)
+				continue;
+			sri->sri_state[b] |= SCRUB_ITEM_BOOST_REPAIR;
+		}
+	}
+}
+
+/*
+ * These are the scrub item state bits that must be copied when scheduling
+ * a (per-AG) scrub type for immediate repairs.  The original state tracking
+ * bits are left untouched to force a rescan in phase 4.
+ */
+#define MUSTFIX_STATES	(SCRUB_ITEM_CORRUPT | \
+			 SCRUB_ITEM_BOOST_REPAIR)
+/*
  * Figure out which AG metadata must be fixed before we can move on
  * to the inode scan.
  */
@@ -235,17 +320,21 @@ repair_item_mustfix(
 	unsigned int		scrub_type;
 
 	assert(sri->sri_agno != -1U);
+	repair_item_boost_priorities(sri);
 	scrub_item_init_ag(fix_now, sri->sri_agno);
 
 	foreach_scrub_type(scrub_type) {
-		if (!(sri->sri_state[scrub_type] & SCRUB_ITEM_CORRUPT))
+		unsigned int	state;
+
+		state = sri->sri_state[scrub_type] & MUSTFIX_STATES;
+		if (!state)
 			continue;
 
 		switch (scrub_type) {
 		case XFS_SCRUB_TYPE_AGI:
 		case XFS_SCRUB_TYPE_FINOBT:
 		case XFS_SCRUB_TYPE_INOBT:
-			fix_now->sri_state[scrub_type] |= SCRUB_ITEM_CORRUPT;
+			fix_now->sri_state[scrub_type] = state;
 			break;
 		}
 	}
@@ -479,6 +568,8 @@ repair_file_corruption(
 	struct scrub_item	*sri,
 	int			override_fd)
 {
+	repair_item_boost_priorities(sri);
+
 	return repair_item_class(ctx, sri, override_fd, SCRUB_ITEM_CORRUPT,
 			XRM_REPAIR_ONLY | XRM_NOPROGRESS);
 }
@@ -494,6 +585,8 @@ repair_item(
 	unsigned int		flags)
 {
 	int			ret;
+
+	repair_item_boost_priorities(sri);
 
 	ret = repair_item_class(ctx, sri, -1, SCRUB_ITEM_CORRUPT, flags);
 	if (ret)
