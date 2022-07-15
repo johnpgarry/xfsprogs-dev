@@ -36,6 +36,7 @@ init_commands(void)
 	freesp_init();
 	health_init();
 	clearfree_init();
+	move_inode_init();
 }
 
 static int

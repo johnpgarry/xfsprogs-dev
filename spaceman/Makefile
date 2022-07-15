@@ -7,10 +7,10 @@ include $(TOPDIR)/include/builddefs
 
 LTCOMMAND = xfs_spaceman
 HFILES = init.h space.h
-CFILES = info.c init.c file.c health.c prealloc.c trim.c
+CFILES = info.c init.c file.c health.c move_inode.c prealloc.c trim.c
 LSRCFILES = xfs_info.sh
 
-LLDLIBS = $(LIBHANDLE) $(LIBXCMD) $(LIBFROG)
+LLDLIBS = $(LIBHANDLE) $(LIBXCMD) $(LIBFROG) $(LIBHANDLE)
 LTDEPENDENCIES = $(LIBHANDLE) $(LIBXCMD) $(LIBFROG)
 LLDFLAGS = -static
 
