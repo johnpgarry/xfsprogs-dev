@@ -340,6 +340,15 @@ repair_item_mustfix(
 	}
 }
 
+/*
+ * These scrub item states correspond to metadata that is inconsistent in some
+ * way and must be repaired.  If too many metadata objects share these states,
+ * this can make repairs difficult.
+ */
+#define HARDREPAIR_STATES	(SCRUB_ITEM_CORRUPT | \
+				 SCRUB_ITEM_XCORRUPT | \
+				 SCRUB_ITEM_XFAIL)
+
 /* Determine if primary or secondary metadata are inconsistent. */
 unsigned int
 repair_item_difficulty(
@@ -349,9 +358,10 @@ repair_item_difficulty(
 	unsigned int		ret = 0;
 
 	foreach_scrub_type(scrub_type) {
-		if (!(sri->sri_state[scrub_type] & (XFS_SCRUB_OFLAG_CORRUPT |
-						    XFS_SCRUB_OFLAG_XCORRUPT |
-						    XFS_SCRUB_OFLAG_XFAIL)))
+		unsigned int	state;
+
+		state = sri->sri_state[scrub_type] & HARDREPAIR_STATES;
+		if (!state)
 			continue;
 
 		switch (scrub_type) {
