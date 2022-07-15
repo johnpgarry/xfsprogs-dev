@@ -64,7 +64,7 @@ defer_fs_repair(
 		return error;
 
 	pthread_mutex_lock(&ctx->lock);
-	action_list_add(ctx->action_list, aitem);
+	action_list_add(ctx->fs_repair_list, aitem);
 	pthread_mutex_unlock(&ctx->lock);
 	return 0;
 }

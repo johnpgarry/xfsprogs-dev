@@ -198,7 +198,13 @@ repair_everything(
 	do {
 		fixed_anything = 0;
 
-		ret = repair_list_schedule(ctx, &wq, ctx->action_list);
+		ret = repair_list_schedule(ctx, &wq, ctx->fs_repair_list);
+		if (ret < 0)
+			break;
+		if (ret == 1)
+			fixed_anything++;
+
+		ret = repair_list_schedule(ctx, &wq, ctx->file_repair_list);
 		if (ret < 0)
 			break;
 		if (ret == 1)
@@ -213,8 +219,12 @@ repair_everything(
 	if (ret < 0)
 		return ret;
 
-	/* Repair everything serially.  Last chance to fix things. */
-	return action_list_process(ctx, ctx->action_list, XRM_FINAL_WARNING);
+	/*
+	 * Combine both repair lists and repair everything serially.  This is
+	 * the last chance to fix things.
+	 */
+	action_list_merge(ctx->fs_repair_list, ctx->file_repair_list);
+	return action_list_process(ctx, ctx->fs_repair_list, XRM_FINAL_WARNING);
 }
 
 /* Trim the unused areas of the filesystem if the caller asked us to. */
@@ -236,7 +246,8 @@ phase4_func(
 	struct scrub_item	sri;
 	int			ret;
 
-	if (action_list_empty(ctx->action_list))
+	if (action_list_empty(ctx->fs_repair_list) &&
+	    action_list_empty(ctx->file_repair_list))
 		goto maybe_trim;
 
 	/*
@@ -297,7 +308,8 @@ phase4_estimate(
 	unsigned long long	need_fixing;
 
 	/* Everything on the repair list plus FSTRIM. */
-	need_fixing = action_list_length(ctx->action_list);
+	need_fixing = action_list_length(ctx->fs_repair_list) +
+		      action_list_length(ctx->file_repair_list);
 	need_fixing++;
 
 	*items = need_fixing;

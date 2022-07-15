@@ -234,7 +234,7 @@ collect_repairs(
 	struct scrub_ctx	*ctx = foreach_arg;
 	struct action_list	*alist = data;
 
-	action_list_merge(ctx->action_list, alist);
+	action_list_merge(ctx->file_repair_list, alist);
 	return 0;
 }
 
@@ -278,7 +278,7 @@ phase3_func(
 	 * to repair the space metadata.
 	 */
 	for (agno = 0; agno < ctx->mnt.fsgeom.agcount; agno++) {
-		if (!action_list_empty(ctx->action_list))
+		if (!action_list_empty(ctx->fs_repair_list))
 			ictx.always_defer_repairs = true;
 	}
 
