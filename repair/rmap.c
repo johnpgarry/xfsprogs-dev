@@ -2092,3 +2092,29 @@ rtgroup_rmap_ino(
 
 	return ar->rg_rmap_ino;
 }
+
+/* Estimate the size of the ondisk rtrmapbt from the incore tree. */
+xfs_filblks_t
+estimate_rtrmapbt_blocks(
+	struct xfs_rtgroup	*rtg)
+{
+	struct xfs_mount	*mp = rtg->rtg_mount;
+	struct xfs_ag_rmap	*x;
+	unsigned long long	nr_recs;
+
+	if (!rmap_needs_work(mp) || !xfs_has_rtrmapbt(mp))
+		return 0;
+
+	/*
+	 * Overestimate the amount of space needed by pretending that every
+	 * byte in the incore tree is used to store rtrmapbt records.  This
+	 * means we can use SEEK_DATA/HOLE on the xfile, which is faster than
+	 * walking the entire btree.
+	 */
+	x = &rg_rmaps[rtg->rtg_rgno];
+	if (!rmaps_has_observations(x))
+		return 0;
+
+	nr_recs = xfbtree_bytes(&x->ar_xfbtree) / sizeof(struct xfs_rmap_rec);
+	return libxfs_rtrmapbt_calc_size(mp, nr_recs);
+}

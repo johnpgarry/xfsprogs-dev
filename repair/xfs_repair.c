@@ -1425,13 +1425,17 @@ main(int argc, char **argv)
 	rcbagbt_destroy_cur_cache();
 
 	/*
-	 * Done with the block usage maps, toss them...
+	 * Done with the block usage maps, toss them.  Realtime metadata aren't
+	 * rebuilt until phase 6, so we have to keep them around.
 	 */
-	rmaps_free(mp);
+	if (mp->m_sb.sb_rblocks == 0)
+		rmaps_free(mp);
 	free_bmaps(mp);
 
 	if (!bad_ino_btree)  {
 		phase6(mp);
+		if (mp->m_sb.sb_rblocks != 0)
+			rmaps_free(mp);
 		phase_end(mp, 6);
 
 		phase7(mp, phase2_threads);

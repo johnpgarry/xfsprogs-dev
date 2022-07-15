@@ -75,6 +75,7 @@ CFILES = \
 	rcbag.c \
 	rmap.c \
 	rt.c \
+	rtrmap_repair.c \
 	sb.c \
 	scan.c \
 	slab.c \
