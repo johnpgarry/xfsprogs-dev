@@ -54,16 +54,6 @@ struct action_item {
 	__u32			agno;
 };
 
-/*
- * Only ask the kernel to repair this object if the kernel directly told us it
- * was corrupt.  Objects that are only flagged as having cross-referencing
- * errors or flagged as eligible for optimization are left for later.
- */
-#define XRM_REPAIR_ONLY		(1U << 0)
-
-/* Complain if still broken even after fix. */
-#define XRM_COMPLAIN_IF_UNFIXED	(1U << 1)
-
 enum check_outcome xfs_repair_metadata(struct scrub_ctx *ctx,
 		struct xfs_fd *xfdp, struct action_item *aitem,
 		unsigned int repair_flags);

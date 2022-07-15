@@ -88,7 +88,7 @@ try_inode_repair(
 		return 0;
 
 	ret = action_list_process(ictx->ctx, fd, alist,
-			ALP_REPAIR_ONLY | ALP_NOPROGRESS);
+			XRM_REPAIR_ONLY | XRM_NOPROGRESS);
 	if (ret)
 		return ret;
 

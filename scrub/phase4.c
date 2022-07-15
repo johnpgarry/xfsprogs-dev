@@ -54,7 +54,7 @@ repair_ag(
 	} while (unfixed > 0);
 
 	/* Try once more, but this time complain if we can't fix things. */
-	flags |= ALP_COMPLAIN_IF_UNFIXED;
+	flags |= XRM_FINAL_WARNING;
 	ret = action_list_process(ctx, -1, alist, flags);
 	if (ret)
 		*aborted = true;

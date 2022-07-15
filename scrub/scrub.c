@@ -743,7 +743,7 @@ _("Filesystem is shut down, aborting."));
 		 * could fix this, it's at least worth trying the scan
 		 * again to see if another repair fixed it.
 		 */
-		if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED))
+		if (!(repair_flags & XRM_FINAL_WARNING))
 			return CHECK_RETRY;
 		fallthrough;
 	case EINVAL:
@@ -773,13 +773,13 @@ _("Read-only filesystem; cannot make changes."));
 		 * to requeue the repair for later and don't say a
 		 * thing.  Otherwise, print error and bail out.
 		 */
-		if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED))
+		if (!(repair_flags & XRM_FINAL_WARNING))
 			return CHECK_RETRY;
 		str_liberror(ctx, error, descr_render(&dsc));
 		return CHECK_DONE;
 	}
 
-	if (repair_flags & XRM_COMPLAIN_IF_UNFIXED)
+	if (repair_flags & XRM_FINAL_WARNING)
 		scrub_warn_incomplete_scrub(ctx, &dsc, &meta);
 	if (needs_repair(&meta)) {
 		/*
@@ -787,7 +787,7 @@ _("Read-only filesystem; cannot make changes."));
 		 * just requeue this and try again later.  Otherwise we
 		 * log the error loudly and don't try again.
 		 */
-		if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED))
+		if (!(repair_flags & XRM_FINAL_WARNING))
 			return CHECK_RETRY;
 		str_corrupt(ctx, descr_render(&dsc),
 _("Repair unsuccessful; offline repair required."));
@@ -799,7 +799,7 @@ _("Repair unsuccessful; offline repair required."));
 		 * caller to run xfs_repair; otherwise, we'll keep trying to
 		 * reverify the cross-referencing as repairs progress.
 		 */
-		if (repair_flags & XRM_COMPLAIN_IF_UNFIXED) {
+		if (repair_flags & XRM_FINAL_WARNING) {
 			str_info(ctx, descr_render(&dsc),
  _("Seems correct but cross-referencing failed; offline repair recommended."));
 		} else {
