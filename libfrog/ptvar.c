@@ -26,6 +26,7 @@
 struct ptvar {
 	pthread_key_t	key;
 	pthread_mutex_t	lock;
+	ptvar_init_fn	init_fn;
 	size_t		nr_used;
 	size_t		nr_counters;
 	size_t		data_size;
@@ -38,6 +39,7 @@ int
 ptvar_alloc(
 	size_t		nr,
 	size_t		size,
+	ptvar_init_fn	init_fn,
 	struct ptvar	**pptv)
 {
 	struct ptvar	*ptv;
@@ -58,6 +60,7 @@ ptvar_alloc(
 	ptv->data_size = size;
 	ptv->nr_counters = nr;
 	ptv->nr_used = 0;
+	ptv->init_fn = init_fn;
 	memset(ptv->data, 0, nr * size);
 	ret = -pthread_mutex_init(&ptv->lock, NULL);
 	if (ret)
@@ -98,11 +101,15 @@ ptvar_get(
 	if (!p) {
 		pthread_mutex_lock(&ptv->lock);
 		assert(ptv->nr_used < ptv->nr_counters);
-		p = &ptv->data[(ptv->nr_used++) * ptv->data_size];
+		p = &ptv->data[ptv->nr_used * ptv->data_size];
 		ret = -pthread_setspecific(ptv->key, p);
 		if (ret)
 			goto out_unlock;
+		ptv->nr_used++;
 		pthread_mutex_unlock(&ptv->lock);
+
+		if (ptv->init_fn)
+			ptv->init_fn(p);
 	}
 	*retp = 0;
 	return p;

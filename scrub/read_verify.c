@@ -120,7 +120,7 @@ read_verify_pool_alloc(
 	rvp->disk = disk;
 	rvp->ioerr_fn = ioerr_fn;
 	ret = -ptvar_alloc(submitter_threads, sizeof(struct read_verify),
-			&rvp->rvstate);
+			NULL, &rvp->rvstate);
 	if (ret)
 		goto out_counter;
 	ret = -workqueue_create(&rvp->wq, (struct xfs_mount *)rvp,

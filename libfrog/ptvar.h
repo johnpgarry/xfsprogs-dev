@@ -8,7 +8,9 @@
 
 struct ptvar;
 
-int ptvar_alloc(size_t nr, size_t size, struct ptvar **pptv);
+typedef void (*ptvar_init_fn)(void *data);
+int ptvar_alloc(size_t nr, size_t size, ptvar_init_fn init_fn,
+		struct ptvar **pptv);
 void ptvar_free(struct ptvar *ptv);
 void *ptvar_get(struct ptvar *ptv, int *ret);
 
