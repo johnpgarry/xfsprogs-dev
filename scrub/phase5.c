@@ -385,6 +385,7 @@ out:
 }
 
 struct fs_scan_item {
+	struct scrub_item	sri;
 	struct action_list	alist;
 	bool			*abortedp;
 	unsigned int		scrub_type;
@@ -412,7 +413,8 @@ fs_scan_worker(
 		nanosleep(&tv, NULL);
 	}
 
-	ret = scrub_meta_type(ctx, item->scrub_type, 0, &item->alist);
+	ret = scrub_meta_type(ctx, item->scrub_type, 0, &item->alist,
+			&item->sri);
 	if (ret) {
 		str_liberror(ctx, ret, _("checking fs scan metadata"));
 		*item->abortedp = true;
@@ -450,6 +452,7 @@ queue_fs_scan(
 		str_liberror(ctx, ret, _("setting up fs scan"));
 		return ret;
 	}
+	scrub_item_init_fs(&item->sri);
 	action_list_init(&item->alist);
 	item->scrub_type = scrub_type;
 	item->abortedp = abortedp;

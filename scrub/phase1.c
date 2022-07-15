@@ -52,6 +52,7 @@ static int
 report_to_kernel(
 	struct scrub_ctx	*ctx)
 {
+	struct scrub_item	sri;
 	struct action_list	alist;
 	int			ret;
 
@@ -60,8 +61,9 @@ report_to_kernel(
 	    ctx->warnings_found)
 		return 0;
 
+	scrub_item_init_fs(&sri);
 	action_list_init(&alist);
-	ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_HEALTHY, 0, &alist);
+	ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_HEALTHY, 0, &alist, &sri);
 	if (ret)
 		return ret;
 

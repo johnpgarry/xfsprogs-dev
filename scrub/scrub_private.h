@@ -52,4 +52,23 @@ static inline bool needs_repair(struct xfs_scrub_metadata *sm)
 void scrub_warn_incomplete_scrub(struct scrub_ctx *ctx, struct descr *dsc,
 		struct xfs_scrub_metadata *meta);
 
+/* Scrub item functions */
+
+static inline void
+scrub_item_save_state(
+	struct scrub_item		*sri,
+	unsigned  int			scrub_type,
+	unsigned  int			scrub_flags)
+{
+	sri->sri_state[scrub_type] = scrub_flags & SCRUB_ITEM_REPAIR_ANY;
+}
+
+static inline void
+scrub_item_clean_state(
+	struct scrub_item		*sri,
+	unsigned  int			scrub_type)
+{
+	sri->sri_state[scrub_type] = 0;
+}
+
 #endif /* XFS_SCRUB_SCRUB_PRIVATE_H_ */

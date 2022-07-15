@@ -57,6 +57,7 @@ scan_ag_metadata(
 	xfs_agnumber_t			agno,
 	void				*arg)
 {
+	struct scrub_item		sri;
 	struct scrub_ctx		*ctx = (struct scrub_ctx *)wq->wq_ctx;
 	struct scan_ctl			*sctl = arg;
 	struct action_list		alist;
@@ -68,6 +69,7 @@ scan_ag_metadata(
 	if (sctl->aborted)
 		return;
 
+	scrub_item_init_ag(&sri, agno);
 	action_list_init(&alist);
 	action_list_init(&immediate_alist);
 	snprintf(descr, DESCR_BUFSZ, _("AG %u"), agno);
@@ -76,7 +78,7 @@ scan_ag_metadata(
 	 * First we scrub and fix the AG headers, because we need
 	 * them to work well enough to check the AG btrees.
 	 */
-	ret = scrub_ag_headers(ctx, agno, &alist);
+	ret = scrub_ag_headers(ctx, agno, &alist, &sri);
 	if (ret)
 		goto err;
 
@@ -86,7 +88,7 @@ scan_ag_metadata(
 		goto err;
 
 	/* Now scrub the AG btrees. */
-	ret = scrub_ag_metadata(ctx, agno, &alist);
+	ret = scrub_ag_metadata(ctx, agno, &alist, &sri);
 	if (ret)
 		goto err;
 
@@ -120,6 +122,7 @@ scan_fs_metadata(
 	xfs_agnumber_t		type,
 	void			*arg)
 {
+	struct scrub_item	sri;
 	struct action_list	alist;
 	struct scrub_ctx	*ctx = (struct scrub_ctx *)wq->wq_ctx;
 	struct scan_ctl		*sctl = arg;
@@ -129,8 +132,9 @@ scan_fs_metadata(
 	if (sctl->aborted)
 		goto out;
 
+	scrub_item_init_fs(&sri);
 	action_list_init(&alist);
-	ret = scrub_fs_metadata(ctx, type, &alist);
+	ret = scrub_fs_metadata(ctx, type, &alist, &sri);
 	if (ret) {
 		sctl->aborted = true;
 		goto out;
@@ -162,6 +166,7 @@ phase2_func(
 		.rbm_done	= false,
 	};
 	struct action_list	alist;
+	struct scrub_item	sri;
 	const struct xfrog_scrub_descr *sc = xfrog_scrubbers;
 	xfs_agnumber_t		agno;
 	unsigned int		type;
@@ -183,8 +188,9 @@ phase2_func(
 	 * upgrades) off of the sb 0 scrubber (which currently does nothing).
 	 * If errors occur, this function will log them and return nonzero.
 	 */
+	scrub_item_init_ag(&sri, 0);
 	action_list_init(&alist);
-	ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_SB, 0, &alist);
+	ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_SB, 0, &alist, &sri);
 	if (ret)
 		goto out_wq;
 	ret = action_list_process(ctx, -1, &alist,
