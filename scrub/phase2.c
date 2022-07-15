@@ -50,6 +50,25 @@ warn_repair_difficulties(
 	str_info(ctx, descr, _("Filesystem might not be repairable."));
 }
 
+/* Add a scrub item that needs more work to fs metadata repair list. */
+static int
+defer_fs_repair(
+	struct scrub_ctx	*ctx,
+	const struct scrub_item	*sri)
+{
+	struct action_item	*aitem = NULL;
+	int			error;
+
+	error = repair_item_to_action_item(ctx, sri, &aitem);
+	if (error || !aitem)
+		return error;
+
+	pthread_mutex_lock(&ctx->lock);
+	action_list_add(ctx->action_list, aitem);
+	pthread_mutex_unlock(&ctx->lock);
+	return 0;
+}
+
 /* Scrub each AG's metadata btrees. */
 static void
 scan_ag_metadata(
@@ -108,7 +127,7 @@ scan_ag_metadata(
 		goto err;
 
 	/* Everything else gets fixed during phase 4. */
-	ret = repair_item_defer(ctx, &sri);
+	ret = defer_fs_repair(ctx, &sri);
 	if (ret)
 		goto err;
 	return;
@@ -144,7 +163,7 @@ scan_fs_metadata(
 	difficulty = repair_item_difficulty(&sri);
 	warn_repair_difficulties(ctx, difficulty, xfrog_scrubbers[type].descr);
 
-	ret = repair_item_defer(ctx, &sri);
+	ret = defer_fs_repair(ctx, &sri);
 	if (ret) {
 		sctl->aborted = true;
 		goto out;

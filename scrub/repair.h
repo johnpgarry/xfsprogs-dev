@@ -12,19 +12,43 @@ struct action_list {
 
 struct action_item;
 
-int action_lists_alloc(size_t nr, struct action_list **listsp);
-void action_lists_free(struct action_list **listsp);
+int action_list_alloc(struct action_list **listp);
+void action_list_free(struct action_list **listp);
+static inline void action_list_init(struct action_list *alist)
+{
+	INIT_LIST_HEAD(&alist->list);
+}
 
-void action_list_init(struct action_list *alist);
+unsigned long long action_list_length(struct action_list *alist);
+
+/* Move all the items of @src to the tail of @dst, and reinitialize @src. */
+static inline void
+action_list_merge(
+	struct action_list	*dst,
+	struct action_list	*src)
+{
+	list_splice_tail_init(&src->list, &dst->list);
+}
+
+struct action_item *action_list_pop(struct action_list *alist);
+void action_list_add(struct action_list *alist, struct action_item *aitem);
 
 static inline bool action_list_empty(const struct action_list *alist)
 {
 	return list_empty(&alist->list);
 }
 
-unsigned long long action_list_length(struct action_list *alist);
-void action_list_add(struct action_list *dest, struct action_item *item);
-void action_list_discard(struct action_list *alist);
+enum tryrepair_outcome {
+	/* No progress was made on repairs at all. */
+	TR_NOPROGRESS = 0,
+	/* Some progress was made on repairs; try again soon. */
+	TR_REQUEUE,
+	/* Repairs completely successful. */
+	TR_REPAIRED,
+};
+
+int action_item_try_repair(struct scrub_ctx *ctx, struct action_item *aitem,
+		enum tryrepair_outcome *outcome);
 
 void repair_item_mustfix(struct scrub_item *sri, struct scrub_item *fix_now);
 
@@ -56,7 +80,6 @@ int repair_item(struct scrub_ctx *ctx, struct scrub_item *sri,
 		unsigned int repair_flags);
 int repair_item_to_action_item(struct scrub_ctx *ctx,
 		const struct scrub_item *sri, struct action_item **aitemp);
-int repair_item_defer(struct scrub_ctx *ctx, const struct scrub_item *sri);
 
 static inline unsigned int
 repair_item_count_needsrepair(

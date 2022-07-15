@@ -89,7 +89,8 @@ scrub_cleanup(
 	if (error)
 		return error;
 
-	action_lists_free(&ctx->action_lists);
+	action_list_free(&ctx->action_list);
+
 	if (ctx->fshandle)
 		free_handle(ctx->fshandle, ctx->fshandle_len);
 	if (ctx->rtdev)
@@ -185,10 +186,9 @@ _("Not an XFS filesystem."));
 		return error;
 	}
 
-	error = action_lists_alloc(ctx->mnt.fsgeom.agcount,
-			&ctx->action_lists);
+	error = action_list_alloc(&ctx->action_list);
 	if (error) {
-		str_liberror(ctx, error, _("allocating action lists"));
+		str_liberror(ctx, error, _("allocating repair list"));
 		return error;
 	}
 
