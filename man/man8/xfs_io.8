@@ -708,10 +708,62 @@ bytes of data.
 .RE
 .PD
 .TP
-.BI swapext " donor_file "
+.BI "swapext [OPTIONS]" " donor_file "
 Swaps extent forks between files. The current open file is the target. The donor
 file is specified by path. Note that file data is not copied (file content moves
 with the fork(s)).
+Options include:
+.RS 1.0i
+.PD 0
+.TP 0.4i
+.B \-a
+Swap extent forks atomically.
+The filesystem must be able to complete the operation even if the system goes
+down.
+.TP
+.B \-C
+Print timing information in a condensed format.
+.TP
+.BI \-d " dest_offset"
+Swap extents with open file beginning at
+.IR dest_offset .
+.TP
+.B \-e
+Swap extents to the ends of both files, including the file sizes.
+.TP
+.B \-f
+Flush changed file data and file metadata to disk.
+.TP
+.B \-h
+Only swap written ranges in the supplied file.
+.TP
+.BI \-l " length"
+Swap up to
+.I length
+bytes of data.
+.TP
+.B \-n
+Perform all the parameter validation checks but don't change anything.
+.TP
+.BI \-s " src_offset"
+Swap extents with donor file beginning at
+.IR src_offset .
+.TP
+.B \-t
+Print timing information.
+.TP
+.B \-u
+Do not snapshot and compare the open file's timestamps.
+.TP
+.B \-v
+Use a particular version of the kernel interface.
+Currently supported values are
+.I xfs
+for the old XFS_IOC_SWAPEXT ioctl, and
+.I vfs
+for the new XFS_IOC_EXCHANGE_RANGE ioctl.
+.RE
+.PD
 .TP
 .BI "set_encpolicy [ \-c " mode " ] [ \-n " mode " ] [ \-f " flags " ] [ \-s " log2_dusize " ] [ \-v " version " ] [ " keyspec " ]"
 On filesystems that support encryption, assign an encryption policy to the
