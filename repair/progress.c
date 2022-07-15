@@ -383,14 +383,18 @@ timediff(int phase)
 **  array.
 */
 char *
-timestamp(int end, int phase, char *buf)
+timestamp(
+	struct xfs_mount	*mp,
+	int			end,
+	int			phase,
+	char			*buf)
 {
 
-	time_t    now;
-	struct tm *tmp;
+	time_t			now;
+	struct tm		*tmp;
 
-	if (verbose > 1)
-		cache_report(stderr, "libxfs_bcache", libxfs_bcache);
+	if (verbose > 1 && mp && mp->m_ddev_targp)
+		cache_report(stderr, "libxfs_bcache", mp->m_ddev_targp->bcache);
 
 	now = time(NULL);
 

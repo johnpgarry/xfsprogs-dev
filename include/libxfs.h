@@ -146,7 +146,6 @@ int		libxfs_init(struct libxfs_init *);
 void		libxfs_destroy(struct libxfs_init *li);
 
 extern int	libxfs_device_alignment (void);
-extern void	libxfs_report(FILE *);
 
 /* check or write log footer: specify device, log size in blocks & uuid */
 typedef char	*(libxfs_get_block_t)(char *, int, void *);
