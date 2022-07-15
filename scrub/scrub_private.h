@@ -89,4 +89,18 @@ scrub_item_type_boosted(
 	return sri->sri_state[scrub_type] & SCRUB_ITEM_BOOST_REPAIR;
 }
 
+/* Decide if we want to retry this operation and update bookkeeping if yes. */
+static inline bool
+scrub_item_schedule_retry(struct scrub_item *sri, unsigned int scrub_type)
+{
+	if (sri->sri_tries[scrub_type] == 0)
+		return false;
+	sri->sri_tries[scrub_type]--;
+	return true;
+}
+
+bool scrub_item_call_kernel_again(struct scrub_item *sri,
+		unsigned int scrub_type, uint8_t work_mask,
+		const struct scrub_item *old);
+
 #endif /* XFS_SCRUB_SCRUB_PRIVATE_H_ */

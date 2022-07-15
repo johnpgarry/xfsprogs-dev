@@ -268,6 +268,34 @@ scrub_item_schedule_group(
 	}
 }
 
+/* Decide if we call the kernel again to finish scrub/repair activity. */
+bool
+scrub_item_call_kernel_again(
+	struct scrub_item	*sri,
+	unsigned int		scrub_type,
+	uint8_t			work_mask,
+	const struct scrub_item	*old)
+{
+	uint8_t			statex;
+
+	/* If there's nothing to do, we're done. */
+	if (!(sri->sri_state[scrub_type] & work_mask))
+		return false;
+
+	/*
+	 * We are willing to go again if the last call had any effect on the
+	 * state of the scrub item that the caller cares about, if the freeze
+	 * flag got set, or if the kernel asked us to try again...
+	 */
+	statex = sri->sri_state[scrub_type] ^ old->sri_state[scrub_type];
+	if (statex & work_mask)
+		return true;
+	if (sri->sri_tries[scrub_type] != old->sri_tries[scrub_type])
+		return true;
+
+	return false;
+}
+
 /* Run all the incomplete scans on this scrub principal. */
 int
 scrub_item_check_file(
@@ -383,9 +411,9 @@ scrub_item_dump(
 		unsigned int	g = 1U << xfrog_scrubbers[i].group;
 
 		if (g & group_mask)
-			printf("[%u]: type '%s' state 0x%x\n", i,
+			printf("[%u]: type '%s' state 0x%x tries %u\n", i,
 					xfrog_scrubbers[i].name,
-					sri->sri_state[i]);
+					sri->sri_state[i], sri->sri_tries[i]);
 	}
 	fflush(stdout);
 }
