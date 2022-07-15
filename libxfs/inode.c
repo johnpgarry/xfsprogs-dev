@@ -295,11 +295,10 @@ libxfs_iget(
 	struct xfs_mount	*mp,
 	struct xfs_trans	*tp,
 	xfs_ino_t		ino,
-	uint			lock_flags,
+	uint			flags,
 	struct xfs_inode	**ipp)
 {
 	struct xfs_inode	*ip;
-	struct xfs_buf		*bp;
 	struct xfs_perag	*pag;
 	int			error = 0;
 
@@ -324,18 +323,35 @@ libxfs_iget(
 	if (error)
 		goto out_destroy;
 
-	error = xfs_imap_to_bp(mp, tp, &ip->i_imap, &bp);
-	if (error)
-		goto out_destroy;
+	/*
+	 * For version 5 superblocks, if we are initialising a new inode and we
+	 * are not utilising the XFS_MOUNT_IKEEP inode cluster mode, we can
+	 * simply build the new inode core with a random generation number.
+	 *
+	 * For version 4 (and older) superblocks, log recovery is dependent on
+	 * the di_flushiter field being initialised from the current on-disk
+	 * value and hence we must also read the inode off disk even when
+	 * initializing new inodes.
+	 */
+	if (xfs_has_v3inodes(mp) &&
+	    (flags & XFS_IGET_CREATE) && !xfs_has_ikeep(mp)) {
+		VFS_I(ip)->i_generation = get_random_u32();
+	} else {
+		struct xfs_buf		*bp;
 
-	error = xfs_inode_from_disk(ip,
-			xfs_buf_offset(bp, ip->i_imap.im_boffset));
-	if (!error)
-		xfs_buf_set_ref(bp, XFS_INO_REF);
-	xfs_trans_brelse(tp, bp);
+		error = xfs_imap_to_bp(mp, tp, &ip->i_imap, &bp);
+		if (error)
+			goto out_destroy;
 
-	if (error)
-		goto out_destroy;
+		error = xfs_inode_from_disk(ip,
+				xfs_buf_offset(bp, ip->i_imap.im_boffset));
+		if (!error)
+			xfs_buf_set_ref(bp, XFS_INO_REF);
+		xfs_trans_brelse(tp, bp);
+
+		if (error)
+			goto out_destroy;
+	}
 
 	*ipp = ip;
 	return 0;
