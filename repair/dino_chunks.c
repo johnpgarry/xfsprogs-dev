@@ -1128,6 +1128,7 @@ process_aginodes(
 void
 check_uncertain_aginodes(xfs_mount_t *mp, xfs_agnumber_t agno)
 {
+	struct xfs_perag	*pag;
 	ino_tree_node_t		*irec;
 	ino_tree_node_t		*nrec;
 	xfs_agino_t		start;
@@ -1157,6 +1158,7 @@ check_uncertain_aginodes(xfs_mount_t *mp, xfs_agnumber_t agno)
 
 	do_warn(_("found inodes not in the inode allocation tree\n"));
 
+	pag = libxfs_perag_get(mp, agno);
 	do {
 		/*
 		 * check every confirmed (which in this case means
@@ -1168,7 +1170,7 @@ check_uncertain_aginodes(xfs_mount_t *mp, xfs_agnumber_t agno)
 
 			agino = i + irec->ino_startnum;
 
-			if (!libxfs_verify_agino(mp, agno, agino))
+			if (!libxfs_verify_agino(pag, agino))
 				continue;
 
 			if (nrec != NULL && nrec->ino_startnum <= agino &&
@@ -1177,7 +1179,7 @@ check_uncertain_aginodes(xfs_mount_t *mp, xfs_agnumber_t agno)
 				continue;
 
 			if ((nrec = find_inode_rec(mp, agno, agino)) == NULL)
-				if (libxfs_verify_agino(mp, agno, agino))
+				if (libxfs_verify_agino(pag, agino))
 					if (verify_aginode_chunk(mp, agno,
 							agino, &start))
 						got_some = 1;
@@ -1188,6 +1190,7 @@ check_uncertain_aginodes(xfs_mount_t *mp, xfs_agnumber_t agno)
 
 		irec = findfirst_uncertain_inode_rec(agno);
 	} while (irec != NULL);
+	libxfs_perag_put(pag);
 
 	if (got_some)
 		do_warn(_("found inodes not in the inode allocation tree\n"));
@@ -1220,6 +1223,7 @@ check_uncertain_aginodes(xfs_mount_t *mp, xfs_agnumber_t agno)
 int
 process_uncertain_aginodes(xfs_mount_t *mp, xfs_agnumber_t agno)
 {
+	struct xfs_perag	*pag;
 	ino_tree_node_t		*irec;
 	ino_tree_node_t		*nrec;
 	xfs_agino_t		agino;
@@ -1242,6 +1246,7 @@ process_uncertain_aginodes(xfs_mount_t *mp, xfs_agnumber_t agno)
 
 	nrec = NULL;
 
+	pag = libxfs_perag_get(mp, agno);
 	do  {
 		/*
 		 * check every confirmed inode
@@ -1259,7 +1264,7 @@ process_uncertain_aginodes(xfs_mount_t *mp, xfs_agnumber_t agno)
 			 * good tree), bad inode numbers, and inode numbers
 			 * pointing to bogus inodes
 			 */
-			if (!libxfs_verify_agino(mp, agno, agino))
+			if (!libxfs_verify_agino(pag, agino))
 				continue;
 
 			if (nrec != NULL && nrec->ino_startnum <= agino &&
@@ -1303,6 +1308,7 @@ process_uncertain_aginodes(xfs_mount_t *mp, xfs_agnumber_t agno)
 
 		irec = findfirst_uncertain_inode_rec(agno);
 	} while (irec != NULL);
+	libxfs_perag_put(pag);
 
 	if (got_some)
 		do_warn(_("found inodes not in the inode allocation tree\n"));
