@@ -263,6 +263,7 @@ libxfs_dir_ialloc(
 		.pip		= dp,
 		.uid		= make_kuid(cr->cr_uid),
 		.gid		= make_kgid(cr->cr_gid),
+		.prid		= dp ? libxfs_get_initial_prid(dp) : 0,
 		.nlink		= nlink,
 		.rdev		= rdev,
 		.mode		= mode,
