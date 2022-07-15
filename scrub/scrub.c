@@ -82,31 +82,51 @@ static int
 xfs_check_metadata(
 	struct scrub_ctx		*ctx,
 	struct xfs_fd			*xfdp,
-	struct xfs_scrub_metadata	*meta,
+	unsigned int			scrub_type,
 	struct scrub_item		*sri)
 {
 	DEFINE_DESCR(dsc, ctx, format_scrub_descr);
+	struct xfs_scrub_metadata	meta = { };
 	enum xfrog_scrub_group		group;
 	unsigned int			tries = 0;
 	int				error;
 
-	group = xfrog_scrubbers[meta->sm_type].group;
-	assert(!debug_tweak_on("XFS_SCRUB_NO_KERNEL"));
-	assert(meta->sm_type < XFS_SCRUB_TYPE_NR);
-	descr_set(&dsc, meta);
+	background_sleep();
 
-	dbg_printf("check %s flags %xh\n", descr_render(&dsc), meta->sm_flags);
+	group = xfrog_scrubbers[scrub_type].group;
+	meta.sm_type = scrub_type;
+	switch (group) {
+	case XFROG_SCRUB_GROUP_AGHEADER:
+	case XFROG_SCRUB_GROUP_PERAG:
+		meta.sm_agno = sri->sri_agno;
+		break;
+	case XFROG_SCRUB_GROUP_FS:
+	case XFROG_SCRUB_GROUP_SUMMARY:
+	case XFROG_SCRUB_GROUP_ISCAN:
+	case XFROG_SCRUB_GROUP_NONE:
+		break;
+	case XFROG_SCRUB_GROUP_INODE:
+		meta.sm_ino = sri->sri_ino;
+		meta.sm_gen = sri->sri_gen;
+		break;
+	}
+
+	assert(!debug_tweak_on("XFS_SCRUB_NO_KERNEL"));
+	assert(scrub_type < XFS_SCRUB_TYPE_NR);
+	descr_set(&dsc, &meta);
+
+	dbg_printf("check %s flags %xh\n", descr_render(&dsc), meta.sm_flags);
 retry:
-	error = -xfrog_scrub_metadata(xfdp, meta);
+	error = -xfrog_scrub_metadata(xfdp, &meta);
 	if (debug_tweak_on("XFS_SCRUB_FORCE_REPAIR") && !error)
-		meta->sm_flags |= XFS_SCRUB_OFLAG_CORRUPT;
+		meta.sm_flags |= XFS_SCRUB_OFLAG_CORRUPT;
 	switch (error) {
 	case 0:
 		/* No operational errors encountered. */
 		break;
 	case ENOENT:
 		/* Metadata not present, just skip it. */
-		scrub_item_clean_state(sri, meta->sm_type);
+		scrub_item_clean_state(sri, scrub_type);
 		return 0;
 	case ESHUTDOWN:
 		/* FS already crashed, give up. */
@@ -128,12 +148,12 @@ _("Filesystem is shut down, aborting."));
 		 * Log it and move on.
 		 */
 		str_liberror(ctx, error, _("Kernel bug"));
-		scrub_item_clean_state(sri, meta->sm_type);
+		scrub_item_clean_state(sri, scrub_type);
 		return 0;
 	default:
 		/* Operational error.  Log it and move on. */
 		str_liberror(ctx, error, descr_render(&dsc));
-		scrub_item_clean_state(sri, meta->sm_type);
+		scrub_item_clean_state(sri, scrub_type);
 		return 0;
 	}
 
@@ -143,29 +163,29 @@ _("Filesystem is shut down, aborting."));
 	 * we'll try the scan again, just in case the fs was busy.
 	 * Only retry so many times.
 	 */
-	if (want_retry(meta) && tries < 10) {
+	if (want_retry(&meta) && tries < 10) {
 		tries++;
 		goto retry;
 	}
 
 	/* Complain about incomplete or suspicious metadata. */
-	scrub_warn_incomplete_scrub(ctx, &dsc, meta);
+	scrub_warn_incomplete_scrub(ctx, &dsc, &meta);
 
 	/*
 	 * If we need repairs or there were discrepancies, schedule a
 	 * repair if desired, otherwise complain.
 	 */
-	if (is_corrupt(meta) || xref_disagrees(meta)) {
+	if (is_corrupt(&meta) || xref_disagrees(&meta)) {
 		if (ctx->mode < SCRUB_MODE_REPAIR) {
 			/* Dry-run mode, so log an error and forget it. */
 			str_corrupt(ctx, descr_render(&dsc),
 _("Repairs are required."));
-			scrub_item_clean_state(sri, meta->sm_type);
+			scrub_item_clean_state(sri, scrub_type);
 			return 0;
 		}
 
 		/* Schedule repairs. */
-		scrub_item_save_state(sri, meta->sm_type, meta->sm_flags);
+		scrub_item_save_state(sri, scrub_type, meta.sm_flags);
 		return 0;
 	}
 
@@ -173,26 +193,26 @@ _("Repairs are required."));
 	 * If we could optimize, schedule a repair if desired,
 	 * otherwise complain.
 	 */
-	if (is_unoptimized(meta)) {
+	if (is_unoptimized(&meta)) {
 		if (ctx->mode != SCRUB_MODE_REPAIR) {
 			/* Dry-run mode, so log an error and forget it. */
 			if (group != XFROG_SCRUB_GROUP_INODE) {
 				/* AG or FS metadata, always warn. */
 				str_info(ctx, descr_render(&dsc),
 _("Optimization is possible."));
-			} else if (!ctx->preen_triggers[meta->sm_type]) {
+			} else if (!ctx->preen_triggers[scrub_type]) {
 				/* File metadata, only warn once per type. */
 				pthread_mutex_lock(&ctx->lock);
-				if (!ctx->preen_triggers[meta->sm_type])
-					ctx->preen_triggers[meta->sm_type] = true;
+				if (!ctx->preen_triggers[scrub_type])
+					ctx->preen_triggers[scrub_type] = true;
 				pthread_mutex_unlock(&ctx->lock);
 			}
-			scrub_item_clean_state(sri, meta->sm_type);
+			scrub_item_clean_state(sri, scrub_type);
 			return 0;
 		}
 
 		/* Schedule optimizations. */
-		scrub_item_save_state(sri, meta->sm_type, meta->sm_flags);
+		scrub_item_save_state(sri, scrub_type, meta.sm_flags);
 		return 0;
 	}
 
@@ -203,13 +223,13 @@ _("Optimization is possible."));
 	 * re-examine the object as repairs progress to see if the kernel will
 	 * deem it completely consistent at some point.
 	 */
-	if (xref_failed(meta) && ctx->mode == SCRUB_MODE_REPAIR) {
-		scrub_item_save_state(sri, meta->sm_type, meta->sm_flags);
+	if (xref_failed(&meta) && ctx->mode == SCRUB_MODE_REPAIR) {
+		scrub_item_save_state(sri, scrub_type, meta.sm_flags);
 		return 0;
 	}
 
 	/* Everything is ok. */
-	scrub_item_clean_state(sri, meta->sm_type);
+	scrub_item_clean_state(sri, scrub_type);
 	return 0;
 }
 
@@ -231,52 +251,6 @@ _("Optimizations of %s are possible."), _(xfrog_scrubbers[i].descr));
 			pthread_mutex_unlock(&ctx->lock);
 		}
 	}
-}
-
-/*
- * Scrub a single XFS_SCRUB_TYPE_*, saving corruption reports for later.
- * Do not call this function to repair file metadata.
- *
- * Returns 0 for success.  If errors occur, this function will log them and
- * return a positive error code.
- */
-static int
-scrub_meta_type(
-	struct scrub_ctx		*ctx,
-	struct xfs_fd			*xfdp,
-	unsigned int			type,
-	struct scrub_item		*sri)
-{
-	struct xfs_scrub_metadata	meta = {
-		.sm_type		= type,
-	};
-	int				error;
-
-	background_sleep();
-
-	switch (xfrog_scrubbers[type].group) {
-	case XFROG_SCRUB_GROUP_AGHEADER:
-	case XFROG_SCRUB_GROUP_PERAG:
-		meta.sm_agno = sri->sri_agno;
-		break;
-	case XFROG_SCRUB_GROUP_FS:
-	case XFROG_SCRUB_GROUP_SUMMARY:
-	case XFROG_SCRUB_GROUP_ISCAN:
-	case XFROG_SCRUB_GROUP_NONE:
-		break;
-	case XFROG_SCRUB_GROUP_INODE:
-		meta.sm_ino = sri->sri_ino;
-		meta.sm_gen = sri->sri_gen;
-		break;
-	}
-
-	/* Check the item. */
-	error = xfs_check_metadata(ctx, xfdp, &meta, sri);
-
-	if (xfrog_scrubbers[type].group != XFROG_SCRUB_GROUP_INODE)
-		progress_add(1);
-
-	return error;
 }
 
 /* Schedule scrub for all metadata of a given group. */
@@ -321,7 +295,15 @@ scrub_item_check_file(
 		if (!(sri->sri_state[scrub_type] & SCRUB_ITEM_NEEDSCHECK))
 			continue;
 
-		error = scrub_meta_type(ctx, xfdp, scrub_type, sri);
+		error = xfs_check_metadata(ctx, xfdp, scrub_type, sri);
+
+		/*
+		 * Progress is counted by the inode for inode metadata; for
+		 * everything else, it's counted for each scrub call.
+		 */
+		if (sri->sri_ino == -1ULL)
+			progress_add(1);
+
 		if (error)
 			break;
 	}
