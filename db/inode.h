@@ -28,3 +28,4 @@ int init_rtmeta_inode_bitmaps(struct xfs_mount *mp);
 bool is_rtrmap_inode(xfs_ino_t ino);
 xfs_rgnumber_t rtgroup_for_rtrmap_ino(struct xfs_mount *mp, xfs_ino_t ino);
 bool is_rtrefcount_inode(xfs_ino_t ino);
+xfs_rgnumber_t rtgroup_for_rtrefcount_ino(struct xfs_mount *mp, xfs_ino_t ino);

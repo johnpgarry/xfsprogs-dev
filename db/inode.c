@@ -642,6 +642,7 @@ inode_init(void)
 
 struct rtgroup_inodes {
 	xfs_ino_t		rmap_ino;
+	xfs_ino_t		refcount_ino;
 };
 
 static struct rtgroup_inodes	*rtgroup_inodes;
@@ -722,6 +723,11 @@ set_rtgroup_refcount_inode(
 	}
 
 	error = bitmap_set(refcount_inodes, rtino, 1);
+	if (error)
+		goto out_trans;
+
+	rtgroup_inodes[rgno].refcount_ino = rtino;
+
 out_trans:
 	libxfs_trans_cancel(tp);
 out_path:
@@ -784,6 +790,18 @@ xfs_rgnumber_t rtgroup_for_rtrmap_ino(struct xfs_mount *mp, xfs_ino_t ino)
 bool is_rtrefcount_inode(xfs_ino_t ino)
 {
 	return bitmap_test(refcount_inodes, ino, 1);
+}
+
+xfs_rgnumber_t rtgroup_for_rtrefcount_ino(struct xfs_mount *mp, xfs_ino_t ino)
+{
+	unsigned int i;
+
+	for (i = 0; i < mp->m_sb.sb_rgcount; i++) {
+		if (rtgroup_inodes[i].refcount_ino == ino)
+			return i;
+	}
+
+	return NULLRGNUMBER;
 }
 
 typnm_t
