@@ -6,13 +6,18 @@
 #ifndef __LIBXFS_XFILE_H__
 #define __LIBXFS_XFILE_H__
 
+struct xfile_fcb;
+
 struct xfile {
-	int		fd;
+	struct xfile_fcb	*fcb;
+	loff_t			partition_pos;
+	uint64_t		partition_bytes;
 };
 
 void xfile_libinit(void);
 
-int xfile_create(const char *description, struct xfile **xfilep);
+int xfile_create(const char *description, unsigned long long maxrange,
+		struct xfile **xfilep);
 void xfile_destroy(struct xfile *xf);
 
 ssize_t xfile_pread(struct xfile *xf, void *buf, size_t count, loff_t pos);

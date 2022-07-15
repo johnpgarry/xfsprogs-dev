@@ -484,13 +484,14 @@ int
 xfile_alloc_buftarg(
 	struct xfs_mount	*mp,
 	const char		*descr,
+	unsigned long long	maxrange,
 	struct xfs_buftarg	**btpp)
 {
 	struct xfs_buftarg	*btp;
 	struct xfile		*xfile;
 	int			error;
 
-	error = xfile_create(descr, &xfile);
+	error = xfile_create(descr, maxrange, &xfile);
 	if (error)
 		return error;
 
