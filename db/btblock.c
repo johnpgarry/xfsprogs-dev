@@ -104,6 +104,12 @@ static struct xfs_db_btree {
 		sizeof(struct xfs_refcount_rec),
 		sizeof(__be32),
 	},
+	{	XFS_RTREFC_CRC_MAGIC,
+		XFS_BTREE_LBLOCK_CRC_LEN,
+		sizeof(struct xfs_refcount_key),
+		sizeof(struct xfs_refcount_rec),
+		sizeof(__be64),
+	},
 	{	0,
 	},
 };
@@ -956,6 +962,50 @@ const field_t	refcbt_key_flds[] = {
 #define	ROFF(f)	bitize(offsetof(struct xfs_refcount_rec, rc_ ## f))
 const field_t	refcbt_rec_flds[] = {
 	{ "startblock", FLDT_CAGBLOCK, OI(REFCNTBT_STARTBLOCK_BITOFF), C1, 0, TYP_DATA },
+	{ "blockcount", FLDT_EXTLEN, OI(ROFF(blockcount)), C1, 0, TYP_NONE },
+	{ "refcount", FLDT_UINT32D, OI(ROFF(refcount)), C1, 0, TYP_DATA },
+	{ "cowflag", FLDT_CCOWFLG, OI(REFCNTBT_COWFLAG_BITOFF), C1, 0, TYP_DATA },
+	{ NULL }
+};
+#undef ROFF
+
+/* realtime refcount btree blocks */
+const field_t	rtrefcbt_crc_hfld[] = {
+	{ "", FLDT_RTREFCBT_CRC, OI(0), C1, 0, TYP_NONE },
+	{ NULL }
+};
+
+#define	OFF(f)	bitize(offsetof(struct xfs_btree_block, bb_ ## f))
+const field_t	rtrefcbt_crc_flds[] = {
+	{ "magic", FLDT_UINT32X, OI(OFF(magic)), C1, 0, TYP_NONE },
+	{ "level", FLDT_UINT16D, OI(OFF(level)), C1, 0, TYP_NONE },
+	{ "numrecs", FLDT_UINT16D, OI(OFF(numrecs)), C1, 0, TYP_NONE },
+	{ "leftsib", FLDT_DFSBNO, OI(OFF(u.l.bb_leftsib)), C1, 0, TYP_RTREFCBT },
+	{ "rightsib", FLDT_DFSBNO, OI(OFF(u.l.bb_rightsib)), C1, 0, TYP_RTREFCBT },
+	{ "bno", FLDT_DFSBNO, OI(OFF(u.l.bb_blkno)), C1, 0, TYP_REFCBT },
+	{ "lsn", FLDT_UINT64X, OI(OFF(u.l.bb_lsn)), C1, 0, TYP_NONE },
+	{ "uuid", FLDT_UUID, OI(OFF(u.l.bb_uuid)), C1, 0, TYP_NONE },
+	{ "owner", FLDT_INO, OI(OFF(u.l.bb_owner)), C1, 0, TYP_NONE },
+	{ "crc", FLDT_CRC, OI(OFF(u.l.bb_crc)), C1, 0, TYP_NONE },
+	{ "recs", FLDT_RTREFCBTREC, btblock_rec_offset, btblock_rec_count,
+	  FLD_ARRAY | FLD_ABASE1 | FLD_COUNT | FLD_OFFSET, TYP_NONE },
+	{ "keys", FLDT_RTREFCBTKEY, btblock_key_offset, btblock_key_count,
+	  FLD_ARRAY | FLD_ABASE1 | FLD_COUNT | FLD_OFFSET, TYP_NONE },
+	{ "ptrs", FLDT_RTREFCBTPTR, btblock_ptr_offset, btblock_key_count,
+	  FLD_ARRAY | FLD_ABASE1 | FLD_COUNT | FLD_OFFSET, TYP_RTREFCBT },
+	{ NULL }
+};
+#undef OFF
+
+const field_t	rtrefcbt_key_flds[] = {
+	{ "startblock", FLDT_CRGBLOCK, OI(REFCNTBT_STARTBLOCK_BITOFF), C1, 0, TYP_DATA },
+	{ "cowflag", FLDT_CCOWFLG, OI(REFCNTBT_COWFLAG_BITOFF), C1, 0, TYP_DATA },
+	{ NULL }
+};
+
+#define	ROFF(f)	bitize(offsetof(struct xfs_refcount_rec, rc_ ## f))
+const field_t	rtrefcbt_rec_flds[] = {
+	{ "startblock", FLDT_CRGBLOCK, OI(REFCNTBT_STARTBLOCK_BITOFF), C1, 0, TYP_DATA },
 	{ "blockcount", FLDT_EXTLEN, OI(ROFF(blockcount)), C1, 0, TYP_NONE },
 	{ "refcount", FLDT_UINT32D, OI(ROFF(refcount)), C1, 0, TYP_DATA },
 	{ "cowflag", FLDT_CCOWFLG, OI(REFCNTBT_COWFLAG_BITOFF), C1, 0, TYP_DATA },

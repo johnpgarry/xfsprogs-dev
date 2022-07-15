@@ -49,6 +49,7 @@ static int	inode_u_sfdir2_count(void *obj, int startoff);
 static int	inode_u_sfdir3_count(void *obj, int startoff);
 static int	inode_u_symlink_count(void *obj, int startoff);
 static int	inode_u_rtrmapbt_count(void *obj, int startoff);
+static int	inode_u_rtrefcbt_count(void *obj, int startoff);
 
 static const cmdinfo_t	inode_cmd =
 	{ "inode", NULL, inode_f, 0, 1, 1, "[inode#]",
@@ -234,6 +235,8 @@ const field_t	inode_u_flds[] = {
 	  TYP_NONE },
 	{ "rtrmapbt", FLDT_RTRMAPROOT, NULL, inode_u_rtrmapbt_count, FLD_COUNT,
 	  TYP_NONE },
+	{ "rtrefcbt", FLDT_RTREFCROOT, NULL, inode_u_rtrefcbt_count, FLD_COUNT,
+	  TYP_NONE },
 	{ NULL }
 };
 
@@ -247,7 +250,7 @@ const field_t	inode_a_flds[] = {
 };
 
 static const char	*dinode_fmt_name[] =
-	{ "dev", "local", "extents", "btree", "uuid", "rmap" };
+	{ "dev", "local", "extents", "btree", "uuid", "rmap", "refcount" };
 static const int	dinode_fmt_name_size =
 	sizeof(dinode_fmt_name) / sizeof(dinode_fmt_name[0]);
 
@@ -643,6 +646,7 @@ struct rtgroup_inodes {
 
 static struct rtgroup_inodes	*rtgroup_inodes;
 static struct bitmap		*rmap_inodes;
+static struct bitmap		*refcount_inodes;
 
 static inline int
 set_rtgroup_rmap_inode(
@@ -687,6 +691,44 @@ out_path:
 	return error;
 }
 
+static inline int
+set_rtgroup_refcount_inode(
+	struct xfs_mount	*mp,
+	xfs_rgnumber_t		rgno)
+{
+	struct xfs_imeta_path	*path;
+	struct xfs_trans	*tp;
+	xfs_ino_t		rtino;
+	int			error;
+
+	if (!xfs_has_rtreflink(mp))
+		return 0;
+
+	error = -libxfs_rtrefcountbt_create_path(mp, rgno, &path);
+	if (error)
+		return error;
+
+	error = -libxfs_trans_alloc_empty(mp, &tp);
+	if (error)
+		goto out_path;
+
+	error = -libxfs_imeta_lookup(tp, path, &rtino);
+	if (error)
+		goto out_trans;
+
+	if (rtino == NULLFSINO) {
+		error = EFSCORRUPTED;
+		goto out_trans;
+	}
+
+	error = bitmap_set(refcount_inodes, rtino, 1);
+out_trans:
+	libxfs_trans_cancel(tp);
+out_path:
+	libxfs_imeta_free_path(path);
+	return error;
+}
+
 int
 init_rtmeta_inode_bitmaps(
 	struct xfs_mount	*mp)
@@ -706,8 +748,15 @@ init_rtmeta_inode_bitmaps(
 	if (error)
 		return error;
 
+	error = bitmap_alloc(&refcount_inodes);
+	if (error)
+		return error;
+
 	for (rgno = 0; rgno < mp->m_sb.sb_rgcount; rgno++) {
 		int err2 = set_rtgroup_rmap_inode(mp, rgno);
+		if (err2 && !error)
+			error = err2;
+		err2 = set_rtgroup_refcount_inode(mp, rgno);
 		if (err2 && !error)
 			error = err2;
 	}
@@ -730,6 +779,11 @@ xfs_rgnumber_t rtgroup_for_rtrmap_ino(struct xfs_mount *mp, xfs_ino_t ino)
 	}
 
 	return NULLRGNUMBER;
+}
+
+bool is_rtrefcount_inode(xfs_ino_t ino)
+{
+	return bitmap_test(refcount_inodes, ino, 1);
 }
 
 typnm_t
@@ -764,6 +818,9 @@ inode_next_type(void)
 			return TYP_DQBLK;
 		else if (is_rtrmap_inode(iocur_top->ino))
 			return TYP_RTRMAPBT;
+		else if (is_rtrefcount_inode(iocur_top->ino))
+			return TYP_RTREFCBT;
+
 		return TYP_DATA;
 	default:
 		return TYP_NONE;
@@ -910,6 +967,20 @@ inode_u_rtrmapbt_count(
 	dip = obj;
 	ASSERT((char *)XFS_DFORK_DPTR(dip) - (char *)dip == byteize(startoff));
 	return dip->di_format == XFS_DINODE_FMT_RMAP;
+}
+
+static int
+inode_u_rtrefcbt_count(
+	void			*obj,
+	int			startoff)
+{
+	struct xfs_dinode	*dip;
+
+	ASSERT(bitoffs(startoff) == 0);
+	ASSERT(obj == iocur_top->data);
+	dip = obj;
+	ASSERT((char *)XFS_DFORK_DPTR(dip) - (char *)dip == byteize(startoff));
+	return dip->di_format == XFS_DINODE_FMT_REFCOUNT;
 }
 
 int
