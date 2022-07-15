@@ -41,6 +41,11 @@ static bool has_reflink(const struct xfs_fsop_geom *g)
 	return g->flags & XFS_FSOP_GEOM_FLAGS_REFLINK;
 }
 
+static bool has_rtrmapbt(const struct xfs_fsop_geom *g)
+{
+	return g->rtblocks > 0 && (g->flags & XFS_FSOP_GEOM_FLAGS_RMAPBT);
+}
+
 struct flag_map {
 	unsigned int		mask;
 	bool			(*has_fn)(const struct xfs_fsop_geom *g);
@@ -144,6 +149,11 @@ static const struct flag_map rtgroup_flags[] = {
 	{
 		.mask = XFS_RTGROUP_GEOM_SICK_BITMAP,
 		.descr = "realtime bitmap",
+	},
+	{
+		.mask = XFS_RTGROUP_GEOM_SICK_RMAPBT,
+		.descr = "realtime reverse mappings btree",
+		.has_fn = has_rtrmapbt,
 	},
 	{0},
 };
