@@ -27,6 +27,7 @@ void scrub_item_to_vhead(struct scrubv_head *bighead,
 		const struct scrub_item *sri);
 void scrub_vhead_add(struct scrubv_head *bighead, const struct scrub_item *sri,
 		unsigned int scrub_type, bool repair);
+void scrub_vhead_add_barrier(struct scrubv_head *bighead);
 
 int format_scrubv_descr(struct scrub_ctx *ctx, char *buf, size_t buflen,
 		void *where);
@@ -123,6 +124,7 @@ scrub_item_schedule_retry(struct scrub_item *sri, unsigned int scrub_type)
 
 bool scrub_item_call_kernel_again(struct scrub_item *sri, uint8_t work_mask,
 		const struct scrub_item *old);
-bool scrub_item_schedule_work(struct scrub_item *sri, uint8_t state_flags);
+bool scrub_item_schedule_work(struct scrub_item *sri, uint8_t state_flags,
+		const unsigned int *schedule_deps);
 
 #endif /* XFS_SCRUB_SCRUB_PRIVATE_H_ */
