@@ -65,4 +65,10 @@ extern void xlog_recover_print_attri(struct xlog_recover_item *item);
 extern int xlog_print_trans_attrd(char **ptr, uint len);
 extern void xlog_recover_print_attrd(struct xlog_recover_item *item);
 extern void xlog_print_op_header(xlog_op_header_t *op_head, int i, char **ptr);
+
+extern int xlog_print_trans_sxi(char **ptr, uint src_len, int continued);
+extern void xlog_recover_print_sxi(struct xlog_recover_item *item);
+extern int xlog_print_trans_sxd(char **ptr, uint len);
+extern void xlog_recover_print_sxd(struct xlog_recover_item *item);
+
 #endif	/* LOGPRINT_H */

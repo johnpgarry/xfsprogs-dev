@@ -847,3 +847,131 @@ xlog_recover_print_attrd(
 		f->alfd_size,
 		(unsigned long long)f->alfd_alf_id);
 }
+
+/* Atomic Extent Swapping Items */
+
+static int
+xfs_sxi_copy_format(
+	struct xfs_sxi_log_format *sxi,
+	uint			  len,
+	struct xfs_sxi_log_format *dst_fmt,
+	int			  continued)
+{
+	if (len == sizeof(struct xfs_sxi_log_format) || continued) {
+		memcpy(dst_fmt, sxi, len);
+		return 0;
+	}
+	fprintf(stderr, _("%s: bad size of SXI format: %u; expected %zu\n"),
+		progname, len, sizeof(struct xfs_sxi_log_format));
+	return 1;
+}
+
+int
+xlog_print_trans_sxi(
+	char			**ptr,
+	uint			src_len,
+	int			continued)
+{
+	struct xfs_sxi_log_format *src_f, *f = NULL;
+	struct xfs_swap_extent	*ex;
+	int			error = 0;
+
+	src_f = malloc(src_len);
+	if (src_f == NULL) {
+		fprintf(stderr, _("%s: %s: malloc failed\n"),
+			progname, __func__);
+		exit(1);
+	}
+	memcpy(src_f, *ptr, src_len);
+	*ptr += src_len;
+
+	/* convert to native format */
+	if (continued && src_len < sizeof(struct xfs_sxi_log_format)) {
+		printf(_("SXI: Not enough data to decode further\n"));
+		error = 1;
+		goto error;
+	}
+
+	f = malloc(sizeof(struct xfs_sxi_log_format));
+	if (f == NULL) {
+		fprintf(stderr, _("%s: %s: malloc failed\n"),
+			progname, __func__);
+		exit(1);
+	}
+	if (xfs_sxi_copy_format(src_f, src_len, f, continued)) {
+		error = 1;
+		goto error;
+	}
+
+	printf(_("SXI:  #regs: %d	num_extents: 1  id: 0x%llx\n"),
+		f->sxi_size, (unsigned long long)f->sxi_id);
+
+	if (continued) {
+		printf(_("SXI extent data skipped (CONTINUE set, no space)\n"));
+		goto error;
+	}
+
+	ex = &f->sxi_extent;
+	printf("(ino1: 0x%llx, ino2: 0x%llx, off1: %lld, off2: %lld, len: %lld, flags: 0x%llx)\n",
+		(unsigned long long)ex->sx_inode1,
+		(unsigned long long)ex->sx_inode2,
+		(unsigned long long)ex->sx_startoff1,
+		(unsigned long long)ex->sx_startoff2,
+		(unsigned long long)ex->sx_blockcount,
+		(unsigned long long)ex->sx_flags);
+error:
+	free(src_f);
+	free(f);
+	return error;
+}
+
+void
+xlog_recover_print_sxi(
+	struct xlog_recover_item	*item)
+{
+	char				*src_f;
+	uint				src_len;
+
+	src_f = item->ri_buf[0].i_addr;
+	src_len = item->ri_buf[0].i_len;
+
+	xlog_print_trans_sxi(&src_f, src_len, 0);
+}
+
+int
+xlog_print_trans_sxd(
+	char				**ptr,
+	uint				len)
+{
+	struct xfs_sxd_log_format	*f;
+	struct xfs_sxd_log_format	lbuf;
+
+	/* size without extents at end */
+	uint core_size = sizeof(struct xfs_sxd_log_format);
+
+	memcpy(&lbuf, *ptr, min(core_size, len));
+	f = &lbuf;
+	*ptr += len;
+	if (len >= core_size) {
+		printf(_("SXD:  #regs: %d	                 id: 0x%llx\n"),
+			f->sxd_size,
+			(unsigned long long)f->sxd_sxi_id);
+
+		/* don't print extents as they are not used */
+
+		return 0;
+	} else {
+		printf(_("SXD: Not enough data to decode further\n"));
+		return 1;
+	}
+}
+
+void
+xlog_recover_print_sxd(
+	struct xlog_recover_item	*item)
+{
+	char				*f;
+
+	f = item->ri_buf[0].i_addr;
+	xlog_print_trans_sxd(&f, sizeof(struct xfs_sxd_log_format));
+}
