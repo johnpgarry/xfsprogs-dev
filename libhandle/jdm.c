@@ -41,6 +41,19 @@ jdm_fill_filehandle( filehandle_t *handlep,
 	handlep->fh_ino = statp->bs_ino;
 }
 
+static void
+jdm_fill_filehandle_v5(
+	struct filehandle	*handlep,
+	struct fshandle		*fshandlep,
+	struct xfs_bulkstat	*statp)
+{
+	handlep->fh_fshandle = *fshandlep;
+	handlep->fh_sz_following = FILEHANDLE_SZ_FOLLOWING;
+	memset(handlep->fh_pad, 0, FILEHANDLE_SZ_PAD);
+	handlep->fh_gen = statp->bs_gen;
+	handlep->fh_ino = statp->bs_ino;
+}
+
 jdm_fshandle_t *
 jdm_getfshandle( char *mntpnt )
 {
@@ -90,6 +103,22 @@ jdm_new_filehandle( jdm_filehandle_t **handlep,
 		jdm_fill_filehandle(*handlep, (fshandle_t *) fshandlep, statp);
 }
 
+void
+jdm_new_filehandle_v5(
+	jdm_filehandle_t	**handlep,
+	size_t			*hlen,
+	jdm_fshandle_t		*fshandlep,
+	struct xfs_bulkstat	*statp)
+{
+	/* allocate and fill filehandle */
+	*hlen = sizeof(filehandle_t);
+	*handlep = (filehandle_t *) malloc(*hlen);
+	if (!*handlep)
+		return;
+
+	jdm_fill_filehandle_v5(*handlep, (struct fshandle *)fshandlep, statp);
+}
+
 /* ARGSUSED */
 void
 jdm_delete_filehandle( jdm_filehandle_t *handlep, size_t hlen )
@@ -112,6 +141,19 @@ jdm_open( jdm_fshandle_t *fshp, struct xfs_bstat *statp, intgen_t oflags )
 }
 
 intgen_t
+jdm_open_v5(
+	jdm_fshandle_t		*fshp,
+	struct xfs_bulkstat	*statp,
+	intgen_t		oflags)
+{
+	struct fshandle		*fshandlep = (struct fshandle *)fshp;
+	struct filehandle	filehandle;
+
+	jdm_fill_filehandle_v5(&filehandle, fshandlep, statp);
+	return open_by_fshandle(&filehandle, sizeof(filehandle), oflags);
+}
+
+intgen_t
 jdm_readlink( jdm_fshandle_t *fshp,
 	      struct xfs_bstat *statp,
 	      char *bufp, size_t bufsz )
@@ -126,6 +168,20 @@ jdm_readlink( jdm_fshandle_t *fshp,
 				   ( void * )bufp,
 				   bufsz );
 	return rval;
+}
+
+intgen_t
+jdm_readlink_v5(
+	jdm_fshandle_t		*fshp,
+	struct xfs_bulkstat	*statp,
+	char			*bufp,
+	size_t			bufsz)
+{
+	struct fshandle		*fshandlep = (struct fshandle *)fshp;
+	struct filehandle	filehandle;
+
+	jdm_fill_filehandle_v5(&filehandle, fshandlep, statp);
+	return readlink_by_handle(&filehandle, sizeof(filehandle), bufp, bufsz);
 }
 
 int
@@ -143,6 +199,22 @@ jdm_attr_multi(	jdm_fshandle_t *fshp,
 				      (void *) bufp,
 				      rtrvcnt, flags);
 	return rval;
+}
+
+int
+jdm_attr_multi_v5(
+	jdm_fshandle_t		*fshp,
+	struct xfs_bulkstat	*statp,
+	char			*bufp,
+	int			rtrvcnt,
+	int			flags)
+{
+	struct fshandle		*fshandlep = (struct fshandle *)fshp;
+	struct filehandle	filehandle;
+
+	jdm_fill_filehandle_v5(&filehandle, fshandlep, statp);
+	return attr_multi_by_handle(&filehandle, sizeof(filehandle), bufp,
+			rtrvcnt, flags);
 }
 
 int
@@ -167,6 +239,27 @@ jdm_attr_list(	jdm_fshandle_t *fshp,
 }
 
 int
+jdm_attr_list_v5(
+	jdm_fshandle_t		*fshp,
+	struct xfs_bulkstat	*statp,
+	char			*bufp,
+	size_t			bufsz,
+	int			flags,
+	struct attrlist_cursor	*cursor)
+{
+	struct fshandle		*fshandlep = (struct fshandle *)fshp;
+	struct filehandle	filehandle;
+
+	/* prevent needless EINVAL from the kernel */
+	if (bufsz > XFS_XATTR_LIST_MAX)
+		bufsz = XFS_XATTR_LIST_MAX;
+
+	jdm_fill_filehandle_v5(&filehandle, fshandlep, statp);
+	return attr_list_by_handle(&filehandle, sizeof(filehandle), bufp,
+			bufsz, flags, cursor);
+}
+
+int
 jdm_parents( jdm_fshandle_t *fshp,
 		struct xfs_bstat *statp,
 		parent_t *bufp, size_t bufsz,
@@ -177,10 +270,34 @@ jdm_parents( jdm_fshandle_t *fshp,
 }
 
 int
+jdm_parents_v5(
+	jdm_fshandle_t		*fshp,
+	struct xfs_bulkstat	*statp,
+	struct parent		*bufp,
+	size_t			bufsz,
+	unsigned int		*count)
+{
+	errno = EOPNOTSUPP;
+	return -1;
+}
+
+int
 jdm_parentpaths( jdm_fshandle_t *fshp,
 		struct xfs_bstat *statp,
 		parent_t *bufp, size_t bufsz,
 		unsigned int *count)
+{
+	errno = EOPNOTSUPP;
+	return -1;
+}
+
+int
+jdm_parentpaths_v5(
+	jdm_fshandle_t		*fshp,
+	struct xfs_bulkstat	*statp,
+	struct parent		*bufp,
+	size_t			bufsz,
+	unsigned int		*count)
 {
 	errno = EOPNOTSUPP;
 	return -1;
