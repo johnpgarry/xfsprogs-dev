@@ -14,6 +14,7 @@ import time
 import sys
 import os
 import argparse
+from io import TextIOWrapper
 
 retcode = 0
 terminate = False
@@ -58,12 +59,18 @@ def find_mounts():
 
 	return fs
 
-def kill_systemd(unit, proc):
-	'''Kill systemd unit.'''
-	proc.terminate()
-	cmd=['systemctl', 'stop', unit]
-	x = subprocess.Popen(cmd)
-	x.wait()
+def backtick(cmd):
+	'''Generator function that yields lines of a program's stdout.'''
+	p = subprocess.Popen(cmd, stdout = subprocess.PIPE)
+	for line in TextIOWrapper(p.stdout, encoding="utf-8"):
+		yield line.strip()
+
+def remove_killfunc(killfuncs, fn):
+	'''Ensure fn is not in killfuncs.'''
+	try:
+		killfuncs.remove(fn)
+	except:
+		pass
 
 def run_killable(cmd, stdout, killfuncs, kill_fn):
 	'''Run a killable program.  Returns program retcode or -1 if we can't start it.'''
@@ -72,10 +79,7 @@ def run_killable(cmd, stdout, killfuncs, kill_fn):
 		real_kill_fn = lambda: kill_fn(proc)
 		killfuncs.add(real_kill_fn)
 		proc.wait()
-		try:
-			killfuncs.remove(real_kill_fn)
-		except:
-			pass
+		remove_killfunc(killfuncs, real_kill_fn)
 		return proc.returncode
 	except:
 		return -1
@@ -96,6 +100,56 @@ def path_to_serviceunit(path):
 	except:
 		return None
 
+def systemctl_stop(unitname):
+	'''Stop a systemd unit.'''
+	cmd = ['systemctl', 'stop', unitname]
+	x = subprocess.Popen(cmd)
+	x.wait()
+
+def systemctl_start(unitname, killfuncs):
+	'''Start a systemd unit and wait for it to complete.'''
+	stop_fn = None
+	cmd = ['systemctl', 'start', unitname]
+	try:
+		proc = subprocess.Popen(cmd, stdout = DEVNULL())
+		stop_fn = lambda: systemctl_stop(unitname)
+		killfuncs.add(stop_fn)
+		proc.wait()
+		ret = proc.returncode
+	except:
+		if stop_fn is not None:
+			remove_killfunc(killfuncs, stop_fn)
+		return -1
+
+	if ret != 1:
+		remove_killfunc(killfuncs, stop_fn)
+		return ret
+
+	# If systemctl-start returns 1, it's possible that the service failed
+	# or that dbus/systemd restarted and the client program lost its
+	# connection -- according to the systemctl man page, 1 means "unit not
+	# failed".
+	#
+	# Either way, we switch to polling the service status to try to wait
+	# for the service to end.  As of systemd 249, the is-active command
+	# returns any of the following states: active, reloading, inactive,
+	# failed, activating, deactivating, or maintenance.  Apparently these
+	# strings are not localized.
+	while True:
+		try:
+			for l in backtick(['systemctl', 'is-active', unitname]):
+				if l == 'failed':
+					remove_killfunc(killfuncs, stop_fn)
+					return 1
+				if l == 'inactive':
+					remove_killfunc(killfuncs, stop_fn)
+					return 0
+		except:
+			remove_killfunc(killfuncs, stop_fn)
+			return -1
+
+		time.sleep(1)
+
 def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 	'''Run a scrub process.'''
 	global retcode, terminate
@@ -110,9 +164,7 @@ def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 		# Try it the systemd way
 		unitname = path_to_serviceunit(path)
 		if unitname is not None:
-			cmd=['systemctl', 'start', unitname]
-			ret = run_killable(cmd, DEVNULL(), killfuncs, \
-					lambda proc: kill_systemd(unitname, proc))
+			ret = systemctl_start(unitname, killfuncs)
 			if ret == 0 or ret == 1:
 				print("Scrubbing %s done, (err=%d)" % (mnt, ret))
 				sys.stdout.flush()
