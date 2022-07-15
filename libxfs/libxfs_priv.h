@@ -430,10 +430,16 @@ howmany_64(uint64_t x, uint32_t y)
 #define _XBF_DQUOTS	0 /* dquot buffer */
 #define _XBF_LOGRECOVERY	0 /* log recovery buffer */
 
-static inline struct xfs_buf *xfs_buf_incore(struct xfs_buftarg *target,
-		xfs_daddr_t blkno, size_t numblks, xfs_buf_flags_t flags)
+static inline int
+xfs_buf_incore(
+	struct xfs_buftarg	*target,
+	xfs_daddr_t		blkno,
+	size_t			numblks,
+	xfs_buf_flags_t		flags,
+	struct xfs_buf		**bpp)
 {
-	return NULL;
+	*bpp = NULL;
+	return -ENOENT;
 }
 
 #define xfs_buf_oneshot(bp)		((void) 0)
