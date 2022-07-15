@@ -56,6 +56,12 @@ struct xfs_fd {
 /* Only use XFS_IOC_EXCHANGE_RANGE for file data exchanges. */
 #define XFROG_FLAG_FORCE_EXCH_RANGE	(1 << 3)
 
+/* Only use the older one-at-a-time scrub ioctl. */
+#define XFROG_FLAG_SCRUB_FORCE_SINGLE	(1 << 4)
+
+/* Only use the vectored scrub ioctl. */
+#define XFROG_FLAG_SCRUB_FORCE_VECTOR	(1 << 5)
+
 /* Static initializers */
 #define XFS_FD_INIT(_fd)	{ .fd = (_fd), }
 #define XFS_FD_INIT_EMPTY	XFS_FD_INIT(-1)
