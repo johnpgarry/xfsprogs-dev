@@ -212,6 +212,122 @@ xrep_bmap_scan_ag(
 	return error;
 }
 
+/* Check for any obvious errors or conflicts in the file mapping. */
+STATIC int
+xrep_bmap_check_rtfork_rmap(
+	struct repair_ctx		*sc,
+	struct xfs_btree_cur		*cur,
+	const struct xfs_rmap_irec	*rec)
+{
+	/* xattr extents are never stored on realtime devices */
+	if (rec->rm_flags & XFS_RMAP_ATTR_FORK)
+		return EFSCORRUPTED;
+
+	/* bmbt blocks are never stored on realtime devices */
+	if (rec->rm_flags & XFS_RMAP_BMBT_BLOCK)
+		return EFSCORRUPTED;
+
+	/* Data extents for non-rt files are never stored on the rt device. */
+	if (!XFS_IS_REALTIME_INODE(sc->ip))
+		return EFSCORRUPTED;
+
+	/* Check the file offsets and physical extents. */
+	if (!xfs_verify_fileext(sc->mp, rec->rm_offset, rec->rm_blockcount))
+		return EFSCORRUPTED;
+
+	/* Check that this fits in the rt volume. */
+	if (!xfs_verify_rgbext(cur->bc_ino.rtg, rec->rm_startblock,
+				rec->rm_blockcount))
+		return EFSCORRUPTED;
+
+	return 0;
+}
+
+/* Record realtime extents that belong to this inode's fork. */
+STATIC int
+xrep_bmap_walk_rtrmap(
+	struct xfs_btree_cur		*cur,
+	const struct xfs_rmap_irec	*rec,
+	void				*priv)
+{
+	struct xrep_bmap		*rb = priv;
+	int				error = 0;
+
+	/* Skip extents which are not owned by this inode and fork. */
+	if (rec->rm_owner != rb->sc->ip->i_ino)
+		return 0;
+
+	error = xrep_bmap_check_rtfork_rmap(rb->sc, cur, rec);
+	if (error)
+		return error;
+
+	/*
+	 * Record all blocks allocated to this file even if the extent isn't
+	 * for the fork we're rebuilding so that we can reset di_nblocks later.
+	 */
+	rb->nblocks += rec->rm_blockcount;
+
+	/* If this rmap isn't for the fork we want, we're done. */
+	if (rb->whichfork == XFS_DATA_FORK &&
+	    (rec->rm_flags & XFS_RMAP_ATTR_FORK))
+		return 0;
+	if (rb->whichfork == XFS_ATTR_FORK &&
+	    !(rec->rm_flags & XFS_RMAP_ATTR_FORK))
+		return 0;
+
+	return xrep_bmap_from_rmap(rb, rec->rm_offset, rec->rm_startblock,
+			rec->rm_blockcount,
+			rec->rm_flags & XFS_RMAP_UNWRITTEN);
+}
+
+/*
+ * Scan the realtime reverse mappings to build the new extent map.  The rt rmap
+ * inodes must be loaded from disk explicitly here, since we have not yet
+ * validated the metadata directory tree but do not wish to throw away user
+ * data unnecessarily.
+ */
+STATIC int
+xrep_bmap_scan_rt(
+	struct xrep_bmap	*rb,
+	struct xfs_rtgroup	*rtg)
+{
+	struct repair_ctx	*sc = rb->sc;
+	struct xfs_mount	*mp = sc->mp;
+	struct xfs_btree_cur	*cur;
+	struct xfs_inode	*ip;
+	struct xfs_imeta_path	*path;
+	xfs_ino_t		ino;
+	int			error;
+
+	error = -libxfs_rtrmapbt_create_path(mp, rtg->rtg_rgno, &path);
+	if (error)
+		return error;
+
+	error = -libxfs_imeta_lookup(sc->tp, path, &ino);
+	if (error)
+		goto out_path;
+
+	if (ino == NULLFSINO) {
+		error = EFSCORRUPTED;
+		goto out_path;
+	}
+
+	error = -libxfs_imeta_iget(sc->tp, ino, XFS_DIR3_FT_REG_FILE, &ip);
+	if (error)
+		goto out_path;
+
+	cur = libxfs_rtrmapbt_init_cursor(mp, sc->tp, rtg, ip);
+	error = -libxfs_rmap_query_all(cur, xrep_bmap_walk_rtrmap, rb);
+	if (error)
+		goto out_cur;
+out_cur:
+	libxfs_btree_del_cursor(cur, error);
+	libxfs_imeta_irele(ip);
+out_path:
+	libxfs_imeta_free_path(path);
+	return error;
+}
+
 /*
  * Collect block mappings for this fork of this inode and decide if we have
  * enough space to rebuild.  Caller is responsible for cleaning up the list if
@@ -222,8 +338,19 @@ xrep_bmap_find_mappings(
 	struct xrep_bmap	*rb)
 {
 	struct xfs_perag	*pag;
+	struct xfs_rtgroup	*rtg;
 	xfs_agnumber_t		agno;
+	xfs_rgnumber_t		rgno;
 	int			error;
+
+	/* Iterate the rtrmaps for extents. */
+	for_each_rtgroup(rb->sc->mp, rgno, rtg) {
+		error = xrep_bmap_scan_rt(rb, rtg);
+		if (error) {
+			libxfs_rtgroup_put(rtg);
+			return error;
+		}
+	}
 
 	/* Iterate the rmaps for extents. */
 	for_each_perag(rb->sc->mp, agno, pag) {
@@ -571,10 +698,6 @@ xrep_bmap_check_inputs(
 	default:
 		return EINVAL;
 	}
-
-	/* Don't know how to rebuild realtime data forks. */
-	if (XFS_IS_REALTIME_INODE(sc->ip))
-		return EOPNOTSUPP;
 
 	return 0;
 }
