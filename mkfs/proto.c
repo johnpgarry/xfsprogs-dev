@@ -237,7 +237,7 @@ newfile(
 
 	flags = 0;
 	mp = ip->i_mount;
-	if (symlink && len <= XFS_IFORK_DSIZE(ip)) {
+	if (symlink && len <= xfs_inode_data_fork_size(ip)) {
 		libxfs_init_local_fork(ip, XFS_DATA_FORK, buf, len);
 		ip->i_df.if_format = XFS_DINODE_FMT_LOCAL;
 		flags = XFS_ILOG_DDATA;
