@@ -136,6 +136,7 @@ scan_lbtree(
 				xfs_extnum_t		*nex,
 				blkmap_t		**blkmapp,
 				bmap_cursor_t		*bm_cursor,
+				int			suspect,
 				int			isroot,
 				int			check_dups,
 				int			*dirty,
@@ -148,6 +149,7 @@ scan_lbtree(
 	xfs_extnum_t	*nex,
 	blkmap_t	**blkmapp,
 	bmap_cursor_t	*bm_cursor,
+	int		suspect,
 	int		isroot,
 	int		check_dups,
 	uint64_t	magic,
@@ -167,6 +169,12 @@ scan_lbtree(
 			XFS_FSB_TO_AGBNO(mp, root));
 		return(1);
 	}
+	if (bp->b_error == -EFSBADCRC || bp->b_error == -EFSCORRUPTED) {
+		do_warn(_("btree block %d/%d is suspect, error %d\n"),
+			XFS_FSB_TO_AGNO(mp, root),
+			XFS_FSB_TO_AGBNO(mp, root), bp->b_error);
+		suspect++;
+	}
 
 	/*
 	 * only check for bad CRC here - caller will determine if there
@@ -182,7 +190,7 @@ scan_lbtree(
 
 	err = (*func)(XFS_BUF_TO_BLOCK(bp), nlevels - 1,
 			type, whichfork, root, ino, tot, nex, blkmapp,
-			bm_cursor, isroot, check_dups, &dirty,
+			bm_cursor, suspect, isroot, check_dups, &dirty,
 			magic, priv);
 
 	ASSERT(dirty == 0 || (dirty && !no_modify));
@@ -209,6 +217,7 @@ scan_bmapbt(
 	xfs_extnum_t		*nex,
 	blkmap_t		**blkmapp,
 	bmap_cursor_t		*bm_cursor,
+	int			suspect,
 	int			isroot,
 	int			check_dups,
 	int			*dirty,
@@ -516,7 +525,7 @@ _("bad bmap btree ptr 0x%llx in ino %" PRIu64 "\n"),
 
 		err = scan_lbtree(be64_to_cpu(pp[i]), level, scan_bmapbt,
 				type, whichfork, ino, tot, nex, blkmapp,
-				bm_cursor, 0, check_dups, magic, priv,
+				bm_cursor, suspect, 0, check_dups, magic, priv,
 				&xfs_bmbt_buf_ops);
 		if (err)
 			return(1);
@@ -584,7 +593,7 @@ _("bad fwd (right) sibling pointer (saw %" PRIu64 " should be NULLFSBLOCK)\n"
 				be64_to_cpu(pkey[numrecs - 1].br_startoff);
 	}
 
-	return(0);
+	return suspect > 0 ? 1 : 0;
 }
 
 static void
