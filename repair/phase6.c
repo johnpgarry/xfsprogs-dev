@@ -471,18 +471,37 @@ reset_root_ino(
 	libxfs_inode_init(tp, &args, ip);
 }
 
-static void
-mk_rbmino(xfs_mount_t *mp)
+/* Load a realtime metadata inode from disk and reset it. */
+static int
+ensure_rtino(
+	struct xfs_trans		*tp,
+	xfs_ino_t			ino,
+	struct xfs_inode		**ipp)
 {
-	xfs_trans_t	*tp;
-	xfs_inode_t	*ip;
-	xfs_bmbt_irec_t	*ep;
-	int		i;
-	int		nmap;
-	int		error;
-	xfs_fileoff_t	bno;
-	xfs_bmbt_irec_t	map[XFS_BMAP_MAX_NMAP];
-	uint		blocks;
+	struct xfs_mount		*mp = tp->t_mountp;
+	int				error;
+
+	error = -libxfs_iget(mp, tp, ino, 0, ipp);
+	if (error)
+		return error;
+
+	reset_root_ino(tp, S_IFREG, *ipp);
+	return 0;
+}
+
+static void
+mk_rbmino(
+	struct xfs_mount	*mp)
+{
+	struct xfs_trans	*tp;
+	struct xfs_inode	*ip;
+	struct xfs_bmbt_irec	*ep;
+	int			i;
+	int			nmap;
+	int			error;
+	xfs_fileoff_t		bno;
+	struct xfs_bmbt_irec	map[XFS_BMAP_MAX_NMAP];
+	uint			blocks;
 
 	/*
 	 * first set up inode
@@ -491,15 +510,13 @@ mk_rbmino(xfs_mount_t *mp)
 	if (i)
 		res_failed(i);
 
-	error = -libxfs_iget(mp, tp, mp->m_sb.sb_rbmino, 0, &ip);
+	/* Reset the realtime bitmap inode. */
+	error = ensure_rtino(tp, mp->m_sb.sb_rbmino, &ip);
 	if (error) {
 		do_error(
 		_("couldn't iget realtime bitmap inode -- error - %d\n"),
 			error);
 	}
-
-	/* Reset the realtime bitmap inode. */
-	reset_root_ino(tp, S_IFREG, ip);
 	ip->i_disk_size = mp->m_sb.sb_rbmblocks * mp->m_sb.sb_blocksize;
 	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 	error = -libxfs_trans_commit(tp);
@@ -700,18 +717,19 @@ _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime summary inode 
 }
 
 static void
-mk_rsumino(xfs_mount_t *mp)
+mk_rsumino(
+	struct xfs_mount	*mp)
 {
-	xfs_trans_t	*tp;
-	xfs_inode_t	*ip;
-	xfs_bmbt_irec_t	*ep;
-	int		i;
-	int		nmap;
-	int		error;
-	int		nsumblocks;
-	xfs_fileoff_t	bno;
-	xfs_bmbt_irec_t	map[XFS_BMAP_MAX_NMAP];
-	uint		blocks;
+	struct xfs_trans	*tp;
+	struct xfs_inode	*ip;
+	struct xfs_bmbt_irec	*ep;
+	int			i;
+	int			nmap;
+	int			error;
+	int			nsumblocks;
+	xfs_fileoff_t		bno;
+	struct xfs_bmbt_irec	map[XFS_BMAP_MAX_NMAP];
+	uint			blocks;
 
 	/*
 	 * first set up inode
@@ -720,15 +738,13 @@ mk_rsumino(xfs_mount_t *mp)
 	if (i)
 		res_failed(i);
 
-	error = -libxfs_iget(mp, tp, mp->m_sb.sb_rsumino, 0, &ip);
+	/* Reset the rt summary inode. */
+	error = ensure_rtino(tp, mp->m_sb.sb_rsumino, &ip);
 	if (error) {
 		do_error(
 		_("couldn't iget realtime summary inode -- error - %d\n"),
 			error);
 	}
-
-	/* Reset the rt summary inode. */
-	reset_root_ino(tp, S_IFREG, ip);
 	ip->i_disk_size = mp->m_rsumsize;
 	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 	error = -libxfs_trans_commit(tp);
