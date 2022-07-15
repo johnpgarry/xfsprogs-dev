@@ -53,6 +53,11 @@ struct btmap {
 		.maxlevels	= libxfs_rmapbt_maxlevels_ondisk,
 		.maxrecs	= libxfs_rmapbt_maxrecs,
 	},
+	{
+		.tag		= "rtrmapbt",
+		.maxlevels	= libxfs_rtrmapbt_maxlevels_ondisk,
+		.maxrecs	= libxfs_rtrmapbt_maxrecs,
+	},
 };
 
 static void
