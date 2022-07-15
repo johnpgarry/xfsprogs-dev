@@ -17,6 +17,7 @@ static void fail(char *msg, int i);
 static struct xfs_trans * getres(struct xfs_mount *mp, uint blocks);
 static void rsvfile(xfs_mount_t *mp, xfs_inode_t *ip, long long len);
 static char *newregfile(char **pp, int *len);
+static int metadir_create(struct xfs_mount *mp);
 static void rtinit(xfs_mount_t *mp);
 static void rtfreesp_init(struct xfs_mount *mp);
 static long filesize(int fd);
@@ -705,8 +706,15 @@ parseproto(
 		 * RT initialization.  Do this here to ensure that
 		 * the RT inodes get placed after the root inode.
 		 */
-		if (isroot)
+		if (isroot) {
+			error = metadir_create(mp);
+			if (error)
+				fail(
+	_("Creation of the metadata directory inode failed"),
+					error);
+
 			rtinit(mp);
+		}
 		tp = NULL;
 		for (;;) {
 			name = getdirentname(pp);
@@ -742,6 +750,41 @@ parse_proto(
 {
 	slashes_are_spaces = proto_slashes_are_spaces;
 	parseproto(mp, NULL, fsx, pp, NULL);
+}
+
+/* Create a new metadata root directory. */
+static int
+metadir_create(
+	struct xfs_mount	*mp)
+{
+	struct xfs_imeta_update	upd;
+	struct xfs_inode	*ip = NULL;
+	int			error;
+
+	if (!xfs_has_metadir(mp))
+		return 0;
+
+	error = -libxfs_imeta_start_create(mp, &XFS_IMETA_METADIR, &upd);
+	if (error)
+		return error;
+
+	error = -libxfs_imeta_create(&upd, S_IFDIR, &ip);
+	if (error)
+		goto out_cancel;
+
+	error = -libxfs_imeta_commit_update(&upd);
+	if (error)
+		goto out_rele;
+
+	mp->m_metadirip = ip;
+	return 0;
+
+out_cancel:
+	libxfs_imeta_cancel_update(&upd, error);
+out_rele:
+	if (ip)
+		libxfs_irele(ip);
+	return error;
 }
 
 /* Create the realtime bitmap inode. */
