@@ -5,14 +5,13 @@
 # Copyright (C) 2018-2024 Oracle.  All Rights Reserved.
 # Author: Darrick J. Wong <djwong@kernel.org>
 
-# Email logs of failed xfs_scrub unit runs
+# Email logs of failed xfs_scrub and xfs_scrub_all unit runs
 
 recipient="$1"
 test -z "${recipient}" && exit 0
 service="$2"
 test -z "${service}" && exit 0
 mntpoint="$3"
-test -z "${mntpoint}" && exit 0
 
 hostname="$(hostname -f 2>/dev/null)"
 test -z "${hostname}" && hostname="${HOSTNAME}"
@@ -23,11 +22,13 @@ if [ ! -x "${mailer}" ]; then
 	exit 1
 fi
 
-# Turn the mountpoint into a properly escaped systemd instance name
-scrub_svc="$(systemd-escape --template "${service}@.service" --path "${mntpoint}")"
+fail_mail_mntpoint() {
+	local scrub_svc
 
-(cat << ENDL
-To: $1
+	# Turn the mountpoint into a properly escaped systemd instance name
+	scrub_svc="$(systemd-escape --template "${service}@.service" --path "${mntpoint}")"
+	cat << ENDL
+To: ${recipient}
 From: <${service}@${hostname}>
 Subject: ${service} failure on ${mntpoint}
 Content-Transfer-Encoding: 8bit
@@ -38,5 +39,25 @@ Please do not reply to this mesage.
 
 A log of what happened follows:
 ENDL
-systemctl status --full --lines 4294967295 "${scrub_svc}") | "${mailer}" -t -i
+	systemctl status --full --lines 4294967295 "${scrub_svc}"
+}
+
+fail_mail() {
+	cat << ENDL
+To: ${recipient}
+From: <${service}@${hostname}>
+Subject: ${service} failure
+
+So sorry, the automatic ${service} on ${hostname} failed.
+
+A log of what happened follows:
+ENDL
+	systemctl status --full --lines 4294967295 "${service}"
+}
+
+if [ -n "${mntpoint}" ]; then
+	fail_mail_mntpoint | "${mailer}" -t -i
+else
+	fail_mail | "${mailer}" -t -i
+fi
 exit "${PIPESTATUS[1]}"
