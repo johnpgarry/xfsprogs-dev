@@ -31,8 +31,10 @@ extern void	quit_init(void);
 extern void	trim_init(void);
 #ifdef HAVE_GETFSMAP
 extern void	freesp_init(void);
+extern void	clearfree_init(void);
 #else
 # define freesp_init()	do { } while (0)
+# define clearfree_init()	do { } while(0)
 #endif
 extern void	info_init(void);
 extern void	health_init(void);

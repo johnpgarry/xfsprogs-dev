@@ -25,6 +25,23 @@ then the program exits.
 
 .SH COMMANDS
 .TP
+.BI "clearfree [ \-n nr ] [ \-r ] [ \-v mask ] " start " " length
+Try to clear the specified physical range in the filesystem.
+The
+.B start
+and
+.B length
+arguments must be given in units of bytes.
+If the
+.B -n
+option is given, run the clearing algorithm this many times.
+If the
+.B -r
+option is given, clear the realtime device.
+If the
+.B -v
+option is given, print what's happening every step of the way.
+.TP
 .BI "freesp [ \-dgrs ] [-a agno]... [ \-b | \-e bsize | \-h bsize | \-m factor ]"
 With no arguments,
 .B freesp
