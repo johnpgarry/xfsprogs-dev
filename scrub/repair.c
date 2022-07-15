@@ -46,7 +46,7 @@ static const unsigned int repair_deps[XFS_SCRUB_TYPE_NR] = {
 #undef DEP
 
 /* Repair some metadata. */
-static enum check_outcome
+static int
 xfs_repair_metadata(
 	struct scrub_ctx		*ctx,
 	struct xfs_fd			*xfdp,
@@ -88,7 +88,7 @@ xfs_repair_metadata(
 	}
 
 	if (!is_corrupt(&meta) && repair_only)
-		return CHECK_RETRY;
+		return 0;
 
 	memcpy(&oldm, &meta, sizeof(oldm));
 	oldm.sm_flags = sri->sri_state[scrub_type] & SCRUB_ITEM_REPAIR_ANY;
@@ -112,12 +112,12 @@ retry:
 		if (debug || verbose)
 			str_info(ctx, descr_render(&dsc),
 _("Filesystem is busy, deferring repair."));
-		return CHECK_RETRY;
+		return 0;
 	case ESHUTDOWN:
 		/* Filesystem is already shut down, abort. */
 		str_error(ctx, descr_render(&dsc),
 _("Filesystem is shut down, aborting."));
-		return CHECK_ABORT;
+		return ECANCELED;
 	case ENOTTY:
 	case EOPNOTSUPP:
 		/*
@@ -129,7 +129,7 @@ _("Filesystem is shut down, aborting."));
 		if (is_unoptimized(&oldm) ||
 		    debug_tweak_on("XFS_SCRUB_FORCE_REPAIR")) {
 			scrub_item_clean_state(sri, scrub_type);
-			return CHECK_DONE;
+			return 0;
 		}
 		/*
 		 * If we're in no-complain mode, requeue the check for
@@ -140,30 +140,30 @@ _("Filesystem is shut down, aborting."));
 		 * again to see if another repair fixed it.
 		 */
 		if (!(repair_flags & XRM_FINAL_WARNING))
-			return CHECK_RETRY;
+			return 0;
 		fallthrough;
 	case EINVAL:
 		/* Kernel doesn't know how to repair this? */
 		str_corrupt(ctx, descr_render(&dsc),
 _("Don't know how to fix; offline repair required."));
 		scrub_item_clean_state(sri, scrub_type);
-		return CHECK_DONE;
+		return 0;
 	case EROFS:
 		/* Read-only filesystem, can't fix. */
 		if (verbose || debug || needs_repair(&oldm))
 			str_error(ctx, descr_render(&dsc),
 _("Read-only filesystem; cannot make changes."));
-		return CHECK_ABORT;
+		return ECANCELED;
 	case ENOENT:
 		/* Metadata not present, just skip it. */
 		scrub_item_clean_state(sri, scrub_type);
-		return CHECK_DONE;
+		return 0;
 	case ENOMEM:
 	case ENOSPC:
 		/* Don't care if preen fails due to low resources. */
 		if (is_unoptimized(&oldm) && !needs_repair(&oldm)) {
 			scrub_item_clean_state(sri, scrub_type);
-			return CHECK_DONE;
+			return 0;
 		}
 		fallthrough;
 	default:
@@ -175,10 +175,10 @@ _("Read-only filesystem; cannot make changes."));
 		 * trying to repair it, and bail out.
 		 */
 		if (!(repair_flags & XRM_FINAL_WARNING))
-			return CHECK_RETRY;
+			return 0;
 		str_liberror(ctx, error, descr_render(&dsc));
 		scrub_item_clean_state(sri, scrub_type);
-		return CHECK_DONE;
+		return 0;
 	}
 
 	/*
@@ -201,7 +201,7 @@ _("Read-only filesystem; cannot make changes."));
 		 * log the error loudly and don't try again.
 		 */
 		if (!(repair_flags & XRM_FINAL_WARNING))
-			return CHECK_RETRY;
+			return 0;
 		str_corrupt(ctx, descr_render(&dsc),
 _("Repair unsuccessful; offline repair required."));
 	} else if (xref_failed(&meta)) {
@@ -219,7 +219,7 @@ _("Repair unsuccessful; offline repair required."));
 			if (verbose)
 				str_info(ctx, descr_render(&dsc),
  _("Seems correct but cross-referencing failed; will keep checking."));
-			return CHECK_RETRY;
+			return 0;
 		}
 	} else if (meta.sm_flags & XFS_SCRUB_OFLAG_NO_REPAIR_NEEDED) {
 		if (verbose)
@@ -242,7 +242,7 @@ _("Repair unsuccessful; offline repair required."));
 	}
 
 	scrub_item_clean_state(sri, scrub_type);
-	return CHECK_DONE;
+	return 0;
 }
 
 /*
@@ -543,6 +543,7 @@ repair_item_class(
 	struct xfs_fd			xfd;
 	struct xfs_fd			*xfdp = &ctx->mnt;
 	unsigned int			scrub_type;
+	int				error = 0;
 
 	if (ctx->mode < SCRUB_MODE_REPAIR)
 		return 0;
@@ -559,8 +560,6 @@ repair_item_class(
 	}
 
 	foreach_scrub_type(scrub_type) {
-		enum check_outcome	fix;
-
 		if (scrub_excessive_errors(ctx))
 			return ECANCELED;
 
@@ -576,22 +575,17 @@ repair_item_class(
 		    !repair_item_dependencies_ok(sri, scrub_type))
 			continue;
 
-		fix = xfs_repair_metadata(ctx, xfdp, scrub_type, sri, flags);
-		switch (fix) {
-		case CHECK_DONE:
-			if (!(flags & XRM_NOPROGRESS))
-				progress_add(1);
-			continue;
-		case CHECK_ABORT:
-			return ECANCELED;
-		case CHECK_RETRY:
-			continue;
-		case CHECK_REPAIR:
-			abort();
-		}
+		error = xfs_repair_metadata(ctx, xfdp, scrub_type, sri, flags);
+		if (error)
+			break;
+
+		/* Maybe update progress if we fixed the problem. */
+		if (!(flags & XRM_NOPROGRESS) &&
+		    !(sri->sri_state[scrub_type] & SCRUB_ITEM_REPAIR_ANY))
+			progress_add(1);
 	}
 
-	return 0;
+	return error;
 }
 
 /*

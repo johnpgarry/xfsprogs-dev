@@ -8,14 +8,6 @@
 
 enum xfrog_scrub_group;
 
-/* Online scrub and repair. */
-enum check_outcome {
-	CHECK_DONE,	/* no further processing needed */
-	CHECK_REPAIR,	/* schedule this for repairs */
-	CHECK_ABORT,	/* end program */
-	CHECK_RETRY,	/* repair failed, try again later */
-};
-
 /*
  * This flag boosts the repair priority of a scrub item when a dependent scrub
  * item is scheduled for repair.  Use a separate flag to preserve the
