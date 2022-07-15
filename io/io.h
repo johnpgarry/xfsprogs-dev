@@ -31,6 +31,9 @@
 #define IO_PATH		(1<<10)
 #define IO_NOFOLLOW	(1<<11)
 
+/* undergoing atomic update, do not close */
+#define IO_ATOMICUPDATE	(1<<12)
+
 /*
  * Regular file I/O control
  */
@@ -74,6 +77,7 @@ extern int		openfile(char *, struct xfs_fsop_geom *, int, mode_t,
 				 struct fs_path *);
 extern int		addfile(char *, int , struct xfs_fsop_geom *, int,
 				struct fs_path *);
+extern int		closefile(void);
 extern void		printxattr(uint, int, int, const char *, int, int);
 
 extern unsigned int	recurse_all;
@@ -185,3 +189,4 @@ extern void		scrub_init(void);
 extern void		repair_init(void);
 extern void		crc32cselftest_init(void);
 extern void		bulkstat_init(void);
+extern void		atomicupdate_init(void);

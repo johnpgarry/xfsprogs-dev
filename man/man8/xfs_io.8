@@ -1045,7 +1045,37 @@ sec uses UNIX timestamp notation and is the seconds elapsed since
 nsec is the nanoseconds since the sec. This value needs to be in
 the range 0-999999999 with UTIME_NOW and UTIME_OMIT being exceptions.
 Each (sec, nsec) pair constitutes a single timestamp value.
-
+.TP
+.BI "startupdate [ " -e ]
+Create a temporary clone of a file in which to stage file updates.
+The
+.B \-e
+option creates an empty staging file.
+.TP
+.B cancelupdate
+Abandon changes from a update staging file.
+.TP
+.BI "commitupdate [" OPTIONS ]
+Commit changes from a update staging file to the real file.
+.RS 1.0i
+.PD 0
+.TP 0.4i
+.B \-C
+Print timing information in a condensed format.
+.TP 0.4i
+.B \-h
+Only swap ranges in the update staging file that were actually written.
+.TP 0.4i
+.B \-k
+Do not change file size.
+.TP 0.4i
+.B \-n
+Check parameters without changing anything.
+.TP 0.4i
+.B \-q
+Do not print timing information at all.
+.PD
+.RE
 
 .SH MEMORY MAPPED I/O COMMANDS
 .TP

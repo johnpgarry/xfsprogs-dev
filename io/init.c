@@ -44,6 +44,7 @@ init_cvtnum(
 static void
 init_commands(void)
 {
+	atomicupdate_init();
 	attr_init();
 	bmap_init();
 	bulkstat_init();
