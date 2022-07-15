@@ -1094,6 +1094,8 @@ libxfs_iget(
 	VFS_I(ip)->i_count = 1;
 	ip->i_ino = ino;
 	ip->i_mount = mp;
+	ip->i_af.if_format = XFS_DINODE_FMT_EXTENTS;
+	ip->i_df.if_present = 1;
 	spin_lock_init(&VFS_I(ip)->i_lock);
 
 	error = xfs_imap(mp, tp, ip->i_ino, &ip->i_imap, 0);
@@ -1132,9 +1134,9 @@ libxfs_idestroy(xfs_inode_t *ip)
 			libxfs_idestroy_fork(&ip->i_df);
 			break;
 	}
-	if (ip->i_afp) {
-		libxfs_idestroy_fork(ip->i_afp);
-		kmem_cache_free(xfs_ifork_cache, ip->i_afp);
+	if (ip->i_af.if_present) {
+		libxfs_idestroy_fork(&ip->i_af);
+		libxfs_ifork_zap_attr(ip);
 	}
 	if (ip->i_cowfp) {
 		libxfs_idestroy_fork(ip->i_cowfp);
