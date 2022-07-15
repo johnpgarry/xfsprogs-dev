@@ -219,7 +219,7 @@ _("data fork in rt ino %" PRIu64 " claims dup rt extent,"
 	return 0;
 }
 
-static int
+static void
 process_rt_rec_state(
 	struct xfs_mount	*mp,
 	xfs_ino_t		ino,
@@ -263,11 +263,78 @@ _("data fork in rt inode %" PRIu64 " found invalid rt extent %"PRIu64" state %d 
 			set_rtbmap(ext, zap_metadata ? XR_E_METADATA :
 						       XR_E_INUSE);
 			break;
-		case XR_E_METADATA:
+		case XR_E_BAD_STATE:
 			do_error(
+_("bad state in rt extent map %" PRIu64 "\n"),
+				ext);
+		case XR_E_METADATA:
+		case XR_E_FS_MAP:
+		case XR_E_INO:
+		case XR_E_INUSE_FS:
+			break;
+		case XR_E_INUSE:
+		case XR_E_MULT:
+			set_rtbmap(ext, XR_E_MULT);
+			break;
+		case XR_E_FREE1:
+		default:
+			do_error(
+_("illegal state %d in rt extent %" PRIu64 "\n"),
+				state, ext);
+		}
+		b += mp->m_sb.sb_rextsize;
+	} while (b < irec->br_startblock + irec->br_blockcount);
+}
+
+/*
+ * Checks the realtime file's data mapping against in-core extent info, and
+ * complains if there are discrepancies.  Returns 0 if good, 1 if bad.
+ */
+static int
+check_rt_rec_state(
+	struct xfs_mount	*mp,
+	xfs_ino_t		ino,
+	struct xfs_bmbt_irec	*irec)
+{
+	xfs_fsblock_t		b = irec->br_startblock;
+	xfs_rtblock_t		ext;
+	int			state;
+
+	do {
+		ext = (xfs_rtblock_t)b / mp->m_sb.sb_rextsize;
+		state = get_rtbmap(ext);
+
+		if ((b % mp->m_sb.sb_rextsize) != 0) {
+			/*
+			 * We are midway through a partially written extent.
+			 * If we don't find the state that gets set in the
+			 * other clause of this loop body, then we have a
+			 * partially *mapped* rt extent and should complain.
+			 */
+			if (state != XR_E_INUSE && state != XR_E_FREE) {
+				do_warn(
+_("data fork in rt inode %" PRIu64 " found invalid rt extent %"PRIu64" state %d at rt block %"PRIu64"\n"),
+					ino, ext, state, b);
+				return 1;
+			}
+
+			b = roundup(b, mp->m_sb.sb_rextsize);
+			continue;
+		}
+
+		/*
+		 * This is the start of an rt extent.  Complain if there are
+		 * conflicting states.  We'll set the state elsewhere.
+		 */
+		switch (state)  {
+		case XR_E_FREE:
+		case XR_E_UNKNOWN:
+			break;
+		case XR_E_METADATA:
+			do_warn(
 _("data fork in rt inode %" PRIu64 " found metadata file block %" PRIu64 " in rt bmap\n"),
 				ino, ext);
-			break;
+			return 1;
 		case XR_E_BAD_STATE:
 			do_error(
 _("bad state in rt extent map %" PRIu64 "\n"),
@@ -275,12 +342,12 @@ _("bad state in rt extent map %" PRIu64 "\n"),
 		case XR_E_FS_MAP:
 		case XR_E_INO:
 		case XR_E_INUSE_FS:
-			do_error(
+			do_warn(
 _("data fork in rt inode %" PRIu64 " found rt metadata extent %" PRIu64 " in rt bmap\n"),
 				ino, ext);
+			return 1;
 		case XR_E_INUSE:
 		case XR_E_MULT:
-			set_rtbmap(ext, XR_E_MULT);
 			do_warn(
 _("data fork in rt inode %" PRIu64 " claims used rt extent %" PRIu64 "\n"),
 				ino, b);
@@ -341,12 +408,17 @@ _("inode %" PRIu64 " - bad rt extent overflows - start %" PRIu64 ", "
 		return 1;
 	}
 
-	if (check_dups)
-		bad = process_rt_rec_dups(mp, ino, irec);
-	else
-		bad = process_rt_rec_state(mp, ino, zap_metadata, irec);
+	bad = check_rt_rec_state(mp, ino, irec);
 	if (bad)
 		return bad;
+
+	if (check_dups) {
+		bad = process_rt_rec_dups(mp, ino, irec);
+		if (bad)
+			return bad;
+	} else {
+		process_rt_rec_state(mp, ino, zap_metadata, irec);
+	}
 
 	/*
 	 * bump up the block counter
