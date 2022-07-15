@@ -532,6 +532,7 @@ repair_item_difficulty(
 
 		switch (scrub_type) {
 		case XFS_SCRUB_TYPE_RMAPBT:
+		case XFS_SCRUB_TYPE_RTRMAPBT:
 			ret |= REPAIR_DIFFICULTY_SECONDARY;
 			break;
 		case XFS_SCRUB_TYPE_SB:
