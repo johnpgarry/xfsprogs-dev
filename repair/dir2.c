@@ -158,6 +158,8 @@ is_meta_ino(
 		reason = _("realtime summary");
 	else if (is_rtrmap_inode(lino))
 		reason = _("realtime rmap");
+	else if (is_rtrefcount_ino(lino))
+		reason = _("realtime refcount");
 	else if (lino == mp->m_sb.sb_uquotino)
 		reason = _("user quota");
 	else if (lino == mp->m_sb.sb_gquotino)

@@ -1987,7 +1987,7 @@ _("extent (%u/%u) len %u claimed, state is %d\n"),
 	libxfs_perag_put(pag);
 out:
 	if (suspect)
-		refcount_avoid_check();
+		refcount_avoid_check(mp);
 	return;
 }
 
@@ -2277,7 +2277,7 @@ _("%s btree block claimed (state %d), agno %d, agbno %d, suspect %d\n"),
 	}
 out:
 	if (suspect) {
-		refcount_avoid_check();
+		refcount_avoid_check(mp);
 		return 1;
 	}
 
@@ -3140,7 +3140,7 @@ validate_agf(
 		if (levels == 0 || levels > mp->m_refc_maxlevels) {
 			do_warn(_("bad levels %u for refcountbt root, agno %d\n"),
 				levels, agno);
-			refcount_avoid_check();
+			refcount_avoid_check(mp);
 		}
 
 		bno = be32_to_cpu(agf->agf_refcount_root);
@@ -3158,7 +3158,7 @@ validate_agf(
 		} else {
 			do_warn(_("bad agbno %u for refcntbt root, agno %d\n"),
 				bno, agno);
-			refcount_avoid_check();
+			refcount_avoid_check(mp);
 		}
 	}
 

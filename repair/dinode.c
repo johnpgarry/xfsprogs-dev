@@ -156,6 +156,9 @@ clear_dinode(xfs_mount_t *mp, struct xfs_dinode *dino, xfs_ino_t ino_num)
 	if (is_rtrmap_inode(ino_num))
 		rmap_avoid_check(mp);
 
+	if (is_rtrefcount_ino(ino_num))
+		refcount_avoid_check(mp);
+
 	/* and clear the forks */
 	memset(XFS_DFORK_DPTR(dino), 0, XFS_LITINO(mp));
 	return;
@@ -1067,6 +1070,12 @@ _("rtrefcount inode %" PRIu64 " not flagged as metadata\n"),
 			lino);
 		return 1;
 	}
+	if (type != XR_INO_RTREFC) {
+		do_warn(
+_("rtrefcount inode %" PRIu64 " was not found in the metadata directory tree\n"),
+			lino);
+		return 1;
+	}
 
 	priv.rgno = rtgroup_for_rtrefcount_inode(mp, ino);
 	if (priv.rgno == NULLRGNUMBER) {
@@ -1107,7 +1116,7 @@ _("computed size of rtrefcountbt root (%zu bytes) is greater than space in "
 		error = process_rtrefc_reclist(mp, rp, numrecs,
 				&priv, "rtrefcountbt root");
 		if (error) {
-			refcount_avoid_check();
+			refcount_avoid_check(mp);
 			return 1;
 		}
 		return 0;
@@ -2063,6 +2072,9 @@ process_check_sb_inodes(
 	if (is_rtrmap_inode(lino))
 		return process_check_rt_inode(mp, dinoc, lino, type, dirty,
 				XR_INO_RTRMAP, _("realtime rmap btree"));
+	if (is_rtrefcount_ino(lino))
+		return process_check_rt_inode(mp, dinoc, lino, type, dirty,
+				XR_INO_RTREFC, _("realtime refcount btree"));
 	return 0;
 }
 
@@ -2172,6 +2184,18 @@ _("found inode %" PRIu64 " claiming to be a rtrmapbt file, but rmapbt is disable
 		}
 		break;
 
+	case XR_INO_RTREFC:
+		/*
+		 * if we have no refcountbt, any inode claiming
+		 * to be a real-time file is bogus
+		 */
+		if (!xfs_has_reflink(mp)) {
+			do_warn(
+_("found inode %" PRIu64 " claiming to be a rtrefcountbt file, but reflink is disabled\n"), lino);
+			return 1;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -2201,6 +2225,7 @@ _("bad attr fork offset %d in dev inode %" PRIu64 ", should be %d\n"),
 		}
 		break;
 	case XFS_DINODE_FMT_RMAP:
+	case XFS_DINODE_FMT_REFCOUNT:
 		if (!(xfs_has_metadir(mp) && xfs_has_parent(mp))) {
 			do_warn(
 _("metadata inode %" PRIu64 " type %d cannot have attr fork\n"),
@@ -3311,6 +3336,8 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 			type = XR_INO_PQUOTA;
 		else if (is_rtrmap_inode(lino))
 			type = XR_INO_RTRMAP;
+		else if (is_rtrefcount_ino(lino))
+			type = XR_INO_RTREFC;
 		else
 			type = XR_INO_DATA;
 		break;
@@ -3417,6 +3444,7 @@ _("Bad CoW extent size %u on inode %" PRIu64 ", "),
 		case XR_INO_GQUOTA:
 		case XR_INO_PQUOTA:
 		case XR_INO_RTRMAP:
+		case XR_INO_RTREFC:
 			/*
 			 * This inode was recognized as being filesystem
 			 * metadata, so preserve the inode and its contents for

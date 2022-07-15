@@ -222,6 +222,7 @@ int		count_bcnt_extents(xfs_agnumber_t);
 #define XR_INO_GQUOTA	13		/* group quota inode */
 #define XR_INO_PQUOTA	14		/* project quota inode */
 #define XR_INO_RTRMAP	15		/* realtime rmap */
+#define XR_INO_RTREFC	16		/* realtime refcount */
 
 /* inode allocation tree */
 

@@ -1025,6 +1025,17 @@ next_readbuf:
 	_("would clear realtime rmap inode %" PRIu64 "\n"),
 						ino);
 				}
+			} else if (is_rtrefcount_ino(ino)) {
+				refcount_avoid_check(mp);
+				if (!no_modify)  {
+					do_warn(
+	_("cleared realtime refcount inode %" PRIu64 "\n"),
+						ino);
+				} else  {
+					do_warn(
+	_("would clear realtime refcount inode %" PRIu64 "\n"),
+						ino);
+				}
 			} else if (!no_modify)  {
 				do_warn(_("cleared inode %" PRIu64 "\n"),
 					ino);
