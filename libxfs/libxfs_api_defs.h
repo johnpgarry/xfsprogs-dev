@@ -32,7 +32,7 @@
 #define xfs_alloc_fix_freelist		libxfs_alloc_fix_freelist
 #define xfs_alloc_min_freelist		libxfs_alloc_min_freelist
 #define xfs_alloc_read_agf		libxfs_alloc_read_agf
-#define xfs_alloc_vextent		libxfs_alloc_vextent
+#define xfs_alloc_vextent_start_ag	libxfs_alloc_vextent_start_ag
 
 #define xfs_ascii_ci_hashname		libxfs_ascii_ci_hashname
 
@@ -43,11 +43,18 @@
 #define xfs_attr_shortform_verify	libxfs_attr_shortform_verify
 
 #define __xfs_bmap_add_free		__libxfs_bmap_add_free
+#define xfs_bmap_validate_extent	libxfs_bmap_validate_extent
 #define xfs_bmapi_read			libxfs_bmapi_read
+#define xfs_bmapi_remap			libxfs_bmapi_remap
 #define xfs_bmapi_write			libxfs_bmapi_write
 #define xfs_bmap_last_offset		libxfs_bmap_last_offset
+#define xfs_bmbt_calc_size		libxfs_bmbt_calc_size
+#define xfs_bmbt_commit_staged_btree	libxfs_bmbt_commit_staged_btree
+#define xfs_bmbt_disk_get_startoff	libxfs_bmbt_disk_get_startoff
+#define xfs_bmbt_disk_set_all		libxfs_bmbt_disk_set_all
 #define xfs_bmbt_maxlevels_ondisk	libxfs_bmbt_maxlevels_ondisk
 #define xfs_bmbt_maxrecs		libxfs_bmbt_maxrecs
+#define xfs_bmbt_stage_cursor		libxfs_bmbt_stage_cursor
 #define xfs_bmdr_maxrecs		libxfs_bmdr_maxrecs
 
 #define xfs_btree_bload			libxfs_btree_bload
@@ -116,6 +123,7 @@
 
 #define xfs_finobt_calc_reserves	libxfs_finobt_calc_reserves
 #define xfs_free_extent			libxfs_free_extent
+#define xfs_free_extent_later		libxfs_free_extent_later
 #define xfs_free_perag			libxfs_free_perag
 #define xfs_fs_geometry			libxfs_fs_geometry
 #define xfs_highbit32			libxfs_highbit32
@@ -126,7 +134,10 @@
 #define xfs_ialloc_read_agi		libxfs_ialloc_read_agi
 #define xfs_idata_realloc		libxfs_idata_realloc
 #define xfs_idestroy_fork		libxfs_idestroy_fork
+#define xfs_iext_first			libxfs_iext_first
+#define xfs_iext_insert_raw		libxfs_iext_insert_raw
 #define xfs_iext_lookup_extent		libxfs_iext_lookup_extent
+#define xfs_iext_next			libxfs_iext_next
 #define xfs_ifork_zap_attr		libxfs_ifork_zap_attr
 #define xfs_imap_to_bp			libxfs_imap_to_bp
 #define xfs_initialize_perag		libxfs_initialize_perag
@@ -173,10 +184,12 @@
 #define xfs_rmapbt_stage_cursor		libxfs_rmapbt_stage_cursor
 #define xfs_rmap_compare		libxfs_rmap_compare
 #define xfs_rmap_get_rec		libxfs_rmap_get_rec
+#define xfs_rmap_ino_bmbt_owner		libxfs_rmap_ino_bmbt_owner
 #define xfs_rmap_irec_offset_pack	libxfs_rmap_irec_offset_pack
 #define xfs_rmap_irec_offset_unpack	libxfs_rmap_irec_offset_unpack
 #define xfs_rmap_lookup_le		libxfs_rmap_lookup_le
 #define xfs_rmap_lookup_le_range	libxfs_rmap_lookup_le_range
+#define xfs_rmap_query_all		libxfs_rmap_query_all
 #define xfs_rmap_query_range		libxfs_rmap_query_range
 
 #define xfs_rtbitmap_getword		libxfs_rtbitmap_getword

@@ -16,6 +16,7 @@ HFILES = \
 	avl.h \
 	bulkload.h \
 	bmap.h \
+	bmap_repair.h \
 	btree.h \
 	da_util.h \
 	dinode.h \
@@ -41,6 +42,7 @@ CFILES = \
 	avl.c \
 	bulkload.c \
 	bmap.c \
+	bmap_repair.c \
 	btree.c \
 	da_util.c \
 	dino_chunks.c \
