@@ -174,7 +174,8 @@ phase2_func(
 	ret = scrub_primary_super(ctx, &alist);
 	if (ret)
 		goto out_wq;
-	ret = action_list_process_or_defer(ctx, 0, &alist);
+	ret = action_list_process(ctx, -1, &alist,
+			XRM_FINAL_WARNING | XRM_NOPROGRESS);
 	if (ret)
 		goto out_wq;
 
