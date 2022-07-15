@@ -30,8 +30,12 @@
 #define xfs_allocbt_maxrecs		libxfs_allocbt_maxrecs
 #define xfs_allocbt_stage_cursor	libxfs_allocbt_stage_cursor
 #define xfs_alloc_fix_freelist		libxfs_alloc_fix_freelist
+#define xfs_alloc_get_freelist		libxfs_alloc_get_freelist
 #define xfs_alloc_min_freelist		libxfs_alloc_min_freelist
+#define xfs_alloc_put_freelist		libxfs_alloc_put_freelist
 #define xfs_alloc_read_agf		libxfs_alloc_read_agf
+#define xfs_alloc_read_agfl		libxfs_alloc_read_agfl
+#define xfs_alloc_vextent_near_bno	libxfs_alloc_vextent_near_bno
 #define xfs_alloc_vextent_start_ag	libxfs_alloc_vextent_start_ag
 
 #define xfs_ascii_ci_hashname		libxfs_ascii_ci_hashname

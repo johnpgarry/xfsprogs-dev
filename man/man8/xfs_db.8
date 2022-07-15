@@ -182,10 +182,19 @@ Set current address to the AGF block for allocation group
 .IR agno .
 If no argument is given, use the current allocation group.
 .TP
-.BI "agfl [" agno ]
+.BI "agfl [" agno "] [\-g " " quantity" "] [\-p " quantity ]
 Set current address to the AGFL block for allocation group
 .IR agno .
 If no argument is given, use the current allocation group.
+If the
+.B -g
+option is specified with a positive quantity, remove that many blocks from the
+AGFL and put them in the free space btrees.
+If the quantity is negative, remove the blocks and leak them.
+If the
+.B -p
+option is specified, add that many blocks to the AGFL.
+If the quantity is negative, the blocks are selected from the end of the AG.
 .TP
 .BI "agi [" agno ]
 Set current address to the AGI block for allocation group
