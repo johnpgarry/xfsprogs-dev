@@ -1416,9 +1416,20 @@ _("invalid length %llu in record %u of %s\n"),
 			continue;
 		}
 
-		/* We only store file data and superblocks in the rtrmap. */
-		if (XFS_RMAP_NON_INODE_OWNER(owner) &&
-		    owner != XFS_RMAP_OWN_FS) {
+		/*
+		 * We only store file data, COW data, and superblocks in the
+		 * rtrmap.
+		 */
+		if (owner == XFS_RMAP_OWN_COW) {
+			if (!xfs_has_reflink(mp)) {
+				do_warn(
+_("invalid CoW staging extent in record %u of %s\n"),
+						i, name);
+				suspect++;
+				continue;
+			}
+		} else if (XFS_RMAP_NON_INODE_OWNER(owner) &&
+			   owner != XFS_RMAP_OWN_FS) {
 			do_warn(
 _("invalid owner %lld in record %u of %s\n"),
 				(long long int)owner, i, name);
