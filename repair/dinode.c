@@ -1736,6 +1736,39 @@ check_dinode_mode_format(
 	return 0;	/* invalid modes are checked elsewhere */
 }
 
+static int
+process_check_rt_inode(
+	struct xfs_mount	*mp,
+	struct xfs_dinode	*dinoc,
+	xfs_ino_t		lino,
+	int			*type,
+	int			*dirty,
+	int			expected_type,
+	const char		*tag)
+{
+	xfs_extnum_t		dnextents = xfs_dfork_data_extents(dinoc);
+
+	if (*type != expected_type) {
+		do_warn(
+_("%s inode %" PRIu64 " has bad type 0x%x, "),
+			tag, lino, dinode_fmt(dinoc));
+		if (!no_modify)  {
+			do_warn(_("resetting to regular file\n"));
+			change_dinode_fmt(dinoc, S_IFREG);
+			*dirty = 1;
+		} else  {
+			do_warn(_("would reset to regular file\n"));
+		}
+	}
+	if (mp->m_sb.sb_rblocks == 0 && dnextents != 0)  {
+		do_warn(
+_("bad # of extents (%" PRIu64 ") for %s inode %" PRIu64 "\n"),
+			dnextents, tag, lino);
+		return 1;
+	}
+	return 0;
+}
+
 /*
  * If inode is a superblock inode, does type check to make sure is it valid.
  * Returns 0 if it's valid, non-zero if it needs to be cleared.
@@ -1749,8 +1782,6 @@ process_check_sb_inodes(
 	int			*type,
 	int			*dirty)
 {
-	xfs_extnum_t		dnextents;
-
 	if (lino == mp->m_sb.sb_rootino) {
 		if (*type != XR_INO_DIR)  {
 			do_warn(_("root inode %" PRIu64 " has bad type 0x%x\n"),
@@ -1792,49 +1823,12 @@ process_check_sb_inodes(
 		}
 		return 0;
 	}
-	dnextents = xfs_dfork_data_extents(dinoc);
-	if (lino == mp->m_sb.sb_rsumino) {
-		if (*type != XR_INO_RTSUM) {
-			do_warn(
-_("realtime summary inode %" PRIu64 " has bad type 0x%x, "),
-				lino, dinode_fmt(dinoc));
-			if (!no_modify)  {
-				do_warn(_("resetting to regular file\n"));
-				change_dinode_fmt(dinoc, S_IFREG);
-				*dirty = 1;
-			} else  {
-				do_warn(_("would reset to regular file\n"));
-			}
-		}
-		if (mp->m_sb.sb_rblocks == 0 && dnextents != 0)  {
-			do_warn(
-_("bad # of extents (%" PRIu64 ") for realtime summary inode %" PRIu64 "\n"),
-				dnextents, lino);
-			return 1;
-		}
-		return 0;
-	}
-	if (lino == mp->m_sb.sb_rbmino) {
-		if (*type != XR_INO_RTBITMAP) {
-			do_warn(
-_("realtime bitmap inode %" PRIu64 " has bad type 0x%x, "),
-				lino, dinode_fmt(dinoc));
-			if (!no_modify)  {
-				do_warn(_("resetting to regular file\n"));
-				change_dinode_fmt(dinoc, S_IFREG);
-				*dirty = 1;
-			} else  {
-				do_warn(_("would reset to regular file\n"));
-			}
-		}
-		if (mp->m_sb.sb_rblocks == 0 && dnextents != 0)  {
-			do_warn(
-_("bad # of extents (%" PRIu64 ") for realtime bitmap inode %" PRIu64 "\n"),
-				dnextents, lino);
-			return 1;
-		}
-		return 0;
-	}
+	if (lino == mp->m_sb.sb_rsumino)
+		return process_check_rt_inode(mp, dinoc, lino, type, dirty,
+				XR_INO_RTSUM, _("realtime summary"));
+	if (lino == mp->m_sb.sb_rbmino)
+		return process_check_rt_inode(mp, dinoc, lino, type, dirty,
+				XR_INO_RTBITMAP, _("realtime bitmap"));
 	return 0;
 }
 
