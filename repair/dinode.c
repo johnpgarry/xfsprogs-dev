@@ -350,6 +350,10 @@ _("inode %" PRIu64 " - bad rt extent overflows - start %" PRIu64 ", "
 	 */
 	*tot += irec->br_blockcount;
 
+	/* Record mapping data for the realtime rmap. */
+	if (collect_rmaps && !zap_metadata && !check_dups)
+		rmap_add_rec(mp, ino, XFS_DATA_FORK, irec, true);
+
 	return 0;
 }
 
