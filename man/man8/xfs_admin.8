@@ -169,6 +169,14 @@ Enable sharing of file data blocks.
 This upgrade can fail if any AG has less than 2% free space remaining.
 The filesystem cannot be downgraded after this feature is enabled.
 This feature was added to Linux 4.9.
+.TP 0.4i
+.B rmapbt
+Store an index of the owners of on-disk blocks.
+This enables much stronger cross-referencing of various metadata structures
+and online repairs to space usage metadata.
+The filesystem cannot be downgraded after this feature is enabled.
+This upgrade can fail if any AG has less than 5% free space remaining.
+This feature was added to Linux 4.8.
 .RE
 .TP
 .BI \-U " uuid"

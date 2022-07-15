@@ -231,6 +231,40 @@ set_reflink(
 	return true;
 }
 
+static bool
+set_rmapbt(
+	struct xfs_mount	*mp,
+	struct xfs_sb		*new_sb)
+{
+	if (xfs_has_rmapbt(mp)) {
+		printf(_("Filesystem already supports reverse mapping btrees.\n"));
+		exit(0);
+	}
+
+	if (!xfs_has_crc(mp)) {
+		printf(
+	_("Reverse mapping btree feature only supported on V5 filesystems.\n"));
+		exit(0);
+	}
+
+	if (xfs_has_realtime(mp)) {
+		printf(
+	_("Reverse mapping btree feature not supported with realtime.\n"));
+		exit(0);
+	}
+
+	if (xfs_has_reflink(mp)) {
+		printf(
+	_("Reverse mapping btrees cannot be added when reflink is enabled.\n"));
+		exit(0);
+	}
+
+	printf(_("Adding reverse mapping btrees to filesystem.\n"));
+	new_sb->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_RMAPBT;
+	new_sb->sb_features_incompat |= XFS_SB_FEAT_INCOMPAT_NEEDSREPAIR;
+	return true;
+}
+
 struct check_state {
 	struct xfs_sb		sb;
 	uint64_t		features;
@@ -402,6 +436,8 @@ need_check_fs_free_space(
 		return true;
 	if (xfs_has_reflink(mp) && !(old->features & XFS_FEAT_REFLINK))
 		return true;
+	if (xfs_has_rmapbt(mp) && !(old->features & XFS_FEAT_RMAPBT))
+		return true;
 	return false;
 }
 
@@ -481,6 +517,8 @@ upgrade_filesystem(
 		dirty |= set_finobt(mp, &new_sb);
 	if (add_reflink)
 		dirty |= set_reflink(mp, &new_sb);
+	if (add_rmapbt)
+		dirty |= set_rmapbt(mp, &new_sb);
 	if (!dirty)
 		return;
 
