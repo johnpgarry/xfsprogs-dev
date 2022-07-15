@@ -55,45 +55,48 @@ report_close_error(
  * Defer all the repairs until phase 4, being careful about locking since the
  * inode scrub threads are not per-AG.
  */
-static void
+static int
 defer_inode_repair(
-	struct scrub_inode_ctx	*ictx,
-	xfs_agnumber_t		agno,
-	struct action_list	*alist)
+	struct scrub_inode_ctx		*ictx,
+	const struct xfs_bulkstat	*bstat,
+	struct scrub_item		*sri)
 {
-	if (alist->nr == 0)
-		return;
+	struct action_item		*aitem = NULL;
+	xfs_agnumber_t			agno;
+	int				ret;
 
+	ret = repair_item_to_action_item(ictx->ctx, sri, &aitem);
+	if (ret || !aitem)
+		return ret;
+
+	agno = cvt_ino_to_agno(&ictx->ctx->mnt, bstat->bs_ino);
 	pthread_mutex_lock(&ictx->locks[agno]);
-	action_list_defer(ictx->ctx, agno, alist);
+	action_list_add(&ictx->ctx->action_lists[agno], aitem);
 	pthread_mutex_unlock(&ictx->locks[agno]);
+	return 0;
 }
 
-/* Run repair actions now and defer unfinished items for later. */
+/* Run repair actions now and leave unfinished items for later. */
 static int
 try_inode_repair(
-	struct scrub_inode_ctx	*ictx,
-	int			fd,
-	xfs_agnumber_t		agno,
-	struct action_list	*alist)
+	struct scrub_inode_ctx		*ictx,
+	struct scrub_item		*sri,
+	int				fd,
+	const struct xfs_bulkstat	*bstat)
 {
-	int			ret;
-
 	/*
 	 * If at the start of phase 3 we already had ag/rt metadata repairs
 	 * queued up for phase 4, leave the action list untouched so that file
-	 * metadata repairs will be deferred in scan order until phase 4.
+	 * metadata repairs will be deferred until phase 4.
 	 */
 	if (ictx->always_defer_repairs)
 		return 0;
 
-	ret = action_list_process(ictx->ctx, fd, alist,
-			XRM_REPAIR_ONLY | XRM_NOPROGRESS);
-	if (ret)
-		return ret;
-
-	defer_inode_repair(ictx, agno, alist);
-	return 0;
+	/*
+	 * Try to repair the file metadata.  Unfixed metadata will remain in
+	 * the scrub item state to be queued as a single action item.
+	 */
+	return repair_file_corruption(ictx->ctx, sri, fd);
 }
 
 /* Verify the contents, xattrs, and extent maps of an inode. */
@@ -108,13 +111,11 @@ scrub_inode(
 	struct scrub_item	sri;
 	struct scrub_inode_ctx	*ictx = arg;
 	struct ptcounter	*icount = ictx->icount;
-	xfs_agnumber_t		agno;
 	int			fd = -1;
 	int			error;
 
 	scrub_item_init_file(&sri, bstat);
 	action_list_init(&alist);
-	agno = cvt_ino_to_agno(&ctx->mnt, bstat->bs_ino);
 	background_sleep();
 
 	/*
@@ -149,7 +150,7 @@ scrub_inode(
 	if (error)
 		goto out;
 
-	error = try_inode_repair(ictx, fd, agno, &alist);
+	error = try_inode_repair(ictx, &sri, fd, bstat);
 	if (error)
 		goto out;
 
@@ -164,7 +165,7 @@ scrub_inode(
 	if (error)
 		goto out;
 
-	error = try_inode_repair(ictx, fd, agno, &alist);
+	error = try_inode_repair(ictx, &sri, fd, bstat);
 	if (error)
 		goto out;
 
@@ -204,7 +205,7 @@ scrub_inode(
 		goto out;
 
 	/* Try to repair the file while it's open. */
-	error = try_inode_repair(ictx, fd, agno, &alist);
+	error = try_inode_repair(ictx, &sri, fd, bstat);
 	if (error)
 		goto out;
 
@@ -221,7 +222,7 @@ out:
 	progress_add(1);
 
 	if (!error && !ictx->aborted)
-		defer_inode_repair(ictx, agno, &alist);
+		error = defer_inode_repair(ictx, bstat, &sri);
 
 	if (fd >= 0) {
 		int	err2;

@@ -40,7 +40,7 @@ repair_ag(
 
 	/* Repair anything broken until we fail to make progress. */
 	do {
-		ret = action_list_process(ctx, -1, alist, flags);
+		ret = action_list_process(ctx, alist, flags);
 		if (ret) {
 			*aborted = true;
 			return;
@@ -55,7 +55,7 @@ repair_ag(
 
 	/* Try once more, but this time complain if we can't fix things. */
 	flags |= XRM_FINAL_WARNING;
-	ret = action_list_process(ctx, -1, alist, flags);
+	ret = action_list_process(ctx, alist, flags);
 	if (ret)
 		*aborted = true;
 }
@@ -167,8 +167,7 @@ phase4_func(
 	}
 
 	/* Repair counters before starting on the rest. */
-	ret = action_list_process(ctx, -1, &alist,
-			XRM_REPAIR_ONLY | XRM_NOPROGRESS);
+	ret = repair_item_corruption(ctx, &sri);
 	if (ret)
 		return ret;
 	action_list_discard(&alist);

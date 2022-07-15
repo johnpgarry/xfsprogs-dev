@@ -14,8 +14,6 @@ enum check_outcome {
 	CHECK_RETRY,	/* repair failed, try again later */
 };
 
-struct action_item;
-
 /*
  * These flags record the metadata object state that the kernel returned.
  * We want to remember if the object was corrupt, if the cross-referencing
@@ -109,15 +107,5 @@ bool can_force_rebuild(struct scrub_ctx *ctx);
 int scrub_file(struct scrub_ctx *ctx, int fd, const struct xfs_bulkstat *bstat,
 		unsigned int type, struct action_list *alist,
 		struct scrub_item *sri);
-
-/* Repair parameters are the scrub inputs and retry count. */
-struct action_item {
-	struct list_head	list;
-	__u64			ino;
-	__u32			type;
-	__u32			flags;
-	__u32			gen;
-	__u32			agno;
-};
 
 #endif /* XFS_SCRUB_SCRUB_H_ */

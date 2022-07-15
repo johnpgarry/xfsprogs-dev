@@ -58,6 +58,7 @@ scan_ag_metadata(
 	void				*arg)
 {
 	struct scrub_item		sri;
+	struct scrub_item		fix_now;
 	struct scrub_ctx		*ctx = (struct scrub_ctx *)wq->wq_ctx;
 	struct scan_ctl			*sctl = arg;
 	struct action_list		alist;
@@ -83,7 +84,7 @@ scan_ag_metadata(
 		goto err;
 
 	/* Repair header damage. */
-	ret = action_list_process_or_defer(ctx, agno, &alist);
+	ret = repair_item_corruption(ctx, &sri);
 	if (ret)
 		goto err;
 
@@ -99,17 +100,19 @@ scan_ag_metadata(
 	 * the inobt from rmapbt data, but if the rmapbt is broken even
 	 * at this early phase then we are sunk.
 	 */
-	difficulty = action_list_difficulty(&alist);
-	action_list_find_mustfix(&alist, &immediate_alist);
+	difficulty = repair_item_difficulty(&sri);
+	repair_item_mustfix(&sri, &fix_now);
 	warn_repair_difficulties(ctx, difficulty, descr);
 
 	/* Repair (inode) btree damage. */
-	ret = action_list_process_or_defer(ctx, agno, &immediate_alist);
+	ret = repair_item_corruption(ctx, &fix_now);
 	if (ret)
 		goto err;
 
 	/* Everything else gets fixed during phase 4. */
-	action_list_defer(ctx, agno, &alist);
+	ret = repair_item_defer(ctx, &sri);
+	if (ret)
+		goto err;
 	return;
 err:
 	sctl->aborted = true;
@@ -141,10 +144,14 @@ scan_fs_metadata(
 	}
 
 	/* Complain about metadata corruptions that might not be fixable. */
-	difficulty = action_list_difficulty(&alist);
+	difficulty = repair_item_difficulty(&sri);
 	warn_repair_difficulties(ctx, difficulty, xfrog_scrubbers[type].descr);
 
-	action_list_defer(ctx, 0, &alist);
+	ret = repair_item_defer(ctx, &sri);
+	if (ret) {
+		sctl->aborted = true;
+		goto out;
+	}
 
 out:
 	if (type == XFS_SCRUB_TYPE_RTBITMAP) {
@@ -193,8 +200,7 @@ phase2_func(
 	ret = scrub_meta_type(ctx, XFS_SCRUB_TYPE_SB, 0, &alist, &sri);
 	if (ret)
 		goto out_wq;
-	ret = action_list_process(ctx, -1, &alist,
-			XRM_FINAL_WARNING | XRM_NOPROGRESS);
+	ret = repair_item_completely(ctx, &sri);
 	if (ret)
 		goto out_wq;
 

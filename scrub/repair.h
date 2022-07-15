@@ -12,6 +12,8 @@ struct action_list {
 	bool			sorted;
 };
 
+struct action_item;
+
 int action_lists_alloc(size_t nr, struct action_list **listsp);
 void action_lists_free(struct action_list **listsp);
 
@@ -25,16 +27,14 @@ static inline bool action_list_empty(const struct action_list *alist)
 unsigned long long action_list_length(struct action_list *alist);
 void action_list_add(struct action_list *dest, struct action_item *item);
 void action_list_discard(struct action_list *alist);
-void action_list_splice(struct action_list *dest, struct action_list *src);
 
-void action_list_find_mustfix(struct action_list *actions,
-		struct action_list *immediate_alist);
+void repair_item_mustfix(struct scrub_item *sri, struct scrub_item *fix_now);
 
 /* Primary metadata is corrupt */
 #define REPAIR_DIFFICULTY_PRIMARY	(1U << 0)
 /* Secondary metadata is corrupt */
 #define REPAIR_DIFFICULTY_SECONDARY	(1U << 1)
-unsigned int action_list_difficulty(const struct action_list *actions);
+unsigned int repair_item_difficulty(const struct scrub_item *sri);
 
 /*
  * Only ask the kernel to repair this object if the kernel directly told us it
@@ -49,11 +49,36 @@ unsigned int action_list_difficulty(const struct action_list *actions);
 /* Don't call progress_add after repairing an item. */
 #define XRM_NOPROGRESS		(1U << 2)
 
-int action_list_process(struct scrub_ctx *ctx, int fd,
-		struct action_list *alist, unsigned int repair_flags);
-void action_list_defer(struct scrub_ctx *ctx, xfs_agnumber_t agno,
-		struct action_list *alist);
-int action_list_process_or_defer(struct scrub_ctx *ctx, xfs_agnumber_t agno,
-		struct action_list *alist);
+int action_list_process(struct scrub_ctx *ctx, struct action_list *alist,
+		unsigned int repair_flags);
+int repair_item_corruption(struct scrub_ctx *ctx, struct scrub_item *sri);
+int repair_file_corruption(struct scrub_ctx *ctx, struct scrub_item *sri,
+		int override_fd);
+int repair_item(struct scrub_ctx *ctx, struct scrub_item *sri,
+		unsigned int repair_flags);
+int repair_item_to_action_item(struct scrub_ctx *ctx,
+		const struct scrub_item *sri, struct action_item **aitemp);
+int repair_item_defer(struct scrub_ctx *ctx, const struct scrub_item *sri);
+
+static inline unsigned int
+repair_item_count_needsrepair(
+	const struct scrub_item	*sri)
+{
+	unsigned int		scrub_type;
+	unsigned int		nr = 0;
+
+	foreach_scrub_type(scrub_type)
+		if (sri->sri_state[scrub_type] & SCRUB_ITEM_REPAIR_ANY)
+			nr++;
+	return nr;
+}
+
+static inline int
+repair_item_completely(
+	struct scrub_ctx	*ctx,
+	struct scrub_item	*sri)
+{
+	return repair_item(ctx, sri, XRM_FINAL_WARNING | XRM_NOPROGRESS);
+}
 
 #endif /* XFS_SCRUB_REPAIR_H_ */

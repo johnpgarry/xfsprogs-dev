@@ -71,7 +71,7 @@ report_to_kernel(
 	 * Complain if we cannot fail the clean bill of health, unless we're
 	 * just testing repairs.
 	 */
-	if (action_list_length(&alist) > 0 &&
+	if (repair_item_count_needsrepair(&sri) != 0 &&
 	    !debug_tweak_on("XFS_SCRUB_FORCE_REPAIR")) {
 		str_info(ctx, _("Couldn't upload clean bill of health."), NULL);
 		action_list_discard(&alist);
