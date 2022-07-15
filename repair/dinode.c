@@ -3199,7 +3199,8 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 		}
 
 		if ((flags2 & XFS_DIFLAG2_REFLINK) &&
-		    (flags & (XFS_DIFLAG_REALTIME | XFS_DIFLAG_RTINHERIT))) {
+		    !xfs_has_rtreflink(mp) &&
+		    (flags & XFS_DIFLAG_REALTIME)) {
 			if (!uncertain) {
 				do_warn(
 	_("Cannot have a reflinked realtime inode %" PRIu64 "\n"),
@@ -3231,7 +3232,8 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 		}
 
 		if ((flags2 & XFS_DIFLAG2_COWEXTSIZE) &&
-		    (flags & (XFS_DIFLAG_REALTIME | XFS_DIFLAG_RTINHERIT))) {
+		    !xfs_has_rtreflink(mp) &&
+		    (flags & XFS_DIFLAG_REALTIME)) {
 			if (!uncertain) {
 				do_warn(
 	_("Cannot have CoW extent size hint on a realtime inode %" PRIu64 "\n"),
