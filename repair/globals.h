@@ -97,6 +97,7 @@ extern bool	add_finobt;		/* add free inode btrees */
 extern bool	add_reflink;		/* add reference count btrees */
 extern bool	add_rmapbt;		/* add reverse mapping btrees */
 extern bool	add_parent;		/* add parent pointers */
+extern bool	add_metadir;		/* add metadata directory tree */
 
 /* misc status variables */
 

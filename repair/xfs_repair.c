@@ -73,6 +73,7 @@ enum c_opt_nums {
 	CONVERT_REFLINK,
 	CONVERT_RMAPBT,
 	CONVERT_PARENT,
+	CONVERT_METADIR,
 	C_MAX_OPTS,
 };
 
@@ -85,6 +86,7 @@ static char *c_opts[] = {
 	[CONVERT_REFLINK]	= "reflink",
 	[CONVERT_RMAPBT]	= "rmapbt",
 	[CONVERT_PARENT]	= "parent",
+	[CONVERT_METADIR]	= "metadir",
 	[C_MAX_OPTS]		= NULL,
 };
 
@@ -379,6 +381,15 @@ process_args(int argc, char **argv)
 						do_abort(
 		_("-c parent only supports upgrades\n"));
 					add_parent = true;
+					break;
+				case CONVERT_METADIR:
+					if (!val)
+						do_abort(
+		_("-c metadir requires a parameter\n"));
+					if (strtol(val, NULL, 0) != 1)
+						do_abort(
+		_("-c metadir only supports upgrades\n"));
+					add_metadir = true;
 					break;
 				default:
 					unknown('c', val);

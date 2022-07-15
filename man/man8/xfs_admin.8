@@ -184,6 +184,14 @@ This enables much stronger cross-referencing and online repairs of the
 directory tree.
 The filesystem cannot be downgraded after this feature is enabled.
 This upgrade can fail if the filesystem has less than 25% free space remaining.
+.TP 0.4i
+.B metadir
+Create a directory tree of metadata inodes instead of storing them all in the
+superblock.
+This is required for reverse mapping btrees and reflink support on the realtime
+device.
+The filesystem cannot be downgraded after this feature is enabled.
+This upgrade can fail if any AG has less than 5% free space remaining.
 This feature is not upstream yet.
 .RE
 .TP

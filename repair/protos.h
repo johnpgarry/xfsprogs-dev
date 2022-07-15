@@ -3,6 +3,8 @@
  * Copyright (c) 2000-2001,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#ifndef __XFS_REPAIR_PROTOS_H__
+#define __XFS_REPAIR_PROTOS_H__
 
 void	xfs_init(struct libxfs_init *args);
 
@@ -45,3 +47,7 @@ void	phase7(struct xfs_mount *, int);
 int	verify_set_agheader(struct xfs_mount *, struct xfs_buf *,
 		struct xfs_sb *, struct xfs_agf *, struct xfs_agi *,
 		xfs_agnumber_t);
+
+bool wipe_pre_metadir_file(xfs_ino_t ino);
+
+#endif  /* __XFS_REPAIR_PROTOS_H__ */
