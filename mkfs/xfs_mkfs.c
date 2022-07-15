@@ -2474,12 +2474,18 @@ _("reflink not supported with realtime devices\n"));
 		}
 		cli->sb_feat.reflink = false;
 
-		if (cli->sb_feat.rmapbt && cli_opt_set(&mopts, M_RMAPBT)) {
-			fprintf(stderr,
-_("rmapbt not supported with realtime devices\n"));
-			usage();
+		if (!cli->sb_feat.rtgroups && cli->sb_feat.rmapbt) {
+			if (cli_opt_set(&mopts, M_RMAPBT) &&
+			    cli_opt_set(&ropts, R_RTGROUPS)) {
+				fprintf(stderr,
+_("rmapbt not supported on realtime devices without rtgroups feature\n"));
+				usage();
+			} else if (cli_opt_set(&mopts, M_RMAPBT)) {
+				cli->sb_feat.rtgroups = true;
+			} else {
+				cli->sb_feat.rmapbt = false;
+			}
 		}
-		cli->sb_feat.rmapbt = false;
 	}
 
 	if ((cli->fsx.fsx_xflags & FS_XFLAG_COWEXTSIZE) &&
@@ -4553,6 +4559,77 @@ cfgfile_parse(
 		cli->cfgfile);
 }
 
+static inline void
+prealloc_fail(
+	struct xfs_mount	*mp,
+	int			error,
+	xfs_filblks_t		ask,
+	const char		*tag)
+{
+	if (error == ENOSPC)
+		fprintf(stderr,
+	_("%s: cannot handle expansion of %s; need %llu free blocks, have %llu\n"),
+				progname, tag, (unsigned long long)ask,
+				(unsigned long long)mp->m_sb.sb_fdblocks);
+	else
+		fprintf(stderr,
+	_("%s: error %d while checking free space for %s\n"),
+				progname, error, tag);
+	exit(1);
+}
+
+/*
+ * Make sure there's enough space on the data device to handle realtime
+ * metadata btree expansions.
+ */
+static void
+check_rt_meta_prealloc(
+	struct xfs_mount	*mp)
+{
+	struct xfs_perag	*pag;
+	struct xfs_rtgroup	*rtg;
+	xfs_agnumber_t		agno;
+	xfs_rgnumber_t		rgno;
+	xfs_filblks_t		ask;
+	int			error;
+
+	/*
+	 * First create all the per-AG reservations, since they take from the
+	 * free block count.  Each AG should start with enough free space for
+	 * the per-AG reservation.
+	 */
+	mp->m_finobt_nores = false;
+
+	for_each_perag(mp, agno, pag) {
+		error = -libxfs_ag_resv_init(pag, NULL);
+		if (error && error != ENOSPC) {
+			fprintf(stderr,
+	_("%s: error %d while checking AG free space for realtime metadata\n"),
+					progname, error);
+			exit(1);
+		}
+	}
+
+	/* Realtime metadata btree inode */
+	for_each_rtgroup(mp, rgno, rtg) {
+		ask = libxfs_rtrmapbt_calc_reserves(mp);
+		error = -libxfs_imeta_resv_init_inode(rtg->rtg_rmapip, ask);
+		if (error)
+			prealloc_fail(mp, error, ask, _("realtime rmap btree"));
+	}
+
+	/* Unreserve the realtime metadata reservations. */
+	for_each_rtgroup(mp, rgno, rtg) {
+		libxfs_imeta_resv_free_inode(rtg->rtg_rmapip);
+	}
+
+	/* Unreserve the per-AG reservations. */
+	for_each_perag(mp, agno, pag)
+		libxfs_ag_resv_free(pag);
+
+	mp->m_finobt_nores = false;
+}
+
 int
 main(
 	int			argc,
@@ -4921,6 +4998,9 @@ main(
 	 * Protect ourselves against possible stupidity
 	 */
 	check_root_ino(mp);
+
+	/* Make sure we can handle space preallocations of rt metadata btrees */
+	check_rt_meta_prealloc(mp);
 
 	/*
 	 * Re-write multiple secondary superblocks with rootinode field set
