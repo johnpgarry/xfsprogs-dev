@@ -159,6 +159,9 @@ block_to_bt(
 	case TYP_REFCBT:
 		magic = crc ? XFS_REFC_CRC_MAGIC : 0;
 		break;
+	case TYP_RTREFCBT:
+		magic = crc ? XFS_RTREFC_CRC_MAGIC : 0;
+		break;
 	default:
 		ASSERT(0);
 	}
