@@ -319,7 +319,9 @@ action_list_difficulty(
 	unsigned int			ret = 0;
 
 	list_for_each_entry_safe(aitem, n, &alist->list, list) {
-		if (!(aitem->flags & XFS_SCRUB_OFLAG_CORRUPT))
+		if (!(aitem->flags & (XFS_SCRUB_OFLAG_CORRUPT |
+				      XFS_SCRUB_OFLAG_XCORRUPT |
+				      XFS_SCRUB_OFLAG_XFAIL)))
 			continue;
 
 		switch (aitem->type) {
