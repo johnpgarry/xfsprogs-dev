@@ -19,15 +19,37 @@ static cmdinfo_t rginfo_cmd;
 static int
 report_aginfo(
 	struct xfs_fd		*xfd,
-	xfs_agnumber_t		agno)
+	xfs_agnumber_t		agno,
+	int			oflag)
 {
 	struct xfs_ag_geometry	ageo = { 0 };
+	bool			update = false;
 	int			ret;
 
 	ret = -xfrog_ag_geometry(xfd->fd, agno, &ageo);
 	if (ret) {
 		xfrog_perror(ret, "aginfo");
 		return 1;
+	}
+
+	switch (oflag) {
+	case 0:
+		ageo.ag_flags |= XFS_AG_FLAG_UPDATE;
+		ageo.ag_flags &= ~XFS_AG_FLAG_NOALLOC;
+		update = true;
+		break;
+	case 1:
+		ageo.ag_flags |= (XFS_AG_FLAG_UPDATE | XFS_AG_FLAG_NOALLOC);
+		update = true;
+		break;
+	}
+
+	if (update) {
+		ret = -xfrog_ag_geometry(xfd->fd, agno, &ageo);
+		if (ret) {
+			xfrog_perror(ret, "aginfo update");
+			return 1;
+		}
 	}
 
 	printf(_("AG: %u\n"),		ageo.ag_number);
@@ -51,6 +73,7 @@ aginfo_f(
 	struct xfs_fd		xfd = XFS_FD_INIT(file->fd);
 	unsigned long long	x;
 	xfs_agnumber_t		agno = NULLAGNUMBER;
+	int			oflag = -1;
 	int			c;
 	int			ret = 0;
 
@@ -61,7 +84,7 @@ aginfo_f(
 		return 1;
 	}
 
-	while ((c = getopt(argc, argv, "a:")) != EOF) {
+	while ((c = getopt(argc, argv, "a:o:")) != EOF) {
 		switch (c) {
 		case 'a':
 			errno = 0;
@@ -74,16 +97,27 @@ aginfo_f(
 			}
 			agno = x;
 			break;
+		case 'o':
+			errno = 0;
+			x = strtoll(optarg, NULL, 10);
+			if (!errno && x != 0 && x != 1)
+				errno = ERANGE;
+			if (errno) {
+				perror("aginfo");
+				return 1;
+			}
+			oflag = x;
+			break;
 		default:
 			return command_usage(&aginfo_cmd);
 		}
 	}
 
 	if (agno != NULLAGNUMBER) {
-		ret = report_aginfo(&xfd, agno);
+		ret = report_aginfo(&xfd, agno, oflag);
 	} else {
 		for (agno = 0; !ret && agno < xfd.fsgeom.agcount; agno++) {
-			ret = report_aginfo(&xfd, agno);
+			ret = report_aginfo(&xfd, agno, oflag);
 		}
 	}
 
@@ -98,6 +132,7 @@ aginfo_help(void)
 "Report allocation group geometry.\n"
 "\n"
 " -a agno  -- Report on the given allocation group.\n"
+" -o state -- Change the NOALLOC state for this allocation group.\n"
 "\n"));
 
 }
@@ -107,7 +142,7 @@ static cmdinfo_t aginfo_cmd = {
 	.cfunc = aginfo_f,
 	.argmin = 0,
 	.argmax = -1,
-	.args = "[-a agno]",
+	.args = "[-a agno] [-o state]",
 	.flags = CMD_NOMAP_OK,
 	.help = aginfo_help,
 };

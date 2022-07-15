@@ -1240,7 +1240,7 @@ for the current memory mapping.
 
 .SH FILESYSTEM COMMANDS
 .TP
-.BI "aginfo [ \-a " agno " ]"
+.BI "aginfo [ \-a " agno " ] [ \-o " nr " ]"
 Show information about or update the state of allocation groups.
 .RE
 .RS 1.0i
@@ -1248,6 +1248,10 @@ Show information about or update the state of allocation groups.
 .TP
 .BI \-a
 Act only on a specific allocation group.
+.TP
+.BI \-o
+If 0, clear the NOALLOC flag.
+If 1, set the NOALLOC flag.
 .PD
 .RE
 
