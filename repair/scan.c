@@ -1754,12 +1754,6 @@ out:
 	return 0;
 }
 
-struct refc_priv {
-	struct xfs_refcount_irec	last_rec;
-	xfs_agblock_t			nr_blocks;
-};
-
-
 static void
 scan_refcbt(
 	struct xfs_btree_block	*block,
@@ -1995,6 +1989,299 @@ out:
 	if (suspect)
 		refcount_avoid_check();
 	return;
+}
+
+
+int
+process_rtrefc_reclist(
+	struct xfs_mount	*mp,
+	struct xfs_refcount_rec	*rp,
+	int			numrecs,
+	struct refc_priv	*refc_priv,
+	const char		*name)
+{
+	xfs_rtblock_t		lastblock = 0;
+	xfs_rtblock_t		rtbno, next_rtbno;
+	int			state;
+	int			suspect = 0;
+	int			i;
+
+	for (i = 0; i < numrecs; i++) {
+		enum xfs_refc_domain	domain;
+		xfs_rgblock_t		b, rgbno, end;
+		xfs_extlen_t		len;
+		xfs_nlink_t		nr;
+
+		b = rgbno = be32_to_cpu(rp[i].rc_startblock);
+		len = be32_to_cpu(rp[i].rc_blockcount);
+		nr = be32_to_cpu(rp[i].rc_refcount);
+
+		if (b & XFS_REFC_COWFLAG) {
+			domain = XFS_REFC_DOMAIN_COW;
+			rgbno &= ~XFS_REFC_COWFLAG;
+		} else {
+			domain = XFS_REFC_DOMAIN_SHARED;
+		}
+
+		if (domain == XFS_REFC_DOMAIN_COW && nr != 1) {
+			do_warn(
+_("leftover rt CoW extent has incorrect refcount in record %u of %s\n"),
+					i, name);
+			suspect++;
+		}
+		if (nr == 1) {
+			if (domain != XFS_REFC_DOMAIN_COW) {
+				do_warn(
+_("leftover rt CoW extent has invalid startblock in record %u of %s\n"),
+					i, name);
+				suspect++;
+			}
+		}
+		end = rgbno + len;
+
+		rtbno = xfs_rgbno_to_rtb(mp, refc_priv->rgno, rgbno);
+		if (!libxfs_verify_rtbno(mp, rtbno)) {
+			do_warn(
+_("invalid start block %llu in record %u of %s\n"),
+					(unsigned long long)b, i, name);
+			suspect++;
+			continue;
+		}
+
+		next_rtbno = xfs_rgbno_to_rtb(mp, refc_priv->rgno, end);
+		if (len == 0 || end <= rgbno ||
+		    !libxfs_verify_rtbno(mp, next_rtbno - 1)) {
+			do_warn(
+_("invalid length %llu in record %u of %s\n"),
+					(unsigned long long)len, i, name);
+			suspect++;
+			continue;
+		}
+
+		if (nr == 1) {
+			xfs_rtxnum_t	rtx, next_rtx;
+
+			rtx = xfs_rtb_to_rtx(mp, rtbno);
+			next_rtx = xfs_rtb_to_rtx(mp, next_rtbno);
+			for (; rtx < next_rtx; rtx++) {
+				state = get_rtbmap(rtx);
+				switch (state) {
+				case XR_E_UNKNOWN:
+				case XR_E_COW:
+					do_warn(
+_("leftover CoW rtextent (%llu)\n"),
+						(unsigned long long)rtx);
+					suspect++;
+					set_rtbmap(rtx, XR_E_FREE);
+					break;
+				default:
+					do_warn(
+_("rtextent (%llu) claimed, state is %d\n"),
+						(unsigned long long)rtx, state);
+					suspect++;
+					break;
+				}
+			}
+		} else if (nr < 2 || nr > XFS_REFC_REFCOUNT_MAX) {
+			do_warn(
+_("invalid rt reference count %u in record %u of %s\n"),
+					nr, i, name);
+			suspect++;
+			continue;
+		}
+
+		if (b && b <= lastblock) {
+			do_warn(_(
+"out-of-order %s btree record %d (%llu %llu) in %s\n"),
+					name, i, (unsigned long long)b,
+					(unsigned long long)len, name);
+			suspect++;
+		} else {
+			lastblock = end - 1;
+		}
+
+		/* Is this record mergeable with the last one? */
+		if (refc_priv->last_rec.rc_domain == domain &&
+		    refc_priv->last_rec.rc_startblock +
+		    refc_priv->last_rec.rc_blockcount == rgbno &&
+		    refc_priv->last_rec.rc_refcount == nr) {
+			do_warn(
+_("record %d of %s tree should be merged with previous record\n"),
+					i, name);
+			suspect++;
+			refc_priv->last_rec.rc_blockcount += len;
+		} else {
+			refc_priv->last_rec.rc_domain = domain;
+			refc_priv->last_rec.rc_startblock = rgbno;
+			refc_priv->last_rec.rc_blockcount = len;
+			refc_priv->last_rec.rc_refcount = nr;
+		}
+
+		/* XXX: probably want to mark the reflinked areas? */
+	}
+
+	return suspect;
+}
+
+int
+scan_rtrefcbt(
+	struct xfs_btree_block		*block,
+	int				level,
+	int				type,
+	int				whichfork,
+	xfs_fsblock_t			fsbno,
+	xfs_ino_t			ino,
+	xfs_rfsblock_t			*tot,
+	uint64_t			*nex,
+	struct blkmap			**blkmapp,
+	bmap_cursor_t			*bm_cursor,
+	int				suspect,
+	int				isroot,
+	int				check_dups,
+	int				*dirty,
+	uint64_t			magic,
+	void				*priv)
+{
+	const char			*name = "rtrefcount";
+	char				rootname[256];
+	int				i;
+	xfs_rtrefcount_ptr_t		*pp;
+	struct xfs_refcount_rec	*rp;
+	struct refc_priv		*refc_priv = priv;
+	int				hdr_errors = 0;
+	int				numrecs;
+	int				state;
+	xfs_agnumber_t			agno;
+	xfs_agblock_t			agbno;
+	int				error;
+
+	agno = XFS_FSB_TO_AGNO(mp, fsbno);
+	agbno = XFS_FSB_TO_AGBNO(mp, fsbno);
+
+	if (magic != XFS_RTREFC_CRC_MAGIC) {
+		name = "(unknown)";
+		hdr_errors++;
+		suspect++;
+		goto out;
+	}
+
+	if (be32_to_cpu(block->bb_magic) != magic) {
+		do_warn(_("bad magic # %#x in %s btree block %d/%d\n"),
+				be32_to_cpu(block->bb_magic), name, agno,
+				agbno);
+		hdr_errors++;
+		if (suspect)
+			goto out;
+	}
+
+	if (be16_to_cpu(block->bb_level) != level) {
+		do_warn(_("expected level %d got %d in %s btree block %d/%d\n"),
+				level, be16_to_cpu(block->bb_level), name,
+				agno, agbno);
+		hdr_errors++;
+		if (suspect)
+			goto out;
+	}
+
+	refc_priv->nr_blocks++;
+
+	/*
+	 * Check for btree blocks multiply claimed.  We're going to regenerate
+	 * the btree anyway, so mark the blocks as metadata so they get freed.
+	 */
+	state = get_bmap(agno, agbno);
+	if (!(state == XR_E_UNKNOWN || state == XR_E_INUSE1))  {
+		do_warn(
+_("%s btree block claimed (state %d), agno %d, agbno %d, suspect %d\n"),
+				name, state, agno, agbno, suspect);
+		goto out;
+	}
+	set_bmap(agno, agbno, XR_E_METADATA);
+
+	numrecs = be16_to_cpu(block->bb_numrecs);
+	if (level == 0) {
+		if (numrecs > mp->m_rtrefc_mxr[0])  {
+			numrecs = mp->m_rtrefc_mxr[0];
+			hdr_errors++;
+		}
+		if (isroot == 0 && numrecs < mp->m_rtrefc_mnr[0])  {
+			numrecs = mp->m_rtrefc_mnr[0];
+			hdr_errors++;
+		}
+
+		if (hdr_errors) {
+			do_warn(
+	_("bad btree nrecs (%u, min=%u, max=%u) in %s btree block %u/%u\n"),
+					be16_to_cpu(block->bb_numrecs),
+					mp->m_rtrefc_mnr[0],
+					mp->m_rtrefc_mxr[0], name, agno, agbno);
+			suspect++;
+		}
+
+		rp = xfs_rtrefcount_rec_addr(block, 1);
+		snprintf(rootname, 256, "%s btree block %u/%u", name, agno,
+				agbno);
+		error = process_rtrefc_reclist(mp, rp, numrecs, refc_priv,
+				rootname);
+		if (error)
+			suspect++;
+		goto out;
+	}
+
+	/*
+	 * interior record
+	 */
+	pp = xfs_rtrefcount_ptr_addr(block, 1, mp->m_rtrefc_mxr[1]);
+
+	if (numrecs > mp->m_rtrefc_mxr[1])  {
+		numrecs = mp->m_rtrefc_mxr[1];
+		hdr_errors++;
+	}
+	if (isroot == 0 && numrecs < mp->m_rtrefc_mnr[1])  {
+		numrecs = mp->m_rtrefc_mnr[1];
+		hdr_errors++;
+	}
+
+	/*
+	 * don't pass bogus tree flag down further if this block
+	 * looked ok.  bail out if two levels in a row look bad.
+	 */
+	if (hdr_errors)  {
+		do_warn(
+	_("bad btree nrecs (%u, min=%u, max=%u) in %s btree block %u/%u\n"),
+				be16_to_cpu(block->bb_numrecs),
+				mp->m_rtrefc_mnr[1], mp->m_rtrefc_mxr[1], name,
+				agno, agbno);
+		if (suspect)
+			goto out;
+		suspect++;
+	} else if (suspect) {
+		suspect = 0;
+	}
+
+	for (i = 0; i < numrecs; i++)  {
+		xfs_fsblock_t		pbno = be64_to_cpu(pp[i]);
+
+		if (!libxfs_verify_fsbno(mp, pbno)) {
+			do_warn(
+	_("bad btree pointer (%u) in %sbt block %u/%u\n"),
+					agbno, name, agno, agbno);
+			suspect++;
+			return 0;
+		}
+
+		scan_lbtree(pbno, level, scan_rtrefcbt, type, whichfork, ino,
+				tot, nex, blkmapp, bm_cursor, suspect, 0,
+				check_dups, magic, refc_priv,
+				&xfs_rtrefcountbt_buf_ops);
+	}
+out:
+	if (suspect) {
+		refcount_avoid_check();
+		return 1;
+	}
+
+	return 0;
 }
 
 /*

@@ -262,6 +262,15 @@ bool is_rtrmap_inode(xfs_ino_t ino)
 	return bitmap_test(rmap_inodes, ino, 1);
 }
 
+xfs_rgnumber_t
+rtgroup_for_rtrefcount_inode(
+	struct xfs_mount	*mp,
+	xfs_ino_t		ino)
+{
+	/* This will be implemented later. */
+	return NULLRGNUMBER;
+}
+
 /*
  * Initialize per-AG reverse map data.
  */

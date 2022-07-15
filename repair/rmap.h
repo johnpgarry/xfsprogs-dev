@@ -64,4 +64,7 @@ int populate_rtgroup_rmapbt(struct xfs_rtgroup *rtg, struct xfs_inode *ip,
 		xfs_filblks_t fdblocks);
 xfs_filblks_t estimate_rtrmapbt_blocks(struct xfs_rtgroup *rtg);
 
+xfs_rgnumber_t rtgroup_for_rtrefcount_inode(struct xfs_mount *mp,
+		xfs_ino_t ino);
+
 #endif /* RMAP_H_ */
