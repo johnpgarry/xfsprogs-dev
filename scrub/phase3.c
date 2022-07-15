@@ -99,6 +99,58 @@ try_inode_repair(
 	return repair_file_corruption(ictx->ctx, sri, fd);
 }
 
+/*
+ * If we couldn't check all the scheduled file metadata items, try performing
+ * spot repairs until we check everything or stop making forward progress.
+ */
+static int
+repair_and_scrub_inode_loop(
+	struct scrub_ctx	*ctx,
+	struct xfs_bulkstat	*bstat,
+	int			fd,
+	struct scrub_item	*sri,
+	bool			*defer)
+{
+	unsigned int		to_check;
+	int			error;
+
+	*defer = false;
+	if (ctx->mode != SCRUB_MODE_REPAIR)
+		return 0;
+
+	to_check = scrub_item_count_needscheck(sri);
+	while (to_check > 0) {
+		unsigned int	nr;
+
+		error = repair_file_corruption(ctx, sri, fd);
+		if (error)
+			return error;
+
+		error = scrub_item_check_file(ctx, sri, fd);
+		if (error)
+			return error;
+
+		nr = scrub_item_count_needscheck(sri);
+		if (nr == to_check) {
+			char	descr[DESCR_BUFSZ];
+
+			/*
+			 * We cannot make forward scanning progress with this
+			 * inode, so defer the rest until phase 4.
+			 */
+			scrub_render_ino_descr(ctx, descr, DESCR_BUFSZ,
+					bstat->bs_ino, bstat->bs_gen, NULL);
+			str_info(ctx, descr,
+ _("Unable to make forward checking progress; will try again in phase 4."));
+			*defer = true;
+			return 0;
+		}
+		to_check = nr;
+	}
+
+	return 0;
+}
+
 /* Verify the contents, xattrs, and extent maps of an inode. */
 static int
 scrub_inode(
@@ -169,11 +221,28 @@ scrub_inode(
 	scrub_item_schedule(&sri, XFS_SCRUB_TYPE_XATTR);
 	scrub_item_schedule(&sri, XFS_SCRUB_TYPE_PARENT);
 
-	/* Try to check and repair the file while it's open. */
+	/*
+	 * Try to check all of the metadata items that we just scheduled.  If
+	 * we return with some types still needing a check and the space
+	 * metadata isn't also in need of repairs, try repairing any damaged
+	 * file metadata that we've found so far, and try checking the file
+	 * again.  Worst case, defer the repairs and the checks to phase 4 if
+	 * we can't make any progress on anything.
+	 */
 	error = scrub_item_check_file(ctx, &sri, fd);
 	if (error)
 		goto out;
 
+	if (!ictx->always_defer_repairs) {
+		bool	defer_repairs;
+
+		error = repair_and_scrub_inode_loop(ctx, bstat, fd, &sri,
+				&defer_repairs);
+		if (error || defer_repairs)
+			goto out;
+	}
+
+	/* Try to repair the file while it's open. */
 	error = try_inode_repair(ictx, &sri, fd);
 	if (error)
 		goto out;
