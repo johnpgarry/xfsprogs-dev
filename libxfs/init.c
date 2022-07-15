@@ -463,6 +463,7 @@ libxfs_buftarg_alloc(
 	btp->bt_mount = mp;
 	btp->bt_bdev = dev->dev;
 	btp->bt_bdev_fd = dev->fd;
+	btp->bt_xfile = NULL;
 	btp->flags = 0;
 	if (write_fails) {
 		btp->writes_left = write_fails;

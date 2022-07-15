@@ -27,6 +27,7 @@ struct xfs_buftarg {
 	unsigned long		writes_left;
 	dev_t			bt_bdev;
 	int			bt_bdev_fd;
+	struct xfile		*bt_xfile;
 	unsigned int		flags;
 	struct cache		*bcache;	/* buffer cache */
 };
@@ -39,6 +40,8 @@ struct xfs_buftarg {
 #define XFS_BUFTARG_INJECT_WRITE_FAIL	(1 << 2)
 /* purge buffers when lookups find a size mismatch */
 #define XFS_BUFTARG_MISCOMPARE_PURGE	(1 << 3)
+/* use bt_xfile instead of bt_bdev/bt_bdev_fd */
+#define XFS_BUFTARG_XFILE		(1 << 4)
 
 /* Simulate the system crashing after a certain number of writes. */
 static inline void
