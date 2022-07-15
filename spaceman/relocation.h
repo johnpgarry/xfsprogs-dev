@@ -43,4 +43,9 @@ struct inode_path {
  */
 #define UNLINKED_IPATH		((struct inode_path *)1)
 
+int find_relocation_targets(xfs_agnumber_t agno);
+int relocate_file_to_ag(const char *mnt, const char *path, struct xfs_fd *xfd,
+			xfs_agnumber_t agno);
+int resolve_target_paths(const char *mntpt);
+
 #endif /* XFS_SPACEMAN_RELOCATION_H_ */

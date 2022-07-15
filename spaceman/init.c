@@ -40,6 +40,7 @@ init_commands(void)
 	move_inode_init();
 	find_owner_init();
 	resolve_owner_init();
+	relocate_init();
 }
 
 static int

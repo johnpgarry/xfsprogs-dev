@@ -12,6 +12,7 @@
 #include "space.h"
 #include "input.h"
 #include "handle.h"
+#include "relocation.h"
 
 #include <linux/fiemap.h>
 #include <linux/falloc.h>
@@ -404,8 +405,8 @@ exchange_inodes(
 	return 0;
 }
 
-static int
-move_file_to_ag(
+int
+relocate_file_to_ag(
 	const char		*mnt,
 	const char		*path,
 	struct xfs_fd		*xfd,
@@ -511,7 +512,7 @@ _("Destination AG %d does not exist. Filesystem only has %d AGs\n"),
 	}
 
 	if (S_ISREG(st.st_mode)) {
-		ret = move_file_to_ag(file->fs_path.fs_dir, file->name,
+		ret = relocate_file_to_ag(file->fs_path.fs_dir, file->name,
 				&file->xfd, agno);
 	} else {
 		fprintf(stderr, _("Unsupported: %s is not a regular file.\n"),

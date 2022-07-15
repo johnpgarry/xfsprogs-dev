@@ -202,6 +202,16 @@ cvt_daddr_to_agno(
 	return cvt_bb_to_off_fsbt(xfd, daddr) / xfd->fsgeom.agblocks;
 }
 
+/* Convert sparse filesystem block to AG Number */
+static inline uint32_t
+cvt_fsb_to_agno(
+	struct xfs_fd		*xfd,
+	uint64_t		fsbno)
+{
+	return fsbno >> xfd->agblklog;
+}
+
+
 /* Convert sector number to AG block number. */
 static inline uint32_t
 cvt_daddr_to_agbno(

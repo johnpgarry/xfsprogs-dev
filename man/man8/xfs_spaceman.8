@@ -203,8 +203,16 @@ Wait for removal to complete.
 .B print
 Display a list of all open files.
 .TP
+.BI "relocate \-a agno [ \-h agno ]"
+Empty out the given allocation group by moving file data elsewhere.
+The
+.B -h
+option specifies the highest allocation group into which we can move data.
+
+.TP
 .B resolve_owner
 Resolves space in the filesystem to file paths, maybe?
+
 .TP
 .B quit
 Exit

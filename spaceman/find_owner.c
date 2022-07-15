@@ -9,10 +9,10 @@
 #include <linux/fiemap.h>
 #include "libfrog/fsgeom.h"
 #include "libfrog/radix-tree.h"
-#include "command.h"
-#include "init.h"
 #include "libfrog/paths.h"
 #include <linux/fsmap.h>
+#include "command.h"
+#include "init.h"
 #include "space.h"
 #include "input.h"
 #include "relocation.h"
@@ -65,8 +65,8 @@ track_inode(
 	set_reloc_iflag(owner, MOVE_BLOCKS);
 }
 
-static void
-scan_ag(
+int
+find_relocation_targets(
 	xfs_agnumber_t		agno)
 {
 	struct fsmap_head	*fsmap;
@@ -80,8 +80,7 @@ scan_ag(
 	fsmap = malloc(fsmap_sizeof(NR_EXTENTS));
 	if (!fsmap) {
 		fprintf(stderr, _("%s: fsmap malloc failed.\n"), progname);
-		exitcode = 1;
-		return;
+		return -ENOMEM;
 	}
 
 	memset(fsmap, 0, sizeof(*fsmap));
@@ -102,8 +101,7 @@ scan_ag(
 			fprintf(stderr, _("%s: FS_IOC_GETFSMAP [\"%s\"]: %s\n"),
 				progname, file->name, strerror(errno));
 			free(fsmap);
-			exitcode = 1;
-			return;
+			return -errno;
 		}
 
 		/* No more extents to map, exit */
@@ -148,6 +146,7 @@ scan_ag(
 	}
 
 	free(fsmap);
+	return 0;
 }
 
 /*
@@ -159,6 +158,7 @@ find_owner_f(
 	char			**argv)
 {
 	xfs_agnumber_t		agno = -1;
+	int			ret;
 	int			c;
 
 	while ((c = getopt(argc, argv, "a:")) != EOF) {
@@ -198,7 +198,9 @@ _("Filesystem at %s does not have reverse mapping enabled. Aborting.\n"),
 		return 0;
 	}
 
-	scan_ag(agno);
+	ret = find_relocation_targets(agno);
+	if (ret)
+		exitcode = 1;
 	return 0;
 }
 
@@ -299,8 +301,8 @@ _("Aborting: Storing path %s for inode 0x%lx failed: %s\n"),
  * This should be parallelised - pass subdirs off to a work queue, have the
  * work queue processes subdirs, queueing more subdirs to work on.
  */
-static int
-walk_mount(
+int
+resolve_target_paths(
 	const char	*mntpt)
 {
 	int		ret;
@@ -361,9 +363,9 @@ list_inode_paths(void)
 
 	/*
 	 * Any inodes remaining in the tree at this point indicate inodes whose
-	 * paths were not found. This will be unlinked but still open inodes or
-	 * lost inodes due to corruptions. Either way, a shrink will not succeed
-	 * until these inodes are removed from the filesystem.
+	 * paths were not found. This will be free inodes or unlinked but still
+	 * open inodes. Either way, a shrink will not succeed until these inodes
+	 * are removed from the filesystem.
 	 */
 	idx = 0;
 	do {
@@ -400,7 +402,7 @@ _("Inode list has not been populated. No inodes to resolve.\n"));
 		return 0;
 	}
 
-	ret = walk_mount(file->fs_path.fs_dir);
+	ret = resolve_target_paths(file->fs_path.fs_dir);
 	if (ret) {
 		fprintf(stderr,
 _("Failed to resolve all paths from mount point %s: %s\n"),
