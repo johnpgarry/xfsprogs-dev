@@ -108,6 +108,7 @@ binary-arch: checkroot built
 	dh_compress
 	dh_fixperms
 	dh_makeshlibs
+	dh_installsystemd -p xfsprogs --no-enable --no-start --no-restart-after-upgrade --no-stop-on-upgrade
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol
