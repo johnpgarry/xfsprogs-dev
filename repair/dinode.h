@@ -27,7 +27,8 @@ process_bmbt_reclist(xfs_mount_t	*mp,
 		struct blkmap		**blkmapp,
 		uint64_t		*first_key,
 		uint64_t		*last_key,
-		int			whichfork);
+		int			whichfork,
+		bool			zap_metadata);
 
 int
 scan_bmbt_reclist(
@@ -37,7 +38,8 @@ scan_bmbt_reclist(
 	int			type,
 	xfs_ino_t		ino,
 	xfs_rfsblock_t		*tot,
-	int			whichfork);
+	int			whichfork,
+	bool			zap_metadata);
 
 void
 update_rootino(xfs_mount_t *mp);

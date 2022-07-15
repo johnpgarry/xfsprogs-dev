@@ -303,6 +303,7 @@ phase4(xfs_mount_t *mp)
 				_("unknown block state, ag %d, blocks %u-%u\n"),
 					i, j, j + blen - 1);
 				fallthrough;
+			case XR_E_METADATA:
 			case XR_E_UNKNOWN:
 			case XR_E_FREE:
 			case XR_E_INUSE:
@@ -335,6 +336,7 @@ phase4(xfs_mount_t *mp)
 	_("unknown rt extent state, extent %" PRIu64 "\n"),
 				rtx);
 			fallthrough;
+		case XR_E_METADATA:
 		case XR_E_UNKNOWN:
 		case XR_E_FREE1:
 		case XR_E_FREE:

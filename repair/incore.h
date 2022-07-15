@@ -85,18 +85,25 @@ typedef struct rt_extent_tree_node  {
 #define XR_E_UNKNOWN	0	/* unknown state */
 #define XR_E_FREE1	1	/* free block (marked by one fs space tree) */
 #define XR_E_FREE	2	/* free block (marked by both fs space trees) */
-#define XR_E_INUSE	3	/* extent used by file/dir data or metadata */
-#define XR_E_INUSE_FS	4	/* extent used by fs ag header or log */
-#define XR_E_MULT	5	/* extent is multiply referenced */
-#define XR_E_INO	6	/* extent used by inodes (inode blocks) */
-#define XR_E_FS_MAP	7	/* extent used by fs space/inode maps */
-#define XR_E_INUSE1	8	/* used block (marked by rmap btree) */
-#define XR_E_INUSE_FS1	9	/* used by fs ag header or log (rmap btree) */
-#define XR_E_INO1	10	/* used by inodes (marked by rmap btree) */
-#define XR_E_FS_MAP1	11	/* used by fs space/inode maps (rmap btree) */
-#define XR_E_REFC	12	/* used by fs ag reference count btree */
-#define XR_E_COW	13	/* leftover cow extent */
-#define XR_E_BAD_STATE	14
+/*
+ * Space used by metadata files.  The entire metadata directory tree will be
+ * rebuilt from scratch during phase 6, so this value must be less than
+ * XR_E_INUSE so that the space will go back to the free space btrees during
+ * phase 5.
+ */
+#define XR_E_METADATA	3
+#define XR_E_INUSE	4	/* extent used by file/dir data or metadata */
+#define XR_E_INUSE_FS	5	/* extent used by fs ag header or log */
+#define XR_E_MULT	6	/* extent is multiply referenced */
+#define XR_E_INO	7	/* extent used by inodes (inode blocks) */
+#define XR_E_FS_MAP	8	/* extent used by fs space/inode maps */
+#define XR_E_INUSE1	9	/* used block (marked by rmap btree) */
+#define XR_E_INUSE_FS1	10	/* used by fs ag header or log (rmap btree) */
+#define XR_E_INO1	11	/* used by inodes (marked by rmap btree) */
+#define XR_E_FS_MAP1	12	/* used by fs space/inode maps (rmap btree) */
+#define XR_E_REFC	13	/* used by fs ag reference count btree */
+#define XR_E_COW	14	/* leftover cow extent */
+#define XR_E_BAD_STATE	15
 
 /* separate state bit, OR'ed into high (4th) bit of ex_state field */
 
@@ -271,7 +278,7 @@ typedef struct ino_tree_node  {
 	uint64_t		ino_isa_dir;	/* bit == 1 if a directory */
 	uint64_t		ino_was_rl;	/* bit == 1 if reflink flag set */
 	uint64_t		ino_is_rl;	/* bit == 1 if reflink flag should be set */
-	uint64_t		ino_was_meta;	/* bit == 1 if metadata */
+	uint64_t		ino_is_meta;	/* bit == 1 if metadata */
 	uint8_t			nlink_size;
 	union ino_nlink		disk_nlinks;	/* on-disk nlinks, set in P3 */
 	union  {
@@ -544,17 +551,17 @@ static inline int inode_is_rl(struct ino_tree_node *irec, int offset)
  */
 static inline void set_inode_is_meta(struct ino_tree_node *irec, int offset)
 {
-	irec->ino_was_meta |= IREC_MASK(offset);
+	irec->ino_is_meta |= IREC_MASK(offset);
 }
 
 static inline void clear_inode_is_meta(struct ino_tree_node *irec, int offset)
 {
-	irec->ino_was_meta &= ~IREC_MASK(offset);
+	irec->ino_is_meta &= ~IREC_MASK(offset);
 }
 
 static inline int inode_is_meta(struct ino_tree_node *irec, int offset)
 {
-	return (irec->ino_was_meta & IREC_MASK(offset)) != 0;
+	return (irec->ino_is_meta & IREC_MASK(offset)) != 0;
 }
 
 /*

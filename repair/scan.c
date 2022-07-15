@@ -227,6 +227,7 @@ scan_bmapbt(
 	xfs_agnumber_t		agno;
 	xfs_agblock_t		agbno;
 	int			state;
+	bool			zap_metadata = priv != NULL;
 
 	/*
 	 * unlike the ag freeblock btrees, if anything looks wrong
@@ -352,7 +353,20 @@ _("bad back (left) sibling pointer (saw %llu should be NULL (0))\n"
 		case XR_E_UNKNOWN:
 		case XR_E_FREE1:
 		case XR_E_FREE:
-			set_bmap(agno, agbno, XR_E_INUSE);
+			set_bmap(agno, agbno, zap_metadata ? XR_E_METADATA :
+							   XR_E_INUSE);
+			break;
+		case XR_E_METADATA:
+			/*
+			 * bmbt block already claimed by a metadata file.  We
+			 * always reconstruct the entire metadata tree, so if
+			 * this is a regular file we mark it owned by the file.
+			 */
+			do_warn(
+_("inode 0x%" PRIx64 "bmap block 0x%" PRIx64 " claimed by metadata file\n"),
+				ino, bno);
+			if (!zap_metadata)
+				set_bmap(agno, agbno, XR_E_INUSE);
 			break;
 		case XR_E_FS_MAP:
 		case XR_E_INUSE:
@@ -364,7 +378,8 @@ _("bad back (left) sibling pointer (saw %llu should be NULL (0))\n"
 			 * we made it here, the block probably
 			 * contains btree data.
 			 */
-			set_bmap(agno, agbno, XR_E_MULT);
+			if (!zap_metadata)
+				set_bmap(agno, agbno, XR_E_MULT);
 			do_warn(
 _("inode 0x%" PRIx64 "bmap block 0x%" PRIx64 " claimed, state is %d\n"),
 				ino, bno, state);
@@ -440,7 +455,8 @@ _("inode %" PRIu64 " bad # of bmap records (%" PRIu64 ", min - %u, max - %u)\n")
 		if (check_dups == 0)  {
 			err = process_bmbt_reclist(mp, rp, &numrecs, type, ino,
 						   tot, blkmapp, &first_key,
-						   &last_key, whichfork);
+						   &last_key, whichfork,
+						   zap_metadata);
 			if (err)
 				return 1;
 
@@ -470,7 +486,7 @@ _("out-of-order bmap key (file offset) in inode %" PRIu64 ", %s fork, fsbno %" P
 			return 0;
 		} else {
 			return scan_bmbt_reclist(mp, rp, &numrecs, type, ino,
-						 tot, whichfork);
+					tot, whichfork, zap_metadata);
 		}
 	}
 	if (numrecs > mp->m_bmap_dmxr[1] || (isroot == 0 && numrecs <
@@ -859,6 +875,12 @@ process_rmap_rec(
 			set_bmap_ext(agno, b, blen, XR_E_INUSE1);
 			break;
 		}
+		break;
+	case XR_E_METADATA:
+		do_warn(
+_("Metadata file block (%d,%d-%d) mismatch in %s tree, state - %d,%" PRIx64 "\n"),
+			agno, b, b + blen - 1,
+			name, state, owner);
 		break;
 	case XR_E_INUSE_FS:
 		if (owner == XFS_RMAP_OWN_FS ||

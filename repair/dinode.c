@@ -220,6 +220,7 @@ static int
 process_rt_rec_state(
 	struct xfs_mount	*mp,
 	xfs_ino_t		ino,
+	bool			zap_metadata,
 	struct xfs_bmbt_irec	*irec)
 {
 	xfs_fsblock_t		b = irec->br_startblock;
@@ -256,7 +257,13 @@ _("data fork in rt inode %" PRIu64 " found invalid rt extent %"PRIu64" state %d 
 		switch (state)  {
 		case XR_E_FREE:
 		case XR_E_UNKNOWN:
-			set_rtbmap(ext, XR_E_INUSE);
+			set_rtbmap(ext, zap_metadata ? XR_E_METADATA :
+						       XR_E_INUSE);
+			break;
+		case XR_E_METADATA:
+			do_error(
+_("data fork in rt inode %" PRIu64 " found metadata file block %" PRIu64 " in rt bmap\n"),
+				ino, ext);
 			break;
 		case XR_E_BAD_STATE:
 			do_error(
@@ -293,7 +300,8 @@ process_rt_rec(
 	struct xfs_bmbt_irec	*irec,
 	xfs_ino_t		ino,
 	xfs_rfsblock_t		*tot,
-	int			check_dups)
+	int			check_dups,
+	bool			zap_metadata)
 {
 	xfs_fsblock_t		lastb;
 	int			bad;
@@ -333,7 +341,7 @@ _("inode %" PRIu64 " - bad rt extent overflows - start %" PRIu64 ", "
 	if (check_dups)
 		bad = process_rt_rec_dups(mp, ino, irec);
 	else
-		bad = process_rt_rec_state(mp, ino, irec);
+		bad = process_rt_rec_state(mp, ino, zap_metadata, irec);
 	if (bad)
 		return bad;
 
@@ -364,7 +372,8 @@ process_bmbt_reclist_int(
 	xfs_fileoff_t		*first_key,
 	xfs_fileoff_t		*last_key,
 	int			check_dups,
-	int			whichfork)
+	int			whichfork,
+	bool			zap_metadata)
 {
 	xfs_bmbt_irec_t		irec;
 	xfs_filblks_t		cp = 0;		/* prev count */
@@ -443,7 +452,8 @@ _("zero length extent (off = %" PRIu64 ", fsbno = %" PRIu64 ") in ino %" PRIu64 
 
 		if (type == XR_INO_RTDATA && whichfork == XFS_DATA_FORK) {
 			pthread_mutex_lock(&rt_lock.lock);
-			error2 = process_rt_rec(mp, &irec, ino, tot, check_dups);
+			error2 = process_rt_rec(mp, &irec, ino, tot, check_dups,
+					zap_metadata);
 			pthread_mutex_unlock(&rt_lock.lock);
 			if (error2)
 				return error2;
@@ -558,6 +568,11 @@ _("%s fork in ino %" PRIu64 " claims free block %" PRIu64 "\n"),
 			case XR_E_INUSE_FS1:
 				do_warn(_("rmap claims metadata use!\n"));
 				fallthrough;
+			case XR_E_METADATA:
+				do_warn(
+_("%s fork in inode %" PRIu64 " claims metadata file block %" PRIu64 "\n"),
+					forkname, ino, b);
+				break;
 			case XR_E_FS_MAP:
 			case XR_E_INO:
 			case XR_E_INUSE_FS:
@@ -614,15 +629,28 @@ _("illegal state %d in block map %" PRIu64 "\n"),
 		for (; agbno < ebno; agbno += blen) {
 			state = get_bmap_ext(agno, agbno, ebno, &blen);
 			switch (state)  {
+			case XR_E_METADATA:
+				/*
+				 * The entire metadata directory tree is rebuilt
+				 * every time, so we can let regular files take
+				 * ownership of this block.
+				 */
+				if (zap_metadata)
+					break;
+				fallthrough;
 			case XR_E_FREE:
 			case XR_E_FREE1:
 			case XR_E_INUSE1:
 			case XR_E_UNKNOWN:
-				set_bmap_ext(agno, agbno, blen, XR_E_INUSE);
+				set_bmap_ext(agno, agbno, blen, zap_metadata ?
+						XR_E_METADATA : XR_E_INUSE);
 				break;
+
 			case XR_E_INUSE:
 			case XR_E_MULT:
-				set_bmap_ext(agno, agbno, blen, XR_E_MULT);
+				if (!zap_metadata)
+					set_bmap_ext(agno, agbno, blen,
+							XR_E_MULT);
 				break;
 			default:
 				break;
@@ -661,10 +689,12 @@ process_bmbt_reclist(
 	blkmap_t		**blkmapp,
 	xfs_fileoff_t		*first_key,
 	xfs_fileoff_t		*last_key,
-	int			whichfork)
+	int			whichfork,
+	bool			zap_metadata)
 {
 	return process_bmbt_reclist_int(mp, rp, numrecs, type, ino, tot,
-				blkmapp, first_key, last_key, 0, whichfork);
+				blkmapp, first_key, last_key, 0, whichfork,
+				zap_metadata);
 }
 
 /*
@@ -679,13 +709,15 @@ scan_bmbt_reclist(
 	int			type,
 	xfs_ino_t		ino,
 	xfs_rfsblock_t		*tot,
-	int			whichfork)
+	int			whichfork,
+	bool			zap_metadata)
 {
 	xfs_fileoff_t		first_key = 0;
 	xfs_fileoff_t		last_key = 0;
 
 	return process_bmbt_reclist_int(mp, rp, numrecs, type, ino, tot,
-				NULL, &first_key, &last_key, 1, whichfork);
+				NULL, &first_key, &last_key, 1, whichfork,
+				zap_metadata);
 }
 
 /*
@@ -760,7 +792,8 @@ process_btinode(
 	xfs_extnum_t		*nex,
 	blkmap_t		**blkmapp,
 	int			whichfork,
-	int			check_dups)
+	int			check_dups,
+	bool			zap_metadata)
 {
 	xfs_bmdr_block_t	*dib;
 	xfs_fileoff_t		last_key;
@@ -839,8 +872,8 @@ _("bad bmap btree ptr 0x%" PRIx64 " in ino %" PRIu64 "\n"),
 
 		if (scan_lbtree(get_unaligned_be64(&pp[i]), level, scan_bmapbt,
 				type, whichfork, lino, tot, nex, blkmapp,
-				&cursor, 1, check_dups, magic, NULL,
-				&xfs_bmbt_buf_ops))
+				&cursor, 1, check_dups, magic,
+				(void *)zap_metadata, &xfs_bmbt_buf_ops))
 			return(1);
 		/*
 		 * fix key (offset) mismatches between the keys in root
@@ -935,7 +968,8 @@ process_exinode(
 	xfs_extnum_t		*nex,
 	blkmap_t		**blkmapp,
 	int			whichfork,
-	int			check_dups)
+	int			check_dups,
+	bool			zap_metadata)
 {
 	xfs_ino_t		lino;
 	xfs_bmbt_rec_t		*rp;
@@ -969,10 +1003,10 @@ process_exinode(
 	if (check_dups == 0)
 		ret = process_bmbt_reclist(mp, rp, &numrecs, type, lino,
 					tot, blkmapp, &first_key, &last_key,
-					whichfork);
+					whichfork, zap_metadata);
 	else
 		ret = scan_bmbt_reclist(mp, rp, &numrecs, type, lino, tot,
-					whichfork);
+					whichfork, zap_metadata);
 
 	*nex = numrecs;
 	return ret;
@@ -1898,7 +1932,8 @@ process_inode_data_fork(
 	xfs_extnum_t		*nextents,
 	blkmap_t		**dblkmap,
 	int			check_dups,
-	struct xfs_buf		**ino_bpp)
+	struct xfs_buf		**ino_bpp,
+	bool			zap_metadata)
 {
 	struct xfs_dinode	*dino = *dinop;
 	xfs_ino_t		lino = XFS_AGINO_TO_INO(mp, agno, ino);
@@ -1939,14 +1974,14 @@ retry:
 			try_rebuild = 1;
 		err = process_exinode(mp, agno, ino, dino, type, dirty,
 			totblocks, nextents, dblkmap, XFS_DATA_FORK,
-			check_dups);
+			check_dups, zap_metadata);
 		break;
 	case XFS_DINODE_FMT_BTREE:
 		if (!rmapbt_suspect && try_rebuild == -1)
 			try_rebuild = 1;
 		err = process_btinode(mp, agno, ino, dino, type, dirty,
 			totblocks, nextents, dblkmap, XFS_DATA_FORK,
-			check_dups);
+			check_dups, zap_metadata);
 		break;
 	case XFS_DINODE_FMT_DEV:
 		err = 0;
@@ -1999,12 +2034,12 @@ _("would have tried to rebuild inode %"PRIu64" data fork\n"),
 		case XFS_DINODE_FMT_EXTENTS:
 			err = process_exinode(mp, agno, ino, dino, type,
 				dirty, totblocks, nextents, dblkmap,
-				XFS_DATA_FORK, 0);
+				XFS_DATA_FORK, 0, zap_metadata);
 			break;
 		case XFS_DINODE_FMT_BTREE:
 			err = process_btinode(mp, agno, ino, dino, type,
 				dirty, totblocks, nextents, dblkmap,
-				XFS_DATA_FORK, 0);
+				XFS_DATA_FORK, 0, zap_metadata);
 			break;
 		case XFS_DINODE_FMT_DEV:
 			err = 0;
@@ -2039,7 +2074,8 @@ process_inode_attr_fork(
 	int			check_dups,
 	int			extra_attr_check,
 	int			*retval,
-	struct xfs_buf		**ino_bpp)
+	struct xfs_buf		**ino_bpp,
+	bool			zap_metadata)
 {
 	xfs_ino_t		lino = XFS_AGINO_TO_INO(mp, agno, ino);
 	struct xfs_dinode	*dino = *dinop;
@@ -2087,7 +2123,7 @@ retry:
 		*anextents = 0;
 		err = process_exinode(mp, agno, ino, dino, type, dirty,
 				atotblocks, anextents, &ablkmap,
-				XFS_ATTR_FORK, check_dups);
+				XFS_ATTR_FORK, check_dups, zap_metadata);
 		break;
 	case XFS_DINODE_FMT_BTREE:
 		if (!rmapbt_suspect && try_rebuild == -1)
@@ -2096,7 +2132,7 @@ retry:
 		*anextents = 0;
 		err = process_btinode(mp, agno, ino, dino, type, dirty,
 				atotblocks, anextents, &ablkmap,
-				XFS_ATTR_FORK, check_dups);
+				XFS_ATTR_FORK, check_dups, zap_metadata);
 		break;
 	default:
 		do_warn(_("illegal attribute format %d, ino %" PRIu64 "\n"),
@@ -2160,12 +2196,12 @@ _("would have tried to rebuild inode %"PRIu64" attr fork or cleared it\n"),
 		case XFS_DINODE_FMT_EXTENTS:
 			err = process_exinode(mp, agno, ino, dino,
 				type, dirty, atotblocks, anextents,
-				&ablkmap, XFS_ATTR_FORK, 0);
+				&ablkmap, XFS_ATTR_FORK, 0, zap_metadata);
 			break;
 		case XFS_DINODE_FMT_BTREE:
 			err = process_btinode(mp, agno, ino, dino,
 				type, dirty, atotblocks, anextents,
-				&ablkmap, XFS_ATTR_FORK, 0);
+				&ablkmap, XFS_ATTR_FORK, 0, zap_metadata);
 			break;
 		default:
 			do_error(_("illegal attribute fmt %d, ino %" PRIu64 "\n"),
@@ -2362,6 +2398,7 @@ process_dinode_int(
 	xfs_agino_t		unlinked_ino;
 	struct xfs_perag	*pag;
 	bool			is_meta = false;
+	bool			zap_metadata = false;
 
 	*dirty = *isa_dir = 0;
 	*used = is_used;
@@ -2944,6 +2981,32 @@ _("Bad CoW extent size %u on inode %" PRIu64 ", "),
 		off = get_inode_offset(mp, lino, irec);
 		set_inode_is_meta(irec, off);
 		is_meta = true;
+
+		/*
+		 * We always rebuild the metadata directory tree during phase
+		 * 6, so we use this flag to get all the directory blocks
+		 * marked as free, and any other metadata files whose contents
+		 * we don't want to save.
+		 *
+		 * Currently, there are no metadata files that use xattrs, so
+		 * we always drop the xattr blocks of metadata files.
+		 */
+		switch (type) {
+		case XR_INO_RTBITMAP:
+		case XR_INO_RTSUM:
+		case XR_INO_UQUOTA:
+		case XR_INO_GQUOTA:
+		case XR_INO_PQUOTA:
+			/*
+			 * This inode was recognized as being filesystem
+			 * metadata, so preserve the inode and its contents for
+			 * later checking and repair.
+			 */
+			break;
+		default:
+			zap_metadata = true;
+			break;
+		}
 	}
 
 	/*
@@ -2951,7 +3014,7 @@ _("Bad CoW extent size %u on inode %" PRIu64 ", "),
 	 */
 	if (process_inode_data_fork(mp, agno, ino, dinop, type, dirty,
 			&totblocks, &nextents, &dblkmap, check_dups,
-			ino_bpp) != 0)
+			ino_bpp, zap_metadata) != 0)
 		goto bad_out;
 	dino = *dinop;
 
@@ -2961,7 +3024,7 @@ _("Bad CoW extent size %u on inode %" PRIu64 ", "),
 	 */
 	if (process_inode_attr_fork(mp, agno, ino, dinop, type, dirty,
 			&atotblocks, &anextents, check_dups, extra_attr_check,
-			&retval, ino_bpp))
+			&retval, ino_bpp, is_meta))
 		goto bad_out;
 	dino = *dinop;
 

@@ -141,6 +141,16 @@ verify_inode_chunk(xfs_mount_t		*mp,
 		_("uncertain inode block %d/%d already known\n"),
 				agno, agbno);
 			break;
+		case XR_E_METADATA:
+			/*
+			 * Files in the metadata directory tree are always
+			 * reconstructed, so it's ok to let go if this block
+			 * is also a valid inode cluster.
+			 */
+			do_warn(
+		_("inode block %d/%d claimed by metadata file\n"),
+				agno, agbno);
+			fallthrough;
 		case XR_E_UNKNOWN:
 		case XR_E_FREE1:
 		case XR_E_FREE:
@@ -430,6 +440,7 @@ verify_inode_chunk(xfs_mount_t		*mp,
 			set_bmap_ext(agno, cur_agbno, blen, XR_E_MULT);
 			pthread_mutex_unlock(&ag_locks[agno].lock);
 			return 0;
+		case XR_E_METADATA:
 		case XR_E_INO:
 			do_error(
 	_("uncertain inode block overlap, agbno = %d, ino = %" PRIu64 "\n"),
@@ -474,6 +485,16 @@ verify_inode_chunk(xfs_mount_t		*mp,
 		_("uncertain inode block %" PRIu64 " already known\n"),
 				XFS_AGB_TO_FSB(mp, agno, cur_agbno));
 			break;
+		case XR_E_METADATA:
+			/*
+			 * Files in the metadata directory tree are always
+			 * reconstructed, so it's ok to let go if this block
+			 * is also a valid inode cluster.
+			 */
+			do_warn(
+		_("inode block %d/%d claimed by metadata file\n"),
+				agno, agbno);
+			fallthrough;
 		case XR_E_UNKNOWN:
 		case XR_E_FREE1:
 		case XR_E_FREE:
@@ -559,6 +580,16 @@ process_inode_agbno_state(
 	switch (state) {
 	case XR_E_INO:	/* already marked */
 		break;
+	case XR_E_METADATA:
+		/*
+		 * Files in the metadata directory tree are always
+		 * reconstructed, so it's ok to let go if this block is also a
+		 * valid inode cluster.
+		 */
+		do_warn(
+	_("inode block %d/%d claimed by metadata file\n"),
+			agno, agbno);
+		fallthrough;
 	case XR_E_UNKNOWN:
 	case XR_E_FREE:
 	case XR_E_FREE1:
