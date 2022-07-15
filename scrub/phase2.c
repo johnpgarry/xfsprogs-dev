@@ -42,9 +42,8 @@ scan_ag_metadata(
 	struct scan_ctl			*sctl = arg;
 	struct action_list		alist;
 	struct action_list		immediate_alist;
-	unsigned long long		broken_primaries;
-	unsigned long long		broken_secondaries;
 	char				descr[DESCR_BUFSZ];
+	unsigned int			difficulty;
 	int				ret;
 
 	if (sctl->aborted)
@@ -79,12 +78,12 @@ scan_ag_metadata(
 	 * the inobt from rmapbt data, but if the rmapbt is broken even
 	 * at this early phase then we are sunk.
 	 */
-	broken_secondaries = 0;
-	broken_primaries = 0;
-	action_list_find_mustfix(&alist, &immediate_alist,
-			&broken_primaries, &broken_secondaries);
-	if (broken_secondaries && !debug_tweak_on("XFS_SCRUB_FORCE_REPAIR")) {
-		if (broken_primaries)
+	difficulty = action_list_difficulty(&alist);
+	action_list_find_mustfix(&alist, &immediate_alist);
+
+	if ((difficulty & REPAIR_DIFFICULTY_SECONDARY) &&
+	    !debug_tweak_on("XFS_SCRUB_FORCE_REPAIR")) {
+		if (difficulty & REPAIR_DIFFICULTY_PRIMARY)
 			str_info(ctx, descr,
 _("Corrupt primary and secondary block mapping metadata."));
 		else

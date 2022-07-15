@@ -290,9 +290,7 @@ xfs_action_item_compare(
 void
 action_list_find_mustfix(
 	struct action_list		*alist,
-	struct action_list		*immediate_alist,
-	unsigned long long		*broken_primaries,
-	unsigned long long		*broken_secondaries)
+	struct action_list		*immediate_alist)
 {
 	struct action_item		*n;
 	struct action_item		*aitem;
@@ -301,25 +299,43 @@ action_list_find_mustfix(
 		if (!(aitem->flags & XFS_SCRUB_OFLAG_CORRUPT))
 			continue;
 		switch (aitem->type) {
-		case XFS_SCRUB_TYPE_RMAPBT:
-			(*broken_secondaries)++;
-			break;
 		case XFS_SCRUB_TYPE_FINOBT:
 		case XFS_SCRUB_TYPE_INOBT:
 			alist->nr--;
 			list_move_tail(&aitem->list, &immediate_alist->list);
 			immediate_alist->nr++;
-			fallthrough;
-		case XFS_SCRUB_TYPE_BNOBT:
-		case XFS_SCRUB_TYPE_CNTBT:
-		case XFS_SCRUB_TYPE_REFCNTBT:
-			(*broken_primaries)++;
-			break;
-		default:
-			abort();
 			break;
 		}
 	}
+}
+
+/* Determine if primary or secondary metadata are inconsistent. */
+unsigned int
+action_list_difficulty(
+	const struct action_list	*alist)
+{
+	struct action_item		*aitem, *n;
+	unsigned int			ret = 0;
+
+	list_for_each_entry_safe(aitem, n, &alist->list, list) {
+		if (!(aitem->flags & XFS_SCRUB_OFLAG_CORRUPT))
+			continue;
+
+		switch (aitem->type) {
+		case XFS_SCRUB_TYPE_RMAPBT:
+			ret |= REPAIR_DIFFICULTY_SECONDARY;
+			break;
+		case XFS_SCRUB_TYPE_FINOBT:
+		case XFS_SCRUB_TYPE_INOBT:
+		case XFS_SCRUB_TYPE_BNOBT:
+		case XFS_SCRUB_TYPE_CNTBT:
+		case XFS_SCRUB_TYPE_REFCNTBT:
+			ret |= REPAIR_DIFFICULTY_PRIMARY;
+			break;
+		}
+	}
+
+	return ret;
 }
 
 /*
