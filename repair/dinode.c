@@ -2808,6 +2808,47 @@ _("Bad extent size hint %u on inode %" PRIu64 ", "),
 	}
 }
 
+static void
+validate_cowextsize(
+	struct xfs_mount	*mp,
+	struct xfs_dinode	*dino,
+	xfs_ino_t		lino,
+	int			*dirty)
+{
+	uint16_t		flags = be16_to_cpu(dino->di_flags);
+	uint64_t		flags2 = be64_to_cpu(dino->di_flags2);
+	unsigned int		value = be32_to_cpu(dino->di_cowextsize);
+	bool			misaligned = false;
+	bool			bad;
+
+	/*
+	 * XFS allows a sysadmin to change the rt extent size when adding a
+	 * rt section to a filesystem after formatting.  If there are any
+	 * directories with both a cowextsize hint and rtinherit set, the
+	 * hint could become misaligned with the new rextsize.
+	 */
+	if ((flags2 & XFS_DIFLAG2_COWEXTSIZE) &&
+	    (flags & XFS_DIFLAG_RTINHERIT) &&
+	    value % mp->m_sb.sb_rextsize > 0)
+		misaligned = true;
+
+	/* Complain if the verifier fails. */
+	bad = libxfs_inode_validate_cowextsize(mp, value,
+			be16_to_cpu(dino->di_mode), flags, flags2) != NULL;
+	if (bad || misaligned) {
+		do_warn(
+_("Bad CoW extent size hint %u on inode %" PRIu64 ", "),
+				be32_to_cpu(dino->di_cowextsize), lino);
+		if (!no_modify) {
+			do_warn(_("resetting to zero\n"));
+			dino->di_flags2 &= ~cpu_to_be64(XFS_DIFLAG2_COWEXTSIZE);
+			dino->di_cowextsize = 0;
+			*dirty = 1;
+		} else
+			do_warn(_("would reset to zero\n"));
+	}
+}
+
 /*
  * returns 0 if the inode is ok, 1 if the inode is corrupt
  * check_dups can be set to 1 *only* when called by the
@@ -3385,27 +3426,8 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 
 	validate_extsize(mp, dino, lino, dirty);
 
-	/*
-	 * Only (regular files and directories) with COWEXTSIZE flags
-	 * set can have extsize set.
-	 */
-	if (dino->di_version >= 3 &&
-	    libxfs_inode_validate_cowextsize(mp,
-			be32_to_cpu(dino->di_cowextsize),
-			be16_to_cpu(dino->di_mode),
-			be16_to_cpu(dino->di_flags),
-			be64_to_cpu(dino->di_flags2)) != NULL) {
-		do_warn(
-_("Bad CoW extent size %u on inode %" PRIu64 ", "),
-				be32_to_cpu(dino->di_cowextsize), lino);
-		if (!no_modify)  {
-			do_warn(_("resetting to zero\n"));
-			dino->di_flags2 &= ~cpu_to_be64(XFS_DIFLAG2_COWEXTSIZE);
-			dino->di_cowextsize = 0;
-			*dirty = 1;
-		} else
-			do_warn(_("would reset to zero\n"));
-	}
+	if (dino->di_version >= 3)
+		validate_cowextsize(mp, dino, lino, dirty);
 
 	/* nsec fields cannot be larger than 1 billion */
 	check_nsec("atime", lino, dino, &dino->di_atime, dirty);
