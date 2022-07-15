@@ -456,13 +456,13 @@ is expressed as a multiplier of the stripe unit,
 usually the same as the number of stripe members in the logical
 volume configuration, or data disks in a RAID device.
 .IP
-When a filesystem is created on a logical volume device,
+When a filesystem is created on a block device,
 .B mkfs.xfs
-will automatically query the logical volume for appropriate
+will automatically query the block device for appropriate
 .B sunit
 and
 .B swidth
-values.
+values if the block device and the filesystem size would be larger than 1GB.
 .TP
 .BI noalign
 This option disables automatic geometry detection and creates the filesystem
