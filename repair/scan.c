@@ -1537,6 +1537,7 @@ verify_single_ino_chunk_align(
 	bool			*skip)
 {
 	const char		*inobt_name = inobt_names[type];
+	struct xfs_perag	*pag;
 	xfs_ino_t		lino;
 	xfs_agino_t		ino;
 	xfs_agblock_t		agbno;
@@ -1574,16 +1575,17 @@ verify_single_ino_chunk_align(
 	 * (NULLAGINO). if it gets closer, the agino number will be illegal as
 	 * the agbno will be too large.
 	 */
-	if (!libxfs_verify_agino(mp, agno, ino)) {
+	pag = libxfs_perag_get(mp, agno);
+	if (!libxfs_verify_agino(pag, ino)) {
 		do_warn(
 _("bad starting inode # (%" PRIu64 " (0x%x 0x%x)) in %s rec, skipping rec\n"),
 			lino, agno, ino, inobt_name);
 		*skip = true;
+		libxfs_perag_put(pag);
 		return ++suspect;
 	}
 
-	if (!libxfs_verify_agino(mp, agno,
-			ino + XFS_INODES_PER_CHUNK - 1)) {
+	if (!libxfs_verify_agino(pag, ino + XFS_INODES_PER_CHUNK - 1)) {
 		do_warn(
 _("bad ending inode # (%" PRIu64 " (0x%x 0x%zx)) in %s rec, skipping rec\n"),
 			lino + XFS_INODES_PER_CHUNK - 1,
@@ -1591,9 +1593,11 @@ _("bad ending inode # (%" PRIu64 " (0x%x 0x%zx)) in %s rec, skipping rec\n"),
 			ino + XFS_INODES_PER_CHUNK - 1,
 			inobt_name);
 		*skip = true;
+		libxfs_perag_put(pag);
 		return ++suspect;
 	}
 
+	libxfs_perag_put(pag);
 	return suspect;
 }
 
