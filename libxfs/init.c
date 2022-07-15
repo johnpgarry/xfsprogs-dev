@@ -892,7 +892,8 @@ libxfs_mount(
 			libxfs_buf_relse(bp);
 	}
 
-	error = libxfs_initialize_perag(mp, sbp->sb_agcount, &mp->m_maxagi);
+	error = libxfs_initialize_perag(mp, sbp->sb_agcount, sbp->sb_dblocks,
+			&mp->m_maxagi);
 	if (error) {
 		fprintf(stderr, _("%s: perag init failed\n"),
 			progname);
