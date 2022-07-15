@@ -531,3 +531,69 @@ AC_DEFUN([AC_PACKAGE_CHECK_LTO],
     AC_SUBST(lto_cflags)
     AC_SUBST(lto_ldflags)
   ])
+
+#
+# Check if we have a memfd_create syscall with a MFD_CLOEXEC flag
+#
+AC_DEFUN([AC_HAVE_MEMFD_CLOEXEC],
+  [ AC_MSG_CHECKING([for memfd_fd and MFD_CLOEXEC])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#define _GNU_SOURCE
+#include <sys/mman.h>
+    ]], [[
+         return memfd_create("xfs", MFD_CLOEXEC);
+    ]])],[have_memfd_cloexec=yes
+       AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no)])
+    AC_SUBST(have_memfd_cloexec)
+  ])
+
+#
+# Check if we have a memfd_create syscall with a MFD_NOEXEC_SEAL flag
+#
+AC_DEFUN([AC_HAVE_MEMFD_NOEXEC_SEAL],
+  [ AC_MSG_CHECKING([for memfd_fd and MFD_NOEXEC_SEAL])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#define _GNU_SOURCE
+#include <linux/memfd.h>
+#include <sys/mman.h>
+    ]], [[
+         return memfd_create("xfs", MFD_NOEXEC_SEAL);
+    ]])],[have_memfd_noexec_seal=yes
+       AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no)])
+    AC_SUBST(have_memfd_noexec_seal)
+  ])
+
+#
+# Check if we have the O_TMPFILE flag
+#
+AC_DEFUN([AC_HAVE_O_TMPFILE],
+  [ AC_MSG_CHECKING([for O_TMPFILE])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#define _GNU_SOURCE
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+    ]], [[
+         return open("nowhere", O_TMPFILE, 0600);
+    ]])],[have_o_tmpfile=yes
+       AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no)])
+    AC_SUBST(have_o_tmpfile)
+  ])
+
+#
+# Check if we have mkostemp with the O_CLOEXEC flag
+#
+AC_DEFUN([AC_HAVE_MKOSTEMP_CLOEXEC],
+  [ AC_MSG_CHECKING([for mkostemp and O_CLOEXEC])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#define _GNU_SOURCE
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
+    ]], [[
+         return mkostemp("nowhere", O_TMPFILE);
+    ]])],[have_mkostemp_cloexec=yes
+       AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no)])
+    AC_SUBST(have_mkostemp_cloexec)
+  ])
