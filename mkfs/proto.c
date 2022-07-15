@@ -270,16 +270,12 @@ writefile(
 {
 	struct xfs_bmbt_irec	map;
 	struct xfs_mount	*mp;
-	struct xfs_buf		*bp;
-	xfs_daddr_t		d;
 	xfs_extlen_t		nb;
 	int			nmap;
 	int			error;
 
 	mp = ip->i_mount;
 	if (len > 0) {
-		int	bcount;
-
 		nb = XFS_B_TO_FSB(mp, len);
 		nmap = 1;
 		error = -libxfs_bmapi_write(tp, ip, 0, nb, 0, nb, &map, &nmap);
@@ -289,30 +285,18 @@ writefile(
 					progname);
 			exit(1);
 		}
-		if (error) {
+		if (error)
 			fail(_("error allocating space for a file"), error);
-		}
 		if (nmap != 1) {
 			fprintf(stderr,
 				_("%s: cannot allocate space for file\n"),
 				progname);
 			exit(1);
 		}
-		d = XFS_FSB_TO_DADDR(mp, map.br_startblock);
-		error = -libxfs_trans_get_buf(NULL, mp->m_dev, d,
-				nb << mp->m_blkbb_log, 0, &bp);
-		if (error) {
-			fprintf(stderr,
-				_("%s: cannot allocate buffer for file\n"),
-				progname);
-			exit(1);
-		}
-		memmove(bp->b_addr, buf, len);
-		bcount = BBTOB(bp->b_length);
-		if (len < bcount)
-			memset((char *)bp->b_addr + len, 0, bcount - len);
-		libxfs_buf_mark_dirty(bp);
-		libxfs_buf_relse(bp);
+
+		error = -libxfs_file_write(tp, ip, buf, len, false);
+		if (error)
+			fail(_("error writing file"), error);
 	}
 	ip->i_disk_size = len;
 }
