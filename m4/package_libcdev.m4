@@ -368,8 +368,7 @@ AC_DEFUN([AC_HAVE_MAP_SYNC],
   [ AC_MSG_CHECKING([for MAP_SYNC])
     AC_COMPILE_IFELSE(
     [	AC_LANG_PROGRAM([[
-#include <asm-generic/mman.h>
-#include <asm-generic/mman-common.h>
+#include <sys/mman.h>
 	]], [[
 int flags = MAP_SYNC | MAP_SHARED_VALIDATE;
 	]])

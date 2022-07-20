@@ -55,7 +55,7 @@ typedef struct mmap_region {
 	size_t		length;		/* length of mapping */
 	off64_t		offset;		/* start offset into backing file */
 	int		prot;		/* protection mode of the mapping */
-	bool		map_sync;	/* is this a MAP_SYNC mapping? */
+	int		flags;		/* MAP_* flags passed to mmap() */
 	char		*name;		/* name of backing file */
 } mmap_region_t;
 
