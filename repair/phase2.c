@@ -370,6 +370,14 @@ phase2(
 	} else
 		do_log(_("Phase 2 - using internal log\n"));
 
+	/*
+	 * Now that we've set up the buffer cache the way we want it, try to
+	 * grab our own reference to the primary sb so that the hooks will not
+	 * have to call out to the buffer cache.
+	 */
+	if (mp->m_buf_writeback_fn)
+		retain_primary_sb(mp);
+
 	/* Zero log if applicable */
 	do_log(_("        - zero log...\n"));
 

@@ -16,6 +16,7 @@ int	get_sb(xfs_sb_t			*sbp,
 		xfs_off_t			off,
 		int			size,
 		xfs_agnumber_t		agno);
+int retain_primary_sb(struct xfs_mount *mp);
 void	write_primary_sb(xfs_sb_t	*sbp,
 			int		size);
 
