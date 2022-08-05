@@ -149,6 +149,13 @@ Upgrade a filesystem to support larger timestamps up to the year 2486.
 The filesystem cannot be downgraded after this feature is enabled.
 Once enabled, the filesystem will not be mountable by older kernels.
 This feature was added to Linux 5.10.
+.TP 0.4i
+.B nrext64
+Upgrade a filesystem to support large per-inode extent counters. The maximum
+data fork extent count will be 2^48 - 1, while the maximum attribute fork
+extent count will be 2^32 - 1. The filesystem cannot be downgraded after this
+feature is enabled. Once enabled, the filesystem will not be mountable by
+older kernels.  This feature was added to Linux 5.19.
 .RE
 .TP
 .BI \-U " uuid"
