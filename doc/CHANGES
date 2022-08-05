@@ -1,3 +1,29 @@
+xfsprogs-5.19.0-rc1 (05 Aug 2022)
+	- libxfs: last bit of kernel sync
+	- libxfs: Fix MAP_SYNC build failure on MIPS/musl (Darrick J. Wong)
+	- mkfs: stop allowing tiny filesystems (Darrick J. Wong)
+	- mkfs: complain about impossible log size constraints (Darrick J. Wong)
+	- mkfs: ignore stripe geometry for small filesystems (Darrick J. Wong)
+	- mkfs: update manpage of bigtime and inobtcount (Zhang Boyang)
+	- mkfs: document large extent count in --help screen (Darrick J. Wong)
+	- mkfs: fix segfault with incorrect options (Darrick J. Wong)
+	- xfs_repair: Support upgrade to large extent counters (Chandan Babu R)
+	- xfs_repair: check geometry before upgrades (Darrick J. Wong)
+	- xfs_repair: ignore empty xattr leaf blocks (Darrick J. Wong)
+	- xfs_repair: check rt summary/bitmap vs observations (Darrick J. Wong)
+	- xfs_repair: check free rt extent count (Darrick J. Wong)
+	- xfs_repair: detect/fix changed fields w/ nrext64 (Darrick J. Wong)
+	- xfs_repair: clear DIFLAG2_NREXT64 w/o fs support (Darrick J. Wong) 
+	- xfs_repair: ignore log_incompat inconsistencies (Darrick J. Wong)s
+	- xfs_repair: rewrite secondary supers w/ needsrepair (Darrick J. Wong)
+	- xfs_db: id the minlogsize transaction reservation (Darrick J. Wong)
+
+xfsprogs-5.19.0-rc0 (22 Jun 2022)
+	- libxfs changes merged from kernels 5.18 and 5.19-rc
+	- mkfs: option to create with large extent counters (Chandan Babu R)
+	- xfs_info: Report NREXT64 feature status (Chandan Babu R)
+	- xfs_logprint: Log item printing for ATTRI & ATTRD (Allison Henderson)
+
 xfsprogs-5.18.0 (03 Jun 2022)
 	- xfsprogs: more autoconf modernisation (Darrick J. Wong)
 
