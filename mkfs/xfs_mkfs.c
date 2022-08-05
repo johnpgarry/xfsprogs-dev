@@ -3490,6 +3490,13 @@ _("external log device size %lld blocks too small, must be at least %lld blocks\
 	 * an AG.
 	 */
 	max_logblocks = libxfs_alloc_ag_max_usable(mp) - 1;
+	if (max_logblocks < min_logblocks) {
+		fprintf(stderr,
+_("max log size %d smaller than min log size %d, filesystem is too small\n"),
+				max_logblocks,
+				min_logblocks);
+		usage();
+	}
 
 	/* internal log - if no size specified, calculate automatically */
 	if (!cfg->logblocks) {
