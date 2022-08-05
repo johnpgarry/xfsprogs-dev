@@ -251,14 +251,6 @@ struct fsxattr {
 #define FS_XFLAG_COWEXTSIZE	0x00010000	/* CoW extent size allocator hint */
 #endif
 
-#ifndef HAVE_MAP_SYNC
-#define MAP_SYNC 0
-#define MAP_SHARED_VALIDATE 0
-#else
-#include <asm-generic/mman.h>
-#include <asm-generic/mman-common.h>
-#endif /* HAVE_MAP_SYNC */
-
 /*
  * Reminder: anything added to this file will be compiled into downstream
  * userspace projects!
