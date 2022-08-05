@@ -67,11 +67,11 @@ SCSI disk, use:
 .PP
 The metadata log can be placed on another device to reduce the number
 of disk seeks.  To create a filesystem on the first partition on the
-first SCSI disk with a 10MiB log located on the first partition
+first SCSI disk with a 100MiB log located on the first partition
 on the second SCSI disk, use:
 .RS
 .HP
-.B mkfs.xfs\ \-l\ logdev=/dev/sdb1,size=10m /dev/sda1
+.B mkfs.xfs\ \-l\ logdev=/dev/sdb1,size=100m /dev/sda1
 .RE
 .PP
 Each of the
@@ -81,9 +81,9 @@ suboptions if multiple suboptions apply to the same option.
 Equivalently, each main option can be given multiple times with
 different suboptions.
 For example,
-.B \-l internal,size=10m
+.B \-l internal,size=100m
 and
-.B \-l internal \-l size=10m
+.B \-l internal \-l size=100m
 are equivalent.
 .PP
 In the descriptions below, sizes are given in sectors, bytes, blocks,
@@ -404,6 +404,8 @@ is required if
 .B \-d file[=1]
 is given. Otherwise, it is only needed if the filesystem should occupy
 less space than the size of the special file.
+
+The data section must be at least 300MB in size.
 .TP
 .BI sunit= value
 This is used to specify the stripe unit for a RAID device or a
@@ -702,6 +704,9 @@ suffix meaning multiplication by the filesystem block size, as
 described above. The overriding minimum value for size is 512 blocks.
 With some combinations of filesystem block size, inode size,
 and directory block size, the minimum log size is larger than 512 blocks.
+
+The log must be at least 64MB in size.
+The log cannot be more than 2GB in size.
 .TP
 .BI version= value
 This specifies the version of the log. The current default is 2,
