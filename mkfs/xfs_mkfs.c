@@ -2583,6 +2583,20 @@ _("%s: Volume reports invalid stripe unit (%d) and stripe width (%d), ignoring.\
 				progname, BBTOB(ft->dsunit), BBTOB(ft->dswidth));
 			ft->dsunit = 0;
 			ft->dswidth = 0;
+		} else if (cfg->dblocks < GIGABYTES(1, cfg->blocklog)) {
+			/*
+			 * Don't use automatic stripe detection if the device
+			 * size is less than 1GB because the performance gains
+			 * on such a small system are not worth the risk that
+			 * we'll end up with an undersized log.
+			 */
+			if (ft->dsunit || ft->dswidth)
+				fprintf(stderr,
+_("%s: small data volume, ignoring data volume stripe unit %d and stripe width %d\n"),
+						progname, ft->dsunit,
+						ft->dswidth);
+			ft->dsunit = 0;
+			ft->dswidth = 0;
 		} else {
 			dsunit = ft->dsunit;
 			dswidth = ft->dswidth;
