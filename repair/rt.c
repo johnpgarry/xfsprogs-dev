@@ -239,3 +239,72 @@ check_rtsummary(
 	check_rtfile_contents(mp, "rtsummary", mp->m_sb.sb_rsumino, sumcompute,
 			XFS_B_TO_FSB(mp, mp->m_rsumsize));
 }
+
+void
+check_rtsupers(
+	struct xfs_mount	*mp)
+{
+	struct xfs_buf		*bp;
+	xfs_rtblock_t		rtbno;
+	xfs_rgnumber_t		rgno;
+	int			error;
+
+	if (!xfs_has_rtgroups(mp))
+		return;
+
+	for (rgno = 0; rgno < mp->m_sb.sb_rgcount; rgno++) {
+		rtbno = xfs_rgbno_to_rtb(mp, rgno, 0);
+		error = -libxfs_buf_read_uncached(mp->m_rtdev_targp,
+				xfs_rtb_to_daddr(mp, rtbno),
+				XFS_FSB_TO_BB(mp, 1), 0, &bp,
+				&xfs_rtsb_buf_ops);
+		if (!error) {
+			libxfs_buf_relse(bp);
+			continue;
+		}
+
+		if (no_modify) {
+			do_warn(
+	_("would rewrite realtime group %u superblock\n"),
+					rgno);
+		} else {
+			do_warn(
+	_("will rewrite realtime group %u superblock\n"),
+					rgno);
+			/*
+			 * Rewrite the primary rt superblock before an update
+			 * to the primary fs superblock trips over the rt super
+			 * being corrupt.
+			 */
+			if (rgno == 0)
+				rewrite_primary_rt_super(mp);
+		}
+	}
+}
+
+void
+rewrite_primary_rt_super(
+	struct xfs_mount	*mp)
+{
+	struct xfs_buf		*rtsb_bp;
+	struct xfs_buf		*sb_bp = libxfs_getsb(mp);
+	int			error;
+
+	if (!sb_bp)
+		do_error(
+ _("couldn't grab primary sb to update rt superblocks\n"));
+
+	error = -libxfs_buf_get_uncached(mp->m_rtdev_targp,
+			XFS_FSB_TO_BB(mp, 1), 0, &rtsb_bp);
+	if (error)
+		do_error(
+ _("couldn't grab primary rt superblock\n"));
+
+	rtsb_bp->b_maps[0].bm_bn = XFS_RTSB_DADDR;
+	rtsb_bp->b_ops = &xfs_rtsb_buf_ops;
+
+	libxfs_rtgroup_update_super(rtsb_bp, sb_bp);
+	libxfs_buf_mark_dirty(rtsb_bp);
+	libxfs_buf_relse(rtsb_bp);
+	libxfs_buf_relse(sb_bp);
+}

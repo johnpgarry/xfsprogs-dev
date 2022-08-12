@@ -17,6 +17,7 @@
 #include "progress.h"
 #include "bmap.h"
 #include "threads.h"
+#include "rt.h"
 
 static void
 process_agi_unlinked(
@@ -115,6 +116,8 @@ phase3(
 		do_log(_("        - scan (but don't clear) agi unlinked lists...\n"));
 
 	set_progress_msg(PROG_FMT_AGI_UNLINKED, (uint64_t) glob_agcount);
+
+	check_rtsupers(mp);
 
 	/* first clear the agi unlinked AGI list */
 	if (!no_modify) {

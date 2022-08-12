@@ -27,6 +27,7 @@
 #include "bulkload.h"
 #include "quotacheck.h"
 #include "rcbag_btree.h"
+#include "rt.h"
 
 /*
  * option tables for getsubopt calls
@@ -1541,6 +1542,16 @@ _("Note - stripe unit (%d) and width (%d) were copied from a backup superblock.\
 			do_error(_("upgrading features of secondary supers"));
 		mp->m_sb.sb_features_incompat |=
 				XFS_SB_FEAT_INCOMPAT_NEEDSREPAIR;
+	}
+
+	/* Always rewrite the realtime superblocks. */
+	if (xfs_has_rtgroups(mp)) {
+		if (mp->m_sb.sb_rgcount > 0)
+			rewrite_primary_rt_super(mp);
+
+		error = -libxfs_rtgroup_update_secondary_sbs(mp);
+		if (error)
+			do_error(_("updating rt superblocks, err %d"), error);
 	}
 
 	/*

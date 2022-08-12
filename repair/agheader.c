@@ -412,6 +412,8 @@ secondary_sb_whack(
 			 * super byte for byte.
 			 */
 			sb->sb_metadirino = mp->m_sb.sb_metadirino;
+			sb->sb_rgblocks = mp->m_sb.sb_rgblocks;
+			sb->sb_rgcount = mp->m_sb.sb_rgcount;
 		} else
 			do_warn(
 	_("would zero unused portion of %s superblock (AG #%u)\n"),

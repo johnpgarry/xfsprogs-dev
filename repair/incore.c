@@ -196,6 +196,25 @@ set_rtbmap(
 }
 
 static void
+rtgroups_init(
+	struct xfs_mount	*mp)
+{
+	xfs_rgnumber_t		rgno;
+
+	if (!xfs_has_rtgroups(mp) || !rt_bmap)
+		return;
+
+	for (rgno = 0; rgno < mp->m_sb.sb_rgcount; rgno++) {
+		xfs_rtblock_t	start_rtx;
+
+		start_rtx = xfs_rgbno_to_rtb(mp, rgno, 0) /
+				mp->m_sb.sb_rextsize;
+
+		set_rtbmap(start_rtx, XR_E_INUSE_FS);
+	}
+}
+
+static void
 reset_rt_bmap(void)
 {
 	if (rt_bmap)
@@ -219,6 +238,8 @@ init_rt_bmap(
 			mp->m_sb.sb_rextents);
 		return;
 	}
+
+	rtgroups_init(mp);
 }
 
 static void
@@ -271,6 +292,7 @@ reset_bmaps(xfs_mount_t *mp)
 	}
 
 	reset_rt_bmap();
+	rtgroups_init(mp);
 }
 
 void
