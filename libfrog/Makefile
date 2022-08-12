@@ -41,6 +41,7 @@ crc32cselftest.h \
 crc32defs.h \
 crc32table.h \
 dahashselftest.h \
+div64.h \
 fsgeom.h \
 logging.h \
 paths.h \
