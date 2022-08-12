@@ -1,3 +1,6 @@
+xfsprogs-5.19.0 (12 Aug 2022)
+	- xfs_repair: fix printf format specifiers on 32-bit (Darrick J. Wong)
+
 xfsprogs-5.19.0-rc1 (05 Aug 2022)
 	- libxfs: last bit of kernel sync
 	- libxfs: Fix MAP_SYNC build failure on MIPS/musl (Darrick J. Wong)
