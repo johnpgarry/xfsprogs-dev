@@ -493,16 +493,16 @@ xlog_print_trans_inode_core(
 	nextents = ip->di_big_nextents;
     else
 	nextents = ip->di_nextents;
-    printf(_("size 0x%llx nblocks 0x%llx extsize 0x%x nextents 0x%lx\n"),
+    printf(_("size 0x%llx nblocks 0x%llx extsize 0x%x nextents 0x%llx\n"),
 	   (unsigned long long)ip->di_size, (unsigned long long)ip->di_nblocks,
-	   ip->di_extsize, nextents);
+	   ip->di_extsize, (unsigned long long)nextents);
 
     if (ip->di_flags2 & XFS_DIFLAG2_NREXT64)
 	nextents = ip->di_big_anextents;
     else
 	nextents = ip->di_anextents;
-    printf(_("naextents 0x%lx forkoff %d dmevmask 0x%x dmstate 0x%hx\n"),
-	   nextents, (int)ip->di_forkoff, ip->di_dmevmask, ip->di_dmstate);
+    printf(_("naextents 0x%llx forkoff %d dmevmask 0x%x dmstate 0x%hx\n"),
+	   (unsigned long long)nextents, (int)ip->di_forkoff, ip->di_dmevmask, ip->di_dmstate);
     printf(_("flags 0x%x gen 0x%x\n"),
 	   ip->di_flags, ip->di_gen);
     if (ip->di_version == 3) {
