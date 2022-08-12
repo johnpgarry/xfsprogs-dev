@@ -7,6 +7,7 @@
 #define __LIBFROG_UTIL_H__
 
 unsigned int	log2_roundup(unsigned int i);
+unsigned int	log2_rounddown(unsigned long long i);
 
 void *memchr_inv(const void *start, int c, size_t bytes);
 

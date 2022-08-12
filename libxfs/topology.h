@@ -32,6 +32,9 @@ calc_default_ag_geometry(
 	uint64_t	*agsize,
 	uint64_t	*agcount);
 
+void calc_default_rtgroup_geometry(int blocklog, uint64_t rblocks,
+		uint64_t *rgsize, uint64_t *rgcount);
+
 extern int
 check_overwrite(
 	const char	*device);

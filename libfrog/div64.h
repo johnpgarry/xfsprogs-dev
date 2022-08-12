@@ -93,4 +93,10 @@ howmany_64(uint64_t x, uint32_t y)
 	return x;
 }
 
+static inline __attribute__((const))
+int is_power_of_2(unsigned long n)
+{
+	return (n != 0 && ((n & (n - 1)) == 0));
+}
+
 #endif /* LIBFROG_DIV64_H_ */

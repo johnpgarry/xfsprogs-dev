@@ -1116,6 +1116,50 @@ or logical volume containing the section.
 .BI noalign
 This option disables stripe size detection, enforcing a realtime device with no
 stripe geometry.
+.TP
+.BI rtgroups= value
+This feature breaks the realtime section into multiple allocation groups for
+improved scalability.
+This feature is only available if the metadata directory tree feature is
+enabled.
+.IP
+By default,
+.B mkfs.xfs
+will not enable this feature.
+If the option
+.B \-r rtgroups=0
+is used, the rt group feature is not supported and is disabled.
+.TP
+.BI rgcount=
+This is used to specify the number of allocation groups in the realtime
+section.
+The realtime section of the filesystem can be divided into allocation groups to
+improve the performance of XFS.
+More allocation groups imply that more parallelism can be achieved when
+allocating blocks.
+The minimum allocation group size is 2 realtime extents; the maximum size is
+2^31 blocks.
+The rt section of the filesystem is divided into
+.I value
+allocation groups (default value is scaled automatically based
+on the underlying device size).
+.TP
+.BI rgsize= value
+This is an alternative to using the
+.B rgcount
+suboption. The
+.I value
+is the desired size of the realtime allocation group expressed in bytes
+(usually using the
+.BR m " or " g
+suffixes).
+This value must be a multiple of the realtime extent size,
+must be at least two realtime extents, and no more than 2^31 blocks.
+The
+.B rgcount
+and
+.B rgsize
+suboptions are mutually exclusive.
 .RE
 .PP
 .PD 0

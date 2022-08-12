@@ -1001,6 +1001,46 @@ rtsummary_init(
 	}
 }
 
+static void
+rtfreesp_init_groups(
+	struct xfs_mount	*mp)
+{
+	xfs_rgnumber_t		rgno;
+	int			error;
+
+	for (rgno = 0; rgno < mp->m_sb.sb_rgcount; rgno++) {
+		struct xfs_trans	*tp;
+		xfs_rtblock_t	rtbno;
+		xfs_rtxnum_t	start_rtx;
+		xfs_rtxnum_t	next_rtx;
+
+		rtbno = xfs_rgbno_to_rtb(mp, rgno, mp->m_sb.sb_rextsize);
+		start_rtx = xfs_rtb_to_rtx(mp, rtbno);
+
+		rtbno = xfs_rgbno_to_rtb(mp, rgno + 1, 0);
+		next_rtx = xfs_rtb_to_rtx(mp, rtbno);
+		next_rtx = min(next_rtx, mp->m_sb.sb_rextents);
+
+		error = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_itruncate,
+				0, 0, 0, &tp);
+		if (error)
+			res_failed(error);
+
+		libxfs_trans_ijoin(tp, mp->m_rbmip, 0);
+		error = -libxfs_rtfree_extent(tp, start_rtx,
+				next_rtx - start_rtx);
+		if (error) {
+			fail(_("Error initializing the realtime space"),
+				error);
+		}
+		error = -libxfs_trans_commit(tp);
+		if (error)
+			fail(_("Initialization of the realtime space failed"),
+					error);
+
+	}
+}
+
 /*
  * Free the whole realtime area using transactions.
  * Do one transaction per bitmap block.
@@ -1049,7 +1089,10 @@ rtinit(
 
 	rtbitmap_init(mp);
 	rtsummary_init(mp);
-	rtfreesp_init(mp);
+	if (xfs_has_rtgroups(mp))
+		rtfreesp_init_groups(mp);
+	else
+		rtfreesp_init(mp);
 }
 
 static long
