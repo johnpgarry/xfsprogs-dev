@@ -74,6 +74,17 @@ rootino_count(
 	return xfs_has_metadir(mp) ? 0 : 1;
 }
 
+/*
+ * Counts superblock fields that only exist when realtime groups are enabled.
+ */
+static int
+rtgroups_count(
+	void		*obj,
+	int		startoff)
+{
+	return xfs_has_rtgroups(mp) ? 1 : 0;
+}
+
 #define	OFF(f)	bitize(offsetof(struct xfs_dsb, sb_ ## f))
 #define	SZC(f)	szcount(struct xfs_dsb, sb_ ## f)
 const field_t	sb_flds[] = {
@@ -91,6 +102,10 @@ const field_t	sb_flds[] = {
 	  TYP_INODE },
 	{ "rsumino", FLDT_INO, OI(OFF(rsumino)), rootino_count, FLD_COUNT,
 	  TYP_INODE },
+	{ "rgblocks", FLDT_RGBLOCK, OI(OFF(rgblocks)), rtgroups_count,
+	  FLD_COUNT, TYP_NONE },
+	{ "rgcount", FLDT_RGNUMBER, OI(OFF(rgcount)), rtgroups_count,
+	  FLD_COUNT, TYP_NONE },
 	{ "rextsize", FLDT_AGBLOCK, OI(OFF(rextsize)), C1, 0, TYP_NONE },
 	{ "agblocks", FLDT_AGBLOCK, OI(OFF(agblocks)), C1, 0, TYP_NONE },
 	{ "agcount", FLDT_AGNUMBER, OI(OFF(agcount)), C1, 0, TYP_NONE },
