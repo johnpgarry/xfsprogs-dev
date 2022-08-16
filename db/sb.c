@@ -27,6 +27,7 @@ static int	label_f(int argc, char **argv);
 static void     label_help(void);
 static int	version_f(int argc, char **argv);
 static void     version_help(void);
+static size_t check_label(char *label, bool can_warn);
 
 static const cmdinfo_t	sb_cmd =
 	{ "sb", NULL, sb_f, 0, 1, 1, N_("[agno]"),
@@ -356,6 +357,77 @@ uuid_help(void)
 ));
 }
 
+static bool
+check_rtgroup_update_problems(
+	struct xfs_mount	*mp)
+{
+	int			error;
+
+	if (!xfs_has_rtgroups(mp) || mp->m_sb.sb_rgcount == 0)
+		return false;
+
+	push_cur();
+	error = set_rt_cur(&typtab[TYP_RTSB], XFS_RTSB_DADDR,
+			XFS_FSB_TO_BB(mp, 1), DB_RING_ADD, NULL);
+	if (error == ENODEV) {
+		/* no rt dev means we should just bail out */
+		pop_cur();
+		return true;
+	}
+
+	pop_cur();
+	return false;
+}
+
+static int
+update_rt_supers(
+	struct xfs_mount	*mp,
+	uuid_t			*uuid,
+	char			*label)
+{
+	uuid_t			old_uuid;
+	xfs_rgnumber_t		rgno;
+	int			error;
+
+	if (uuid)
+		memcpy(&old_uuid, &mp->m_sb.sb_uuid, sizeof(uuid_t));
+
+	for (rgno = 0; rgno < mp->m_sb.sb_rgcount; rgno++) {
+		struct xfs_rtsb	*rsb;
+		xfs_rtblock_t	rtbno;
+
+		push_cur();
+		rtbno = xfs_rgbno_to_rtb(mp, rgno, 0);
+		error = set_rt_cur(&typtab[TYP_RTSB],
+				xfs_rtb_to_daddr(mp, rtbno),
+				XFS_FSB_TO_BB(mp, 1), DB_RING_ADD, NULL);
+		if (error == ENODEV) {
+			/* no rt dev means we should just bail out */
+			exitcode = 1;
+			pop_cur();
+			return 1;
+		}
+
+		rsb = iocur_top->data;
+		if (label) {
+			size_t	len = check_label(label, false);
+
+			memset(&rsb->rsb_fname, 0, XFSLABEL_MAX);
+			memcpy(&rsb->rsb_fname, label, len);
+		}
+		if (uuid) {
+			memcpy(&mp->m_sb.sb_uuid, uuid, sizeof(uuid_t));
+			memcpy(&rsb->rsb_uuid, uuid, sizeof(rsb->rsb_uuid));
+		}
+		write_cur();
+		if (uuid)
+			memcpy(&mp->m_sb.sb_uuid, &old_uuid, sizeof(uuid_t));
+		pop_cur();
+	}
+
+	return 0;
+}
+
 static uuid_t *
 do_uuid(xfs_agnumber_t agno, uuid_t *uuid)
 {
@@ -462,11 +534,18 @@ uuid_f(
 			}
 		}
 
+		if (check_rtgroup_update_problems(mp)) {
+			exitcode = 1;
+			return 0;
+		}
+
 		/* clear the log (setting uuid) if it's not dirty */
 		if (!sb_logzero(&uu))
 			return 0;
 
 		dbprintf(_("writing all SBs\n"));
+		if (update_rt_supers(mp, &uu, NULL))
+			return 1;
 		for (agno = 0; agno < mp->m_sb.sb_agcount; agno++)
 			if (!do_uuid(agno, &uu)) {
 				dbprintf(_("failed to set UUID in AG %d\n"), agno);
@@ -535,6 +614,27 @@ label_help(void)
 ));
 }
 
+static size_t
+check_label(
+	char	*label,
+	bool	can_warn)
+{
+	size_t	len = strlen(label);
+
+	if (len > XFSLABEL_MAX) {
+		if (can_warn)
+			dbprintf(_("%s: truncating label length from %d to %d\n"),
+				progname, (int)len, XFSLABEL_MAX);
+		len = XFSLABEL_MAX;
+	}
+	if ( len == 2 &&
+	     (strcmp(label, "\"\"") == 0 ||
+	      strcmp(label, "''")   == 0 ||
+	      strcmp(label, "--")   == 0) )
+		label[0] = label[1] = '\0';
+	return len;
+}
+
 static char *
 do_label(xfs_agnumber_t agno, char *label)
 {
@@ -553,17 +653,7 @@ do_label(xfs_agnumber_t agno, char *label)
 		return &lbl[0];
 	}
 	/* set label */
-	if ((len = strlen(label)) > sizeof(tsb.sb_fname)) {
-		if (agno == 0)
-			dbprintf(_("%s: truncating label length from %d to %d\n"),
-				progname, (int)len, (int)sizeof(tsb.sb_fname));
-		len = sizeof(tsb.sb_fname);
-	}
-	if ( len == 2 &&
-	     (strcmp(label, "\"\"") == 0 ||
-	      strcmp(label, "''")   == 0 ||
-	      strcmp(label, "--")   == 0) )
-		label[0] = label[1] = '\0';
+	len = check_label(label, agno == 0);
 	memset(&tsb.sb_fname, 0, sizeof(tsb.sb_fname));
 	memcpy(&tsb.sb_fname, label, len);
 	memcpy(&lbl[0], &tsb.sb_fname, sizeof(tsb.sb_fname));
@@ -600,7 +690,14 @@ label_f(
 			return 0;
 		}
 
+		if (check_rtgroup_update_problems(mp)) {
+			exitcode = 1;
+			return 0;
+		}
+
 		dbprintf(_("writing all SBs\n"));
+		if (update_rt_supers(mp, NULL, argv[1]))
+			return 1;
 		for (ag = 0; ag < mp->m_sb.sb_agcount; ag++)
 			if ((p = do_label(ag, argv[1])) == NULL) {
 				dbprintf(_("failed to set label in AG %d\n"), ag);
