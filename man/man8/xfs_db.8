@@ -14,6 +14,9 @@ xfs_db \- debug an XFS filesystem
 .B \-l
 .I logdev
 ] [
+.B \-R
+.I rtdev
+] [
 .B \-p
 .I progname
 ]
@@ -79,6 +82,16 @@ Set the program name to
 .I progname
 for prompts and some error messages, the default value is
 .BR xfs_db .
+.TP
+.B -R
+.I rtdev
+Specifies the device where the realtime data resides.
+This is only relevant for filesystems that have a realtime section.
+See the
+.BR mkfs.xfs "(8) " \-r
+option, and refer to
+.BR xfs (5)
+for a detailed description of the XFS realtime section.
 .TP
 .B -r
 Open

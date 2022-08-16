@@ -8,6 +8,7 @@ status=0
 require_offline=""
 require_online=""
 DB_OPTS=""
+DB_DEV_OPTS=""
 REPAIR_OPTS=""
 IO_OPTS=""
 REPAIR_DEV_OPTS=""
@@ -42,6 +43,7 @@ do
 		require_offline=1
 		;;
 	r)	REPAIR_DEV_OPTS=" -r '$OPTARG'"
+		DB_DEV_OPTS=" -R '$OPTARG'"
 		require_offline=1
 		;;
 	u)	DB_OPTS=$DB_OPTS" -r -c uuid"
@@ -89,7 +91,7 @@ case $# in
 
 		if [ -n "$DB_OPTS" ]
 		then
-			eval xfs_db -x -p xfs_admin $LOG_OPTS $DB_OPTS "$1"
+			eval xfs_db -x -p xfs_admin $LOG_OPTS $DB_DEV_OPTS $DB_OPTS "$1"
 			status=$?
 		fi
 		if [ -n "$REPAIR_OPTS" ]
