@@ -405,6 +405,13 @@ secondary_sb_whack(
 				mp->m_sb.sb_sectsize - size);
 			/* Preserve meta_uuid so we don't fail uuid checks */
 			memcpy(&sb->sb_meta_uuid, &tmpuuid, sizeof(uuid_t));
+
+			/*
+			 * Preserve the parts of the incore super that extend
+			 * beyond the part that's supposed to match the ondisk
+			 * super byte for byte.
+			 */
+			sb->sb_metadirino = mp->m_sb.sb_metadirino;
 		} else
 			do_warn(
 	_("would zero unused portion of %s superblock (AG #%u)\n"),
