@@ -56,6 +56,7 @@ typedef enum {
 	DBM_BTREFC,
 	DBM_RLDATA,
 	DBM_COWDATA,
+	DBM_RTSB,
 	DBM_NDBM
 } dbm_t;
 
@@ -187,6 +188,7 @@ static const char	*typename[] = {
 	"btrefcnt",
 	"rldata",
 	"cowdata",
+	"rtsb",
 	NULL
 };
 
@@ -809,6 +811,23 @@ blockfree_f(
 	return 0;
 }
 
+static void
+rtgroups_init(
+	struct xfs_mount	*mp)
+{
+	xfs_rgnumber_t		rgno;
+
+	if (!xfs_has_rtgroups(mp))
+		return;
+
+	for (rgno = 0; rgno < mp->m_sb.sb_rgcount; rgno++) {
+		xfs_rtblock_t	rtbno;
+
+		rtbno = xfs_rgbno_to_rtb(mp, rgno, 0);
+		set_rdbmap(rtbno, mp->m_sb.sb_rextsize, DBM_RTSB);
+	}
+}
+
 /*
  * Check consistency of xfs filesystem contents.
  */
@@ -843,6 +862,7 @@ blockget_f(
 				 "filesystem.\n"));
 		}
 	}
+	rtgroups_init(mp);
 	if (blist_size) {
 		xfree(blist);
 		blist = NULL;
