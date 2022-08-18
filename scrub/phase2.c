@@ -28,6 +28,14 @@ struct scan_ctl {
 	pthread_mutex_t		rbm_waitlock;
 	bool			rbm_done;
 
+	/*
+	 * Control mechanism to signal that each group's scan of the rt bitmap
+	 * file scan is done and wake up any waiters.
+	 */
+	pthread_cond_t		rbm_group_wait;
+	pthread_mutex_t		rbm_group_waitlock;
+	unsigned int		rbm_group_count;
+
 	bool			aborted;
 };
 
@@ -247,6 +255,61 @@ out:
 	}
 }
 
+/* Scrub each rt group's metadata. */
+static void
+scan_rtgroup_metadata(
+	struct workqueue	*wq,
+	xfs_agnumber_t		rgno,
+	void			*arg)
+{
+	struct scrub_item	sri;
+	struct scrub_ctx	*ctx = (struct scrub_ctx *)wq->wq_ctx;
+	struct scan_ctl		*sctl = arg;
+	char			descr[DESCR_BUFSZ];
+	bool			defer_repairs;
+	int			ret;
+
+	if (sctl->aborted)
+		goto out;
+
+	scrub_item_init_rtgroup(&sri, rgno);
+	snprintf(descr, DESCR_BUFSZ, _("rtgroup %u"), rgno);
+
+	/*
+	 * Try to check all of the rtgroup metadata items that we just
+	 * scheduled.  If we return with some types still needing a check, try
+	 * repairing any damaged metadata that we've found so far, and try
+	 * again.  Abort if we stop making forward progress.
+	 */
+	scrub_item_schedule_group(&sri, XFROG_SCRUB_GROUP_RTGROUP);
+	ret = scrub_item_check(ctx, &sri);
+	if (ret) {
+		sctl->aborted = true;
+		goto out;
+	}
+
+	ret = repair_and_scrub_loop(ctx, &sri, descr, &defer_repairs);
+	if (ret) {
+		sctl->aborted = true;
+		goto out;
+	}
+
+	/* Everything else gets fixed during phase 4. */
+	ret = defer_fs_repair(ctx, &sri);
+	if (ret) {
+		sctl->aborted = true;
+		goto out;
+	}
+
+out:
+	/* Signal anybody waiting for the group bitmap scan to finish. */
+	pthread_mutex_lock(&sctl->rbm_group_waitlock);
+	sctl->rbm_group_count--;
+	if (sctl->rbm_group_count == 0)
+		pthread_cond_broadcast(&sctl->rbm_group_wait);
+	pthread_mutex_unlock(&sctl->rbm_group_waitlock);
+}
+
 /* Scan all filesystem metadata. */
 int
 phase2_func(
@@ -260,6 +323,7 @@ phase2_func(
 	struct scrub_item	sri;
 	const struct xfrog_scrub_descr *sc = xfrog_scrubbers;
 	xfs_agnumber_t		agno;
+	xfs_rgnumber_t		rgno;
 	unsigned int		type;
 	int			ret, ret2;
 
@@ -326,13 +390,45 @@ phase2_func(
 		goto out_wq;
 
 	/*
-	 * Wait for the rt bitmap to finish scanning, then scan the rt summary
-	 * since the summary can be regenerated completely from the bitmap.
+	 * Wait for the rt bitmap to finish scanning, then scan the realtime
+	 * group metadata.  When rtgroups are enabled, the RTBITMAP scanner
+	 * only checks the inode and fork data of the rt bitmap file, and each
+	 * group checks its own part of the rtbitmap.
 	 */
 	pthread_mutex_lock(&sctl.rbm_waitlock);
 	while (!sctl.rbm_done)
 		pthread_cond_wait(&sctl.rbm_wait, &sctl.rbm_waitlock);
 	pthread_mutex_unlock(&sctl.rbm_waitlock);
+
+	if (sctl.aborted)
+		goto out_wq;
+
+	for (rgno = 0;
+	     rgno < ctx->mnt.fsgeom.rgcount && !sctl.aborted;
+	     rgno++) {
+		pthread_mutex_lock(&sctl.rbm_group_waitlock);
+		sctl.rbm_group_count++;
+		pthread_mutex_unlock(&sctl.rbm_group_waitlock);
+		ret = -workqueue_add(&wq, scan_rtgroup_metadata, rgno, &sctl);
+		if (ret) {
+			str_liberror(ctx, ret,
+					_("queueing rtgroup scrub work"));
+			goto out_wq;
+		}
+	}
+
+	if (sctl.aborted)
+		goto out_wq;
+
+	/*
+	 * Wait for the rtgroups to finish scanning, then scan the rt summary
+	 * since the summary can be regenerated completely from the bitmap.
+	 */
+	pthread_mutex_lock(&sctl.rbm_group_waitlock);
+	while (sctl.rbm_group_count > 0)
+		pthread_cond_wait(&sctl.rbm_group_wait,
+				&sctl.rbm_group_waitlock);
+	pthread_mutex_unlock(&sctl.rbm_group_waitlock);
 
 	if (sctl.aborted)
 		goto out_wq;

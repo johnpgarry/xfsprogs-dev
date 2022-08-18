@@ -91,6 +91,15 @@ scrub_item_init_ag(struct scrub_item *sri, xfs_agnumber_t agno)
 }
 
 static inline void
+scrub_item_init_rtgroup(struct scrub_item *sri, xfs_rgnumber_t rgno)
+{
+	memset(sri, 0, sizeof(*sri));
+	sri->sri_agno = rgno;
+	sri->sri_ino = -1ULL;
+	sri->sri_gen = -1U;
+}
+
+static inline void
 scrub_item_init_fs(struct scrub_item *sri)
 {
 	memset(sri, 0, sizeof(*sri));
