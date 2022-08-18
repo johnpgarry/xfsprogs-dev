@@ -48,8 +48,8 @@ generate_rtinfo(xfs_mount_t	*mp,
 		xfs_rtword_t	*words,
 		xfs_suminfo_t	*sumcompute)
 {
-	xfs_rtblock_t	extno;
-	xfs_rtblock_t	start_ext;
+	xfs_rtxnum_t	extno;
+	xfs_rtxnum_t	start_ext;
 	int		bitsperblock;
 	int		bmbno;
 	xfs_rtword_t	freebit;

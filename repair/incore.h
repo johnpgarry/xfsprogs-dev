@@ -28,8 +28,8 @@ void		set_bmap_ext(xfs_agnumber_t agno, xfs_agblock_t agbno,
 int		get_bmap_ext(xfs_agnumber_t agno, xfs_agblock_t agbno,
 			     xfs_agblock_t maxbno, xfs_extlen_t *blen);
 
-void		set_rtbmap(xfs_rtblock_t rtx, int state);
-int		get_rtbmap(xfs_rtblock_t rtx);
+void		set_rtbmap(xfs_rtxnum_t rtx, int state);
+int		get_rtbmap(xfs_rtxnum_t rtx);
 
 static inline void
 set_bmap(xfs_agnumber_t agno, xfs_agblock_t agbno, int state)
@@ -70,8 +70,8 @@ typedef struct extent_tree_node  {
 
 typedef struct rt_extent_tree_node  {
 	avlnode_t		avl_node;
-	xfs_rtblock_t		rt_startrtx;	/* starting rt extent number */
-	xfs_extlen_t		rt_rtxlen;	/* number of rt extents */
+	xfs_rtxnum_t		rt_startrtx;	/* starting rt extent number */
+	xfs_rtxlen_t		rt_rtxlen;	/* number of rt extents */
 	extent_state_t		rt_state;	/* see state flags below */
 
 #if 0
@@ -157,8 +157,8 @@ int		add_dup_extent(xfs_agnumber_t agno, xfs_agblock_t startblock,
 			xfs_extlen_t blockcount);
 int		search_dup_extent(xfs_agnumber_t agno,
 			xfs_agblock_t start_agbno, xfs_agblock_t end_agbno);
-void		add_rt_dup_extent(xfs_rtblock_t startrtx, xfs_extlen_t rtxlen);
-int		search_rt_dup_extent(struct xfs_mount *mp, xfs_rtblock_t rtx);
+void		add_rt_dup_extent(xfs_rtxnum_t startrtx, xfs_rtxlen_t rtxlen);
+int		search_rt_dup_extent(struct xfs_mount *mp, xfs_rtxnum_t rtx);
 
 /*
  * extent/tree recyling and deletion routines

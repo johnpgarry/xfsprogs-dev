@@ -533,8 +533,8 @@ static avlops_t avl_extent_tree_ops = {
  */
 static rt_extent_tree_node_t *
 mk_rt_extent_tree_nodes(
-	xfs_rtblock_t			new_startrtx,
-	xfs_extlen_t			new_rtxlen,
+	xfs_rtxnum_t			new_startrtx,
+	xfs_rtxlen_t			new_rtxlen,
 	extent_state_t			new_state)
 {
 	struct rt_extent_tree_node	*new;
@@ -603,12 +603,12 @@ free_rt_dup_extent_tree(xfs_mount_t *mp)
  */
 void
 add_rt_dup_extent(
-	xfs_rtblock_t			startrtx,
-	xfs_extlen_t			rtxlen)
+	xfs_rtxnum_t			startrtx,
+	xfs_rtxlen_t			rtxlen)
 {
 	struct rt_extent_tree_node	*first, *last, *ext, *next_ext;
-	xfs_rtblock_t			new_startrtx;
-	xfs_extlen_t			new_rtxlen;
+	xfs_rtxnum_t			new_startrtx;
+	xfs_rtxlen_t			new_rtxlen;
 
 	pthread_mutex_lock(&rt_ext_tree_lock);
 	avl64_findranges(rt_ext_tree_ptr, startrtx - 1,
@@ -692,7 +692,7 @@ add_rt_dup_extent(
 int
 search_rt_dup_extent(
 	struct xfs_mount	*mp,
-	xfs_rtblock_t		rtx)
+	xfs_rtxnum_t		rtx)
 {
 	int			ret;
 

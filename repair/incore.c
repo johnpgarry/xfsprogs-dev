@@ -178,7 +178,7 @@ static size_t		rt_bmap_size;
  */
 int
 get_rtbmap(
-	xfs_rtblock_t	rtx)
+	xfs_rtxnum_t	rtx)
 {
 	return (*(rt_bmap + rtx /  XR_BB_NUM) >>
 		((rtx % XR_BB_NUM) * XR_BB)) & XR_BB_MASK;
@@ -186,7 +186,7 @@ get_rtbmap(
 
 void
 set_rtbmap(
-	xfs_rtblock_t	rtx,
+	xfs_rtxnum_t	rtx,
 	int		state)
 {
 	*(rt_bmap + rtx / XR_BB_NUM) =

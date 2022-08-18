@@ -11,7 +11,7 @@ typedef struct fs_geometry  {
 	uint32_t	sb_blocksize;	/* blocksize (bytes) */
 	xfs_rfsblock_t	sb_dblocks;	/* # data blocks */
 	xfs_rfsblock_t	sb_rblocks;	/* # realtime blocks */
-	xfs_rtblock_t	sb_rextents;	/* # realtime extents */
+	xfs_rtxnum_t	sb_rextents;	/* # realtime extents */
 	xfs_fsblock_t	sb_logstart;	/* starting log block # */
 	xfs_agblock_t	sb_rextsize;	/* realtime extent size (blocks )*/
 	xfs_agblock_t	sb_agblocks;	/* # of blocks per ag */

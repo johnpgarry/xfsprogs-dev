@@ -250,9 +250,9 @@ void
 phase4(xfs_mount_t *mp)
 {
 	ino_tree_node_t		*irec;
-	xfs_rtblock_t		rtx;
-	xfs_rtblock_t		rt_start;
-	xfs_extlen_t		rt_len;
+	xfs_rtxnum_t		rtx;
+	xfs_rtxnum_t		rt_start;
+	xfs_rtxlen_t		rt_len;
 	xfs_agnumber_t		i;
 	xfs_agblock_t		j;
 	xfs_agblock_t		ag_end;

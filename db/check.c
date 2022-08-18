@@ -3594,7 +3594,7 @@ process_rtbitmap(
 	int		bitsperblock;
 	xfs_fileoff_t	bmbno;
 	xfs_fsblock_t	bno;
-	xfs_rtblock_t	extno;
+	xfs_rtxnum_t	extno;
 	int		len;
 	int		log;
 	int		offs;
