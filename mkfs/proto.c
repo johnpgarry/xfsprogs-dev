@@ -20,6 +20,7 @@ static int newfile(xfs_trans_t *tp, xfs_inode_t *ip, int symlink, int logit,
 			char *buf, int len);
 static char *newregfile(char **pp, int *len);
 static void rtinit(xfs_mount_t *mp);
+static void rtfreesp_init(struct xfs_mount *mp);
 static long filesize(int fd);
 static int slashes_are_spaces;
 
@@ -652,7 +653,6 @@ rtinit(
 	xfs_mount_t	*mp)
 {
 	xfs_fileoff_t	bno;
-	xfs_fileoff_t	ebno;
 	xfs_bmbt_irec_t	*ep;
 	int		error;
 	int		i;
@@ -770,19 +770,34 @@ rtinit(
 		fail(_("Block allocation of the realtime summary inode failed"),
 				error);
 
-	/*
-	 * Free the whole area using transactions.
-	 * Do one transaction per bitmap block.
-	 */
-	for (bno = 0; bno < mp->m_sb.sb_rextents; bno = ebno) {
-		i = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_itruncate,
+	rtfreesp_init(mp);
+}
+
+/*
+ * Free the whole realtime area using transactions.
+ * Do one transaction per bitmap block.
+ */
+static void
+rtfreesp_init(
+	struct xfs_mount	*mp)
+{
+	struct xfs_trans	*tp;
+	xfs_rtxnum_t		rtx;
+	xfs_rtxnum_t		ertx;
+	int			error;
+
+	for (rtx = 0; rtx < mp->m_sb.sb_rextents; rtx = ertx) {
+		error = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_itruncate,
 				0, 0, 0, &tp);
-		if (i)
-			res_failed(i);
-		libxfs_trans_ijoin(tp, rbmip, 0);
-		ebno = XFS_RTMIN(mp->m_sb.sb_rextents,
-			bno + NBBY * mp->m_sb.sb_blocksize);
-		error = -libxfs_rtfree_extent(tp, bno, (xfs_extlen_t)(ebno-bno));
+		if (error)
+			res_failed(error);
+
+		libxfs_trans_ijoin(tp, mp->m_rbmip, 0);
+		ertx = XFS_RTMIN(mp->m_sb.sb_rextents,
+			rtx + NBBY * mp->m_sb.sb_blocksize);
+
+		error = -libxfs_rtfree_extent(tp, rtx,
+				(xfs_rtxlen_t)(ertx - rtx));
 		if (error) {
 			fail(_("Error initializing the realtime space"),
 				error);
