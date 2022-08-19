@@ -317,18 +317,6 @@ scrub_ag_metadata(
 	return scrub_group(ctx, XFROG_SCRUB_GROUP_PERAG, sri);
 }
 
-/* Scrub whole-filesystem metadata. */
-int
-scrub_fs_metadata(
-	struct scrub_ctx		*ctx,
-	unsigned int			type,
-	struct scrub_item		*sri)
-{
-	ASSERT(xfrog_scrubbers[type].group == XFROG_SCRUB_GROUP_FS);
-
-	return scrub_meta_type(ctx, type, sri);
-}
-
 /* Scrub all FS summary metadata. */
 int
 scrub_summary_metadata(
