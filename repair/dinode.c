@@ -2300,6 +2300,7 @@ process_dinode_int(xfs_mount_t *mp,
 	const int		is_used = 1;
 	blkmap_t		*dblkmap = NULL;
 	xfs_agino_t		unlinked_ino;
+	struct xfs_perag	*pag;
 
 	*dirty = *isa_dir = 0;
 	*used = is_used;
@@ -2380,7 +2381,8 @@ process_dinode_int(xfs_mount_t *mp,
 	}
 
 	unlinked_ino = be32_to_cpu(dino->di_next_unlinked);
-	if (!xfs_verify_agino_or_null(mp, agno, unlinked_ino)) {
+	pag = libxfs_perag_get(mp, agno);
+	if (!xfs_verify_agino_or_null(pag, unlinked_ino)) {
 		retval = 1;
 		if (!uncertain)
 			do_warn(_("bad next_unlinked 0x%x on inode %" PRIu64 "%c"),
@@ -2395,6 +2397,7 @@ process_dinode_int(xfs_mount_t *mp,
 				do_warn(_(" would reset next_unlinked\n"));
 		}
 	}
+	libxfs_perag_put(pag);
 
 	/*
 	 * We don't bother checking the CRC here - we cannot guarantee that when
