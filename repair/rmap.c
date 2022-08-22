@@ -551,13 +551,15 @@ rmap_store_ag_btree_rec(
 		if (error)
 			goto err_slab;
 
-		error = -libxfs_alloc_read_agf(mp, tp, agno, 0, &agbp);
-		if (error)
+		pag = libxfs_perag_get(mp, agno);
+		error = -libxfs_alloc_read_agf(pag, tp, 0, &agbp);
+		if (error) {
+			libxfs_perag_put(pag);
 			goto err_trans;
+		}
 
 		ASSERT(XFS_RMAP_NON_INODE_OWNER(rm_rec->rm_owner));
 		oinfo.oi_owner = rm_rec->rm_owner;
-		pag = libxfs_perag_get(mp, agno);
 		error = -libxfs_rmap_alloc(tp, agbp, pag, rm_rec->rm_startblock,
 				rm_rec->rm_blockcount, &oinfo);
 		libxfs_perag_put(pag);
@@ -995,7 +997,8 @@ rmaps_verify_btree(
 		return;
 	}
 
-	error = -libxfs_alloc_read_agf(mp, NULL, agno, 0, &agbp);
+	pag = libxfs_perag_get(mp, agno);
+	error = -libxfs_alloc_read_agf(pag, NULL, 0, &agbp);
 	if (error) {
 		do_warn(_("Could not read AGF %u to check rmap btree.\n"),
 				agno);
@@ -1003,7 +1006,6 @@ rmaps_verify_btree(
 	}
 
 	/* Leave the per-ag data "uninitialized" since we rewrite it later */
-	pag = libxfs_perag_get(mp, agno);
 	pag->pagf_init = 0;
 
 	bt_cur = libxfs_rmapbt_init_cursor(mp, NULL, agbp, pag);
@@ -1370,7 +1372,8 @@ check_refcounts(
 		return;
 	}
 
-	error = -libxfs_alloc_read_agf(mp, NULL, agno, 0, &agbp);
+	pag = libxfs_perag_get(mp, agno);
+	error = -libxfs_alloc_read_agf(pag, NULL, 0, &agbp);
 	if (error) {
 		do_warn(_("Could not read AGF %u to check refcount btree.\n"),
 				agno);
@@ -1378,7 +1381,6 @@ check_refcounts(
 	}
 
 	/* Leave the per-ag data "uninitialized" since we rewrite it later */
-	pag = libxfs_perag_get(mp, agno);
 	pag->pagf_init = 0;
 
 	bt_cur = libxfs_refcountbt_init_cursor(mp, NULL, agbp, pag);
