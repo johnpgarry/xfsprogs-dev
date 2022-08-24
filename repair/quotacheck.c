@@ -162,7 +162,7 @@ qc_count_rtblocks(
 	struct xfs_iext_cursor	icur;
 	struct xfs_bmbt_irec	got;
 	xfs_filblks_t		count = 0;
-	struct xfs_ifork	*ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
+	struct xfs_ifork	*ifp = xfs_ifork_ptr(ip, XFS_DATA_FORK);
 	int			error;
 
 	error = -libxfs_iread_extents(NULL, ip, XFS_DATA_FORK);
@@ -438,7 +438,7 @@ quotacheck_verify(
 		return;
 	}
 
-	ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
+	ifp = xfs_ifork_ptr(ip, XFS_DATA_FORK);
 	error = -libxfs_iread_extents(NULL, ip, XFS_DATA_FORK);
 	if (error) {
 		do_warn(
