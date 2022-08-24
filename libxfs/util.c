@@ -360,7 +360,7 @@ libxfs_iflush_int(
 			(ip->i_df.if_format == XFS_DINODE_FMT_BTREE)   ||
 			(ip->i_df.if_format == XFS_DINODE_FMT_LOCAL) );
 	}
-	ASSERT(ip->i_df.if_nextents+ip->i_afp->if_nextents <= ip->i_nblocks);
+	ASSERT(ip->i_df.if_nextents+ip.i_af->if_nextents <= ip->i_nblocks);
 	ASSERT(ip->i_forkoff <= mp->m_sb.sb_inodesize);
 
 	/* bump the change count on v3 inodes */
@@ -374,7 +374,8 @@ libxfs_iflush_int(
 	if (ip->i_df.if_format == XFS_DINODE_FMT_LOCAL &&
 	    xfs_ifork_verify_local_data(ip))
 		return -EFSCORRUPTED;
-	if (ip->i_afp && ip->i_afp->if_format == XFS_DINODE_FMT_LOCAL &&
+	if (ip->i_af.if_present &&
+	    ip->i_af.if_format == XFS_DINODE_FMT_LOCAL &&
 	    xfs_ifork_verify_local_attr(ip))
 		return -EFSCORRUPTED;
 

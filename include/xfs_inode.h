@@ -74,9 +74,9 @@ typedef struct xfs_inode {
 	xfs_ino_t		i_ino;		/* inode number (agno/agino) */
 	struct xfs_imap		i_imap;		/* location for xfs_imap() */
 	struct xfs_buftarg	i_dev;		/* dev for this inode */
-	struct xfs_ifork	*i_afp;		/* attribute fork pointer */
 	struct xfs_ifork	*i_cowfp;	/* copy on write extents */
 	struct xfs_ifork	i_df;		/* data fork */
+	struct xfs_ifork	i_af;		/* attribute fork */
 	struct xfs_inode_log_item *i_itemp;	/* logging information */
 	unsigned int		i_delayed_blks;	/* count of delay alloc blks */
 	xfs_fsize_t		i_disk_size;	/* number of bytes in file */
@@ -109,7 +109,9 @@ xfs_ifork_ptr(
 	case XFS_DATA_FORK:
 		return &ip->i_df;
 	case XFS_ATTR_FORK:
-		return ip->i_afp;
+		if (!ip->i_af.if_present)
+			return NULL;
+		return &ip->i_af;
 	case XFS_COW_FORK:
 		return ip->i_cowfp;
 	default:
