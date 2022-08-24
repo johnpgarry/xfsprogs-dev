@@ -958,7 +958,7 @@ libxfs_buf_mark_dirty(
 	 */
 	bp->b_error = 0;
 	bp->b_flags &= ~LIBXFS_B_STALE;
-	bp->b_flags |= LIBXFS_B_DIRTY;
+	bp->b_flags |= LIBXFS_B_DIRTY | LIBXFS_B_UPTODATE;
 }
 
 /* Prepare a buffer to be sent to the MRU list. */
