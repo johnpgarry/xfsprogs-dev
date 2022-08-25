@@ -12,6 +12,9 @@ xfs_metadump \- copy XFS filesystem metadata to a file
 .B \-l
 .I logdev
 ] [
+.B \-r
+.I rtdev
+] [
 .B \-v
 .I version
 ]
@@ -145,6 +148,14 @@ this value.  The default size is 2097151 blocks.
 .TP
 .B \-o
 Disables obfuscation of file names and extended attributes.
+.TP
+.BI \-r  " rtdev"
+For filesystems that have a realtime section, this specifies the device where
+the realtime section resides.
+If the v2 metadump format is selected, the realtime group superblocks will be
+copied to the metadump.
+The v2 metadump format will be selected automatically if the filesystem
+contains realtime groups.
 .TP
 .B \-v
 The format of the metadump file to be produced.

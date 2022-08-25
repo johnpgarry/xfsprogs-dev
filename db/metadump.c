@@ -85,6 +85,7 @@ static struct metadump {
 	bool			dirty_log;
 	bool			external_log;
 	bool			stdout_metadump;
+	bool			realtime_data;
 	xfs_ino_t		cur_ino;
 	/* Metadump file */
 	FILE			*outf;
@@ -3099,6 +3100,7 @@ init_metadump_v2(void)
 {
 	struct xfs_metadump_header	xmh = {0};
 	uint32_t			compat_flags = 0;
+	uint32_t			incompat_flags = 0;
 
 	xmh.xmh_magic = cpu_to_be32(XFS_MD_MAGIC_V2);
 	xmh.xmh_version = cpu_to_be32(2);
@@ -3111,8 +3113,11 @@ init_metadump_v2(void)
 		compat_flags |= XFS_MD2_COMPAT_DIRTYLOG;
 	if (metadump.external_log)
 		compat_flags |= XFS_MD2_COMPAT_EXTERNALLOG;
+	if (metadump.realtime_data)
+		incompat_flags |= XFS_MD2_INCOMPAT_RTDEVICE;
 
 	xmh.xmh_compat_flags = cpu_to_be32(compat_flags);
+	xmh.xmh_incompat_flags = cpu_to_be32(incompat_flags);
 
 	if (fwrite(&xmh, sizeof(xmh), 1, metadump.outf) != 1) {
 		print_warning("error writing to target file");
@@ -3120,6 +3125,39 @@ init_metadump_v2(void)
 	}
 
 	return 0;
+}
+
+static int
+copy_rtsupers(void)
+{
+	int		error;
+	xfs_rtblock_t	rtbno;
+	xfs_rgnumber_t	rgno = 0;
+
+	if (metadump.show_progress)
+		print_progress("Copying realtime superblocks");
+
+	for (rgno = 0; rgno < mp->m_sb.sb_rgcount; rgno++) {
+		rtbno = xfs_rgbno_to_rtb(mp, rgno, 0);
+
+		push_cur();
+		error = set_rt_cur(&typtab[TYP_RTSB],
+				xfs_rtb_to_daddr(mp, rtbno),
+				XFS_FSB_TO_BB(mp, 1), DB_RING_ADD, NULL);
+		if (error)
+			return 0;
+		if (iocur_top->data == NULL) {
+			pop_cur();
+			print_warning("cannot read rt super %u", rgno);
+			return !metadump.stop_on_read_error;
+		}
+		error = write_buf(iocur_top);
+		pop_cur();
+		if (error)
+			return 0;
+	}
+
+	return 1;
 }
 
 static int
@@ -3136,6 +3174,8 @@ write_metadump_v2(
 	if (type == TYP_LOG &&
 	    mp->m_logdev_targp->bt_bdev != mp->m_ddev_targp->bt_bdev)
 		addr |= XME_ADDR_LOG_DEVICE;
+	else if (type == TYP_RTSB)
+		addr |= XME_ADDR_RT_DEVICE;
 	else
 		addr |= XME_ADDR_DATA_DEVICE;
 
@@ -3184,6 +3224,7 @@ metadump_f(
 	metadump.zero_stale_data = true;
 	metadump.dirty_log = false;
 	metadump.external_log = false;
+	metadump.realtime_data = false;
 
 	if (mp->m_sb.sb_magicnum != XFS_SB_MAGIC) {
 		print_warning("bad superblock magic number %x, giving up",
@@ -3259,6 +3300,20 @@ metadump_f(
 	if (metadump.version == 2 && mp->m_sb.sb_logstart == 0 &&
 	    !metadump.external_log) {
 		print_warning("external log device not loaded, use -l");
+		return 1;
+	}
+
+	/* The realtime device only contains metadata if rtgroups is enabled. */
+	if (mp->m_rtdev_targp->bt_bdev && xfs_has_rtgroups(mp))
+		metadump.realtime_data = true;
+
+	if (metadump.realtime_data && !version_opt_set)
+		metadump.version = 2;
+
+	if (metadump.version == 2 && xfs_has_realtime(mp) &&
+	    xfs_has_rtgroups(mp) &&
+	    !metadump.realtime_data) {
+		print_warning("realtime device not loaded, use -R");
 		return 1;
 	}
 
@@ -3364,6 +3419,12 @@ metadump_f(
 	/* copy log */
 	if (!exitcode && !(metadump.version == 1 && metadump.external_log))
 		exitcode = !copy_log();
+
+	/* copy rt sueprblocks */
+	if (!exitcode && metadump.realtime_data) {
+		if (!copy_rtsupers())
+			exitcode = 1;
+	}
 
 	/* write the remaining index */
 	if (!exitcode && metadump.mdops->finish_dump)

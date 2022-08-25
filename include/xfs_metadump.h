@@ -68,12 +68,18 @@ struct xfs_metadump_header {
 /* Dump contains external log contents. */
 #define XFS_MD2_COMPAT_EXTERNALLOG	(1 << 3)
 
+/* Dump contains realtime device contents. */
+#define XFS_MD2_INCOMPAT_RTDEVICE	(1U << 0)
+
+#define XFS_MD2_INCOMPAT_ALL		(XFS_MD2_INCOMPAT_RTDEVICE)
+
 struct xfs_meta_extent {
 	/*
 	 * Lowest 54 bits are used to store 512 byte addresses.
 	 * Next 2 bits is used for indicating the device.
 	 * 00 - Data device
 	 * 01 - External log
+	 * 10 - Realtime device
 	 */
 	__be64 xme_addr;
 	/* In units of 512 byte blocks */
@@ -88,6 +94,8 @@ struct xfs_meta_extent {
 #define XME_ADDR_DATA_DEVICE	(0ULL << XME_ADDR_DEVICE_SHIFT)
 /* Extent was copied from the log device */
 #define XME_ADDR_LOG_DEVICE	(1ULL << XME_ADDR_DEVICE_SHIFT)
+/* Extent was copied from the rt device */
+#define XME_ADDR_RT_DEVICE	(2ULL << XME_ADDR_DEVICE_SHIFT)
 
 #define XME_ADDR_DEVICE_MASK	(3ULL << XME_ADDR_DEVICE_SHIFT)
 
