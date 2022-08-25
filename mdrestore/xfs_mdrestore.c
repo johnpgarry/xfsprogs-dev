@@ -7,6 +7,7 @@
 #include "libxfs.h"
 #include "xfs_metadump.h"
 #include <libfrog/platform.h>
+#include "libfrog/div64.h"
 
 union mdrestore_headers {
 	__be32				magic;
@@ -160,6 +161,7 @@ restore_v1(
 	int			mb_count;
 	xfs_sb_t		sb;
 	int64_t			bytes_read;
+	int64_t			mb_read = 0;
 
 	block_size = 1 << h->v1.mb_blocklog;
 	max_indices = (block_size - sizeof(xfs_metablock_t)) / sizeof(__be64);
@@ -208,9 +210,14 @@ restore_v1(
 	bytes_read = 0;
 
 	for (;;) {
-		if (mdrestore.show_progress &&
-		    (bytes_read & ((1 << 20) - 1)) == 0)
-			print_progress("%lld MB read", bytes_read >> 20);
+		if (mdrestore.show_progress) {
+			int64_t		mb_now = bytes_read >> 20;
+
+			if (mb_now != mb_read) {
+				print_progress("%lld MB read", mb_now);
+				mb_read = mb_now;
+			}
+		}
 
 		for (cur_index = 0; cur_index < mb_count; cur_index++) {
 			if (pwrite(ddev_fd, &block_buffer[cur_index <<
@@ -239,6 +246,9 @@ restore_v1(
 
 		bytes_read += block_size + (mb_count << h->v1.mb_blocklog);
 	}
+
+	if (mdrestore.show_progress && bytes_read > (mb_read << 20))
+		print_progress("%lld MB read", howmany_64(bytes_read, 1U << 20));
 
 	if (mdrestore.progress_since_warning)
 		putchar('\n');
@@ -343,6 +353,7 @@ restore_v2(
 	struct xfs_sb		sb;
 	struct xfs_meta_extent	xme;
 	char			*block_buffer;
+	int64_t			mb_read = 0;
 	int64_t			bytes_read;
 	uint64_t		offset;
 	int			len;
@@ -419,15 +430,17 @@ restore_v2(
 		bytes_read += len;
 
 		if (mdrestore.show_progress) {
-			static int64_t mb_read;
-			int64_t mb_now = bytes_read >> 20;
+			int64_t	mb_now = bytes_read >> 20;
 
 			if (mb_now != mb_read) {
-				print_progress("%lld MB read", mb_now);
+				print_progress("%lld mb read", mb_now);
 				mb_read = mb_now;
 			}
 		}
 	} while (1);
+
+	if (mdrestore.show_progress && bytes_read > (mb_read << 20))
+		print_progress("%lld mb read", howmany_64(bytes_read, 1U << 20));
 
 	if (mdrestore.progress_since_warning)
 		putchar('\n');
