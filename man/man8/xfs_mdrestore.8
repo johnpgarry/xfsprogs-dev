@@ -8,6 +8,9 @@ xfs_mdrestore \- restores an XFS metadump image to a filesystem image
 ] [
 .B \-l
 .I logdev
+] [
+.B \-r
+.I rtdev
 ]
 .I source
 .I target
@@ -17,6 +20,9 @@ xfs_mdrestore \- restores an XFS metadump image to a filesystem image
 [
 .B \-l
 .I logdev
+] [
+.B \-r
+.I rtdev
 ]
 .I source
 .br
@@ -60,6 +66,10 @@ include any descriptive information.
 Metadump in v2 format can contain metadata dumped from an external log.
 In such a scenario, the user has to provide a device to which the log device
 contents from the metadump file are copied.
+.TP
+.BI \-r " rtdev"
+Restore realtime device metadata to this device.
+This is only required for a metadump in v2 format.
 .TP
 .B \-V
 Prints the version number and exits.

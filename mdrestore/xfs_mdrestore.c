@@ -19,8 +19,9 @@ struct mdrestore_ops {
 	void (*read_header)(union mdrestore_headers *header, FILE *md_fp);
 	void (*show_info)(union mdrestore_headers *header, const char *md_file);
 	void (*restore)(union mdrestore_headers *header, FILE *md_fp,
-			int ddev_fd, bool is_data_target_file, int logdev_fd,
-			bool is_log_target_file);
+			int ddev_fd, bool is_data_target_file,
+			int logdev_fd, bool is_log_target_file,
+			int rtdev_fd, bool is_rt_target_file);
 };
 
 static struct mdrestore {
@@ -29,6 +30,7 @@ static struct mdrestore {
 	bool			show_info;
 	bool			progress_since_warning;
 	bool			external_log;
+	bool			realtime_data;
 } mdrestore;
 
 static void
@@ -200,7 +202,9 @@ restore_v1(
 	int			ddev_fd,
 	bool			is_data_target_file,
 	int			logdev_fd,
-	bool			is_log_target_file)
+	bool			is_log_target_file,
+	int			rtdev_fd,
+	bool			is_rt_target_file)
 {
 	struct xfs_metablock	*metablock;	/* header + index + blocks */
 	__be64			*block_index;
@@ -325,8 +329,9 @@ read_header_v2(
 	if (!mdrestore.external_log && (compat & XFS_MD2_COMPAT_EXTERNALLOG))
 		fatal("External Log device is required\n");
 
-	if (h->v2.xmh_incompat_flags & cpu_to_be32(XFS_MD2_INCOMPAT_RTDEVICE))
-		fatal("Realtime device not yet supported\n");
+	if ((h->v2.xmh_incompat_flags & cpu_to_be32(XFS_MD2_INCOMPAT_RTDEVICE)) &&
+	    !mdrestore.realtime_data)
+		fatal("Realtime device is required\n");
 }
 
 static void
@@ -335,14 +340,17 @@ show_info_v2(
 	const char		*md_file)
 {
 	uint32_t		compat_flags;
+	uint32_t		incompat_flags;
 
 	compat_flags = be32_to_cpu(h->v2.xmh_compat_flags);
+	incompat_flags = be32_to_cpu(h->v2.xmh_incompat_flags);
 
-	printf("%s: %sobfuscated, %s log, external log contents are %sdumped, %s metadata blocks,\n",
+	printf("%s: %sobfuscated, %s log, external log contents are %sdumped, rt device contents are %sdumped, %s metadata blocks,\n",
 		md_file,
 		compat_flags & XFS_MD2_COMPAT_OBFUSCATED ? "":"not ",
 		compat_flags & XFS_MD2_COMPAT_DIRTYLOG ? "dirty":"clean",
 		compat_flags & XFS_MD2_COMPAT_EXTERNALLOG ? "":"not ",
+		incompat_flags & XFS_MD2_INCOMPAT_RTDEVICE ? "":"not ",
 		compat_flags & XFS_MD2_COMPAT_FULLBLOCKS ? "full":"zeroed");
 }
 
@@ -381,7 +389,9 @@ restore_v2(
 	int			ddev_fd,
 	bool			is_data_target_file,
 	int			logdev_fd,
-	bool			is_log_target_file)
+	bool			is_log_target_file,
+	int			rtdev_fd,
+	bool			is_rt_target_file)
 {
 	struct xfs_sb		sb;
 	struct xfs_meta_extent	xme;
@@ -452,6 +462,10 @@ restore_v2(
 			device = "log";
 			fd = logdev_fd;
 			break;
+		case XME_ADDR_RT_DEVICE:
+			device = "rt";
+			fd = rtdev_fd;
+			break;
 		default:
 			fatal("Invalid device found in metadump\n");
 			break;
@@ -481,7 +495,7 @@ static struct mdrestore_ops mdrestore_ops_v2 = {
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-V] [-g] [-i] [-l logdev] source target\n",
+	fprintf(stderr, "Usage: %s [-V] [-g] [-i] [-l logdev] [-r rtdev] source target\n",
 		progname);
 	exit(1);
 }
@@ -494,20 +508,24 @@ main(
 	union mdrestore_headers	headers;
 	FILE			*src_f;
 	char			*logdev = NULL;
+	char			*rtdev = NULL;
 	int			data_dev_fd = -1;
 	int			log_dev_fd = -1;
+	int			rt_dev_fd = -1;
 	int			c;
 	bool			is_data_dev_file = false;
 	bool			is_log_dev_file = false;
+	bool			is_rt_dev_file = false;
 
 	mdrestore.show_progress = false;
 	mdrestore.show_info = false;
 	mdrestore.progress_since_warning = false;
 	mdrestore.external_log = false;
+	mdrestore.realtime_data = false;
 
 	progname = basename(argv[0]);
 
-	while ((c = getopt(argc, argv, "gil:V")) != EOF) {
+	while ((c = getopt(argc, argv, "gil:r:V")) != EOF) {
 		switch (c) {
 			case 'g':
 				mdrestore.show_progress = true;
@@ -518,6 +536,10 @@ main(
 			case 'l':
 				logdev = optarg;
 				mdrestore.external_log = true;
+				break;
+			case 'r':
+				rtdev = optarg;
+				mdrestore.realtime_data = true;
 				break;
 			case 'V':
 				printf("%s version %s\n", progname, VERSION);
@@ -587,12 +609,20 @@ main(
 		/* check and open log device */
 		log_dev_fd = open_device(logdev, &is_log_dev_file);
 
-	mdrestore.mdrops->restore(&headers, src_f, data_dev_fd,
-			is_data_dev_file, log_dev_fd, is_log_dev_file);
+	if (mdrestore.realtime_data)
+		/* check and open realtime device */
+		rt_dev_fd = open_device(rtdev, &is_rt_dev_file);
+
+	mdrestore.mdrops->restore(&headers, src_f,
+			data_dev_fd, is_data_dev_file,
+			log_dev_fd, is_log_dev_file,
+			rt_dev_fd, is_rt_dev_file);
 
 	close(data_dev_fd);
 	if (mdrestore.external_log)
 		close(log_dev_fd);
+	if (mdrestore.realtime_data)
+		close(rt_dev_fd);
 
 	if (src_f != stdin)
 		fclose(src_f);
