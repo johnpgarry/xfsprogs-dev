@@ -173,10 +173,25 @@ compute_ag_refcounts(
 {
 	int		error;
 
-	error = compute_refcounts(wq->wq_ctx, agno);
+	error = compute_refcounts(wq->wq_ctx, false, agno);
 	if (error)
 		do_error(
 _("%s while computing reference count records.\n"),
+			 strerror(error));
+}
+
+static void
+compute_rt_refcounts(
+	struct workqueue*wq,
+	xfs_agnumber_t	rgno,
+	void		*arg)
+{
+	int		error;
+
+	error = compute_refcounts(wq->wq_ctx, true, rgno);
+	if (error)
+		do_error(
+_("%s while computing realtime reference count records.\n"),
 			 strerror(error));
 }
 
@@ -227,6 +242,8 @@ process_rmap_data(
 	create_work_queue(&wq, mp, platform_nproc());
 	for (i = 0; i < mp->m_sb.sb_agcount; i++)
 		queue_work(&wq, compute_ag_refcounts, i, NULL);
+	for (i = 0; i < mp->m_sb.sb_rgcount; i++)
+		queue_work(&wq, compute_rt_refcounts, i, NULL);
 	destroy_work_queue(&wq);
 
 	create_work_queue(&wq, mp, platform_nproc());
