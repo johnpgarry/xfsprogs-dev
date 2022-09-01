@@ -1325,6 +1325,19 @@ specific points under adverse conditions. Without the
 .I tag
 argument, displays the list of error tags available.
 Only available in expert mode and requires privileges.
+
+.TP
+.BI "rginfo [ \-r " rgno " ]"
+Show information about or update the state of realtime allocation groups.
+.RE
+.RS 1.0i
+.PD 0
+.TP
+.BI \-r
+Act only on a specific realtime group.
+.PD
+.RE
+
 .TP
 .BI "resblks [ " blocks " ]"
 Get and/or set count of reserved filesystem blocks using the
@@ -1625,7 +1638,6 @@ flag.
 .TP
 .B fsuuid
 Print the mounted filesystem UUID.
-
 
 .SH OTHER COMMANDS
 .TP
