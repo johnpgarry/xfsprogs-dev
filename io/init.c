@@ -44,6 +44,7 @@ init_cvtnum(
 static void
 init_commands(void)
 {
+	aginfo_init();
 	atomicupdate_init();
 	attr_init();
 	bmap_init();

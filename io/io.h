@@ -190,3 +190,4 @@ extern void		repair_init(void);
 extern void		crc32cselftest_init(void);
 extern void		bulkstat_init(void);
 extern void		atomicupdate_init(void);
+extern void		aginfo_init(void);
