@@ -157,9 +157,11 @@ dump_limits_any_type(
 			struct group *g;
 			setgrent();
 			while ((g = getgrent()) != NULL) {
-				get_dquot(&d, g->gr_gid, type,
-						mount->fs_name, 0);
-				dump_file(fp, &d, mount->fs_name);
+				if (get_dquot(&d, g->gr_gid, type,
+							mount->fs_name, 0) &&
+						!(lower && (d.d_id < lower)) &&
+						!(upper && (d.d_id > upper)))
+					dump_file(fp, &d, mount->fs_name);
 			}
 			endgrent();
 			break;
@@ -168,9 +170,11 @@ dump_limits_any_type(
 			struct fs_project *p;
 			setprent();
 			while ((p = getprent()) != NULL) {
-				get_dquot(&d, p->pr_prid, type,
-						mount->fs_name, 0);
-				dump_file(fp, &d, mount->fs_name);
+				if (get_dquot(&d, p->pr_prid, type,
+							mount->fs_name, 0) &&
+						!(lower && (d.d_id < lower)) &&
+						!(upper && (d.d_id > upper)))
+					dump_file(fp, &d, mount->fs_name);
 			}
 			endprent();
 			break;
@@ -179,9 +183,11 @@ dump_limits_any_type(
 			struct passwd *u;
 			setpwent();
 			while ((u = getpwent()) != NULL) {
-				get_dquot(&d, u->pw_uid, type,
-						mount->fs_name, 0);
-				dump_file(fp, &d, mount->fs_name);
+				if (get_dquot(&d, u->pw_uid, type,
+							mount->fs_name, 0) &&
+						!(lower && (d.d_id < lower)) &&
+						!(upper && (d.d_id > upper)))
+					dump_file(fp, &d, mount->fs_name);
 			}
 			endpwent();
 			break;
@@ -474,7 +480,9 @@ report_user_mount(
 		setpwent();
 		while ((u = getpwent()) != NULL) {
 			if (get_dquot(&d, u->pw_uid, XFS_USER_QUOTA,
-						mount->fs_name, flags)) {
+						mount->fs_name, flags) &&
+					!(lower && (d.d_id < lower)) &&
+					!(upper && (d.d_id > upper))) {
 				report_mount(fp, &d, u->pw_name, form,
 						XFS_USER_QUOTA, mount, flags);
 				flags |= NO_HEADER_FLAG;
@@ -514,7 +522,9 @@ report_group_mount(
 		setgrent();
 		while ((g = getgrent()) != NULL) {
 			if (get_dquot(&d, g->gr_gid, XFS_GROUP_QUOTA,
-						mount->fs_name, flags)) {
+						mount->fs_name, flags) &&
+					!(lower && (d.d_id < lower)) &&
+					!(upper && (d.d_id > upper))) {
 				report_mount(fp, &d, g->gr_name, form,
 						XFS_GROUP_QUOTA, mount, flags);
 				flags |= NO_HEADER_FLAG;
@@ -556,7 +566,9 @@ report_project_mount(
 			 * isn't defined
 			 */
 			if (get_dquot(&d, 0, XFS_PROJ_QUOTA, mount->fs_name,
-						flags)) {
+						flags) &&
+					!(lower && (d.d_id < lower)) &&
+					!(upper && (d.d_id > upper))) {
 				report_mount(fp, &d, NULL, form, XFS_PROJ_QUOTA,
 						mount, flags);
 				flags |= NO_HEADER_FLAG;
@@ -566,7 +578,9 @@ report_project_mount(
 		setprent();
 		while ((p = getprent()) != NULL) {
 			if (get_dquot(&d, p->pr_prid, XFS_PROJ_QUOTA,
-						mount->fs_name, flags)) {
+						mount->fs_name, flags) &&
+					!(lower && (d.d_id < lower)) &&
+					!(upper && (d.d_id > upper))) {
 				report_mount(fp, &d, p->pr_name, form,
 						XFS_PROJ_QUOTA, mount, flags);
 				flags |= NO_HEADER_FLAG;
