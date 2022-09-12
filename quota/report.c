@@ -339,30 +339,25 @@ report_header(
 static int
 report_mount(
 	FILE		*fp,
-	uint32_t	id,
+	struct fs_disk_quota *d,
 	char		*name,
-	uint32_t	*oid,
 	uint		form,
 	uint		type,
 	fs_path_t	*mount,
 	uint		flags)
 {
-	fs_disk_quota_t	d;
 	time64_t	timer;
 	char		c[8], h[8], s[8];
 	uint		qflags;
 	int		count;
 
-	if (!get_dquot(&d, id, oid, type, mount->fs_name, flags))
-		return 0;
-
 	if (flags & TERSE_FLAG) {
 		count = 0;
-		if ((form & XFS_BLOCK_QUOTA) && d.d_bcount)
+		if ((form & XFS_BLOCK_QUOTA) && d->d_bcount)
 			count++;
-		if ((form & XFS_INODE_QUOTA) && d.d_icount)
+		if ((form & XFS_INODE_QUOTA) && d->d_icount)
 			count++;
-		if ((form & XFS_RTBLOCK_QUOTA) && d.d_rtbcount)
+		if ((form & XFS_RTBLOCK_QUOTA) && d->d_rtbcount)
 			count++;
 		if (!count)
 			return 0;
@@ -372,19 +367,19 @@ report_mount(
 		report_header(fp, form, type, mount, flags);
 
 	if (flags & NO_LOOKUP_FLAG) {
-		fprintf(fp, "#%-10u", d.d_id);
+		fprintf(fp, "#%-10u", d->d_id);
 	} else {
 		if (name == NULL) {
 			if (type == XFS_USER_QUOTA) {
-				struct passwd	*u = getpwuid(d.d_id);
+				struct passwd	*u = getpwuid(d->d_id);
 				if (u)
 					name = u->pw_name;
 			} else if (type == XFS_GROUP_QUOTA) {
-				struct group	*g = getgrgid(d.d_id);
+				struct group	*g = getgrgid(d->d_id);
 				if (g)
 					name = g->gr_name;
 			} else if (type == XFS_PROJ_QUOTA) {
-				fs_project_t	*p = getprprid(d.d_id);
+				fs_project_t	*p = getprprid(d->d_id);
 				if (p)
 					name = p->pr_name;
 			}
@@ -393,73 +388,73 @@ report_mount(
 		if (name != NULL)
 			fprintf(fp, "%-10s", name);
 		else
-			fprintf(fp, "#%-9u", d.d_id);
+			fprintf(fp, "#%-9u", d->d_id);
 	}
 
 	if (form & XFS_BLOCK_QUOTA) {
-		timer = decode_timer(&d, d.d_btimer, d.d_btimer_hi);
+		timer = decode_timer(d, d->d_btimer, d->d_btimer_hi);
 		qflags = (flags & HUMAN_FLAG);
-		if (d.d_blk_hardlimit && d.d_bcount > d.d_blk_hardlimit)
+		if (d->d_blk_hardlimit && d->d_bcount > d->d_blk_hardlimit)
 			qflags |= LIMIT_FLAG;
-		if (d.d_blk_softlimit && d.d_bcount > d.d_blk_softlimit)
+		if (d->d_blk_softlimit && d->d_bcount > d->d_blk_softlimit)
 			qflags |= QUOTA_FLAG;
 		if (flags & HUMAN_FLAG)
 			fprintf(fp, " %6s %6s %6s  %02d %8s",
-				bbs_to_string(d.d_bcount, c, sizeof(c)),
-				bbs_to_string(d.d_blk_softlimit, s, sizeof(s)),
-				bbs_to_string(d.d_blk_hardlimit, h, sizeof(h)),
-				d.d_bwarns,
+				bbs_to_string(d->d_bcount, c, sizeof(c)),
+				bbs_to_string(d->d_blk_softlimit, s, sizeof(s)),
+				bbs_to_string(d->d_blk_hardlimit, h, sizeof(h)),
+				d->d_bwarns,
 				time_to_string(timer, qflags));
 		else
 			fprintf(fp, " %10llu %10llu %10llu     %02d %9s",
-				(unsigned long long)d.d_bcount >> 1,
-				(unsigned long long)d.d_blk_softlimit >> 1,
-				(unsigned long long)d.d_blk_hardlimit >> 1,
-				d.d_bwarns,
+				(unsigned long long)d->d_bcount >> 1,
+				(unsigned long long)d->d_blk_softlimit >> 1,
+				(unsigned long long)d->d_blk_hardlimit >> 1,
+				d->d_bwarns,
 				time_to_string(timer, qflags));
 	}
 	if (form & XFS_INODE_QUOTA) {
-		timer = decode_timer(&d, d.d_itimer, d.d_itimer_hi);
+		timer = decode_timer(d, d->d_itimer, d->d_itimer_hi);
 		qflags = (flags & HUMAN_FLAG);
-		if (d.d_ino_hardlimit && d.d_icount > d.d_ino_hardlimit)
+		if (d->d_ino_hardlimit && d->d_icount > d->d_ino_hardlimit)
 			qflags |= LIMIT_FLAG;
-		if (d.d_ino_softlimit && d.d_icount > d.d_ino_softlimit)
+		if (d->d_ino_softlimit && d->d_icount > d->d_ino_softlimit)
 			qflags |= QUOTA_FLAG;
 		if (flags & HUMAN_FLAG)
 			fprintf(fp, " %6s %6s %6s  %02d %8s",
-				num_to_string(d.d_icount, c, sizeof(c)),
-				num_to_string(d.d_ino_softlimit, s, sizeof(s)),
-				num_to_string(d.d_ino_hardlimit, h, sizeof(h)),
-				d.d_iwarns,
+				num_to_string(d->d_icount, c, sizeof(c)),
+				num_to_string(d->d_ino_softlimit, s, sizeof(s)),
+				num_to_string(d->d_ino_hardlimit, h, sizeof(h)),
+				d->d_iwarns,
 				time_to_string(timer, qflags));
 		else
 			fprintf(fp, " %10llu %10llu %10llu     %02d %9s",
-				(unsigned long long)d.d_icount,
-				(unsigned long long)d.d_ino_softlimit,
-				(unsigned long long)d.d_ino_hardlimit,
-				d.d_iwarns,
+				(unsigned long long)d->d_icount,
+				(unsigned long long)d->d_ino_softlimit,
+				(unsigned long long)d->d_ino_hardlimit,
+				d->d_iwarns,
 				time_to_string(timer, qflags));
 	}
 	if (form & XFS_RTBLOCK_QUOTA) {
-		timer = decode_timer(&d, d.d_rtbtimer, d.d_rtbtimer_hi);
+		timer = decode_timer(d, d->d_rtbtimer, d->d_rtbtimer_hi);
 		qflags = (flags & HUMAN_FLAG);
-		if (d.d_rtb_hardlimit && d.d_rtbcount > d.d_rtb_hardlimit)
+		if (d->d_rtb_hardlimit && d->d_rtbcount > d->d_rtb_hardlimit)
 			qflags |= LIMIT_FLAG;
-		if (d.d_rtb_softlimit && d.d_rtbcount > d.d_rtb_softlimit)
+		if (d->d_rtb_softlimit && d->d_rtbcount > d->d_rtb_softlimit)
 			qflags |= QUOTA_FLAG;
 		if (flags & HUMAN_FLAG)
 			fprintf(fp, " %6s %6s %6s  %02d %8s",
-				bbs_to_string(d.d_rtbcount, c, sizeof(c)),
-				bbs_to_string(d.d_rtb_softlimit, s, sizeof(s)),
-				bbs_to_string(d.d_rtb_hardlimit, h, sizeof(h)),
-				d.d_rtbwarns,
+				bbs_to_string(d->d_rtbcount, c, sizeof(c)),
+				bbs_to_string(d->d_rtb_softlimit, s, sizeof(s)),
+				bbs_to_string(d->d_rtb_hardlimit, h, sizeof(h)),
+				d->d_rtbwarns,
 				time_to_string(timer, qflags));
 		else
 			fprintf(fp, " %10llu %10llu %10llu     %02d %9s",
-				(unsigned long long)d.d_rtbcount >> 1,
-				(unsigned long long)d.d_rtb_softlimit >> 1,
-				(unsigned long long)d.d_rtb_hardlimit >> 1,
-				d.d_rtbwarns,
+				(unsigned long long)d->d_rtbcount >> 1,
+				(unsigned long long)d->d_rtb_softlimit >> 1,
+				(unsigned long long)d->d_rtb_hardlimit >> 1,
+				d->d_rtbwarns,
 				time_to_string(timer, qflags));
 	}
 	fputc('\n', fp);
@@ -476,30 +471,40 @@ report_user_mount(
 	uint		flags)
 {
 	struct passwd	*u;
+	struct fs_disk_quota	d;
 	uint		id = 0, oid;
 
 	if (upper) {	/* identifier range specified */
 		for (id = lower; id <= upper; id++) {
-			if (report_mount(fp, id, NULL, NULL,
-					form, XFS_USER_QUOTA, mount, flags))
+			if (get_dquot(&d, id, NULL, XFS_USER_QUOTA,
+						mount->fs_name, flags)) {
+				report_mount(fp, &d, NULL, form, XFS_USER_QUOTA,
+						mount, flags);
 				flags |= NO_HEADER_FLAG;
+			}
 		}
-	} else if (report_mount(fp, id, NULL, &oid, form,
-				XFS_USER_QUOTA, mount,
+	} else if (get_dquot(&d, id, &oid, XFS_USER_QUOTA, mount->fs_name,
 				flags|GETNEXTQUOTA_FLAG)) {
+		report_mount(fp, &d, NULL, form, XFS_USER_QUOTA, mount,
+			flags|GETNEXTQUOTA_FLAG);
 		id = oid + 1;
 		flags |= GETNEXTQUOTA_FLAG;
 		flags |= NO_HEADER_FLAG;
-		while (report_mount(fp, id, NULL, &oid, form, XFS_USER_QUOTA,
-				    mount, flags)) {
+		while (get_dquot(&d, id, &oid, XFS_USER_QUOTA, mount->fs_name,
+				flags)) {
+			report_mount(fp, &d, NULL, form, XFS_USER_QUOTA,
+				mount, flags);
 			id = oid + 1;
 		}
 	} else {
 		setpwent();
 		while ((u = getpwent()) != NULL) {
-			if (report_mount(fp, u->pw_uid, u->pw_name, NULL,
-					form, XFS_USER_QUOTA, mount, flags))
+			if (get_dquot(&d, u->pw_uid, NULL, XFS_USER_QUOTA,
+						mount->fs_name, flags)) {
+				report_mount(fp, &d, u->pw_name, form,
+						XFS_USER_QUOTA, mount, flags);
 				flags |= NO_HEADER_FLAG;
+			}
 		}
 		endpwent();
 	}
@@ -518,30 +523,40 @@ report_group_mount(
 	uint		flags)
 {
 	struct group	*g;
+	struct fs_disk_quota	d;
 	uint		id = 0, oid;
 
 	if (upper) {	/* identifier range specified */
 		for (id = lower; id <= upper; id++) {
-			if (report_mount(fp, id, NULL, NULL,
-					form, XFS_GROUP_QUOTA, mount, flags))
+			if (get_dquot(&d, id, NULL, XFS_GROUP_QUOTA,
+						mount->fs_name, flags)) {
+				report_mount(fp, &d, NULL, form,
+						XFS_GROUP_QUOTA, mount, flags);
 				flags |= NO_HEADER_FLAG;
+			}
 		}
-	} else if (report_mount(fp, id, NULL, &oid, form,
-				XFS_GROUP_QUOTA, mount,
-				flags|GETNEXTQUOTA_FLAG)) {
+	} else if (get_dquot(&d, id, &oid, XFS_GROUP_QUOTA,
+				mount->fs_name, flags|GETNEXTQUOTA_FLAG)) {
+		report_mount(fp, &d, NULL, form, XFS_GROUP_QUOTA, mount,
+				flags|GETNEXTQUOTA_FLAG);
 		id = oid + 1;
 		flags |= GETNEXTQUOTA_FLAG;
 		flags |= NO_HEADER_FLAG;
-		while (report_mount(fp, id, NULL, &oid, form, XFS_GROUP_QUOTA,
-				    mount, flags)) {
+		while (get_dquot(&d, id, &oid, XFS_GROUP_QUOTA,
+					mount->fs_name, flags)) {
+			report_mount(fp, &d, NULL, form, XFS_GROUP_QUOTA, mount,
+					flags);
 			id = oid + 1;
 		}
 	} else {
 		setgrent();
 		while ((g = getgrent()) != NULL) {
-			if (report_mount(fp, g->gr_gid, g->gr_name, NULL,
-					form, XFS_GROUP_QUOTA, mount, flags))
+			if (get_dquot(&d, g->gr_gid, NULL, XFS_GROUP_QUOTA,
+						mount->fs_name, flags)) {
+				report_mount(fp, &d, g->gr_name, form,
+						XFS_GROUP_QUOTA, mount, flags);
 				flags |= NO_HEADER_FLAG;
+			}
 		}
 	}
 	if (flags & NO_HEADER_FLAG)
@@ -559,22 +574,29 @@ report_project_mount(
 	uint		flags)
 {
 	fs_project_t	*p;
+	struct fs_disk_quota	d;
 	uint		id = 0, oid;
 
 	if (upper) {	/* identifier range specified */
 		for (id = lower; id <= upper; id++) {
-			if (report_mount(fp, id, NULL, NULL,
-					form, XFS_PROJ_QUOTA, mount, flags))
+			if (get_dquot(&d, id, NULL, XFS_PROJ_QUOTA,
+						mount->fs_name, flags)) {
+				report_mount(fp, &d, NULL, form, XFS_PROJ_QUOTA,
+						mount, flags);
 				flags |= NO_HEADER_FLAG;
+			}
 		}
-	} else if (report_mount(fp, id, NULL, &oid, form,
-				XFS_PROJ_QUOTA, mount,
-				flags|GETNEXTQUOTA_FLAG)) {
+	} else if (get_dquot(&d, id, &oid, XFS_PROJ_QUOTA,
+				mount->fs_name, flags|GETNEXTQUOTA_FLAG)) {
+		report_mount(fp, &d, NULL, form, XFS_PROJ_QUOTA, mount,
+				flags|GETNEXTQUOTA_FLAG);
 		id = oid + 1;
 		flags |= GETNEXTQUOTA_FLAG;
 		flags |= NO_HEADER_FLAG;
-		while (report_mount(fp, id, NULL, &oid, form, XFS_PROJ_QUOTA,
-				    mount, flags)) {
+		while (get_dquot(&d, id, &oid, XFS_PROJ_QUOTA,
+					mount->fs_name, flags)) {
+			report_mount(fp, &d, NULL, form, XFS_PROJ_QUOTA, mount,
+					flags);
 			id = oid + 1;
 		}
 	} else {
@@ -583,16 +605,22 @@ report_project_mount(
 			 * Print default project quota, even if projid 0
 			 * isn't defined
 			 */
-			if (report_mount(fp, 0, NULL, NULL,
-					form, XFS_PROJ_QUOTA, mount, flags))
+			if (get_dquot(&d, 0, NULL, XFS_PROJ_QUOTA,
+						mount->fs_name, flags)) {
+				report_mount(fp, &d, NULL, form, XFS_PROJ_QUOTA,
+						mount, flags);
 				flags |= NO_HEADER_FLAG;
+			}
 		}
 
 		setprent();
 		while ((p = getprent()) != NULL) {
-			if (report_mount(fp, p->pr_prid, p->pr_name, NULL,
-					form, XFS_PROJ_QUOTA, mount, flags))
+			if (get_dquot(&d, p->pr_prid, NULL, XFS_PROJ_QUOTA,
+						mount->fs_name, flags)) {
+				report_mount(fp, &d, p->pr_name, form,
+						XFS_PROJ_QUOTA, mount, flags);
 				flags |= NO_HEADER_FLAG;
+			}
 		}
 		endprent();
 	}
