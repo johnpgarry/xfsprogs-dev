@@ -59,16 +59,15 @@ report_help(void)
 "\n"));
 }
 
-static int 
-dump_file(
-	FILE		*fp,
+static int
+get_dquot(
+	struct fs_disk_quota *d,
 	uint		id,
 	uint		*oid,
 	uint		type,
 	char		*dev,
 	int		flags)
 {
-	fs_disk_quota_t	d;
 	int		cmd;
 
 	if (flags & GETNEXTQUOTA_FLAG)
@@ -77,7 +76,7 @@ dump_file(
 		cmd = XFS_GETQUOTA;
 
 	/* Fall back silently if XFS_GETNEXTQUOTA fails, warn on XFS_GETQUOTA */
-	if (xfsquotactl(cmd, dev, type, id, (void *)&d) < 0) {
+	if (xfsquotactl(cmd, dev, type, id, (void *)d) < 0) {
 		if (errno != ENOENT && errno != ENOSYS && errno != ESRCH &&
 		    cmd == XFS_GETQUOTA)
 			perror("XFS_GETQUOTA");
@@ -85,11 +84,28 @@ dump_file(
 	}
 
 	if (oid) {
-		*oid = d.d_id;
+		*oid = d->d_id;
 		/* Did kernelspace wrap? */
 		if (*oid < id)
 			return 0;
 	}
+
+	return 1;
+}
+
+static int
+dump_file(
+	FILE		*fp,
+	uint		id,
+	uint		*oid,
+	uint		type,
+	char		*dev,
+	int		flags)
+{
+	struct fs_disk_quota d;
+
+	if (!get_dquot(&d, id, oid, type, dev, flags))
+		return 0;
 
 	if (!d.d_blk_softlimit && !d.d_blk_hardlimit &&
 	    !d.d_ino_softlimit && !d.d_ino_hardlimit &&
@@ -329,31 +345,12 @@ report_mount(
 {
 	fs_disk_quota_t	d;
 	time64_t	timer;
-	char		*dev = mount->fs_name;
 	char		c[8], h[8], s[8];
 	uint		qflags;
 	int		count;
-	int		cmd;
 
-	if (flags & GETNEXTQUOTA_FLAG)
-		cmd = XFS_GETNEXTQUOTA;
-	else
-		cmd = XFS_GETQUOTA;
-
-	/* Fall back silently if XFS_GETNEXTQUOTA fails, warn on XFS_GETQUOTA*/
-	if (xfsquotactl(cmd, dev, type, id, (void *)&d) < 0) {
-		if (errno != ENOENT && errno != ENOSYS && errno != ESRCH &&
-		    cmd == XFS_GETQUOTA)
-			perror("XFS_GETQUOTA");
+	if (!get_dquot(&d, id, oid, type, mount->fs_name, flags))
 		return 0;
-	}
-
-	if (oid) {
-		*oid = d.d_id;
-		/* Did kernelspace wrap? */
-		if (* oid < id)
-			return 0;
-	}
 
 	if (flags & TERSE_FLAG) {
 		count = 0;
