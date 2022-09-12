@@ -63,7 +63,6 @@ static int
 get_dquot(
 	struct fs_disk_quota *d,
 	uint		id,
-	uint		*oid,
 	uint		type,
 	char		*dev,
 	int		flags)
@@ -83,12 +82,9 @@ get_dquot(
 		return 0;
 	}
 
-	if (oid) {
-		*oid = d->d_id;
-		/* Did kernelspace wrap? */
-		if (*oid < id)
-			return 0;
-	}
+	/* Did kernelspace wrap? */
+	if (d->d_id < id)
+		return 0;
 
 	return 1;
 }
@@ -135,7 +131,7 @@ dump_limits_any_type(
 {
 	fs_path_t	*mount;
 	struct fs_disk_quota d;
-	uint		id = 0, oid;
+	uint		id = lower, flags = 0;
 
 	if ((mount = fs_table_lookup(dir, FS_MOUNT_POINT)) == NULL) {
 		exitcode = 1;
@@ -144,26 +140,16 @@ dump_limits_any_type(
 		return;
 	}
 
-	/* Range was specified; query everything in it */
-	if (upper) {
-		for (id = lower; id <= upper; id++) {
-			get_dquot(&d, id, &oid, type, mount->fs_name, 0);
-			dump_file(fp, &d, mount->fs_name);
-		}
-		return;
+	while (get_dquot(&d, id, type, mount->fs_name,
+				flags | GETNEXTQUOTA_FLAG) &&
+			!(upper && (d.d_id > upper))) {
+		dump_file(fp, &d, mount->fs_name);
+		id = d.d_id + 1;
+		flags |= GETNEXTQUOTA_FLAG;
 	}
 
-	/* Use GETNEXTQUOTA if it's available */
-	if (get_dquot(&d, id, &oid, type, mount->fs_name, GETNEXTQUOTA_FLAG)) {
-		dump_file(fp, &d, mount->fs_name);
-		id = oid + 1;
-		while (get_dquot(&d, id, &oid, type, mount->fs_name,
-					GETNEXTQUOTA_FLAG)) {
-			dump_file(fp, &d, mount->fs_name);
-			id = oid + 1;
-		}
+	if (flags & GETNEXTQUOTA_FLAG)
 		return;
-	}
 
 	/* Otherwise fall back to iterating over each uid/gid/prjid */
 	switch (type) {
@@ -171,7 +157,7 @@ dump_limits_any_type(
 			struct group *g;
 			setgrent();
 			while ((g = getgrent()) != NULL) {
-				get_dquot(&d, g->gr_gid, NULL, type,
+				get_dquot(&d, g->gr_gid, type,
 						mount->fs_name, 0);
 				dump_file(fp, &d, mount->fs_name);
 			}
@@ -182,7 +168,7 @@ dump_limits_any_type(
 			struct fs_project *p;
 			setprent();
 			while ((p = getprent()) != NULL) {
-				get_dquot(&d, p->pr_prid, NULL, type,
+				get_dquot(&d, p->pr_prid, type,
 						mount->fs_name, 0);
 				dump_file(fp, &d, mount->fs_name);
 			}
@@ -193,7 +179,7 @@ dump_limits_any_type(
 			struct passwd *u;
 			setpwent();
 			while ((u = getpwent()) != NULL) {
-				get_dquot(&d, u->pw_uid, NULL, type,
+				get_dquot(&d, u->pw_uid, type,
 						mount->fs_name, 0);
 				dump_file(fp, &d, mount->fs_name);
 			}
@@ -472,34 +458,22 @@ report_user_mount(
 {
 	struct passwd	*u;
 	struct fs_disk_quota	d;
-	uint		id = 0, oid;
+	uint		id = lower;
 
-	if (upper) {	/* identifier range specified */
-		for (id = lower; id <= upper; id++) {
-			if (get_dquot(&d, id, NULL, XFS_USER_QUOTA,
-						mount->fs_name, flags)) {
-				report_mount(fp, &d, NULL, form, XFS_USER_QUOTA,
-						mount, flags);
-				flags |= NO_HEADER_FLAG;
-			}
-		}
-	} else if (get_dquot(&d, id, &oid, XFS_USER_QUOTA, mount->fs_name,
-				flags|GETNEXTQUOTA_FLAG)) {
-		report_mount(fp, &d, NULL, form, XFS_USER_QUOTA, mount,
-			flags|GETNEXTQUOTA_FLAG);
-		id = oid + 1;
+	while (get_dquot(&d, id, XFS_USER_QUOTA, mount->fs_name,
+				flags | GETNEXTQUOTA_FLAG) &&
+			!(upper && (d.d_id > upper))) {
+		report_mount(fp, &d, NULL, form, XFS_USER_QUOTA, mount, flags);
+		id = d.d_id + 1;
 		flags |= GETNEXTQUOTA_FLAG;
 		flags |= NO_HEADER_FLAG;
-		while (get_dquot(&d, id, &oid, XFS_USER_QUOTA, mount->fs_name,
-				flags)) {
-			report_mount(fp, &d, NULL, form, XFS_USER_QUOTA,
-				mount, flags);
-			id = oid + 1;
-		}
-	} else {
+	}
+
+	/* No GETNEXTQUOTA support, iterate over all from password file */
+	if (!(flags & GETNEXTQUOTA_FLAG)) {
 		setpwent();
 		while ((u = getpwent()) != NULL) {
-			if (get_dquot(&d, u->pw_uid, NULL, XFS_USER_QUOTA,
+			if (get_dquot(&d, u->pw_uid, XFS_USER_QUOTA,
 						mount->fs_name, flags)) {
 				report_mount(fp, &d, u->pw_name, form,
 						XFS_USER_QUOTA, mount, flags);
@@ -524,34 +498,22 @@ report_group_mount(
 {
 	struct group	*g;
 	struct fs_disk_quota	d;
-	uint		id = 0, oid;
+	uint		id = lower;
 
-	if (upper) {	/* identifier range specified */
-		for (id = lower; id <= upper; id++) {
-			if (get_dquot(&d, id, NULL, XFS_GROUP_QUOTA,
-						mount->fs_name, flags)) {
-				report_mount(fp, &d, NULL, form,
-						XFS_GROUP_QUOTA, mount, flags);
-				flags |= NO_HEADER_FLAG;
-			}
-		}
-	} else if (get_dquot(&d, id, &oid, XFS_GROUP_QUOTA,
-				mount->fs_name, flags|GETNEXTQUOTA_FLAG)) {
-		report_mount(fp, &d, NULL, form, XFS_GROUP_QUOTA, mount,
-				flags|GETNEXTQUOTA_FLAG);
-		id = oid + 1;
+	while (get_dquot(&d, id, XFS_GROUP_QUOTA, mount->fs_name,
+				flags | GETNEXTQUOTA_FLAG) &&
+			!(upper && (d.d_id > upper))) {
+		report_mount(fp, &d, NULL, form, XFS_GROUP_QUOTA, mount, flags);
+		id = d.d_id + 1;
 		flags |= GETNEXTQUOTA_FLAG;
 		flags |= NO_HEADER_FLAG;
-		while (get_dquot(&d, id, &oid, XFS_GROUP_QUOTA,
-					mount->fs_name, flags)) {
-			report_mount(fp, &d, NULL, form, XFS_GROUP_QUOTA, mount,
-					flags);
-			id = oid + 1;
-		}
-	} else {
+	}
+
+	/* No GETNEXTQUOTA support, iterate over all from password file */
+	if (!(flags & GETNEXTQUOTA_FLAG)) {
 		setgrent();
 		while ((g = getgrent()) != NULL) {
-			if (get_dquot(&d, g->gr_gid, NULL, XFS_GROUP_QUOTA,
+			if (get_dquot(&d, g->gr_gid, XFS_GROUP_QUOTA,
 						mount->fs_name, flags)) {
 				report_mount(fp, &d, g->gr_name, form,
 						XFS_GROUP_QUOTA, mount, flags);
@@ -575,38 +537,26 @@ report_project_mount(
 {
 	fs_project_t	*p;
 	struct fs_disk_quota	d;
-	uint		id = 0, oid;
+	uint		id = lower;
 
-	if (upper) {	/* identifier range specified */
-		for (id = lower; id <= upper; id++) {
-			if (get_dquot(&d, id, NULL, XFS_PROJ_QUOTA,
-						mount->fs_name, flags)) {
-				report_mount(fp, &d, NULL, form, XFS_PROJ_QUOTA,
-						mount, flags);
-				flags |= NO_HEADER_FLAG;
-			}
-		}
-	} else if (get_dquot(&d, id, &oid, XFS_PROJ_QUOTA,
-				mount->fs_name, flags|GETNEXTQUOTA_FLAG)) {
-		report_mount(fp, &d, NULL, form, XFS_PROJ_QUOTA, mount,
-				flags|GETNEXTQUOTA_FLAG);
-		id = oid + 1;
+	while (get_dquot(&d, id, XFS_PROJ_QUOTA, mount->fs_name,
+				flags | GETNEXTQUOTA_FLAG) &&
+			!(upper && (d.d_id > upper))) {
+		report_mount(fp, &d, NULL, form, XFS_PROJ_QUOTA, mount, flags);
+		id = d.d_id + 1;
 		flags |= GETNEXTQUOTA_FLAG;
 		flags |= NO_HEADER_FLAG;
-		while (get_dquot(&d, id, &oid, XFS_PROJ_QUOTA,
-					mount->fs_name, flags)) {
-			report_mount(fp, &d, NULL, form, XFS_PROJ_QUOTA, mount,
-					flags);
-			id = oid + 1;
-		}
-	} else {
+	}
+
+	/* No GETNEXTQUOTA support, iterate over all */
+	if (!(flags & GETNEXTQUOTA_FLAG)) {
 		if (!getprprid(0)) {
 			/*
 			 * Print default project quota, even if projid 0
 			 * isn't defined
 			 */
-			if (get_dquot(&d, 0, NULL, XFS_PROJ_QUOTA,
-						mount->fs_name, flags)) {
+			if (get_dquot(&d, 0, XFS_PROJ_QUOTA, mount->fs_name,
+						flags)) {
 				report_mount(fp, &d, NULL, form, XFS_PROJ_QUOTA,
 						mount, flags);
 				flags |= NO_HEADER_FLAG;
@@ -615,7 +565,7 @@ report_project_mount(
 
 		setprent();
 		while ((p = getprent()) != NULL) {
-			if (get_dquot(&d, p->pr_prid, NULL, XFS_PROJ_QUOTA,
+			if (get_dquot(&d, p->pr_prid, XFS_PROJ_QUOTA,
 						mount->fs_name, flags)) {
 				report_mount(fp, &d, p->pr_name, form,
 						XFS_PROJ_QUOTA, mount, flags);
