@@ -68,13 +68,20 @@ fp_num(
 	int		bitpos;
 	int		i;
 	int		isnull;
+	int		bvflags = 0;
 	int64_t		val;
+
+	if (arg & FTARG_LE)
+		bvflags |= BV_LE;
+	if (arg & FTARG_SIGNED)
+		bvflags |= BVSIGNED;
+	else
+		bvflags |= BVUNSIGNED;
 
 	for (i = 0, bitpos = bit;
 	     i < count && !seenint();
 	     i++, bitpos += size) {
-		val = getbitval(obj, bitpos, size,
-			(arg & FTARG_SIGNED) ? BVSIGNED : BVUNSIGNED);
+		val = getbitval(obj, bitpos, size, bvflags);
 		if ((arg & FTARG_SKIPZERO) && val == 0)
 			continue;
 		isnull = (arg & FTARG_SIGNED) || size == 64 ?

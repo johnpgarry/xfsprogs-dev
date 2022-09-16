@@ -200,6 +200,9 @@ static __inline__ void __swab64s(__u64 *addr)
 	((__force __le32)___constant_swab32((__u32)(val)))
 #define __constant_cpu_to_be32(val)	\
 	((__force __be32)(__u32)(val))
+
+#define le64_to_cpu(val)	(__swab64((__force __u64)(__le64)(val)))
+#define le16_to_cpu(val)	(__swab16((__force __u16)(__le16)(val)))
 #else
 #define cpu_to_be16(val)	((__force __be16)__swab16((__u16)(val)))
 #define cpu_to_be32(val)	((__force __be32)__swab32((__u32)(val)))
@@ -215,6 +218,9 @@ static __inline__ void __swab64s(__u64 *addr)
 	((__force __le32)(__u32)(val))
 #define __constant_cpu_to_be32(val)	\
 	((__force __be32)___constant_swab32((__u32)(val)))
+
+#define le64_to_cpu(val)	((__force __u64)(__le64)(val))
+#define le16_to_cpu(val)	((__force __u16)(__le16)(val))
 #endif
 
 static inline void be16_add_cpu(__be16 *a, __s16 b)

@@ -13,6 +13,7 @@
 
 #define	BVUNSIGNED	0
 #define	BVSIGNED	1
+#define	BV_LE		(1U << 1) /* little endian */
 
 extern int64_t		getbitval(void *obj, int bitoff, int nbits, int flags);
 extern void		setbitval(void *obuf, int bitoff, int nbits, void *ibuf);
