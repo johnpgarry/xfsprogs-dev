@@ -852,6 +852,50 @@ rtsummary_create(
 	mp->m_rsumip = rsumip;
 }
 
+/* Initialize block headers of rt free space files. */
+static int
+init_rtblock_headers(
+	struct xfs_inode	*ip,
+	xfs_fileoff_t		nrblocks,
+	const struct xfs_buf_ops *ops,
+	uint32_t		magic)
+{
+	struct xfs_bmbt_irec	map;
+	struct xfs_mount	*mp = ip->i_mount;
+	struct xfs_rtbuf_blkinfo *hdr;
+	xfs_fileoff_t		off = 0;
+	int			error;
+
+	while (off < nrblocks) {
+		struct xfs_buf	*bp;
+		xfs_daddr_t	daddr;
+		int		nimaps = 1;
+
+		error = -libxfs_bmapi_read(ip, off, 1, &map, &nimaps, 0);
+		if (error)
+			return error;
+
+		daddr = XFS_FSB_TO_DADDR(mp, map.br_startblock);
+		error = -libxfs_buf_get(mp->m_ddev_targp, daddr,
+				XFS_FSB_TO_BB(mp, map.br_blockcount), &bp);
+		if (error)
+			return error;
+
+		bp->b_ops = ops;
+		hdr = bp->b_addr;
+		hdr->rt_magic = cpu_to_be32(magic);
+		hdr->rt_owner = cpu_to_be64(ip->i_ino);
+		hdr->rt_blkno = cpu_to_be64(daddr);
+		platform_uuid_copy(&hdr->rt_uuid, &mp->m_sb.sb_meta_uuid);
+		libxfs_buf_mark_dirty(bp);
+		libxfs_buf_relse(bp);
+
+		off = map.br_startoff + map.br_blockcount;
+	}
+
+	return 0;
+}
+
 /* Zero the realtime bitmap. */
 static void
 rtbitmap_init(
@@ -895,6 +939,13 @@ rtbitmap_init(
 	if (error)
 		fail(_("Block allocation of the realtime bitmap inode failed"),
 				error);
+
+	if (xfs_has_rtgroups(mp)) {
+		error = init_rtblock_headers(mp->m_rbmip, mp->m_sb.sb_rbmblocks,
+				&xfs_rtbitmap_buf_ops, XFS_RTBITMAP_MAGIC);
+		if (error)
+			fail(_("Initialization of rtbitmap failed"), error);
+	}
 }
 
 /* Zero the realtime summary file. */
