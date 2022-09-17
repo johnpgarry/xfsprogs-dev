@@ -194,7 +194,8 @@ check_rtfile_contents(
 	const char		*filename,
 	xfs_ino_t		ino,
 	void			*buf,
-	xfs_fileoff_t		filelen)
+	xfs_fileoff_t		filelen,
+	const struct xfs_buf_ops *buf_ops)
 {
 	struct xfs_bmbt_irec	map;
 	struct xfs_buf		*bp;
@@ -216,12 +217,10 @@ check_rtfile_contents(
 	}
 
 	while (bno < filelen)  {
-		xfs_filblks_t	maplen;
+		xfs_daddr_t	daddr;
 		int		nmap = 1;
 
-		/* Read up to 1MB at a time. */
-		maplen = min(filelen - bno, XFS_B_TO_FSBT(mp, 1048576));
-		error = -libxfs_bmapi_read(ip, bno, maplen, &map, &nmap, 0);
+		error = -libxfs_bmapi_read(ip, bno, 1, &map, &nmap, 0);
 		if (error) {
 			do_warn(_("unable to read %s mapping, err %d\n"),
 					filename, error);
@@ -234,19 +233,39 @@ check_rtfile_contents(
 			break;
 		}
 
-		error = -libxfs_buf_read_uncached(mp->m_dev,
-				XFS_FSB_TO_DADDR(mp, map.br_startblock),
+		daddr = XFS_FSB_TO_DADDR(mp, map.br_startblock);
+		error = -libxfs_buf_read_uncached(mp->m_dev, daddr,
 				XFS_FSB_TO_BB(mp, map.br_blockcount),
-				0, &bp, NULL);
+				0, &bp, buf_ops);
 		if (error) {
 			do_warn(_("unable to read %s at dblock 0x%llx, err %d\n"),
 					filename, (unsigned long long)bno, error);
 			break;
 		}
 
-		check_rtwords(mp, filename, bno, bp->b_addr, buf);
+		if (buf_ops == &xfs_rtbitmap_buf_ops) {
+			struct xfs_rtalloc_args		args = {
+				.mp			= mp,
+			};
+			struct xfs_rtbuf_blkinfo	*hdr = bp->b_addr;
+			union xfs_rtword_raw		*incore = buf;
+			union xfs_rtword_raw		*ondisk;
 
-		buf += XFS_FSB_TO_B(mp, map.br_blockcount);
+			if (hdr->rt_owner != cpu_to_be64(ino)) {
+				do_warn(
+ _("corrupt owner in %s at dblock 0x%llx\n"),
+					filename, (unsigned long long)bno);
+			}
+
+			args.rbmbp = bp;
+			ondisk = xfs_rbmblock_wordptr(&args, 0);
+			check_rtwords(mp, filename, bno, ondisk, incore);
+			buf += mp->m_blockwsize << XFS_WORDLOG;
+		} else {
+			check_rtwords(mp, filename, bno, bp->b_addr, buf);
+			buf += XFS_FSB_TO_B(mp, map.br_blockcount);
+		}
+
 		bno += map.br_blockcount;
 		libxfs_buf_relse(bp);
 	}
@@ -258,11 +277,15 @@ void
 check_rtbitmap(
 	struct xfs_mount	*mp)
 {
+	const struct xfs_buf_ops *buf_ops = NULL;
+
 	if (need_rbmino)
 		return;
+	if (xfs_has_rtgroups(mp))
+		buf_ops = &xfs_rtbitmap_buf_ops;
 
 	check_rtfile_contents(mp, "rtbitmap", mp->m_sb.sb_rbmino, btmcompute,
-			mp->m_sb.sb_rbmblocks);
+			mp->m_sb.sb_rbmblocks, buf_ops);
 }
 
 void
@@ -273,7 +296,7 @@ check_rtsummary(
 		return;
 
 	check_rtfile_contents(mp, "rtsummary", mp->m_sb.sb_rsumino, sumcompute,
-			XFS_B_TO_FSB(mp, mp->m_rsumsize));
+			XFS_B_TO_FSB(mp, mp->m_rsumsize), NULL);
 }
 
 void
