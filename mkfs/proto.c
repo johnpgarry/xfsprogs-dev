@@ -991,6 +991,14 @@ rtsummary_init(
 	if (error)
 		fail(_("Block allocation of the realtime summary inode failed"),
 				error);
+
+	if (xfs_has_rtgroups(mp)) {
+		error = init_rtblock_headers(mp->m_rsumip,
+				XFS_B_TO_FSB(mp, mp->m_rsumsize),
+				&xfs_rtsummary_buf_ops, XFS_RTSUMMARY_MAGIC);
+		if (error)
+			fail(_("Initialization of rtsummary failed"), error);
+	}
 }
 
 /*
