@@ -194,6 +194,9 @@ typedef enum fldt	{
 
 	FLDT_RTWORD,
 	FLDT_RGBITMAP,
+	FLDT_SUMINFO,
+	FLDT_RGSUMMARY,
+
 	FLDT_ZZZ			/* mark last entry */
 } fldt_t;
 
