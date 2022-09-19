@@ -932,6 +932,7 @@ fill_rsumino(xfs_mount_t *mp)
 			.tp		= tp,
 		};
 		union xfs_suminfo_raw	*ondisk;
+		xfs_daddr_t		daddr;
 
 		/*
 		 * fill the file one block at a time
@@ -946,9 +947,8 @@ fill_rsumino(xfs_mount_t *mp)
 
 		ASSERT(map.br_startblock != HOLESTARTBLOCK);
 
-		error = -libxfs_trans_read_buf(
-				mp, tp, mp->m_dev,
-				XFS_FSB_TO_DADDR(mp, map.br_startblock),
+		daddr = XFS_FSB_TO_DADDR(mp, map.br_startblock);
+		error = -libxfs_trans_read_buf(mp, tp, mp->m_dev, daddr,
 				XFS_FSB_TO_BB(mp, 1), 1, &bp, NULL);
 
 		if (error) {
@@ -962,6 +962,18 @@ _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime summary inode 
 		args.sumbp = bp;
 		ondisk = xfs_rsumblock_infoptr(&args, 0);
 		memcpy(ondisk, smp, mp->m_blockwsize << XFS_WORDLOG);
+
+		if (xfs_has_rtgroups(mp)) {
+			struct xfs_rtbuf_blkinfo *hdr = bp->b_addr;
+
+			bp->b_ops = &xfs_rtsummary_buf_ops;
+			hdr->rt_magic = cpu_to_be32(XFS_RTSUMMARY_MAGIC);
+			hdr->rt_owner = cpu_to_be64(ip->i_ino);
+			hdr->rt_lsn = 0;
+			hdr->rt_blkno = cpu_to_be64(daddr);
+			platform_uuid_copy(&hdr->rt_uuid,
+					&mp->m_sb.sb_meta_uuid);
+		}
 
 		libxfs_trans_log_buf(tp, bp, 0, mp->m_sb.sb_blocksize - 1);
 

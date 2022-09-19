@@ -261,6 +261,24 @@ check_rtfile_contents(
 			ondisk = xfs_rbmblock_wordptr(&args, 0);
 			check_rtwords(mp, filename, bno, ondisk, incore);
 			buf += mp->m_blockwsize << XFS_WORDLOG;
+		} else if (buf_ops == &xfs_rtsummary_buf_ops) {
+			struct xfs_rtalloc_args		args = {
+				.mp			= mp,
+			};
+			struct xfs_rtbuf_blkinfo	*hdr = bp->b_addr;
+			union xfs_suminfo_raw		*incore = buf;
+			union xfs_suminfo_raw		*ondisk;
+
+			if (hdr->rt_owner != cpu_to_be64(ino)) {
+				do_warn(
+ _("corrupt owner in %s at dblock 0x%llx\n"),
+					filename, (unsigned long long)bno);
+			}
+
+			args.sumbp = bp;
+			ondisk = xfs_rsumblock_infoptr(&args, 0);
+			check_rtwords(mp, filename, bno, ondisk, incore);
+			buf += mp->m_blockwsize << XFS_WORDLOG;
 		} else {
 			check_rtwords(mp, filename, bno, bp->b_addr, buf);
 			buf += XFS_FSB_TO_B(mp, map.br_blockcount);
@@ -292,11 +310,15 @@ void
 check_rtsummary(
 	struct xfs_mount	*mp)
 {
+	const struct xfs_buf_ops *buf_ops = NULL;
+
 	if (need_rsumino)
 		return;
+	if (xfs_has_rtgroups(mp))
+		buf_ops = &xfs_rtsummary_buf_ops;
 
 	check_rtfile_contents(mp, "rtsummary", mp->m_sb.sb_rsumino, sumcompute,
-			XFS_B_TO_FSB(mp, mp->m_rsumsize), NULL);
+			XFS_B_TO_FSB(mp, mp->m_rsumsize), buf_ops);
 }
 
 void
