@@ -26,6 +26,10 @@
 	 agino_to_bytes(XFS_INO_TO_AGINO(mp, (x))))
 #define	inoidx_to_bytes(x)	\
 	((uint64_t)(x) << mp->m_sb.sb_inodelog)
+#define rtblock_to_bytes(x)	\
+	((uint64_t)(x) << mp->m_sb.sb_blocklog)
+#define rtx_to_rtblock(x)	\
+	((uint64_t)(x) * mp->m_sb.sb_rextsize)
 
 typedef enum {
 	CT_NONE = -1,
@@ -40,11 +44,12 @@ typedef enum {
 	CT_INO,			/* xfs_ino_t */
 	CT_INOIDX,		/* index of inode in fsblock */
 	CT_INOOFF,		/* byte offset in inode */
+	CT_RTBLOCK,		/* realtime block */
+	CT_RTX,			/* realtime extent */
 	NCTS
 } ctype_t;
 
 typedef struct ctydesc {
-	ctype_t		ctype;
 	int		allowed;
 	const char	**names;
 } ctydesc_t;
@@ -61,18 +66,24 @@ typedef union {
 	xfs_ino_t	ino;
 	int		inoidx;
 	int		inooff;
+	xfs_rtblock_t	rtblock;
+	xfs_rtblock_t	rtx;
 } cval_t;
 
 static uint64_t		bytevalue(ctype_t ctype, cval_t *val);
+static int		rtconvert_f(int argc, char **argv);
 static int		convert_f(int argc, char **argv);
 static int		getvalue(char *s, ctype_t ctype, cval_t *val);
-static ctype_t		lookupcty(char *ctyname);
+static ctype_t		lookupcty(const struct ctydesc *descs,
+				  const char *ctyname);
 
 static const char	*agblock_names[] = { "agblock", "agbno", NULL };
 static const char	*agino_names[] = { "agino", "aginode", NULL };
 static const char	*agnumber_names[] = { "agnumber", "agno", NULL };
 static const char	*bboff_names[] = { "bboff", "daddroff", NULL };
 static const char	*blkoff_names[] = { "blkoff", "fsboff", "agboff",
+					    NULL };
+static const char	*rtblkoff_names[] = { "blkoff", "rtboff",
 					    NULL };
 static const char	*byte_names[] = { "byte", "fsbyte", NULL };
 static const char	*daddr_names[] = { "daddr", "bb", NULL };
@@ -81,29 +92,90 @@ static const char	*ino_names[] = { "ino", "inode", NULL };
 static const char	*inoidx_names[] = { "inoidx", "offset", NULL };
 static const char	*inooff_names[] = { "inooff", "inodeoff", NULL };
 
+static const char	*rtblock_names[] = { "rtblock", "rtb", "rtbno", NULL };
+static const char	*rtx_names[] = { "rtx", "rtextent", NULL };
+
 static const ctydesc_t	ctydescs[NCTS] = {
-	{ CT_AGBLOCK, M(AGNUMBER)|M(BBOFF)|M(BLKOFF)|M(INOIDX)|M(INOOFF),
-	  agblock_names },
-	{ CT_AGINO, M(AGNUMBER)|M(INOOFF), agino_names },
-	{ CT_AGNUMBER,
-	  M(AGBLOCK)|M(AGINO)|M(BBOFF)|M(BLKOFF)|M(INOIDX)|M(INOOFF),
-	  agnumber_names },
-	{ CT_BBOFF, M(AGBLOCK)|M(AGNUMBER)|M(DADDR)|M(FSBLOCK), bboff_names },
-	{ CT_BLKOFF, M(AGBLOCK)|M(AGNUMBER)|M(FSBLOCK), blkoff_names },
-	{ CT_BYTE, 0, byte_names },
-	{ CT_DADDR, M(BBOFF), daddr_names },
-	{ CT_FSBLOCK, M(BBOFF)|M(BLKOFF)|M(INOIDX), fsblock_names },
-	{ CT_INO, M(INOOFF), ino_names },
-	{ CT_INOIDX, M(AGBLOCK)|M(AGNUMBER)|M(FSBLOCK)|M(INOOFF),
-	  inoidx_names },
-	{ CT_INOOFF,
-	  M(AGBLOCK)|M(AGINO)|M(AGNUMBER)|M(FSBLOCK)|M(INO)|M(INOIDX),
-	  inooff_names },
+	[CT_AGBLOCK] = {
+		.allowed = M(AGNUMBER)|M(BBOFF)|M(BLKOFF)|M(INOIDX)|M(INOOFF),
+		.names   = agblock_names,
+	},
+	[CT_AGINO] = {
+		.allowed = M(AGNUMBER)|M(INOOFF),
+		.names   = agino_names,
+	},
+	[CT_AGNUMBER] = {
+		.allowed = M(AGBLOCK)|M(AGINO)|M(BBOFF)|M(BLKOFF)|M(INOIDX)|M(INOOFF),
+		.names   = agnumber_names,
+	},
+	[CT_BBOFF] = {
+		.allowed = M(AGBLOCK)|M(AGNUMBER)|M(DADDR)|M(FSBLOCK),
+		.names   = bboff_names,
+	},
+	[CT_BLKOFF] = {
+		.allowed = M(AGBLOCK)|M(AGNUMBER)|M(FSBLOCK),
+		.names   = blkoff_names,
+	},
+	[CT_BYTE] = {
+		.allowed = 0,
+		.names   = byte_names,
+	},
+	[CT_DADDR] = {
+		.allowed = M(BBOFF),
+		.names   = daddr_names,
+	},
+	[CT_FSBLOCK] = {
+		.allowed = M(BBOFF)|M(BLKOFF)|M(INOIDX),
+		.names   = fsblock_names,
+	},
+	[CT_INO] = {
+		.allowed = M(INOOFF),
+		.names   = ino_names,
+	},
+	[CT_INOIDX] = {
+		.allowed = M(AGBLOCK)|M(AGNUMBER)|M(FSBLOCK)|M(INOOFF),
+		.names   = inoidx_names,
+	},
+	[CT_INOOFF] = {
+		.allowed = M(AGBLOCK)|M(AGINO)|M(AGNUMBER)|M(FSBLOCK)|M(INO)|M(INOIDX),
+		.names   = inooff_names,
+	},
+};
+
+static const ctydesc_t	ctydescs_rt[NCTS] = {
+	[CT_BBOFF] = {
+		.allowed = M(DADDR)|M(RTBLOCK),
+		.names   = bboff_names,
+	},
+	[CT_BLKOFF] = {
+		.allowed = M(RTBLOCK),
+		.names   = rtblkoff_names,
+	},
+	[CT_BYTE] = {
+		.allowed = 0,
+		.names   = byte_names,
+	},
+	[CT_DADDR] = {
+		.allowed = M(BBOFF),
+		.names   = daddr_names,
+	},
+	[CT_RTBLOCK] = {
+		.allowed = M(BBOFF)|M(BLKOFF),
+		.names   = rtblock_names,
+	},
+	[CT_RTX] = {
+		.allowed = M(BBOFF)|M(BLKOFF),
+		.names   = rtx_names,
+	},
 };
 
 static const cmdinfo_t	convert_cmd =
 	{ "convert", NULL, convert_f, 3, 9, 0, "type num [type num]... type",
 	  "convert from one address form to another", NULL };
+
+static const cmdinfo_t	rtconvert_cmd =
+	{ "rtconvert", NULL, rtconvert_f, 3, 9, 0, "type num [type num]... type",
+	  "convert from one realtime address form to another", NULL };
 
 static uint64_t
 bytevalue(ctype_t ctype, cval_t *val)
@@ -131,6 +203,10 @@ bytevalue(ctype_t ctype, cval_t *val)
 		return inoidx_to_bytes(val->inoidx);
 	case CT_INOOFF:
 		return (uint64_t)val->inooff;
+	case CT_RTBLOCK:
+		return rtblock_to_bytes(val->rtblock);
+	case CT_RTX:
+		return rtblock_to_bytes(rtx_to_rtblock(val->rtx));
 	case CT_NONE:
 	case NCTS:
 		break;
@@ -159,13 +235,13 @@ convert_f(int argc, char **argv)
 			 "arguments\n"), argc);
 		return 0;
 	}
-	if ((wtype = lookupcty(argv[argc - 1])) == CT_NONE) {
+	if ((wtype = lookupcty(ctydescs, argv[argc - 1])) == CT_NONE) {
 		dbprintf(_("unknown conversion type %s\n"), argv[argc - 1]);
 		return 0;
 	}
 
 	for (i = mask = conmask = 0; i < (argc - 1) / 2; i++) {
-		c = lookupcty(argv[i * 2]);
+		c = lookupcty(ctydescs, argv[i * 2]);
 		if (c == CT_NONE) {
 			dbprintf(_("unknown conversion type %s\n"), argv[i * 2]);
 			return 0;
@@ -230,6 +306,107 @@ convert_f(int argc, char **argv)
 	case CT_INOOFF:
 		v &= mp->m_sb.sb_inodesize - 1;
 		break;
+	case CT_RTBLOCK:
+	case CT_RTX:
+		/* shouldn't get here */
+		ASSERT(0);
+		break;
+	case CT_NONE:
+	case NCTS:
+		/* NOTREACHED */
+		break;
+	}
+	dbprintf("0x%llx (%llu)\n", v, v);
+	return 0;
+}
+
+static inline xfs_rtblock_t
+xfs_daddr_to_rtb(
+	struct xfs_mount	*mp,
+	xfs_daddr_t		daddr)
+{
+	return daddr >> mp->m_blkbb_log;
+}
+
+static int
+rtconvert_f(int argc, char **argv)
+{
+	ctype_t		c;
+	int		conmask;
+	cval_t		cvals[NCTS] = {};
+	int		i;
+	int		mask;
+	uint64_t	v;
+	ctype_t		wtype;
+
+	/* move past the "rtconvert" command */
+	argc--;
+	argv++;
+
+	if ((argc % 2) != 1) {
+		dbprintf(_("bad argument count %d to rtconvert, expected 3,5,7,9 "
+			 "arguments\n"), argc);
+		return 0;
+	}
+	if ((wtype = lookupcty(ctydescs_rt, argv[argc - 1])) == CT_NONE) {
+		dbprintf(_("unknown conversion type %s\n"), argv[argc - 1]);
+		return 0;
+	}
+
+	for (i = mask = conmask = 0; i < (argc - 1) / 2; i++) {
+		c = lookupcty(ctydescs_rt, argv[i * 2]);
+		if (c == CT_NONE) {
+			dbprintf(_("unknown conversion type %s\n"), argv[i * 2]);
+			return 0;
+		}
+		if (c == wtype) {
+			dbprintf(_("result type same as argument\n"));
+			return 0;
+		}
+		if (conmask & (1 << c)) {
+			dbprintf(_("conflicting conversion type %s\n"),
+				argv[i * 2]);
+			return 0;
+		}
+		if (!getvalue(argv[i * 2 + 1], c, &cvals[c]))
+			return 0;
+		mask |= 1 << c;
+		conmask |= ~ctydescs_rt[c].allowed;
+	}
+	v = 0;
+	for (c = (ctype_t)0; c < NCTS; c++) {
+		if (!(mask & (1 << c)))
+			continue;
+		v += bytevalue(c, &cvals[c]);
+	}
+	switch (wtype) {
+	case CT_BBOFF:
+		v &= BBMASK;
+		break;
+	case CT_BLKOFF:
+		v &= mp->m_blockmask;
+		break;
+	case CT_BYTE:
+		break;
+	case CT_DADDR:
+		v >>= BBSHIFT;
+		break;
+	case CT_RTBLOCK:
+		v = xfs_daddr_to_rtb(mp, v >> BBSHIFT);
+		break;
+	case CT_RTX:
+		v = xfs_daddr_to_rtb(mp, v >> BBSHIFT) / mp->m_sb.sb_rextsize;
+		break;
+	case CT_AGBLOCK:
+	case CT_AGINO:
+	case CT_AGNUMBER:
+	case CT_FSBLOCK:
+	case CT_INO:
+	case CT_INOIDX:
+	case CT_INOOFF:
+		/* shouldn't get here */
+		ASSERT(0);
+		break;
 	case CT_NONE:
 	case NCTS:
 		/* NOTREACHED */
@@ -243,6 +420,7 @@ void
 convert_init(void)
 {
 	add_command(&convert_cmd);
+	add_command(&rtconvert_cmd);
 }
 
 static int
@@ -290,6 +468,12 @@ getvalue(char *s, ctype_t ctype, cval_t *val)
 	case CT_INOOFF:
 		val->inooff = (int)v;
 		break;
+	case CT_RTBLOCK:
+		val->rtblock = (xfs_rtblock_t)v;
+		break;
+	case CT_RTX:
+		val->rtx = (xfs_rtblock_t)v;
+		break;
 	case CT_NONE:
 	case NCTS:
 		/* NOTREACHED */
@@ -299,13 +483,15 @@ getvalue(char *s, ctype_t ctype, cval_t *val)
 }
 
 static ctype_t
-lookupcty(char *ctyname)
+lookupcty(
+	const struct ctydesc	*descs,
+	const char		*ctyname)
 {
 	ctype_t		cty;
 	const char	**name;
 
 	for (cty = (ctype_t)0; cty < NCTS; cty++) {
-		for (name = ctydescs[cty].names; *name; name++) {
+		for (name = descs[cty].names; name && *name; name++) {
 			if (strcmp(ctyname, *name) == 0)
 				return cty;
 		}
