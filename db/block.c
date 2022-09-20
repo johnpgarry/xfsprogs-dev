@@ -29,6 +29,8 @@ static int	rtblock_f(int argc, char **argv);
 static void	rtblock_help(void);
 static int	rtextent_f(int argc, char **argv);
 static void	rtextent_help(void);
+static int	logblock_f(int argc, char **argv);
+static void	logblock_help(void);
 static void	print_rawdata(void *data, int len);
 
 static const cmdinfo_t	ablock_cmd =
@@ -49,6 +51,9 @@ static const cmdinfo_t	rtblock_cmd =
 static const cmdinfo_t	rtextent_cmd =
 	{ "rtextent", "rtx", rtextent_f, 0, 1, 1, N_("[rtxno]"),
 	  N_("set address to rtextent value"), rtextent_help };
+static const cmdinfo_t	logblock_cmd =
+	{ "logblock", "lsb", logblock_f, 0, 1, 1, N_("[logbno]"),
+	  N_("set address to logblock value"), logblock_help };
 
 static void
 ablock_help(void)
@@ -116,6 +121,7 @@ block_init(void)
 	add_command(&fsblock_cmd);
 	add_command(&rtblock_cmd);
 	add_command(&rtextent_cmd);
+	add_command(&logblock_cmd);
 }
 
 static void
@@ -132,6 +138,7 @@ daddr_help(void)
 enum daddr_target {
 	DT_DATA,
 	DT_RT,
+	DT_LOG,
 };
 
 static int
@@ -145,16 +152,25 @@ daddr_f(
 	xfs_rfsblock_t	max_daddrs = mp->m_sb.sb_dblocks;
 	enum daddr_target tgt = DT_DATA;
 
-	while ((c = getopt(argc, argv, "r")) != -1) {
+	while ((c = getopt(argc, argv, "rl")) != -1) {
 		switch (c) {
 		case 'r':
 			tgt = DT_RT;
 			max_daddrs = mp->m_sb.sb_rblocks;
 			break;
+		case 'l':
+			tgt = DT_LOG;
+			max_daddrs = mp->m_sb.sb_logblocks;
+			break;
 		default:
 			daddr_help();
 			return 0;
 		}
+	}
+
+	if (tgt == DT_LOG && mp->m_sb.sb_logstart > 0) {
+		dbprintf(_("filesystem has internal log\n"));
+		return 0;
 	}
 
 	if (optind == argc) {
@@ -190,6 +206,9 @@ daddr_f(
 		break;
 	case DT_RT:
 		set_rt_cur(&typtab[TYP_DATA], d, 1, DB_RING_ADD, NULL);
+		break;
+	case DT_LOG:
+		set_log_cur(&typtab[TYP_DATA], d, 1, DB_RING_ADD, NULL);
 		break;
 	}
 	return 0;
@@ -403,6 +422,88 @@ rtextent_f(
 	ASSERT(typtab[TYP_DATA].typnm == TYP_DATA);
 	set_rt_cur(&typtab[TYP_DATA], XFS_FSB_TO_BB(mp, rtbno),
 			mp->m_sb.sb_rextsize * blkbb, DB_RING_ADD, NULL);
+	return 0;
+}
+
+static void
+logblock_help(void)
+{
+	dbprintf(_(
+"\n Example:\n"
+"\n"
+" 'logblock 1023' - sets the file position to the 1023rd log block.\n"
+" The external log device or the block offset within the internal log will be\n"
+" chosen as appropriate.\n"
+));
+}
+
+static int
+logblock_f(
+	int		argc,
+	char		**argv)
+{
+	xfs_fsblock_t	logblock;
+	char		*p;
+
+	if (argc == 1) {
+		if (mp->m_sb.sb_logstart > 0 && iocur_is_ddev(iocur_top)) {
+			logblock = XFS_DADDR_TO_FSB(mp,
+						iocur_top->off >> BBSHIFT);
+
+			if (logblock < mp->m_sb.sb_logstart ||
+			    logblock >= mp->m_sb.sb_logstart +
+					mp->m_sb.sb_logblocks) {
+				dbprintf(
+ _("current address not within internal log\n"));
+				return 0;
+			}
+
+			dbprintf(_("current logblock is %lld\n"),
+					logblock - mp->m_sb.sb_logstart);
+			return 0;
+		}
+
+		if (mp->m_sb.sb_logstart == 0 &&
+		    iocur_is_extlogdev(iocur_top)) {
+			logblock = XFS_BB_TO_FSB(mp,
+						iocur_top->off >> BBSHIFT);
+
+			if (logblock >= mp->m_sb.sb_logblocks) {
+				dbprintf(
+ _("current address not within external log\n"));
+				return 0;
+			}
+
+			dbprintf(_("current logblock is %lld\n"), logblock);
+			return 0;
+		}
+
+		dbprintf(_("current address does not point to log\n"));
+		return 0;
+	}
+
+	logblock = strtoull(argv[1], &p, 0);
+	if (*p != '\0') {
+		dbprintf(_("bad logblock %s\n"), argv[1]);
+		return 0;
+	}
+
+	if (logblock >= mp->m_sb.sb_logblocks) {
+		dbprintf(_("bad logblock %s\n"), argv[1]);
+		return 0;
+	}
+
+	ASSERT(typtab[TYP_DATA].typnm == TYP_DATA);
+
+	if (mp->m_sb.sb_logstart) {
+		logblock += mp->m_sb.sb_logstart;
+		set_cur(&typtab[TYP_DATA], XFS_FSB_TO_DADDR(mp, logblock),
+				blkbb, DB_RING_ADD, NULL);
+	} else {
+		set_log_cur(&typtab[TYP_DATA], XFS_FSB_TO_BB(mp, logblock),
+				blkbb, DB_RING_ADD, NULL);
+	}
+
 	return 0;
 }
 

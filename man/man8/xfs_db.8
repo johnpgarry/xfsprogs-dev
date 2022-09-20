@@ -601,6 +601,9 @@ The type is set to
 (uninterpreted).
 
 If an address and the
+.B \-l
+option are specified, the current address is set to the external log device.
+If an address and the
 .B \-r
 option are specified, the current address is set to the realtime device.
 .TP
@@ -924,6 +927,20 @@ The file being targetted must not be on the iunlink list.
 Start logging output to
 .IR filename ,
 stop logging, or print the current logging status.
+.TP
+.BI "logblock [" logbno ]
+Set current address to the log block value given by
+.IR logbno .
+If no value for
+.I logbno
+is given the current address is printed, expressed as an fsb.
+The type is set to
+.B data
+(uninterpreted).
+If the filesystem has an external log, then the address will be within the log
+device.
+If the filesystem has an internal log, then the address will be within the
+internal log.
 .TP
 .BI "logformat [\-c " cycle "] [\-s " sunit "]"
 Reformats the log to the specified log cycle and log stripe unit.
