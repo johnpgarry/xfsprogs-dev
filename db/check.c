@@ -3630,7 +3630,7 @@ process_rtbitmap(
 	int		t;
 	xfs_rtword_t	*words;
 
-	bitsperblock = mp->m_sb.sb_blocksize * NBBY;
+	bitsperblock = mp->m_blockwsize << XFS_NBWORDLOG;
 	words = malloc(mp->m_blockwsize << XFS_WORDLOG);
 	if (!words) {
 		dbprintf(_("could not allocate rtwords buffer\n"));
@@ -3749,7 +3749,7 @@ process_rtsummary(
 
 		args.sumbp = iocur_top->bp;
 		ondisk = xfs_rsumblock_infoptr(&args, 0);
-		memcpy(sfile, ondisk, mp->m_sb.sb_blocksize);
+		memcpy(sfile, ondisk, mp->m_blockwsize << XFS_WORDLOG);
 		pop_cur();
 		sfile += mp->m_blockwsize;
 	}
