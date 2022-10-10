@@ -1836,7 +1836,14 @@ longform_dir2_entry_check_data(
 			continue;
 		}
 		parent = get_inode_parent(irec, ino_offset);
-		ASSERT(parent != 0);
+		if (parent == 0) {
+			if (no_modify)
+				do_warn(
+ _("unknown parent for inode %" PRIu64 "\n"),
+						inum);
+			else
+				ASSERT(parent != 0);
+		}
 		junkit = 0;
 		/*
 		 * bump up the link counts in parent and child
