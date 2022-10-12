@@ -1367,6 +1367,7 @@ _("%s btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 		pag = libxfs_perag_get(mp, agno);
 
 		for (i = 0; i < numrecs; i++) {
+			enum xfs_refc_domain	domain;
 			xfs_agblock_t		b, agb, end;
 			xfs_extlen_t		len;
 			xfs_nlink_t		nr;
@@ -1374,16 +1375,23 @@ _("%s btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 			b = agb = be32_to_cpu(rp[i].rc_startblock);
 			len = be32_to_cpu(rp[i].rc_blockcount);
 			nr = be32_to_cpu(rp[i].rc_refcount);
-			if (b >= XFS_REFC_COWFLAG && nr != 1)
+
+			if (b & XFS_REFC_COWFLAG) {
+				domain = XFS_REFC_DOMAIN_COW;
+				agb &= ~XFS_REFC_COWFLAG;
+			} else {
+				domain = XFS_REFC_DOMAIN_SHARED;
+			}
+
+			if (domain == XFS_REFC_DOMAIN_COW && nr != 1)
 				do_warn(
 _("leftover CoW extent has incorrect refcount in record %u of %s btree block %u/%u\n"),
 					i, name, agno, bno);
 			if (nr == 1) {
-				if (agb < XFS_REFC_COWFLAG)
+				if (domain != XFS_REFC_DOMAIN_COW)
 					do_warn(
 _("leftover CoW extent has invalid startblock in record %u of %s btree block %u/%u\n"),
 						i, name, agno, bno);
-				agb -= XFS_REFC_COWFLAG;
 			}
 			end = agb + len;
 
@@ -1438,15 +1446,17 @@ _("extent (%u/%u) len %u claimed, state is %d\n"),
 			}
 
 			/* Is this record mergeable with the last one? */
-			if (refc_priv->last_rec.rc_startblock +
-			    refc_priv->last_rec.rc_blockcount == b &&
+			if (refc_priv->last_rec.rc_domain == domain &&
+			    refc_priv->last_rec.rc_startblock +
+			    refc_priv->last_rec.rc_blockcount == agb &&
 			    refc_priv->last_rec.rc_refcount == nr) {
 				do_warn(
 	_("record %d in block (%u/%u) of %s tree should be merged with previous record\n"),
 					i, agno, bno, name);
 				refc_priv->last_rec.rc_blockcount += len;
 			} else {
-				refc_priv->last_rec.rc_startblock = b;
+				refc_priv->last_rec.rc_domain = domain;
+				refc_priv->last_rec.rc_startblock = agb;
 				refc_priv->last_rec.rc_blockcount = len;
 				refc_priv->last_rec.rc_refcount = nr;
 			}
