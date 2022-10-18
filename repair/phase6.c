@@ -2250,8 +2250,8 @@ longform_dir2_entry_check(
 	xfs_dablk_t		da_bno;
 	freetab_t		*freetab;
 	int			i;
-	int			isblock;
-	int			isleaf;
+	bool			isblock;
+	bool			isleaf;
 	xfs_fileoff_t		next_da_bno;
 	int			seeval;
 	int			fixit = 0;
