@@ -449,8 +449,8 @@ listdir(
 		.dp		= dp,
 		.geo		= dp->i_mount->m_dir_geo,
 	};
+	bool			isblock;
 	int			error;
-	int			isblock;
 
 	if (dp->i_df.if_format == XFS_DINODE_FMT_LOCAL)
 		return list_sfdir(&args);
