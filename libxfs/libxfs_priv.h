@@ -225,10 +225,10 @@ static inline bool WARN_ON(bool expr) {
 #define WRITE_ONCE(x, val)		((x) = (val))
 
 /*
- * prandom_u32 is used for di_gen inode allocation, it must be zero for libxfs
- * or all sorts of badness can occur!
+ * get_random_u32 is used for di_gen inode allocation, it must be zero for
+ * libxfs or all sorts of badness can occur!
  */
-#define prandom_u32()		0
+#define get_random_u32()	(0)
 
 #define PAGE_SIZE		getpagesize()
 
