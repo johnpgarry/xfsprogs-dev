@@ -20,9 +20,9 @@ xfs_efi_copy_format(
 {
 	uint i;
 	uint nextents = ((xfs_efi_log_format_t *)buf)->efi_nextents;
-	uint dst_len = sizeof(xfs_efi_log_format_t) + nextents * sizeof(xfs_extent_t);
-	uint len32 = sizeof(xfs_efi_log_format_32_t) + nextents * sizeof(xfs_extent_32_t);
-	uint len64 = sizeof(xfs_efi_log_format_64_t) + nextents * sizeof(xfs_extent_64_t);
+	uint dst_len = xfs_efi_log_format_sizeof(nextents);
+	uint len32 = xfs_efi_log_format32_sizeof(nextents);
+	uint len64 = xfs_efi_log_format64_sizeof(nextents);
 
 	if (len == dst_len || continued) {
 		memcpy((char *)dst_efi_fmt, buf, len);
@@ -86,7 +86,7 @@ xlog_print_trans_efi(
 	*ptr += src_len;
 
 	/* convert to native format */
-	dst_len = sizeof(xfs_efi_log_format_t) + src_f->efi_nextents * sizeof(xfs_extent_t);
+	dst_len = xfs_efi_log_format_sizeof(src_f->efi_nextents);
 
 	if (continued && src_len < core_size) {
 		printf(_("EFI: Not enough data to decode further\n"));
