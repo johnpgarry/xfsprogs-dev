@@ -60,4 +60,14 @@ kmem_free(const void *ptr) {
 
 extern void	*krealloc(void *, size_t, int);
 
+static inline void *kmalloc(size_t size, gfp_t flags)
+{
+	return kvmalloc(size, flags);
+}
+
+static inline void kfree(const void *ptr)
+{
+	return kmem_free(ptr);
+}
+
 #endif
