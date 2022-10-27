@@ -734,6 +734,8 @@ refcount_emit(
 	rlrec.rc_startblock = agbno;
 	rlrec.rc_blockcount = len;
 	rlrec.rc_refcount = REFCOUNT_CLAMP(nr_rmaps);
+	rlrec.rc_domain = XFS_REFC_DOMAIN_SHARED;
+
 	error = slab_add(rlslab, &rlrec);
 	if (error)
 		do_error(
@@ -1393,7 +1395,8 @@ check_refcounts(
 	while (rl_rec) {
 		/* Look for a refcount record in the btree */
 		error = -libxfs_refcount_lookup_le(bt_cur,
-				rl_rec->rc_startblock, &have);
+				XFS_REFC_DOMAIN_SHARED, rl_rec->rc_startblock,
+				&have);
 		if (error) {
 			do_warn(
 _("Could not read reference count record for (%u/%u).\n"),
@@ -1424,14 +1427,21 @@ _("Missing reference count record for (%u/%u) len %u count %u\n"),
 		}
 
 		/* Compare each refcount observation against the btree's */
-		if (tmp.rc_startblock != rl_rec->rc_startblock ||
+		if (tmp.rc_domain != rl_rec->rc_domain ||
+		    tmp.rc_startblock != rl_rec->rc_startblock ||
 		    tmp.rc_blockcount != rl_rec->rc_blockcount ||
-		    tmp.rc_refcount != rl_rec->rc_refcount)
+		    tmp.rc_refcount != rl_rec->rc_refcount) {
+			unsigned int	start;
+
+			start = xfs_refcount_encode_startblock(
+					tmp.rc_startblock, tmp.rc_domain);
+
 			do_warn(
 _("Incorrect reference count: saw (%u/%u) len %u nlinks %u; should be (%u/%u) len %u nlinks %u\n"),
-				agno, tmp.rc_startblock, tmp.rc_blockcount,
+				agno, start, tmp.rc_blockcount,
 				tmp.rc_refcount, agno, rl_rec->rc_startblock,
 				rl_rec->rc_blockcount, rl_rec->rc_refcount);
+		}
 next_loop:
 		rl_rec = pop_slab_cursor(rl_cur);
 	}
