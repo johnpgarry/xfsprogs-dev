@@ -1374,16 +1374,16 @@ _("%s btree block claimed (state %d), agno %d, bno %d, suspect %d\n"),
 			b = agb = be32_to_cpu(rp[i].rc_startblock);
 			len = be32_to_cpu(rp[i].rc_blockcount);
 			nr = be32_to_cpu(rp[i].rc_refcount);
-			if (b >= XFS_REFC_COW_START && nr != 1)
+			if (b >= XFS_REFC_COWFLAG && nr != 1)
 				do_warn(
 _("leftover CoW extent has incorrect refcount in record %u of %s btree block %u/%u\n"),
 					i, name, agno, bno);
 			if (nr == 1) {
-				if (agb < XFS_REFC_COW_START)
+				if (agb < XFS_REFC_COWFLAG)
 					do_warn(
 _("leftover CoW extent has invalid startblock in record %u of %s btree block %u/%u\n"),
 						i, name, agno, bno);
-				agb -= XFS_REFC_COW_START;
+				agb -= XFS_REFC_COWFLAG;
 			}
 			end = agb + len;
 

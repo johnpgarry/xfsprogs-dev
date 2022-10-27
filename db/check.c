@@ -4848,8 +4848,8 @@ scanfunc_refcnt(
 				char		*msg;
 
 				agbno = be32_to_cpu(rp[i].rc_startblock);
-				if (agbno >= XFS_REFC_COW_START) {
-					agbno -= XFS_REFC_COW_START;
+				if (agbno >= XFS_REFC_COWFLAG) {
+					agbno -= XFS_REFC_COWFLAG;
 					msg = _(
 		"leftover CoW extent (%u/%u) len %u\n");
 				} else {
