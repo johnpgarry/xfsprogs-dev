@@ -750,7 +750,7 @@ check_fs_vs_host_sectsize(
 }
 
 /* Clear needsrepair after a successful repair run. */
-void
+static void
 clear_needsrepair(
 	struct xfs_mount	*mp)
 {

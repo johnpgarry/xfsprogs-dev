@@ -441,7 +441,7 @@ list_leafdir(
 }
 
 /* Read the directory, display contents. */
-int
+static int
 listdir(
 	struct xfs_inode	*dp)
 {

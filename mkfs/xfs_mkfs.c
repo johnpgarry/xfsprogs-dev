@@ -3964,7 +3964,7 @@ cfgfile_parse_ini(
 	return 1;
 }
 
-void
+static void
 cfgfile_parse(
 	struct cli_params	*cli)
 {
