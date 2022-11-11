@@ -1,3 +1,9 @@
+xfsprogs (6.0.0) unstable; urgency=low
+
+  * New upstream release
+
+ -- Nathan Scott <nathans@debian.org>  Fri, 11 Nov 2022 11:29:37 +0100
+
 xfsprogs (5.19.0-1) unstable; urgency=medium
 
   * New upstream release
