@@ -20,9 +20,9 @@ xfs_efi_copy_format(
 {
 	uint i;
 	uint nextents = ((xfs_efi_log_format_t *)buf)->efi_nextents;
-	uint dst_len = sizeof(xfs_efi_log_format_t) + (nextents - 1) * sizeof(xfs_extent_t);
-	uint len32 = sizeof(xfs_efi_log_format_32_t) + (nextents - 1) * sizeof(xfs_extent_32_t);
-	uint len64 = sizeof(xfs_efi_log_format_64_t) + (nextents - 1) * sizeof(xfs_extent_64_t);
+	uint dst_len = sizeof(xfs_efi_log_format_t) + (nextents) * sizeof(xfs_extent_t);
+	uint len32 = sizeof(xfs_efi_log_format_32_t) + (nextents) * sizeof(xfs_extent_32_t);
+	uint len64 = sizeof(xfs_efi_log_format_64_t) + (nextents) * sizeof(xfs_extent_64_t);
 
 	if (len == dst_len || continued) {
 		memcpy((char *)dst_efi_fmt, buf, len);
@@ -86,7 +86,7 @@ xlog_print_trans_efi(
 	*ptr += src_len;
 
 	/* convert to native format */
-	dst_len = sizeof(xfs_efi_log_format_t) + (src_f->efi_nextents - 1) * sizeof(xfs_extent_t);
+	dst_len = sizeof(xfs_efi_log_format_t) + (src_f->efi_nextents) * sizeof(xfs_extent_t);
 
 	if (continued && src_len < core_size) {
 		printf(_("EFI: Not enough data to decode further\n"));
@@ -144,7 +144,7 @@ xlog_recover_print_efi(
 	 * Need to convert to native format.
 	 */
 	dst_len = sizeof(xfs_efi_log_format_t) +
-		(src_f->efi_nextents - 1) * sizeof(xfs_extent_t);
+		(src_f->efi_nextents) * sizeof(xfs_extent_t);
 	if ((f = (xfs_efi_log_format_t *)malloc(dst_len)) == NULL) {
 		fprintf(stderr, _("%s: xlog_recover_print_efi: malloc failed\n"),
 			progname);
@@ -177,7 +177,7 @@ xlog_print_trans_efd(char **ptr, uint len)
 	xfs_efd_log_format_t *f;
 	xfs_efd_log_format_t lbuf;
 	/* size without extents at end */
-	uint core_size = sizeof(xfs_efd_log_format_t) - sizeof(xfs_extent_t);
+	uint core_size = sizeof(xfs_efd_log_format_t);
 
 	/*
 	 * memmove to ensure 8-byte alignment for the long longs in
