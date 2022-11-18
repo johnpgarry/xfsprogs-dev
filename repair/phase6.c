@@ -1455,7 +1455,7 @@ longform_dir2_entry_check_data(
 	struct dir_hash_tab	*hashtab,
 	freetab_t		**freetabp,
 	xfs_dablk_t		da_bno,
-	int			isblock)
+	bool			isblock)
 {
 	xfs_dir2_dataptr_t	addr;
 	xfs_dir2_leaf_entry_t	*blp;
@@ -2243,8 +2243,8 @@ longform_dir2_entry_check(
 	xfs_dablk_t		da_bno;
 	freetab_t		*freetab;
 	int			i;
-	int			isblock;
-	int			isleaf;
+	bool			isblock;
+	bool			isleaf;
 	xfs_fileoff_t		next_da_bno;
 	int			seeval;
 	int			fixit = 0;
