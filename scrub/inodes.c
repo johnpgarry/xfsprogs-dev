@@ -163,7 +163,7 @@ alloc_ichunk(
 	return 0;
 }
 
-int
+static int
 render_ino_from_bulkstat(
 	struct scrub_ctx	*ctx,
 	char			*buf,
