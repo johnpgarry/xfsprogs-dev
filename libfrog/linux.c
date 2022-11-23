@@ -12,6 +12,7 @@
 #include "platform_defs.h"
 #include "xfs.h"
 #include "init.h"
+#include "libfrog/platform.h"
 
 extern char *progname;
 static int max_block_alignment;
