@@ -301,8 +301,17 @@ free_bmaps(xfs_mount_t *mp)
 {
 	xfs_agnumber_t i;
 
+	pthread_mutex_destroy(&rt_lock.lock);
+
+	for (i = 0; i < mp->m_sb.sb_agcount; i++)
+		pthread_mutex_destroy(&ag_locks[i].lock);
+
+	free(ag_locks);
+	ag_locks = NULL;
+
 	for (i = 0; i < mp->m_sb.sb_agcount; i++)
 		btree_destroy(ag_bmap[i]);
+
 	free(ag_bmap);
 	ag_bmap = NULL;
 
