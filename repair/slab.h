@@ -9,29 +9,31 @@
 struct xfs_slab;
 struct xfs_slab_cursor;
 
-extern int init_slab(struct xfs_slab **, size_t);
-extern void free_slab(struct xfs_slab **);
+int init_slab(struct xfs_slab **slabp, size_t item_sz);
+void free_slab(struct xfs_slab **slabp);
 
-extern int slab_add(struct xfs_slab *, void *);
-extern void qsort_slab(struct xfs_slab *, int (*)(const void *, const void *));
-extern size_t slab_count(struct xfs_slab *);
+int slab_add(struct xfs_slab *slab, void *item);
+void qsort_slab(struct xfs_slab *slab,
+		int (*compare)(const void *, const void *));
+uint64_t slab_count(struct xfs_slab *slab);
 
-extern int init_slab_cursor(struct xfs_slab *,
-	int (*)(const void *, const void *), struct xfs_slab_cursor **);
-extern void free_slab_cursor(struct xfs_slab_cursor **);
+int init_slab_cursor(struct xfs_slab *slab,
+		int (*compare)(const void *, const void *),
+		struct xfs_slab_cursor **curp);
+void free_slab_cursor(struct xfs_slab_cursor **curp);
 
-extern void *peek_slab_cursor(struct xfs_slab_cursor *);
-extern void advance_slab_cursor(struct xfs_slab_cursor *);
-extern void *pop_slab_cursor(struct xfs_slab_cursor *);
+void *peek_slab_cursor(struct xfs_slab_cursor *cur);
+void advance_slab_cursor(struct xfs_slab_cursor *cur);
+void *pop_slab_cursor(struct xfs_slab_cursor *cur);
 
 struct xfs_bag;
 
-extern int init_bag(struct xfs_bag **);
-extern void free_bag(struct xfs_bag **);
-extern int bag_add(struct xfs_bag *, void *);
-extern int bag_remove(struct xfs_bag *, size_t);
-extern size_t bag_count(struct xfs_bag *);
-extern void *bag_item(struct xfs_bag *, size_t);
+int init_bag(struct xfs_bag **bagp);
+void free_bag(struct xfs_bag **bagp);
+int bag_add(struct xfs_bag *bag, void *item);
+int bag_remove(struct xfs_bag *bag, uint64_t idx);
+uint64_t bag_count(struct xfs_bag *bag);
+void *bag_item(struct xfs_bag *bag, uint64_t idx);
 
 #define foreach_bag_ptr(bag, idx, ptr) \
 	for ((idx) = 0, (ptr) = bag_item((bag), (idx)); \
