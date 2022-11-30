@@ -283,7 +283,7 @@ rmap_fold_raw_recs(
 {
 	struct xfs_slab_cursor	*cur = NULL;
 	struct xfs_rmap_irec	*prev, *rec;
-	size_t			old_sz;
+	uint64_t		old_sz;
 	int			error = 0;
 
 	old_sz = slab_count(ag_rmaps[agno].ar_rmaps);
@@ -690,7 +690,7 @@ mark_inode_rl(
 	struct xfs_rmap_irec	*rmap;
 	struct ino_tree_node	*irec;
 	int			off;
-	size_t			idx;
+	uint64_t		idx;
 	xfs_agino_t		ino;
 
 	if (bag_count(rmaps) < 2)
@@ -873,9 +873,9 @@ err:
 /*
  * Return the number of rmap objects for an AG.
  */
-size_t
+uint64_t
 rmap_record_count(
-	struct xfs_mount		*mp,
+	struct xfs_mount	*mp,
 	xfs_agnumber_t		agno)
 {
 	return slab_count(ag_rmaps[agno].ar_rmaps);
