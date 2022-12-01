@@ -1379,7 +1379,7 @@ check_refcounts(
 	if (error) {
 		do_warn(_("Could not read AGF %u to check refcount btree.\n"),
 				agno);
-		goto err;
+		goto err_pag;
 	}
 
 	/* Leave the per-ag data "uninitialized" since we rewrite it later */
@@ -1388,7 +1388,7 @@ check_refcounts(
 	bt_cur = libxfs_refcountbt_init_cursor(mp, NULL, agbp, pag);
 	if (!bt_cur) {
 		do_warn(_("Not enough memory to check refcount data.\n"));
-		goto err;
+		goto err_agf;
 	}
 
 	rl_rec = pop_slab_cursor(rl_cur);
@@ -1401,7 +1401,7 @@ check_refcounts(
 			do_warn(
 _("Could not read reference count record for (%u/%u).\n"),
 					agno, rl_rec->rc_startblock);
-			goto err;
+			goto err_cur;
 		}
 		if (!have) {
 			do_warn(
@@ -1416,7 +1416,7 @@ _("Missing reference count record for (%u/%u) len %u count %u\n"),
 			do_warn(
 _("Could not read reference count record for (%u/%u).\n"),
 					agno, rl_rec->rc_startblock);
-			goto err;
+			goto err_cur;
 		}
 		if (!i) {
 			do_warn(
@@ -1446,14 +1446,12 @@ next_loop:
 		rl_rec = pop_slab_cursor(rl_cur);
 	}
 
-err:
-	if (bt_cur)
-		libxfs_btree_del_cursor(bt_cur, error ? XFS_BTREE_ERROR :
-							XFS_BTREE_NOERROR);
-	if (pag)
-		libxfs_perag_put(pag);
-	if (agbp)
-		libxfs_buf_relse(agbp);
+err_cur:
+	libxfs_btree_del_cursor(bt_cur, error);
+err_agf:
+	libxfs_buf_relse(agbp);
+err_pag:
+	libxfs_perag_put(pag);
 	free_slab_cursor(&rl_cur);
 }
 
