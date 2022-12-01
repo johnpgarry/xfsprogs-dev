@@ -388,6 +388,29 @@ and
 options are used to select the attribute or data
 area of the inode, if neither option is given then both areas are shown.
 .TP
+.BI "bmapinflate [\-d " dirty_bytes "] [-e] [\-n " nr "]
+Duplicates the first data fork mapping this many times, as if the mapping had
+been repeatedly reflinked.
+This is an expert-mode command for exercising high-refcount filesystems only.
+Existing data fork mappings will be forgotten and the refcount btree will not
+be updated.
+This command leaves at least the refcount btree and the inode inconsistent;
+.B xfs_repair
+must be run afterwards.
+.RS 1.0i
+.TP 0.4i
+.B \-d
+Constrain the memory consumption of new dirty btree blocks to this quantity.
+Defaults to 60MiB.
+.TP 0.4i
+.B \-e
+Estimate the number of blocks and height of the new data fork mapping
+structure and exit without changing anything.
+.TP 0.4i
+.B \-n
+Create this many copies of the first mapping.
+.RE
+.TP
 .B btdump [-a] [-i]
 If the cursor points to a btree node, dump the btree from that block downward.
 If instead the cursor points to an inode, dump the data fork block mapping btree if there is one.
