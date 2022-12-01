@@ -1004,7 +1004,7 @@ rmaps_verify_btree(
 	if (error) {
 		do_warn(_("Could not read AGF %u to check rmap btree.\n"),
 				agno);
-		goto err;
+		goto err_pag;
 	}
 
 	/* Leave the per-ag data "uninitialized" since we rewrite it later */
@@ -1013,7 +1013,7 @@ rmaps_verify_btree(
 	bt_cur = libxfs_rmapbt_init_cursor(mp, NULL, agbp, pag);
 	if (!bt_cur) {
 		do_warn(_("Not enough memory to check reverse mappings.\n"));
-		goto err;
+		goto err_agf;
 	}
 
 	rm_rec = pop_slab_cursor(rm_cur);
@@ -1023,7 +1023,7 @@ rmaps_verify_btree(
 			do_warn(
 _("Could not read reverse-mapping record for (%u/%u).\n"),
 					agno, rm_rec->rm_startblock);
-			goto err;
+			goto err_cur;
 		}
 
 		/*
@@ -1039,7 +1039,7 @@ _("Could not read reverse-mapping record for (%u/%u).\n"),
 				do_warn(
 _("Could not read reverse-mapping record for (%u/%u).\n"),
 						agno, rm_rec->rm_startblock);
-				goto err;
+				goto err_cur;
 			}
 		}
 		if (!have) {
@@ -1090,13 +1090,12 @@ next_loop:
 		rm_rec = pop_slab_cursor(rm_cur);
 	}
 
-err:
-	if (bt_cur)
-		libxfs_btree_del_cursor(bt_cur, XFS_BTREE_NOERROR);
-	if (pag)
-		libxfs_perag_put(pag);
-	if (agbp)
-		libxfs_buf_relse(agbp);
+err_cur:
+	libxfs_btree_del_cursor(bt_cur, XFS_BTREE_NOERROR);
+err_agf:
+	libxfs_buf_relse(agbp);
+err_pag:
+	libxfs_perag_put(pag);
 	free_slab_cursor(&rm_cur);
 }
 
