@@ -50,6 +50,11 @@ enum tryrepair_outcome {
 int action_item_try_repair(struct scrub_ctx *ctx, struct action_item *aitem,
 		enum tryrepair_outcome *outcome);
 
+int action_item_schedule_revalidation(struct scrub_ctx *ctx,
+		const struct action_item *old_aitem,
+		struct action_list *new_items);
+int action_list_revalidate(struct scrub_ctx *sc, struct action_list *alist);
+
 void repair_item_mustfix(struct scrub_item *sri, struct scrub_item *fix_now);
 
 /* Primary metadata is corrupt */

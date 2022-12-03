@@ -43,6 +43,15 @@ static const unsigned int repair_deps[XFS_SCRUB_TYPE_NR] = {
 					  DEP(XFS_SCRUB_TYPE_PQUOTA),
 	[XFS_SCRUB_TYPE_RTSUM]		= DEP(XFS_SCRUB_TYPE_RTBITMAP),
 };
+
+/*
+ * Data dependencies that cross scrub groups.  When we repair a metadata object
+ * of the given type (e.g. rtgroup bitmaps), we want to trigger a revalidation
+ * of the specified objects (e.g. rt summary file).
+ */
+static const unsigned int cross_group_recheck[XFS_SCRUB_TYPE_NR] = {
+	[XFS_SCRUB_TYPE_RGBITMAP]	= DEP(XFS_SCRUB_TYPE_RTSUM),
+};
 #undef DEP
 
 /*
@@ -631,6 +640,16 @@ action_list_add(
 	list_add_tail(&aitem->list, &alist->list);
 }
 
+/* Move an action item off of a list onto alist. */
+static void
+action_list_move(
+	struct action_list		*alist,
+	struct action_item		*aitem)
+{
+	list_del_init(&aitem->list);
+	action_list_add(alist, aitem);
+}
+
 /*
  * Try to repair a filesystem object and let the caller know what it should do
  * with the action item.  The caller must be able to requeue action items, so
@@ -892,5 +911,144 @@ repair_item_to_action_item(
 	}
 
 	*aitemp = aitem;
+	return 0;
+}
+
+static int
+schedule_cross_group_recheck(
+	struct scrub_ctx	*ctx,
+	unsigned int		recheck_mask,
+	struct action_list	*new_items)
+{
+	unsigned int		scrub_type;
+
+	foreach_scrub_type(scrub_type) {
+		struct action_item	*aitem;
+
+		if (!(recheck_mask & (1U << scrub_type)))
+			continue;
+
+		switch (xfrog_scrubbers[scrub_type].group) {
+		case XFROG_SCRUB_GROUP_FS:
+			/*
+			 * XXX gcc fortify gets confused on the memset in
+			 * scrub_item_init_fs if we hoist this allocation to a
+			 * helper function.
+			 */
+			aitem = malloc(sizeof(struct action_item));
+			if (!aitem) {
+				int	error = errno;
+
+				str_liberror(ctx, error,
+						_("creating repair revalidation action item"));
+				return error;
+			}
+
+			INIT_LIST_HEAD(&aitem->list);
+			aitem->sri.sri_revalidate = true;
+
+			scrub_item_init_fs(&aitem->sri);
+			scrub_item_schedule(&aitem->sri, scrub_type);
+			action_list_add(new_items, aitem);
+			break;
+		default:
+			/* We don't support any other groups yet. */
+			assert(false);
+			continue;
+		}
+	}
+
+	return 0;
+}
+
+/*
+ * After a successful repair, schedule revalidation of metadata outside of this
+ * scrub item's group.
+ */
+int
+action_item_schedule_revalidation(
+	struct scrub_ctx		*ctx,
+	const struct action_item	*old_aitem,
+	struct action_list		*new_repairs)
+{
+	struct action_list		new_items;
+	struct action_item		*aitem, *n;
+	unsigned int			scrub_type;
+	int				error = 0;
+
+	/* Find new scrub items to revalidate */
+	action_list_init(&new_items);
+	foreach_scrub_type(scrub_type) {
+		unsigned int		mask;
+
+		if (!(old_aitem->sri.sri_selected & (1ULL << scrub_type)))
+			continue;
+		mask = cross_group_recheck[scrub_type];
+		if (!mask)
+			continue;
+
+		error = schedule_cross_group_recheck(ctx, mask, &new_items);
+		if (error)
+			goto bad;
+	}
+	if (action_list_empty(&new_items))
+		return 0;
+
+	/* Scrub them all, and move corrupted items to the caller's list */
+	list_for_each_entry_safe(aitem, n, &new_items.list, list) {
+		unsigned int	bad;
+
+		error = scrub_item_check(ctx, &aitem->sri);
+		if (error)
+			 goto bad;
+
+		bad = repair_item_count_needsrepair(&aitem->sri);
+		if (bad > 0) {
+			/*
+			 * Uhoh, we found something else broken.  Queue it for
+			 * more repairs.
+			 */
+			aitem->sri.sri_revalidate = false;
+			action_list_move(new_repairs, aitem);
+		}
+	}
+
+bad:
+	/* Delete anything that's still on the list. */
+	list_for_each_entry_safe(aitem, n, &new_items.list, list) {
+		list_del(&aitem->list);
+		free(aitem);
+	}
+
+	return error;
+}
+
+/*
+ * Revalidate all items scheduled for a recheck, and drop the ones that are
+ * clean.
+ */
+int
+action_list_revalidate(
+	struct scrub_ctx	*ctx,
+	struct action_list	*alist)
+{
+	struct action_item	*aitem, *n;
+	int			error;
+
+	list_for_each_entry_safe(aitem, n, &alist->list, list) {
+		error = scrub_item_check(ctx, &aitem->sri);
+		if (error)
+			return error;
+
+		if (repair_item_count_needsrepair(&aitem->sri) > 0) {
+			aitem->sri.sri_revalidate = false;
+			continue;
+		}
+
+		/* Metadata are clean, delete from list. */
+		list_del(&aitem->list);
+		free(aitem);
+	}
+
 	return 0;
 }
