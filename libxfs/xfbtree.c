@@ -524,7 +524,6 @@ xfbtree_trans_commit(
 	struct xfbtree		*xfbt,
 	struct xfs_trans	*tp)
 {
-	LIST_HEAD(buffer_list);
 	struct xfs_log_item	*lip, *n;
 	bool			corrupt = false;
 	bool			tp_dirty = false;
@@ -558,12 +557,16 @@ xfbtree_trans_commit(
 			 * If the buffer fails verification, log the failure
 			 * but continue walking the transaction items so that
 			 * we remove all ephemeral btree buffers.
+			 *
+			 * Since the userspace buffer cache supports marking
+			 * buffers dirty and flushing them later, use this to
+			 * reduce the number of writes to the xfile.
 			 */
 			if (fa) {
 				corrupt = true;
 				xfs_verifier_error(bp, -EFSCORRUPTED, fa);
 			} else {
-				xfs_buf_delwri_queue_here(bp, &buffer_list);
+				libxfs_buf_mark_dirty(bp);
 			}
 		}
 
@@ -577,15 +580,9 @@ xfbtree_trans_commit(
 	tp->t_flags = (tp->t_flags & ~XFS_TRANS_DIRTY) |
 			(tp_dirty ? XFS_TRANS_DIRTY : 0);
 
-	if (corrupt) {
-		xfs_buf_delwri_cancel(&buffer_list);
+	if (corrupt)
 		return -EFSCORRUPTED;
-	}
-
-	if (list_empty(&buffer_list))
-		return 0;
-
-	return xfs_buf_delwri_submit(&buffer_list);
+	return 0;
 }
 
 /*
