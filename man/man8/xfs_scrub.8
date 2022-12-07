@@ -4,7 +4,7 @@ xfs_scrub \- check and repair the contents of a mounted XFS filesystem
 .SH SYNOPSIS
 .B xfs_scrub
 [
-.B \-abCeMmnTvx
+.B \-abCeMmnpTvx
 ]
 .I mount-point
 .br
@@ -127,6 +127,10 @@ By default, the percentage threshold is 99%.
 Treat informational messages as warnings.
 This will result in a nonzero return code, and a higher logging level.
 .RE
+.TP
+.B \-p
+Only optimize filesystem metadata.
+If repairs are required, report them and exit.
 .TP
 .BI \-T
 Print timing and memory usage information for each phase.
