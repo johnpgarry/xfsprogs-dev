@@ -29,6 +29,7 @@ HFILES = \
 	protos.h \
 	quotacheck.h \
 	rcbag_btree.h \
+	rcbag.h \
 	rmap.h \
 	rt.h \
 	scan.h \
@@ -66,6 +67,7 @@ CFILES = \
 	progress.c \
 	quotacheck.c \
 	rcbag_btree.c \
+	rcbag.c \
 	rmap.c \
 	rt.c \
 	sb.c \
