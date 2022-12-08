@@ -26,6 +26,7 @@
 #include "libfrog/platform.h"
 #include "bulkload.h"
 #include "quotacheck.h"
+#include "rcbag_btree.h"
 
 /*
  * option tables for getsubopt calls
@@ -1259,6 +1260,10 @@ main(int argc, char **argv)
 	phase3(mp, phase2_threads);
 	phase_end(mp, 3);
 
+	error = rcbagbt_init_cur_cache();
+	if (error)
+		do_error(_("could not allocate btree cursor memory\n"));
+
 	phase4(mp);
 	phase_end(mp, 4);
 
@@ -1271,6 +1276,7 @@ main(int argc, char **argv)
 		phase5(mp);
 	}
 	phase_end(mp, 5);
+	rcbagbt_destroy_cur_cache();
 
 	/*
 	 * Done with the block usage maps, toss them...
