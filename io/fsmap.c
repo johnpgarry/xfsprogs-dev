@@ -197,7 +197,7 @@ dump_map_verbose(
 		    p->fmr_flags & FMR_OF_ATTR_FORK ||
 		    p->fmr_flags & FMR_OF_SHARED)
 			flg = 1;
-		if (sunit &&
+		if (sunit && p->fmr_device == xfs_data_dev &&
 		    (p->fmr_physical  % sunit != 0 ||
 		     ((p->fmr_physical + p->fmr_length) % sunit) != 0 ||
 		     p->fmr_physical % swidth != 0 ||
@@ -273,7 +273,7 @@ dump_map_verbose(
 		 * If striping enabled, determine if extent starts/ends
 		 * on a stripe unit boundary.
 		 */
-		if (sunit) {
+		if (sunit && p->fmr_device == xfs_data_dev) {
 			if (p->fmr_physical  % sunit != 0)
 				flg |= FLG_BSU;
 			if (((p->fmr_physical +
