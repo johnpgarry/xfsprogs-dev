@@ -2578,7 +2578,7 @@ process_data_dir_v2(
 		error++;
 	}
 	if ((be32_to_cpu(data->magic) == XFS_DIR2_BLOCK_MAGIC ||
-	     be32_to_cpu(data->magic) == XFS_DIR2_BLOCK_MAGIC) &&
+	     be32_to_cpu(data->magic) == XFS_DIR3_BLOCK_MAGIC) &&
 					stale != be32_to_cpu(btp->stale)) {
 		if (!sflag || v)
 			dbprintf(_("dir %lld block %d bad stale tail count %d\n"),
