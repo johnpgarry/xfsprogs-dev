@@ -1,3 +1,21 @@
+xfsprogs-6.1.0 (23 Dec 2022)
+	- libxfs: kernel sync
+	- libxfs: consume the xfs_warn mountpoint argument (Darrick J. Wong)
+	- misc: add static to various sourcefile-local functions (Darrick J. Wong)
+	- misc: add missing includes (Darrick J. Wong)
+	- xfs_{db,repair}: fix XFS_REFC_COW_START usage (Darrick J. Wong)
+	- xfs_repair: don't crash on unknown inode parents in dry run mode (Darrick J. Wong)
+	- xfs_repair: retain superblock buffer to avoid write hook deadlock (Darrick J. Wong)
+	- xfs_repair: Attempt log replay during boot time repair (Srikanth C S)
+	- xfs_repair: covscan fixes (Carlos Maiolino)
+	- xfs_db: create separate struct and field definitions for finobts (Darrick J. Wong)
+	- xfs_db: fix dir3 block magic check (Darrick J. Wong)
+	- xfs_db: fix octal conversion logic (Darrick J. Wong)
+	- xfs_db: fix printing of reverse mapping record blockcounts (Darrick J. Wong)
+	- xfs_io: don't display stripe alignment flags for rt files (Darrick J. Wong)
+	- xfs_db: fix dir3 block magic check (Darrick J. Wong)
+	- mkfs.xfs: add mkfs config file for the 6.1 LTS kernel (Darrick J. Wong)
+
 xfsprogs-6.0.0 (11 Nov 2022)
 	- libxfs: kernel sync
 	- xfs_db: use preferable macro to seek offset for local dir3 (Xiaole He)
