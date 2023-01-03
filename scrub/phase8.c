@@ -45,6 +45,13 @@ fstrim_ok(
 	return true;
 }
 
+/*
+ * Limit the amount of fstrim scanning that we let the kernel do in a single
+ * call so that we can implement decent progress reporting and CPU resource
+ * control.  Pick a prime number of gigabytes for interest.
+ */
+#define FSTRIM_MAX_BYTES	(11ULL << 30)
+
 /* Trim a certain range of the filesystem. */
 static int
 fstrim_fsblocks(
@@ -56,18 +63,31 @@ fstrim_fsblocks(
 	uint64_t		len = cvt_off_fsb_to_b(&ctx->mnt, fsbcount);
 	int			error;
 
-	error = fstrim(ctx, start, len);
-	if (error == EOPNOTSUPP)
-		return 0;
-	if (error) {
-		char		descr[DESCR_BUFSZ];
+	while (len > 0) {
+		uint64_t	run;
 
-		snprintf(descr, sizeof(descr) - 1,
-				_("fstrim start 0x%llx len 0x%llx"),
-				(unsigned long long)start,
-				(unsigned long long)len);
-		str_liberror(ctx, error, descr);
-		return error;
+		run = min(len, FSTRIM_MAX_BYTES);
+
+		error = fstrim(ctx, start, run);
+		if (error == EOPNOTSUPP) {
+			/* Pretend we finished all the work. */
+			progress_add(len);
+			return 0;
+		}
+		if (error) {
+			char		descr[DESCR_BUFSZ];
+
+			snprintf(descr, sizeof(descr) - 1,
+					_("fstrim start 0x%llx run 0x%llx"),
+					(unsigned long long)start,
+					(unsigned long long)run);
+			str_liberror(ctx, error, descr);
+			return error;
+		}
+
+		progress_add(run);
+		len -= run;
+		start += run;
 	}
 
 	return 0;
@@ -90,13 +110,13 @@ fstrim_datadev(
 		 * partial-AG discard implementation, which cycles the AGF lock
 		 * to prevent foreground threads from stalling.
 		 */
+		progress_add(geo->blocksize);
 		fsbcount = min(geo->datablocks - fsbno + 1, geo->agblocks);
 		error = fstrim_fsblocks(ctx, fsbno + 1, fsbcount);
 		if (error)
 			return error;
 	}
 
-	progress_add(1);
 	return 0;
 }
 
@@ -119,12 +139,13 @@ phase8_estimate(
 	unsigned int		*nr_threads,
 	int			*rshift)
 {
-	*items = 0;
-
-	if (fstrim_ok(ctx))
-		*items = 1;
-
+	if (fstrim_ok(ctx)) {
+		*items = cvt_off_fsb_to_b(&ctx->mnt,
+				ctx->mnt.fsgeom.datablocks);
+	} else {
+		*items = 0;
+	}
 	*nr_threads = 1;
-	*rshift = 0;
+	*rshift = 30; /* GiB */
 	return 0;
 }
