@@ -59,7 +59,8 @@ fstrim_fsblocks(
 	struct scrub_ctx	*ctx,
 	uint64_t		start_fsb,
 	uint64_t		fsbcount,
-	uint64_t		minlen_fsb)
+	uint64_t		minlen_fsb,
+	bool			ignore_einval)
 {
 	uint64_t		start = cvt_off_fsb_to_b(&ctx->mnt, start_fsb);
 	uint64_t		len = cvt_off_fsb_to_b(&ctx->mnt, fsbcount);
@@ -72,6 +73,8 @@ fstrim_fsblocks(
 		run = min(len, FSTRIM_MAX_BYTES);
 
 		error = fstrim(ctx, start, run, minlen);
+		if (error == EINVAL && ignore_einval)
+			error = EOPNOTSUPP;
 		if (error == EOPNOTSUPP) {
 			/* Pretend we finished all the work. */
 			progress_add(len);
@@ -177,7 +180,8 @@ fstrim_datadev(
 		 */
 		progress_add(geo->blocksize);
 		fsbcount = min(geo->datablocks - fsbno + 1, geo->agblocks);
-		error = fstrim_fsblocks(ctx, fsbno + 1, fsbcount, minlen_fsb);
+		error = fstrim_fsblocks(ctx, fsbno + 1, fsbcount, minlen_fsb,
+				false);
 		if (error)
 			return error;
 	}
@@ -185,15 +189,35 @@ fstrim_datadev(
 	return 0;
 }
 
+/* Trim the realtime device. */
+static int
+fstrim_rtdev(
+	struct scrub_ctx	*ctx)
+{
+	struct xfs_fsop_geom	*geo = &ctx->mnt.fsgeom;
+
+	/*
+	 * The fstrim ioctl pretends that the realtime volume is in the address
+	 * space immediately after the data volume.  Ignore EINVAL if someone
+	 * tries to run us on an older kernel.
+	 */
+	return fstrim_fsblocks(ctx, geo->datablocks, geo->rtblocks, 0, true);
+}
+
 /* Trim the filesystem, if desired. */
 int
 phase8_func(
 	struct scrub_ctx	*ctx)
 {
+	int			error;
+
 	if (!fstrim_ok(ctx))
 		return 0;
 
-	return fstrim_datadev(ctx);
+	error = fstrim_datadev(ctx);
+	if (error)
+		return error;
+	return fstrim_rtdev(ctx);
 }
 
 /* Estimate how much work we're going to do. */
@@ -207,6 +231,8 @@ phase8_estimate(
 	if (fstrim_ok(ctx)) {
 		*items = cvt_off_fsb_to_b(&ctx->mnt,
 				ctx->mnt.fsgeom.datablocks);
+		*items += cvt_off_fsb_to_b(&ctx->mnt,
+				ctx->mnt.fsgeom.rtblocks);
 	} else {
 		*items = 0;
 	}
