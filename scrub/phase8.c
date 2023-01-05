@@ -45,27 +45,70 @@ fstrim_ok(
 	return true;
 }
 
+/* Trim a certain range of the filesystem. */
+static int
+fstrim_fsblocks(
+	struct scrub_ctx	*ctx,
+	uint64_t		start_fsb,
+	uint64_t		fsbcount)
+{
+	uint64_t		start = cvt_off_fsb_to_b(&ctx->mnt, start_fsb);
+	uint64_t		len = cvt_off_fsb_to_b(&ctx->mnt, fsbcount);
+	int			error;
+
+	error = fstrim(ctx, start, len);
+	if (error == EOPNOTSUPP)
+		return 0;
+	if (error) {
+		char		descr[DESCR_BUFSZ];
+
+		snprintf(descr, sizeof(descr) - 1,
+				_("fstrim start 0x%llx len 0x%llx"),
+				(unsigned long long)start,
+				(unsigned long long)len);
+		str_liberror(ctx, error, descr);
+		return error;
+	}
+
+	return 0;
+}
+
+/* Trim each AG on the data device. */
+static int
+fstrim_datadev(
+	struct scrub_ctx	*ctx)
+{
+	struct xfs_fsop_geom	*geo = &ctx->mnt.fsgeom;
+	uint64_t		fsbno;
+	int			error;
+
+	for (fsbno = 0; fsbno < geo->datablocks; fsbno += geo->agblocks) {
+		uint64_t	fsbcount;
+
+		/*
+		 * Skip the first block of each AG to ensure that we get the
+		 * partial-AG discard implementation, which cycles the AGF lock
+		 * to prevent foreground threads from stalling.
+		 */
+		fsbcount = min(geo->datablocks - fsbno + 1, geo->agblocks);
+		error = fstrim_fsblocks(ctx, fsbno + 1, fsbcount);
+		if (error)
+			return error;
+	}
+
+	progress_add(1);
+	return 0;
+}
+
 /* Trim the filesystem, if desired. */
 int
 phase8_func(
 	struct scrub_ctx	*ctx)
 {
-	int			error;
-
 	if (!fstrim_ok(ctx))
 		return 0;
 
-	error = fstrim(ctx);
-	if (error == EOPNOTSUPP)
-		return 0;
-
-	if (error) {
-		str_liberror(ctx, error, _("fstrim"));
-		return error;
-	}
-
-	progress_add(1);
-	return 0;
+	return fstrim_datadev(ctx);
 }
 
 /* Estimate how much work we're going to do. */
