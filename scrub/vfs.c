@@ -300,11 +300,13 @@ int
 fstrim(
 	struct scrub_ctx	*ctx,
 	uint64_t		start,
-	uint64_t		len)
+	uint64_t		len,
+	uint64_t		minlen)
 {
 	struct fstrim_range	range = {
 		.start		= start,
 		.len		= len,
+		.minlen		= minlen,
 	};
 
 	if (ioctl(ctx->mnt.fd, FITRIM, &range) == 0)

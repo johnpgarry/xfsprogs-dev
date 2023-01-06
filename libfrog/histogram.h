@@ -39,6 +39,7 @@ void hist_add(struct histogram *hs, long long len);
 void hist_init(struct histogram *hs);
 void hist_prepare(struct histogram *hs, long long maxlen);
 void hist_free(struct histogram *hs);
+int hist_cdf(const struct histogram *hs, struct histogram *cdf);
 void hist_print(const struct histogram *hs);
 void hist_summarize(const struct histogram *hs);
 

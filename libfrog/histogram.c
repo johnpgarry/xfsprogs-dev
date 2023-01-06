@@ -109,7 +109,7 @@ hist_free(
  * of small extents, e.g. 98% of the free space extents are larger than 31
  * blocks.
  */
-static int
+int
 hist_cdf(
 	const struct histogram	*hs,
 	struct histogram	*cdf)
