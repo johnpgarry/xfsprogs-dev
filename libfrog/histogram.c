@@ -103,13 +103,64 @@ hist_free(
 	memset(hs, 0, sizeof(struct histogram));
 }
 
+/*
+ * Compute the CDF of the free space in decreasing order of extent length.
+ * This enables users to determine how much free space is not in the long tail
+ * of small extents, e.g. 98% of the free space extents are larger than 31
+ * blocks.
+ */
+static int
+hist_cdf(
+	const struct histogram	*hs,
+	struct histogram	*cdf)
+{
+	struct histent		*buckets;
+	int			i = hs->nr_buckets - 1;
+
+	ASSERT(cdf->nr_buckets == 0);
+	ASSERT(hs->nr_buckets < INT_MAX);
+
+	if (hs->nr_buckets == 0)
+		return 0;
+
+	buckets = calloc(hs->nr_buckets, sizeof(struct histent));
+	if (!buckets)
+		return errno;
+
+	memset(cdf, 0, sizeof(struct histogram));
+	cdf->buckets = buckets;
+
+	cdf->buckets[i].count = hs->buckets[i].count;
+	cdf->buckets[i].blocks = hs->buckets[i].blocks;
+	i--;
+
+	while (i >= 0) {
+		cdf->buckets[i].count = hs->buckets[i].count +
+				       cdf->buckets[i + 1].count;
+
+		cdf->buckets[i].blocks = hs->buckets[i].blocks +
+					cdf->buckets[i + 1].blocks;
+		i--;
+	}
+
+	return 0;
+}
+
 /* Dump a histogram to stdout. */
 void
 hist_print(
 	const struct histogram	*hs)
 {
+	struct histogram	cdf = { };
 	unsigned int		from_w, to_w, extents_w, blocks_w;
 	unsigned int		i;
+	int			error;
+
+	error = hist_cdf(hs, &cdf);
+	if (error) {
+		printf(_("histogram cdf: %s\n"), strerror(error));
+		return;
+	}
 
 	from_w = to_w = extents_w = blocks_w = 7;
 	for (i = 0; i < hs->nr_buckets; i++) {
@@ -131,20 +182,24 @@ hist_print(
 		blocks_w = max(blocks_w, strlen(buf));
 	}
 
-	printf("%*s %*s %*s %*s %6s\n",
+	printf("%*s %*s %*s %*s %6s %6s %6s\n",
 		from_w, _("from"), to_w, _("to"), extents_w, _("extents"),
-		blocks_w, _("blocks"), _("pct"));
+		blocks_w, _("blocks"), _("pct"), _("blkcdf"), _("extcdf"));
 	for (i = 0; i < hs->nr_buckets; i++) {
 		if (hs->buckets[i].count == 0)
 			continue;
 
-		printf("%*lld %*lld %*lld %*lld %6.2f\n",
+		printf("%*lld %*lld %*lld %*lld %6.2f %6.2f %6.2f\n",
 				from_w, hs->buckets[i].low,
 				to_w, hs->buckets[i].high,
 				extents_w, hs->buckets[i].count,
 				blocks_w, hs->buckets[i].blocks,
-				hs->buckets[i].blocks * 100.0 / hs->totblocks);
+				hs->buckets[i].blocks * 100.0 / hs->totblocks,
+				cdf.buckets[i].blocks * 100.0 / hs->totblocks,
+				cdf.buckets[i].count * 100.0 / hs->totexts);
 	}
+
+	hist_free(&cdf);
 }
 
 /* Summarize the contents of the histogram. */
