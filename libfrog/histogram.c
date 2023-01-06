@@ -108,17 +108,41 @@ void
 hist_print(
 	const struct histogram	*hs)
 {
+	unsigned int		from_w, to_w, extents_w, blocks_w;
 	unsigned int		i;
 
-	printf("%7s %7s %7s %7s %6s\n",
-		_("from"), _("to"), _("extents"), _("blocks"), _("pct"));
+	from_w = to_w = extents_w = blocks_w = 7;
+	for (i = 0; i < hs->nr_buckets; i++) {
+		char buf[256];
+
+		if (!hs->buckets[i].count)
+			continue;
+
+		snprintf(buf, sizeof(buf) - 1, "%lld", hs->buckets[i].low);
+		from_w = max(from_w, strlen(buf));
+
+		snprintf(buf, sizeof(buf) - 1, "%lld", hs->buckets[i].high);
+		to_w = max(to_w, strlen(buf));
+
+		snprintf(buf, sizeof(buf) - 1, "%lld", hs->buckets[i].count);
+		extents_w = max(extents_w, strlen(buf));
+
+		snprintf(buf, sizeof(buf) - 1, "%lld", hs->buckets[i].blocks);
+		blocks_w = max(blocks_w, strlen(buf));
+	}
+
+	printf("%*s %*s %*s %*s %6s\n",
+		from_w, _("from"), to_w, _("to"), extents_w, _("extents"),
+		blocks_w, _("blocks"), _("pct"));
 	for (i = 0; i < hs->nr_buckets; i++) {
 		if (hs->buckets[i].count == 0)
 			continue;
 
-		printf("%7lld %7lld %7lld %7lld %6.2f\n",
-				hs->buckets[i].low, hs->buckets[i].high,
-				hs->buckets[i].count, hs->buckets[i].blocks,
+		printf("%*lld %*lld %*lld %*lld %6.2f\n",
+				from_w, hs->buckets[i].low,
+				to_w, hs->buckets[i].high,
+				extents_w, hs->buckets[i].count,
+				blocks_w, hs->buckets[i].blocks,
 				hs->buckets[i].blocks * 100.0 / hs->totblocks);
 	}
 }
