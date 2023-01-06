@@ -212,3 +212,41 @@ hist_summarize(
 	printf(_("average free extent size %g\n"),
 			(double)hs->totblocks / (double)hs->totexts);
 }
+
+/* Copy the contents of src to dest. */
+void
+hist_import(
+	struct histogram	*dest,
+	const struct histogram	*src)
+{
+	unsigned int		i;
+
+	ASSERT(dest->nr_buckets == src->nr_buckets);
+
+	dest->totblocks += src->totblocks;
+	dest->totexts += src->totexts;
+
+	for (i = 0; i < dest->nr_buckets; i++) {
+		ASSERT(dest->buckets[i].low == src->buckets[i].low);
+		ASSERT(dest->buckets[i].high == src->buckets[i].high);
+
+		dest->buckets[i].count += src->buckets[i].count;
+		dest->buckets[i].blocks += src->buckets[i].blocks;
+	}
+}
+
+/*
+ * Move the contents of src to dest and reinitialize src.  dst must not
+ * contain any observations or buckets.
+ */
+void
+hist_move(
+	struct histogram	*dest,
+	struct histogram	*src)
+{
+	ASSERT(dest->nr_buckets == 0);
+	ASSERT(dest->totexts == 0);
+
+	memcpy(dest, src, sizeof(struct histogram));
+	hist_init(src);
+}

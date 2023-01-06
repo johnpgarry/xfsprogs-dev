@@ -18,6 +18,7 @@
 #include "descr.h"
 #include "unicrash.h"
 #include "progress.h"
+#include "libfrog/histogram.h"
 
 /*
  * XFS Online Metadata Scrub (and Repair)
@@ -669,6 +670,8 @@ main(
 	int			ret = SCRUB_RET_SUCCESS;
 	int			error;
 
+	hist_init(&ctx.datadev_hist);
+
 	fprintf(stdout, "EXPERIMENTAL xfs_scrub program in use! Use at your own risk!\n");
 	fflush(stdout);
 
@@ -881,6 +884,8 @@ out:
 	if (progress_fp && fileno(progress_fp) != 1)
 		fclose(progress_fp);
 	unicrash_unload();
+
+	hist_free(&ctx.datadev_hist);
 
 	/*
 	 * If we're being run as a service, the return code must fit the LSB
