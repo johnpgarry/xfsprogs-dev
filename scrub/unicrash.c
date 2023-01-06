@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/statvfs.h>
 #include <strings.h>
+#include <unicode/uclean.h>
 #include <unicode/ustring.h>
 #include <unicode/unorm2.h>
 #include <unicode/uspoof.h>
