@@ -284,7 +284,6 @@ init(
 			speced = 1;
 			break;
 		case 'g':
-			histcount = 0;
 			gflag++;
 			break;
 		case 'h':
