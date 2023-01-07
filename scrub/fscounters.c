@@ -138,7 +138,7 @@ scrub_scan_estimate_blocks(
 	*d_blocks = ctx->mnt.fsgeom.datablocks;
 	*d_bfree = fc.freedata;
 	*r_blocks = ctx->mnt.fsgeom.rtblocks;
-	*r_bfree = fc.freertx;
+	*r_bfree = fc.freertx * ctx->mnt.fsgeom.rtextsize;
 	*f_files_used = fc.allocino - fc.freeino;
 
 	return 0;
