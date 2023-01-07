@@ -94,6 +94,7 @@ struct scrub_ctx {
 
 	/* Free space histograms, in fsb */
 	struct histogram	datadev_hist;
+	struct histogram	rtdev_hist;
 
 	/*
 	 * Pick the largest value for fstrim minlen such that we trim at least

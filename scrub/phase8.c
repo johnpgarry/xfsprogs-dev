@@ -195,13 +195,17 @@ fstrim_rtdev(
 	struct scrub_ctx	*ctx)
 {
 	struct xfs_fsop_geom	*geo = &ctx->mnt.fsgeom;
+	uint64_t		minlen_fsb;
+
+	minlen_fsb = fstrim_compute_minlen(ctx, &ctx->rtdev_hist);
 
 	/*
 	 * The fstrim ioctl pretends that the realtime volume is in the address
 	 * space immediately after the data volume.  Ignore EINVAL if someone
 	 * tries to run us on an older kernel.
 	 */
-	return fstrim_fsblocks(ctx, geo->datablocks, geo->rtblocks, 0, true);
+	return fstrim_fsblocks(ctx, geo->datablocks, geo->rtblocks,
+			minlen_fsb, true);
 }
 
 /* Trim the filesystem, if desired. */
