@@ -72,14 +72,14 @@ def remove_killfunc(killfuncs, fn):
 	except:
 		pass
 
-def run_killable(cmd, stdout, killfuncs, kill_fn):
-	'''Run a killable program.  Returns program retcode or -1 if we can't start it.'''
+def run_killable(cmd, stdout, killfuncs):
+	'''Run a killable program.  Returns program retcode or -1 if we can't
+	start it.'''
 	try:
 		proc = subprocess.Popen(cmd, stdout = stdout)
-		real_kill_fn = lambda: kill_fn(proc)
-		killfuncs.add(real_kill_fn)
+		killfuncs.add(proc.terminate)
 		proc.wait()
-		remove_killfunc(killfuncs, real_kill_fn)
+		remove_killfunc(killfuncs, proc.terminate)
 		return proc.returncode
 	except:
 		return -1
@@ -178,8 +178,7 @@ def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 		cmd = ['@sbindir@/xfs_scrub']
 		cmd += '@scrub_args@'.split()
 		cmd += [mnt]
-		ret = run_killable(cmd, None, killfuncs, \
-				lambda proc: proc.terminate())
+		ret = run_killable(cmd, None, killfuncs)
 		if ret >= 0:
 			print("Scrubbing %s done, (err=%d)" % (mnt, ret))
 			sys.stdout.flush()
