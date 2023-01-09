@@ -149,63 +149,73 @@ def path_to_serviceunit(path, scrub_media):
 		svcname = '@scrub_svcname@'
 	cmd = ['systemd-escape', '--template', svcname, '--path', path]
 
-	try:
-		proc = subprocess.Popen(cmd, stdout = subprocess.PIPE)
-		proc.wait()
-		for line in proc.stdout:
-			return line.decode(sys.stdout.encoding).strip()
-	except:
-		return None
+	proc = subprocess.Popen(cmd, stdout = subprocess.PIPE)
+	proc.wait()
+	for line in proc.stdout:
+		return line.decode(sys.stdout.encoding).strip()
 
-def systemctl_stop(unitname):
-	'''Stop a systemd unit.'''
-	cmd = ['systemctl', 'stop', unitname]
-	x = subprocess.Popen(cmd)
-	x.wait()
+class scrub_service(scrub_control):
+	'''Control object for xfs_scrub systemd service.'''
+	def __init__(self, mnt, scrub_media):
+		self.unitname = path_to_serviceunit(mnt, scrub_media)
 
-def systemctl_start(unitname, killfuncs):
-	'''Start a systemd unit and wait for it to complete.'''
-	stop_fn = None
-	cmd = ['systemctl', 'start', unitname]
-	try:
-		proc = subprocess.Popen(cmd, stdout = DEVNULL())
-		stop_fn = lambda: systemctl_stop(unitname)
-		killfuncs.add(stop_fn)
-		proc.wait()
-		ret = proc.returncode
-	except:
-		if stop_fn is not None:
-			remove_killfunc(killfuncs, stop_fn)
-		return -1
+	def wait(self, interval = 1):
+		'''Wait until the service finishes.'''
 
-	if ret != 1:
-		remove_killfunc(killfuncs, stop_fn)
-		return ret
+		# As of systemd 249, the is-active command returns any of the
+		# following states: active, reloading, inactive, failed,
+		# activating, deactivating, or maintenance.  Apparently these
+		# strings are not localized.
+		while True:
+			try:
+				for l in backtick(['systemctl', 'is-active', self.unitname]):
+					if l == 'failed':
+						return 1
+					if l == 'inactive':
+						return 0
+			except:
+				return -1
 
-	# If systemctl-start returns 1, it's possible that the service failed
-	# or that dbus/systemd restarted and the client program lost its
-	# connection -- according to the systemctl man page, 1 means "unit not
-	# failed".
-	#
-	# Either way, we switch to polling the service status to try to wait
-	# for the service to end.  As of systemd 249, the is-active command
-	# returns any of the following states: active, reloading, inactive,
-	# failed, activating, deactivating, or maintenance.  Apparently these
-	# strings are not localized.
-	while True:
+			time.sleep(interval)
+
+	def start(self):
+		'''Start the service and wait for it to complete.  Returns -1
+		if the service was not started, 0 if it succeeded, or 1 if it
+		failed.'''
+		cmd = ['systemctl', 'start', self.unitname]
 		try:
-			for l in backtick(['systemctl', 'is-active', unitname]):
-				if l == 'failed':
-					remove_killfunc(killfuncs, stop_fn)
-					return 1
-				if l == 'inactive':
-					remove_killfunc(killfuncs, stop_fn)
-					return 0
+			proc = subprocess.Popen(cmd, stdout = DEVNULL())
+			proc.wait()
+			ret = proc.returncode
 		except:
-			remove_killfunc(killfuncs, stop_fn)
 			return -1
 
-		time.sleep(1)
+		if ret != 1:
+			return ret
+
+		# If systemctl-start returns 1, it's possible that the service
+		# failed or that dbus/systemd restarted and the client program
+		# lost its connection -- according to the systemctl man page, 1
+		# means "unit not failed".
+		return self.wait()
+
+	def stop(self):
+		'''Stop the service.'''
+		cmd = ['systemctl', 'stop', self.unitname]
+		x = subprocess.Popen(cmd)
+		x.wait()
+
+def run_service(mnt, scrub_media, killfuncs):
+	'''Run scrub as a service.'''
+	try:
+		svc = scrub_service(mnt, scrub_media)
+	except:
+		return -1
+
+	killfuncs.add(svc.stop)
+	retcode = svc.start()
+	remove_killfunc(killfuncs, svc.stop)
+	return retcode
 
 def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 	'''Run a scrub process.'''
@@ -220,9 +230,8 @@ def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 
 		# Run per-mount systemd xfs_scrub service only if we ourselves
 		# are running as a systemd service.
-		unitname = path_to_serviceunit(path, scrub_media)
-		if unitname is not None and 'SERVICE_MODE' in os.environ:
-			ret = systemctl_start(unitname, killfuncs)
+		if 'SERVICE_MODE' in os.environ:
+			ret = run_service(mnt, scrub_media, killfuncs)
 			if ret == 0 or ret == 1:
 				print("Scrubbing %s done, (err=%d)" % (mnt, ret))
 				sys.stdout.flush()
