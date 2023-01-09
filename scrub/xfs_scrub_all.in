@@ -261,17 +261,6 @@ def main():
 
 	fs = find_mounts()
 
-	# Tail the journal if we ourselves aren't a service...
-	journalthread = None
-	if 'SERVICE_MODE' not in os.environ:
-		try:
-			cmd=['journalctl', '--no-pager', '-q', '-S', 'now', \
-					'-f', '-u', 'xfs_scrub@*', '-o', \
-					'cat']
-			journalthread = subprocess.Popen(cmd)
-		except:
-			pass
-
 	# Schedule scrub jobs...
 	running_devs = set()
 	killfuncs = set()
@@ -307,9 +296,6 @@ def main():
 	# Wait for the rest of the threads to finish
 	while len(killfuncs) > 0:
 		wait_for_termination(cond, killfuncs)
-
-	if journalthread is not None:
-		journalthread.terminate()
 
 	# See the service mode comments in xfs_scrub.c for why we do this.
 	if 'SERVICE_MODE' in os.environ:
