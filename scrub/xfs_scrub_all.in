@@ -24,6 +24,7 @@ from datetime import timezone
 retcode = 0
 terminate = False
 scrub_media = False
+debug = False
 
 def DEVNULL():
 	'''Return /dev/null in subprocess writable format.'''
@@ -110,6 +111,11 @@ class scrub_subprocess(scrub_control):
 		'''Start xfs_scrub and wait for it to complete.  Returns -1 if
 		the service was not started, 0 if it succeeded, or 1 if it
 		failed.'''
+		global debug
+
+		if debug:
+			print('run ', ' '.join(self.cmdline))
+
 		try:
 			self.proc = subprocess.Popen(self.cmdline)
 			self.proc.wait()
@@ -122,6 +128,10 @@ class scrub_subprocess(scrub_control):
 
 	def stop(self):
 		'''Stop xfs_scrub.'''
+		global debug
+
+		if debug:
+			print('kill ', ' '.join(self.cmdline))
 		if self.proc is not None:
 			self.proc.terminate()
 
@@ -182,8 +192,12 @@ class scrub_service(scrub_control):
 		'''Start the service and wait for it to complete.  Returns -1
 		if the service was not started, 0 if it succeeded, or 1 if it
 		failed.'''
+		global debug
+
 		cmd = ['systemctl', 'start', self.unitname]
 		try:
+			if debug:
+				print(' '.join(cmd))
 			proc = subprocess.Popen(cmd, stdout = DEVNULL())
 			proc.wait()
 			ret = proc.returncode
@@ -201,7 +215,11 @@ class scrub_service(scrub_control):
 
 	def stop(self):
 		'''Stop the service.'''
+		global debug
+
 		cmd = ['systemctl', 'stop', self.unitname]
+		if debug:
+			print(' '.join(cmd))
 		x = subprocess.Popen(cmd)
 		x.wait()
 
@@ -366,10 +384,12 @@ def main():
 		a = (mnt, cond, running_devs, devs, killfuncs)
 		thr = threading.Thread(target = run_scrub, args = a)
 		thr.start()
-	global retcode, terminate, scrub_media
+	global retcode, terminate, scrub_media, debug
 
 	parser = argparse.ArgumentParser( \
 			description = "Scrub all mounted XFS filesystems.")
+	parser.add_argument("--debug", help = "Enabling debugging messages.", \
+			action = "store_true")
 	parser.add_argument("-V", help = "Report version and exit.", \
 			action = "store_true")
 	parser.add_argument("-x", help = "Scrub file data after filesystem metadata.", \
@@ -383,6 +403,9 @@ def main():
 	if args.V:
 		print("xfs_scrub_all version @pkg_version@")
 		sys.exit(0)
+
+	if args.debug:
+		debug = True
 
 	if args.auto_media_scan_interval is not None:
 		try:
