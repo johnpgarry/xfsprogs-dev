@@ -14,6 +14,7 @@ import time
 import sys
 import os
 import argparse
+import signal
 from io import TextIOWrapper
 
 retcode = 0
@@ -196,6 +197,45 @@ def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 		cond.notify()
 		cond.release()
 
+def signal_scrubs(signum, cond):
+	'''Handle termination signals by killing xfs_scrub children.'''
+	global debug, terminate
+
+	if debug:
+		print('Signal handler called with signal', signum)
+		sys.stdout.flush()
+
+	terminate = True
+	cond.acquire()
+	cond.notify()
+	cond.release()
+
+def wait_for_termination(cond, killfuncs):
+	'''Wait for a child thread to terminate.  Returns True if we should
+	abort the program, False otherwise.'''
+	global debug, terminate
+
+	if debug:
+		print('waiting for threads to terminate')
+		sys.stdout.flush()
+
+	cond.acquire()
+	try:
+		cond.wait()
+	except KeyboardInterrupt:
+		terminate = True
+	cond.release()
+
+	if not terminate:
+		return False
+
+	print("Terminating...")
+	sys.stdout.flush()
+	while len(killfuncs) > 0:
+		fn = killfuncs.pop()
+		fn()
+	return True
+
 def main():
 	'''Find mounts, schedule scrub runs.'''
 	def thr(mnt, devs):
@@ -231,6 +271,10 @@ def main():
 	running_devs = set()
 	killfuncs = set()
 	cond = threading.Condition()
+
+	signal.signal(signal.SIGINT, lambda s, f: signal_scrubs(s, cond))
+	signal.signal(signal.SIGTERM, lambda s, f: signal_scrubs(s, cond))
+
 	while len(fs) > 0:
 		if len(running_devs) == 0:
 			mnt, devs = fs.popitem()
@@ -250,18 +294,14 @@ def main():
 				thr(mnt, devs)
 		for p in poppers:
 			fs.pop(p)
-		cond.acquire()
-		try:
-			cond.wait()
-		except KeyboardInterrupt:
-			terminate = True
-			print("Terminating...")
-			sys.stdout.flush()
-			while len(killfuncs) > 0:
-				fn = killfuncs.pop()
-				fn()
-			fs = []
-		cond.release()
+
+		# Wait for one thread to finish
+		if wait_for_termination(cond, killfuncs):
+			break
+
+	# Wait for the rest of the threads to finish
+	while len(killfuncs) > 0:
+		wait_for_termination(cond, killfuncs)
 
 	if journalthread is not None:
 		journalthread.terminate()
