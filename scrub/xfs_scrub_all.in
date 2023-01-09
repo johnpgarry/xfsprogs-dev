@@ -162,9 +162,10 @@ def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 		if terminate:
 			return
 
-		# Try it the systemd way
+		# Run per-mount systemd xfs_scrub service only if we ourselves
+		# are running as a systemd service.
 		unitname = path_to_serviceunit(path)
-		if unitname is not None:
+		if unitname is not None and 'SERVICE_MODE' in os.environ:
 			ret = systemctl_start(unitname, killfuncs)
 			if ret == 0 or ret == 1:
 				print("Scrubbing %s done, (err=%d)" % (mnt, ret))
@@ -175,8 +176,12 @@ def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 			if terminate:
 				return
 
-		# Invoke xfs_scrub manually
+		# Invoke xfs_scrub manually if we're running in the foreground.
+		# We also permit this if we're running as a cronjob where
+		# systemd services are unavailable.
 		cmd = ['@sbindir@/xfs_scrub']
+		if 'SERVICE_MODE' in os.environ:
+			cmd += '@scrub_service_args@'.split()
 		cmd += '@scrub_args@'.split()
 		cmd += [mnt]
 		ret = run_killable(cmd, None, killfuncs)
