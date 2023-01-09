@@ -78,15 +78,62 @@ def remove_killfunc(killfuncs, fn):
 	except:
 		pass
 
-def run_killable(cmd, stdout, killfuncs):
+class scrub_control(object):
+	'''Control object for xfs_scrub.'''
+	def __init__(self):
+		pass
+
+	def start(self):
+		'''Start scrub and wait for it to complete.  Returns -1 if the
+		service was not started, 0 if it succeeded, or 1 if it
+		failed.'''
+		assert False
+
+	def stop(self):
+		'''Stop scrub.'''
+		assert False
+
+class scrub_subprocess(scrub_control):
+	'''Control object for xfs_scrub subprocesses.'''
+	def __init__(self, mnt, scrub_media):
+		cmd = ['@sbindir@/xfs_scrub']
+		if 'SERVICE_MODE' in os.environ:
+			cmd += '@scrub_service_args@'.split()
+		cmd += '@scrub_args@'.split()
+		if scrub_media:
+			cmd += '-x'
+		cmd += [mnt]
+		self.cmdline = cmd
+		self.proc = None
+
+	def start(self):
+		'''Start xfs_scrub and wait for it to complete.  Returns -1 if
+		the service was not started, 0 if it succeeded, or 1 if it
+		failed.'''
+		try:
+			self.proc = subprocess.Popen(self.cmdline)
+			self.proc.wait()
+		except:
+			return -1
+
+		proc = self.proc
+		self.proc = None
+		return proc.returncode
+
+	def stop(self):
+		'''Stop xfs_scrub.'''
+		if self.proc is not None:
+			self.proc.terminate()
+
+def run_subprocess(mnt, scrub_media, killfuncs):
 	'''Run a killable program.  Returns program retcode or -1 if we can't
 	start it.'''
 	try:
-		proc = subprocess.Popen(cmd, stdout = stdout)
-		killfuncs.add(proc.terminate)
-		proc.wait()
-		remove_killfunc(killfuncs, proc.terminate)
-		return proc.returncode
+		p = scrub_subprocess(mnt, scrub_media)
+		killfuncs.add(p.stop)
+		ret = p.start()
+		remove_killfunc(killfuncs, p.stop)
+		return ret
 	except:
 		return -1
 
@@ -188,14 +235,7 @@ def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 		# Invoke xfs_scrub manually if we're running in the foreground.
 		# We also permit this if we're running as a cronjob where
 		# systemd services are unavailable.
-		cmd = ['@sbindir@/xfs_scrub']
-		if 'SERVICE_MODE' in os.environ:
-			cmd += '@scrub_service_args@'.split()
-		cmd += '@scrub_args@'.split()
-		if scrub_media:
-			cmd += '-x'
-		cmd += [mnt]
-		ret = run_killable(cmd, None, killfuncs)
+		ret = run_subprocess(mnt, scrub_media, killfuncs)
 		if ret >= 0:
 			print("Scrubbing %s done, (err=%d)" % (mnt, ret))
 			sys.stdout.flush()
