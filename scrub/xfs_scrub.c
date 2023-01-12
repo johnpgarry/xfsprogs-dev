@@ -535,6 +535,7 @@ _("%s: repairs made: %llu.\n"),
 		fprintf(stdout,
 _("%s: optimizations made: %llu.\n"),
 				ctx->mntpoint, ctx->preens);
+	fflush(stdout);
 }
 
 static void
@@ -620,6 +621,7 @@ main(
 	int			error;
 
 	fprintf(stdout, "EXPERIMENTAL xfs_scrub program in use! Use at your own risk!\n");
+	fflush(stdout);
 
 	progname = basename(argv[0]);
 	setlocale(LC_ALL, "");
