@@ -2049,6 +2049,7 @@ process_inode_attr_fork(
 	xfs_ino_t		lino = XFS_AGINO_TO_INO(mp, agno, ino);
 	struct xfs_dinode	*dino = *dinop;
 	struct blkmap		*ablkmap = NULL;
+	xfs_extnum_t		max_nex;
 	int			repair = 0;
 	int			err;
 	int			try_rebuild = -1; /* don't know yet */
@@ -2070,6 +2071,11 @@ retry:
 	}
 
 	*anextents = xfs_dfork_attr_extents(dino);
+	max_nex = xfs_iext_max_nextents(
+			xfs_dinode_has_large_extent_counts(dino),
+			XFS_ATTR_FORK);
+	if (*anextents > max_nex)
+		*anextents = 1;
 	if (*anextents > be64_to_cpu(dino->di_nblocks))
 		*anextents = 1;
 
