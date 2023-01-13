@@ -1,3 +1,7 @@
+xfsprogs-6.1.1 (13 Jan 2023)
+	- scrub: fix warnings/errors due to missing include (Holger Hoffstatte)
+	- debian: Add missing pkg version to the changelog (Carlos Maiolino)
+
 xfsprogs-6.1.0 (23 Dec 2022)
 	- libxfs: kernel sync
 	- libxfs: consume the xfs_warn mountpoint argument (Darrick J. Wong)
