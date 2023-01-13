@@ -1327,7 +1327,7 @@ process_leaf_node_dir2(
 	int			i;
 	xfs_fileoff_t		ndbno;
 	int			nex;
-	int			t;
+	xfs_extnum_t		t;
 	bmap_ext_t		lbmp;
 	int			dirty = 0;
 
