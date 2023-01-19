@@ -73,14 +73,6 @@ ifneq ("$(XGETTEXT)","")
 TOOL_SUBDIRS += po
 endif
 
-# If we are on OS X, use glibtoolize from MacPorts, as OS X doesn't have
-# libtoolize binary itself.
-LIBTOOLIZE_TEST=$(shell libtoolize --version >/dev/null 2>&1 && echo found)
-LIBTOOLIZE_BIN=libtoolize
-ifneq ("$(LIBTOOLIZE_TEST)","found")
-LIBTOOLIZE_BIN=glibtoolize
-endif
-
 # include is listed last so it is processed last in clean rules.
 SUBDIRS = $(LIBFROG_SUBDIR) $(LIB_SUBDIRS) $(TOOL_SUBDIRS) include
 
@@ -116,7 +108,7 @@ clean:	# if configure hasn't run, nothing to clean
 endif
 
 configure: configure.ac
-	$(LIBTOOLIZE_BIN) -c -i -f
+	libtoolize -c -i -f
 	cp include/install-sh .
 	aclocal -I m4
 	autoconf
