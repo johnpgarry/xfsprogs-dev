@@ -69,7 +69,8 @@ case $# in
 			fi
 
 			if [ -n "$IO_OPTS" ]; then
-				exec xfs_io -p xfs_admin $IO_OPTS "$mntpt"
+				eval xfs_io -p xfs_admin $IO_OPTS "$mntpt"
+				exit $?
 			fi
 		fi
 
