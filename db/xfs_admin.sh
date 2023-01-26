@@ -29,9 +29,11 @@ do
 	j)	DB_OPTS=$DB_OPTS" -c 'version log2'"
 		require_offline=1
 		;;
-	l)	DB_OPTS=$DB_OPTS" -r -c label";;
+	l)	DB_OPTS=$DB_OPTS" -r -c label"
+		IO_OPTS=$IO_OPTS" -r -c label"
+		;;
 	L)	DB_OPTS=$DB_OPTS" -c 'label "$OPTARG"'"
-		require_offline=1
+		IO_OPTS=$IO_OPTS" -c 'label -s "$OPTARG"'"
 		;;
 	O)	REPAIR_OPTS=$REPAIR_OPTS" -c $OPTARG"
 		require_offline=1
