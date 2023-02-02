@@ -171,6 +171,27 @@ getstr(
 	return NULL;
 }
 
+/* Extract directory entry name from a protofile. */
+static char *
+getdirentname(
+	char	**pp)
+{
+	char	*p = getstr(pp);
+	char	*c = p;
+
+	if (!p)
+		return NULL;
+
+	/* Replace slash with space because slashes aren't allowed. */
+	while (*c) {
+		if (*c == '/')
+			*c = ' ';
+		c++;
+	}
+
+	return p;
+}
+
 static void
 rsvfile(
 	xfs_mount_t	*mp,
@@ -580,7 +601,7 @@ parseproto(
 			rtinit(mp);
 		tp = NULL;
 		for (;;) {
-			name = getstr(pp);
+			name = getdirentname(pp);
 			if (!name)
 				break;
 			if (strcmp(name, "$") == 0)
