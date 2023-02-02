@@ -996,6 +996,12 @@ in the directory. A scan of the protofile is
 always terminated with the dollar (
 .B $
 ) token.
+.TP
+.BI slashes_are_spaces= value
+If set to 1, slashes ("/") in the first token of each line of the protofile
+are converted to spaces.
+This enables the creation of a filesystem containing filenames with spaces.
+By default, this is set to 0.
 .RE
 .TP
 .B \-q

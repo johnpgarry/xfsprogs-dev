@@ -115,6 +115,7 @@ enum {
 
 enum {
 	P_FILE = 0,
+	P_SLASHES,
 	P_MAX_OPTS,
 };
 
@@ -651,12 +652,19 @@ static struct opt_params popts = {
 	.ini_section = "proto",
 	.subopts = {
 		[P_FILE] = "file",
+		[P_SLASHES] = "slashes_are_spaces",
 		[P_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
 		{ .index = P_FILE,
 		  .conflicts = { { NULL, LAST_CONFLICT } },
 		  .defaultval = SUBOPT_NEEDS_VAL,
+		},
+		{ .index = P_SLASHES,
+		  .conflicts = { { NULL, LAST_CONFLICT } },
+		  .minval = 0,
+		  .maxval = 1,
+		  .defaultval = 1,
 		},
 	},
 };
@@ -881,6 +889,7 @@ struct cli_params {
 	int	loginternal;
 	int	lsunit;
 	int	is_supported;
+	int	proto_slashes_are_spaces;
 
 	/* parameters where 0 is not a valid value */
 	int64_t	agcount;
@@ -1779,6 +1788,9 @@ proto_opts_parser(
 	struct cli_params	*cli)
 {
 	switch (subopt) {
+	case P_SLASHES:
+		cli->proto_slashes_are_spaces = getnum(value, opts, subopt);
+		break;
 	case P_FILE:
 		fallthrough;
 	default:
@@ -4368,7 +4380,7 @@ main(
 	/*
 	 * Allocate the root inode and anything else in the proto file.
 	 */
-	parse_proto(mp, &cli.fsx, &protostring);
+	parse_proto(mp, &cli.fsx, &protostring, cli.proto_slashes_are_spaces);
 
 	/*
 	 * Protect ourselves against possible stupidity
