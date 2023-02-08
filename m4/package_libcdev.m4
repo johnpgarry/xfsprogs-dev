@@ -117,6 +117,7 @@ AC_DEFUN([AC_HAVE_FIEMAP],
 #define _GNU_SOURCE
 #include <linux/fs.h>
 #include <linux/fiemap.h>
+#include <sys/ioctl.h>
 	]], [[
 struct fiemap *fiemap;
 ioctl(0, FS_IOC_FIEMAP, (unsigned long)fiemap);
@@ -153,7 +154,7 @@ AC_DEFUN([AC_HAVE_PWRITEV2],
   [ AC_MSG_CHECKING([for pwritev2])
     AC_LINK_IFELSE(
     [	AC_LANG_PROGRAM([[
-#define _BSD_SOURCE
+#define _GNU_SOURCE
 #include <sys/uio.h>
 	]], [[
 pwritev2(0, 0, 0, 0, 0);
@@ -454,6 +455,7 @@ AC_DEFUN([AC_HAVE_SG_IO],
     AC_COMPILE_IFELSE(
     [	AC_LANG_PROGRAM([[
 #include <scsi/sg.h>
+#include <sys/ioctl.h>
 	]], [[
 struct sg_io_hdr hdr;
 ioctl(0, SG_IO, &hdr);
@@ -471,7 +473,8 @@ AC_DEFUN([AC_HAVE_HDIO_GETGEO],
   [ AC_MSG_CHECKING([for struct hd_geometry ])
     AC_COMPILE_IFELSE(
     [	AC_LANG_PROGRAM([[
-#include <linux/hdreg.h>,
+#include <linux/hdreg.h>
+#include <sys/ioctl.h>
 	]], [[
 struct hd_geometry hdr;
 ioctl(0, HDIO_GETGEO, &hdr);
