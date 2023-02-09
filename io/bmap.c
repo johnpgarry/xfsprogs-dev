@@ -118,7 +118,7 @@ bmap_f(
 			return 0;
 		}
 
-		if (fsx.fsx_xflags == FS_XFLAG_REALTIME) {
+		if (fsx.fsx_xflags & FS_XFLAG_REALTIME) {
 			/*
 			 * ag info not applicable to rt, continue
 			 * without ag output.
