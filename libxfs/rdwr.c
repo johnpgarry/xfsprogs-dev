@@ -1085,7 +1085,12 @@ libxfs_iget(
 {
 	struct xfs_inode	*ip;
 	struct xfs_buf		*bp;
+	struct xfs_perag	*pag;
 	int			error = 0;
+
+	/* reject inode numbers outside existing AGs */
+	if (!ino || XFS_INO_TO_AGNO(mp, ino) >= mp->m_sb.sb_agcount)
+		return -EINVAL;
 
 	ip = kmem_cache_zalloc(xfs_inode_cache, 0);
 	if (!ip)
@@ -1097,7 +1102,9 @@ libxfs_iget(
 	ip->i_af.if_format = XFS_DINODE_FMT_EXTENTS;
 	spin_lock_init(&VFS_I(ip)->i_lock);
 
-	error = xfs_imap(mp, tp, ip->i_ino, &ip->i_imap, 0);
+	pag = xfs_perag_get(mp, XFS_INO_TO_AGNO(mp, ino));
+	error = xfs_imap(pag, tp, ip->i_ino, &ip->i_imap, 0);
+	xfs_perag_put(pag);
 	if (error)
 		goto out_destroy;
 
