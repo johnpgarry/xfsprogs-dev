@@ -48,6 +48,11 @@ static inline bool atomic_add_unless(atomic_t *a, int v, int u)
 	return o != u;
 }
 
+static inline bool atomic_inc_not_zero(atomic_t *a)
+{
+	return atomic_add_unless(a, 1, 0);
+}
+
 static inline bool atomic_dec_and_lock(atomic_t *a, spinlock_t *lock)
 {
 	if (atomic_add_unless(a, -1, 1))
