@@ -12,6 +12,17 @@ struct xfs_buftarg;
 struct xfs_da_geometry;
 
 typedef void (*buf_writeback_fn)(struct xfs_buf *bp);
+;
+
+/* dynamic preallocation free space thresholds, 5% down to 1% */
+enum {
+	XFS_LOWSP_1_PCNT = 0,
+	XFS_LOWSP_2_PCNT,
+	XFS_LOWSP_3_PCNT,
+	XFS_LOWSP_4_PCNT,
+	XFS_LOWSP_5_PCNT,
+	XFS_LOWSP_MAX,
+};
 
 /*
  * Define a user-level mount structure with all we need
@@ -81,6 +92,7 @@ typedef struct xfs_mount {
 	uint			m_ag_max_usable; /* max space per AG */
 	struct radix_tree_root	m_perag_tree;
 	uint64_t		m_features;	/* active filesystem features */
+	uint64_t		m_low_space[XFS_LOWSP_MAX];
 	unsigned long		m_opstate;	/* dynamic state flags */
 	bool			m_finobt_nores; /* no per-AG finobt resv. */
 	uint			m_qflags;	/* quota status flags */
