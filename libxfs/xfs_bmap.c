@@ -3507,7 +3507,6 @@ xfs_bmap_btalloc_at_eof(
 		xfs_extlen_t	nextminlen = 0;
 
 		atype = args->type;
-		args->type = XFS_ALLOCTYPE_THIS_BNO;
 		args->alignment = 1;
 
 		/*
@@ -3525,8 +3524,8 @@ xfs_bmap_btalloc_at_eof(
 		else
 			args->minalignslop = 0;
 
-		args->pag = xfs_perag_get(mp, XFS_FSB_TO_AGNO(mp, args->fsbno));
-		error = xfs_alloc_vextent_this_ag(args);
+		args->pag = xfs_perag_get(mp, XFS_FSB_TO_AGNO(mp, ap->blkno));
+		error = xfs_alloc_vextent_exact_bno(args, ap->blkno);
 		xfs_perag_put(args->pag);
 		if (error)
 			return error;
@@ -3539,7 +3538,6 @@ xfs_bmap_btalloc_at_eof(
 		 */
 		args->pag = NULL;
 		args->type = atype;
-		args->fsbno = ap->blkno;
 		args->alignment = stripe_align;
 		args->minlen = nextminlen;
 		args->minalignslop = 0;
