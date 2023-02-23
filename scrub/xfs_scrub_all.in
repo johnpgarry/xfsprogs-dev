@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 
-# SPDX-License-Identifier: GPL-2.0+
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright (C) 2018 Oracle.  All rights reserved.
 #
-# Author: Darrick J. Wong <darrick.wong@oracle.com>
+# Author: Darrick J. Wong <djwong@kernel.org>
 
 # Run online scrubbers in parallel, but avoid thrashing.
 
