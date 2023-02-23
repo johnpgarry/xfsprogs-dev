@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+#
+# Copyright (C) 2018-2024 Oracle.  All Rights Reserved.
+# Author: Darrick J. Wong <djwong@kernel.org>
+
 [Unit]
 Description=Online XFS Metadata Check for All Filesystems
 ConditionACPower=true
