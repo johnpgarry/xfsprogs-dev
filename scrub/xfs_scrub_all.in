@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # SPDX-License-Identifier: GPL-2.0-or-later
-# Copyright (C) 2018 Oracle.  All rights reserved.
+# Copyright (C) 2018-2024 Oracle.  All rights reserved.
 #
 # Author: Darrick J. Wong <djwong@kernel.org>
 
