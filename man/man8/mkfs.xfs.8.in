@@ -28,7 +28,7 @@ mkfs.xfs \- construct an XFS filesystem
 .I naming_options
 ] [
 .B \-p
-.I protofile
+.I protofile_options
 ] [
 .B \-q
 ] [
@@ -834,12 +834,29 @@ When CRCs are enabled (the default), the ftype functionality is always
 enabled, and cannot be turned off.
 .IP
 In other words, this option is only tunable on the deprecated V4 format.
-.IP
 .RE
+.PP
+.PD 0
 .TP
-.BI \-p " protofile"
+.BI \-p " protofile_options"
+.TP
+.BI "Section Name: " [proto]
+.PD
+These options specify the protofile parameters for populating the filesystem.
+The valid
+.I protofile_options
+are:
+.RS 1.2i
+.TP
+.BI [file=] protofile
+The
+.B file=
+prefix is not required for this CLI argument for legacy reasons.
+If specified as a config file directive, the prefix is required.
+
 If the optional
-.BI \-p " protofile"
+.PD
+.I protofile
 argument is given,
 .B mkfs.xfs
 uses
@@ -979,6 +996,7 @@ in the directory. A scan of the protofile is
 always terminated with the dollar (
 .B $
 ) token.
+.RE
 .TP
 .B \-q
 Quiet option. Normally

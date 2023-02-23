@@ -114,6 +114,11 @@ enum {
 };
 
 enum {
+	P_FILE = 0,
+	P_MAX_OPTS,
+};
+
+enum {
 	R_EXTSIZE = 0,
 	R_SIZE,
 	R_DEV,
@@ -641,6 +646,21 @@ static struct opt_params nopts = {
 	},
 };
 
+static struct opt_params popts = {
+	.name = 'p',
+	.ini_section = "proto",
+	.subopts = {
+		[P_FILE] = "file",
+		[P_MAX_OPTS] = NULL,
+	},
+	.subopt_params = {
+		{ .index = P_FILE,
+		  .conflicts = { { NULL, LAST_CONFLICT } },
+		  .defaultval = SUBOPT_NEEDS_VAL,
+		},
+	},
+};
+
 static struct opt_params ropts = {
 	.name = 'r',
 	.ini_section = "realtime",
@@ -841,6 +861,7 @@ struct cli_params {
 	int	blocksize;
 
 	char	*cfgfile;
+	char	*protofile;
 
 	/* parameters that depend on sector/block size being validated. */
 	char	*dsize;
@@ -1751,6 +1772,33 @@ naming_opts_parser(
 }
 
 static int
+proto_opts_parser(
+	struct opt_params	*opts,
+	int			subopt,
+	const char		*value,
+	struct cli_params	*cli)
+{
+	switch (subopt) {
+	case P_FILE:
+		fallthrough;
+	default:
+		if (cli->protofile) {
+			if (subopt < 0)
+				subopt = P_FILE;
+			respec(opts->name, opts->subopts, subopt);
+		}
+		cli->protofile = strdup(value);
+		if (!cli->protofile) {
+			fprintf(stderr,
+ _("Out of memory while saving protofile option.\n"));
+			exit(1);
+		}
+		break;
+	}
+	return 0;
+}
+
+static int
 rtdev_opts_parser(
 	struct opt_params	*opts,
 	int			subopt,
@@ -1813,6 +1861,7 @@ static struct subopts {
 	{ &lopts, log_opts_parser },
 	{ &mopts, meta_opts_parser },
 	{ &nopts, naming_opts_parser },
+	{ &popts, proto_opts_parser },
 	{ &ropts, rtdev_opts_parser },
 	{ &sopts, sector_opts_parser },
 	{ NULL, NULL },
@@ -4013,7 +4062,6 @@ main(
 	int			discard = 1;
 	int			force_overwrite = 0;
 	int			quiet = 0;
-	char			*protofile = NULL;
 	char			*protostring = NULL;
 	int			worst_freelist = 0;
 
@@ -4119,6 +4167,7 @@ main(
 		case 'l':
 		case 'm':
 		case 'n':
+		case 'p':
 		case 'r':
 		case 's':
 			parse_subopts(c, optarg, &cli);
@@ -4133,11 +4182,6 @@ main(
 			break;
 		case 'K':
 			discard = 0;
-			break;
-		case 'p':
-			if (protofile)
-				respec('p', NULL, 0);
-			protofile = optarg;
 			break;
 		case 'q':
 			quiet = 1;
@@ -4165,7 +4209,7 @@ main(
 	 */
 	cfgfile_parse(&cli);
 
-	protostring = setup_proto(protofile);
+	protostring = setup_proto(cli.protofile);
 
 	/*
 	 * Extract as much of the valid config as we can from the CLI input
