@@ -93,19 +93,19 @@ def run_killable(cmd, stdout, killfuncs, kill_fn):
 # that log messages from the service units preserve the full path and users can
 # look up log messages using full paths.  However, for "/" the escaping rules
 # do /not/ drop the initial slash, so we have to special-case that here.
-def systemd_escape(path):
+def path_to_service(path):
 	'''Escape a path to avoid mangled systemd mangling.'''
 
 	if path == '/':
-		return '-'
+		return 'xfs_scrub@-'
 	cmd = ['systemd-escape', '--path', path]
 	try:
 		proc = subprocess.Popen(cmd, stdout = subprocess.PIPE)
 		proc.wait()
 		for line in proc.stdout:
-			return '-' + line.decode(sys.stdout.encoding).strip()
+			return 'xfs_scrub@-%s' % line.decode(sys.stdout.encoding).strip()
 	except:
-		return path
+		return None
 
 def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 	'''Run a scrub process.'''
@@ -119,17 +119,19 @@ def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 			return
 
 		# Try it the systemd way
-		cmd=['systemctl', 'start', 'xfs_scrub@%s' % systemd_escape(mnt)]
-		ret = run_killable(cmd, DEVNULL(), killfuncs, \
-				lambda proc: kill_systemd('xfs_scrub@%s' % mnt, proc))
-		if ret == 0 or ret == 1:
-			print("Scrubbing %s done, (err=%d)" % (mnt, ret))
-			sys.stdout.flush()
-			retcode |= ret
-			return
+		svcname = path_to_service(path)
+		if svcname is not None:
+			cmd=['systemctl', 'start', svcname]
+			ret = run_killable(cmd, DEVNULL(), killfuncs, \
+					lambda proc: kill_systemd(svcname, proc))
+			if ret == 0 or ret == 1:
+				print("Scrubbing %s done, (err=%d)" % (mnt, ret))
+				sys.stdout.flush()
+				retcode |= ret
+				return
 
-		if terminate:
-			return
+			if terminate:
+				return
 
 		# Invoke xfs_scrub manually
 		cmd=['@sbindir@/xfs_scrub', '@scrub_args@', mnt]
