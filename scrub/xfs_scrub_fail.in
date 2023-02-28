@@ -19,6 +19,9 @@ if [ ! -x "${mailer}" ]; then
 	exit 1
 fi
 
+# Turn the mountpoint into a properly escaped systemd instance name
+scrub_svc="$(systemd-escape --template "@scrub_svcname@" --path "${mntpoint}")"
+
 (cat << ENDL
 To: $1
 From: <xfs_scrub@${hostname}>
@@ -28,4 +31,4 @@ So sorry, the automatic xfs_scrub of ${mntpoint} on ${hostname} failed.
 
 A log of what happened follows:
 ENDL
-systemctl status --full --lines 4294967295 "xfs_scrub@${mntpoint}") | "${mailer}" -t -i
+systemctl status --full --lines 4294967295 "${scrub_svc}") | "${mailer}" -t -i

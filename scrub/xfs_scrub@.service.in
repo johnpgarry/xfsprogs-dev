@@ -4,7 +4,7 @@
 # Author: Darrick J. Wong <djwong@kernel.org>
 
 [Unit]
-Description=Online XFS Metadata Check for %I
+Description=Online XFS Metadata Check for %f
 OnFailure=xfs_scrub_fail@%i.service
 Documentation=man:xfs_scrub(8)
 
@@ -13,7 +13,7 @@ Type=oneshot
 PrivateNetwork=true
 ProtectSystem=full
 ProtectHome=read-only
-# Disable private /tmp just in case %i is a path under /tmp.
+# Disable private /tmp just in case %f is a path under /tmp.
 PrivateTmp=no
 AmbientCapabilities=CAP_SYS_ADMIN CAP_FOWNER CAP_DAC_OVERRIDE CAP_DAC_READ_SEARCH CAP_SYS_RAWIO
 NoNewPrivileges=yes
@@ -21,5 +21,5 @@ User=nobody
 IOSchedulingClass=idle
 CPUSchedulingPolicy=idle
 Environment=SERVICE_MODE=1
-ExecStart=@sbindir@/xfs_scrub @scrub_args@ %I
+ExecStart=@sbindir@/xfs_scrub @scrub_args@ %f
 SyslogIdentifier=%N

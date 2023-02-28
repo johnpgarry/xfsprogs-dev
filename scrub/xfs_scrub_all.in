@@ -81,29 +81,18 @@ def run_killable(cmd, stdout, killfuncs, kill_fn):
 		return -1
 
 # systemd doesn't like unit instance names with slashes in them, so it
-# replaces them with dashes when it invokes the service.  However, it's not
-# smart enough to convert the dashes to something else, so when it unescapes
-# the instance name to feed to xfs_scrub, it turns all dashes into slashes.
-# "/moo-cow" becomes "-moo-cow" becomes "/moo/cow", which is wrong.  systemd
-# actually /can/ escape the dashes correctly if it is told that this is a path
-# (and not a unit name), but it didn't do this prior to January 2017, so fix
-# this for them.
-#
-# systemd path escaping also drops the initial slash so we add that back in so
-# that log messages from the service units preserve the full path and users can
-# look up log messages using full paths.  However, for "/" the escaping rules
-# do /not/ drop the initial slash, so we have to special-case that here.
-def path_to_service(path):
-	'''Escape a path to avoid mangled systemd mangling.'''
+# replaces them with dashes when it invokes the service.  Filesystem paths
+# need a special --path argument so that dashes do not get mangled.
+def path_to_serviceunit(path):
+	'''Convert a pathname into a systemd service unit name.'''
 
-	if path == '/':
-		return 'xfs_scrub@-'
-	cmd = ['systemd-escape', '--path', path]
+	cmd = ['systemd-escape', '--template', '@scrub_svcname@',
+	       '--path', path]
 	try:
 		proc = subprocess.Popen(cmd, stdout = subprocess.PIPE)
 		proc.wait()
 		for line in proc.stdout:
-			return 'xfs_scrub@-%s' % line.decode(sys.stdout.encoding).strip()
+			return line.decode(sys.stdout.encoding).strip()
 	except:
 		return None
 
@@ -119,11 +108,11 @@ def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 			return
 
 		# Try it the systemd way
-		svcname = path_to_service(path)
-		if svcname is not None:
-			cmd=['systemctl', 'start', svcname]
+		unitname = path_to_serviceunit(path)
+		if unitname is not None:
+			cmd=['systemctl', 'start', unitname]
 			ret = run_killable(cmd, DEVNULL(), killfuncs, \
-					lambda proc: kill_systemd(svcname, proc))
+					lambda proc: kill_systemd(unitname, proc))
 			if ret == 0 or ret == 1:
 				print("Scrubbing %s done, (err=%d)" % (mnt, ret))
 				sys.stdout.flush()
