@@ -7,7 +7,8 @@
 #define MKFS_PROTO_H_
 
 char *setup_proto(char *fname);
-void parse_proto(struct xfs_mount *mp, struct fsxattr *fsx, char **pp);
+void parse_proto(struct xfs_mount *mp, struct fsxattr *fsx, char **pp,
+		int proto_slashes_are_spaces);
 void res_failed(int err);
 
 #endif /* MKFS_PROTO_H_ */

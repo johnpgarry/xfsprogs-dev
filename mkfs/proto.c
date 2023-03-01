@@ -21,6 +21,7 @@ static int newfile(xfs_trans_t *tp, xfs_inode_t *ip, int symlink, int logit,
 static char *newregfile(char **pp, int *len);
 static void rtinit(xfs_mount_t *mp);
 static long filesize(int fd);
+static int slashes_are_spaces;
 
 /*
  * Use this for block reservations needed for mkfs's conditions
@@ -169,6 +170,30 @@ getstr(
 		exit(1);
 	}
 	return NULL;
+}
+
+/* Extract directory entry name from a protofile. */
+static char *
+getdirentname(
+	char	**pp)
+{
+	char	*p = getstr(pp);
+	char	*c = p;
+
+	if (!p)
+		return NULL;
+
+	if (!slashes_are_spaces)
+		return p;
+
+	/* Replace slash with space because slashes aren't allowed. */
+	while (*c) {
+		if (*c == '/')
+			*c = ' ';
+		c++;
+	}
+
+	return p;
 }
 
 static void
@@ -586,7 +611,7 @@ parseproto(
 			rtinit(mp);
 		tp = NULL;
 		for (;;) {
-			name = getstr(pp);
+			name = getdirentname(pp);
 			if (!name)
 				break;
 			if (strcmp(name, "$") == 0)
@@ -612,8 +637,10 @@ void
 parse_proto(
 	xfs_mount_t	*mp,
 	struct fsxattr	*fsx,
-	char		**pp)
+	char		**pp,
+	int		proto_slashes_are_spaces)
 {
+	slashes_are_spaces = proto_slashes_are_spaces;
 	parseproto(mp, NULL, fsx, pp, NULL);
 }
 
