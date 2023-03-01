@@ -326,6 +326,12 @@ newdirent(
 	int	error;
 	int	rsv;
 
+	if (!libxfs_dir2_namecheck(name->name, name->len)) {
+		fprintf(stderr, _("%.*s: invalid directory entry name\n"),
+				name->len, name->name);
+		exit(1);
+	}
+
 	rsv = XFS_DIRENTER_SPACE_RES(mp, name->len);
 
 	error = -libxfs_dir_createname(tp, pip, name, inum, rsv);
