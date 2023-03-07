@@ -593,6 +593,12 @@ fill_rbmino(xfs_mount_t *mp)
 	}
 
 	while (bno < mp->m_sb.sb_rbmblocks)  {
+		struct xfs_rtalloc_args	args = {
+			.mp		= mp,
+			.tp		= tp,
+		};
+		union xfs_rtword_raw	*ondisk;
+
 		/*
 		 * fill the file one block at a time
 		 */
@@ -618,11 +624,13 @@ _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime bitmap inode %
 			return(1);
 		}
 
-		memmove(bp->b_addr, bmp, mp->m_sb.sb_blocksize);
+		args.rbmbp = bp;
+		ondisk = xfs_rbmblock_wordptr(&args, 0);
+		memcpy(ondisk, bmp, mp->m_sb.sb_blocksize);
 
 		libxfs_trans_log_buf(tp, bp, 0, mp->m_sb.sb_blocksize - 1);
 
-		bmp = (xfs_rtword_t *)((intptr_t) bmp + mp->m_sb.sb_blocksize);
+		bmp += mp->m_blockwsize;
 		bno++;
 	}
 
