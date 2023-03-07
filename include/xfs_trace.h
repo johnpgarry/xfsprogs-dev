@@ -389,4 +389,11 @@
 #define trace_xfs_iunlink_remove(...)		((void) 0)
 #define trace_xfs_iunlink_map_prev_fallback(...)	((void) 0)
 
+#define trace_xfs_imeta_resv_alloc_extent(...)	((void) 0)
+#define trace_xfs_imeta_resv_critical(...)	((void) 0)
+#define trace_xfs_imeta_resv_free(...)		((void) 0)
+#define trace_xfs_imeta_resv_free_extent(...)	((void) 0)
+#define trace_xfs_imeta_resv_init(...)		((void) 0)
+#define trace_xfs_imeta_resv_init_error(...)	((void) 0)
+
 #endif /* __TRACE_H__ */

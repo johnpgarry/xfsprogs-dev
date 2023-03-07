@@ -64,6 +64,7 @@ error_tag(char *name)
 		{ XFS_ERRTAG_WB_DELAY_MS,		"wb_delay_ms" },
 		{ XFS_ERRTAG_WRITE_DELAY_MS,		"write_delay_ms" },
 		{ XFS_ERRTAG_SWAPEXT_FINISH_ONE,	"swapext_finish_one" },
+		{ XFS_ERRTAG_IMETA_RESV_CRITICAL,	"imeta_resv_critical" },
 		{ XFS_ERRTAG_MAX,			NULL }
 	};
 	int	count;

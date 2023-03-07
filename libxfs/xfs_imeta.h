@@ -102,6 +102,17 @@ unsigned int xfs_imeta_create_space_res(struct xfs_mount *mp);
 unsigned int xfs_imeta_link_space_res(struct xfs_mount *mp);
 unsigned int xfs_imeta_unlink_space_res(struct xfs_mount *mp);
 
+/* Space reservations for metadata inodes. */
+struct xfs_alloc_arg;
+
+bool xfs_imeta_resv_critical(struct xfs_inode *ip);
+void xfs_imeta_resv_alloc_extent(struct xfs_inode *ip,
+		struct xfs_alloc_arg *args);
+void xfs_imeta_resv_free_extent(struct xfs_inode *ip, struct xfs_trans *tp,
+		xfs_filblks_t len);
+void xfs_imeta_resv_free_inode(struct xfs_inode *ip);
+int xfs_imeta_resv_init_inode(struct xfs_inode *ip, xfs_filblks_t ask);
+
 /* Must be implemented by the libxfs client */
 int xfs_imeta_iget(struct xfs_trans *tp, xfs_ino_t ino, unsigned char ftype,
 		struct xfs_inode **ipp);

@@ -654,6 +654,15 @@ xfs_agbtree_compute_maxlevels(
 	mp->m_agbtree_maxlevels = max(levels, mp->m_refc_maxlevels);
 }
 
+/* Compute maximum possible height for realtime btree types for this fs. */
+static inline void
+xfs_rtbtree_compute_maxlevels(
+	struct xfs_mount	*mp)
+{
+	/* This will be filled in later. */
+	mp->m_rtbtree_maxlevels = 0;
+}
+
 /* Compute maximum possible height of all btrees. */
 void
 libxfs_compute_all_maxlevels(
@@ -670,7 +679,7 @@ libxfs_compute_all_maxlevels(
 	xfs_refcountbt_compute_maxlevels(mp);
 
 	xfs_agbtree_compute_maxlevels(mp);
-
+	xfs_rtbtree_compute_maxlevels(mp);
 }
 
 /* Mount the metadata files under the metadata directory tree. */
