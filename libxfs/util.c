@@ -728,3 +728,4 @@ xfs_fs_mark_healthy(
 }
 
 void xfs_ag_geom_health(struct xfs_perag *pag, struct xfs_ag_geometry *ageo) { }
+void xfs_fs_mark_sick(struct xfs_mount *mp, unsigned int mask) { }
