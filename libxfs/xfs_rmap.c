@@ -919,8 +919,7 @@ xfs_rmap_update_hook(
 			.oinfo		= *oinfo, /* struct copy */
 		};
 
-		if (pag)
-			xfs_hooks_call(&pag->pag_rmap_update_hooks, op, &p);
+		xfs_hooks_call(&pag->pag_rmap_update_hooks, op, &p);
 	}
 }
 
@@ -944,6 +943,50 @@ xfs_rmap_hook_del(
 #else
 # define xfs_rmap_update_hook(t, p, o, s, b, u, oi)	do { } while (0)
 #endif /* CONFIG_XFS_LIVE_HOOKS */
+
+# if defined(CONFIG_XFS_LIVE_HOOKS) && defined(CONFIG_XFS_RT)
+static inline void
+xfs_rtrmap_update_hook(
+	struct xfs_trans		*tp,
+	struct xfs_rtgroup		*rtg,
+	enum xfs_rmap_intent_type	op,
+	xfs_rgblock_t			startblock,
+	xfs_extlen_t			blockcount,
+	bool				unwritten,
+	const struct xfs_owner_info	*oinfo)
+{
+	if (xfs_hooks_switched_on(&xfs_rmap_hooks_switch)) {
+		struct xfs_rmap_update_params	p = {
+			.startblock	= startblock,
+			.blockcount	= blockcount,
+			.unwritten	= unwritten,
+			.oinfo		= *oinfo, /* struct copy */
+		};
+
+		xfs_hooks_call(&rtg->rtg_rmap_update_hooks, op, &p);
+	}
+}
+
+/* Call the specified function during a rt reverse mapping update. */
+int
+xfs_rtrmap_hook_add(
+	struct xfs_rtgroup	*rtg,
+	struct xfs_rmap_hook	*hook)
+{
+	return xfs_hooks_add(&rtg->rtg_rmap_update_hooks, &hook->update_hook);
+}
+
+/* Stop calling the specified function during a rt reverse mapping update. */
+void
+xfs_rtrmap_hook_del(
+	struct xfs_rtgroup	*rtg,
+	struct xfs_rmap_hook	*hook)
+{
+	xfs_hooks_del(&rtg->rtg_rmap_update_hooks, &hook->update_hook);
+}
+#else
+# define xfs_rtrmap_update_hook(t, r, o, s, b, u, oi)	do { } while (0)
+#endif /* CONFIG_XFS_LIVE_HOOKS && CONFIG_XFS_RT */
 
 /*
  * Remove a reference to an extent in the rmap btree.
@@ -2701,6 +2744,7 @@ xfs_rtrmap_finish_one(
 	xfs_rgnumber_t			rgno;
 	xfs_rgblock_t			bno;
 	bool				unwritten;
+	int				error;
 
 	trace_xfs_rmap_deferred(mp, ri);
 
@@ -2726,8 +2770,14 @@ xfs_rtrmap_finish_one(
 	unwritten = ri->ri_bmap.br_state == XFS_EXT_UNWRITTEN;
 	bno = xfs_rtb_to_rgbno(mp, ri->ri_bmap.br_startblock, &rgno);
 
-	return __xfs_rmap_finish_intent(rcur, ri->ri_type, bno,
+	error = __xfs_rmap_finish_intent(rcur, ri->ri_type, bno,
 			ri->ri_bmap.br_blockcount, &oinfo, unwritten);
+	if (error)
+		return error;
+
+	xfs_rtrmap_update_hook(tp, ri->ri_rtg, ri->ri_type, bno,
+			ri->ri_bmap.br_blockcount, unwritten, &oinfo);
+	return 0;
 }
 
 /*

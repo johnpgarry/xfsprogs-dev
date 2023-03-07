@@ -275,6 +275,12 @@ void xfs_rmap_hook_enable(void);
 
 int xfs_rmap_hook_add(struct xfs_perag *pag, struct xfs_rmap_hook *hook);
 void xfs_rmap_hook_del(struct xfs_perag *pag, struct xfs_rmap_hook *hook);
+
+# ifdef CONFIG_XFS_RT
+int xfs_rtrmap_hook_add(struct xfs_rtgroup *rtg, struct xfs_rmap_hook *hook);
+void xfs_rtrmap_hook_del(struct xfs_rtgroup *rtg, struct xfs_rmap_hook *hook);
+# endif /* CONFIG_XFS_RT */
+
 #endif
 
 #endif	/* __XFS_RMAP_H__ */
