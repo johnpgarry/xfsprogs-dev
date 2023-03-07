@@ -205,6 +205,9 @@ struct xfs_btree_ops {
 			       const union xfs_btree_key *key1,
 			       const union xfs_btree_key *key2,
 			       const union xfs_btree_key *mask);
+
+	/* Functions for manipulating the btree root block. */
+	const struct xfs_ifork_broot_ops *iroot_ops;
 };
 
 /* btree geometry flags */

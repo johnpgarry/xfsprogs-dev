@@ -3064,6 +3064,16 @@ xfs_btree_split(
 #define xfs_btree_split	__xfs_btree_split
 #endif /* __KERNEL__ */
 
+static inline void
+xfs_btree_iroot_realloc(
+	struct xfs_btree_cur		*cur,
+	int				rec_diff)
+{
+	ASSERT(xfs_btree_has_iroot(cur));
+
+	xfs_iroot_realloc(cur->bc_ino.ip, cur->bc_ino.whichfork,
+			cur->bc_ops->iroot_ops, rec_diff);
+}
 
 /*
  * Copy the old inode root contents into a real block and make the
@@ -3148,9 +3158,7 @@ xfs_btree_new_iroot(
 
 	xfs_btree_copy_ptrs(cur, pp, &nptr, 1);
 
-	xfs_iroot_realloc(cur->bc_ino.ip,
-			  1 - xfs_btree_get_numrecs(cblock),
-			  cur->bc_ino.whichfork);
+	xfs_btree_iroot_realloc(cur, 1 - xfs_btree_get_numrecs(cblock));
 
 	xfs_btree_setbuf(cur, level, cbp);
 
@@ -3319,7 +3327,7 @@ xfs_btree_make_block_unfull(
 
 		if (numrecs < cur->bc_ops->get_dmaxrecs(cur, level)) {
 			/* A root block that can be made bigger. */
-			xfs_iroot_realloc(ip, 1, cur->bc_ino.whichfork);
+			xfs_btree_iroot_realloc(cur, 1);
 			*stat = 1;
 		} else {
 			/* A root block that needs replacing */
@@ -3727,8 +3735,7 @@ xfs_btree_kill_iroot(
 
 	index = numrecs - cur->bc_ops->get_maxrecs(cur, level);
 	if (index) {
-		xfs_iroot_realloc(cur->bc_ino.ip, index,
-				  cur->bc_ino.whichfork);
+		xfs_btree_iroot_realloc(cur, index);
 		block = ifp->if_broot;
 	}
 
@@ -3925,8 +3932,7 @@ xfs_btree_delrec(
 	 */
 	if (level == cur->bc_nlevels - 1) {
 		if (xfs_btree_has_iroot(cur)) {
-			xfs_iroot_realloc(cur->bc_ino.ip, -1,
-					  cur->bc_ino.whichfork);
+			xfs_btree_iroot_realloc(cur, -1);
 
 			error = xfs_btree_kill_iroot(cur);
 			if (error)

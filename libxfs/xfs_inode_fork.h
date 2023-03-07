@@ -175,7 +175,6 @@ void		xfs_idata_realloc(struct xfs_inode *ip, int64_t byte_diff,
 void		xfs_iroot_alloc(struct xfs_inode *ip, int whichfork,
 				size_t bytes);
 void		xfs_iroot_free(struct xfs_inode *ip, int whichfork);
-void		xfs_iroot_realloc(struct xfs_inode *, int, int);
 int		xfs_iread_extents(struct xfs_trans *, struct xfs_inode *, int);
 int		xfs_iextents_copy(struct xfs_inode *, struct xfs_bmbt_rec *,
 				  int);
@@ -273,5 +272,27 @@ static inline bool xfs_need_iread_extents(const struct xfs_ifork *ifp)
 	/* see xfs_iformat_{data,attr}_fork() for needextents semantics */
 	return smp_load_acquire(&ifp->if_needextents) != 0;
 }
+
+struct xfs_ifork_broot_ops {
+	/* Calculate the number of records/keys in the incore btree block. */
+	unsigned int (*maxrecs)(struct xfs_mount *mp, unsigned int blocksize,
+			bool leaf);
+
+	/* Calculate the bytes required for the incore btree root block. */
+	size_t (*size)(struct xfs_mount *mp, unsigned int nrecs);
+
+	/*
+	 * Move an incore btree root from one buffer to another.  Note that
+	 * src_broot and dst_broot could be the same or they could be totally
+	 * separate memory regions.
+	 */
+	void (*move)(struct xfs_inode *ip, int whichfork,
+			struct xfs_btree_block *dst_broot, size_t dst_bytes,
+			struct xfs_btree_block *src_broot, size_t src_bytes,
+			unsigned int numrecs);
+};
+
+void xfs_iroot_realloc(struct xfs_inode *ip, int whichfork,
+		const struct xfs_ifork_broot_ops *ops, int rec_diff);
 
 #endif	/* __XFS_INODE_FORK_H__ */
