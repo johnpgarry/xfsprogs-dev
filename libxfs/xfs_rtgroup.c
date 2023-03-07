@@ -558,6 +558,13 @@ xfs_rtgroup_lock(
 		if (tp)
 			xfs_trans_ijoin(tp, rtg->rtg_rmapip, XFS_ILOCK_EXCL);
 	}
+
+	if ((rtglock_flags & XFS_RTGLOCK_REFCOUNT) && rtg->rtg_refcountip) {
+		xfs_ilock(rtg->rtg_refcountip, XFS_ILOCK_EXCL);
+		if (tp)
+			xfs_trans_ijoin(tp, rtg->rtg_refcountip,
+					XFS_ILOCK_EXCL);
+	}
 }
 
 /* Unlock metadata inodes associated with this rt group. */
@@ -569,6 +576,9 @@ xfs_rtgroup_unlock(
 	ASSERT(!(rtglock_flags & ~XFS_RTGLOCK_ALL_FLAGS));
 	ASSERT(!(rtglock_flags & XFS_RTGLOCK_BITMAP_SHARED) ||
 	       !(rtglock_flags & XFS_RTGLOCK_BITMAP));
+
+	if ((rtglock_flags & XFS_RTGLOCK_REFCOUNT) && rtg->rtg_refcountip)
+		xfs_iunlock(rtg->rtg_refcountip, XFS_ILOCK_EXCL);
 
 	if ((rtglock_flags & XFS_RTGLOCK_RMAP) && rtg->rtg_rmapip)
 		xfs_iunlock(rtg->rtg_rmapip, XFS_ILOCK_EXCL);
