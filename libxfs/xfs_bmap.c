@@ -591,7 +591,7 @@ xfs_bmap_btree_to_extents(
 	xfs_trans_binval(tp, cbp);
 	if (cur->bc_levels[0].bp == cbp)
 		cur->bc_levels[0].bp = NULL;
-	xfs_iroot_realloc(ip, -1, whichfork);
+	xfs_iroot_free(ip, whichfork);
 	ASSERT(ifp->if_broot == NULL);
 	ifp->if_format = XFS_DINODE_FMT_EXTENTS;
 	*logflagsp |= XFS_ILOG_CORE | xfs_ilog_fext(whichfork);
@@ -632,19 +632,10 @@ xfs_bmap_extents_to_btree(
 	ASSERT(ifp->if_format == XFS_DINODE_FMT_EXTENTS);
 
 	/*
-	 * Make space in the inode incore. This needs to be undone if we fail
-	 * to expand the root.
+	 * Fill in the root, create a cursor.  Can't allocate until bb_level is
+	 * filled in.
 	 */
-	xfs_iroot_realloc(ip, 1, whichfork);
-
-	/*
-	 * Fill in the root.
-	 */
-	block = ifp->if_broot;
-	xfs_bmbt_init_block(ip, block, NULL, 1, 1);
-	/*
-	 * Need a cursor.  Can't allocate until bb_level is filled in.
-	 */
+	xfs_bmbt_iroot_alloc(ip, whichfork);
 	cur = xfs_bmbt_init_cursor(mp, tp, ip, whichfork);
 	if (wasdel)
 		cur->bc_flags |= XFS_BTREE_BMBT_WASDEL;
@@ -701,6 +692,7 @@ xfs_bmap_extents_to_btree(
 	/*
 	 * Fill in the root key and pointer.
 	 */
+	block = ifp->if_broot;
 	kp = xfs_bmbt_key_addr(mp, block, 1);
 	arp = xfs_bmbt_rec_addr(mp, ablock, 1);
 	kp->br_startoff = cpu_to_be64(xfs_bmbt_disk_get_startoff(arp));
@@ -722,7 +714,7 @@ xfs_bmap_extents_to_btree(
 out_unreserve_dquot:
 	xfs_trans_mod_dquot_byino(tp, ip, XFS_TRANS_DQ_BCOUNT, -1L);
 out_root_realloc:
-	xfs_iroot_realloc(ip, -1, whichfork);
+	xfs_iroot_free(ip, whichfork);
 	ifp->if_format = XFS_DINODE_FMT_EXTENTS;
 	ASSERT(ifp->if_broot == NULL);
 	xfs_btree_del_cursor(cur, XFS_BTREE_ERROR);
