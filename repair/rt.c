@@ -63,7 +63,10 @@ inc_sumcount(
 {
 	union xfs_suminfo_raw	*p = info + index;
 
-	p->old++;
+	if (xfs_has_rtgroups(mp))
+		be32_add_cpu(&p->rtg, 1);
+	else
+		p->old++;
 }
 
 /*

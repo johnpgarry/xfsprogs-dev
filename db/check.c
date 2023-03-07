@@ -1709,6 +1709,8 @@ get_suminfo(
 	struct xfs_mount	*mp,
 	union xfs_suminfo_raw	*raw)
 {
+	if (xfs_has_rtgroups(mp))
+		return be32_to_cpu(raw->rtg);
 	return raw->old;
 }
 
@@ -3625,7 +3627,10 @@ inc_sumcount(
 {
 	union xfs_suminfo_raw	*p = info + index;
 
-	p->old++;
+	if (xfs_has_rtgroups(mp))
+		be32_add_cpu(&p->rtg, 1);
+	else
+		p->old++;
 }
 
 static void
