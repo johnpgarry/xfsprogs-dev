@@ -73,6 +73,7 @@ struct iomap;
 #include "xfs_attr_sf.h"
 #include "xfs_inode_fork.h"
 #include "xfs_inode_buf.h"
+#include "xfs_inode_util.h"
 #include "xfs_alloc.h"
 #include "xfs_btree.h"
 #include "xfs_bmap.h"
