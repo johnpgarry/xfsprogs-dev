@@ -393,8 +393,6 @@ extern void	libxfs_trans_ichgtime(struct xfs_trans *,
 				struct xfs_inode *, int);
 extern int	libxfs_iflush_int (struct xfs_inode *, struct xfs_buf *);
 
-void libxfs_bumplink(struct xfs_trans *tp, struct xfs_inode *ip);
-
 int libxfs_icreate(struct xfs_trans *tp, xfs_ino_t ino,
 		const struct xfs_icreate_args *args, struct xfs_inode **ipp);
 void libxfs_icreate_args_rootfile(struct xfs_icreate_args *args,

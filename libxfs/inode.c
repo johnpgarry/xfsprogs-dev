@@ -30,24 +30,6 @@
 #include "xfs_dir2_priv.h"
 
 /*
- * Increment the link count on an inode & log the change.
- */
-void
-libxfs_bumplink(
-	struct xfs_trans	*tp,
-	struct xfs_inode	*ip)
-{
-	struct inode		*inode = VFS_I(ip);
-
-	xfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_CHG);
-
-	if (inode->i_nlink != XFS_NLINK_PINNED)
-		inc_nlink(inode);
-
-	xfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
-}
-
-/*
  * Initialise a newly allocated inode and return the in-core inode to the
  * caller locked exclusively.
  */

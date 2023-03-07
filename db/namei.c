@@ -1154,21 +1154,6 @@ unlink_help(void)
 	));
 }
 
-static void
-droplink(
-	struct xfs_trans	*tp,
-	struct xfs_inode	*ip)
-{
-	struct inode		*inode = VFS_I(ip);
-
-	libxfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_CHG);
-
-	if (inode->i_nlink != XFS_NLINK_PINNED)
-		drop_nlink(VFS_I(ip));
-
-	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
-}
-
 static int
 remove_child(
 	struct xfs_mount	*mp,
@@ -1218,13 +1203,17 @@ remove_child(
 
 	if (S_ISDIR(VFS_I(ip)->i_mode)) {
 		/* drop ip's dotdot link to dp */
-		droplink(tp, dp);
+		error = -libxfs_droplink(tp, dp);
+		if (error)
+			goto out_trans;
 	} else {
 		libxfs_trans_log_inode(tp, dp, XFS_ILOG_CORE);
 	}
 
 	/* drop dp's link to ip */
-	droplink(tp, ip);
+	error = -libxfs_droplink(tp, ip);
+	if (error)
+		goto out_trans;
 
 	error = -libxfs_dir_removename(tp, dp, &xname, ip->i_ino, resblks);
 	if (error)
