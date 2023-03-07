@@ -28,6 +28,7 @@
 #include "xfs_attr.h"
 #include "xfs_dir2_priv.h"
 #include "xfs_dir2.h"
+#include "xfs_symlink_remote.h"
 
 struct kmem_cache	*xfs_swapext_intent_cache;
 
@@ -431,6 +432,48 @@ xfs_swapext_dir_to_sf(
 	return xfs_dir2_block_to_sf(&args, bp, size, &sfh);
 }
 
+/* Convert inode2's remote symlink target back to shortform, if possible. */
+STATIC int
+xfs_swapext_link_to_sf(
+	struct xfs_trans		*tp,
+	struct xfs_swapext_intent	*sxi)
+{
+	struct xfs_inode		*ip = sxi->sxi_ip2;
+	struct xfs_ifork		*ifp = xfs_ifork_ptr(ip, XFS_DATA_FORK);
+	char				*buf;
+	int				error;
+
+	if (ifp->if_format == XFS_DINODE_FMT_LOCAL ||
+	    ip->i_disk_size > xfs_inode_data_fork_size(ip))
+		return 0;
+
+	/* Read the current symlink target into a buffer. */
+	buf = kmem_alloc(ip->i_disk_size + 1, KM_NOFS);
+	if (!buf) {
+		ASSERT(0);
+		return -ENOMEM;
+	}
+
+	error = xfs_symlink_remote_read(ip, buf);
+	if (error)
+		goto free;
+
+	/* Remove the blocks. */
+	error = xfs_symlink_remote_truncate(tp, ip);
+	if (error)
+		goto free;
+
+	/* Convert fork to local format and log our changes. */
+	xfs_idestroy_fork(ifp);
+	ifp->if_bytes = 0;
+	ifp->if_format = XFS_DINODE_FMT_LOCAL;
+	xfs_init_local_fork(ip, XFS_DATA_FORK, buf, ip->i_disk_size);
+	xfs_trans_log_inode(tp, ip, XFS_ILOG_DDATA | XFS_ILOG_CORE);
+free:
+	kmem_free(buf);
+	return error;
+}
+
 static inline void
 xfs_swapext_clear_reflink(
 	struct xfs_trans	*tp,
@@ -455,6 +498,8 @@ xfs_swapext_do_postop_work(
 			error = xfs_swapext_attr_to_sf(tp, sxi);
 		else if (S_ISDIR(VFS_I(sxi->sxi_ip2)->i_mode))
 			error = xfs_swapext_dir_to_sf(tp, sxi);
+		else if (S_ISLNK(VFS_I(sxi->sxi_ip2)->i_mode))
+			error = xfs_swapext_link_to_sf(tp, sxi);
 		sxi->sxi_flags &= ~XFS_SWAP_EXT_CVT_INO2_SF;
 		if (error)
 			return error;
@@ -1111,7 +1156,8 @@ xfs_swapext(
 	if (req->req_flags & XFS_SWAP_REQ_CVT_INO2_SF)
 		ASSERT(req->whichfork == XFS_ATTR_FORK ||
 		       (req->whichfork == XFS_DATA_FORK &&
-			S_ISDIR(VFS_I(req->ip2)->i_mode)));
+			(S_ISDIR(VFS_I(req->ip2)->i_mode) ||
+			 S_ISLNK(VFS_I(req->ip2)->i_mode))));
 
 	if (req->blockcount == 0)
 		return;
