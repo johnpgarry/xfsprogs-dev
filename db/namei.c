@@ -448,6 +448,7 @@ listdir(
 	struct xfs_da_args	args = {
 		.dp		= dp,
 		.geo		= dp->i_mount->m_dir_geo,
+		.owner		= dp->i_ino,
 	};
 	int			error;
 	bool			isblock;
