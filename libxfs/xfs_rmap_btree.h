@@ -64,4 +64,12 @@ unsigned int xfs_rmapbt_maxlevels_ondisk(void);
 int __init xfs_rmapbt_init_cur_cache(void);
 void xfs_rmapbt_destroy_cur_cache(void);
 
+#ifdef CONFIG_XFS_BTREE_IN_XFILE
+struct xfbtree;
+struct xfs_btree_cur *xfs_rmapbt_mem_cursor(struct xfs_perag *pag,
+		struct xfs_trans *tp, struct xfbtree *xfbtree);
+int xfs_rmapbt_mem_init(struct xfs_mount *mp, xfs_agnumber_t agno,
+		struct xfs_buftarg *target, struct xfbtree *xfbtree);
+#endif /* CONFIG_XFS_BTREE_IN_XFILE */
+
 #endif /* __XFS_RMAP_BTREE_H__ */
