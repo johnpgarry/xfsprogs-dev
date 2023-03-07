@@ -212,10 +212,12 @@ xfs_rgblock_t xfs_rtgroup_block_count(struct xfs_mount *mp,
 void xfs_rtgroup_update_super(struct xfs_buf *rtsb_bp,
 		const struct xfs_buf *sb_bp);
 void xfs_rtgroup_log_super(struct xfs_trans *tp, const struct xfs_buf *sb_bp);
+int xfs_rtgroup_update_secondary_sbs(struct xfs_mount *mp);
 #else
 # define xfs_rtgroup_block_count(mp, rgno)	(0)
 # define xfs_rtgroup_update_super(bp, sb_bp)	((void)0)
 # define xfs_rtgroup_log_super(tp, sb_bp)	((void)0)
+# define xfs_rtgroup_update_secondary_sbs(mp)	(0)
 #endif /* CONFIG_XFS_RT */
 
 #endif /* __LIBXFS_RTGROUP_H */
