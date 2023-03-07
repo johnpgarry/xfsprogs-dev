@@ -644,21 +644,21 @@ phase5(xfs_mount_t *mp)
 
 #ifdef XR_BLD_FREE_TRACE
 	fprintf(stderr, "inobt level 1, maxrec = %d, minrec = %d\n",
-		libxfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, 0),
-		libxfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, 0) / 2);
+		libxfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, false),
+		libxfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, false) / 2);
 	fprintf(stderr, "inobt level 0 (leaf), maxrec = %d, minrec = %d\n",
-		libxfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, 1),
-		libxfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, 1) / 2);
+		libxfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, true),
+		libxfs_inobt_maxrecs(mp, mp->m_sb.sb_blocksize, true) / 2);
 	fprintf(stderr, "xr inobt level 0 (leaf), maxrec = %d\n",
 		XR_INOBT_BLOCK_MAXRECS(mp, 0));
 	fprintf(stderr, "xr inobt level 1 (int), maxrec = %d\n",
 		XR_INOBT_BLOCK_MAXRECS(mp, 1));
 	fprintf(stderr, "bnobt level 1, maxrec = %d, minrec = %d\n",
-		libxfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, 0),
-		libxfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, 0) / 2);
+		libxfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, false),
+		libxfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, false) / 2);
 	fprintf(stderr, "bnobt level 0 (leaf), maxrec = %d, minrec = %d\n",
-		libxfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, 1),
-		libxfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, 1) / 2);
+		libxfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, true),
+		libxfs_allocbt_maxrecs(mp, mp->m_sb.sb_blocksize, true) / 2);
 #endif
 	/*
 	 * make sure the root and realtime inodes show up allocated
