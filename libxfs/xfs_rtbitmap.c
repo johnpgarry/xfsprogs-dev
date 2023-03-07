@@ -49,7 +49,7 @@ xfs_rtbuf_verify_read(
 	struct xfs_rtbuf_blkinfo	*hdr = bp->b_addr;
 	xfs_failaddr_t			fa;
 
-	if (!xfs_has_rtgroups(mp) || bp->b_ops != &xfs_rtbitmap_buf_ops)
+	if (!xfs_has_rtgroups(mp))
 		return;
 
 	if (!xfs_log_check_lsn(mp, be64_to_cpu(hdr->rt_lsn))) {
@@ -80,7 +80,7 @@ xfs_rtbuf_verify_write(
 	struct xfs_buf_log_item		*bip = bp->b_log_item;
 	xfs_failaddr_t			fa;
 
-	if (!xfs_has_rtgroups(mp) || bp->b_ops != &xfs_rtbitmap_buf_ops)
+	if (!xfs_has_rtgroups(mp))
 		return;
 
 	fa = xfs_rtbuf_verify(bp);
@@ -103,6 +103,14 @@ const struct xfs_buf_ops xfs_rtbuf_ops = {
 const struct xfs_buf_ops xfs_rtbitmap_buf_ops = {
 	.name		= "xfs_rtbitmap",
 	.magic		= { 0, cpu_to_be32(XFS_RTBITMAP_MAGIC) },
+	.verify_read	= xfs_rtbuf_verify_read,
+	.verify_write	= xfs_rtbuf_verify_write,
+	.verify_struct	= xfs_rtbuf_verify,
+};
+
+const struct xfs_buf_ops xfs_rtsummary_buf_ops = {
+	.name		= "xfs_rtsummary",
+	.magic		= { 0, cpu_to_be32(XFS_RTSUMMARY_MAGIC) },
 	.verify_read	= xfs_rtbuf_verify_read,
 	.verify_write	= xfs_rtbuf_verify_write,
 	.verify_struct	= xfs_rtbuf_verify,
@@ -193,7 +201,7 @@ xfs_rtbuf_get(
 	if (error)
 		return error;
 
-	if (xfs_has_rtgroups(mp) && !issum) {
+	if (xfs_has_rtgroups(mp)) {
 		struct xfs_rtbuf_blkinfo	*hdr = bp->b_addr;
 
 		if (hdr->rt_owner != cpu_to_be64(ip->i_ino)) {
@@ -1273,6 +1281,10 @@ xfs_rtsummary_blockcount(
 	unsigned long long	rsumwords;
 
 	rsumwords = (unsigned long long)rsumlevels * rbmblocks;
+
+	if (xfs_has_rtgroups(mp))
+		return howmany_64(rsumwords, mp->m_blockwsize);
+
 	return XFS_B_TO_FSB(mp, rsumwords << XFS_WORDLOG);
 }
 
