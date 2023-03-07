@@ -20,6 +20,7 @@
 #include "xfs_ialloc_btree.h"
 #include "xfs_ag.h"
 #include "xfs_ag_resv.h"
+#include "xfs_ag.h"
 
 /*
  * Per-AG Block Reservations
@@ -72,6 +73,13 @@ xfs_ag_resv_critical(
 	xfs_extlen_t			avail;
 	xfs_extlen_t			orig;
 
+	/*
+	 * Pretend we're critically low on reservations in this AG to scare
+	 * everyone else away.
+	 */
+	if (xfs_perag_prohibits_alloc(pag))
+		return true;
+
 	switch (type) {
 	case XFS_AG_RESV_METADATA:
 		avail = pag->pagf_freeblks - pag->pag_rmapbt_resv.ar_reserved;
@@ -114,7 +122,12 @@ xfs_ag_resv_needed(
 		break;
 	case XFS_AG_RESV_IMETA:
 	case XFS_AG_RESV_NONE:
-		/* empty */
+		/*
+		 * In noalloc mode, we pretend that all the free blocks in this
+		 * AG have been allocated.  Make this AG look full.
+		 */
+		if (xfs_perag_prohibits_alloc(pag))
+			len += xfs_ag_fdblocks(pag);
 		break;
 	default:
 		ASSERT(0);
@@ -343,6 +356,8 @@ xfs_ag_resv_alloc_extent(
 	xfs_extlen_t			len;
 	uint				field;
 
+	ASSERT(type != XFS_AG_RESV_NONE || !xfs_perag_prohibits_alloc(pag));
+
 	trace_xfs_ag_resv_alloc_extent(pag, type, args->len);
 
 	switch (type) {
@@ -400,7 +415,14 @@ xfs_ag_resv_free_extent(
 		ASSERT(0);
 		fallthrough;
 	case XFS_AG_RESV_NONE:
-		xfs_trans_mod_sb(tp, XFS_TRANS_SB_FDBLOCKS, (int64_t)len);
+		/*
+		 * Normally we put freed blocks back into fdblocks.  In noalloc
+		 * mode, however, we pretend that there are no fdblocks in the
+		 * AG, so don't put them back.
+		 */
+		if (!xfs_perag_prohibits_alloc(pag))
+			xfs_trans_mod_sb(tp, XFS_TRANS_SB_FDBLOCKS,
+					(int64_t)len);
 		fallthrough;
 	case XFS_AG_RESV_IGNORE:
 		return;
@@ -413,6 +435,6 @@ xfs_ag_resv_free_extent(
 	/* Freeing into the reserved pool only requires on-disk update... */
 	xfs_trans_mod_sb(tp, XFS_TRANS_SB_RES_FDBLOCKS, len);
 	/* ...but freeing beyond that requires in-core and on-disk update. */
-	if (len > leftover)
+	if (len > leftover && !xfs_perag_prohibits_alloc(pag))
 		xfs_trans_mod_sb(tp, XFS_TRANS_SB_FDBLOCKS, len - leftover);
 }

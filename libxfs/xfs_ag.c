@@ -1117,3 +1117,63 @@ out_agi:
 	xfs_buf_relse(agi_bp);
 	return error;
 }
+
+/* How many blocks does this AG contribute to fdblocks? */
+xfs_extlen_t
+xfs_ag_fdblocks(
+	struct xfs_perag		*pag)
+{
+	xfs_extlen_t			ret;
+
+	ASSERT(xfs_perag_initialised_agf(pag));
+
+	ret = pag->pagf_freeblks + pag->pagf_flcount + pag->pagf_btreeblks;
+	ret -= pag->pag_meta_resv.ar_reserved;
+	ret -= pag->pag_rmapbt_resv.ar_orig_reserved;
+	return ret;
+}
+
+/*
+ * Hide all the free space in this AG.  Caller must hold both the AGI and the
+ * AGF buffers or have otherwise prevented concurrent access.
+ */
+int
+xfs_ag_set_noalloc(
+	struct xfs_perag	*pag)
+{
+	struct xfs_mount	*mp = pag->pag_mount;
+	int			error;
+
+	ASSERT(xfs_perag_initialised_agf(pag));
+	ASSERT(xfs_perag_initialised_agi(pag));
+
+	if (xfs_perag_prohibits_alloc(pag))
+		return 0;
+
+	error = xfs_mod_fdblocks(mp, -(int64_t)xfs_ag_fdblocks(pag), false);
+	if (error)
+		return error;
+
+	trace_xfs_ag_set_noalloc(pag);
+	set_bit(XFS_AGSTATE_NOALLOC, &pag->pag_opstate);
+	return 0;
+}
+
+/*
+ * Unhide all the free space in this AG.  Caller must hold both the AGI and
+ * the AGF buffers or have otherwise prevented concurrent access.
+ */
+void
+xfs_ag_clear_noalloc(
+	struct xfs_perag	*pag)
+{
+	struct xfs_mount	*mp = pag->pag_mount;
+
+	if (!xfs_perag_prohibits_alloc(pag))
+		return;
+
+	xfs_mod_fdblocks(mp, xfs_ag_fdblocks(pag), false);
+
+	trace_xfs_ag_clear_noalloc(pag);
+	clear_bit(XFS_AGSTATE_NOALLOC, &pag->pag_opstate);
+}

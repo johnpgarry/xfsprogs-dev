@@ -13,6 +13,8 @@
 #define trace_xfbtree_trans_cancel_buf(...)	((void) 0)
 #define trace_xfbtree_trans_commit_buf(...)	((void) 0)
 
+#define trace_xfs_ag_clear_noalloc(a)		((void) 0)
+#define trace_xfs_ag_set_noalloc(a)		((void) 0)
 #define trace_xfs_agfl_free_defer(...)		((void) 0)
 #define trace_xfs_agfl_reset(a,b,c,d)		((void) 0)
 #define trace_xfs_alloc_cur_check(a,b,c,d,e,f)	((void) 0)
