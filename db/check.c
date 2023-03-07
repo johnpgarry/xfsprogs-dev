@@ -1944,10 +1944,14 @@ init(
 		inodata[c] = xcalloc(inodata_hash_size, sizeof(**inodata));
 	}
 	if (rt) {
+		unsigned long long	words;
+
 		dbmap[c] = xcalloc(mp->m_sb.sb_rblocks, sizeof(**dbmap));
 		inomap[c] = xcalloc(mp->m_sb.sb_rblocks, sizeof(**inomap));
-		sumfile = xcalloc(mp->m_rsumsize, 1);
-		sumcompute = xcalloc(mp->m_rsumsize, 1);
+		words = libxfs_rtsummary_wordcount(mp, mp->m_rsumlevels,
+				mp->m_sb.sb_rbmblocks);
+		sumfile = xcalloc(words, sizeof(xfs_suminfo_t));
+		sumcompute = xcalloc(words, sizeof(xfs_suminfo_t));
 	}
 	nflag = sflag = tflag = verbose = optind = 0;
 	while ((c = getopt(argc, argv, "b:i:npstv")) != EOF) {
