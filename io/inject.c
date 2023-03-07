@@ -63,6 +63,7 @@ error_tag(char *name)
 		{ XFS_ERRTAG_ATTR_LEAF_TO_NODE,		"attr_leaf_to_node" },
 		{ XFS_ERRTAG_WB_DELAY_MS,		"wb_delay_ms" },
 		{ XFS_ERRTAG_WRITE_DELAY_MS,		"write_delay_ms" },
+		{ XFS_ERRTAG_SWAPEXT_FINISH_ONE,	"swapext_finish_one" },
 		{ XFS_ERRTAG_MAX,			NULL }
 	};
 	int	count;
