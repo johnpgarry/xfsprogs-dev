@@ -225,6 +225,35 @@ out_destroy:
 	return error;
 }
 
+/*
+ * Get a metadata inode.  The ftype must match exactly.  Caller must supply
+ * a transaction (even if empty) to avoid livelocking if the inobt has a cycle.
+ */
+int
+libxfs_imeta_iget(
+	struct xfs_trans	*tp,
+	xfs_ino_t		ino,
+	unsigned char		ftype,
+	struct xfs_inode	**ipp)
+{
+	struct xfs_mount	*mp = tp->t_mountp;
+	struct xfs_inode	*ip;
+	int			error;
+
+	error = libxfs_iget(mp, tp, ino, XFS_IGET_UNTRUSTED, &ip);
+	if (error)
+		return error;
+
+	if (ftype == XFS_DIR3_FT_UNKNOWN ||
+	    xfs_mode_to_ftype(VFS_I(ip)->i_mode) != ftype) {
+		libxfs_irele(ip);
+		return -EFSCORRUPTED;
+	}
+
+	*ipp = ip;
+	return 0;
+}
+
 static void
 libxfs_idestroy(
 	struct xfs_inode	*ip)
@@ -256,6 +285,13 @@ libxfs_irele(
 		libxfs_idestroy(ip);
 		kmem_cache_free(xfs_inode_cache, ip);
 	}
+}
+
+void
+libxfs_imeta_irele(
+	struct xfs_inode	*ip)
+{
+	libxfs_irele(ip);
 }
 
 static inline void inode_fsgid_set(struct inode *inode,

@@ -886,9 +886,9 @@ void
 libxfs_rtmount_destroy(xfs_mount_t *mp)
 {
 	if (mp->m_rsumip)
-		libxfs_irele(mp->m_rsumip);
+		libxfs_imeta_irele(mp->m_rsumip);
 	if (mp->m_rbmip)
-		libxfs_irele(mp->m_rbmip);
+		libxfs_imeta_irele(mp->m_rbmip);
 	mp->m_rsumip = mp->m_rbmip = NULL;
 }
 
