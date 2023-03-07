@@ -345,6 +345,13 @@
 #define trace_xfs_rmap_map_error(...)		((void) 0)
 #define trace_xfs_rmap_delete_error(...)	((void) 0)
 
+/* set c = c to avoid unused var warnings */
+#define trace_xfs_rtgroup_get(a,b)		((a) = (a))
+#define trace_xfs_rtgroup_hold(a,b)		((a) = (a))
+#define trace_xfs_rtgroup_put(a,b)		((a) = (a))
+#define trace_xfs_rtgroup_grab(a,b)		((a) = (a))
+#define trace_xfs_rtgroup_rele(a,b)		((a) = (a))
+
 #define trace_xfs_swapext_defer(...)		((void) 0)
 #define trace_xfs_swapext_delta_nextents(...)	((void) 0)
 #define trace_xfs_swapext_delta_nextents_step(...)	((void) 0)
