@@ -10,4 +10,8 @@ struct xfs_bmap_intent;
 
 void xfs_bmap_defer_add(struct xfs_trans *tp, struct xfs_bmap_intent *bi);
 
+struct xfs_swapext_intent;
+
+void xfs_swapext_defer_add(struct xfs_trans *tp, struct xfs_swapext_intent *sxi);
+
 #endif /* __LIBXFS_DEFER_ITEM_H_ */

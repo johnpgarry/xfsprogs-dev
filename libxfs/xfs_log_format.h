@@ -898,9 +898,36 @@ struct xfs_swap_extent {
 	int64_t			sx_isize2;
 };
 
-#define XFS_SWAP_EXT_FLAGS		(0)
+/* Swap extents between extended attribute forks. */
+#define XFS_SWAP_EXT_ATTR_FORK		(1ULL << 0)
 
-#define XFS_SWAP_EXT_STRINGS
+/* Set the file sizes when finished. */
+#define XFS_SWAP_EXT_SET_SIZES		(1ULL << 1)
+
+/*
+ * Swap only the extents of the two files where the file allocation units
+ * mapped to file1's range have been written to.
+ */
+#define XFS_SWAP_EXT_INO1_WRITTEN	(1ULL << 2)
+
+/* Clear the reflink flag from inode1 after the operation. */
+#define XFS_SWAP_EXT_CLEAR_INO1_REFLINK	(1ULL << 3)
+
+/* Clear the reflink flag from inode2 after the operation. */
+#define XFS_SWAP_EXT_CLEAR_INO2_REFLINK	(1ULL << 4)
+
+#define XFS_SWAP_EXT_FLAGS		(XFS_SWAP_EXT_ATTR_FORK | \
+					 XFS_SWAP_EXT_SET_SIZES | \
+					 XFS_SWAP_EXT_INO1_WRITTEN | \
+					 XFS_SWAP_EXT_CLEAR_INO1_REFLINK | \
+					 XFS_SWAP_EXT_CLEAR_INO2_REFLINK)
+
+#define XFS_SWAP_EXT_STRINGS \
+	{ XFS_SWAP_EXT_ATTR_FORK,		"ATTRFORK" }, \
+	{ XFS_SWAP_EXT_SET_SIZES,		"SETSIZES" }, \
+	{ XFS_SWAP_EXT_INO1_WRITTEN,		"INO1_WRITTEN" }, \
+	{ XFS_SWAP_EXT_CLEAR_INO1_REFLINK,	"CLEAR_INO1_REFLINK" }, \
+	{ XFS_SWAP_EXT_CLEAR_INO2_REFLINK,	"CLEAR_INO2_REFLINK" }
 
 /* This is the structure used to lay out an sxi log item in the log. */
 struct xfs_sxi_log_format {

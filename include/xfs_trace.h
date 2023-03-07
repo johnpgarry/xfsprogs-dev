@@ -329,6 +329,9 @@
 #define trace_xfs_refcount_cow_decrease(...)	((void) 0)
 #define trace_xfs_refcount_recover_extent(...)	((void) 0)
 
+#define trace_xfs_reflink_set_inode_flag(...)	((void) 0)
+#define trace_xfs_reflink_unset_inode_flag(...)	((void) 0)
+
 #define trace_xfs_rmap_find_left_neighbor_candidate(...)	((void) 0)
 #define trace_xfs_rmap_find_left_neighbor_query(...)	((void) 0)
 #define trace_xfs_rmap_find_left_neighbor_result(...)	((void) 0)
@@ -341,6 +344,17 @@
 #define trace_xfs_rmap_map_done(...)		((void) 0)
 #define trace_xfs_rmap_map_error(...)		((void) 0)
 #define trace_xfs_rmap_delete_error(...)	((void) 0)
+
+#define trace_xfs_swapext_defer(...)		((void) 0)
+#define trace_xfs_swapext_delta_nextents(...)	((void) 0)
+#define trace_xfs_swapext_delta_nextents_step(...)	((void) 0)
+#define trace_xfs_swapext_extent1_skip(...)	((void) 0)
+#define trace_xfs_swapext_extent1(...)		((void) 0)
+#define trace_xfs_swapext_extent2(...)		((void) 0)
+#define trace_xfs_swapext_final_estimate(...)	((void) 0)
+#define trace_xfs_swapext_initial_estimate(...)	((void) 0)
+#define trace_xfs_swapext_overhead(...)		((void) 0)
+#define trace_xfs_swapext_update_inode_size(...) ((void) 0)
 
 #define trace_xfs_fs_mark_healthy(a,b)		((void) 0)
 
