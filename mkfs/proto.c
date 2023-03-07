@@ -431,7 +431,6 @@ creatproto(
 				  XFS_ICREATE_ARGS_FORCE_MODE,
 	};
 	struct xfs_inode	*ip;
-	xfs_ino_t		parent_ino = dp ? dp->i_ino : 0;
 	xfs_ino_t		ino;
 	int			error;
 
@@ -442,7 +441,7 @@ creatproto(
 	 * Call the space management code to pick the on-disk inode to be
 	 * allocated.
 	 */
-	error = -libxfs_dialloc(tpp, parent_ino, mode, &ino);
+	error = -libxfs_dialloc(tpp, dp, mode, &ino);
 	if (error)
 		return error;
 
