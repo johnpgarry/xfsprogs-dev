@@ -209,18 +209,25 @@ get_bno_rec(
 
 /* Grab one bnobt record and put it in the btree cursor. */
 static int
-get_bnobt_record(
+get_bnobt_records(
 	struct xfs_btree_cur		*cur,
+	unsigned int			idx,
+	struct xfs_btree_block		*block,
+	unsigned int			nr_wanted,
 	void				*priv)
 {
 	struct bt_rebuild		*btr = priv;
 	struct xfs_alloc_rec_incore	*arec = &cur->bc_rec.a;
+	union xfs_btree_rec		*block_rec;
 
 	btr->bno_rec = get_bno_rec(cur, btr->bno_rec);
 	arec->ar_startblock = btr->bno_rec->ex_startblock;
 	arec->ar_blockcount = btr->bno_rec->ex_blockcount;
 	btr->freeblks += btr->bno_rec->ex_blockcount;
-	return 0;
+
+	block_rec = libxfs_btree_rec_addr(cur, idx, block);
+	cur->bc_ops->init_rec_from_cur(cur, block_rec);
+	return 1;
 }
 
 void
@@ -247,10 +254,10 @@ init_freespace_cursors(
 	btr_cnt->cur = libxfs_allocbt_stage_cursor(sc->mp,
 			&btr_cnt->newbt.afake, pag, XFS_BTNUM_CNT);
 
-	btr_bno->bload.get_record = get_bnobt_record;
+	btr_bno->bload.get_records = get_bnobt_records;
 	btr_bno->bload.claim_block = rebuild_claim_block;
 
-	btr_cnt->bload.get_record = get_bnobt_record;
+	btr_cnt->bload.get_records = get_bnobt_records;
 	btr_cnt->bload.claim_block = rebuild_claim_block;
 
 	/*
@@ -371,13 +378,17 @@ get_ino_rec(
 
 /* Grab one inobt record. */
 static int
-get_inobt_record(
+get_inobt_records(
 	struct xfs_btree_cur		*cur,
+	unsigned int			idx,
+	struct xfs_btree_block		*block,
+	unsigned int			nr_wanted,
 	void				*priv)
 {
 	struct bt_rebuild		*btr = priv;
 	struct xfs_inobt_rec_incore	*irec = &cur->bc_rec.i;
 	struct ino_tree_node		*ino_rec;
+	union xfs_btree_rec		*block_rec;
 	int				inocnt = 0;
 	int				finocnt = 0;
 	int				k;
@@ -431,7 +442,10 @@ get_inobt_record(
 		btr->first_agino = ino_rec->ino_startnum;
 	btr->freecount += finocnt;
 	btr->count += inocnt;
-	return 0;
+
+	block_rec = libxfs_btree_rec_addr(cur, idx, block);
+	cur->bc_ops->init_rec_from_cur(cur, block_rec);
+	return 1;
 }
 
 /* Initialize both inode btree cursors as needed. */
@@ -490,7 +504,7 @@ init_ino_cursors(
 	btr_ino->cur = libxfs_inobt_stage_cursor(pag, &btr_ino->newbt.afake,
 			XFS_BTNUM_INO);
 
-	btr_ino->bload.get_record = get_inobt_record;
+	btr_ino->bload.get_records = get_inobt_records;
 	btr_ino->bload.claim_block = rebuild_claim_block;
 	btr_ino->first_agino = NULLAGINO;
 
@@ -510,7 +524,7 @@ _("Unable to compute inode btree geometry, error %d.\n"), error);
 	btr_fino->cur = libxfs_inobt_stage_cursor(pag,
 			&btr_fino->newbt.afake, XFS_BTNUM_FINO);
 
-	btr_fino->bload.get_record = get_inobt_record;
+	btr_fino->bload.get_records = get_inobt_records;
 	btr_fino->bload.claim_block = rebuild_claim_block;
 	btr_fino->first_agino = NULLAGINO;
 
@@ -560,16 +574,23 @@ _("Error %d while creating finobt btree for AG %u.\n"), error, agno);
 
 /* Grab one rmap record. */
 static int
-get_rmapbt_record(
+get_rmapbt_records(
 	struct xfs_btree_cur		*cur,
+	unsigned int			idx,
+	struct xfs_btree_block		*block,
+	unsigned int			nr_wanted,
 	void				*priv)
 {
 	struct xfs_rmap_irec		*rec;
 	struct bt_rebuild		*btr = priv;
+	union xfs_btree_rec		*block_rec;
 
 	rec = pop_slab_cursor(btr->slab_cursor);
 	memcpy(&cur->bc_rec.r, rec, sizeof(struct xfs_rmap_irec));
-	return 0;
+
+	block_rec = libxfs_btree_rec_addr(cur, idx, block);
+	cur->bc_ops->init_rec_from_cur(cur, block_rec);
+	return 1;
 }
 
 /* Set up the rmap rebuild parameters. */
@@ -589,7 +610,7 @@ init_rmapbt_cursor(
 	init_rebuild(sc, &XFS_RMAP_OINFO_AG, est_agfreeblocks, btr);
 	btr->cur = libxfs_rmapbt_stage_cursor(sc->mp, &btr->newbt.afake, pag);
 
-	btr->bload.get_record = get_rmapbt_record;
+	btr->bload.get_records = get_rmapbt_records;
 	btr->bload.claim_block = rebuild_claim_block;
 
 	/* Compute how many blocks we'll need. */
@@ -631,16 +652,23 @@ _("Error %d while creating rmap btree for AG %u.\n"), error, agno);
 
 /* Grab one refcount record. */
 static int
-get_refcountbt_record(
+get_refcountbt_records(
 	struct xfs_btree_cur		*cur,
+	unsigned int			idx,
+	struct xfs_btree_block		*block,
+	unsigned int			nr_wanted,
 	void				*priv)
 {
 	struct xfs_refcount_irec	*rec;
 	struct bt_rebuild		*btr = priv;
+	union xfs_btree_rec		*block_rec;
 
 	rec = pop_slab_cursor(btr->slab_cursor);
 	memcpy(&cur->bc_rec.rc, rec, sizeof(struct xfs_refcount_irec));
-	return 0;
+
+	block_rec = libxfs_btree_rec_addr(cur, idx, block);
+	cur->bc_ops->init_rec_from_cur(cur, block_rec);
+	return 1;
 }
 
 /* Set up the refcount rebuild parameters. */
@@ -661,7 +689,7 @@ init_refc_cursor(
 	btr->cur = libxfs_refcountbt_stage_cursor(sc->mp, &btr->newbt.afake,
 			pag);
 
-	btr->bload.get_record = get_refcountbt_record;
+	btr->bload.get_records = get_refcountbt_records;
 	btr->bload.claim_block = rebuild_claim_block;
 
 	/* Compute how many blocks we'll need. */
