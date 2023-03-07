@@ -358,22 +358,22 @@ secondary_sb_whack(
 	 * size is the size of data which is valid for this sb.
 	 */
 	if (xfs_sb_version_hasmetauuid(sb))
-		size = offsetof(xfs_sb_t, sb_meta_uuid)
+		size = offsetof(struct xfs_dsb, sb_meta_uuid)
 			+ sizeof(sb->sb_meta_uuid);
 	else if (xfs_sb_version_hascrc(sb))
-		size = offsetof(xfs_sb_t, sb_lsn)
+		size = offsetof(struct xfs_dsb, sb_lsn)
 			+ sizeof(sb->sb_lsn);
 	else if (xfs_sb_version_hasmorebits(sb))
-		size = offsetof(xfs_sb_t, sb_bad_features2)
+		size = offsetof(struct xfs_dsb, sb_bad_features2)
 			+ sizeof(sb->sb_bad_features2);
 	else if (xfs_sb_version_haslogv2(sb))
-		size = offsetof(xfs_sb_t, sb_logsunit)
+		size = offsetof(struct xfs_dsb, sb_logsunit)
 			+ sizeof(sb->sb_logsunit);
 	else if (xfs_sb_version_hassector(sb))
-		size = offsetof(xfs_sb_t, sb_logsectsize)
+		size = offsetof(struct xfs_dsb, sb_logsectsize)
 			+ sizeof(sb->sb_logsectsize);
 	else /* only support dirv2 or more recent */
-		size = offsetof(xfs_sb_t, sb_dirblklog)
+		size = offsetof(struct xfs_dsb, sb_dirblklog)
 			+ sizeof(sb->sb_dirblklog);
 
 	/* Check the buffer we read from disk for garbage outside size */

@@ -101,10 +101,8 @@ fixup_superblock(
 	memset(block_buffer, 0, sb->sb_sectsize);
 	sb->sb_inprogress = 0;
 	libxfs_sb_to_disk((struct xfs_dsb *)block_buffer, sb);
-	if (xfs_sb_version_hascrc(sb)) {
-		xfs_update_cksum(block_buffer, sb->sb_sectsize,
-				 offsetof(struct xfs_sb, sb_crc));
-	}
+	if (xfs_sb_version_hascrc(sb))
+		xfs_update_cksum(block_buffer, sb->sb_sectsize, XFS_SB_CRC_OFF);
 
 	if (pwrite(ddev_fd, block_buffer, sb->sb_sectsize, 0) < 0)
 		fatal("error writing primary superblock: %s\n", strerror(errno));

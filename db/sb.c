@@ -50,8 +50,8 @@ sb_init(void)
 	add_command(&version_cmd);
 }
 
-#define	OFF(f)	bitize(offsetof(xfs_sb_t, sb_ ## f))
-#define	SZC(f)	szcount(xfs_sb_t, sb_ ## f)
+#define	OFF(f)	bitize(offsetof(struct xfs_dsb, sb_ ## f))
+#define	SZC(f)	szcount(struct xfs_dsb, sb_ ## f)
 const field_t	sb_flds[] = {
 	{ "magicnum", FLDT_UINT32X, OI(OFF(magicnum)), C1, 0, TYP_NONE },
 	{ "blocksize", FLDT_UINT32D, OI(OFF(blocksize)), C1, 0, TYP_NONE },
