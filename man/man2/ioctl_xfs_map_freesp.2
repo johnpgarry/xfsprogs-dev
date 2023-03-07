@@ -1,0 +1,76 @@
+.\" Copyright (c) 2023-2024 Oracle.  All rights reserved.
+.\"
+.\" %%%LICENSE_START(GPLv2+_DOC_FULL)
+.\" SPDX-License-Identifier: GPL-2.0-or-later
+.\" %%%LICENSE_END
+.TH IOCTL-XFS-MAP-FREESP 2 2023-11-17 "XFS"
+.SH NAME
+ioctl_xfs_map_freesp \- map free space into a file
+.SH SYNOPSIS
+.br
+.B #include <xfs/xfs_fs_staging.h>
+.PP
+.BI "int ioctl(int " fd ", XFS_IOC_MAP_FREESP, struct xfs_map_freesp *" arg );
+.SH DESCRIPTION
+Maps free space into the sparse ranges of a regular file.
+This ioctl uses
+.B struct xfs_map_freesp
+to specify the range of free space to be mapped:
+.PP
+.in +4n
+.nf
+struct xfs_map_freesp {
+	__s64   offset;
+	__s64   len;
+	__s64   flags;
+	__s64   pad;
+};
+.fi
+.in
+.PP
+.I offset
+is the physical disk address, in bytes, of the start of the range to scan.
+Each free space extent in this range will be mapped to the file if the
+corresponding range of the file is sparse.
+.PP
+.I len
+is the number of bytes in the range to scan.
+.PP
+.I flags
+must be zero; there are no flags defined yet.
+.PP
+.I pad
+must be zero.
+.SH RETURN VALUE
+On error, \-1 is returned, and
+.I errno
+is set to indicate the error.
+.PP
+.SH ERRORS
+Error codes can be one of, but are not limited to, the following:
+.TP
+.B EFAULT
+The kernel was not able to copy into the userspace buffer.
+.TP
+.B EFSBADCRC
+Metadata checksum validation failed while performing the query.
+.TP
+.B EFSCORRUPTED
+Metadata corruption was encountered while performing the query.
+.TP
+.B EINVAL
+One of the arguments was not valid,
+or the file was not sparse.
+.TP
+.B EIO
+An I/O error was encountered while performing the query.
+.TP
+.B ENOMEM
+There was insufficient memory to perform the query.
+.TP
+.B ENOSPC
+There was insufficient disk space to commit the space mappings.
+.SH CONFORMING TO
+This API is specific to XFS filesystem on the Linux kernel.
+.SH SEE ALSO
+.BR ioctl (2)

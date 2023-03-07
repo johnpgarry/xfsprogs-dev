@@ -26,6 +26,8 @@
 #define trace_xfs_alloc_exact_done(a)		((void) 0)
 #define trace_xfs_alloc_exact_notfound(a)	((void) 0)
 #define trace_xfs_alloc_exact_error(a)		((void) 0)
+#define trace_xfs_alloc_find_freesp(...)	((void) 0)
+#define trace_xfs_alloc_find_freesp_done(...)	((void) 0)
 #define trace_xfs_alloc_near_first(a)		((void) 0)
 #define trace_xfs_alloc_near_greater(a)		((void) 0)
 #define trace_xfs_alloc_near_lesser(a)		((void) 0)
@@ -196,6 +198,8 @@
 
 #define trace_xfs_bmap_pre_update(a,b,c,d)	((void) 0)
 #define trace_xfs_bmap_post_update(a,b,c,d)	((void) 0)
+#define trace_xfs_bmapi_freesp(...)		((void) 0)
+#define trace_xfs_bmapi_freesp_done(...)	((void) 0)
 #define trace_xfs_bunmap(a,b,c,d,e)		((void) 0)
 #define trace_xfs_read_extent(a,b,c,d)		((void) 0)
 

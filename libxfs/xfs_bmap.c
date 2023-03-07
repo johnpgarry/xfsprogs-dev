@@ -6428,3 +6428,152 @@ xfs_get_cowextsz_hint(
 		return XFS_DEFAULT_COWEXTSZ_HINT;
 	return a;
 }
+
+static inline xfs_fileoff_t
+xfs_fsblock_to_fileoff(
+	struct xfs_mount	*mp,
+	xfs_fsblock_t		fsbno)
+{
+	xfs_daddr_t		daddr = XFS_FSB_TO_DADDR(mp, fsbno);
+
+	return XFS_B_TO_FSB(mp, BBTOB(daddr));
+}
+
+/*
+ * Given a file and a free physical extent, map it into the file at the same
+ * offset if the file were a sparse image of the physical device.  Set @mval to
+ * whatever mapping we added to the file.
+ */
+int
+xfs_bmapi_freesp(
+	struct xfs_trans	*tp,
+	struct xfs_inode	*ip,
+	xfs_fsblock_t		fsbno,
+	xfs_extlen_t		len,
+	struct xfs_bmbt_irec	*mval)
+{
+	struct xfs_bmbt_irec	irec;
+	struct xfs_mount	*mp = ip->i_mount;
+	xfs_fileoff_t		startoff;
+	bool			isrt = XFS_IS_REALTIME_INODE(ip);
+	int			nimaps;
+	int			error;
+
+	trace_xfs_bmapi_freesp(ip, fsbno, len);
+
+	error = xfs_iext_count_may_overflow(ip, XFS_DATA_FORK,
+			XFS_IEXT_ADD_NOSPLIT_CNT);
+	if (error)
+		return error;
+
+	if (isrt)
+		startoff = fsbno;
+	else
+		startoff = xfs_fsblock_to_fileoff(mp, fsbno);
+
+	/* Make sure the entire range is a hole. */
+	nimaps = 1;
+	error = xfs_bmapi_read(ip, startoff, len, &irec, &nimaps, 0);
+	if (error)
+		return error;
+
+	if (irec.br_startoff != startoff ||
+	    irec.br_startblock != HOLESTARTBLOCK ||
+	    irec.br_blockcount < len)
+		return -EINVAL;
+
+	/*
+	 * Allocate the physical extent.  We should not have dropped the lock
+	 * since the scan of the free space metadata, so this should work,
+	 * though the length may be adjusted to play nicely with metadata space
+	 * reservations.
+	 */
+	if (isrt) {
+		xfs_rtxnum_t	rtx_in, rtx_out;
+		xfs_extlen_t	rtxlen_in, rtxlen_out;
+		uint32_t	mod;
+
+		rtx_in = xfs_rtb_to_rtxrem(mp, fsbno, &mod);
+		if (mod) {
+			ASSERT(mod == 0);
+			return -EFSCORRUPTED;
+		}
+
+		rtxlen_in = xfs_rtb_to_rtxrem(mp, len, &mod);
+		if (mod) {
+			ASSERT(mod == 0);
+			return -EFSCORRUPTED;
+		}
+
+		error = xfs_rtallocate_extent(tp, rtx_in, 1, rtxlen_in,
+				&rtxlen_out, 0, 1, &rtx_out);
+		if (error)
+			return error;
+		if (rtx_out == NULLRTEXTNO) {
+			/*
+			 * We were promised the space!  In theory there aren't
+			 * any reserve lists that would prevent us from getting
+			 * the space.
+			 */
+			return -ENOSPC;
+		}
+		if (rtx_out != rtx_in) {
+			ASSERT(0);
+			xfs_bmap_mark_sick(ip, XFS_DATA_FORK);
+			return -EFSCORRUPTED;
+		}
+		mval->br_blockcount = rtxlen_out * mp->m_sb.sb_rextsize;
+	} else {
+		struct xfs_alloc_arg	args = {
+			.mp		= mp,
+			.tp		= tp,
+			.oinfo		= XFS_RMAP_OINFO_SKIP_UPDATE,
+			.resv		= XFS_AG_RESV_NONE,
+			.prod		= 1,
+			.datatype	= XFS_ALLOC_USERDATA,
+			.maxlen		= len,
+			.minlen		= 1,
+		};
+		args.pag = xfs_perag_get(mp, XFS_FSB_TO_AGNO(mp, fsbno));
+		error = xfs_alloc_vextent_exact_bno(&args, fsbno);
+		xfs_perag_put(args.pag);
+		if (error)
+			return error;
+		if (args.fsbno == NULLFSBLOCK) {
+			/*
+			 * We were promised the space, but failed to get it.
+			 * This could be because the space is reserved for
+			 * metadata expansion, or it could be because the AGFL
+			 * fixup grabbed the first block we wanted.  Either
+			 * way, if the transaction is dirty we must commit it
+			 * and tell the caller to try again.
+			 */
+			if (tp->t_flags & XFS_TRANS_DIRTY)
+				return -EAGAIN;
+			return -ENOSPC;
+		}
+		if (args.fsbno != fsbno) {
+			ASSERT(0);
+			xfs_bmap_mark_sick(ip, XFS_DATA_FORK);
+			return -EFSCORRUPTED;
+		}
+		mval->br_blockcount = args.len;
+	}
+
+	/* Map extent into file, update quota. */
+	mval->br_startblock = fsbno;
+	mval->br_startoff = startoff;
+	mval->br_state = XFS_EXT_UNWRITTEN;
+
+	trace_xfs_bmapi_freesp_done(ip, mval);
+
+	xfs_bmap_map_extent(tp, ip, XFS_DATA_FORK, mval);
+	if (isrt)
+		xfs_trans_mod_dquot_byino(tp, ip, XFS_TRANS_DQ_RTBCOUNT,
+				mval->br_blockcount);
+	else
+		xfs_trans_mod_dquot_byino(tp, ip, XFS_TRANS_DQ_BCOUNT,
+				mval->br_blockcount);
+
+	return 0;
+}

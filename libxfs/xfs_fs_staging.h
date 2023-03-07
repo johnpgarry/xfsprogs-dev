@@ -303,4 +303,19 @@ xfs_getfsrefs_advance(
 /* XXX stealing XFS_IOC_GETBIOSIZE */
 #define XFS_IOC_GETFSREFCOUNTS		_IOWR('X', 47, struct xfs_getfsrefs_head)
 
+/* map free space to file */
+
+struct xfs_map_freesp {
+	__s64	offset;		/* disk address to map, in bytes */
+	__s64	len;		/* length in bytes */
+	__u64	flags;		/* must be zero */
+	__u64	pad;		/* must be zero */
+};
+
+/*
+ * XFS_IOC_MAP_FREESP maps all the free physical space in the filesystem into
+ * the file at the same offsets.  This ioctl requires CAP_SYS_ADMIN.
+ */
+#define XFS_IOC_MAP_FREESP	_IOWR('X', 64, struct xfs_map_freesp)
+
 #endif /* __XFS_FS_STAGING_H__ */
