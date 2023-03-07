@@ -16,6 +16,7 @@
 #include "xfs_trans.h"
 #include "xfs_rtbitmap.h"
 #include "xfs_health.h"
+#include "xfs_errortag.h"
 
 /*
  * Realtime allocator bitmap functions shared with userspace.
@@ -1035,6 +1036,9 @@ xfs_rtfree_extent(
 
 	ASSERT(mp->m_rbmip->i_itemp != NULL);
 	ASSERT(xfs_isilocked(mp->m_rbmip, XFS_ILOCK_EXCL));
+
+	if (XFS_TEST_ERROR(false, mp, XFS_ERRTAG_FREE_EXTENT))
+		return -EIO;
 
 	error = xfs_rtcheck_alloc_range(&args, start, len);
 	if (error)
