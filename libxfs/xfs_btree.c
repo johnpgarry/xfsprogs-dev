@@ -28,6 +28,7 @@
 #include "xfile.h"
 #include "xfbtree.h"
 #include "xfs_btree_mem.h"
+#include "xfs_rtgroup.h"
 
 /*
  * Btree magic numbers.
@@ -473,6 +474,9 @@ xfs_btree_del_cursor(
 	       xfs_is_shutdown(cur->bc_mp) || error != 0);
 	if (unlikely(xfs_btree_is_staging(cur)))
 		kmem_free(cur->bc_ops);
+	if (xfs_btree_has_iroot(cur) &&
+	    !xfs_btree_has_xfile(cur) && cur->bc_ino.rtg)
+		xfs_rtgroup_put(cur->bc_ino.rtg);
 	if (!xfs_btree_has_long_ptrs(cur) &&
 	    !xfs_btree_has_xfile(cur) && cur->bc_ag.pag)
 		xfs_perag_put(cur->bc_ag.pag);

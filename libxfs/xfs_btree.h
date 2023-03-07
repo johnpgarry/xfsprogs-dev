@@ -12,6 +12,7 @@ struct xfs_mount;
 struct xfs_trans;
 struct xfs_ifork;
 struct xfs_perag;
+struct xfs_rtgroup;
 
 /*
  * Generic key, ptr and record wrapper structures.
@@ -263,6 +264,7 @@ struct xfs_btree_cur_ag {
 /* Btree-in-inode cursor information */
 struct xfs_btree_cur_ino {
 	struct xfs_inode		*ip;
+	struct xfs_rtgroup		*rtg;	/* if realtime metadata */
 	struct xbtree_ifakeroot		*ifake;	/* for staging cursor */
 	int				allocated;
 	short				forksize;
