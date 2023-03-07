@@ -16,6 +16,7 @@ enum xfrog_scrub_group {
 	XFROG_SCRUB_GROUP_ISCAN,	/* metadata requiring full inode scan */
 	XFROG_SCRUB_GROUP_SUMMARY,	/* summary metadata */
 	XFROG_SCRUB_GROUP_METAPATH,	/* metadata directory path */
+	XFROG_SCRUB_GROUP_RTGROUP,	/* per-rtgroup metadata */
 };
 
 /* Catalog of scrub types and names, indexed by XFS_SCRUB_TYPE_* */

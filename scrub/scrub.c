@@ -98,6 +98,9 @@ format_scrubv_descr(
 		return snprintf(buf, buflen, _("%s"), _(sc->descr));
 	case XFROG_SCRUB_GROUP_METAPATH:
 		return format_metapath_descr(buf, buflen, vhead);
+	case XFROG_SCRUB_GROUP_RTGROUP:
+		return snprintf(buf, buflen, _("rtgroup %u %s"),
+				vhead->svh_agno, _(sc->descr));
 	}
 	return -1;
 }
