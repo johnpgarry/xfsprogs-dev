@@ -309,6 +309,7 @@
 #define xfs_trans_dirty_buf		libxfs_trans_dirty_buf
 #define xfs_trans_get_buf		libxfs_trans_get_buf
 #define xfs_trans_get_buf_map		libxfs_trans_get_buf_map
+#define xfs_trans_getrtsb		libxfs_trans_getrtsb
 #define xfs_trans_getsb			libxfs_trans_getsb
 #define xfs_trans_ichgtime		libxfs_trans_ichgtime
 #define xfs_trans_ijoin			libxfs_trans_ijoin

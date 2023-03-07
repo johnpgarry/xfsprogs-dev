@@ -189,6 +189,7 @@ libxfs_buf_read(
 
 int libxfs_readbuf_verify(struct xfs_buf *bp, const struct xfs_buf_ops *ops);
 struct xfs_buf *libxfs_getsb(struct xfs_mount *mp);
+struct xfs_buf *libxfs_getrtsb(struct xfs_mount *mp);
 extern void	libxfs_bcache_purge(struct xfs_mount *mp);
 extern void	libxfs_bcache_free(void);
 extern void	libxfs_bcache_flush(struct xfs_mount *mp);

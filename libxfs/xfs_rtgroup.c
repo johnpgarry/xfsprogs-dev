@@ -342,3 +342,77 @@ const struct xfs_buf_ops xfs_rtsb_buf_ops = {
 	.verify_write = xfs_rtsb_write_verify,
 	.verify_struct = xfs_rtsb_verify,
 };
+
+/* Update a realtime superblock from the primary fs super */
+void
+xfs_rtgroup_update_super(
+	struct xfs_buf		*rtsb_bp,
+	const struct xfs_buf	*sb_bp)
+{
+	const struct xfs_dsb	*dsb = sb_bp->b_addr;
+	struct xfs_rtsb		*rsb = rtsb_bp->b_addr;
+	const uuid_t		*meta_uuid;
+
+	rsb->rsb_magicnum = cpu_to_be32(XFS_RTSB_MAGIC);
+	rsb->rsb_blocksize = dsb->sb_blocksize;
+	rsb->rsb_rblocks = dsb->sb_rblocks;
+
+	rsb->rsb_rextents = dsb->sb_rextents;
+	rsb->rsb_lsn = 0;
+
+	memcpy(&rsb->rsb_uuid, &dsb->sb_uuid, sizeof(rsb->rsb_uuid));
+
+	rsb->rsb_rgcount = dsb->sb_rgcount;
+	memcpy(&rsb->rsb_fname, &dsb->sb_fname, XFSLABEL_MAX);
+
+	rsb->rsb_rextsize = dsb->sb_rextsize;
+	rsb->rsb_rbmblocks = dsb->sb_rbmblocks;
+
+	rsb->rsb_rgblocks = dsb->sb_rgblocks;
+	rsb->rsb_blocklog = dsb->sb_blocklog;
+	rsb->rsb_sectlog = dsb->sb_sectlog;
+	rsb->rsb_rextslog = dsb->sb_rextslog;
+	rsb->rsb_pad = 0;
+	rsb->rsb_pad2 = 0;
+
+	/*
+	 * The metadata uuid is the fs uuid if the metauuid feature is not
+	 * enabled.
+	 */
+	if (dsb->sb_features_incompat &
+				cpu_to_be32(XFS_SB_FEAT_INCOMPAT_META_UUID))
+		meta_uuid = &dsb->sb_meta_uuid;
+	else
+		meta_uuid = &dsb->sb_uuid;
+	memcpy(&rsb->rsb_meta_uuid, meta_uuid, sizeof(rsb->rsb_meta_uuid));
+}
+
+/*
+ * Update the primary realtime superblock from a filesystem superblock and
+ * log it to the given transaction.
+ */
+void
+xfs_rtgroup_log_super(
+	struct xfs_trans	*tp,
+	const struct xfs_buf	*sb_bp)
+{
+	struct xfs_buf		*rtsb_bp;
+
+	if (!xfs_has_rtgroups(tp->t_mountp))
+		return;
+
+	rtsb_bp = xfs_trans_getrtsb(tp);
+	if (!rtsb_bp) {
+		/*
+		 * It's possible for the rtgroups feature to be enabled but
+		 * there is no incore rt superblock buffer if the rt geometry
+		 * was specified at mkfs time but the rt section has not yet
+		 * been attached.  In this case, rblocks must be zero.
+		 */
+		ASSERT(tp->t_mountp->m_sb.sb_rblocks == 0);
+		return;
+	}
+
+	xfs_rtgroup_update_super(rtsb_bp, sb_bp);
+	xfs_trans_ordered_buf(tp, rtsb_bp);
+}

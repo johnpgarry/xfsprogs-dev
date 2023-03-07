@@ -164,6 +164,23 @@ libxfs_getsb(
 	return bp;
 }
 
+struct xfs_buf *
+libxfs_getrtsb(
+	struct xfs_mount	*mp)
+{
+	struct xfs_buf		*bp;
+	int			error;
+
+	if (!mp->m_rtdev_targp->bt_bdev)
+		return NULL;
+
+	error = libxfs_buf_read_uncached(mp->m_rtdev_targp, XFS_RTSB_DADDR,
+			XFS_FSB_TO_BB(mp, 1), 0, &bp, &xfs_rtsb_buf_ops);
+	if (error)
+		return NULL;
+	return bp;
+}
+
 struct kmem_cache			*xfs_buf_cache;
 
 static struct cache_mru		xfs_buf_freelist =
