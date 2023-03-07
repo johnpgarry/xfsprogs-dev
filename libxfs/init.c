@@ -973,6 +973,10 @@ libxfs_rtmount_destroy(xfs_mount_t *mp)
 	xfs_rgnumber_t		rgno;
 
 	for_each_rtgroup(mp, rgno, rtg) {
+		if (rtg->rtg_refcountip)
+			libxfs_imeta_irele(rtg->rtg_refcountip);
+		rtg->rtg_refcountip = NULL;
+
 		if (rtg->rtg_rmapip)
 			libxfs_imeta_irele(rtg->rtg_rmapip);
 		rtg->rtg_rmapip = NULL;

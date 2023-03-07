@@ -25,6 +25,9 @@ struct xfs_rtgroup {
 	/* reverse mapping btree inode */
 	struct xfs_inode	*rtg_rmapip;
 
+	/* refcount btree inode */
+	struct xfs_inode	*rtg_refcountip;
+
 	/* Number of blocks in this group */
 	xfs_rgblock_t		rtg_blockcount;
 

@@ -269,6 +269,11 @@ xfs_iformat_data_fork(
 				return -EFSCORRUPTED;
 			}
 			return xfs_iformat_rtrmap(ip, dip);
+		case XFS_DINODE_FMT_REFCOUNT:
+			if (!xfs_has_rtreflink(ip->i_mount))
+				return -EFSCORRUPTED;
+			ASSERT(0); /* to be implemented later */
+			return -EFSCORRUPTED;
 		default:
 			xfs_inode_verifier_error(ip, -EFSCORRUPTED, __func__,
 					dip, sizeof(*dip), __this_address);
@@ -662,6 +667,10 @@ xfs_iflush_fork(
 		ASSERT(whichfork == XFS_DATA_FORK);
 		if (iip->ili_fields & brootflag[whichfork])
 			xfs_iflush_rtrmap(ip, dip);
+		break;
+
+	case XFS_DINODE_FMT_REFCOUNT:
+		ASSERT(0); /* to be implemented later */
 		break;
 
 	default:

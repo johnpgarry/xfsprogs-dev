@@ -5103,9 +5103,13 @@ xfs_bmap_del_extent_real(
 		 * the same order of operations as the data device, which is:
 		 * Remove the file mapping, remove the reverse mapping, and
 		 * then free the blocks.  This means that we must delay the
-		 * freeing until after we've scheduled the rmap update.
+		 * freeing until after we've scheduled the rmap update.  If
+		 * realtime reflink is enabled, use deferred refcount intent
+		 * items to decide what to do with the extent, just like we do
+		 * for the data device.
 		 */
-		if (want_free && !xfs_has_rtrmapbt(mp)) {
+		if (want_free && !xfs_has_rtrmapbt(mp) &&
+				 !xfs_has_rtreflink(mp)) {
 			error = xfs_rtfree_blocks(tp, del->br_startblock,
 					del->br_blockcount);
 			if (error)
