@@ -88,11 +88,8 @@ xfs_extent_free_defer_add(
 	struct xfs_mount		*mp = tp->t_mountp;
 
 	if (xfs_efi_is_realtime(xefi)) {
-		xfs_rgnumber_t		rgno;
-
-		rgno = xfs_rtb_to_rgno(mp, xefi->xefi_startblock);
-		xefi->xefi_rtg = xfs_rtgroup_get(mp, rgno);
-
+		xefi->xefi_rtg = xfs_rtgroup_intent_get(mp,
+						xefi->xefi_startblock);
 		*dfpp = xfs_defer_add(tp, &xefi->xefi_list,
 				&xfs_rtextent_free_defer_type);
 		return;
@@ -204,7 +201,7 @@ xfs_rtextent_free_cancel_item(
 {
 	struct xfs_extent_free_item	*xefi = xefi_entry(item);
 
-	xfs_rtgroup_put(xefi->xefi_rtg);
+	xfs_rtgroup_intent_put(xefi->xefi_rtg);
 	kmem_cache_free(xfs_extfree_item_cache, xefi);
 }
 
@@ -338,13 +335,12 @@ xfs_rmap_defer_add(
 	 * section updates.
 	 */
 	if (ri->ri_realtime) {
-		xfs_rgnumber_t	rgno;
-
-		rgno = xfs_rtb_to_rgno(mp, ri->ri_bmap.br_startblock);
-		ri->ri_rtg = xfs_rtgroup_get(mp, rgno);
+		ri->ri_rtg = xfs_rtgroup_intent_get(mp,
+						ri->ri_bmap.br_startblock);
 		xfs_defer_add(tp, &ri->ri_list, &xfs_rtrmap_update_defer_type);
 	} else {
-		ri->ri_pag = xfs_perag_intent_get(mp, ri->ri_bmap.br_startblock);
+		ri->ri_pag = xfs_perag_intent_get(mp,
+						ri->ri_bmap.br_startblock);
 		xfs_defer_add(tp, &ri->ri_list, &xfs_rmap_update_defer_type);
 	}
 }
@@ -445,7 +441,7 @@ xfs_rtrmap_update_cancel_item(
 {
 	struct xfs_rmap_intent		*ri = ri_entry(item);
 
-	xfs_rtgroup_put(ri->ri_rtg);
+	xfs_rtgroup_intent_put(ri->ri_rtg);
 	kmem_cache_free(xfs_rmap_intent_cache, ri);
 }
 
@@ -656,10 +652,8 @@ xfs_bmap_update_get_group(
 {
 	if (xfs_ifork_is_realtime(bi->bi_owner, bi->bi_whichfork)) {
 		if (xfs_has_rtgroups(mp)) {
-			xfs_rgnumber_t	rgno;
-
-			rgno = xfs_rtb_to_rgno(mp, bi->bi_bmap.br_startblock);
-			bi->bi_rtg = xfs_rtgroup_get(mp, rgno);
+			bi->bi_rtg = xfs_rtgroup_intent_get(mp,
+						bi->bi_bmap.br_startblock);
 		} else {
 			bi->bi_rtg = NULL;
 		}
@@ -695,8 +689,9 @@ xfs_bmap_update_put_group(
 	struct xfs_bmap_intent	*bi)
 {
 	if (xfs_ifork_is_realtime(bi->bi_owner, bi->bi_whichfork)) {
-		if (xfs_has_rtgroups(bi->bi_owner->i_mount))
-			xfs_rtgroup_put(bi->bi_rtg);
+		if (xfs_has_rtgroups(bi->bi_owner->i_mount)) {
+			xfs_rtgroup_intent_put(bi->bi_rtg);
+		}
 		return;
 	}
 

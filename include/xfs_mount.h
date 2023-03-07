@@ -333,6 +333,18 @@ struct xfs_defer_drain { /* empty */ };
 static inline void xfs_perag_intent_hold(struct xfs_perag *pag) {}
 static inline void xfs_perag_intent_rele(struct xfs_perag *pag) {}
 
+struct xfs_rtgroup;
+
+#define xfs_rtgroup_intent_get(mp, rgno) \
+	xfs_rtgroup_get((mp), xfs_rtb_to_rgno((mp), (rgno)))
+#define xfs_rtgroup_intent_put(rtg)		xfs_rtgroup_put(rtg)
+
+static inline void xfs_rtgroup_intent_hold(struct xfs_rtgroup *rtg) { }
+static inline void xfs_rtgroup_intent_rele(struct xfs_rtgroup *rtg) { }
+
+#define xfs_drain_free(dr)		((void)0)
+#define xfs_drain_init(dr)		((void)0)
+
 static inline void libxfs_buftarg_drain(struct xfs_buftarg *btp)
 {
 	cache_purge(btp->bcache);
