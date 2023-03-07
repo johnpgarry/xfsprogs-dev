@@ -7,6 +7,31 @@
 #ifndef __XFS_INODE_H__
 #define __XFS_INODE_H__
 
+/*
+ * Borrow the kernel's uid/gid types.  These are used by xfs_inode_util.h, so
+ * they must come first in the header file.
+ */
+
+typedef struct {
+	uid_t val;
+} kuid_t;
+
+typedef struct {
+	gid_t val;
+} kgid_t;
+
+static inline kuid_t make_kuid(uid_t uid)
+{
+	kuid_t	v = { .val = uid };
+	return v;
+}
+
+static inline kgid_t make_kgid(gid_t gid)
+{
+	kgid_t	v = { .val = gid };
+	return v;
+}
+
 /* These match kernel side includes */
 #include "xfs_inode_buf.h"
 #include "xfs_inode_fork.h"
@@ -34,8 +59,8 @@ static inline bool IS_I_VERSION(const struct inode *inode) { return false; }
  */
 struct inode {
 	mode_t			i_mode;
-	uint32_t		i_uid;
-	uint32_t		i_gid;
+	kuid_t			i_uid;
+	kgid_t			i_gid;
 	uint32_t		i_nlink;
 	xfs_dev_t		i_rdev;	 /* This actually holds xfs_dev_t */
 	unsigned int		i_count;
@@ -50,19 +75,19 @@ struct inode {
 
 static inline uint32_t i_uid_read(struct inode *inode)
 {
-	return inode->i_uid;
+	return inode->i_uid.val;
 }
 static inline uint32_t i_gid_read(struct inode *inode)
 {
-	return inode->i_gid;
+	return inode->i_gid.val;
 }
 static inline void i_uid_write(struct inode *inode, uint32_t uid)
 {
-	inode->i_uid = uid;
+	inode->i_uid.val = uid;
 }
 static inline void i_gid_write(struct inode *inode, uint32_t gid)
 {
-	inode->i_gid = gid;
+	inode->i_gid.val = gid;
 }
 
 static inline void ihold(struct inode *inode)

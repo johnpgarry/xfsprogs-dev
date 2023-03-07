@@ -82,17 +82,13 @@ libxfs_bumplink(
  * caller locked exclusively.
  */
 static int
-libxfs_init_new_inode(
+libxfs_icreate(
 	struct xfs_trans	*tp,
-	struct xfs_inode	*pip,
 	xfs_ino_t		ino,
-	umode_t			mode,
-	xfs_nlink_t		nlink,
-	dev_t			rdev,
-	struct cred		*cr,
-	struct fsxattr		*fsx,
+	const struct xfs_icreate_args *args,
 	struct xfs_inode	**ipp)
 {
+	struct xfs_inode	*pip = args->pip;
 	struct xfs_inode	*ip;
 	unsigned int		flags;
 	int			error;
@@ -102,48 +98,41 @@ libxfs_init_new_inode(
 		return error;
 	ASSERT(ip != NULL);
 
-	VFS_I(ip)->i_mode = mode;
-	set_nlink(VFS_I(ip), nlink);
-	i_uid_write(VFS_I(ip), cr->cr_uid);
-	i_gid_write(VFS_I(ip), cr->cr_gid);
-	ip->i_projid = pip ? 0 : fsx->fsx_projid;
+	VFS_I(ip)->i_mode = args->mode;
+	set_nlink(VFS_I(ip), args->nlink);
+	VFS_I(ip)->i_uid = args->uid;
+	ip->i_projid = args->prid;
 	xfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_CHG | XFS_ICHGTIME_MOD);
 
 	if (pip && (VFS_I(pip)->i_mode & S_ISGID)) {
-		if (!(cr->cr_flags & CRED_FORCE_GID))
+		if (!(args->flags & XFS_ICREATE_ARGS_FORCE_GID))
 			VFS_I(ip)->i_gid = VFS_I(pip)->i_gid;
-		if ((VFS_I(pip)->i_mode & S_ISGID) && (mode & S_IFMT) == S_IFDIR)
+		if ((VFS_I(pip)->i_mode & S_ISGID) && S_ISDIR(args->mode))
 			VFS_I(ip)->i_mode |= S_ISGID;
-	}
+	} else
+		VFS_I(ip)->i_gid = args->gid;
 
 	ip->i_disk_size = 0;
 	ip->i_df.if_nextents = 0;
 	ASSERT(ip->i_nblocks == 0);
-	ip->i_extsize = pip ? 0 : fsx->fsx_extsize;
-	ip->i_diflags = pip ? 0 : xfs_flags2diflags(ip, fsx->fsx_xflags);
-
+	ip->i_extsize = 0;
+	ip->i_diflags = 0;
 	if (xfs_has_v3inodes(ip->i_mount)) {
 		VFS_I(ip)->i_version = 1;
 		ip->i_diflags2 = ip->i_mount->m_ino_geo.new_diflags2;
-		if (!pip)
-			ip->i_diflags2 = xfs_flags2diflags2(ip,
-							fsx->fsx_xflags);
-		ip->i_crtime = VFS_I(ip)->__i_mtime; /* struct copy */
-		ip->i_cowextsize = pip ? 0 : fsx->fsx_cowextsize;
+		ip->i_crtime = VFS_I(ip)->__i_mtime;
+		ip->i_cowextsize = 0;
 	}
 
 	flags = XFS_ILOG_CORE;
-	switch (mode & S_IFMT) {
+	switch (args->mode & S_IFMT) {
 	case S_IFIFO:
 	case S_IFSOCK:
-		/* doesn't make sense to set an rdev for these */
-		rdev = 0;
-		/* FALLTHROUGH */
 	case S_IFCHR:
 	case S_IFBLK:
 		ip->i_df.if_format = XFS_DINODE_FMT_DEV;
 		flags |= XFS_ILOG_DEV;
-		VFS_I(ip)->i_rdev = rdev;
+		VFS_I(ip)->i_rdev = args->rdev;
 		break;
 	case S_IFREG:
 	case S_IFDIR:
@@ -267,9 +256,24 @@ libxfs_dir_ialloc(
 	struct fsxattr		*fsx,
 	struct xfs_inode	**ipp)
 {
+	struct xfs_icreate_args	args = {
+		.pip		= dp,
+		.uid		= make_kuid(cr->cr_uid),
+		.gid		= make_kgid(cr->cr_gid),
+		.nlink		= nlink,
+		.rdev		= rdev,
+		.mode		= mode,
+	};
+	struct xfs_inode	*ip;
 	xfs_ino_t		parent_ino = dp ? dp->i_ino : 0;
 	xfs_ino_t		ino;
 	int			error;
+
+	if (cr->cr_flags & CRED_FORCE_GID)
+		args.flags |= XFS_ICREATE_ARGS_FORCE_GID;
+
+	if (dp && xfs_has_parent(dp->i_mount))
+		args.flags |= XFS_ICREATE_ARGS_INIT_XATTRS;
 
 	/*
 	 * Call the space management code to pick the on-disk inode to be
@@ -279,8 +283,22 @@ libxfs_dir_ialloc(
 	if (error)
 		return error;
 
-	return libxfs_init_new_inode(*tpp, dp, ino, mode, nlink, rdev, cr,
-				fsx, ipp);
+	error = libxfs_icreate(*tpp, ino, &args, ipp);
+	if (error || dp)
+		return error;
+
+	/* If there is no parent dir, initialize the file from fsxattr data. */
+	ip = *ipp;
+	ip->i_projid = fsx->fsx_projid;
+	ip->i_extsize = fsx->fsx_extsize;
+	ip->i_diflags = xfs_flags2diflags(ip, fsx->fsx_xflags);
+
+	if (xfs_has_v3inodes(ip->i_mount)) {
+		ip->i_diflags2 = xfs_flags2diflags2(ip, fsx->fsx_xflags);
+		ip->i_cowextsize = fsx->fsx_cowextsize;
+	}
+	xfs_trans_log_inode(*tpp, ip, XFS_ILOG_CORE);
+	return 0;
 }
 
 /*
