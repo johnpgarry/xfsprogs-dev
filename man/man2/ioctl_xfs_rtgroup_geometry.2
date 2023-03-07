@@ -1,0 +1,99 @@
+.\" Copyright (c) 2022-2024 Oracle.  All rights reserved.
+.\"
+.\" %%%LICENSE_START(GPLv2+_DOC_FULL)
+.\" SPDX-License-Identifier: GPL-2.0-or-later
+.\" %%%LICENSE_END
+.TH IOCTL-XFS-RTGROUP-GEOMETRY 2 2022-08-18 "XFS"
+.SH NAME
+ioctl_xfs_rtgroup_geometry \- query XFS realtime group geometry information
+.SH SYNOPSIS
+.br
+.B #include <xfs/xfs_fs.h>
+.br
+.B #include <xfs/xfs_fs_staging.h>
+.PP
+.BI "int ioctl(int " fd ", XFS_IOC_RTGROUP_GEOMETRY, struct xfs_rtgroup_geometry *" arg );
+.SH DESCRIPTION
+This XFS ioctl retrieves the geometry information for a given realtime group.
+The geometry information is conveyed in a structure of the following form:
+.PP
+.in +4n
+.nf
+struct xfs_rtgroup_geometry {
+	__u32  rg_number;
+	__u32  rg_length;
+	__u32  rg_sick;
+	__u32  rg_checked;
+	__u32  rg_flags;
+	__u32  rg_pad;
+	__u64  rg_reserved[13];
+};
+.fi
+.in
+.TP
+.I rg_number
+The caller must set this field to the index of the realtime group that the
+caller wishes to learn about.
+.TP
+.I rg_length
+The length of the realtime group is returned in this field, in units of
+filesystem blocks.
+.I rg_flags
+The caller can set this field to change the operational behavior of the ioctl.
+Currently no flags are defined, so this field must be zero.
+.TP
+.IR rg_reserved " and " rg_pad
+All reserved fields will be set to zero on return.
+.PP
+The fields
+.IR rg_sick " and " rg_checked
+indicate the relative health of various realtime group metadata:
+.IP \[bu] 2
+If a given sick flag is set in
+.IR rg_sick ,
+then that piece of metadata has been observed to be damaged.
+The same bit will be set in
+.IR rg_checked .
+.IP \[bu]
+If a given sick flag is set in
+.I rg_checked
+and is not set in
+.IR rg_sick ,
+then that piece of metadata has been checked and is not faulty.
+.IP \[bu]
+If a given sick flag is not set in
+.IR rg_checked ,
+then no conclusion can be made.
+.PP
+The following flags apply to these fields:
+.RS 0.4i
+.TP
+.B XFS_RTGROUP_GEOM_SICK_SUPER
+Realtime group superblock.
+.TP
+.B XFS_RTGROUP_GEOM_SICK_BITMAP
+Realtime bitmap for this group.
+.RE
+.SH RETURN VALUE
+On error, \-1 is returned, and
+.I errno
+is set to indicate the error.
+.PP
+.SH ERRORS
+Error codes can be one of, but are not limited to, the following:
+.TP
+.B EFSBADCRC
+Metadata checksum validation failed while performing the query.
+.TP
+.B EFSCORRUPTED
+Metadata corruption was encountered while performing the query.
+.TP
+.B EINVAL
+The specified realtime group number is not valid for this filesystem.
+.TP
+.B EIO
+An I/O error was encountered while performing the query.
+.SH CONFORMING TO
+This API is specific to XFS filesystem on the Linux kernel.
+.SH SEE ALSO
+.BR ioctl (2)

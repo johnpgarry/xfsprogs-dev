@@ -852,6 +852,7 @@ struct xfs_scrub_metadata {
 /*	XFS_IOC_SCRUBV_METADATA -- staging 60	   */
 #define XFS_IOC_AG_GEOMETRY	_IOWR('X', 61, struct xfs_ag_geometry)
 /*	XFS_IOC_GETPARENTS ---- staging 62         */
+/*	XFS_IOC_RTGROUP_GEOMETRY - staging 63	   */
 
 /*
  * ioctl commands that replace IRIX syssgi()'s
