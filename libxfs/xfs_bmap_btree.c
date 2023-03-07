@@ -38,11 +38,11 @@ xfs_bmbt_init_block(
 		ops = &xfs_bmbt_ops;
 
 	if (bp)
-		xfs_btree_init_block(ip->i_mount, bp, ops, level, numrecs,
+		xfs_btree_init_buf(ip->i_mount, bp, ops, level, numrecs,
 				ip->i_ino);
 	else
-		xfs_btree_init_block_int(ip->i_mount, buf, ops,
-				XFS_BUF_DADDR_NULL, level, numrecs, ip->i_ino);
+		xfs_btree_init_block(ip->i_mount, buf, ops, XFS_BUF_DADDR_NULL,
+				level, numrecs, ip->i_ino);
 }
 
 /*
