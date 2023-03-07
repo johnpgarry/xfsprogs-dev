@@ -275,6 +275,7 @@ xfs_rtrmap_check_irec(
 	bool				is_unwritten;
 	bool				is_bmbt;
 	bool				is_attr;
+	bool				is_cow;
 
 	if (irec->rm_blockcount == 0)
 		return __this_address;
@@ -285,6 +286,12 @@ xfs_rtrmap_check_irec(
 		if (irec->rm_blockcount != mp->m_sb.sb_rextsize)
 			return __this_address;
 		if (irec->rm_offset != 0)
+			return __this_address;
+	} else if (irec->rm_owner == XFS_RMAP_OWN_COW) {
+		if (!xfs_has_rtreflink(mp))
+			return __this_address;
+		if (!xfs_verify_rgbext(rtg, irec->rm_startblock,
+					    irec->rm_blockcount))
 			return __this_address;
 	} else {
 		if (!xfs_verify_rgbext(rtg, irec->rm_startblock,
@@ -302,8 +309,10 @@ xfs_rtrmap_check_irec(
 	is_bmbt = irec->rm_flags & XFS_RMAP_BMBT_BLOCK;
 	is_attr = irec->rm_flags & XFS_RMAP_ATTR_FORK;
 	is_unwritten = irec->rm_flags & XFS_RMAP_UNWRITTEN;
+	is_cow = xfs_has_rtreflink(mp) &&
+		 irec->rm_owner == XFS_RMAP_OWN_COW;
 
-	if (!is_inode && irec->rm_owner != XFS_RMAP_OWN_FS)
+	if (!is_inode && !is_cow && irec->rm_owner != XFS_RMAP_OWN_FS)
 		return __this_address;
 
 	if (!is_inode && irec->rm_offset != 0)
@@ -313,6 +322,9 @@ xfs_rtrmap_check_irec(
 		return __this_address;
 
 	if (is_unwritten && !is_inode)
+		return __this_address;
+
+	if (is_unwritten && is_cow)
 		return __this_address;
 
 	/* Check for a valid fork offset, if applicable. */
