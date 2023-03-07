@@ -240,6 +240,9 @@ typedef struct xfs_fsop_resblks {
 #define XFS_FSOP_GEOM_FLAGS_INOBTCNT	(1 << 22) /* inobt btree counter */
 #define XFS_FSOP_GEOM_FLAGS_NREXT64	(1 << 23) /* large extent counters */
 
+/* atomic file extent swap available to userspace */
+#define XFS_FSOP_GEOM_FLAGS_ATOMIC_SWAP	(1U << 31)
+
 /*
  * Minimum and maximum sizes need for growth checks.
  *

@@ -211,6 +211,9 @@ Filesystem stores reverse mappings of blocks to owners.
 .TP
 .B XFS_FSOP_GEOM_FLAGS_REFLINK
 Filesystem supports sharing blocks between files.
+.TP
+.B XFS_FSOP_GEOM_FLAGS_ATOMICSWAP
+Filesystem can exchange file contents atomically via XFS_IOC_EXCHANGE_RANGE.
 .RE
 .SH XFS METADATA HEALTH REPORTING
 .PP
