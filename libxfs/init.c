@@ -479,6 +479,62 @@ libxfs_buftarg_alloc(
 	return btp;
 }
 
+/* Allocate a buffer cache target for a memory-backed file. */
+int
+xfile_alloc_buftarg(
+	struct xfs_mount	*mp,
+	const char		*descr,
+	struct xfs_buftarg	**btpp)
+{
+	struct xfs_buftarg	*btp;
+	struct xfile		*xfile;
+	int			error;
+
+	error = xfile_create(descr, &xfile);
+	if (error)
+		return error;
+
+	btp = malloc(sizeof(*btp));
+	if (!btp) {
+		error = -ENOMEM;
+		goto out_xfile;
+	}
+
+	btp->bt_mount = mp;
+	btp->bt_bdev = 0;
+	btp->bt_bdev_fd = -1;
+	btp->bt_xfile = xfile;
+	btp->flags = XFS_BUFTARG_XFILE;
+	btp->writes_left = 0;
+	pthread_mutex_init(&btp->lock, NULL);
+
+	/*
+	 * Keep the bucket count small because the only anticipated caller is
+	 * per-AG in-memory btrees, for which we don't need to scale to handle
+	 * an entire filesystem.
+	 */
+	btp->bcache = cache_init(0, 63, &libxfs_bcache_operations);
+
+	*btpp = btp;
+	return 0;
+out_xfile:
+	xfile_destroy(xfile);
+	return error;
+}
+
+/* Free a buffer cache target for a memory-backed file. */
+void
+xfile_free_buftarg(
+	struct xfs_buftarg	*btp)
+{
+	struct xfile		*xfile = btp->bt_xfile;
+
+	ASSERT(btp->flags & XFS_BUFTARG_XFILE);
+
+	libxfs_buftarg_free(btp);
+	xfile_destroy(xfile);
+}
+
 enum libxfs_write_failure_nums {
 	WF_DATA = 0,
 	WF_LOG,
@@ -882,7 +938,7 @@ libxfs_flush_mount(
 	return error;
 }
 
-static void
+void
 libxfs_buftarg_free(
 	struct xfs_buftarg	*btp)
 {

@@ -11,8 +11,14 @@
 /* xfile-backed in-memory btrees */
 
 struct xfbtree {
-	/* buffer cache target for this in-memory btree */
+	/* buffer cache target for the xfile backing this in-memory btree */
 	struct xfs_buftarg		*target;
+
+	/* Bitmap of free space from pos to used */
+	struct bitmap			*freespace;
+
+	/* Highest xfile offset that has been written to. */
+	xfileoff_t			highest_offset;
 
 	/* Owner of this btree. */
 	unsigned long long		owner;
@@ -20,7 +26,15 @@ struct xfbtree {
 	/* Btree header */
 	union xfs_btree_ptr		root;
 	unsigned int			nlevels;
+
+	/* Minimum and maximum records per block. */
+	unsigned int			maxrecs[2];
+	unsigned int			minrecs[2];
 };
+
+void xfbtree_destroy(struct xfbtree *xfbt);
+int xfbtree_trans_commit(struct xfbtree *xfbt, struct xfs_trans *tp);
+void xfbtree_trans_cancel(struct xfbtree *xfbt, struct xfs_trans *tp);
 
 #endif /* CONFIG_XFS_BTREE_IN_XFILE */
 

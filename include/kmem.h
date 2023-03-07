@@ -26,7 +26,7 @@ typedef unsigned int __bitwise gfp_t;
 #define __GFP_NOFAIL	((__force gfp_t)0)
 #define __GFP_NOLOCKDEP	((__force gfp_t)0)
 
-#define __GFP_ZERO	(__force gfp_t)1
+#define __GFP_ZERO	((__force gfp_t)1)
 
 struct kmem_cache * kmem_cache_create(const char *name, unsigned int size,
 		unsigned int align, unsigned int slab_flags,
@@ -64,6 +64,8 @@ static inline void *kmalloc(size_t size, gfp_t flags)
 {
 	return kvmalloc(size, flags);
 }
+
+#define kzalloc(size, gfp)	kvmalloc((size), (gfp) | __GFP_ZERO)
 
 static inline void kfree(const void *ptr)
 {

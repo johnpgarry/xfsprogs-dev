@@ -281,3 +281,19 @@ xfile_dump(
 
 	return execvp("od", argv);
 }
+
+/* Ensure that there is storage backing the given range. */
+int
+xfile_prealloc(
+	struct xfile	*xf,
+	loff_t		pos,
+	uint64_t	count)
+{
+	int		error;
+
+	count = min(count, xfile_maxbytes(xf) - pos);
+	error = fallocate(xf->fd, 0, pos, count);
+	if (error)
+		return -errno;
+	return 0;
+}

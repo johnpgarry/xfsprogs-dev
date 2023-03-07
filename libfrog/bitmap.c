@@ -233,10 +233,9 @@ bitmap_set(
 	return res;
 }
 
-#if 0	/* Unused, provided for completeness. */
 /* Clear a region of bits. */
-int
-bitmap_clear(
+static int
+__bitmap_clear(
 	struct bitmap		*bmap,
 	uint64_t		start,
 	uint64_t		len)
@@ -251,8 +250,8 @@ bitmap_clear(
 	uint64_t		new_length;
 	struct avl64node	*node;
 	int			stat;
+	int			ret = 0;
 
-	pthread_mutex_lock(&bmap->bt_lock);
 	/* Find any existing nodes over that range. */
 	avl64_findranges(bmap->bt_tree, start, start + len, &firstn, &lastn);
 
@@ -312,10 +311,24 @@ bitmap_clear(
 	}
 
 out:
-	pthread_mutex_unlock(&bmap->bt_lock);
 	return ret;
 }
-#endif
+
+/* Clear a region of bits. */
+int
+bitmap_clear(
+	struct bitmap		*bmap,
+	uint64_t		start,
+	uint64_t		length)
+{
+	int			res;
+
+	pthread_mutex_lock(&bmap->bt_lock);
+	res = __bitmap_clear(bmap, start, length);
+	pthread_mutex_unlock(&bmap->bt_lock);
+
+	return res;
+}
 
 /* Iterate the set regions of this bitmap. */
 int
@@ -438,3 +451,42 @@ bitmap_dump(
 	printf("BITMAP DUMP DONE\n");
 }
 #endif
+
+/*
+ * Find the first set bit in this bitmap, clear it, and return the index of
+ * that bit in @valp.  Returns -ENODATA if no bits were set, or the usual
+ * negative errno.
+ */
+int
+bitmap_take_first_set(
+	struct bitmap		*bmap,
+	uint64_t		start,
+	uint64_t		last,
+	uint64_t		*valp)
+{
+	struct avl64node	*firstn;
+	struct avl64node	*lastn;
+	struct bitmap_node	*ext;
+	uint64_t		val;
+	int			error;
+
+	pthread_mutex_lock(&bmap->bt_lock);
+
+	avl64_findranges(bmap->bt_tree, start, last + 1, &firstn, &lastn);
+
+	if (firstn == NULL && lastn == NULL) {
+		error = -ENODATA;
+		goto out;
+	}
+
+	ext = container_of(firstn, struct bitmap_node, btn_node);
+	val = ext->btn_start;
+	error = __bitmap_clear(bmap, val, 1);
+	if (error)
+		goto out;
+
+	*valp = val;
+out:
+	pthread_mutex_unlock(&bmap->bt_lock);
+	return error;
+}
