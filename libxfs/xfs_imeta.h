@@ -6,10 +6,23 @@
 #ifndef __XFS_IMETA_H__
 #define __XFS_IMETA_H__
 
+/* How deep can we nest metadata dirs? */
+#define XFS_IMETA_MAX_DEPTH	64
+
+/* Form an imeta path from a simple array of strings. */
+#define XFS_IMETA_DEFINE_PATH(name, path) \
+const struct xfs_imeta_path name = { \
+	.im_path = (path), \
+	.im_depth = ARRAY_SIZE(path), \
+}
+
 /* Key for looking up metadata inodes. */
 struct xfs_imeta_path {
-	/* Temporary: integer to keep the static imeta definitions unique */
-	int		bogus;
+	/* Array of string pointers. */
+	const unsigned char	**im_path;
+
+	/* Number of strings in path. */
+	uint8_t			im_depth;
 };
 
 /* Cleanup widget for metadata inode creation and deletion. */
@@ -24,6 +37,16 @@ struct xfs_imeta_update {
 
 	unsigned int		ip_locked:1;
 };
+
+/* Grab the last path component, mostly for tracing. */
+static inline const unsigned char *
+xfs_imeta_lastpath(
+	const struct xfs_imeta_update	*upd)
+{
+	if (upd->path && upd->path->im_path && upd->path->im_depth > 0)
+		return upd->path->im_path[upd->path->im_depth - 1];
+	return "?";
+}
 
 /* Lookup keys for static metadata inodes. */
 extern const struct xfs_imeta_path XFS_IMETA_RTBITMAP;
