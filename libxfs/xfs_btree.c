@@ -487,6 +487,8 @@ xfs_btree_del_cursor(
 	if (xfs_btree_has_xfile(cur)) {
 		if (cur->bc_mem.pag)
 			xfs_perag_put(cur->bc_mem.pag);
+		if (cur->bc_mem.rtg)
+			xfs_rtgroup_put(cur->bc_mem.rtg);
 	}
 	kmem_cache_free(cur->bc_cache, cur);
 }

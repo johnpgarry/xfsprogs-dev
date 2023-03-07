@@ -205,4 +205,12 @@ int xfs_rtrmapbt_create(struct xfs_imeta_update *upd, struct xfs_inode **ipp);
 unsigned long long xfs_rtrmapbt_calc_size(struct xfs_mount *mp,
 		unsigned long long len);
 
+#ifdef CONFIG_XFS_BTREE_IN_XFILE
+struct xfbtree;
+struct xfs_btree_cur *xfs_rtrmapbt_mem_cursor(struct xfs_rtgroup *rtg,
+		struct xfs_trans *tp, struct xfbtree *xfbtree);
+int xfs_rtrmapbt_mem_init(struct xfs_mount *mp, xfs_rgnumber_t rgno,
+		struct xfs_buftarg *target, struct xfbtree *xfbtree);
+#endif /* CONFIG_XFS_BTREE_IN_XFILE */
+
 #endif	/* __XFS_RTRMAP_BTREE_H__ */
