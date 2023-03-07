@@ -360,4 +360,11 @@
 
 #define trace_xlog_intent_recovery_failed(...)	((void) 0)
 
+#define trace_xfs_iunlink_update_bucket(...)	((void) 0)
+#define trace_xfs_iunlink_update_dinode(...)	((void) 0)
+#define trace_xfs_iunlink(...)			((void) 0)
+#define trace_xfs_iunlink_reload_next(...)	((void) 0)
+#define trace_xfs_iunlink_remove(...)		((void) 0)
+#define trace_xfs_iunlink_map_prev_fallback(...)	((void) 0)
+
 #endif /* __TRACE_H__ */
