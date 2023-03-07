@@ -400,7 +400,8 @@ list_leafdir(
 		libxfs_trim_extent(&map, dabno, geo->leafblk - dabno);
 
 		/* Read the directory block of that first mapping. */
-		error = xfs_dir3_data_read(NULL, dp, map.br_startoff, 0, &bp);
+		error = xfs_dir3_data_read(NULL, dp, args->owner,
+				map.br_startoff, 0, &bp);
 		if (error)
 			break;
 
