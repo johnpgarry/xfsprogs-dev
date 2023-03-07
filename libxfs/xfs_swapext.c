@@ -533,7 +533,8 @@ xfs_swapext_attr_to_sf(
 	if (!xfs_attr_is_leaf(sxi->sxi_ip2))
 		return 0;
 
-	error = xfs_attr3_leaf_read(tp, sxi->sxi_ip2, 0, &bp);
+	error = xfs_attr3_leaf_read(tp, sxi->sxi_ip2, sxi->sxi_ip2->i_ino, 0,
+			&bp);
 	if (error)
 		return error;
 
