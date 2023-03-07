@@ -150,6 +150,7 @@
 #define xfs_free_extent_later		libxfs_free_extent_later
 #define xfs_free_perag			libxfs_free_perag
 #define xfs_fs_geometry			libxfs_fs_geometry
+#define xfs_get_projid			libxfs_get_projid
 #define xfs_highbit32			libxfs_highbit32
 #define xfs_highbit64			libxfs_highbit64
 #define xfs_ialloc_calc_rootino		libxfs_ialloc_calc_rootino
@@ -252,6 +253,7 @@
 #define xfs_sb_read_secondary		libxfs_sb_read_secondary
 #define xfs_sb_to_disk			libxfs_sb_to_disk
 #define xfs_sb_version_to_features	libxfs_sb_version_to_features
+#define xfs_set_projid			libxfs_set_projid
 #define xfs_symlink_blocks		libxfs_symlink_blocks
 #define xfs_symlink_hdr_ok		libxfs_symlink_hdr_ok
 #define xfs_symlink_write_target	libxfs_symlink_write_target
