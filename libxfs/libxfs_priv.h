@@ -38,6 +38,7 @@
 #define __LIBXFS_INTERNAL_XFS_H__
 
 #define CONFIG_XFS_RT
+#define CONFIG_XFS_BTREE_IN_XFILE
 
 #include "libxfs_api_defs.h"
 #include "platform_defs.h"

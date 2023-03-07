@@ -213,6 +213,13 @@ struct xfs_btree_ops {
 #define XFS_BTGEO_CRC_BLOCKS		(1U << 3) /* uses extended btree blocks */
 #define XFS_BTGEO_OVERLAPPING		(1U << 4) /* overlapping intervals */
 
+/* btree stored in memory; not compatible with ROOT_IN_INODE */
+#ifdef CONFIG_XFS_BTREE_IN_XFILE
+# define XFS_BTGEO_IN_XFILE		(1U << 5)
+#else
+# define XFS_BTGEO_IN_XFILE		(0)
+#endif
+
 /*
  * Reasons for the update_lastrec method to be called.
  */
@@ -256,6 +263,14 @@ struct xfs_btree_cur_ino {
 	char				whichfork;
 };
 
+/* In-memory btree information */
+struct xfbtree;
+
+struct xfs_btree_cur_mem {
+	struct xfbtree			*xfbtree;
+	struct xfs_perag		*pag;
+};
+
 struct xfs_btree_level {
 	/* buffer pointer */
 	struct xfs_buf		*bp;
@@ -295,6 +310,7 @@ struct xfs_btree_cur
 	union {
 		struct xfs_btree_cur_ag	bc_ag;
 		struct xfs_btree_cur_ino bc_ino;
+		struct xfs_btree_cur_mem bc_mem;
 	};
 
 	/* Must be at the end of the struct! */
@@ -324,6 +340,7 @@ __XFS_BTREE_HAS(iroot, ROOT_IN_INODE)
 __XFS_BTREE_HAS(lastrec_update, LASTREC_UPDATE)
 __XFS_BTREE_HAS(crc, CRC_BLOCKS)
 __XFS_BTREE_HAS(overlapping, OVERLAPPING)
+__XFS_BTREE_HAS(xfile, IN_XFILE)
 
 /* cursor flags */
 /*

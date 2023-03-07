@@ -6,6 +6,7 @@
 #include "libxfs_priv.h"
 #include "libxfs.h"
 #include "libxfs/xfile.h"
+#include "libfrog/util.h"
 #ifdef HAVE_MEMFD_NOEXEC_SEAL
 # include <linux/memfd.h>
 #endif
@@ -28,6 +29,23 @@
  * xfiles assume that the caller will handle all required concurrency
  * management; file locks are not taken.
  */
+
+/* Figure out the xfile block size here */
+unsigned int		XFB_BLOCKSIZE;
+unsigned int		XFB_BSHIFT;
+
+void
+xfile_libinit(void)
+{
+	long		ret = sysconf(_SC_PAGESIZE);
+
+	/* If we don't find a power-of-two page size, go with 4k. */
+	if (ret < 0 || !is_power_of_2(ret))
+		ret = 4096;
+
+	XFB_BLOCKSIZE = ret;
+	XFB_BSHIFT = libxfs_highbit32(XFB_BLOCKSIZE);
+}
 
 /*
  * Open a memory-backed fd to back an xfile.  We require close-on-exec here,

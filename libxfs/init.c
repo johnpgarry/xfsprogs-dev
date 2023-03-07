@@ -22,6 +22,7 @@
 #include "xfs_rmap_btree.h"
 #include "xfs_refcount_btree.h"
 #include "libfrog/platform.h"
+#include "xfile.h"
 
 #include "xfs_format.h"
 #include "xfs_da_format.h"
@@ -253,6 +254,7 @@ int
 libxfs_init(struct libxfs_init *a)
 {
 	xfs_check_ondisk_structs();
+	xfile_libinit();
 	rcu_init();
 	rcu_register_thread();
 	radix_tree_init();

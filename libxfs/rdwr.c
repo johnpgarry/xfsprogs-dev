@@ -1546,3 +1546,32 @@ __xfs_buf_mark_corrupt(
 	xfs_buf_corruption_error(bp, fa);
 	xfs_buf_stale(bp);
 }
+
+/* Return the number of sectors for a buffer target. */
+xfs_daddr_t
+xfs_buftarg_nr_sectors(
+	struct xfs_buftarg	*btp)
+{
+	struct stat		sb;
+	int			fd = btp->bt_bdev_fd;
+	int			ret;
+
+	if (btp->flags & XFS_BUFTARG_XFILE)
+		return xfile_size(btp->bt_xfile) >> BBSHIFT;
+
+	ret = fstat(fd, &sb);
+	if (ret)
+		return 0;
+
+	if (S_ISBLK(sb.st_mode)) {
+		uint64_t	sz;
+
+		ret = ioctl(fd, BLKGETSIZE64, &sz);
+		if (ret)
+			return 0;
+
+		return sz >> BBSHIFT;
+	}
+
+	return sb.st_size >> BBSHIFT;
+}

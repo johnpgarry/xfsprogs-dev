@@ -10,6 +10,8 @@ struct xfile {
 	int		fd;
 };
 
+void xfile_libinit(void);
+
 int xfile_create(const char *description, struct xfile **xfilep);
 void xfile_destroy(struct xfile *xf);
 
@@ -52,5 +54,53 @@ struct xfile_stat {
 int xfile_stat(struct xfile *xf, struct xfile_stat *statbuf);
 unsigned long long xfile_bytes(struct xfile *xf);
 int xfile_dump(struct xfile *xf);
+
+static inline loff_t xfile_size(struct xfile *xf)
+{
+	struct xfile_stat	xs;
+	int			ret;
+
+	ret = xfile_stat(xf, &xs);
+	if (ret)
+		return 0;
+
+	return xs.size;
+}
+
+/* file block (aka system page size) to basic block conversions. */
+typedef unsigned long long	xfileoff_t;
+extern unsigned int		XFB_BLOCKSIZE;
+extern unsigned int		XFB_BSHIFT;
+#define XFB_SHIFT		(XFB_BSHIFT - BBSHIFT)
+
+static inline loff_t xfo_to_b(xfileoff_t xfoff)
+{
+	return xfoff << XFB_BSHIFT;
+}
+
+static inline xfileoff_t b_to_xfo(loff_t pos)
+{
+	return (pos + (XFB_BLOCKSIZE - 1)) >> XFB_BSHIFT;
+}
+
+static inline xfileoff_t b_to_xfot(loff_t pos)
+{
+	return pos >> XFB_BSHIFT;
+}
+
+static inline xfs_daddr_t xfo_to_daddr(xfileoff_t xfoff)
+{
+	return xfoff << XFB_SHIFT;
+}
+
+static inline xfileoff_t xfs_daddr_to_xfo(xfs_daddr_t bb)
+{
+	return (bb + (xfo_to_daddr(1) - 1)) >> XFB_SHIFT;
+}
+
+static inline xfileoff_t xfs_daddr_to_xfot(xfs_daddr_t bb)
+{
+	return bb >> XFB_SHIFT;
+}
 
 #endif /* __LIBXFS_XFILE_H__ */

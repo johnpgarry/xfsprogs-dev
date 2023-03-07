@@ -26,6 +26,7 @@ HFILES = \
 	libxfs_priv.h \
 	linux-err.h \
 	topology.h \
+	xfbtree.h \
 	xfile.h \
 	xfs_ag_resv.h \
 	xfs_alloc.h \
@@ -36,6 +37,7 @@ HFILES = \
 	xfs_bmap.h \
 	xfs_bmap_btree.h \
 	xfs_btree.h \
+	xfs_btree_mem.h \
 	xfs_btree_staging.h \
 	xfs_attr_remote.h \
 	xfs_cksum.h \
@@ -67,6 +69,7 @@ CFILES = cache.c \
 	topology.c \
 	trans.c \
 	util.c \
+	xfbtree.c \
 	xfile.c \
 	xfs_ag.c \
 	xfs_ag_resv.c \
