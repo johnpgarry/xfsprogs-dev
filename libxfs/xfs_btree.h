@@ -224,6 +224,8 @@ struct xfs_btree_ops {
 # define XFS_BTGEO_IN_XFILE		(0)
 #endif
 
+#define XFS_BTGEO_IROOT_RECORDS		(1U << 6) /* iroot can store records */
+
 /*
  * Reasons for the update_lastrec method to be called.
  */
@@ -345,6 +347,7 @@ __XFS_BTREE_HAS(lastrec_update, LASTREC_UPDATE)
 __XFS_BTREE_HAS(crc, CRC_BLOCKS)
 __XFS_BTREE_HAS(overlapping, OVERLAPPING)
 __XFS_BTREE_HAS(xfile, IN_XFILE)
+__XFS_BTREE_HAS(iroot_records, IROOT_RECORDS)
 
 /* cursor flags */
 /*
