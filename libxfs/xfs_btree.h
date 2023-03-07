@@ -116,6 +116,9 @@ struct xfs_btree_ops {
 	size_t	key_len;
 	size_t	rec_len;
 
+	/* XFS_BTGEO_* flags that determine the geometry of the btree */
+	unsigned int	geom_flags;
+
 	/* cursor operations */
 	struct xfs_btree_cur *(*dup_cursor)(struct xfs_btree_cur *);
 	void	(*update_cursor)(struct xfs_btree_cur *src,
@@ -199,6 +202,13 @@ struct xfs_btree_ops {
 			       const union xfs_btree_key *mask);
 };
 
+/* btree geometry flags */
+#define XFS_BTGEO_LONG_PTRS		(1U << 0) /* pointers are 64bits long */
+#define XFS_BTGEO_ROOT_IN_INODE		(1U << 1) /* root may be variable size */
+#define XFS_BTGEO_LASTREC_UPDATE	(1U << 2) /* track last rec externally */
+#define XFS_BTGEO_CRC_BLOCKS		(1U << 3) /* uses extended btree blocks */
+#define XFS_BTGEO_OVERLAPPING		(1U << 4) /* overlapping intervals */
+
 /*
  * Reasons for the update_lastrec method to be called.
  */
@@ -281,7 +291,7 @@ struct xfs_btree_cur
 	/*
 	 * Short btree pointers need an agno to be able to turn the pointers
 	 * into physical addresses for IO, so the btree cursor switches between
-	 * bc_ino and bc_ag based on whether XFS_BTREE_LONG_PTRS is set for the
+	 * bc_ino and bc_ag based on whether XFS_BTGEO_LONG_PTRS is set for the
 	 * cursor.
 	 */
 	union {
@@ -304,18 +314,26 @@ xfs_btree_cur_sizeof(unsigned int nlevels)
 	return struct_size_t(struct xfs_btree_cur, bc_levels, nlevels);
 }
 
+/* btree geometry flags */
+#define __XFS_BTCUR_HAS(name, NAME) \
+static inline bool xfs_btree_has_ ## name (const struct xfs_btree_cur *cur) \
+{ \
+	return cur->bc_ops->geom_flags & XFS_BTGEO_ ## NAME; \
+}
+
+__XFS_BTCUR_HAS(long_ptrs, LONG_PTRS)
+__XFS_BTCUR_HAS(iroot, ROOT_IN_INODE)
+__XFS_BTCUR_HAS(lastrec_update, LASTREC_UPDATE)
+__XFS_BTCUR_HAS(crc, CRC_BLOCKS)
+__XFS_BTCUR_HAS(overlapping, OVERLAPPING)
+
 /* cursor flags */
-#define XFS_BTREE_LONG_PTRS		(1<<0)	/* pointers are 64bits long */
-#define XFS_BTREE_ROOT_IN_INODE		(1<<1)	/* root may be variable size */
-#define XFS_BTREE_LASTREC_UPDATE	(1<<2)	/* track last rec externally */
-#define XFS_BTREE_CRC_BLOCKS		(1<<3)	/* uses extended btree blocks */
-#define XFS_BTREE_OVERLAPPING		(1<<4)	/* overlapping intervals */
 /*
  * The root of this btree is a fakeroot structure so that we can stage a btree
  * rebuild without leaving it accessible via primary metadata.  The ops struct
  * is dynamically allocated and must be freed when the cursor is deleted.
  */
-#define XFS_BTREE_STAGING		(1<<5)
+#define XFS_BTREE_STAGING		(1U << 0)
 
 #define	XFS_BTREE_NOERROR	0
 #define	XFS_BTREE_ERROR		1
@@ -448,7 +466,7 @@ xfs_btree_init_block_int(
 	__u16			level,
 	__u16			numrecs,
 	__u64			owner,
-	unsigned int		flags);
+	unsigned int		geom_flags);
 
 /*
  * Common btree core entry points.
@@ -690,7 +708,7 @@ xfs_btree_islastblock(
 
 	block = xfs_btree_get_block(cur, level, &bp);
 
-	if (cur->bc_flags & XFS_BTREE_LONG_PTRS)
+	if (xfs_btree_has_long_ptrs(cur))
 		return block->bb_u.l.bb_rightsib == cpu_to_be64(NULLFSBLOCK);
 	return block->bb_u.s.bb_rightsib == cpu_to_be32(NULLAGBLOCK);
 }

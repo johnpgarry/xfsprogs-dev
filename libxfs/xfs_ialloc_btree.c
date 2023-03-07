@@ -422,6 +422,7 @@ static const struct xfs_btree_ops xfs_inobt_ops = {
 static const struct xfs_btree_ops xfs_crc_inobt_ops = {
 	.rec_len		= sizeof(struct xfs_inobt_rec),
 	.key_len		= sizeof(struct xfs_inobt_key),
+	.geom_flags		= XFS_BTGEO_CRC_BLOCKS,
 
 	.dup_cursor		= xfs_inobt_dup_cursor,
 	.set_root		= xfs_inobt_set_root,
@@ -444,6 +445,7 @@ static const struct xfs_btree_ops xfs_crc_inobt_ops = {
 static const struct xfs_btree_ops xfs_finobt_ops = {
 	.rec_len		= sizeof(xfs_inobt_rec_t),
 	.key_len		= sizeof(xfs_inobt_key_t),
+	.geom_flags		= XFS_BTGEO_CRC_BLOCKS,
 
 	.dup_cursor		= xfs_inobt_dup_cursor,
 	.set_root		= xfs_finobt_set_root,
@@ -491,9 +493,6 @@ xfs_inobt_init_common(
 				xfs_inobt_cur_cache);
 		cur->bc_statoff = XFS_STATS_CALC_INDEX(xs_fibt_2);
 	}
-
-	if (xfs_has_crc(mp))
-		cur->bc_flags |= XFS_BTREE_CRC_BLOCKS;
 
 	cur->bc_ag.pag = xfs_perag_hold(pag);
 	return cur;

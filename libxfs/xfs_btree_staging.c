@@ -136,7 +136,7 @@ xfs_btree_stage_afakeroot(
 	struct xfs_btree_ops		*nops;
 
 	ASSERT(!(cur->bc_flags & XFS_BTREE_STAGING));
-	ASSERT(!(cur->bc_flags & XFS_BTREE_ROOT_IN_INODE));
+	ASSERT(!xfs_btree_has_iroot(cur));
 	ASSERT(cur->bc_tp == NULL);
 
 	nops = kmem_alloc(sizeof(struct xfs_btree_ops), KM_NOFS);
@@ -217,7 +217,7 @@ xfs_btree_stage_ifakeroot(
 	struct xfs_btree_ops		*nops;
 
 	ASSERT(!(cur->bc_flags & XFS_BTREE_STAGING));
-	ASSERT(cur->bc_flags & XFS_BTREE_ROOT_IN_INODE);
+	ASSERT(xfs_btree_has_iroot(cur));
 	ASSERT(cur->bc_tp == NULL);
 
 	nops = kmem_alloc(sizeof(struct xfs_btree_ops), KM_NOFS);
@@ -397,7 +397,7 @@ xfs_btree_bload_prep_block(
 	struct xfs_btree_block		*new_block;
 	int				ret;
 
-	if ((cur->bc_flags & XFS_BTREE_ROOT_IN_INODE) &&
+	if ((xfs_btree_has_iroot(cur)) &&
 	    level == cur->bc_nlevels - 1) {
 		struct xfs_ifork	*ifp = xfs_btree_ifork_ptr(cur);
 		size_t			new_size;
@@ -413,7 +413,7 @@ xfs_btree_bload_prep_block(
 		xfs_btree_init_block_int(cur->bc_mp, ifp->if_broot,
 				XFS_BUF_DADDR_NULL, cur->bc_btnum, level,
 				nr_this_block, cur->bc_ino.ip->i_ino,
-				cur->bc_flags);
+				cur->bc_ops->geom_flags);
 
 		*bpp = NULL;
 		*blockp = ifp->if_broot;
@@ -704,7 +704,7 @@ xfs_btree_bload_compute_geometry(
 		xfs_btree_bload_level_geometry(cur, bbl, level, nr_this_level,
 				&avg_per_block, &level_blocks, &dontcare64);
 
-		if (cur->bc_flags & XFS_BTREE_ROOT_IN_INODE) {
+		if (xfs_btree_has_iroot(cur)) {
 			/*
 			 * If all the items we want to store at this level
 			 * would fit in the inode root block, then we have our
@@ -763,7 +763,7 @@ xfs_btree_bload_compute_geometry(
 		return -EOVERFLOW;
 
 	bbl->btree_height = cur->bc_nlevels;
-	if (cur->bc_flags & XFS_BTREE_ROOT_IN_INODE)
+	if (xfs_btree_has_iroot(cur))
 		bbl->nr_blocks = nr_blocks - 1;
 	else
 		bbl->nr_blocks = nr_blocks;
@@ -890,7 +890,7 @@ xfs_btree_bload(
 	}
 
 	/* Initialize the new root. */
-	if (cur->bc_flags & XFS_BTREE_ROOT_IN_INODE) {
+	if (xfs_btree_has_iroot(cur)) {
 		ASSERT(xfs_btree_ptr_is_null(cur, &ptr));
 		cur->bc_ino.ifake->if_levels = cur->bc_nlevels;
 		cur->bc_ino.ifake->if_blocks = total_blocks - 1;

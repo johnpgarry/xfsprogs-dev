@@ -44,7 +44,7 @@ xfs_bmdr_to_bmbt(
 
 	xfs_btree_init_block_int(mp, rblock, XFS_BUF_DADDR_NULL,
 				 XFS_BTNUM_BMAP, 0, 0, ip->i_ino,
-				 XFS_BTREE_LONG_PTRS);
+				 XFS_BTGEO_LONG_PTRS);
 	rblock->bb_level = dblock->bb_level;
 	ASSERT(be16_to_cpu(rblock->bb_level) > 0);
 	rblock->bb_numrecs = dblock->bb_numrecs;
@@ -516,6 +516,7 @@ xfs_bmbt_keys_contiguous(
 static const struct xfs_btree_ops xfs_bmbt_ops = {
 	.rec_len		= sizeof(xfs_bmbt_rec_t),
 	.key_len		= sizeof(xfs_bmbt_key_t),
+	.geom_flags		= XFS_BTGEO_LONG_PTRS | XFS_BTGEO_ROOT_IN_INODE,
 
 	.dup_cursor		= xfs_bmbt_dup_cursor,
 	.update_cursor		= xfs_bmbt_update_cursor,
@@ -539,6 +540,9 @@ static const struct xfs_btree_ops xfs_bmbt_ops = {
 static const struct xfs_btree_ops xfs_crc_bmbt_ops = {
 	.rec_len		= sizeof(struct xfs_bmbt_rec),
 	.key_len		= sizeof(struct xfs_bmbt_key),
+	.geom_flags		= XFS_BTGEO_LONG_PTRS |
+				  XFS_BTGEO_ROOT_IN_INODE |
+				  XFS_BTGEO_CRC_BLOCKS,
 
 	.dup_cursor		= xfs_bmbt_dup_cursor,
 	.update_cursor		= xfs_bmbt_update_cursor,
@@ -577,10 +581,6 @@ xfs_bmbt_init_common(
 	cur = xfs_btree_alloc_cursor(mp, tp, XFS_BTNUM_BMAP, ops,
 			mp->m_bm_maxlevels[whichfork], xfs_bmbt_cur_cache);
 	cur->bc_statoff = XFS_STATS_CALC_INDEX(xs_bmbt_2);
-
-	cur->bc_flags = XFS_BTREE_LONG_PTRS | XFS_BTREE_ROOT_IN_INODE;
-	if (xfs_has_crc(mp))
-		cur->bc_flags |= XFS_BTREE_CRC_BLOCKS;
 
 	cur->bc_ino.ip = ip;
 	cur->bc_ino.allocated = 0;
