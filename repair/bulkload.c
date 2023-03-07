@@ -196,7 +196,8 @@ free:
 	 */
 	fsbno = XFS_AGB_TO_FSB(sc->mp, resv->pag->pag_agno, free_agbno);
 	error = -libxfs_free_extent_later(sc->tp, fsbno, free_aglen,
-			&bkl->oinfo, XFS_AG_RESV_NONE, true);
+			&bkl->oinfo, XFS_AG_RESV_NONE,
+			XFS_FREE_EXTENT_SKIP_DISCARD);
 	if (error)
 		return error;
 
