@@ -32,6 +32,7 @@
 #include "xfs_rtbitmap.h"
 #include "xfs_health.h"
 #include "defer_item.h"
+#include "xfs_symlink_remote.h"
 
 struct kmem_cache		*xfs_bmap_intent_cache;
 
