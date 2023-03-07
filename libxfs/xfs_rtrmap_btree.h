@@ -198,4 +198,8 @@ void xfs_rtrmapbt_to_disk(struct xfs_mount *mp, struct xfs_btree_block *rblock,
 		unsigned int dblocklen);
 void xfs_iflush_rtrmap(struct xfs_inode *ip, struct xfs_dinode *dip);
 
+struct xfs_imeta_update;
+
+int xfs_rtrmapbt_create(struct xfs_imeta_update *upd, struct xfs_inode **ipp);
+
 #endif	/* __XFS_RTRMAP_BTREE_H__ */
