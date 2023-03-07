@@ -247,3 +247,98 @@ xfs_rtgroup_block_count(
 	return __xfs_rtgroup_block_count(mp, rgno, mp->m_sb.sb_rgcount,
 			mp->m_sb.sb_rblocks);
 }
+
+static xfs_failaddr_t
+xfs_rtsb_verify(
+	struct xfs_buf		*bp)
+{
+	struct xfs_mount	*mp = bp->b_mount;
+	struct xfs_rtsb		*rsb = bp->b_addr;
+
+	if (!xfs_verify_magic(bp, rsb->rsb_magicnum))
+		return __this_address;
+	if (be32_to_cpu(rsb->rsb_blocksize) != mp->m_sb.sb_blocksize)
+		return __this_address;
+	if (be64_to_cpu(rsb->rsb_rblocks) != mp->m_sb.sb_rblocks)
+		return __this_address;
+
+	if (be64_to_cpu(rsb->rsb_rextents) != mp->m_sb.sb_rextents)
+		return __this_address;
+
+	if (!uuid_equal(&rsb->rsb_uuid, &mp->m_sb.sb_uuid))
+		return __this_address;
+
+	if (be32_to_cpu(rsb->rsb_rgcount) != mp->m_sb.sb_rgcount)
+		return __this_address;
+
+	if (be32_to_cpu(rsb->rsb_rextsize) != mp->m_sb.sb_rextsize)
+		return __this_address;
+	if (be32_to_cpu(rsb->rsb_rbmblocks) != mp->m_sb.sb_rbmblocks)
+		return __this_address;
+
+	if (be32_to_cpu(rsb->rsb_rgblocks) != mp->m_sb.sb_rgblocks)
+		return __this_address;
+	if (rsb->rsb_blocklog != mp->m_sb.sb_blocklog)
+		return __this_address;
+	if (rsb->rsb_sectlog != mp->m_sb.sb_sectlog)
+		return __this_address;
+	if (rsb->rsb_rextslog != mp->m_sb.sb_rextslog)
+		return __this_address;
+	if (rsb->rsb_pad)
+		return __this_address;
+
+	if (rsb->rsb_pad2)
+		return __this_address;
+
+	if (!uuid_equal(&rsb->rsb_meta_uuid, &mp->m_sb.sb_meta_uuid))
+		return __this_address;
+
+	/* Everything to the end of the fs block must be zero */
+	if (memchr_inv(rsb + 1, 0, BBTOB(bp->b_length) - sizeof(*rsb)))
+		return __this_address;
+
+	return NULL;
+}
+
+static void
+xfs_rtsb_read_verify(
+	struct xfs_buf	*bp)
+{
+	xfs_failaddr_t	fa;
+
+	if (!xfs_buf_verify_cksum(bp, XFS_RTSB_CRC_OFF))
+		xfs_verifier_error(bp, -EFSBADCRC, __this_address);
+	else {
+		fa = xfs_rtsb_verify(bp);
+		if (fa)
+			xfs_verifier_error(bp, -EFSCORRUPTED, fa);
+	}
+}
+
+static void
+xfs_rtsb_write_verify(
+	struct xfs_buf		*bp)
+{
+	struct xfs_rtsb		*rsb = bp->b_addr;
+	struct xfs_buf_log_item	*bip = bp->b_log_item;
+	xfs_failaddr_t		fa;
+
+	fa = xfs_rtsb_verify(bp);
+	if (fa) {
+		xfs_verifier_error(bp, -EFSCORRUPTED, fa);
+		return;
+	}
+
+	if (bip)
+		rsb->rsb_lsn = cpu_to_be64(bip->bli_item.li_lsn);
+
+	xfs_buf_update_cksum(bp, XFS_RTSB_CRC_OFF);
+}
+
+const struct xfs_buf_ops xfs_rtsb_buf_ops = {
+	.name = "xfs_rtsb",
+	.magic = { 0, cpu_to_be32(XFS_RTSB_MAGIC) },
+	.verify_read = xfs_rtsb_read_verify,
+	.verify_write = xfs_rtsb_write_verify,
+	.verify_struct = xfs_rtsb_verify,
+};

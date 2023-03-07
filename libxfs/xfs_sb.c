@@ -178,6 +178,8 @@ xfs_sb_version_to_features(
 		features |= XFS_FEAT_PARENT;
 	if (sbp->sb_features_incompat & XFS_SB_FEAT_INCOMPAT_METADIR)
 		features |= XFS_FEAT_METADIR;
+	if (sbp->sb_features_incompat & XFS_SB_FEAT_INCOMPAT_RTGROUPS)
+		features |= XFS_FEAT_RTGROUPS;
 
 	return features;
 }
@@ -305,6 +307,64 @@ xfs_validate_sb_write(
 	return 0;
 }
 
+static int
+xfs_validate_sb_rtgroups(
+	struct xfs_mount	*mp,
+	struct xfs_sb		*sbp)
+{
+	uint64_t		groups;
+
+	if (!(sbp->sb_features_incompat & XFS_SB_FEAT_INCOMPAT_METADIR)) {
+		xfs_warn(mp,
+"Realtime groups require metadata directory tree.");
+		return -EINVAL;
+	}
+
+	if (sbp->sb_rgblocks > XFS_MAX_RGBLOCKS) {
+		xfs_warn(mp,
+"Realtime group size (%u) must be less than %u.",
+			 sbp->sb_rgblocks, XFS_MAX_RGBLOCKS);
+		return -EINVAL;
+	}
+
+	if (sbp->sb_rextsize == 0) {
+		xfs_warn(mp,
+"Realtime extent size must not be zero.");
+		return -EINVAL;
+	}
+
+	if (sbp->sb_rgblocks % sbp->sb_rextsize != 0) {
+		xfs_warn(mp,
+"Realtime group size (%u) must be an even multiple of extent size (%u).",
+			 sbp->sb_rgblocks, sbp->sb_rextsize);
+		return -EINVAL;
+	}
+
+	if (sbp->sb_rgblocks < (sbp->sb_rextsize << 1)) {
+		xfs_warn(mp,
+"Realtime group size (%u) must be greater than 1 rt extent.",
+			 sbp->sb_rgblocks);
+		return -EINVAL;
+	}
+
+	if (sbp->sb_rgcount > XFS_MAX_RGNUMBER) {
+		xfs_warn(mp,
+"Realtime groups (%u) must be less than %u.",
+			 sbp->sb_rgcount, XFS_MAX_RGNUMBER);
+		return -EINVAL;
+	}
+
+	groups = howmany_64(sbp->sb_rblocks, sbp->sb_rgblocks);
+	if (groups != sbp->sb_rgcount) {
+		xfs_warn(mp,
+"Realtime groups (%u) do not cover the entire rt section; need (%llu) groups.",
+			sbp->sb_rgcount, groups);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 /* Check the validity of the SB. */
 STATIC int
 xfs_validate_sb_common(
@@ -316,6 +376,7 @@ xfs_validate_sb_common(
 	uint32_t		agcount = 0;
 	uint32_t		rem;
 	bool			has_dalign;
+	int			error;
 
 	if (!xfs_verify_magic(bp, dsb->sb_magicnum)) {
 		xfs_warn(mp,
@@ -364,6 +425,12 @@ xfs_validate_sb_common(
 					 sbp->sb_inoalignmt, align);
 				return -EINVAL;
 			}
+		}
+
+		if (sbp->sb_features_incompat & XFS_SB_FEAT_INCOMPAT_RTGROUPS) {
+			error = xfs_validate_sb_rtgroups(mp, sbp);
+			if (error)
+				return error;
 		}
 	} else if (sbp->sb_qflags & (XFS_PQUOTA_ENFD | XFS_GQUOTA_ENFD |
 				XFS_PQUOTA_CHKD | XFS_GQUOTA_CHKD)) {
@@ -700,8 +767,13 @@ __xfs_sb_from_disk(
 		to->sb_pquotino = NULLFSINO;
 	}
 
-	to->sb_rgcount = 0;
-	to->sb_rgblocks = 0;
+	if (to->sb_features_incompat & XFS_SB_FEAT_INCOMPAT_RTGROUPS) {
+		to->sb_rgcount = be32_to_cpu(from->sb_rgcount);
+		to->sb_rgblocks = be32_to_cpu(from->sb_rgblocks);
+	} else {
+		to->sb_rgcount = 0;
+		to->sb_rgblocks = 0;
+	}
 }
 
 void
@@ -861,6 +933,12 @@ xfs_sb_to_disk(
 		to->sb_gquotino = cpu_to_be64(NULLFSINO);
 		to->sb_pquotino = cpu_to_be64(NULLFSINO);
 	}
+
+	if (from->sb_features_incompat & XFS_SB_FEAT_INCOMPAT_RTGROUPS) {
+		/* must come after setting to_rsumino */
+		to->sb_rgcount = cpu_to_be32(from->sb_rgcount);
+		to->sb_rgblocks = cpu_to_be32(from->sb_rgblocks);
+	}
 }
 
 /*
@@ -1016,8 +1094,8 @@ xfs_sb_mount_common(
 	mp->m_blockwmask = mp->m_blockwsize - 1;
 	mp->m_rtxblklog = log2_if_power2(sbp->sb_rextsize);
 	mp->m_rtxblkmask = mask64_if_power2(sbp->sb_rextsize);
-	mp->m_rgblklog = 0;
-	mp->m_rgblkmask = 0;
+	mp->m_rgblklog = log2_if_power2(sbp->sb_rgblocks);
+	mp->m_rgblkmask = mask64_if_power2(sbp->sb_rgblocks);
 
 	mp->m_alloc_mxr[0] = xfs_allocbt_maxrecs(mp, sbp->sb_blocksize, 1);
 	mp->m_alloc_mxr[1] = xfs_allocbt_maxrecs(mp, sbp->sb_blocksize, 0);

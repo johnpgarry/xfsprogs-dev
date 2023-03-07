@@ -216,7 +216,17 @@ struct xfs_dsb {
 	 * pointers are no longer used.
 	 */
 	__be64		sb_rbmino;
-	__be64		sb_rsumino;	/* summary inode for rt bitmap */
+	/*
+	 * rtgroups requires metadir, so we reuse the rsumino space to hold
+	 * the rg block count and shift values.
+	 */
+	union {
+		__be64	sb_rsumino;	/* summary inode for rt bitmap */
+		struct {
+			__be32	sb_rgcount;	/* # of realtime groups */
+			__be32	sb_rgblocks;	/* rtblocks per group */
+		};
+	};
 	__be32		sb_rextsize;	/* realtime extent size, blocks */
 	__be32		sb_agblocks;	/* size of an allocation group */
 	__be32		sb_agcount;	/* number of allocation groups */
@@ -398,6 +408,7 @@ xfs_sb_has_ro_compat_feature(
 #define XFS_SB_FEAT_INCOMPAT_NEEDSREPAIR (1 << 4)	/* needs xfs_repair */
 #define XFS_SB_FEAT_INCOMPAT_NREXT64	(1 << 5)	/* large extent counters */
 #define XFS_SB_FEAT_INCOMPAT_PARENT	(1 << 6)	/* parent pointers */
+#define XFS_SB_FEAT_INCOMPAT_RTGROUPS	(1U << 30)	/* realtime groups */
 #define XFS_SB_FEAT_INCOMPAT_METADIR	(1U << 31)	/* metadata dir tree */
 #define XFS_SB_FEAT_INCOMPAT_ALL \
 		(XFS_SB_FEAT_INCOMPAT_FTYPE|	\
@@ -751,6 +762,55 @@ union xfs_rtword_raw {
 union xfs_suminfo_raw {
 	__u32		old;
 };
+
+/*
+ * Realtime allocation groups break the rt section into multiple pieces that
+ * could be locked independently.  Realtime block group numbers are 32-bit
+ * quantities.  Block numbers within a group are also 32-bit quantities, but
+ * the upper bit must never be set.
+ */
+#define XFS_MAX_RGBLOCKS	((xfs_rgblock_t)(1U << 31) - 1)
+#define XFS_MAX_RGNUMBER	((xfs_rgnumber_t)(-1U))
+
+#define XFS_RTSB_MAGIC	0x58524750	/* 'XRGP' */
+
+/*
+ * Realtime superblock - on disk version.  Must be padded to 64 bit alignment.
+ * The first block of each realtime group contains this superblock; this is
+ * how we avoid having file data extents cross a group boundary.
+ */
+struct xfs_rtsb {
+	__be32		rsb_magicnum;	/* magic number == XFS_RTSB_MAGIC */
+	__be32		rsb_blocksize;	/* logical block size, bytes */
+	__be64		rsb_rblocks;	/* number of realtime blocks */
+
+	__be64		rsb_rextents;	/* number of realtime extents */
+	__be64		rsb_lsn;	/* last write sequence */
+
+	__be32		rsb_rgcount;	/* # of realtime groups */
+	unsigned char	rsb_fname[XFSLABEL_MAX]; /* rt volume name */
+
+	uuid_t		rsb_uuid;	/* user-visible file system unique id */
+
+	__be32		rsb_rextsize;	/* realtime extent size, blocks */
+	__be32		rsb_rbmblocks;	/* number of rt bitmap blocks */
+
+	__be32		rsb_rgblocks;	/* rt blocks per group */
+	__u8		rsb_blocklog;	/* log2 of sb_blocksize */
+	__u8		rsb_sectlog;	/* log2 of sb_sectsize */
+	__u8		rsb_rextslog;	/* log2 of sb_rextents */
+	__u8		rsb_pad;
+
+	__le32		rsb_crc;	/* superblock crc */
+	__le32		rsb_pad2;
+
+	uuid_t		rsb_meta_uuid;	/* metadata file system unique id */
+
+	/* must be padded to 64 bit alignment */
+};
+
+#define XFS_RTSB_CRC_OFF	offsetof(struct xfs_rtsb, rsb_crc)
+#define XFS_RTSB_DADDR		((xfs_daddr_t)0) /* daddr in rt section */
 
 /*
  * XFS Timestamps

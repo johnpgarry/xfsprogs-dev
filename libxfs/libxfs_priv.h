@@ -52,6 +52,7 @@
 #include "libfrog/radix-tree.h"
 #include "libfrog/bitmask.h"
 #include "libfrog/div64.h"
+#include "libfrog/util.h"
 #include "atomic.h"
 #include "spinlock.h"
 #include "linux-err.h"
@@ -389,6 +390,24 @@ static inline int8_t log2_if_power2(unsigned long b)
 static inline unsigned long long mask64_if_power2(unsigned long b)
 {
 	return is_power_of_2(b) ? b - 1 : 0;
+}
+
+/* If @b is a power of 2, return log2(b).  Else return zero. */
+static inline unsigned int log2_if_power(unsigned long b)
+{
+	unsigned long	mask = 1;
+	unsigned int	i;
+	unsigned int	ret = 1;
+
+	if (!is_power_of_2(b))
+	       return 0;
+
+	for (i = 0; i < NBBY * sizeof(unsigned long); i++, mask <<= 1) {
+		if (b & mask)
+			ret = i;
+	}
+
+	return ret;
 }
 
 /* buffer management */

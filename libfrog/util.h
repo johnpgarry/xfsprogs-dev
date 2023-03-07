@@ -8,4 +8,6 @@
 
 unsigned int	log2_roundup(unsigned int i);
 
+void *memchr_inv(const void *start, int c, size_t bytes);
+
 #endif /* __LIBFROG_UTIL_H__ */

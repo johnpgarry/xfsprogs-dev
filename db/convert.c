@@ -413,14 +413,6 @@ convert_f(int argc, char **argv)
 	return 0;
 }
 
-static inline xfs_rtblock_t
-xfs_daddr_to_rtb(
-	struct xfs_mount	*mp,
-	xfs_daddr_t		daddr)
-{
-	return daddr >> mp->m_blkbb_log;
-}
-
 static inline uint64_t
 rt_daddr_to_rsumblock(
 	struct xfs_mount	*mp,
