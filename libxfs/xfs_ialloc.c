@@ -95,12 +95,10 @@ uint8_t
 xfs_inobt_rec_freecount(
 	const struct xfs_inobt_rec_incore	*irec)
 {
-	uint64_t				realfree;
+	uint64_t				realfree = irec->ir_free;
 
-	if (!xfs_inobt_issparse(irec->ir_holemask))
-		realfree = irec->ir_free;
-	else
-		realfree = irec->ir_free & xfs_inobt_irec_to_allocmask(irec);
+	if (xfs_inobt_issparse(irec->ir_holemask))
+		realfree &= xfs_inobt_irec_to_allocmask(irec);
 	return hweight64(realfree);
 }
 
