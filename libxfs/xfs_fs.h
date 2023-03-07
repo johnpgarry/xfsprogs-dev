@@ -305,6 +305,11 @@ struct xfs_ag_geometry {
 #define XFS_AG_GEOM_SICK_REFCNTBT (1 << 9)  /* reference counts */
 #define XFS_AG_GEOM_SICK_INODES	(1 << 10) /* bad inodes were seen */
 
+#define XFS_AG_FLAG_UPDATE	(1 << 0)  /* update flags */
+#define XFS_AG_FLAG_NOALLOC	(1 << 1)  /* do not allocate from this AG */
+#define XFS_AG_FLAG_ALL		(XFS_AG_FLAG_UPDATE | \
+				 XFS_AG_FLAG_NOALLOC)
+
 /*
  * Structures for XFS_IOC_FSGROWFSDATA, XFS_IOC_FSGROWFSLOG & XFS_IOC_FSGROWFSRT
  */
