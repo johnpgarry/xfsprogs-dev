@@ -25,6 +25,7 @@
 #include "xfs_health.h"
 #include "defer_item.h"
 #include "xfs_rtgroup.h"
+#include "xfs_rtrmap_btree.h"
 
 struct kmem_cache	*xfs_rmap_intent_cache;
 
@@ -2691,9 +2692,39 @@ xfs_rtrmap_finish_one(
 	struct xfs_rmap_intent		*ri,
 	struct xfs_btree_cur		**pcur)
 {
-	/* coming in a subsequent patch */
-	ASSERT(0);
-	return -EFSCORRUPTED;
+	struct xfs_owner_info		oinfo;
+	struct xfs_mount		*mp = tp->t_mountp;
+	struct xfs_btree_cur		*rcur = *pcur;
+	xfs_rgnumber_t			rgno;
+	xfs_rgblock_t			bno;
+	bool				unwritten;
+
+	trace_xfs_rmap_deferred(mp, ri);
+
+	if (XFS_TEST_ERROR(false, mp, XFS_ERRTAG_RMAP_FINISH_ONE))
+		return -EIO;
+
+	/*
+	 * If we haven't gotten a cursor or the cursor rtgroup doesn't match
+	 * the startblock, get one now.
+	 */
+	if (rcur != NULL && rcur->bc_ino.rtg != ri->ri_rtg) {
+		xfs_btree_del_cursor(rcur, 0);
+		rcur = NULL;
+	}
+	if (rcur == NULL) {
+		xfs_rtgroup_lock(tp, ri->ri_rtg, XFS_RTGLOCK_RMAP);
+		*pcur = rcur = xfs_rtrmapbt_init_cursor(mp, tp, ri->ri_rtg,
+				ri->ri_rtg->rtg_rmapip);
+	}
+
+	xfs_rmap_ino_owner(&oinfo, ri->ri_owner, ri->ri_whichfork,
+			ri->ri_bmap.br_startoff);
+	unwritten = ri->ri_bmap.br_state == XFS_EXT_UNWRITTEN;
+	bno = xfs_rtb_to_rgbno(mp, ri->ri_bmap.br_startblock, &rgno);
+
+	return __xfs_rmap_finish_intent(rcur, ri->ri_type, bno,
+			ri->ri_bmap.br_blockcount, &oinfo, unwritten);
 }
 
 /*
