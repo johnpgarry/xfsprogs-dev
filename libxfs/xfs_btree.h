@@ -120,6 +120,9 @@ struct xfs_btree_ops {
 	/* XFS_BTGEO_* flags that determine the geometry of the btree */
 	unsigned int	geom_flags;
 
+	/* LRU refcount to set on each btree buffer created */
+	int	lru_refs;
+
 	/* cursor operations */
 	struct xfs_btree_cur *(*dup_cursor)(struct xfs_btree_cur *);
 	void	(*update_cursor)(struct xfs_btree_cur *src,

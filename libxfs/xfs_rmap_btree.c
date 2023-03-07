@@ -474,6 +474,7 @@ const struct xfs_btree_ops xfs_rmapbt_ops = {
 	.rec_len		= sizeof(struct xfs_rmap_rec),
 	.key_len		= 2 * sizeof(struct xfs_rmap_key),
 	.geom_flags		= XFS_BTGEO_CRC_BLOCKS | XFS_BTGEO_OVERLAPPING,
+	.lru_refs		= XFS_RMAP_BTREE_REF,
 
 	.dup_cursor		= xfs_rmapbt_dup_cursor,
 	.set_root		= xfs_rmapbt_set_root,

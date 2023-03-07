@@ -400,6 +400,7 @@ xfs_inobt_keys_contiguous(
 const struct xfs_btree_ops xfs_inobt_ops = {
 	.rec_len		= sizeof(xfs_inobt_rec_t),
 	.key_len		= sizeof(xfs_inobt_key_t),
+	.lru_refs		= XFS_INO_BTREE_REF,
 
 	.dup_cursor		= xfs_inobt_dup_cursor,
 	.set_root		= xfs_inobt_set_root,
@@ -423,6 +424,7 @@ const struct xfs_btree_ops xfs_crc_inobt_ops = {
 	.rec_len		= sizeof(struct xfs_inobt_rec),
 	.key_len		= sizeof(struct xfs_inobt_key),
 	.geom_flags		= XFS_BTGEO_CRC_BLOCKS,
+	.lru_refs		= XFS_INO_BTREE_REF,
 
 	.dup_cursor		= xfs_inobt_dup_cursor,
 	.set_root		= xfs_inobt_set_root,
@@ -446,6 +448,7 @@ const struct xfs_btree_ops xfs_finobt_ops = {
 	.rec_len		= sizeof(xfs_inobt_rec_t),
 	.key_len		= sizeof(xfs_inobt_key_t),
 	.geom_flags		= XFS_BTGEO_CRC_BLOCKS,
+	.lru_refs		= XFS_INO_BTREE_REF,
 
 	.dup_cursor		= xfs_inobt_dup_cursor,
 	.set_root		= xfs_finobt_set_root,
