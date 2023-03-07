@@ -339,7 +339,7 @@ list_blockdir(
 	unsigned int		end;
 	int			error;
 
-	error = xfs_dir3_block_read(NULL, dp, &bp);
+	error = xfs_dir3_block_read(NULL, dp, args->owner, &bp);
 	if (error)
 		return error;
 

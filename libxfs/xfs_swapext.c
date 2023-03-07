@@ -571,7 +571,7 @@ xfs_swapext_dir_to_sf(
 	if (!isblock)
 		return 0;
 
-	error = xfs_dir3_block_read(tp, sxi->sxi_ip2, &bp);
+	error = xfs_dir3_block_read(tp, sxi->sxi_ip2, sxi->sxi_ip2->i_ino, &bp);
 	if (error)
 		return error;
 
