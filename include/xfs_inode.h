@@ -187,6 +187,20 @@ static inline struct timespec64 inode_set_ctime_current(struct inode *inode)
 	return now;
 }
 
+static inline void
+inode_fsuid_set(
+	struct inode		*inode,
+	struct mnt_idmap	*idmap)
+{
+	inode->i_uid = make_kuid(0);
+}
+
+static inline void
+inode_set_iversion(struct inode *inode, uint64_t version)
+{
+	inode->i_version = version;
+}
+
 typedef struct xfs_inode {
 	struct cache_node	i_node;
 	struct xfs_mount	*i_mount;	/* fs mount struct ptr */
@@ -393,5 +407,11 @@ extern void	libxfs_irele(struct xfs_inode *ip);
 #define XFS_DEFAULT_COWEXTSZ_HINT 32
 
 #define XFS_INHERIT_GID(pip)		(VFS_I(pip)->i_mode & S_ISGID)
+
+#define xfs_inherit_noatime	(false)
+#define xfs_inherit_nodump	(false)
+#define xfs_inherit_sync	(false)
+#define xfs_inherit_nosymlinks	(false)
+#define xfs_inherit_nodefrag	(false)
 
 #endif /* __XFS_INODE_H__ */
