@@ -452,7 +452,7 @@ xfs_allocbt_keys_contiguous(
 				 be32_to_cpu(key2->alloc.ar_startblock));
 }
 
-static const struct xfs_btree_ops xfs_bnobt_ops = {
+const struct xfs_btree_ops xfs_bnobt_ops = {
 	.rec_len		= sizeof(xfs_alloc_rec_t),
 	.key_len		= sizeof(xfs_alloc_key_t),
 
@@ -475,7 +475,7 @@ static const struct xfs_btree_ops xfs_bnobt_ops = {
 	.keys_contiguous	= xfs_allocbt_keys_contiguous,
 };
 
-static const struct xfs_btree_ops xfs_crc_bnobt_ops = {
+const struct xfs_btree_ops xfs_crc_bnobt_ops = {
 	.rec_len		= sizeof(struct xfs_alloc_rec),
 	.key_len		= sizeof(xfs_alloc_key_t),
 	.geom_flags		= XFS_BTGEO_CRC_BLOCKS,
@@ -499,7 +499,7 @@ static const struct xfs_btree_ops xfs_crc_bnobt_ops = {
 	.keys_contiguous	= xfs_allocbt_keys_contiguous,
 };
 
-static const struct xfs_btree_ops xfs_cntbt_ops = {
+const struct xfs_btree_ops xfs_cntbt_ops = {
 	.rec_len		= sizeof(xfs_alloc_rec_t),
 	.key_len		= sizeof(xfs_alloc_key_t),
 	.geom_flags		= XFS_BTGEO_LASTREC_UPDATE,
@@ -523,7 +523,7 @@ static const struct xfs_btree_ops xfs_cntbt_ops = {
 	.keys_contiguous	= NULL, /* not needed right now */
 };
 
-static const struct xfs_btree_ops xfs_crc_cntbt_ops = {
+const struct xfs_btree_ops xfs_crc_cntbt_ops = {
 	.rec_len		= sizeof(struct xfs_alloc_rec),
 	.key_len		= sizeof(xfs_alloc_key_t),
 	.geom_flags		= XFS_BTGEO_LASTREC_UPDATE | XFS_BTGEO_CRC_BLOCKS,

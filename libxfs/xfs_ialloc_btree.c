@@ -397,7 +397,7 @@ xfs_inobt_keys_contiguous(
 				 be32_to_cpu(key2->inobt.ir_startino));
 }
 
-static const struct xfs_btree_ops xfs_inobt_ops = {
+const struct xfs_btree_ops xfs_inobt_ops = {
 	.rec_len		= sizeof(xfs_inobt_rec_t),
 	.key_len		= sizeof(xfs_inobt_key_t),
 
@@ -419,7 +419,7 @@ static const struct xfs_btree_ops xfs_inobt_ops = {
 	.keys_contiguous	= xfs_inobt_keys_contiguous,
 };
 
-static const struct xfs_btree_ops xfs_crc_inobt_ops = {
+const struct xfs_btree_ops xfs_crc_inobt_ops = {
 	.rec_len		= sizeof(struct xfs_inobt_rec),
 	.key_len		= sizeof(struct xfs_inobt_key),
 	.geom_flags		= XFS_BTGEO_CRC_BLOCKS,
@@ -442,7 +442,7 @@ static const struct xfs_btree_ops xfs_crc_inobt_ops = {
 	.keys_contiguous	= xfs_inobt_keys_contiguous,
 };
 
-static const struct xfs_btree_ops xfs_finobt_ops = {
+const struct xfs_btree_ops xfs_finobt_ops = {
 	.rec_len		= sizeof(xfs_inobt_rec_t),
 	.key_len		= sizeof(xfs_inobt_key_t),
 	.geom_flags		= XFS_BTGEO_CRC_BLOCKS,

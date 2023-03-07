@@ -508,7 +508,7 @@ xfs_bmbt_keys_contiguous(
 				 be64_to_cpu(key2->bmbt.br_startoff));
 }
 
-static const struct xfs_btree_ops xfs_bmbt_ops = {
+const struct xfs_btree_ops xfs_bmbt_ops = {
 	.rec_len		= sizeof(xfs_bmbt_rec_t),
 	.key_len		= sizeof(xfs_bmbt_key_t),
 	.geom_flags		= XFS_BTGEO_LONG_PTRS | XFS_BTGEO_ROOT_IN_INODE,
@@ -532,7 +532,7 @@ static const struct xfs_btree_ops xfs_bmbt_ops = {
 	.keys_contiguous	= xfs_bmbt_keys_contiguous,
 };
 
-static const struct xfs_btree_ops xfs_crc_bmbt_ops = {
+const struct xfs_btree_ops xfs_crc_bmbt_ops = {
 	.rec_len		= sizeof(struct xfs_bmbt_rec),
 	.key_len		= sizeof(struct xfs_bmbt_key),
 	.geom_flags		= XFS_BTGEO_LONG_PTRS |
