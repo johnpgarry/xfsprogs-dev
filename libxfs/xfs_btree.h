@@ -789,4 +789,9 @@ void xfs_btree_destroy_cur_caches(void);
 
 int xfs_btree_goto_left_edge(struct xfs_btree_cur *cur);
 
+int xfs_btree_alloc_imeta_block(struct xfs_btree_cur *cur,
+		const union xfs_btree_ptr *start, union xfs_btree_ptr *newp,
+		int *stat);
+int xfs_btree_free_imeta_block(struct xfs_btree_cur *cur, struct xfs_buf *bp);
+
 #endif	/* __XFS_BTREE_H__ */
