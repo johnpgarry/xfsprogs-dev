@@ -972,6 +972,14 @@ out_da:
 void
 libxfs_rtmount_destroy(xfs_mount_t *mp)
 {
+	struct xfs_rtgroup	*rtg;
+	xfs_rgnumber_t		rgno;
+
+	for_each_rtgroup(mp, rgno, rtg) {
+		if (rtg->rtg_rmapip)
+			libxfs_imeta_irele(rtg->rtg_rmapip);
+		rtg->rtg_rmapip = NULL;
+	}
 	if (mp->m_rsumip)
 		libxfs_imeta_irele(mp->m_rsumip);
 	if (mp->m_rbmip)

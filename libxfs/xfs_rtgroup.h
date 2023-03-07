@@ -22,6 +22,9 @@ struct xfs_rtgroup {
 	/* for rcu-safe freeing */
 	struct rcu_head		rcu_head;
 
+	/* reverse mapping btree inode */
+	struct xfs_inode	*rtg_rmapip;
+
 	/* Number of blocks in this group */
 	xfs_rgblock_t		rtg_blockcount;
 
