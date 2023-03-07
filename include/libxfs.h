@@ -27,6 +27,7 @@
 
 #include "xfs_types.h"
 #include "xfs_fs.h"
+#include "xfs_fs_staging.h"
 #include "xfs_arch.h"
 
 #include "xfs_shared.h"

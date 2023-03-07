@@ -60,6 +60,7 @@
 #include "xfs_arch.h"
 
 #include "xfs_fs.h"
+#include "xfs_fs_staging.h"
 #include "libfrog/crc32c.h"
 
 #include <sys/xattr.h>

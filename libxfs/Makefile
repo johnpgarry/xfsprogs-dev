@@ -14,6 +14,7 @@ LTLDFLAGS += -static
 
 # headers to install in include/xfs
 PKGHFILES = xfs_fs.h \
+	xfs_fs_staging.h \
 	xfs_types.h \
 	xfs_da_format.h \
 	xfs_format.h \
