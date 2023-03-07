@@ -19,6 +19,7 @@
 #include "xfs_bmap.h"
 #include "xfs_trace.h"
 #include "xfs_ag.h"
+#include "xfs_imeta.h"
 #include "iunlink.h"
 
 uint16_t
@@ -646,6 +647,8 @@ xfs_droplink(
 	if (inode->i_nlink)
 		return 0;
 
+	if (xfs_is_metadir_inode(ip))
+		xfs_imeta_clear_iflag(tp, ip);
 	return xfs_iunlink(tp, ip);
 }
 

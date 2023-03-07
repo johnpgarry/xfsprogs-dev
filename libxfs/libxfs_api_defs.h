@@ -184,6 +184,7 @@
 #define xfs_imeta_link_space_res	libxfs_imeta_link_space_res
 #define xfs_imeta_lookup		libxfs_imeta_lookup
 #define xfs_imeta_mount			libxfs_imeta_mount
+#define xfs_imeta_set_metaflag		libxfs_imeta_set_metaflag
 #define xfs_imeta_start_create		libxfs_imeta_start_create
 #define xfs_imeta_start_link		libxfs_imeta_start_link
 #define xfs_imeta_start_unlink		libxfs_imeta_start_unlink
@@ -289,6 +290,7 @@
 #define xfs_trans_add_item		libxfs_trans_add_item
 #define xfs_trans_alloc_empty		libxfs_trans_alloc_empty
 #define xfs_trans_alloc			libxfs_trans_alloc
+#define xfs_trans_alloc_dir		libxfs_trans_alloc_dir
 #define xfs_trans_alloc_inode		libxfs_trans_alloc_inode
 #define xfs_trans_bhold			libxfs_trans_bhold
 #define xfs_trans_bhold_release		libxfs_trans_bhold_release

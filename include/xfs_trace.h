@@ -360,6 +360,11 @@
 
 #define trace_xlog_intent_recovery_failed(...)	((void) 0)
 
+#define trace_xfs_imeta_dir_link(...)		((void) 0)
+#define trace_xfs_imeta_dir_lookup(...)		((void) 0)
+#define trace_xfs_imeta_dir_try_create(...)	((void) 0)
+#define trace_xfs_imeta_dir_create(...)		((void) 0)
+#define trace_xfs_imeta_dir_unlink(...)		((void) 0)
 #define trace_xfs_imeta_teardown(...)		((void) 0)
 #define trace_xfs_imeta_sb_create(...)		((void) 0)
 #define trace_xfs_imeta_sb_link(...)		((void) 0)

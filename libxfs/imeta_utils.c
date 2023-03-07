@@ -20,6 +20,7 @@
 #include "xfs_sb.h"
 #include "xfs_imeta.h"
 #include "xfs_trace.h"
+#include "xfs_parent.h"
 #include "imeta_utils.h"
 
 /* Initialize a metadata update structure. */
@@ -29,10 +30,33 @@ xfs_imeta_init(
 	const struct xfs_imeta_path	*path,
 	struct xfs_imeta_update		*upd)
 {
+	struct xfs_trans		*tp;
+	int				error;
+
 	memset(upd, 0, sizeof(struct xfs_imeta_update));
 	upd->mp = mp;
 	upd->path = path;
-	return 0;
+
+	if (!xfs_has_metadir(mp))
+		return 0;
+
+	/*
+	 * Find the parent of the last path component.  If the parent path does
+	 * not exist, we consider this corruption because paths are supposed
+	 * to exist.  For example, if the path is /quota/user, we require that
+	 * /quota already exists.
+	 */
+	error = xfs_trans_alloc_empty(mp, &tp);
+	if (error)
+		return error;
+	error = xfs_imeta_dir_parent(tp, upd->path, &upd->dp);
+	xfs_trans_cancel(tp);
+	if (error == -ENOENT)
+		return -EFSCORRUPTED;
+	if (error)
+		return error;
+
+	return xfs_parent_start(mp, &upd->ppargs);
 }
 
 /*
@@ -47,10 +71,24 @@ xfs_imeta_teardown(
 {
 	trace_xfs_imeta_teardown(upd, error);
 
+	if (upd->ppargs) {
+		xfs_parent_finish(upd->mp, upd->ppargs);
+		upd->ppargs = NULL;
+	}
+
 	if (upd->ip) {
 		if (upd->ip_locked)
 			xfs_iunlock(upd->ip, XFS_ILOCK_EXCL);
 		upd->ip_locked = false;
+	}
+
+	if (upd->dp) {
+		if (upd->dp_locked)
+			xfs_iunlock(upd->dp, XFS_ILOCK_EXCL);
+		upd->dp_locked = false;
+
+		xfs_imeta_irele(upd->dp);
+		upd->dp = NULL;
 	}
 }
 
@@ -74,6 +112,15 @@ xfs_imeta_start_create(
 			xfs_create_space_res(mp, MAXNAMELEN), 0, 0, &upd->tp);
 	if (error)
 		goto out_teardown;
+
+	/*
+	 * Lock the parent directory if there is one.  We can't ijoin it to
+	 * the transaction until after the child file has been created.
+	 */
+	if (upd->dp) {
+		xfs_ilock(upd->dp, XFS_ILOCK_EXCL | XFS_ILOCK_PARENT);
+		upd->dp_locked = true;
+	}
 
 	trace_xfs_imeta_start_create(upd);
 	return 0;
@@ -103,10 +150,19 @@ xfs_imeta_start_dir_update(
 
 	upd->ip = ip;
 
-	error = xfs_trans_alloc_inode(upd->ip, tr_resv, resblks, 0, false,
-			&upd->tp);
-	if (error)
-		goto out_teardown;
+	if (upd->dp) {
+		error = xfs_trans_alloc_dir(upd->dp, tr_resv, upd->ip,
+				resblks, &upd->tp);
+		if (error)
+			goto out_teardown;
+
+		upd->dp_locked = true;
+	} else {
+		error = xfs_trans_alloc_inode(upd->ip, tr_resv, resblks, 0,
+				false, &upd->tp);
+		if (error)
+			goto out_teardown;
+	}
 
 	upd->ip_locked = true;
 	return 0;

@@ -1185,6 +1185,39 @@ libxfs_trans_alloc_inode(
 }
 
 /*
+ * Allocate an transaction, lock and join the directory and child inodes to it,
+ * and reserve quota for a directory update.
+ *
+ * The ILOCKs will be dropped when the transaction is committed or cancelled.
+ *
+ * Caller is responsible for unlocking the inodes manually upon return
+ */
+int
+libxfs_trans_alloc_dir(
+	struct xfs_inode	*dp,
+	struct xfs_trans_res	*resv,
+	struct xfs_inode	*ip,
+	unsigned int		resblks,
+	struct xfs_trans	**tpp)
+{
+	struct xfs_trans	*tp;
+	struct xfs_mount	*mp = ip->i_mount;
+	int			error;
+
+	error = xfs_trans_alloc(mp, resv, resblks, 0, 0, &tp);
+	if (error)
+		return error;
+
+	xfs_lock_two_inodes(dp, XFS_ILOCK_EXCL, ip, XFS_ILOCK_EXCL);
+
+	xfs_trans_ijoin(tp, dp, 0);
+	xfs_trans_ijoin(tp, ip, 0);
+
+	*tpp = tp;
+	return 0;
+}
+
+/*
  * Try to reserve more blocks for a transaction.  The single use case we
  * support is for offline repair -- use a transaction to gather data without
  * fear of btree cycle deadlocks; calculate how many blocks we really need
