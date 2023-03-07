@@ -177,8 +177,10 @@
 #define xfs_imeta_cancel_update		libxfs_imeta_cancel_update
 #define xfs_imeta_commit_update		libxfs_imeta_commit_update
 #define xfs_imeta_create		libxfs_imeta_create
+#define xfs_imeta_create_file_path	libxfs_imeta_create_file_path
 #define xfs_imeta_create_space_res	libxfs_imeta_create_space_res
 #define xfs_imeta_ensure_dirpath	libxfs_imeta_ensure_dirpath
+#define xfs_imeta_free_path		libxfs_imeta_free_path
 #define xfs_imeta_iget			libxfs_imeta_iget
 #define xfs_imeta_irele			libxfs_imeta_irele
 #define xfs_imeta_link			libxfs_imeta_link

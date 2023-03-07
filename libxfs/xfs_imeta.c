@@ -1014,3 +1014,49 @@ xfs_imeta_mount(
 
 	return 0;
 }
+
+/* Create a path to a file within the metadata directory tree. */
+int
+xfs_imeta_create_file_path(
+	struct xfs_mount	*mp,
+	unsigned int		nr_components,
+	struct xfs_imeta_path	**pathp)
+{
+	struct xfs_imeta_path	*p;
+	unsigned char		**components;
+
+	p = kzalloc(sizeof(struct xfs_imeta_path), GFP_KERNEL);
+	if (!p)
+		return -ENOMEM;
+
+	components = kvcalloc(nr_components, sizeof(unsigned char *),
+			GFP_KERNEL);
+	if (!components) {
+		kfree(p);
+		return -ENOMEM;
+	}
+
+	p->im_depth = nr_components;
+	p->im_path = (const unsigned char **)components;
+	p->im_ftype = XFS_DIR3_FT_REG_FILE;
+	*pathp = p;
+	return 0;
+}
+
+/* Free a metadata directory tree path. */
+void
+xfs_imeta_free_path(
+	const struct xfs_imeta_path	*path)
+{
+	unsigned int			i;
+
+	if (path->im_flags & XFS_IMETA_PATH_STATIC)
+		return;
+
+	for (i = 0; i < path->im_depth; i++) {
+		if ((path->im_dynamicmask & (1ULL << i)) && path->im_path[i])
+			kfree(path->im_path[i]);
+	}
+	kfree(path->im_path);
+	kfree(path);
+}

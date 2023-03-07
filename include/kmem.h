@@ -65,6 +65,7 @@ static inline void *kmalloc(size_t size, gfp_t flags)
 	return kvmalloc(size, flags);
 }
 
+#define kvcalloc(nr, size, gfp)	kvmalloc((nr) * (size), (gfp) | __GFP_ZERO)
 #define kzalloc(size, gfp)	kvmalloc((size), (gfp) | __GFP_ZERO)
 
 static inline void kfree(const void *ptr)
