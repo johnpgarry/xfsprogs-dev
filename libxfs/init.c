@@ -688,6 +688,17 @@ libxfs_mountfs_imeta(
 	if (error)
 		return;
 
+	if (xfs_has_metadir(mp)) {
+		error = -libxfs_imeta_iget(tp, mp->m_sb.sb_metadirino,
+				XFS_DIR3_FT_DIR, &mp->m_metadirip);
+		if (error) {
+			fprintf(stderr,
+ _("%s: Failed to load metadir root directory, error %d\n"),
+					progname, error);
+			goto err_cancel;
+		}
+	}
+
 	error = -xfs_imeta_mount(tp);
 	if (error) {
 		fprintf(stderr,
@@ -994,6 +1005,8 @@ libxfs_umount(
 	int			error;
 
 	libxfs_rtmount_destroy(mp);
+	if (mp->m_metadirip)
+		libxfs_imeta_irele(mp->m_metadirip);
 
 	/*
 	 * Purge the buffer cache to write all dirty buffers to disk and free
