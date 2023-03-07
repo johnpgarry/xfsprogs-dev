@@ -271,8 +271,10 @@ xfs_iformat_data_fork(
 			}
 			return xfs_iformat_rtrmap(ip, dip);
 		case XFS_DINODE_FMT_REFCOUNT:
-			if (!xfs_has_rtreflink(ip->i_mount))
+			if (!xfs_has_rtreflink(ip->i_mount)) {
+				xfs_inode_mark_sick(ip, XFS_SICK_INO_CORE);
 				return -EFSCORRUPTED;
+			}
 			return xfs_iformat_rtrefcount(ip, dip);
 		default:
 			xfs_inode_verifier_error(ip, -EFSCORRUPTED, __func__,
