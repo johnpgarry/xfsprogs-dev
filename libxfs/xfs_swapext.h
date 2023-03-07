@@ -180,16 +180,21 @@ struct xfs_swapext_req {
 /* Files need to be upgraded to have large extent counts. */
 #define XFS_SWAP_REQ_NREXT64		(1U << 3)
 
+/* Try to convert inode2's fork to local format, if possible. */
+#define XFS_SWAP_REQ_CVT_INO2_SF	(1U << 4)
+
 #define XFS_SWAP_REQ_FLAGS		(XFS_SWAP_REQ_LOGGED | \
 					 XFS_SWAP_REQ_SET_SIZES | \
 					 XFS_SWAP_REQ_INO1_WRITTEN | \
-					 XFS_SWAP_REQ_NREXT64)
+					 XFS_SWAP_REQ_NREXT64 | \
+					 XFS_SWAP_REQ_CVT_INO2_SF)
 
 #define XFS_SWAP_REQ_STRINGS \
 	{ XFS_SWAP_REQ_LOGGED,		"LOGGED" }, \
 	{ XFS_SWAP_REQ_SET_SIZES,	"SETSIZES" }, \
 	{ XFS_SWAP_REQ_INO1_WRITTEN,	"INO1_WRITTEN" }, \
-	{ XFS_SWAP_REQ_NREXT64,		"NREXT64" }
+	{ XFS_SWAP_REQ_NREXT64,		"NREXT64" }, \
+	{ XFS_SWAP_REQ_CVT_INO2_SF,	"CVT_INO2_SF" }
 
 unsigned int xfs_swapext_reflink_prep(const struct xfs_swapext_req *req);
 void xfs_swapext_reflink_finish(struct xfs_trans *tp,
