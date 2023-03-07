@@ -282,7 +282,7 @@ iroot_size(
 	unsigned int		nr_this_level,
 	void			*priv)
 {
-	return XFS_BMAP_BROOT_SPACE_CALC(cur->bc_mp, nr_this_level);
+	return xfs_bmap_broot_space_calc(cur->bc_mp, nr_this_level);
 }
 
 static int

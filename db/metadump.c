@@ -250,8 +250,8 @@ zero_btree_node(
 		if (nrecs > mp->m_bmap_dmxr[1])
 			return;
 
-		bkp = XFS_BMBT_KEY_ADDR(mp, block, 1);
-		bpp = XFS_BMBT_PTR_ADDR(mp, block, 1, mp->m_bmap_dmxr[1]);
+		bkp = xfs_bmbt_key_addr(mp, block, 1);
+		bpp = xfs_bmbt_ptr_addr(mp, block, 1, mp->m_bmap_dmxr[1]);
 		zp1 = (char *)&bkp[nrecs];
 		zp2 = (char *)&bpp[nrecs];
 		key_end = (char *)bpp;
@@ -316,7 +316,7 @@ zero_btree_leaf(
 		if (nrecs > mp->m_bmap_dmxr[0])
 			return;
 
-		brp = XFS_BMBT_REC_ADDR(mp, block, 1);
+		brp = xfs_bmbt_rec_addr(mp, block, 1);
 		zp = (char *)&brp[nrecs];
 		break;
 	case TYP_INOBT:
@@ -2156,7 +2156,7 @@ scanfunc_bmap(
 					typtab[btype].name, agno, agbno);
 			return 1;
 		}
-		return process_bmbt_reclist(XFS_BMBT_REC_ADDR(mp, block, 1),
+		return process_bmbt_reclist(xfs_bmbt_rec_addr(mp, block, 1),
 					    nrecs, sbm->typ, sbm->is_meta);
 	}
 
@@ -2166,7 +2166,7 @@ scanfunc_bmap(
 					nrecs, typtab[btype].name, agno, agbno);
 		return 1;
 	}
-	pp = XFS_BMBT_PTR_ADDR(mp, block, 1, mp->m_bmap_dmxr[1]);
+	pp = xfs_bmbt_ptr_addr(mp, block, 1, mp->m_bmap_dmxr[1]);
 	for (i = 0; i < nrecs; i++) {
 		xfs_agnumber_t	ag;
 		xfs_agblock_t	bno;
@@ -2229,7 +2229,7 @@ process_btinode(
 	}
 
 	if (level == 0) {
-		return process_bmbt_reclist(XFS_BMDR_REC_ADDR(dib, 1),
+		return process_bmbt_reclist(xfs_bmdr_rec_addr(dib, 1),
 					    nrecs, itype, is_meta);
 	}
 
@@ -2242,13 +2242,13 @@ process_btinode(
 		return 1;
 	}
 
-	pp = XFS_BMDR_PTR_ADDR(dib, 1, maxrecs);
+	pp = xfs_bmdr_ptr_addr(dib, 1, maxrecs);
 
 	if (metadump.zero_stale_data) {
 		char	*top;
 
 		/* Unused btree key space */
-		top = (char*)XFS_BMDR_KEY_ADDR(dib, nrecs + 1);
+		top = (char*)xfs_bmdr_key_addr(dib, nrecs + 1);
 		memset(top, 0, (char*)pp - top);
 
 		/* Unused btree ptr space */

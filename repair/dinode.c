@@ -842,19 +842,19 @@ _("bad numrecs 0 in inode %" PRIu64 " bmap btree root block\n"),
 	/*
 	 * use bmdr/dfork_dsize since the root block is in the data fork
 	 */
-	if (XFS_BMDR_SPACE_CALC(numrecs) > XFS_DFORK_SIZE(dip, mp, whichfork)) {
+	if (xfs_bmdr_space_calc(numrecs) > XFS_DFORK_SIZE(dip, mp, whichfork)) {
 		do_warn(
-	_("indicated size of %s btree root (%d bytes) greater than space in "
+	_("indicated size of %s btree root (%zu bytes) greater than space in "
 	  "inode %" PRIu64 " %s fork\n"),
-			forkname, XFS_BMDR_SPACE_CALC(numrecs), lino, forkname);
+			forkname, xfs_bmdr_space_calc(numrecs), lino, forkname);
 		return(1);
 	}
 
 	init_bm_cursor(&cursor, level + 1);
 
-	pp = XFS_BMDR_PTR_ADDR(dib, 1,
+	pp = xfs_bmdr_ptr_addr(dib, 1,
 		libxfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork), 0));
-	pkey = XFS_BMDR_KEY_ADDR(dib, 1);
+	pkey = xfs_bmdr_key_addr(dib, 1);
 	last_key = NULLFILEOFF;
 
 	for (i = 0; i < numrecs; i++)  {

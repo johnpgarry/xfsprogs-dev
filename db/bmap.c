@@ -78,8 +78,8 @@ bmap(
 		push_cur();
 		rblock = (xfs_bmdr_block_t *)XFS_DFORK_PTR(dip, whichfork);
 		fsize = XFS_DFORK_SIZE(dip, mp, whichfork);
-		pp = XFS_BMDR_PTR_ADDR(rblock, 1, libxfs_bmdr_maxrecs(fsize, 0));
-		kp = XFS_BMDR_KEY_ADDR(rblock, 1);
+		pp = xfs_bmdr_ptr_addr(rblock, 1, libxfs_bmdr_maxrecs(fsize, 0));
+		kp = xfs_bmdr_key_addr(rblock, 1);
 		bno = select_child(curoffset, kp, pp,
 					be16_to_cpu(rblock->bb_numrecs));
 		for (;;) {
@@ -88,9 +88,9 @@ bmap(
 			block = (struct xfs_btree_block *)iocur_top->data;
 			if (be16_to_cpu(block->bb_level) == 0)
 				break;
-			pp = XFS_BMBT_PTR_ADDR(mp, block, 1,
+			pp = xfs_bmbt_ptr_addr(mp, block, 1,
 				libxfs_bmbt_maxrecs(mp, mp->m_sb.sb_blocksize, 0));
-			kp = XFS_BMBT_KEY_ADDR(mp, block, 1);
+			kp = xfs_bmbt_key_addr(mp, block, 1);
 			bno = select_child(curoffset, kp, pp,
 					be16_to_cpu(block->bb_numrecs));
 		}
@@ -98,7 +98,7 @@ bmap(
 			nextbno = be64_to_cpu(block->bb_u.l.bb_rightsib);
 			nextents = be16_to_cpu(block->bb_numrecs);
 			xp = (xfs_bmbt_rec_t *)
-				XFS_BMBT_REC_ADDR(mp, block, 1);
+				xfs_bmbt_rec_addr(mp, block, 1);
 			for (ep = xp; ep < &xp[nextents] && n < nex; ep++) {
 				if (!bmap_one_extent(ep, &curoffset, eoffset,
 						&n, bep)) {

@@ -445,7 +445,7 @@ _("inode %" PRIu64 " bad # of bmap records (%" PRIu64 ", min - %u, max - %u)\n")
 					mp->m_bmap_dmxr[0]);
 			return(1);
 		}
-		rp = XFS_BMBT_REC_ADDR(mp, block, 1);
+		rp = xfs_bmbt_rec_addr(mp, block, 1);
 		*nex += numrecs;
 		/*
 		 * XXX - if we were going to fix up the btree record,
@@ -496,8 +496,8 @@ _("inode %" PRIu64 " bad # of bmap records (%" PRIu64 ", min - %u, max - %u)\n")
 			ino, numrecs, mp->m_bmap_dmnr[1], mp->m_bmap_dmxr[1]);
 		return(1);
 	}
-	pp = XFS_BMBT_PTR_ADDR(mp, block, 1, mp->m_bmap_dmxr[1]);
-	pkey = XFS_BMBT_KEY_ADDR(mp, block, 1);
+	pp = xfs_bmbt_ptr_addr(mp, block, 1, mp->m_bmap_dmxr[1]);
+	pkey = xfs_bmbt_key_addr(mp, block, 1);
 
 	last_key = NULLFILEOFF;
 

@@ -328,13 +328,13 @@ pf_scanfunc_bmap(
 		if (numrecs > mp->m_bmap_dmxr[0] || !isadir)
 			return 0;
 		return pf_read_bmbt_reclist(args,
-			XFS_BMBT_REC_ADDR(mp, block, 1), numrecs);
+			xfs_bmbt_rec_addr(mp, block, 1), numrecs);
 	}
 
 	if (numrecs > mp->m_bmap_dmxr[1])
 		return 0;
 
-	pp = XFS_BMBT_PTR_ADDR(mp, block, 1, mp->m_bmap_dmxr[1]);
+	pp = xfs_bmbt_ptr_addr(mp, block, 1, mp->m_bmap_dmxr[1]);
 
 	for (i = 0; i < numrecs; i++) {
 		dbno = get_unaligned_be64(&pp[i]);
@@ -372,11 +372,11 @@ pf_read_btinode(
 	/*
 	 * use bmdr/dfork_dsize since the root block is in the data fork
 	 */
-	if (XFS_BMDR_SPACE_CALC(numrecs) > XFS_DFORK_DSIZE(dino, mp))
+	if (xfs_bmdr_space_calc(numrecs) > XFS_DFORK_DSIZE(dino, mp))
 		return;
 
 	dsize = XFS_DFORK_DSIZE(dino, mp);
-	pp = XFS_BMDR_PTR_ADDR(dib, 1, libxfs_bmdr_maxrecs(dsize, 0));
+	pp = xfs_bmdr_ptr_addr(dib, 1, libxfs_bmdr_maxrecs(dsize, 0));
 
 	for (i = 0; i < numrecs; i++) {
 		dbno = get_unaligned_be64(&pp[i]);

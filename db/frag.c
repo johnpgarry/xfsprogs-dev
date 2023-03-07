@@ -243,11 +243,11 @@ process_btinode(
 
 	dib = (xfs_bmdr_block_t *)XFS_DFORK_PTR(dip, whichfork);
 	if (be16_to_cpu(dib->bb_level) == 0) {
-		xfs_bmbt_rec_t		*rp = XFS_BMDR_REC_ADDR(dib, 1);
+		xfs_bmbt_rec_t		*rp = xfs_bmdr_rec_addr(dib, 1);
 		process_bmbt_reclist(rp, be16_to_cpu(dib->bb_numrecs), extmapp);
 		return;
 	}
-	pp = XFS_BMDR_PTR_ADDR(dib, 1,
+	pp = xfs_bmdr_ptr_addr(dib, 1,
 		libxfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork), 0));
 	for (i = 0; i < be16_to_cpu(dib->bb_numrecs); i++)
 		scan_lbtree(get_unaligned_be64(&pp[i]),
@@ -437,7 +437,7 @@ scanfunc_bmap(
 				   nrecs, typtab[btype].name);
 			return;
 		}
-		rp = XFS_BMBT_REC_ADDR(mp, block, 1);
+		rp = xfs_bmbt_rec_addr(mp, block, 1);
 		process_bmbt_reclist(rp, nrecs, extmapp);
 		return;
 	}
@@ -447,7 +447,7 @@ scanfunc_bmap(
 			   nrecs, typtab[btype].name);
 		return;
 	}
-	pp = XFS_BMBT_PTR_ADDR(mp, block, 1, mp->m_bmap_dmxr[0]);
+	pp = xfs_bmbt_ptr_addr(mp, block, 1, mp->m_bmap_dmxr[0]);
 	for (i = 0; i < nrecs; i++)
 		scan_lbtree(be64_to_cpu(pp[i]), level, scanfunc_bmap, extmapp,
 									btype);
