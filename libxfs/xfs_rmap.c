@@ -24,6 +24,7 @@
 #include "xfs_ag.h"
 #include "xfs_health.h"
 #include "defer_item.h"
+#include "xfs_rtgroup.h"
 
 struct kmem_cache	*xfs_rmap_intent_cache;
 
@@ -263,11 +264,72 @@ xfs_rmap_check_irec(
 	return NULL;
 }
 
+xfs_failaddr_t
+xfs_rtrmap_check_irec(
+	struct xfs_rtgroup		*rtg,
+	const struct xfs_rmap_irec	*irec)
+{
+	struct xfs_mount		*mp = rtg->rtg_mount;
+	bool				is_inode;
+	bool				is_unwritten;
+	bool				is_bmbt;
+	bool				is_attr;
+
+	if (irec->rm_blockcount == 0)
+		return __this_address;
+
+	if (irec->rm_owner == XFS_RMAP_OWN_FS) {
+		if (irec->rm_startblock != 0)
+			return __this_address;
+		if (irec->rm_blockcount != mp->m_sb.sb_rextsize)
+			return __this_address;
+		if (irec->rm_offset != 0)
+			return __this_address;
+	} else {
+		if (!xfs_verify_rgbext(rtg, irec->rm_startblock,
+					    irec->rm_blockcount))
+			return __this_address;
+	}
+
+	if (!(xfs_verify_ino(mp, irec->rm_owner) ||
+	      (irec->rm_owner <= XFS_RMAP_OWN_FS &&
+	       irec->rm_owner >= XFS_RMAP_OWN_MIN)))
+		return __this_address;
+
+	/* Check flags. */
+	is_inode = !XFS_RMAP_NON_INODE_OWNER(irec->rm_owner);
+	is_bmbt = irec->rm_flags & XFS_RMAP_BMBT_BLOCK;
+	is_attr = irec->rm_flags & XFS_RMAP_ATTR_FORK;
+	is_unwritten = irec->rm_flags & XFS_RMAP_UNWRITTEN;
+
+	if (!is_inode && irec->rm_owner != XFS_RMAP_OWN_FS)
+		return __this_address;
+
+	if (!is_inode && irec->rm_offset != 0)
+		return __this_address;
+
+	if (is_bmbt || is_attr)
+		return __this_address;
+
+	if (is_unwritten && !is_inode)
+		return __this_address;
+
+	/* Check for a valid fork offset, if applicable. */
+	if (is_inode &&
+	    !xfs_verify_fileext(mp, irec->rm_offset, irec->rm_blockcount))
+		return __this_address;
+
+	return NULL;
+}
+
 static inline xfs_failaddr_t
 xfs_rmap_check_btrec(
 	struct xfs_btree_cur		*cur,
 	const struct xfs_rmap_irec	*irec)
 {
+	if (cur->bc_btnum == XFS_BTNUM_RTRMAP)
+		return xfs_rtrmap_check_irec(cur->bc_ino.rtg, irec);
+
 	if (xfs_btree_has_xfile(cur))
 		return xfs_rmap_check_irec(cur->bc_mem.pag, irec);
 	return xfs_rmap_check_irec(cur->bc_ag.pag, irec);
@@ -284,6 +346,10 @@ xfs_rmap_complain_bad_rec(
 	if (xfs_btree_has_xfile(cur))
 		xfs_warn(mp,
  "In-Memory Reverse Mapping BTree record corruption detected at %pS!", fa);
+	else if (cur->bc_btnum == XFS_BTNUM_RTRMAP)
+		xfs_warn(mp,
+ "RT Reverse Mapping BTree record corruption in rtgroup %u detected at %pS!",
+				cur->bc_ino.rtg->rtg_rgno, fa);
 	else
 		xfs_warn(mp,
  "Reverse Mapping BTree record corruption in AG %d detected at %pS!",
