@@ -572,7 +572,7 @@ fill_rbmino(xfs_mount_t *mp)
 	struct xfs_buf	*bp;
 	xfs_trans_t	*tp;
 	xfs_inode_t	*ip;
-	xfs_rtword_t	*bmp;
+	union xfs_rtword_raw	*bmp;
 	int		nmap;
 	int		error;
 	xfs_fileoff_t	bno;

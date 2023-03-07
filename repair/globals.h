@@ -127,7 +127,7 @@ extern int64_t		fs_max_file_offset;
 
 /* realtime info */
 
-extern xfs_rtword_t	*btmcompute;
+extern union xfs_rtword_raw		*btmcompute;
 extern xfs_suminfo_t	*sumcompute;
 
 /* inode tree records have full or partial backptr fields ? */

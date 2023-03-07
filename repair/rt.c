@@ -29,7 +29,7 @@ rtinit(xfs_mount_t *mp)
 	 * handled by incore_init()
 	 */
 	wordcnt = libxfs_rtbitmap_wordcount(mp, mp->m_sb.sb_rextents);
-	btmcompute = calloc(wordcnt, sizeof(xfs_rtword_t));
+	btmcompute = calloc(wordcnt, sizeof(union xfs_rtword_raw));
 	if (!btmcompute)
 		do_error(
 	_("couldn't allocate memory for incore realtime bitmap.\n"));
@@ -39,14 +39,24 @@ rtinit(xfs_mount_t *mp)
 	_("couldn't allocate memory for incore realtime summary info.\n"));
 }
 
+static inline void
+set_rtword(
+	struct xfs_mount	*mp,
+	union xfs_rtword_raw	*word,
+	xfs_rtword_t		value)
+{
+	word->old = value;
+}
+
 /*
  * generate the real-time bitmap and summary info based on the
  * incore realtime extent map.
  */
 int
-generate_rtinfo(xfs_mount_t	*mp,
-		xfs_rtword_t	*words,
-		xfs_suminfo_t	*sumcompute)
+generate_rtinfo(
+	struct xfs_mount	*mp,
+	union xfs_rtword_raw	*words,
+	xfs_suminfo_t		*sumcompute)
 {
 	xfs_rtxnum_t	extno;
 	xfs_rtxnum_t	start_ext;
@@ -75,7 +85,7 @@ generate_rtinfo(xfs_mount_t	*mp,
 	 */
 	while (extno < mp->m_sb.sb_rextents)  {
 		freebit = 1;
-		*words = 0;
+		set_rtword(mp, words, 0);
 		bits = 0;
 		for (i = 0; i < sizeof(xfs_rtword_t) * NBBY &&
 				extno < mp->m_sb.sb_rextents; i++, extno++)  {
@@ -98,7 +108,7 @@ generate_rtinfo(xfs_mount_t	*mp,
 
 			freebit <<= 1;
 		}
-		*words = bits;
+		set_rtword(mp, words, bits);
 		words++;
 
 		if (extno % bitsperblock == 0)

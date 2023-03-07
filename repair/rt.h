@@ -11,10 +11,8 @@ struct blkmap;
 void
 rtinit(xfs_mount_t		*mp);
 
-int
-generate_rtinfo(xfs_mount_t	*mp,
-		xfs_rtword_t	*words,
-		xfs_suminfo_t	*sumcompute);
+int generate_rtinfo(struct xfs_mount *mp, union xfs_rtword_raw *words,
+		xfs_suminfo_t *sumcompute);
 
 void check_rtbitmap(struct xfs_mount *mp);
 void check_rtsummary(struct xfs_mount *mp);
