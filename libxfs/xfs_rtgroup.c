@@ -418,7 +418,7 @@ xfs_rtgroup_log_super(
 }
 
 /* Initialize a secondary realtime superblock. */
-static int
+int
 xfs_rtgroup_init_secondary_super(
 	struct xfs_mount	*mp,
 	xfs_rgnumber_t		rgno,
