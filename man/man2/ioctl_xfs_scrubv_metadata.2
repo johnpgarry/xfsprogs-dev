@@ -1,0 +1,168 @@
+.\" Copyright (c) 2023-2024 Oracle.  All rights reserved.
+.\"
+.\" %%%LICENSE_START(GPLv2+_DOC_FULL)
+.\" SPDX-License-Identifier: GPL-2.0-or-later
+.\" %%%LICENSE_END
+.TH IOCTL-XFS-SCRUBV-METADATA 2 2023-08-18 "XFS"
+.SH NAME
+ioctl_xfs_scrubv_metadata \- check a lot of XFS filesystem metadata
+.SH SYNOPSIS
+.br
+.B #include <xfs/xfs_fs.h>
+.br
+.B #include <xfs/xfs_fs_staging.h>
+.PP
+.BI "int ioctl(int " dest_fd ", XFS_IOC_SCRUBV_METADATA, struct xfs_scrub_vec_head *" arg );
+.SH DESCRIPTION
+This XFS ioctl asks the kernel driver to examine several pieces of filesystem
+metadata for errors or suboptimal metadata.
+Multiple scrub types can be invoked to target a single filesystem object.
+See
+.BR ioctl_xfs_scrub_metadata (2)
+for a discussion of metadata validation, and documentation of the various
+.B XFS_SCRUB_TYPE
+and
+.B XFS_SCRUB_FLAGS
+values referenced below.
+
+The types and location of the metadata to scrub are conveyed as a vector with
+a header of the following form:
+.PP
+.in +4n
+.nf
+
+struct xfs_scrub_vec_head {
+	__u64 svh_ino;
+	__u32 svh_gen;
+	__u32 svh_agno;
+	__u32 svh_flags;
+	__u16 svh_rest_us;
+	__u16 svh_nr;
+	__u64 svh_reserved;
+
+	struct xfs_scrub_vec svh_vecs[];
+};
+.fi
+.in
+.PP
+The field
+.IR svh_ino ,
+.IR svh_gen ,
+and
+.IR svh_agno
+correspond to the
+.IR sm_ino ,
+.IR sm_gen ,
+and
+.IR sm_agno
+fields of the regular scrub ioctl.
+Exactly one filesystem object can be specified in a single call.
+The kernel will proceed with each vector in
+.I svh_vecs
+until progress is no longer possible.
+
+The field
+.I svh_rest_us
+specifies an amount of time to pause between each scrub invocation to give
+the system a chance to process other requests.
+
+The field
+.I svh_nr
+specifies the number of vectors in the
+.I svh_recs
+flex array.
+
+.PP
+The field
+.I svh_reserved
+must be zero.
+
+Each vector has the following form:
+.PP
+.in +4n
+.nf
+
+struct xfs_scrub_vec {
+	__u32 sv_type;
+	__u32 sv_flags;
+	__s32 sv_ret;
+	__u32 sv_reserved;
+};
+.fi
+.in
+
+.PP
+The fields
+.I sv_type
+and
+.I sv_flags
+indicate the type of metadata to check and the behavioral changes that
+userspace will permit of the kernel.
+The
+.I sv_flags
+field will be updated upon completion of the scrub call.
+See the documentation of
+.B XFS_SCRUB_TYPE_*
+and
+.B XFS_SCRUB_[IO]FLAG_*
+values in
+.BR ioctl_xfs_scrub_metadata (2)
+for a detailed description of their purpose.
+
+.PP
+If a vector's
+.I sv_type
+field is set to the value
+.BR XFS_SCRUB_TYPE_BARRIER ,
+the kernel will stop processing vectors and return to userspace if a scrubber
+flags corruption by setting one of the
+.B XFS_SCRUB_OFLAG_*
+values in
+.I sv_flags
+or
+returns an operation error in
+.IR sv_ret .
+Otherwise, the kernel returns only after processing all vectors.
+
+The
+.I sv_ret
+field is set to the return value of the scrub function.
+See the RETURN VALUE
+section of the
+.BR ioctl_xfs_scrub_metadata (2)
+manual page for more information.
+
+The
+.B sv_reserved
+field must be zero.
+
+.SH RETURN VALUE
+On error, \-1 is returned, and
+.I errno
+is set to indicate the error.
+.PP
+.SH ERRORS
+Error codes can be one of, but are not limited to, the following:
+.TP
+.B EINVAL
+One or more of the arguments specified is invalid.
+.TP
+.B EINTR
+The operation was interrupted.
+.TP
+.B ENOMEM
+There was not sufficient memory to perform the scrub or repair operation.
+.TP
+.B EFAULT
+A memory fault was encountered while reading or writing the vector.
+.SH CONFORMING TO
+This API is specific to XFS filesystem on the Linux kernel.
+.SH NOTES
+These operations may block other filesystem operations for a long time.
+A calling process can stop the operation by being sent a fatal
+signal, but non-fatal signals are blocked.
+.SH SEE ALSO
+.BR ioctl (2)
+.BR ioctl_xfs_scrub_metadata (2)
+.BR xfs_scrub (8)
+.BR xfs_repair (8)
