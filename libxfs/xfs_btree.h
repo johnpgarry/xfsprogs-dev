@@ -245,6 +245,11 @@ union xfs_btree_irec {
 	struct xfs_refcount_irec	rc;
 };
 
+struct xbtree_refc {
+	unsigned int	nr_ops;		/* # record updates */
+	unsigned int	shape_changes;	/* # of extent splits */
+};
+
 /* Per-AG btree information. */
 struct xfs_btree_cur_ag {
 	struct xfs_perag		*pag;
@@ -253,10 +258,7 @@ struct xfs_btree_cur_ag {
 		struct xbtree_afakeroot	*afake;	/* for staging cursor */
 	};
 	union {
-		struct {
-			unsigned int	nr_ops;	/* # record updates */
-			unsigned int	shape_changes;	/* # of extent splits */
-		} refc;
+		struct xbtree_refc	refc;
 		struct {
 			bool		active;	/* allocation cursor state */
 		} abt;
@@ -271,6 +273,7 @@ struct xfs_btree_cur_ino {
 	int				allocated;
 	short				forksize;
 	char				whichfork;
+	struct xbtree_refc		refc;
 };
 
 /* In-memory btree information */

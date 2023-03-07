@@ -1822,6 +1822,9 @@ typedef __be32 xfs_refcount_ptr_t;
  */
 #define	XFS_RTREFC_CRC_MAGIC	0x52434e54	/* 'RCNT' */
 
+/* inode-rooted btree pointer type */
+typedef __be64 xfs_rtrefcount_ptr_t;
+
 /*
  * BMAP Btree format definitions
  *
