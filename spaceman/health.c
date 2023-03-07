@@ -127,6 +127,10 @@ static const struct flag_map ag_flags[] = {
 		.descr = "reference count btree",
 		.has_fn = has_reflink,
 	},
+	{
+		.mask = XFS_AG_GEOM_SICK_INODES,
+		.descr = "overall inode state",
+	},
 	{0},
 };
 
