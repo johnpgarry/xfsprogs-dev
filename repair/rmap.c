@@ -990,8 +990,8 @@ refcount_emit(
 		agno, agbno, len, nr_rmaps);
 	rlrec.rc_startblock = agbno;
 	rlrec.rc_blockcount = len;
-	if (nr_rmaps > MAXREFCOUNT)
-		nr_rmaps = MAXREFCOUNT;
+	if (nr_rmaps > XFS_REFC_REFCOUNT_MAX)
+		nr_rmaps = XFS_REFC_REFCOUNT_MAX;
 	rlrec.rc_refcount = nr_rmaps;
 	rlrec.rc_domain = XFS_REFC_DOMAIN_SHARED;
 

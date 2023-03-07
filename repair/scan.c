@@ -1895,7 +1895,7 @@ _("extent (%u/%u) len %u claimed, state is %d\n"),
 						break;
 					}
 				}
-			} else if (nr < 2 || nr > MAXREFCOUNT) {
+			} else if (nr < 2 || nr > XFS_REFC_REFCOUNT_MAX) {
 				do_warn(
 	_("invalid reference count %u in record %u of %s btree block %u/%u\n"),
 					nr, i, name, agno, bno);
