@@ -3878,6 +3878,7 @@ start_superblock_setup(
 	struct xfs_mount	*mp,
 	struct xfs_sb		*sbp)
 {
+	sbp->sb_inprogress = 1;	/* mkfs is in progress */
 	sbp->sb_magicnum = XFS_SB_MAGIC;
 	sbp->sb_sectsize = (uint16_t)cfg->sectorsize;
 	sbp->sb_sectlog = (uint8_t)cfg->sectorlog;
@@ -3960,7 +3961,6 @@ finish_superblock_setup(
 	sbp->sb_rbmblocks = cfg->rtbmblocks;
 	sbp->sb_logblocks = (xfs_extlen_t)cfg->logblocks;
 	sbp->sb_rextslog = libxfs_compute_rextslog(cfg->rtextents);
-	sbp->sb_inprogress = 1;	/* mkfs is in progress */
 	sbp->sb_imax_pct = cfg->imaxpct;
 	sbp->sb_icount = 0;
 	sbp->sb_ifree = 0;

@@ -360,6 +360,17 @@
 
 #define trace_xlog_intent_recovery_failed(...)	((void) 0)
 
+#define trace_xfs_imeta_teardown(...)		((void) 0)
+#define trace_xfs_imeta_sb_create(...)		((void) 0)
+#define trace_xfs_imeta_sb_link(...)		((void) 0)
+#define trace_xfs_imeta_sb_lookup(...)		((void) 0)
+#define trace_xfs_imeta_sb_unlink(...)		((void) 0)
+#define trace_xfs_imeta_start_create(...)	((void) 0)
+#define trace_xfs_imeta_start_link(...)		((void) 0)
+#define trace_xfs_imeta_start_unlink(...)	((void) 0)
+#define trace_xfs_imeta_update_cancel(...)	((void) 0)
+#define trace_xfs_imeta_update_commit(...)	((void) 0)
+
 #define trace_xfs_iunlink_update_bucket(...)	((void) 0)
 #define trace_xfs_iunlink_update_dinode(...)	((void) 0)
 #define trace_xfs_iunlink(...)			((void) 0)
