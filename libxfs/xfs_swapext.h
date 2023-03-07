@@ -200,6 +200,7 @@ unsigned int xfs_swapext_reflink_prep(const struct xfs_swapext_req *req);
 void xfs_swapext_reflink_finish(struct xfs_trans *tp,
 		const struct xfs_swapext_req *req, unsigned int reflink_state);
 
+int xfs_swapext_estimate_overhead(struct xfs_swapext_req *req);
 int xfs_swapext_estimate(struct xfs_swapext_req *req);
 
 extern struct kmem_cache	*xfs_swapext_intent_cache;

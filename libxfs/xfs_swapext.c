@@ -767,7 +767,7 @@ xfs_swapext_rmapbt_blocks(
 }
 
 /* Estimate the bmbt and rmapbt overhead required to exchange extents. */
-static int
+int
 xfs_swapext_estimate_overhead(
 	struct xfs_swapext_req	*req)
 {
