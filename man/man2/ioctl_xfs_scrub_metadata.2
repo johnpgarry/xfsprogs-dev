@@ -98,9 +98,13 @@ The realtime allocation group number must be given in
 must be zero.
 
 .PP
-.TP
+.nf
 .B XFS_SCRUB_TYPE_RGBITMAP
-Examine a given realtime allocation group's free space bitmap.
+.fi
+.TP
+.B XFS_SCRUB_TYPE_RTRMAPBT
+Examine a given realtime allocation group's free space bitmap or reverse
+mapping btree, respectively.
 Records are checked for obviously incorrect values and cross-referenced
 with other allocation group metadata records to ensure that there are no
 conflicts.
