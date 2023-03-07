@@ -738,9 +738,10 @@ struct xfs_scrub_metadata {
 #define XFS_SCRUB_TYPE_RGSUPER	30	/* realtime superblock */
 #define XFS_SCRUB_TYPE_RGBITMAP	31	/* realtime group bitmap */
 #define XFS_SCRUB_TYPE_RTRMAPBT	32	/* rtgroup reverse mapping btree */
+#define XFS_SCRUB_TYPE_RTREFCBT	33	/* realtime reference count btree */
 
 /* Number of scrub subcommands. */
-#define XFS_SCRUB_TYPE_NR	33
+#define XFS_SCRUB_TYPE_NR	34
 
 /*
  * This special type code only applies to the vectored scrub implementation.
