@@ -70,7 +70,7 @@ xfs_imeta_start_create(
 	if (error)
 		return error;
 
-	error = xfs_trans_alloc(mp, &M_RES(mp)->tr_create,
+	error = xfs_trans_alloc(mp, &M_RES(mp)->tr_imeta_create,
 			xfs_create_space_res(mp, MAXNAMELEN), 0, 0, &upd->tp);
 	if (error)
 		goto out_teardown;
@@ -128,7 +128,8 @@ xfs_imeta_start_link(
 {
 	int				error;
 
-	error = xfs_imeta_start_dir_update(mp, path, ip, &M_RES(mp)->tr_link,
+	error = xfs_imeta_start_dir_update(mp, path, ip,
+			&M_RES(mp)->tr_imeta_link,
 			xfs_link_space_res(mp, MAXNAMELEN), upd);
 	if (error)
 		return error;
@@ -150,7 +151,8 @@ xfs_imeta_start_unlink(
 {
 	int				error;
 
-	error = xfs_imeta_start_dir_update(mp, path, ip, &M_RES(mp)->tr_remove,
+	error = xfs_imeta_start_dir_update(mp, path, ip,
+			&M_RES(mp)->tr_imeta_unlink,
 			xfs_remove_space_res(mp, MAXNAMELEN), upd);
 	if (error)
 		return error;

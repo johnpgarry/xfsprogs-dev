@@ -1246,4 +1246,9 @@ xfs_trans_resv_calc(
 	resp->tr_itruncate.tr_logcount += logcount_adj;
 	resp->tr_write.tr_logcount += logcount_adj;
 	resp->tr_qm_dqalloc.tr_logcount += logcount_adj;
+
+	/* metadata inode creation and unlink */
+	resp->tr_imeta_create = resp->tr_create;
+	resp->tr_imeta_link = resp->tr_link;
+	resp->tr_imeta_unlink = resp->tr_remove;
 }
