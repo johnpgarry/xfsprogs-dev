@@ -132,8 +132,8 @@ static unsigned		sbversion;
 static int		sbver_err;
 static int		serious_error;
 static int		sflag;
-static xfs_suminfo_t	*sumcompute;
-static xfs_suminfo_t	*sumfile;
+static union xfs_suminfo_raw *sumcompute;
+static union xfs_suminfo_raw *sumfile;
 static const char	*typename[] = {
 	"unknown",
 	"agf",
@@ -1704,12 +1704,20 @@ check_set_rdbmap(
 	}
 }
 
+static inline xfs_suminfo_t
+get_suminfo(
+	struct xfs_mount	*mp,
+	union xfs_suminfo_raw	*raw)
+{
+	return raw->old;
+}
+
 static void
 check_summary(void)
 {
 	xfs_rfsblock_t	bno;
-	xfs_suminfo_t	*csp;
-	xfs_suminfo_t	*fsp;
+	union xfs_suminfo_raw *csp;
+	union xfs_suminfo_raw *fsp;
 	int		log;
 
 	csp = sumcompute;
@@ -1718,12 +1726,14 @@ check_summary(void)
 		for (bno = 0;
 		     bno < mp->m_sb.sb_rbmblocks;
 		     bno++, csp++, fsp++) {
-			if (*csp != *fsp) {
+			if (csp->old != fsp->old) {
 				if (!sflag)
 					dbprintf(_("rt summary mismatch, size %d "
 						 "block %llu, file: %d, "
 						 "computed: %d\n"),
-						log, bno, *fsp, *csp);
+						log, bno,
+						get_suminfo(mp, fsp),
+						get_suminfo(mp, csp));
 				error++;
 			}
 		}
@@ -1950,8 +1960,8 @@ init(
 		inomap[c] = xcalloc(mp->m_sb.sb_rblocks, sizeof(**inomap));
 		words = libxfs_rtsummary_wordcount(mp, mp->m_rsumlevels,
 				mp->m_sb.sb_rbmblocks);
-		sumfile = xcalloc(words, sizeof(xfs_suminfo_t));
-		sumcompute = xcalloc(words, sizeof(xfs_suminfo_t));
+		sumfile = xcalloc(words, sizeof(union xfs_suminfo_raw));
+		sumcompute = xcalloc(words, sizeof(union xfs_suminfo_raw));
 	}
 	nflag = sflag = tflag = verbose = optind = 0;
 	while ((c = getopt(argc, argv, "b:i:npstv")) != EOF) {
@@ -3590,6 +3600,17 @@ process_quota(
 	}
 }
 
+static inline void
+inc_sumcount(
+	struct xfs_mount	*mp,
+	union xfs_suminfo_raw	*info,
+	xfs_rtsumoff_t		index)
+{
+	union xfs_suminfo_raw	*p = info + index;
+
+	p->old++;
+}
+
 static void
 process_rtbitmap(
 	blkmap_t	*blkmap)
@@ -3669,7 +3690,7 @@ process_rtbitmap(
 					bitsperblock + (bit - start_bit);
 				log = XFS_RTBLOCKLOG(len);
 				offs = xfs_rtsumoffs(mp, log, start_bmbno);
-				sumcompute[offs]++;
+				inc_sumcount(mp, sumcompute, offs);
 				prevbit = 0;
 			}
 		}
@@ -3682,7 +3703,7 @@ process_rtbitmap(
 			(bit - start_bit);
 		log = XFS_RTBLOCKLOG(len);
 		offs = xfs_rtsumoffs(mp, log, start_bmbno);
-		sumcompute[offs]++;
+		inc_sumcount(mp, sumcompute, offs);
 	}
 	free(words);
 }
@@ -3692,12 +3713,17 @@ process_rtsummary(
 	blkmap_t	*blkmap)
 {
 	xfs_fsblock_t	bno;
-	char		*bytes;
+	union xfs_suminfo_raw *sfile = sumfile;
 	xfs_fileoff_t	sumbno;
 	int		t;
 
 	sumbno = NULLFILEOFF;
 	while ((sumbno = blkmap_next_off(blkmap, sumbno, &t)) != NULLFILEOFF) {
+		struct xfs_rtalloc_args	args = {
+			.mp		= mp,
+		};
+		union xfs_suminfo_raw	*ondisk;
+
 		bno = blkmap_get(blkmap, sumbno);
 		if (bno == NULLFSBLOCK) {
 			if (!sflag)
@@ -3710,18 +3736,22 @@ process_rtsummary(
 		push_cur();
 		set_cur(&typtab[TYP_RTSUMMARY], XFS_FSB_TO_DADDR(mp, bno),
 			blkbb, DB_RING_IGN, NULL);
-		if ((bytes = iocur_top->data) == NULL) {
+		if (!iocur_top->bp) {
 			if (!sflag)
 				dbprintf(_("can't read block %lld for rtsummary "
 					 "inode\n"),
 					(xfs_fileoff_t)sumbno);
 			error++;
 			pop_cur();
+			sfile += mp->m_blockwsize;
 			continue;
 		}
-		memcpy((char *)sumfile + sumbno * mp->m_sb.sb_blocksize, bytes,
-			mp->m_sb.sb_blocksize);
+
+		args.sumbp = iocur_top->bp;
+		ondisk = xfs_rsumblock_infoptr(&args, 0);
+		memcpy(sfile, ondisk, mp->m_sb.sb_blocksize);
 		pop_cur();
+		sfile += mp->m_blockwsize;
 	}
 }
 

@@ -36,7 +36,7 @@ rtinit(xfs_mount_t *mp)
 
 	wordcnt = libxfs_rtsummary_wordcount(mp, mp->m_rsumlevels,
 			mp->m_sb.sb_rbmblocks);
-	sumcompute = calloc(wordcnt, sizeof(xfs_suminfo_t));
+	sumcompute = calloc(wordcnt, sizeof(union xfs_suminfo_raw));
 	if (!sumcompute)
 		do_error(
 	_("couldn't allocate memory for incore realtime summary info.\n"));
@@ -51,6 +51,17 @@ set_rtword(
 	word->old = value;
 }
 
+static inline void
+inc_sumcount(
+	struct xfs_mount	*mp,
+	union xfs_suminfo_raw	*info,
+	xfs_rtsumoff_t		index)
+{
+	union xfs_suminfo_raw	*p = info + index;
+
+	p->old++;
+}
+
 /*
  * generate the real-time bitmap and summary info based on the
  * incore realtime extent map.
@@ -59,7 +70,7 @@ int
 generate_rtinfo(
 	struct xfs_mount	*mp,
 	union xfs_rtword_raw	*words,
-	xfs_suminfo_t		*sumcompute)
+	union xfs_suminfo_raw	*sumcompute)
 {
 	xfs_rtxnum_t	extno;
 	xfs_rtxnum_t	start_ext;
@@ -105,7 +116,7 @@ generate_rtinfo(
 				len = (int) (extno - start_ext);
 				log = XFS_RTBLOCKLOG(len);
 				offs = xfs_rtsumoffs(mp, log, start_bmbno);
-				sumcompute[offs]++;
+				inc_sumcount(mp, sumcompute, offs);
 				in_extent = 0;
 			}
 
@@ -121,7 +132,7 @@ generate_rtinfo(
 		len = (int) (extno - start_ext);
 		log = XFS_RTBLOCKLOG(len);
 		offs = xfs_rtsumoffs(mp, log, start_bmbno);
-		sumcompute[offs]++;
+		inc_sumcount(mp, sumcompute, offs);
 	}
 
 	if (mp->m_sb.sb_frextents != sb_frextents) {

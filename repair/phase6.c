@@ -648,7 +648,7 @@ fill_rsumino(xfs_mount_t *mp)
 	struct xfs_buf	*bp;
 	xfs_trans_t	*tp;
 	xfs_inode_t	*ip;
-	xfs_suminfo_t	*smp;
+	union xfs_suminfo_raw *smp;
 	int		nmap;
 	int		error;
 	xfs_fileoff_t	bno;
@@ -671,6 +671,12 @@ fill_rsumino(xfs_mount_t *mp)
 	}
 
 	while (bno < end_bno)  {
+		struct xfs_rtalloc_args	args = {
+			.mp		= mp,
+			.tp		= tp,
+		};
+		union xfs_suminfo_raw	*ondisk;
+
 		/*
 		 * fill the file one block at a time
 		 */
@@ -697,11 +703,13 @@ _("can't access block %" PRIu64 " (fsbno %" PRIu64 ") of realtime summary inode 
 			return(1);
 		}
 
-		memmove(bp->b_addr, smp, mp->m_sb.sb_blocksize);
+		args.sumbp = bp;
+		ondisk = xfs_rsumblock_infoptr(&args, 0);
+		memcpy(ondisk, smp, mp->m_sb.sb_blocksize);
 
 		libxfs_trans_log_buf(tp, bp, 0, mp->m_sb.sb_blocksize - 1);
 
-		smp = (xfs_suminfo_t *)((intptr_t)smp + mp->m_sb.sb_blocksize);
+		smp += mp->m_blockwsize;
 		bno++;
 	}
 
