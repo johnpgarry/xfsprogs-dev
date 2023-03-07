@@ -1059,6 +1059,7 @@ xfs_dialloc_ag_inobt(
 
 	ASSERT(xfs_perag_initialised_agi(pag));
 	ASSERT(xfs_perag_allows_inodes(pag));
+	ASSERT(!xfs_perag_prohibits_alloc(pag));
 	ASSERT(pag->pagi_freecount > 0);
 
  restart_pagno:
@@ -1686,6 +1687,8 @@ xfs_dialloc_good_ag(
 	if (!pag)
 		return false;
 	if (!xfs_perag_allows_inodes(pag))
+		return false;
+	if (xfs_perag_prohibits_alloc(pag))
 		return false;
 
 	if (!xfs_perag_initialised_agi(pag)) {
