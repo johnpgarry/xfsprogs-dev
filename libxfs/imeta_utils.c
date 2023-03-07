@@ -246,3 +246,72 @@ xfs_imeta_cancel_update(
 
 	xfs_imeta_teardown(upd, error);
 }
+
+/* Create a metadata for the last component of the path. */
+STATIC int
+xfs_imeta_mkdir(
+	struct xfs_mount		*mp,
+	const struct xfs_imeta_path	*path)
+{
+	struct xfs_imeta_update		upd;
+	struct xfs_inode		*ip = NULL;
+	int				error;
+
+	if (xfs_is_shutdown(mp))
+		return -EIO;
+
+	/* Allocate a transaction to create the last directory. */
+	error = xfs_imeta_start_create(mp, path, &upd);
+	if (error)
+		return error;
+
+	/* Create the subdirectory and take our reference. */
+	error = xfs_imeta_create(&upd, S_IFDIR, &ip);
+	if (error)
+		goto out_cancel;
+
+	error = xfs_imeta_commit_update(&upd);
+
+	/*
+	 * We don't pass the directory we just created to the caller, so finish
+	 * setting up the inode, then release the dir and the dquots.
+	 */
+	goto out_irele;
+
+out_cancel:
+	xfs_imeta_cancel_update(&upd, error);
+out_irele:
+	/* Have to finish setting up the inode to ensure it's deleted. */
+	if (ip)
+		xfs_irele(ip);
+	return error;
+}
+
+/*
+ * Make sure that every metadata directory path component exists and is a
+ * directory.
+ */
+int
+xfs_imeta_ensure_dirpath(
+	struct xfs_mount		*mp,
+	const struct xfs_imeta_path	*path)
+{
+	struct xfs_imeta_path		temp_path = {
+		.im_path		= path->im_path,
+		.im_depth		= 1,
+		.im_ftype		= XFS_DIR3_FT_DIR,
+	};
+	unsigned int			i;
+	int				error = 0;
+
+	if (!xfs_has_metadir(mp))
+		return 0;
+
+	for (i = 0; i < path->im_depth - 1; i++, temp_path.im_depth++) {
+		error = xfs_imeta_mkdir(mp, &temp_path);
+		if (error && error != -EEXIST)
+			return error;
+	}
+
+	return 0;
+}

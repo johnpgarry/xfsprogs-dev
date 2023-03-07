@@ -18,6 +18,9 @@ int xfs_imeta_start_unlink(struct xfs_mount *mp,
 		const struct xfs_imeta_path *path,
 		struct xfs_inode *ip, struct xfs_imeta_update *upd);
 
+int xfs_imeta_ensure_dirpath(struct xfs_mount *mp,
+		const struct xfs_imeta_path *path);
+
 int xfs_imeta_commit_update(struct xfs_imeta_update *upd);
 void xfs_imeta_cancel_update(struct xfs_imeta_update *upd, int error);
 
