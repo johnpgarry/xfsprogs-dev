@@ -91,28 +91,17 @@ libxfs_bumplink(
 	xfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 }
 
-/*
- * Initialise a newly allocated inode and return the in-core inode to the
- * caller locked exclusively.
- */
-static int
-libxfs_icreate(
+/* Initialise an inode's attributes. */
+static void
+xfs_inode_init(
 	struct xfs_trans	*tp,
-	xfs_ino_t		ino,
 	const struct xfs_icreate_args *args,
-	struct xfs_inode	**ipp)
+	struct xfs_inode	*ip)
 {
 	struct xfs_inode	*pip = args->pip;
-	struct xfs_inode	*ip;
 	unsigned int		flags;
 	int			times = XFS_ICHGTIME_MOD | XFS_ICHGTIME_CHG |
 					XFS_ICHGTIME_ACCESS;
-	int			error;
-
-	error = libxfs_iget(tp->t_mountp, tp, ino, XFS_IGET_CREATE, &ip);
-	if (error != 0)
-		return error;
-	ASSERT(ip != NULL);
 
 	VFS_I(ip)->i_mode = args->mode;
 	set_nlink(VFS_I(ip), args->nlink);
@@ -181,11 +170,32 @@ libxfs_icreate(
 		xfs_ifork_init_attr(ip, XFS_DINODE_FMT_EXTENTS, 0);
 	}
 
-	/*
-	 * Log the new values stuffed into the inode.
-	 */
-	xfs_trans_ijoin(tp, ip, 0);
 	xfs_trans_log_inode(tp, ip, flags);
+}
+
+/*
+ * Initialise a newly allocated inode and return the in-core inode to the
+ * caller locked exclusively.
+ */
+static int
+libxfs_icreate(
+	struct xfs_trans	*tp,
+	xfs_ino_t		ino,
+	const struct xfs_icreate_args *args,
+	struct xfs_inode	**ipp)
+{
+	struct xfs_mount	*mp = tp->t_mountp;
+	struct xfs_inode	*ip = NULL;
+	int			error;
+
+	error = libxfs_iget(mp, tp, ino, XFS_IGET_CREATE, &ip);
+	if (error)
+		return error;
+
+	ASSERT(ip != NULL);
+	xfs_trans_ijoin(tp, ip, 0);
+	xfs_inode_init(tp, args, ip);
+
 	*ipp = ip;
 	return 0;
 }
