@@ -49,7 +49,10 @@ set_rtword(
 	union xfs_rtword_raw	*word,
 	xfs_rtword_t		value)
 {
-	word->old = value;
+	if (xfs_has_rtgroups(mp))
+		word->rtg = cpu_to_le32(value);
+	else
+		word->old = value;
 }
 
 static inline void

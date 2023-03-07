@@ -749,10 +749,12 @@ struct xfs_agfl {
 
 /*
  * Realtime bitmap information is accessed by the word, which is currently
- * stored in host-endian format.
+ * stored in host-endian format.  Starting with the realtime groups feature,
+ * the words are stored in le32 ondisk.
  */
 union xfs_rtword_raw {
 	__u32		old;
+	__le32		rtg;
 };
 
 /*
