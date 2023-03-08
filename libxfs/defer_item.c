@@ -413,25 +413,16 @@ xfs_bmap_update_finish_item(
 	struct list_head		*item,
 	struct xfs_btree_cur		**state)
 {
-	struct xfs_bmap_intent		*bmap;
-	xfs_filblks_t			count;
+	struct xfs_bmap_intent		*bi;
 	int				error;
 
-	bmap = container_of(item, struct xfs_bmap_intent, bi_list);
-	count = bmap->bi_bmap.br_blockcount;
-	error = xfs_bmap_finish_one(tp,
-			bmap->bi_owner,
-			bmap->bi_type, bmap->bi_whichfork,
-			bmap->bi_bmap.br_startoff,
-			bmap->bi_bmap.br_startblock,
-			&count,
-			bmap->bi_bmap.br_state);
-	if (!error && count > 0) {
-		ASSERT(bmap->bi_type == XFS_BMAP_UNMAP);
-		bmap->bi_bmap.br_blockcount = count;
+	bi = container_of(item, struct xfs_bmap_intent, bi_list);
+	error = xfs_bmap_finish_one(tp, bi);
+	if (!error && bi->bi_bmap.br_blockcount > 0) {
+		ASSERT(bi->bi_type == XFS_BMAP_UNMAP);
 		return -EAGAIN;
 	}
-	kmem_cache_free(xfs_bmap_intent_cache, bmap);
+	kmem_cache_free(xfs_bmap_intent_cache, bi);
 	return error;
 }
 
@@ -447,10 +438,10 @@ STATIC void
 xfs_bmap_update_cancel_item(
 	struct list_head		*item)
 {
-	struct xfs_bmap_intent		*bmap;
+	struct xfs_bmap_intent		*bi;
 
-	bmap = container_of(item, struct xfs_bmap_intent, bi_list);
-	kmem_cache_free(xfs_bmap_intent_cache, bmap);
+	bi = container_of(item, struct xfs_bmap_intent, bi_list);
+	kmem_cache_free(xfs_bmap_intent_cache, bi);
 }
 
 const struct xfs_defer_op_type xfs_bmap_update_defer_type = {
