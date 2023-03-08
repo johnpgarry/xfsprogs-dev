@@ -3239,7 +3239,6 @@ xfs_bmap_btalloc_filestreams(
 	int			notinit = 0;
 	int			error;
 
-	args->type = XFS_ALLOCTYPE_NEAR_BNO;
 	args->total = ap->total;
 
 	start_agno = XFS_FSB_TO_AGNO(mp, ap->blkno);
@@ -3558,7 +3557,7 @@ xfs_bmap_btalloc_at_eof(
 	}
 
 	if (ag_only)
-		error = xfs_alloc_vextent(args);
+		error = xfs_alloc_vextent_near_bno(args, ap->blkno);
 	else
 		error = xfs_alloc_vextent_start_ag(args, ap->blkno);
 	if (error)
@@ -3605,7 +3604,6 @@ xfs_bmap_btalloc_best_length(
 		ap->blkno = XFS_INO_TO_FSB(mp, ap->ip->i_ino);
 	}
 	xfs_bmap_adjacent(ap);
-	args->fsbno = ap->blkno;
 
 	/*
 	 * Search for an allocation group with a single extent large enough for
@@ -3646,7 +3644,7 @@ xfs_bmap_btalloc_best_length(
 	}
 
 	if (is_filestream)
-		error = xfs_alloc_vextent(args);
+		error = xfs_alloc_vextent_near_bno(args, ap->blkno);
 	else
 		error = xfs_alloc_vextent_start_ag(args, ap->blkno);
 	if (error)
