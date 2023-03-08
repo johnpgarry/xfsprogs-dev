@@ -3128,7 +3128,7 @@ xfs_bmap_adjacent(
 #undef ISVALID
 }
 
-static int
+int
 xfs_bmap_longest_free_extent(
 	struct xfs_perag	*pag,
 	struct xfs_trans	*tp,
