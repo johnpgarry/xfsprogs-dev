@@ -217,19 +217,12 @@ xfs_rmap_update_finish_item(
 	struct list_head		*item,
 	struct xfs_btree_cur		**state)
 {
-	struct xfs_rmap_intent		*rmap;
+	struct xfs_rmap_intent		*ri;
 	int				error;
 
-	rmap = container_of(item, struct xfs_rmap_intent, ri_list);
-	error = xfs_rmap_finish_one(tp,
-			rmap->ri_type,
-			rmap->ri_owner, rmap->ri_whichfork,
-			rmap->ri_bmap.br_startoff,
-			rmap->ri_bmap.br_startblock,
-			rmap->ri_bmap.br_blockcount,
-			rmap->ri_bmap.br_state,
-			state);
-	kmem_cache_free(xfs_rmap_intent_cache, rmap);
+	ri = container_of(item, struct xfs_rmap_intent, ri_list);
+	error = xfs_rmap_finish_one(tp, ri, state);
+	kmem_cache_free(xfs_rmap_intent_cache, ri);
 	return error;
 }
 
@@ -245,10 +238,10 @@ STATIC void
 xfs_rmap_update_cancel_item(
 	struct list_head		*item)
 {
-	struct xfs_rmap_intent		*rmap;
+	struct xfs_rmap_intent		*ri;
 
-	rmap = container_of(item, struct xfs_rmap_intent, ri_list);
-	kmem_cache_free(xfs_rmap_intent_cache, rmap);
+	ri = container_of(item, struct xfs_rmap_intent, ri_list);
+	kmem_cache_free(xfs_rmap_intent_cache, ri);
 }
 
 const struct xfs_defer_op_type xfs_rmap_update_defer_type = {
