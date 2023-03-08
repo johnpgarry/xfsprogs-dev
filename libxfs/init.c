@@ -744,6 +744,22 @@ libxfs_compute_all_maxlevels(
 }
 
 /*
+ * precalculate the low space thresholds for dynamic speculative preallocation.
+ */
+static void
+xfs_set_low_space_thresholds(
+	struct xfs_mount	*mp)
+{
+	uint64_t		dblocks = mp->m_sb.sb_dblocks;
+	int			i;
+
+	do_div(dblocks, 100);
+
+	for (i = 0; i < XFS_LOWSP_MAX; i++)
+		mp->m_low_space[i] = dblocks * (i + 1);
+}
+
+/*
  * Mount structure initialization, provides a filled-in xfs_mount_t
  * such that the numerous XFS_* macros can be used.  If dev is zero,
  * no IO will be performed (no size checks, read root inodes).
@@ -861,6 +877,8 @@ libxfs_mount(
 		if (bp)
 			libxfs_buf_relse(bp);
 	}
+
+	xfs_set_low_space_thresholds(mp);
 
 	/* Initialize realtime fields in the mount structure */
 	if (rtmount_init(mp)) {
