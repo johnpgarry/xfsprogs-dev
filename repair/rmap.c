@@ -1008,7 +1008,7 @@ rmaps_verify_btree(
 	}
 
 	/* Leave the per-ag data "uninitialized" since we rewrite it later */
-	pag->pagf_init = 0;
+	clear_bit(XFS_AGSTATE_AGF_INIT, &pag->pag_opstate);
 
 	bt_cur = libxfs_rmapbt_init_cursor(mp, NULL, agbp, pag);
 	if (!bt_cur) {
@@ -1382,7 +1382,7 @@ check_refcounts(
 	}
 
 	/* Leave the per-ag data "uninitialized" since we rewrite it later */
-	pag->pagf_init = 0;
+	clear_bit(XFS_AGSTATE_AGF_INIT, &pag->pag_opstate);
 
 	bt_cur = libxfs_refcountbt_init_cursor(mp, NULL, agbp, pag);
 	if (!bt_cur) {

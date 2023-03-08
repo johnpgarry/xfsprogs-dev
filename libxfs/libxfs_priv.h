@@ -47,6 +47,7 @@
 #include "bitops.h"
 #include "kmem.h"
 #include "libfrog/radix-tree.h"
+#include "libfrog/bitmask.h"
 #include "atomic.h"
 #include "spinlock.h"
 #include "linux-err.h"
@@ -629,42 +630,6 @@ typedef unsigned char u8;
 unsigned int hweight8(unsigned int w);
 unsigned int hweight32(unsigned int w);
 unsigned int hweight64(__u64 w);
-
-#define BIT_MASK(nr)	(1UL << ((nr) % BITS_PER_LONG))
-#define BIT_WORD(nr)	((nr) / BITS_PER_LONG)
-
-static inline void set_bit(int nr, volatile unsigned long *addr)
-{
-	unsigned long mask = BIT_MASK(nr);
-	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
-
-	*p  |= mask;
-}
-
-static inline void clear_bit(int nr, volatile unsigned long *addr)
-{
-	unsigned long mask = BIT_MASK(nr);
-	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
-
-	*p &= ~mask;
-}
-
-static inline int test_bit(int nr, const volatile unsigned long *addr)
-{
-	unsigned long mask = BIT_MASK(nr);
-	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
-
-	return *p & mask;
-}
-
-/* Sets and returns original value of the bit */
-static inline int test_and_set_bit(int nr, volatile unsigned long *addr)
-{
-	if (test_bit(nr, addr))
-		return 1;
-	set_bit(nr, addr);
-	return 0;
-}
 
 static inline int xfs_buf_hash_init(struct xfs_perag *pag) { return 0; }
 static inline void xfs_buf_hash_destroy(struct xfs_perag *pag) { }
