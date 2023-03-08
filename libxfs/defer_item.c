@@ -305,27 +305,19 @@ xfs_refcount_update_finish_item(
 	struct list_head		*item,
 	struct xfs_btree_cur		**state)
 {
-	struct xfs_refcount_intent	*refc;
-	xfs_fsblock_t			new_fsb;
-	xfs_extlen_t			new_aglen;
+	struct xfs_refcount_intent	*ri;
 	int				error;
 
-	refc = container_of(item, struct xfs_refcount_intent, ri_list);
-	error = xfs_refcount_finish_one(tp,
-			refc->ri_type,
-			refc->ri_startblock,
-			refc->ri_blockcount,
-			&new_fsb, &new_aglen,
-			state);
+	ri = container_of(item, struct xfs_refcount_intent, ri_list);
+	error = xfs_refcount_finish_one(tp, ri, state);
+
 	/* Did we run out of reservation?  Requeue what we didn't finish. */
-	if (!error && new_aglen > 0) {
-		ASSERT(refc->ri_type == XFS_REFCOUNT_INCREASE ||
-		       refc->ri_type == XFS_REFCOUNT_DECREASE);
-		refc->ri_startblock = new_fsb;
-		refc->ri_blockcount = new_aglen;
+	if (!error && ri->ri_blockcount > 0) {
+		ASSERT(ri->ri_type == XFS_REFCOUNT_INCREASE ||
+		       ri->ri_type == XFS_REFCOUNT_DECREASE);
 		return -EAGAIN;
 	}
-	kmem_cache_free(xfs_refcount_intent_cache, refc);
+	kmem_cache_free(xfs_refcount_intent_cache, ri);
 	return error;
 }
 
@@ -341,10 +333,10 @@ STATIC void
 xfs_refcount_update_cancel_item(
 	struct list_head		*item)
 {
-	struct xfs_refcount_intent	*refc;
+	struct xfs_refcount_intent	*ri;
 
-	refc = container_of(item, struct xfs_refcount_intent, ri_list);
-	kmem_cache_free(xfs_refcount_intent_cache, refc);
+	ri = container_of(item, struct xfs_refcount_intent, ri_list);
+	kmem_cache_free(xfs_refcount_intent_cache, ri);
 }
 
 const struct xfs_defer_op_type xfs_refcount_update_defer_type = {
