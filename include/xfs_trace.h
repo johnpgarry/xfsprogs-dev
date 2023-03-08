@@ -183,7 +183,10 @@
 #define trace_xfs_write_extent(a,b,c,d)	((c) = (c))
 #define trace_xfs_perag_get(a,b,c,d)	((c) = (c))
 #define trace_xfs_perag_get_tag(a,b,c,d) ((c) = (c))
+#define trace_xfs_perag_grab(...)		((void) 0)
+#define trace_xfs_perag_grab_tag(...)		((void) 0)
 #define trace_xfs_perag_put(a,b,c,d)	((c) = (c))
+#define trace_xfs_perag_rele(...)		((void) 0)
 
 #define trace_xfs_trans_alloc(a,b)		((void) 0)
 #define trace_xfs_trans_cancel(a,b)		((void) 0)
