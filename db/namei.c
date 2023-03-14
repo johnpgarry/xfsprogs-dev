@@ -98,7 +98,7 @@ path_navigate(
 
 	for (i = 0; i < dirpath->depth; i++) {
 		struct xfs_name	xname = {
-			.name	= dirpath->path[i],
+			.name	= (unsigned char *)dirpath->path[i],
 			.len	= strlen(dirpath->path[i]),
 		};
 
@@ -250,7 +250,7 @@ dir_emit(
 	uint8_t			dtype)
 {
 	char			*display_name;
-	struct xfs_name		xname = { .name = name };
+	struct xfs_name		xname = { .name = (unsigned char *)name };
 	const char		*dstr = get_dstr(mp, dtype);
 	xfs_dahash_t		hash;
 	bool			good;
