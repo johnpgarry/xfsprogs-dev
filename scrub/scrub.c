@@ -669,6 +669,15 @@ _("Filesystem is shut down, aborting."));
 	case ENOTTY:
 	case EOPNOTSUPP:
 		/*
+		 * If the kernel cannot perform the optimization that we
+		 * requested; or we forced a repair but the kernel doesn't know
+		 * how to perform the repair, don't requeue the request.  Mark
+		 * it done and move on.
+		 */
+		if (is_unoptimized(&oldm) ||
+		    debug_tweak_on("XFS_SCRUB_FORCE_REPAIR"))
+			return CHECK_DONE;
+		/*
 		 * If we're in no-complain mode, requeue the check for
 		 * later.  It's possible that an error in another
 		 * component caused us to flag an error in this
@@ -678,13 +687,6 @@ _("Filesystem is shut down, aborting."));
 		 */
 		if (!(repair_flags & XRM_COMPLAIN_IF_UNFIXED))
 			return CHECK_RETRY;
-		/*
-		 * If we forced repairs or this is a preen, don't
-		 * error out if the kernel doesn't know how to fix.
-		 */
-		if (is_unoptimized(&oldm) ||
-		    debug_tweak_on("XFS_SCRUB_FORCE_REPAIR"))
-			return CHECK_DONE;
 		fallthrough;
 	case EINVAL:
 		/* Kernel doesn't know how to repair this? */
