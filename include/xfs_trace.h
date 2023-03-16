@@ -39,6 +39,12 @@
 #define trace_xfs_alloc_vextent_loopfailed(a)	((void) 0)
 #define trace_xfs_alloc_vextent_allfailed(a)	((void) 0)
 #define trace_xfs_alloc_vextent_skip_deadlock(...)	((void)0)
+#define trace_xfs_alloc_vextent_finish(...)	((void) 0)
+#define trace_xfs_alloc_vextent_this_ag(...)	((void) 0)
+#define trace_xfs_alloc_vextent_first_ag(...)	((void) 0)
+#define trace_xfs_alloc_vextent_start_ag(...)	((void) 0)
+#define trace_xfs_alloc_vextent_near_bno(...)	((void) 0)
+#define trace_xfs_alloc_vextent_exact_bno(...)	((void) 0)
 
 #define trace_xfs_attr_defer_add(...)		((void) 0)
 #define trace_xfs_attr_defer_replace(...)	((void) 0)
