@@ -3322,11 +3322,14 @@ xfs_alloc_vextent_iterate_ags(
 	uint32_t		flags)
 {
 	struct xfs_mount	*mp = args->mp;
+	xfs_agnumber_t		restart_agno = minimum_agno;
 	xfs_agnumber_t		agno;
 	int			error = 0;
 
+	if (flags & XFS_ALLOC_FLAG_TRYLOCK)
+		restart_agno = 0;
 restart:
-	for_each_perag_wrap_range(mp, start_agno, minimum_agno,
+	for_each_perag_wrap_range(mp, start_agno, restart_agno,
 			mp->m_sb.sb_agcount, agno, args->pag) {
 		args->agno = agno;
 		error = xfs_alloc_vextent_prepare_ag(args);
@@ -3365,6 +3368,7 @@ restart:
 	 */
 	if (flags) {
 		flags = 0;
+		restart_agno = minimum_agno;
 		goto restart;
 	}
 
