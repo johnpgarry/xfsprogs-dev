@@ -108,7 +108,8 @@ void add_inode_ref(struct ino_tree_node *irec, int ino_offset)
 		nlink_grow_16_to_32(irec);
 		/*FALLTHRU*/
 	case sizeof(uint32_t):
-		irec->ino_un.ex_data->counted_nlinks.un32[ino_offset]++;
+		if (irec->ino_un.ex_data->counted_nlinks.un32[ino_offset] != XFS_NLINK_PINNED)
+			irec->ino_un.ex_data->counted_nlinks.un32[ino_offset]++;
 		break;
 	default:
 		ASSERT(0);

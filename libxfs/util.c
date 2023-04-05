@@ -252,7 +252,8 @@ libxfs_bumplink(
 
 	xfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_CHG);
 
-	inc_nlink(inode);
+	if (inode->i_nlink != XFS_NLINK_PINNED)
+		inc_nlink(inode);
 
 	xfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 }
