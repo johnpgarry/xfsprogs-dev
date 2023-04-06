@@ -11,6 +11,7 @@
 #include "libfrog/fsgeom.h"
 #include "libfrog/convert.h"
 #include "libfrog/crc32cselftest.h"
+#include "libfrog/dahashselftest.h"
 #include "proto.h"
 #include <ini.h>
 
@@ -4317,6 +4318,13 @@ main(
 	if (crc32c_test(CRC32CTEST_QUIET) != 0) {
 		fprintf(stderr,
  _("crc32c self-test failed, will not create a filesystem here.\n"));
+		return 1;
+	}
+
+	/* Make sure our dir/attr hash algorithm really works. */
+	if (dahash_test(DAHASHTEST_QUIET) != 0) {
+		fprintf(stderr,
+ _("xfs dir/attr self-test failed, will not create a filesystem here.\n"));
 		return 1;
 	}
 

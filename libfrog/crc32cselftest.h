@@ -41,7 +41,7 @@ static struct crc_test {
 	uint32_t start;	/* random 6 bit offset in buf */
 	uint32_t length;	/* random 11 bit length of test */
 	uint32_t crc32c_le;	/* expected crc32c_le result */
-} test[] =
+} crc_tests[] =
 {
 	{0x674bf11d, 0x00000038, 0x00000542, 0xf6e93d6c},
 	{0x35c672c6, 0x0000003a, 0x000001aa, 0x0fe92aca},
@@ -164,18 +164,19 @@ crc32c_test(
 
 	/* pre-warm the cache */
 	for (i = 0; i < 100; i++) {
-		bytes += 2*test[i].length;
+		bytes += 2 * crc_tests[i].length;
 
-		crc ^= crc32c_le(test[i].crc, randbytes_test_buf +
-		    test[i].start, test[i].length);
+		crc ^= crc32c_le(crc_tests[i].crc,
+				randbytes_test_buf + crc_tests[i].start,
+				crc_tests[i].length);
 	}
 
 	gettimeofday(&start, NULL);
 	for (i = 0; i < 100; i++) {
-		crc = crc32c_le(test[i].crc,
-				randbytes_test_buf + test[i].start,
-				test[i].length);
-		if (crc != test[i].crc32c_le)
+		crc = crc32c_le(crc_tests[i].crc,
+				randbytes_test_buf + crc_tests[i].start,
+				crc_tests[i].length);
+		if (crc != crc_tests[i].crc32c_le)
 			errors++;
 	}
 	gettimeofday(&stop, NULL);
