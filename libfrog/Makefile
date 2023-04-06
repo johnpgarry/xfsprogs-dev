@@ -26,6 +26,7 @@ paths.c \
 projects.c \
 ptvar.c \
 radix-tree.c \
+randbytes.c \
 scrub.c \
 util.c \
 workqueue.c
@@ -45,6 +46,7 @@ paths.h \
 projects.h \
 ptvar.h \
 radix-tree.h \
+randbytes.h \
 scrub.h \
 workqueue.h
 
@@ -69,9 +71,9 @@ crc32table.h: gen_crc32table.c crc32defs.h
 # systems/architectures. Hence we make sure that xfsprogs will never use a
 # busted CRC calculation at build time and hence avoid putting bad CRCs down on
 # disk.
-crc32selftest: gen_crc32table.c crc32table.h crc32.c crc32defs.h
+crc32selftest: gen_crc32table.c crc32table.h crc32.c crc32defs.h randbytes.c
 	@echo "    [TEST]    CRC32"
-	$(Q) $(BUILD_CC) $(BUILD_CFLAGS) -D CRC32_SELFTEST=1 crc32.c -o $@
+	$(Q) $(BUILD_CC) $(BUILD_CFLAGS) -D CRC32_SELFTEST=1 randbytes.c crc32.c -o $@
 	$(Q) ./$@
 
 include $(BUILDRULES)
