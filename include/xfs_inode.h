@@ -418,4 +418,7 @@ extern void	libxfs_irele(struct xfs_inode *ip);
 #define xfs_inherit_nosymlinks	(false)
 #define xfs_inherit_nodefrag	(false)
 
+int libxfs_ifree_cluster(struct xfs_trans *tp, struct xfs_perag *pag,
+		struct xfs_inode *free_ip, struct xfs_icluster *xic);
+
 #endif /* __XFS_INODE_H__ */

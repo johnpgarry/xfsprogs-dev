@@ -171,6 +171,7 @@
 #define xfs_iext_lookup_extent		libxfs_iext_lookup_extent
 #define xfs_iext_next			libxfs_iext_next
 #define xfs_ifork_zap_attr		libxfs_ifork_zap_attr
+#define xfs_ifree_cluster		libxfs_ifree_cluster
 #define xfs_imap_to_bp			libxfs_imap_to_bp
 
 #define xfs_imeta_cancel_update		libxfs_imeta_cancel_update

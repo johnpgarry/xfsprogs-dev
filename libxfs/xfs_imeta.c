@@ -22,6 +22,7 @@
 #include "xfs_da_format.h"
 #include "xfs_da_btree.h"
 #include "xfs_trans_space.h"
+#include "xfs_ag.h"
 
 /*
  * Metadata File Management
@@ -359,6 +360,38 @@ xfs_imeta_create(
 	return error;
 }
 
+/* Free a file from the metadata directory tree. */
+STATIC int
+xfs_imeta_ifree(
+	struct xfs_trans	*tp,
+	struct xfs_inode	*ip)
+{
+	struct xfs_mount	*mp = ip->i_mount;
+	struct xfs_perag	*pag;
+	struct xfs_icluster	xic = { 0 };
+	int			error;
+
+	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
+	ASSERT(VFS_I(ip)->i_nlink == 0);
+	ASSERT(ip->i_df.if_nextents == 0);
+	ASSERT(ip->i_disk_size == 0 || !S_ISREG(VFS_I(ip)->i_mode));
+	ASSERT(ip->i_nblocks == 0);
+
+	pag = xfs_perag_get(mp, XFS_INO_TO_AGNO(mp, ip->i_ino));
+
+	error = xfs_dir_ifree(tp, pag, ip, &xic);
+	if (error)
+		goto out;
+
+	/* Metadata files do not support ownership changes or DMAPI. */
+
+	if (xic.deleted)
+		error = xfs_ifree_cluster(tp, pag, ip, &xic);
+out:
+	xfs_perag_put(pag);
+	return error;
+}
+
 /*
  * Unlink a metadata inode @upd->ip from the metadata directory given by @path.
  * The path must already exist.
@@ -367,10 +400,24 @@ int
 xfs_imeta_unlink(
 	struct xfs_imeta_update		*upd)
 {
+	int				error;
+
 	ASSERT(xfs_imeta_path_check(upd->path));
 	ASSERT(xfs_imeta_verify(upd->mp, upd->ip->i_ino));
 
-	return xfs_imeta_sb_unlink(upd);
+	error = xfs_imeta_sb_unlink(upd);
+	if (error)
+		return error;
+
+	/*
+	 * Metadata files require explicit resource cleanup.  In other words,
+	 * the inactivation system will not touch these files, so we must free
+	 * the ondisk inode by ourselves if warranted.
+	 */
+	if (VFS_I(upd->ip)->i_nlink > 0)
+		return 0;
+
+	return xfs_imeta_ifree(upd->tp, upd->ip);
 }
 
 /*
