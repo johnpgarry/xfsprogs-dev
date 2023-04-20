@@ -447,6 +447,8 @@ phase5_func(
 	int			extra_blocks = 0;
 	uint			num_freeblocks;
 	xfs_agblock_t		num_extents;
+	unsigned int		est_agfreeblocks = 0;
+	unsigned int		total_btblocks;
 
 	if (verbose)
 		do_log(_("        - agno = %d\n"), agno);
@@ -474,12 +476,20 @@ _("unable to rebuild AG %u.  Not enough free space in on-disk AG.\n"),
 			agno);
 	}
 
-	init_ino_cursors(&sc, pag, num_freeblocks, &sb_icount_ag[agno],
+	/*
+	 * Estimate the number of free blocks in this AG after rebuilding
+	 * all btrees.
+	 */
+	total_btblocks = estimate_agbtree_blocks(pag, num_extents);
+	if (num_freeblocks > total_btblocks)
+		est_agfreeblocks = num_freeblocks - total_btblocks;
+
+	init_ino_cursors(&sc, pag, est_agfreeblocks, &sb_icount_ag[agno],
 			&sb_ifree_ag[agno], &btr_ino, &btr_fino);
 
-	init_rmapbt_cursor(&sc, pag, num_freeblocks, &btr_rmap);
+	init_rmapbt_cursor(&sc, pag, est_agfreeblocks, &btr_rmap);
 
-	init_refc_cursor(&sc, pag, num_freeblocks, &btr_refc);
+	init_refc_cursor(&sc, pag, est_agfreeblocks, &btr_refc);
 
 	num_extents = count_bno_extents_blocks(agno, &num_freeblocks);
 	/*
@@ -507,7 +517,7 @@ _("unable to rebuild AG %u.  Not enough free space in on-disk AG.\n"),
 	/*
 	 * track blocks that we might really lose
 	 */
-	init_freespace_cursors(&sc, pag, num_freeblocks, &num_extents,
+	init_freespace_cursors(&sc, pag, est_agfreeblocks, &num_extents,
 			&extra_blocks, &btr_bno, &btr_cnt);
 
 	/*

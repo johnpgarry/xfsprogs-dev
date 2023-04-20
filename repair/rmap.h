@@ -48,4 +48,7 @@ extern int fix_inode_reflink_flags(struct xfs_mount *, xfs_agnumber_t);
 extern void fix_freelist(struct xfs_mount *, xfs_agnumber_t, bool);
 extern void rmap_store_agflcount(struct xfs_mount *, xfs_agnumber_t, int);
 
+xfs_extlen_t estimate_rmapbt_blocks(struct xfs_perag *pag);
+xfs_extlen_t estimate_refcountbt_blocks(struct xfs_perag *pag);
+
 #endif /* RMAP_H_ */
