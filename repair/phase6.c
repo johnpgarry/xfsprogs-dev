@@ -3979,12 +3979,18 @@ reset_rt_metadata_inodes(
 	xfs_filblks_t		est_fdblocks = 0;
 	xfs_rgnumber_t		rgno;
 
-	/* Estimate how much free space will be left after building btrees */
-	for_each_rtgroup(mp, rgno, rtg) {
-		metadata_blocks += estimate_rtrmapbt_blocks(rtg);
+	/*
+	 * Estimate how much free space will be left after building btrees
+	 * unless we already decided that we needed to pack all new blocks
+	 * maximally.
+	 */
+	if (!need_packed_btrees) {
+		for_each_rtgroup(mp, rgno, rtg) {
+			metadata_blocks += estimate_rtrmapbt_blocks(rtg);
+		}
+		if (mp->m_sb.sb_fdblocks > metadata_blocks)
+			est_fdblocks = mp->m_sb.sb_fdblocks - metadata_blocks;
 	}
-	if (mp->m_sb.sb_fdblocks > metadata_blocks)
-		est_fdblocks = mp->m_sb.sb_fdblocks - metadata_blocks;
 
 	for_each_rtgroup(mp, rgno, rtg) {
 		ensure_rtgroup_rmapbt(rtg, est_fdblocks);
