@@ -3167,11 +3167,12 @@ _("agsize rounded to %lld, sunit = %d\n"),
 
 		if (cli_opt_set(&dopts, D_AGCOUNT) ||
 		    cli_opt_set(&dopts, D_AGSIZE)) {
-			fprintf(stderr, _(
+			printf(_(
 "Warning: AG size is a multiple of stripe width.  This can cause performance\n\
 problems by aligning all AGs on the same disk.  To avoid this, run mkfs with\n\
 an AG size that is one stripe unit smaller or larger, for example %llu.\n"),
 				(unsigned long long)cfg->agsize - dsunit);
+			fflush(stdout);
 			goto validate;
 		}
 
