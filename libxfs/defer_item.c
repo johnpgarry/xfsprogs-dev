@@ -81,6 +81,9 @@ xfs_extent_free_finish_item(
 {
 	struct xfs_owner_info		oinfo = { };
 	struct xfs_extent_free_item	*xefi;
+	struct xfs_perag		*pag;
+	xfs_agnumber_t			agno;
+	xfs_agblock_t			agbno;
 	int				error;
 
 	xefi = container_of(item, struct xfs_extent_free_item, xefi_list);
@@ -90,8 +93,13 @@ xfs_extent_free_finish_item(
 		oinfo.oi_flags |= XFS_OWNER_INFO_ATTR_FORK;
 	if (xefi->xefi_flags & XFS_EFI_BMBT_BLOCK)
 		oinfo.oi_flags |= XFS_OWNER_INFO_BMBT_BLOCK;
-	error = xfs_free_extent(tp, xefi->xefi_startblock,
-			xefi->xefi_blockcount, &oinfo, XFS_AG_RESV_NONE);
+
+	agno = XFS_FSB_TO_AGNO(tp->t_mountp, xefi->xefi_startblock);
+	agbno = XFS_FSB_TO_AGBNO(tp->t_mountp, xefi->xefi_startblock);
+	pag = xfs_perag_get(tp->t_mountp, agno);
+	error = xfs_free_extent(tp, pag, agbno, xefi->xefi_blockcount, &oinfo,
+			XFS_AG_RESV_NONE);
+	xfs_perag_put(pag);
 
 	kmem_cache_free(xfs_extfree_item_cache, xefi);
 	return error;
