@@ -36,14 +36,13 @@ xfs_extent_free_diff_items(
 	struct list_head		*a,
 	struct list_head		*b)
 {
-	struct xfs_mount		*mp = priv;
 	struct xfs_extent_free_item	*ra;
 	struct xfs_extent_free_item	*rb;
 
 	ra = container_of(a, struct xfs_extent_free_item, xefi_list);
 	rb = container_of(b, struct xfs_extent_free_item, xefi_list);
-	return  XFS_FSB_TO_AGNO(mp, ra->xefi_startblock) -
-		XFS_FSB_TO_AGNO(mp, rb->xefi_startblock);
+
+	return ra->xefi_pag->pag_agno - rb->xefi_pag->pag_agno;
 }
 
 /* Get an EFI. */
@@ -71,6 +70,26 @@ xfs_extent_free_create_done(
 	return NULL;
 }
 
+/* Take an active ref to the AG containing the space we're freeing. */
+void
+xfs_extent_free_get_group(
+	struct xfs_mount		*mp,
+	struct xfs_extent_free_item	*xefi)
+{
+	xfs_agnumber_t			agno;
+
+	agno = XFS_FSB_TO_AGNO(mp, xefi->xefi_startblock);
+	xefi->xefi_pag = xfs_perag_get(mp, agno);
+}
+
+/* Release an active AG ref after some freeing work. */
+static inline void
+xfs_extent_free_put_group(
+	struct xfs_extent_free_item	*xefi)
+{
+	xfs_perag_put(xefi->xefi_pag);
+}
+
 /* Process a free extent. */
 STATIC int
 xfs_extent_free_finish_item(
@@ -81,8 +100,6 @@ xfs_extent_free_finish_item(
 {
 	struct xfs_owner_info		oinfo = { };
 	struct xfs_extent_free_item	*xefi;
-	struct xfs_perag		*pag;
-	xfs_agnumber_t			agno;
 	xfs_agblock_t			agbno;
 	int				error;
 
@@ -94,13 +111,11 @@ xfs_extent_free_finish_item(
 	if (xefi->xefi_flags & XFS_EFI_BMBT_BLOCK)
 		oinfo.oi_flags |= XFS_OWNER_INFO_BMBT_BLOCK;
 
-	agno = XFS_FSB_TO_AGNO(tp->t_mountp, xefi->xefi_startblock);
 	agbno = XFS_FSB_TO_AGBNO(tp->t_mountp, xefi->xefi_startblock);
-	pag = xfs_perag_get(tp->t_mountp, agno);
-	error = xfs_free_extent(tp, pag, agbno, xefi->xefi_blockcount, &oinfo,
-			XFS_AG_RESV_NONE);
-	xfs_perag_put(pag);
+	error = xfs_free_extent(tp, xefi->xefi_pag, agbno,
+			xefi->xefi_blockcount, &oinfo, XFS_AG_RESV_NONE);
 
+	xfs_extent_free_put_group(xefi);
 	kmem_cache_free(xfs_extfree_item_cache, xefi);
 	return error;
 }
@@ -121,6 +136,7 @@ xfs_extent_free_cancel_item(
 
 	xefi = container_of(item, struct xfs_extent_free_item, xefi_list);
 
+	xfs_extent_free_put_group(xefi);
 	kmem_cache_free(xfs_extfree_item_cache, xefi);
 }
 
@@ -147,24 +163,21 @@ xfs_agfl_free_finish_item(
 	struct xfs_mount		*mp = tp->t_mountp;
 	struct xfs_extent_free_item	*xefi;
 	struct xfs_buf			*agbp;
-	struct xfs_perag		*pag;
 	int				error;
-	xfs_agnumber_t			agno;
 	xfs_agblock_t			agbno;
 
 	xefi = container_of(item, struct xfs_extent_free_item, xefi_list);
 
 	ASSERT(xefi->xefi_blockcount == 1);
-	agno = XFS_FSB_TO_AGNO(mp, xefi->xefi_startblock);
 	agbno = XFS_FSB_TO_AGBNO(mp, xefi->xefi_startblock);
 	oinfo.oi_owner = xefi->xefi_owner;
 
-	pag = libxfs_perag_get(mp, agno);
-	error = xfs_alloc_read_agf(pag, tp, 0, &agbp);
+	error = xfs_alloc_read_agf(xefi->xefi_pag, tp, 0, &agbp);
 	if (!error)
-		error = xfs_free_agfl_block(tp, agno, agbno, agbp, &oinfo);
-	libxfs_perag_put(pag);
+		error = xfs_free_agfl_block(tp, xefi->xefi_pag->pag_agno,
+				agbno, agbp, &oinfo);
 
+	xfs_extent_free_put_group(xefi);
 	kmem_cache_free(xfs_extfree_item_cache, xefi);
 	return error;
 }
