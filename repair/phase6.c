@@ -2332,6 +2332,9 @@ longform_dir2_entry_check(
 				fixit++;
 				if (isblock)
 					goto out_fix;
+
+				libxfs_buf_relse(bp);
+				bp = NULL;
 				continue;
 			}
 		}
@@ -2343,6 +2346,7 @@ longform_dir2_entry_check(
 			break;
 
 		libxfs_buf_relse(bp);
+		bp = NULL;
 	}
 	fixit |= (*num_illegal != 0) || dir2_is_badino(ino) || *need_dot;
 
@@ -2370,7 +2374,7 @@ longform_dir2_entry_check(
 		}
 	}
 out_fix:
-	if (isblock && bp)
+	if (bp)
 		libxfs_buf_relse(bp);
 
 	if (!no_modify && (fixit || dotdot_update)) {
