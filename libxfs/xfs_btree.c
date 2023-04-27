@@ -4934,6 +4934,19 @@ out:
 	return error;
 }
 
+static inline void
+xfs_btree_key_from_irec(
+	struct xfs_btree_cur		*cur,
+	union xfs_btree_key		*key,
+	const union xfs_btree_irec	*irec)
+{
+	union xfs_btree_rec		rec;
+
+	cur->bc_rec = *irec;
+	cur->bc_ops->init_rec_from_cur(cur, &rec);
+	cur->bc_ops->init_key_from_rec(key, &rec);
+}
+
 /*
  * Query a btree for all records overlapping a given interval of keys.  The
  * supplied function will be called with each record found; return one of the
@@ -4948,18 +4961,12 @@ xfs_btree_query_range(
 	xfs_btree_query_range_fn	fn,
 	void				*priv)
 {
-	union xfs_btree_rec		rec;
 	union xfs_btree_key		low_key;
 	union xfs_btree_key		high_key;
 
 	/* Find the keys of both ends of the interval. */
-	cur->bc_rec = *high_rec;
-	cur->bc_ops->init_rec_from_cur(cur, &rec);
-	cur->bc_ops->init_key_from_rec(&high_key, &rec);
-
-	cur->bc_rec = *low_rec;
-	cur->bc_ops->init_rec_from_cur(cur, &rec);
-	cur->bc_ops->init_key_from_rec(&low_key, &rec);
+	xfs_btree_key_from_irec(cur, &high_key, high_rec);
+	xfs_btree_key_from_irec(cur, &low_key, low_rec);
 
 	/* Enforce low key < high key. */
 	if (cur->bc_ops->diff_two_keys(cur, &low_key, &high_key) > 0)
