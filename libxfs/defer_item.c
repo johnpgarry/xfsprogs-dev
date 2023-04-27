@@ -395,6 +395,26 @@ xfs_bmap_update_create_done(
 	return NULL;
 }
 
+/* Take an active ref to the AG containing the space we're mapping. */
+void
+xfs_bmap_update_get_group(
+	struct xfs_mount	*mp,
+	struct xfs_bmap_intent	*bi)
+{
+	xfs_agnumber_t		agno;
+
+	agno = XFS_FSB_TO_AGNO(mp, bi->bi_bmap.br_startblock);
+	bi->bi_pag = xfs_perag_get(mp, agno);
+}
+
+/* Release an active AG ref after finishing mapping work. */
+static inline void
+xfs_bmap_update_put_group(
+	struct xfs_bmap_intent	*bi)
+{
+	xfs_perag_put(bi->bi_pag);
+}
+
 /* Process a deferred rmap update. */
 STATIC int
 xfs_bmap_update_finish_item(
@@ -412,6 +432,8 @@ xfs_bmap_update_finish_item(
 		ASSERT(bi->bi_type == XFS_BMAP_UNMAP);
 		return -EAGAIN;
 	}
+
+	xfs_bmap_update_put_group(bi);
 	kmem_cache_free(xfs_bmap_intent_cache, bi);
 	return error;
 }
@@ -431,6 +453,8 @@ xfs_bmap_update_cancel_item(
 	struct xfs_bmap_intent		*bi;
 
 	bi = container_of(item, struct xfs_bmap_intent, bi_list);
+
+	xfs_bmap_update_put_group(bi);
 	kmem_cache_free(xfs_bmap_intent_cache, bi);
 }
 
