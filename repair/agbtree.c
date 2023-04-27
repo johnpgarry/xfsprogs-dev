@@ -17,13 +17,13 @@ static void
 init_rebuild(
 	struct repair_ctx		*sc,
 	const struct xfs_owner_info	*oinfo,
-	xfs_agblock_t			free_space,
+	xfs_agblock_t			est_agfreeblocks,
 	struct bt_rebuild		*btr)
 {
 	memset(btr, 0, sizeof(struct bt_rebuild));
 
 	bulkload_init_ag(&btr->newbt, sc, oinfo);
-	bulkload_estimate_ag_slack(sc, &btr->bload, free_space);
+	bulkload_estimate_ag_slack(sc, &btr->bload, est_agfreeblocks);
 }
 
 /*
@@ -227,7 +227,7 @@ void
 init_freespace_cursors(
 	struct repair_ctx	*sc,
 	struct xfs_perag	*pag,
-	unsigned int		free_space,
+	unsigned int		est_agfreeblocks,
 	unsigned int		*nr_extents,
 	int			*extra_blocks,
 	struct bt_rebuild	*btr_bno,
@@ -239,8 +239,8 @@ init_freespace_cursors(
 
 	agfl_goal = libxfs_alloc_min_freelist(sc->mp, NULL);
 
-	init_rebuild(sc, &XFS_RMAP_OINFO_AG, free_space, btr_bno);
-	init_rebuild(sc, &XFS_RMAP_OINFO_AG, free_space, btr_cnt);
+	init_rebuild(sc, &XFS_RMAP_OINFO_AG, est_agfreeblocks, btr_bno);
+	init_rebuild(sc, &XFS_RMAP_OINFO_AG, est_agfreeblocks, btr_cnt);
 
 	btr_bno->cur = libxfs_allocbt_stage_cursor(sc->mp,
 			&btr_bno->newbt.afake, pag, XFS_BTNUM_BNO);
@@ -439,7 +439,7 @@ void
 init_ino_cursors(
 	struct repair_ctx	*sc,
 	struct xfs_perag	*pag,
-	unsigned int		free_space,
+	unsigned int		est_agfreeblocks,
 	uint64_t		*num_inos,
 	uint64_t		*num_free_inos,
 	struct bt_rebuild	*btr_ino,
@@ -453,7 +453,7 @@ init_ino_cursors(
 	int			error;
 
 	finobt = xfs_has_finobt(sc->mp);
-	init_rebuild(sc, &XFS_RMAP_OINFO_INOBT, free_space, btr_ino);
+	init_rebuild(sc, &XFS_RMAP_OINFO_INOBT, est_agfreeblocks, btr_ino);
 
 	/* Compute inode statistics. */
 	*num_free_inos = 0;
@@ -506,7 +506,7 @@ _("Unable to compute inode btree geometry, error %d.\n"), error);
 	if (!finobt)
 		return;
 
-	init_rebuild(sc, &XFS_RMAP_OINFO_INOBT, free_space, btr_fino);
+	init_rebuild(sc, &XFS_RMAP_OINFO_INOBT, est_agfreeblocks, btr_fino);
 	btr_fino->cur = libxfs_inobt_stage_cursor(pag,
 			&btr_fino->newbt.afake, XFS_BTNUM_FINO);
 
@@ -577,7 +577,7 @@ void
 init_rmapbt_cursor(
 	struct repair_ctx	*sc,
 	struct xfs_perag	*pag,
-	unsigned int		free_space,
+	unsigned int		est_agfreeblocks,
 	struct bt_rebuild	*btr)
 {
 	xfs_agnumber_t		agno = pag->pag_agno;
@@ -586,7 +586,7 @@ init_rmapbt_cursor(
 	if (!xfs_has_rmapbt(sc->mp))
 		return;
 
-	init_rebuild(sc, &XFS_RMAP_OINFO_AG, free_space, btr);
+	init_rebuild(sc, &XFS_RMAP_OINFO_AG, est_agfreeblocks, btr);
 	btr->cur = libxfs_rmapbt_stage_cursor(sc->mp, &btr->newbt.afake, pag);
 
 	btr->bload.get_record = get_rmapbt_record;
@@ -648,7 +648,7 @@ void
 init_refc_cursor(
 	struct repair_ctx	*sc,
 	struct xfs_perag	*pag,
-	unsigned int		free_space,
+	unsigned int		est_agfreeblocks,
 	struct bt_rebuild	*btr)
 {
 	xfs_agnumber_t		agno = pag->pag_agno;
@@ -657,7 +657,7 @@ init_refc_cursor(
 	if (!xfs_has_reflink(sc->mp))
 		return;
 
-	init_rebuild(sc, &XFS_RMAP_OINFO_REFC, free_space, btr);
+	init_rebuild(sc, &XFS_RMAP_OINFO_REFC, est_agfreeblocks, btr);
 	btr->cur = libxfs_refcountbt_stage_cursor(sc->mp, &btr->newbt.afake,
 			pag);
 
@@ -697,4 +697,71 @@ _("Error %d while creating refcount btree for AG %u.\n"), error, agno);
 	/* Since we're not writing the AGF yet, no need to commit the cursor */
 	libxfs_btree_del_cursor(btr->cur, 0);
 	free_slab_cursor(&btr->slab_cursor);
+}
+
+static xfs_extlen_t
+estimate_allocbt_blocks(
+	struct xfs_perag	*pag,
+	unsigned int		nr_extents)
+{
+	/* Account for space consumed by both free space btrees */
+	return libxfs_allocbt_calc_size(pag->pag_mount, nr_extents) * 2;
+}
+
+static xfs_extlen_t
+estimate_inobt_blocks(
+	struct xfs_perag	*pag)
+{
+	struct ino_tree_node	*ino_rec;
+	xfs_agnumber_t		agno = pag->pag_agno;
+	unsigned int		ino_recs = 0;
+	unsigned int		fino_recs = 0;
+	xfs_extlen_t		ret;
+
+	for (ino_rec = findfirst_inode_rec(agno);
+	     ino_rec != NULL;
+	     ino_rec = next_ino_rec(ino_rec))  {
+		unsigned int	rec_nfinos = 0;
+		int		i;
+
+		for (i = 0; i < XFS_INODES_PER_CHUNK; i++)  {
+			ASSERT(is_inode_confirmed(ino_rec, i));
+			/*
+			 * sparse inodes are not factored into superblock (free)
+			 * inode counts
+			 */
+			if (is_inode_sparse(ino_rec, i))
+				continue;
+			if (is_inode_free(ino_rec, i))
+				rec_nfinos++;
+		}
+
+		ino_recs++;
+
+		/* finobt only considers records with free inodes */
+		if (rec_nfinos)
+			fino_recs++;
+	}
+
+	ret = libxfs_iallocbt_calc_size(pag->pag_mount, ino_recs);
+	if (xfs_has_finobt(pag->pag_mount))
+		ret += libxfs_iallocbt_calc_size(pag->pag_mount, fino_recs);
+	return ret;
+
+}
+
+/* Estimate the size of the per-AG btrees. */
+xfs_extlen_t
+estimate_agbtree_blocks(
+	struct xfs_perag	*pag,
+	unsigned int		free_extents)
+{
+	unsigned int		ret = 0;
+
+	ret += estimate_allocbt_blocks(pag, free_extents);
+	ret += estimate_inobt_blocks(pag);
+	ret += estimate_rmapbt_blocks(pag);
+	ret += estimate_refcountbt_blocks(pag);
+
+	return ret;
 }

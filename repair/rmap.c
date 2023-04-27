@@ -1531,3 +1531,47 @@ rmap_store_agflcount(
 
 	ag_rmaps[agno].ar_flcount = count;
 }
+
+/* Estimate the size of the ondisk rmapbt from the incore data. */
+xfs_extlen_t
+estimate_rmapbt_blocks(
+	struct xfs_perag	*pag)
+{
+	struct xfs_mount	*mp = pag->pag_mount;
+	struct xfs_ag_rmap	*x;
+	unsigned long long	nr_recs = 0;
+
+	if (!rmap_needs_work(mp) || !xfs_has_rmapbt(mp))
+		return 0;
+
+	/*
+	 * Overestimate the amount of space needed by pretending that every
+	 * record in the incore slab will become rmapbt records.
+	 */
+	x = &ag_rmaps[pag->pag_agno];
+	if (x->ar_rmaps)
+		nr_recs += slab_count(x->ar_rmaps);
+	if (x->ar_raw_rmaps)
+		nr_recs += slab_count(x->ar_raw_rmaps);
+
+	return libxfs_rmapbt_calc_size(mp, nr_recs);
+}
+
+/* Estimate the size of the ondisk refcountbt from the incore data. */
+xfs_extlen_t
+estimate_refcountbt_blocks(
+	struct xfs_perag	*pag)
+{
+	struct xfs_mount	*mp = pag->pag_mount;
+	struct xfs_ag_rmap	*x;
+
+	if (!rmap_needs_work(mp) || !xfs_has_reflink(mp))
+		return 0;
+
+	x = &ag_rmaps[pag->pag_agno];
+	if (!x->ar_refcount_items)
+		return 0;
+
+	return libxfs_refcountbt_calc_size(mp,
+			slab_count(x->ar_refcount_items));
+}

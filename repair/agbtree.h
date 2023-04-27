@@ -59,4 +59,7 @@ void init_refc_cursor(struct repair_ctx *sc, struct xfs_perag *pag,
 void build_refcount_tree(struct repair_ctx *sc, xfs_agnumber_t agno,
 		struct bt_rebuild *btr);
 
+xfs_extlen_t estimate_agbtree_blocks(struct xfs_perag *pag,
+		unsigned int free_extents);
+
 #endif /* __XFS_REPAIR_AG_BTREE_H__ */
