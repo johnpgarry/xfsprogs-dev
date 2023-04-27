@@ -192,7 +192,7 @@ done:
 }
 
 /* Convert an internal btree record to an rmap record. */
-int
+xfs_failaddr_t
 xfs_rmap_btrec_to_irec(
 	const union xfs_btree_rec	*rec,
 	struct xfs_rmap_irec		*irec)
@@ -2319,11 +2319,10 @@ xfs_rmap_query_range_helper(
 {
 	struct xfs_rmap_query_range_info	*query = priv;
 	struct xfs_rmap_irec			irec;
-	int					error;
 
-	error = xfs_rmap_btrec_to_irec(rec, &irec);
-	if (error)
-		return error;
+	if (xfs_rmap_btrec_to_irec(rec, &irec) != NULL)
+		return -EFSCORRUPTED;
+
 	return query->fn(cur, &irec, query->priv);
 }
 
