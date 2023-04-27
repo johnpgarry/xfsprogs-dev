@@ -79,7 +79,7 @@ xfs_extent_free_get_group(
 	xfs_agnumber_t			agno;
 
 	agno = XFS_FSB_TO_AGNO(mp, xefi->xefi_startblock);
-	xefi->xefi_pag = xfs_perag_get(mp, agno);
+	xefi->xefi_pag = xfs_perag_intent_get(mp, agno);
 }
 
 /* Release an active AG ref after some freeing work. */
@@ -87,7 +87,7 @@ static inline void
 xfs_extent_free_put_group(
 	struct xfs_extent_free_item	*xefi)
 {
-	xfs_perag_put(xefi->xefi_pag);
+	xfs_perag_intent_put(xefi->xefi_pag);
 }
 
 /* Process a free extent. */
@@ -243,7 +243,7 @@ xfs_rmap_update_get_group(
 	xfs_agnumber_t		agno;
 
 	agno = XFS_FSB_TO_AGNO(mp, ri->ri_bmap.br_startblock);
-	ri->ri_pag = xfs_perag_get(mp, agno);
+	ri->ri_pag = xfs_perag_intent_get(mp, agno);
 }
 
 /* Release an active AG ref after finishing rmapping work. */
@@ -251,7 +251,7 @@ static inline void
 xfs_rmap_update_put_group(
 	struct xfs_rmap_intent	*ri)
 {
-	xfs_perag_put(ri->ri_pag);
+	xfs_perag_intent_put(ri->ri_pag);
 }
 
 /* Process a deferred rmap update. */
@@ -355,7 +355,7 @@ xfs_refcount_update_get_group(
 	xfs_agnumber_t			agno;
 
 	agno = XFS_FSB_TO_AGNO(mp, ri->ri_startblock);
-	ri->ri_pag = xfs_perag_get(mp, agno);
+	ri->ri_pag = xfs_perag_intent_get(mp, agno);
 }
 
 /* Release an active AG ref after finishing refcounting work. */
@@ -363,7 +363,7 @@ static inline void
 xfs_refcount_update_put_group(
 	struct xfs_refcount_intent	*ri)
 {
-	xfs_perag_put(ri->ri_pag);
+	xfs_perag_intent_put(ri->ri_pag);
 }
 
 /* Process a deferred refcount update. */
@@ -473,6 +473,15 @@ xfs_bmap_update_get_group(
 
 	agno = XFS_FSB_TO_AGNO(mp, bi->bi_bmap.br_startblock);
 	bi->bi_pag = xfs_perag_get(mp, agno);
+
+	/*
+	 * Bump the intent count on behalf of the deferred rmap and refcount
+	 * intent items that that we can queue when we finish this bmap work.
+	 * This new intent item will bump the intent count before the bmap
+	 * intent drops the intent count, ensuring that the intent count
+	 * remains nonzero across the transaction roll.
+	 */
+	bi->bi_pag = xfs_perag_intent_get(mp, agno);
 }
 
 /* Release an active AG ref after finishing mapping work. */
@@ -480,7 +489,7 @@ static inline void
 xfs_bmap_update_put_group(
 	struct xfs_bmap_intent	*bi)
 {
-	xfs_perag_put(bi->bi_pag);
+	xfs_perag_intent_put(bi->bi_pag);
 }
 
 /* Process a deferred rmap update. */

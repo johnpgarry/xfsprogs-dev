@@ -287,4 +287,16 @@ typedef struct wait_queue_head {
 
 static inline void wake_up(wait_queue_head_t *wq) {}
 
+/* Dummy xfs_drain so that libxfs compiles. */
+struct xfs_defer_drain { /* empty */ };
+
+#define xfs_perag_intent_get(mp, agno)		xfs_perag_get((mp), (agno))
+#define xfs_perag_intent_put(pag)		xfs_perag_put(pag)
+
+static inline void xfs_perag_intent_hold(struct xfs_perag *pag) { }
+static inline void xfs_perag_intent_rele(struct xfs_perag *pag) { }
+
+#define xfs_defer_drain_free(dr)		((void)0)
+#define xfs_defer_drain_init(dr)		((void)0)
+
 #endif	/* __XFS_MOUNT_H__ */
