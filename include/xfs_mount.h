@@ -282,4 +282,9 @@ struct xfs_dquot {
 	int		q_type;
 };
 
+typedef struct wait_queue_head {
+} wait_queue_head_t;
+
+static inline void wake_up(wait_queue_head_t *wq) {}
+
 #endif	/* __XFS_MOUNT_H__ */
