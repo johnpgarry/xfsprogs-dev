@@ -76,7 +76,7 @@ print_agresv_info(
 	error = -libxfs_refcountbt_calc_reserves(mp, NULL, pag, &ask, &used);
 	if (error)
 		xfrog_perror(error, "refcountbt");
-	error = -libxfs_finobt_calc_reserves(mp, NULL, pag, &ask, &used);
+	error = -libxfs_finobt_calc_reserves(pag, NULL, &ask, &used);
 	if (error)
 		xfrog_perror(error, "finobt");
 	error = -libxfs_rmapbt_calc_reserves(mp, NULL, pag, &ask, &used);
