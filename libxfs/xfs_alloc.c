@@ -3251,6 +3251,8 @@ xfs_alloc_vextent_finish(
 	XFS_STATS_INC(mp, xs_allocx);
 	XFS_STATS_ADD(mp, xs_allocb, args->len);
 
+	trace_xfs_alloc_vextent_finish(args);
+
 out_drop_perag:
 	if (drop_perag && args->pag) {
 		xfs_perag_rele(args->pag);
@@ -3280,6 +3282,9 @@ xfs_alloc_vextent_this_ag(
 
 	args->agno = agno;
 	args->agbno = 0;
+
+	trace_xfs_alloc_vextent_this_ag(args);
+
 	error = xfs_alloc_vextent_check_args(args, XFS_AGB_TO_FSB(mp, agno, 0),
 			&minimum_agno);
 	if (error) {
@@ -3401,6 +3406,9 @@ xfs_alloc_vextent_start_ag(
 
 	args->agno = NULLAGNUMBER;
 	args->agbno = NULLAGBLOCK;
+
+	trace_xfs_alloc_vextent_first_ag(args);
+
 	error = xfs_alloc_vextent_check_args(args, target, &minimum_agno);
 	if (error) {
 		if (error == -ENOSPC)
@@ -3451,6 +3459,9 @@ xfs_alloc_vextent_first_ag(
 
 	args->agno = NULLAGNUMBER;
 	args->agbno = NULLAGBLOCK;
+
+	trace_xfs_alloc_vextent_start_ag(args);
+
 	error = xfs_alloc_vextent_check_args(args, target, &minimum_agno);
 	if (error) {
 		if (error == -ENOSPC)
@@ -3482,6 +3493,9 @@ xfs_alloc_vextent_exact_bno(
 
 	args->agno = XFS_FSB_TO_AGNO(mp, target);
 	args->agbno = XFS_FSB_TO_AGBNO(mp, target);
+
+	trace_xfs_alloc_vextent_near_bno(args);
+
 	error = xfs_alloc_vextent_check_args(args, target, &minimum_agno);
 	if (error) {
 		if (error == -ENOSPC)
@@ -3517,6 +3531,9 @@ xfs_alloc_vextent_near_bno(
 
 	args->agno = XFS_FSB_TO_AGNO(mp, target);
 	args->agbno = XFS_FSB_TO_AGBNO(mp, target);
+
+	trace_xfs_alloc_vextent_exact_bno(args);
+
 	error = xfs_alloc_vextent_check_args(args, target, &minimum_agno);
 	if (error) {
 		if (error == -ENOSPC)
