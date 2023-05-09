@@ -181,11 +181,11 @@
 
 /* set c = c to avoid unused var warnings */
 #define trace_xfs_write_extent(a,b,c,d)	((c) = (c))
-#define trace_xfs_perag_get(a,b,c,d)	((c) = (c))
-#define trace_xfs_perag_get_tag(a,b,c,d) ((c) = (c))
+#define trace_xfs_perag_get(c,d)		((c) = (c))
+#define trace_xfs_perag_get_tag(c,d)		((c) = (c))
 #define trace_xfs_perag_grab(...)		((void) 0)
 #define trace_xfs_perag_grab_tag(...)		((void) 0)
-#define trace_xfs_perag_put(a,b,c,d)	((c) = (c))
+#define trace_xfs_perag_put(c,d)		((c) = (c))
 #define trace_xfs_perag_rele(...)		((void) 0)
 
 #define trace_xfs_trans_alloc(a,b)		((void) 0)
@@ -325,10 +325,5 @@
 #define trace_xfs_rmap_delete_error(...)	((void) 0)
 
 #define trace_xfs_fs_mark_healthy(a,b)		((void) 0)
-
-/* set c = c to avoid unused var warnings */
-#define trace_xfs_perag_get(a,b,c,d)		((c) = (c))
-#define trace_xfs_perag_get_tag(a,b,c,d)	((c) = (c))
-#define trace_xfs_perag_put(a,b,c,d)		((c) = (c))
 
 #endif /* __TRACE_H__ */
