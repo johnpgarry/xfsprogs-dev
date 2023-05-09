@@ -34,6 +34,7 @@
 #define trace_xfs_alloc_small_done(a)		((void) 0)
 #define trace_xfs_alloc_small_error(a)		((void) 0)
 #define trace_xfs_alloc_vextent_badargs(a)	((void) 0)
+#define trace_xfs_alloc_vextent_skip_deadlock(...)	((void) 0)
 #define trace_xfs_alloc_vextent_nofix(a)	((void) 0)
 #define trace_xfs_alloc_vextent_noagbp(a)	((void) 0)
 #define trace_xfs_alloc_vextent_loopfailed(a)	((void) 0)
