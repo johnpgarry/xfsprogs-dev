@@ -1016,25 +1016,26 @@ and
 options behave as described above, in
 .B chproj.
 .TP
-.BR parent " [ " \-cpv " ]"
+.BR parent " [ " \-p " ] [" " ino gen " "]"
 By default this command prints out the parent inode numbers,
 inode generation numbers and basenames of all the hardlinks which
 point to the inode of the current file.
+
+If the optional
+.B ino
+and
+.B gen
+parameters are provided, they will be used to create a file handle on the same
+filesystem as the open file.
+The parents of the file represented by the handle will be reported instead of
+the open file.
+
 .RS 1.0i
 .PD 0
 .TP 0.4i
 .B \-p
 the output is similar to the default output except pathnames up to
 the mount-point are printed out instead of the component name.
-.TP
-.B \-c
-the file's filesystem will check all the parent attributes for consistency.
-.TP
-.B \-v
-verbose output will be printed.
-.RE
-.IP
-.B [NOTE: Not currently operational on Linux.]
 .RE
 .PD
 .TP
