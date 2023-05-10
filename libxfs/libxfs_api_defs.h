@@ -181,6 +181,9 @@
 #define xfs_parent_finish		libxfs_parent_finish
 #define xfs_parent_irec_from_disk	libxfs_parent_irec_from_disk
 #define xfs_parent_start		libxfs_parent_start
+#define xfs_parent_hashcheck		libxfs_parent_hashcheck
+#define xfs_parent_namecheck		libxfs_parent_namecheck
+#define xfs_parent_valuecheck		libxfs_parent_valuecheck
 #define xfs_perag_get			libxfs_perag_get
 #define xfs_perag_hold			libxfs_perag_hold
 #define xfs_perag_put			libxfs_perag_put
