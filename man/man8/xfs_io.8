@@ -1016,7 +1016,7 @@ and
 options behave as described above, in
 .B chproj.
 .TP
-.BR parent " [ " \-p " ] [" " ino gen " "]"
+.BR parent " [ " \-fp " ] [-i " ino "] [-n " name "] [" " ino gen " "]"
 By default this command prints out the parent inode numbers,
 inode generation numbers and basenames of all the hardlinks which
 point to the inode of the current file.
@@ -1032,6 +1032,15 @@ the open file.
 
 .RS 1.0i
 .PD 0
+.TP 0.4i
+.B \-f
+Print records in short format: ino/gen/namelen/name
+.TP 0.4i
+.B \-i
+Only show parent pointer records containing this inode number.
+.TP 0.4i
+.B \-n
+Only show parent pointer records containing this directory entry name.
 .TP 0.4i
 .B \-p
 the output is similar to the default output except pathnames up to
