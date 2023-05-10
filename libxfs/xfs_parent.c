@@ -140,6 +140,19 @@ xfs_init_parent_davalue(
 }
 
 /*
+ * Point the da args new value fields at the non-key parts of a replacement
+ * parent pointer.
+ */
+static inline void
+xfs_init_parent_danewvalue(
+	struct xfs_da_args		*args,
+	const struct xfs_name		*name)
+{
+	args->new_valuelen = name->len;
+	args->new_value = (void *)name->name;
+}
+
+/*
  * Allocate memory to control a logged parent pointer update as part of a
  * dirent operation.
  */
@@ -231,6 +244,56 @@ xfs_parent_removename(
 	xfs_init_parent_davalue(&ppargs->args, parent_name);
 
 	xfs_attr_defer_add(args, XFS_ATTRI_OP_FLAGS_REMOVE);
+	return 0;
+}
+
+/* Replace one parent pointer with another to reflect a rename. */
+int
+xfs_parent_replacename(
+	struct xfs_trans	*tp,
+	struct xfs_parent_args	*ppargs,
+	struct xfs_inode	*old_dp,
+	const struct xfs_name	*old_name,
+	struct xfs_inode	*new_dp,
+	const struct xfs_name	*new_name,
+	struct xfs_inode	*child)
+{
+	struct xfs_da_args	*args = &ppargs->args;
+
+	if (XFS_IS_CORRUPT(tp->t_mountp,
+			!xfs_parent_valuecheck(tp->t_mountp, old_name->name,
+					       old_name->len)))
+		return -EFSCORRUPTED;
+
+	if (XFS_IS_CORRUPT(tp->t_mountp,
+			!xfs_parent_valuecheck(tp->t_mountp, new_name->name,
+					       new_name->len)))
+		return -EFSCORRUPTED;
+
+	/*
+	 * For regular attrs, replacing an attr from a !hasattr inode becomes
+	 * an attr-set operation.  For replacing a parent pointer, however, we
+	 * require that the old pointer must exist.
+	 */
+	if (XFS_IS_CORRUPT(child->i_mount, !xfs_inode_hasattr(child))) {
+		xfs_inode_mark_sick(child, XFS_SICK_INO_PARENT);
+		return -EFSCORRUPTED;
+	}
+
+	xfs_init_parent_name_rec(&ppargs->rec, old_dp, old_name, child);
+	args->hashval = xfs_parent_hashname(old_dp, ppargs);
+
+	xfs_init_parent_name_rec(&ppargs->new_rec, new_dp, new_name, child);
+	args->new_name = (const uint8_t *)&ppargs->new_rec;
+	args->new_namelen = sizeof(struct xfs_parent_name_rec);
+
+	args->trans = tp;
+	args->dp = child;
+
+	xfs_init_parent_davalue(&ppargs->args, old_name);
+	xfs_init_parent_danewvalue(&ppargs->args, new_name);
+
+	xfs_attr_defer_add(args, XFS_ATTRI_OP_FLAGS_REPLACE);
 	return 0;
 }
 
