@@ -82,6 +82,16 @@ xfs_log_calc_trans_resv_for_minlogblocks(
 	unsigned int		rmap_maxlevels = mp->m_rmap_maxlevels;
 
 	/*
+	 * Starting with the parent pointer feature, every new fs feature
+	 * drops the oversized minimum log size computation introduced by the
+	 * original reflink code.
+	 */
+	if (xfs_has_parent_or_newer_feature(mp)) {
+		xfs_trans_resv_calc(mp, resv);
+		return;
+	}
+
+	/*
 	 * In the early days of rmap+reflink, we always set the rmap maxlevels
 	 * to 9 even if the AG was small enough that it would never grow to
 	 * that height.  Transaction reservation sizes influence the minimum
