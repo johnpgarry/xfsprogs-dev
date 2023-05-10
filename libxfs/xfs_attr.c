@@ -893,7 +893,7 @@ xfs_attr_lookup(
 	return error;
 }
 
-static void
+void
 xfs_attr_defer_add(
 	struct xfs_da_args	*args,
 	unsigned int		op_flags)

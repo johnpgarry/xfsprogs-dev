@@ -213,6 +213,8 @@ init_caches(void)
 			"xfs_extfree_item");
 	xfs_trans_cache = kmem_cache_init(
 			sizeof(struct xfs_trans), "xfs_trans");
+	xfs_parent_args_cache = kmem_cache_init(
+			sizeof(struct xfs_parent_args), "xfs_parent_args");
 }
 
 static int
@@ -230,6 +232,7 @@ destroy_caches(void)
 	xfs_btree_destroy_cur_caches();
 	leaked += kmem_cache_destroy(xfs_extfree_item_cache);
 	leaked += kmem_cache_destroy(xfs_trans_cache);
+	leaked += kmem_cache_destroy(xfs_parent_args_cache);
 
 	return leaked;
 }

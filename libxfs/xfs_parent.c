@@ -29,6 +29,8 @@
 #include "xfs_format.h"
 #include "xfs_trans_space.h"
 
+struct kmem_cache		*xfs_parent_args_cache;
+
 /*
  * Parent pointer attribute handling.
  *
@@ -111,4 +113,93 @@ xfs_parent_hashcheck(
 
 	/* Namehash matches name? */
 	return be32_to_cpu(rec->p_namehash) == xfs_dir2_hashname(mp, &dname);
+}
+
+/* Initializes a xfs_parent_name_rec to be stored as an attribute name. */
+static inline void
+xfs_init_parent_name_rec(
+	struct xfs_parent_name_rec	*rec,
+	const struct xfs_inode		*dp,
+	const struct xfs_name		*name,
+	struct xfs_inode		*ip)
+{
+	rec->p_ino = cpu_to_be64(dp->i_ino);
+	rec->p_gen = cpu_to_be32(VFS_IC(dp)->i_generation);
+	rec->p_namehash = cpu_to_be32(xfs_dir2_hashname(dp->i_mount, name));
+}
+
+/* Point the da args value fields at the non-key parts of a parent pointer. */
+static inline void
+xfs_init_parent_davalue(
+	struct xfs_da_args		*args,
+	const struct xfs_name		*name)
+{
+	args->valuelen = name->len;
+	args->value = (void *)name->name;
+}
+
+/*
+ * Allocate memory to control a logged parent pointer update as part of a
+ * dirent operation.
+ */
+int
+xfs_parent_args_alloc(
+	struct xfs_mount		*mp,
+	struct xfs_parent_args		**ppargsp)
+{
+	struct xfs_parent_args		*ppargs;
+
+	ppargs = kmem_cache_zalloc(xfs_parent_args_cache, GFP_KERNEL);
+	if (!ppargs)
+		return -ENOMEM;
+
+	xfs_parent_args_init(mp, ppargs);
+	*ppargsp = ppargs;
+	return 0;
+}
+
+static inline xfs_dahash_t
+xfs_parent_hashname(
+	struct xfs_inode		*ip,
+	const struct xfs_parent_args	*ppargs)
+{
+	return xfs_da_hashname((const void *)&ppargs->rec,
+			sizeof(struct xfs_parent_name_rec));
+}
+
+/* Add a parent pointer to reflect a dirent addition. */
+int
+xfs_parent_addname(
+	struct xfs_trans	*tp,
+	struct xfs_parent_args	*ppargs,
+	struct xfs_inode	*dp,
+	const struct xfs_name	*parent_name,
+	struct xfs_inode	*child)
+{
+	struct xfs_da_args	*args = &ppargs->args;
+
+	if (XFS_IS_CORRUPT(tp->t_mountp,
+			!xfs_parent_valuecheck(tp->t_mountp, parent_name->name,
+					       parent_name->len)))
+		return -EFSCORRUPTED;
+
+	xfs_init_parent_name_rec(&ppargs->rec, dp, parent_name, child);
+	args->hashval = xfs_parent_hashname(dp, ppargs);
+
+	args->trans = tp;
+	args->dp = child;
+
+	xfs_init_parent_davalue(&ppargs->args, parent_name);
+
+	xfs_attr_defer_add(args, XFS_ATTRI_OP_FLAGS_SET);
+	return 0;
+}
+
+/* Free a parent pointer context object. */
+void
+xfs_parent_args_free(
+	struct xfs_mount	*mp,
+	struct xfs_parent_args	*ppargs)
+{
+	kmem_cache_free(xfs_parent_args_cache, ppargs);
 }

@@ -562,8 +562,9 @@ struct xfs_item_ops;
 bool xfs_log_check_lsn(struct xfs_mount *, xfs_lsn_t);
 void xfs_log_item_init(struct xfs_mount *mp, struct xfs_log_item *lip, int type,
 		const struct xfs_item_ops *ops);
-#define xfs_attr_use_log_assist(mp)	(0)
-#define xlog_drop_incompat_feat(log)	do { } while (0)
+#define xfs_attr_grab_log_assist(mp)	(0)
+#define xfs_attr_rele_log_assist(mp)	((void) 0)
+#define xlog_drop_incompat_feat(log,w)	do { } while (0)
 #define xfs_log_in_recovery(mp)		(false)
 
 /* xfs_icache.c */
