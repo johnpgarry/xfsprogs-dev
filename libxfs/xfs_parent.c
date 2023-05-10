@@ -305,3 +305,65 @@ xfs_parent_args_free(
 {
 	kmem_cache_free(xfs_parent_args_cache, ppargs);
 }
+
+/* Convert an ondisk parent pointer to the incore format. */
+void
+xfs_parent_irec_from_disk(
+	struct xfs_parent_name_irec	*irec,
+	const struct xfs_parent_name_rec *rec,
+	const void			*value,
+	unsigned int			valuelen)
+{
+	irec->p_ino = be64_to_cpu(rec->p_ino);
+	irec->p_gen = be32_to_cpu(rec->p_gen);
+	irec->p_namehash = be32_to_cpu(rec->p_namehash);
+	irec->p_namelen = valuelen;
+	memcpy(irec->p_name, value, valuelen);
+}
+
+/* Convert an incore parent pointer to the ondisk attr name format. */
+void
+xfs_parent_irec_to_disk(
+	struct xfs_parent_name_rec	*rec,
+	const struct xfs_parent_name_irec *irec)
+{
+	rec->p_ino = cpu_to_be64(irec->p_ino);
+	rec->p_gen = cpu_to_be32(irec->p_gen);
+	rec->p_namehash = cpu_to_be32(irec->p_namehash);
+}
+
+/* Is this a valid incore parent pointer? */
+bool
+xfs_parent_verify_irec(
+	struct xfs_mount		*mp,
+	const struct xfs_parent_name_irec *irec)
+{
+	struct xfs_name			dname = {
+		.name			= irec->p_name,
+		.len			= irec->p_namelen,
+	};
+
+	if (!xfs_verify_dir_ino(mp, irec->p_ino))
+		return false;
+	if (!xfs_parent_valuecheck(mp, irec->p_name, irec->p_namelen))
+		return false;
+	if (!xfs_dir2_namecheck(irec->p_name, irec->p_namelen))
+		return false;
+	if (irec->p_namehash != xfs_dir2_hashname(mp, &dname))
+		return false;
+	return true;
+}
+
+/* Compute p_namehash for the this parent pointer. */
+void
+xfs_parent_irec_hashname(
+	struct xfs_mount		*mp,
+	struct xfs_parent_name_irec	*irec)
+{
+	struct xfs_name			dname = {
+		.name			= irec->p_name,
+		.len			= irec->p_namelen,
+	};
+
+	irec->p_namehash = xfs_dir2_hashname(mp, &dname);
+}

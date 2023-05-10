@@ -1,0 +1,227 @@
+.\" Copyright (c) 2019-2024 Oracle.  All rights reserved.
+.\"
+.\" %%%LICENSE_START(GPLv2+_DOC_FULL)
+.\" SPDX-License-Identifier: GPL-2.0-or-later
+.\" %%%LICENSE_END
+.TH IOCTL-XFS-GETPARENTS 2 2023-08-18 "XFS"
+.SH NAME
+ioctl_xfs_getparents \- query XFS directory parent information
+.SH SYNOPSIS
+.br
+.B #include <xfs/xfs_fs.h>
+.br
+.B #include <xfs/xfs_fs_staging.h>
+.PP
+.BI "int ioctl(int " fd ", XFS_IOC_GETPARENTS, struct xfs_getparents *" arg );
+.SH DESCRIPTION
+This command is used to get a file's parent pointers.
+Parent pointers point upwards in the directory tree from a child file towards a
+parent directories.
+Each entry in a parent directory must have a corresponding parent pointer in
+the child.
+
+Calling programs should allocate a large memory buffer and initialize the
+beginning of the buffer to a header of the following form:
+.PP
+.in +4n
+.nf
+struct xfs_getparents {
+	struct xfs_handle		gp_handle;
+	struct xfs_attrlist_cursor	gp_cursor;
+	__u32				gp_flags;
+	__u32				gp_reserved;
+	__u32				gp_bufsize;
+	__u32				gp_count;
+	__u64				gp_reserved2[5];
+	__u32				gp_offsets[];
+};
+.fi
+.in
+
+.PP
+If the flag
+.B XFS_GETPARENTS_IFLAG_HANDLE
+is set,
+the field
+.I gp_handle
+will be interpreted as if it contains file handle information.
+If the file handle is not stale, the file represented by the handle will be the
+target of the query.
+If the flag is not set, the file represented by
+.I fd
+will be queried instead.
+
+.PP
+The field
+.I gp_cursor
+tracks the progress of iterating through the parent pointers.
+Calling programs must initialize this to zero before the first system call
+and must not touch it after that.
+
+.PP
+The field
+.I gp_flags
+control the behavior of the query operation and provide more information
+about the outcome of the operation.
+.RS 0.4i
+.TP
+.B XFS_GETPARENTS_IFLAG_HANDLE
+If the caller sets this flag, the kernel driver will interpret the
+.I gp_handle
+field as if it were a file handle.
+If the handle maps to an allocated file, that file will be queried for
+parents instead of the open file descriptor.
+.TP
+.B XFS_GETPARENTS_OFLAG_ROOT
+The file queried was the root directory.
+.TP
+.B XFS_GETPARENTS_OFLAG_DONE
+There are no more parent pointers to query.
+.RE
+
+.PP
+The fields
+.I gp_reserved
+and
+.I gp_reserved2
+must be zero.
+
+.PP
+The field
+.I gp_bufsize
+should be set to the size of the buffer, in bytes.
+
+.PP
+The field
+.I gp_count
+will be set to the number of parent pointer records returned.
+
+.PP
+Each element of the array
+.I gp_offsets
+will be set to the byte offset within the buffer of each parent record.
+
+Parent pointer records are returned in the following form:
+.PP
+.in +4n
+.nf
+
+struct xfs_getparents_rec {
+	__u64		gpr_ino;
+	__u32		gpr_gen;
+	__u32		gpr_pad;
+	__u64		gpr_rsvd;
+	__u8			gpr_name[];
+};
+.fi
+.in
+
+.PP
+The field
+.I gpr_ino
+and
+.I gpr_gen
+will be set to the inode number and generation number of the parent.
+
+.PP
+The fields
+.I gpr_pad
+and
+.I gpr_rsvd
+will be set to zero.
+
+.PP
+The array
+.I gpr_name
+will be set to a NULL-terminated byte sequence representing the filename
+stored in the parent pointer.
+
+.SH SAMPLE PROGRAM
+Calling programs should allocate a large memory buffer, initialize the head
+structure to zeroes, set gp_bufsize to the size of the buffer, and call the
+ioctl.
+The kernel will fill out the gp_offsets array with integer offsets to
+struct xfs_getparents_rec objects that are written within the provided memory
+buffer.
+The size of the gp_offsets array is given by gp_count.
+The XFS_GETPARENTS_OFLAG_DONE flag will be set in gp_flags when there are no
+more parent pointers to be read.
+The below code is an example of XFS_IOC_GETPARENTS usage:
+
+.nf
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <xfs/linux.h>
+#include <xfs/xfs.h>
+#include <xfs/xfs_types.h>
+#include <xfs/xfs_fs.h>
+#include <xfs/xfs_fs_staging.h>
+
+int main() {
+	struct xfs_getparents		*pi;
+	struct xfs_getparents_rec	*p;
+	int				i, error, fd, nr_ptrs = 4;
+
+	error = malloc(65536);
+	if (!error) {
+		perror("malloc");
+		return 1;
+	}
+
+	memset(pi, 0, sizeof(*pi));
+	pi->gp_bufsize = 65536;
+
+	fd = open("/mnt/test/foo.txt", O_RDONLY | O_CREAT);
+	if (fd  == -1)
+		return errno;
+
+	do {
+		error = ioctl(fd, XFS_IOC_GETPARENTS, pi);
+		if (error)
+			return error;
+
+		for (i = 0; i < pi->gp_count; i++) {
+			p = xfs_getparents_rec(pi, i);
+			printf("inode		= %llu\\n", (unsigned long long)p->gpr_ino);
+			printf("generation	= %u\\n", (unsigned int)p->gpr_gen);
+			printf("name		= \\"%s\\"\\n\\n", (char *)p->gpr_name);
+		}
+	} while (!(pi->gp_flags & XFS_GETPARENTS_OFLAG_DONE));
+
+	return 0;
+}
+.fi
+
+.SH RETURN VALUE
+On error, \-1 is returned, and
+.I errno
+is set to indicate the error.
+.PP
+.SH ERRORS
+Error codes can be one of, but are not limited to, the following:
+.TP
+.B EFSBADCRC
+Metadata checksum validation failed while performing the query.
+.TP
+.B EFSCORRUPTED
+Metadata corruption was encountered while performing the query.
+.TP
+.B EINVAL
+One or more of the arguments specified is invalid.
+.TP
+.B EOPNOTSUPP
+Repairs of the requested metadata object are not supported.
+.TP
+.B EROFS
+Filesystem is read-only and a repair was requested.
+.TP
+.B ESHUTDOWN
+Filesystem is shut down due to previous errors.
+.TP
+.B EIO
+An I/O error was encountered while performing the query.
+.SH CONFORMING TO
+This API is specific to XFS filesystem on the Linux kernel.
+.SH SEE ALSO
+.BR ioctl (2)
