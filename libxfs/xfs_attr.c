@@ -896,6 +896,8 @@ xfs_attr_defer_add(
 
 	switch (op_flags) {
 	case XFS_ATTRI_OP_FLAGS_SET:
+		if (args->op_flags & XFS_DA_OP_NVLOOKUP)
+			new->xattri_op_flags = XFS_ATTRI_OP_FLAGS_NVSET;
 		new->xattri_dela_state = xfs_attr_init_add_state(args);
 		break;
 	case XFS_ATTRI_OP_FLAGS_REPLACE:
