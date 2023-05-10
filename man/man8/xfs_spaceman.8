@@ -91,7 +91,7 @@ The output will have the same format that
 .BR "xfs_info" "(8)"
 prints when querying a filesystem.
 .TP
-.BI "health [ \-a agno] [ \-c ] [ \-f ] [ \-i inum ] [ \-q ] [ paths ]"
+.BI "health [ \-a agno] [ \-c ] [ \-f ] [ \-i inum ] [ \-n ] [ \-q ] [ paths ]"
 Reports the health of the given group of filesystem metadata.
 .RS 1.0i
 .PD 0
@@ -110,6 +110,11 @@ Report on the health of metadata that affect the entire filesystem.
 .TP
 .B \-i inum
 Report on the health of a specific inode.
+.TP
+.B \-n
+When reporting on the health of a file, try to report the full file path,
+if possible.
+This option is disabled by default to minimize runtime.
 .TP
 .B \-q
 Report only unhealthy metadata.

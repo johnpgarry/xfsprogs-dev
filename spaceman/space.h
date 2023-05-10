@@ -10,6 +10,9 @@ struct fileio {
 	struct xfs_fd	xfd;		/* XFS runtime support context */
 	struct fs_path	fs_path;	/* XFS path information */
 	char		*name;		/* file name at time of open */
+
+	void		*fshandle;
+	size_t		fshandle_len;
 };
 
 extern struct fileio	*filetable;	/* open file table */

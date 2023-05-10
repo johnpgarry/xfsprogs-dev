@@ -13,11 +13,13 @@
 #include "libfrog/fsgeom.h"
 #include "libfrog/bulkstat.h"
 #include "space.h"
+#include "libfrog/getparents.h"
 
 static cmdinfo_t health_cmd;
 static unsigned long long reported;
 static bool comprehensive;
 static bool quiet;
+static bool report_paths;
 
 static bool has_realtime(const struct xfs_fsop_geom *g)
 {
@@ -269,6 +271,38 @@ report_file_health(
 
 #define BULKSTAT_NR		(128)
 
+static void
+report_inode(
+	const struct xfs_bulkstat	*bs)
+{
+	char				descr[PATH_MAX];
+	int				ret;
+
+	if (report_paths && file->fshandle &&
+	    (file->xfd.fsgeom.flags & XFS_FSOP_GEOM_FLAGS_PARENT)) {
+		struct xfs_handle handle;
+
+		memcpy(&handle.ha_fsid, file->fshandle, sizeof(handle.ha_fsid));
+		handle.ha_fid.fid_len = sizeof(xfs_fid_t) -
+				sizeof(handle.ha_fid.fid_len);
+		handle.ha_fid.fid_pad = 0;
+		handle.ha_fid.fid_ino = bs->bs_ino;
+		handle.ha_fid.fid_gen = bs->bs_gen;
+
+		ret = handle_to_path(&handle, sizeof(struct xfs_handle), descr,
+				sizeof(descr) - 1);
+		if (ret)
+			goto report_inum;
+
+		goto report_status;
+	}
+
+report_inum:
+	snprintf(descr, sizeof(descr) - 1, _("inode %"PRIu64), bs->bs_ino);
+report_status:
+	report_sick(descr, inode_flags, bs->bs_sick, bs->bs_checked);
+}
+
 /*
  * Report on all files' health for a given @agno.  If @agno is NULLAGNUMBER,
  * report on all files in the filesystem.
@@ -278,7 +312,6 @@ report_bulkstat_health(
 	xfs_agnumber_t		agno)
 {
 	struct xfs_bulkstat_req	*breq;
-	char			descr[256];
 	uint32_t		i;
 	int			error;
 
@@ -296,13 +329,8 @@ report_bulkstat_health(
 		error = -xfrog_bulkstat(&file->xfd, breq);
 		if (error)
 			break;
-		for (i = 0; i < breq->hdr.ocount; i++) {
-			snprintf(descr, sizeof(descr) - 1, _("inode %"PRIu64),
-					breq->bulkstat[i].bs_ino);
-			report_sick(descr, inode_flags,
-					breq->bulkstat[i].bs_sick,
-					breq->bulkstat[i].bs_checked);
-		}
+		for (i = 0; i < breq->hdr.ocount; i++)
+			report_inode(&breq->bulkstat[i]);
 	} while (breq->hdr.ocount > 0);
 
 	if (error)
@@ -312,7 +340,7 @@ report_bulkstat_health(
 	return error;
 }
 
-#define OPT_STRING ("a:cfi:q")
+#define OPT_STRING ("a:cfi:nq")
 
 /* Report on health problems in XFS filesystem. */
 static int
@@ -327,6 +355,7 @@ health_f(
 	int			ret;
 
 	reported = 0;
+	report_paths = false;
 
 	if (file->xfd.fsgeom.version != XFS_FSOP_GEOM_VERSION_V5) {
 		perror("health");
@@ -361,6 +390,9 @@ health_f(
 				perror("inode health");
 				return 1;
 			}
+			break;
+		case 'n':
+			report_paths = true;
 			break;
 		case 'q':
 			quiet = true;
@@ -449,6 +481,7 @@ health_help(void)
 " -c       -- Report on the health of all inodes.\n"
 " -f       -- Report health of the overall filesystem.\n"
 " -i inum  -- Report health of a given inode number.\n"
+" -n       -- Try to report file names.\n"
 " -q       -- Only report unhealthy metadata.\n"
 " paths    -- Report health of the given file path.\n"
 "\n"));
@@ -460,7 +493,7 @@ static cmdinfo_t health_cmd = {
 	.cfunc = health_f,
 	.argmin = 0,
 	.argmax = -1,
-	.args = "[-a agno] [-c] [-f] [-i inum] [-q] [paths]",
+	.args = "[-a agno] [-c] [-f] [-i inum] [-n] [-q] [paths]",
 	.flags = CMD_FLAG_ONESHOT,
 	.help = health_help,
 };

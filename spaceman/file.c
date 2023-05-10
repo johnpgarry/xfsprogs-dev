@@ -14,6 +14,7 @@
 #include "libfrog/paths.h"
 #include "libfrog/fsgeom.h"
 #include "space.h"
+#include "handle.h"
 
 static cmdinfo_t print_cmd;
 
@@ -106,6 +107,12 @@ addfile(
 	file->name = filename;
 	memcpy(&file->xfd, xfd, sizeof(struct xfs_fd));
 	memcpy(&file->fs_path, fs_path, sizeof(file->fs_path));
+
+	/* Try to capture a fs handle for reporting paths. */
+	file->fshandle = NULL;
+	file->fshandle_len = 0;
+	path_to_fshandle(filename, &file->fshandle, &file->fshandle_len);
+
 	return 0;
 }
 
