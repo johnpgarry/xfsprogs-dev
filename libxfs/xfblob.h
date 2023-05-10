@@ -21,4 +21,6 @@ int xfblob_store(struct xfblob *blob, xfblob_cookie *cookie, const void *ptr,
 		uint32_t size);
 int xfblob_free(struct xfblob *blob, xfblob_cookie cookie);
 
+void xfblob_truncate(struct xfblob *blob);
+
 #endif /* __XFS_SCRUB_XFBLOB_H__ */
