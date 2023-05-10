@@ -902,6 +902,8 @@ xfs_attr_defer_add(
 		new->xattri_dela_state = xfs_attr_init_replace_state(args);
 		break;
 	case XFS_ATTRI_OP_FLAGS_REMOVE:
+		if (args->op_flags & XFS_DA_OP_NVLOOKUP)
+			new->xattri_op_flags = XFS_ATTRI_OP_FLAGS_NVREMOVE;
 		new->xattri_dela_state = xfs_attr_init_remove_state(args);
 		break;
 	default:
