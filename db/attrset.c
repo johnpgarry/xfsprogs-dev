@@ -185,7 +185,9 @@ attr_remove_f(
 	int			argc,
 	char			**argv)
 {
-	struct xfs_da_args	args = { };
+	struct xfs_da_args	args = {
+		.op_flags	= XFS_DA_OP_REMOVE,
+	};
 	int			c;
 
 	if (cur_typ == NULL) {
