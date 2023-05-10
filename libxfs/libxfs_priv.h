@@ -483,6 +483,7 @@ static inline int retzero(void) { return 0; }
 
 #define xfs_icreate_log(tp, agno, agbno, cnt, isize, len, gen) ((void) 0)
 #define xfs_sb_validate_fsb_count(sbp, nblks)		(0)
+#define xlog_calc_iovec_len(len)		roundup(len, sizeof(uint32_t))
 
 /*
  * Prototypes for kernel static functions that are aren't in their
