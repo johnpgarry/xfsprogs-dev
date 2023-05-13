@@ -140,6 +140,7 @@ static bool
 is_meta_ino(
 	struct xfs_mount	*mp,
 	xfs_ino_t		dirino,
+	const struct xfs_dinode	*dip,
 	xfs_ino_t		lino,
 	char			**junkreason)
 {
@@ -155,6 +156,9 @@ is_meta_ino(
 		reason = _("group quota");
 	else if (lino == mp->m_sb.sb_pquotino)
 		reason = _("project quota");
+	else if (dip->di_version >= 3 &&
+		 (dip->di_flags2 & cpu_to_be64(XFS_DIFLAG2_METADIR)))
+		reason = _("metadata directory file");
 
 	if (reason)
 		*junkreason = reason;
@@ -252,7 +256,7 @@ process_sf_dir2(
 		} else if (!libxfs_verify_dir_ino(mp, lino)) {
 			junkit = 1;
 			junkreason = _("invalid");
-		} else if (is_meta_ino(mp, ino, lino, &junkreason)) {
+		} else if (is_meta_ino(mp, ino, dip, lino, &junkreason)) {
 			/*
 			 * Directories that are not in the metadir tree should
 			 * not be linking to metadata files.
@@ -714,7 +718,7 @@ process_dir2_data(
 			 * directory since it's still structurally intact.
 			 */
 			clearreason = _("invalid");
-		} else if (is_meta_ino(mp, ino, ent_ino, &clearreason)) {
+		} else if (is_meta_ino(mp, ino, dip, ent_ino, &clearreason)) {
 			/*
 			 * Directories that are not in the metadir tree should
 			 * not be linking to metadata files.
