@@ -933,7 +933,7 @@ xfs_attr_defer_add(
 	trace_xfs_attr_defer_add(new->xattri_dela_state, args->dp);
 }
 
-STATIC int
+int
 xfs_attr_add_fork(
 	struct xfs_inode	*ip,		/* incore inode pointer */
 	int			size,		/* space new attribute needs */
