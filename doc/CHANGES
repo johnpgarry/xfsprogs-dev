@@ -1,3 +1,9 @@
+xfsprogs-6.3.0 (22 May 2023)
+	xfs_repair: Don't leak buffer when discarding directories (Darrick J. Wong)
+	xfs_repair: estimate per-AG btree slack better (Darrick J. Wong)
+	xfs_db: fix broken logic in error path (Darrick J. Wong)
+	xfsprogs: nrext64 option is now in [inode] section of mkfs conf files (Eric Sandeen)
+
 xfsprogs-6.2.0 (24 Mar 2023)
 	xfs_repair: fix incorrect dabtree hashval comparison (Darrick J. Wong)
 	mkfs: protofile can now create directories with spaces  in their names (Darrick J. Wong)
