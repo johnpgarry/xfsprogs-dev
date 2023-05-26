@@ -598,14 +598,22 @@ inject_lost_extent(
 {
 	struct xfs_mount	*mp = arg;
 	struct xfs_trans	*tp;
+	struct xfs_perag	*pag;
+	xfs_agnumber_t		agno;
+	xfs_agblock_t		agbno;
 	int			error;
 
 	error = -libxfs_trans_alloc_rollable(mp, 16, &tp);
 	if (error)
 		return error;
 
-	error = -libxfs_free_extent(tp, start, length,
+	agno = XFS_FSB_TO_AGNO(mp, start);
+	agbno = XFS_FSB_TO_AGBNO(mp, start);
+	pag = libxfs_perag_get(mp, agno);
+	error = -libxfs_free_extent(tp, pag, agbno, length,
 			&XFS_RMAP_OINFO_ANY_OWNER, XFS_AG_RESV_NONE);
+	libxfs_perag_put(pag);
+
 	if (error)
 		return error;
 
