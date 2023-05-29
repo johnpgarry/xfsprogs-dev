@@ -198,14 +198,13 @@ xfs_rmap_update_diff_items(
 	struct list_head		*a,
 	struct list_head		*b)
 {
-	struct xfs_mount		*mp = priv;
 	struct xfs_rmap_intent		*ra;
 	struct xfs_rmap_intent		*rb;
 
 	ra = container_of(a, struct xfs_rmap_intent, ri_list);
 	rb = container_of(b, struct xfs_rmap_intent, ri_list);
-	return  XFS_FSB_TO_AGNO(mp, ra->ri_bmap.br_startblock) -
-		XFS_FSB_TO_AGNO(mp, rb->ri_bmap.br_startblock);
+
+	return ra->ri_pag->pag_agno - rb->ri_pag->pag_agno;
 }
 
 /* Get an RUI. */
@@ -233,6 +232,26 @@ xfs_rmap_update_create_done(
 	return NULL;
 }
 
+/* Take a passive ref to the AG containing the space we're rmapping. */
+void
+xfs_rmap_update_get_group(
+	struct xfs_mount	*mp,
+	struct xfs_rmap_intent	*ri)
+{
+	xfs_agnumber_t	agno;
+
+	agno = XFS_FSB_TO_AGNO(mp, ri->ri_bmap.br_startblock);
+	ri->ri_pag = xfs_perag_get(mp, agno);
+}
+
+/* Release a passive AG ref after finishing rmapping work. */
+static inline void
+xfs_rmap_update_put_group(
+	struct xfs_rmap_intent	*ri)
+{
+	xfs_perag_put(ri->ri_pag);
+}
+
 /* Process a deferred rmap update. */
 STATIC int
 xfs_rmap_update_finish_item(
@@ -245,7 +264,10 @@ xfs_rmap_update_finish_item(
 	int				error;
 
 	ri = container_of(item, struct xfs_rmap_intent, ri_list);
+
 	error = xfs_rmap_finish_one(tp, ri, state);
+
+	xfs_rmap_update_put_group(ri);
 	kmem_cache_free(xfs_rmap_intent_cache, ri);
 	return error;
 }
@@ -265,6 +287,8 @@ xfs_rmap_update_cancel_item(
 	struct xfs_rmap_intent		*ri;
 
 	ri = container_of(item, struct xfs_rmap_intent, ri_list);
+
+	xfs_rmap_update_put_group(ri);
 	kmem_cache_free(xfs_rmap_intent_cache, ri);
 }
 
