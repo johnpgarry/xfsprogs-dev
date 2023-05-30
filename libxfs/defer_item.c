@@ -310,14 +310,13 @@ xfs_refcount_update_diff_items(
 	struct list_head		*a,
 	struct list_head		*b)
 {
-	struct xfs_mount		*mp = priv;
 	struct xfs_refcount_intent	*ra;
 	struct xfs_refcount_intent	*rb;
 
 	ra = container_of(a, struct xfs_refcount_intent, ri_list);
 	rb = container_of(b, struct xfs_refcount_intent, ri_list);
-	return  XFS_FSB_TO_AGNO(mp, ra->ri_startblock) -
-		XFS_FSB_TO_AGNO(mp, rb->ri_startblock);
+
+	return ra->ri_pag->pag_agno - rb->ri_pag->pag_agno;
 }
 
 /* Get an CUI. */
@@ -345,6 +344,26 @@ xfs_refcount_update_create_done(
 	return NULL;
 }
 
+/* Take a passive ref to the AG containing the space we're refcounting. */
+void
+xfs_refcount_update_get_group(
+	struct xfs_mount		*mp,
+	struct xfs_refcount_intent	*ri)
+{
+	xfs_agnumber_t			agno;
+
+	agno = XFS_FSB_TO_AGNO(mp, ri->ri_startblock);
+	ri->ri_pag = xfs_perag_get(mp, agno);
+}
+
+/* Release a passive AG ref after finishing refcounting work. */
+static inline void
+xfs_refcount_update_put_group(
+	struct xfs_refcount_intent	*ri)
+{
+	xfs_perag_put(ri->ri_pag);
+}
+
 /* Process a deferred refcount update. */
 STATIC int
 xfs_refcount_update_finish_item(
@@ -365,6 +384,8 @@ xfs_refcount_update_finish_item(
 		       ri->ri_type == XFS_REFCOUNT_DECREASE);
 		return -EAGAIN;
 	}
+
+	xfs_refcount_update_put_group(ri);
 	kmem_cache_free(xfs_refcount_intent_cache, ri);
 	return error;
 }
@@ -384,6 +405,8 @@ xfs_refcount_update_cancel_item(
 	struct xfs_refcount_intent	*ri;
 
 	ri = container_of(item, struct xfs_refcount_intent, ri_list);
+
+	xfs_refcount_update_put_group(ri);
 	kmem_cache_free(xfs_refcount_intent_cache, ri);
 }
 
