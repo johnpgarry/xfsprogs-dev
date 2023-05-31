@@ -188,26 +188,6 @@ enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
 #define xfs_info_once(dev, fmt, ...)				\
 	xfs_printk_once(xfs_info, dev, fmt, ##__VA_ARGS__)
 
-#ifdef __GNUC__
-#define __return_address	__builtin_return_address(0)
-
-/*
- * Return the address of a label.  Use barrier() so that the optimizer
- * won't reorder code to refactor the error jumpouts into a single
- * return, which throws off the reported address.
- */
-#define __this_address  ({ __label__ __here; __here: barrier(); &&__here; })
-/* Optimization barrier */
-
-/* The "volatile" is due to gcc bugs */
-#define barrier() __asm__ __volatile__("": : :"memory")
-#endif
-
-/* Optimization barrier */
-#ifndef barrier
-# define barrier() __memory_barrier()
-#endif
-
 /* miscellaneous kernel routines not in user space */
 #define likely(x)		(x)
 #define unlikely(x)		(x)
