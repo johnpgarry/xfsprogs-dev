@@ -118,4 +118,104 @@ atomic64_set(atomic64_t *a, int64_t v)
 
 #endif /* HAVE_URCU_ATOMIC64 */
 
+#define __smp_mb()		cmm_smp_mb()
+
+/* from compiler_types.h */
+/*
+ * __unqual_scalar_typeof(x) - Declare an unqualified scalar type, leaving
+ *			       non-scalar types unchanged.
+ */
+/*
+ * Prefer C11 _Generic for better compile-times and simpler code. Note 'char'
+ * is not type-compatible with 'signed char', and we define a separate case.
+ */
+#define __scalar_type_to_expr_cases(type)				\
+		unsigned type:	(unsigned type)0,			\
+		signed type:	(signed type)0
+
+#define __unqual_scalar_typeof(x) typeof(				\
+		_Generic((x),						\
+			char:	(char)0,				\
+			__scalar_type_to_expr_cases(char),		\
+			__scalar_type_to_expr_cases(short),		\
+			__scalar_type_to_expr_cases(int),		\
+			__scalar_type_to_expr_cases(long),		\
+			__scalar_type_to_expr_cases(long long),		\
+			default: (x)))
+
+/* Is this type a native word size -- useful for atomic operations */
+#define __native_word(t) \
+	(sizeof(t) == sizeof(char) || sizeof(t) == sizeof(short) || \
+	 sizeof(t) == sizeof(int) || sizeof(t) == sizeof(long))
+
+#define compiletime_assert(a, s)	BUILD_BUG_ON(!(a))
+
+#define compiletime_assert_atomic_type(t)				\
+		compiletime_assert(__native_word(t),			\
+			"Need native word sized stores/loads for atomicity.")
+
+/* from rwonce.h */
+/*
+ * Yes, this permits 64-bit accesses on 32-bit architectures. These will
+ * actually be atomic in some cases (namely Armv7 + LPAE), but for others we
+ * rely on the access being split into 2x32-bit accesses for a 32-bit quantity
+ * (e.g. a virtual address) and a strong prevailing wind.
+ */
+#define compiletime_assert_rwonce_type(t)					\
+	compiletime_assert(__native_word(t) || sizeof(t) == sizeof(long long),	\
+		"Unsupported access size for {READ,WRITE}_ONCE().")
+
+/*
+ * Use __READ_ONCE() instead of READ_ONCE() if you do not require any
+ * atomicity. Note that this may result in tears!
+ */
+#ifndef __READ_ONCE
+#define __READ_ONCE(x)	(*(const volatile __unqual_scalar_typeof(x) *)&(x))
+#endif
+
+#define READ_ONCE(x)								\
+({										\
+	compiletime_assert_rwonce_type(x);					\
+	__READ_ONCE(x);								\
+})
+
+#define __WRITE_ONCE(x, val)							\
+do {										\
+	*(volatile typeof(x) *)&(x) = (val);					\
+} while (0)
+
+#define WRITE_ONCE(x, val)							\
+do {										\
+	compiletime_assert_rwonce_type(x);					\
+	__WRITE_ONCE(x, val);							\
+} while (0)
+
+/* from barrier.h */
+#ifndef __smp_store_release
+#define __smp_store_release(p, v)					\
+do {									\
+	compiletime_assert_atomic_type(*p);				\
+	__smp_mb();							\
+	WRITE_ONCE(*p, v);						\
+} while (0)
+#endif
+
+#ifndef __smp_load_acquire
+#define __smp_load_acquire(p)						\
+({									\
+	__unqual_scalar_typeof(*p) ___p1 = READ_ONCE(*p);		\
+	compiletime_assert_atomic_type(*p);				\
+	__smp_mb();							\
+	(typeof(*p))___p1;						\
+})
+#endif
+
+#ifndef smp_store_release
+#define smp_store_release(p, v) __smp_store_release((p), (v))
+#endif
+
+#ifndef smp_load_acquire
+#define smp_load_acquire(p) __smp_load_acquire(p)
+#endif
+
 #endif /* __ATOMIC_H__ */
