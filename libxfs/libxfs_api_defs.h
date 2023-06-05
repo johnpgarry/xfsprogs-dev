@@ -34,6 +34,8 @@
 #define xfs_alloc_read_agf		libxfs_alloc_read_agf
 #define xfs_alloc_vextent		libxfs_alloc_vextent
 
+#define xfs_ascii_ci_hashname		libxfs_ascii_ci_hashname
+
 #define xfs_attr_get			libxfs_attr_get
 #define xfs_attr_leaf_newentsize	libxfs_attr_leaf_newentsize
 #define xfs_attr_namecheck		libxfs_attr_namecheck
