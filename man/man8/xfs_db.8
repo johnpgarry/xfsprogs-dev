@@ -768,6 +768,37 @@ Prints the hash value of
 .I string
 using the hash function of the XFS directory and attribute implementation.
 .TP
+.BI "hashcoll [-a] [-s seed] [-n " nr "] [-p " path "] -i | " names...
+Create directory entries or extended attributes names that all have the same
+hash value.
+The metadump name obfuscation algorithm is used here.
+Names are written to standard output, with a NULL between each name for use
+with xargs -0.
+.RS 1.0i
+.PD 0
+.TP 0.4i
+.TP 0.4i
+.B \-a
+Create extended attribute names.
+.TP 0.4i
+.B \-i
+Read the first name to create from standard input.
+Up to 255 bytes are read.
+If this option is not specified, first names are taken from the command line.
+.TP 0.4i
+.BI \-n " nr"
+Create this many duplicated names.
+The default is to create one name.
+.TP 0.4i
+.BI \-p " path"
+Create directory entries or extended attributes in this file instead of
+writing the names to standard output.
+.TP 0.4i
+.BI \-s " seed"
+Seed the random number generator with this value.
+.PD
+.RE
+.TP
 .BI "help [" command ]
 Print help for one or all commands.
 .TP
