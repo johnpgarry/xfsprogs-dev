@@ -966,6 +966,30 @@ verify_rmap_agbno(
 	return agbno < libxfs_ag_block_count(mp, agno);
 }
 
+static inline void
+warn_rmap_unwritten_key(
+	xfs_agblock_t		agno)
+{
+	static bool		warned = false;
+	static pthread_mutex_t	lock = PTHREAD_MUTEX_INITIALIZER;
+
+	if (warned)
+		return;
+
+	pthread_mutex_lock(&lock);
+	if (!warned) {
+		if (no_modify)
+			do_log(
+ _("would clear unwritten flag on rmapbt key in agno 0x%x\n"),
+			       agno);
+		else
+			do_warn(
+ _("clearing unwritten flag on rmapbt key in agno 0x%x\n"),
+			       agno);
+		warned = true;
+	}
+	pthread_mutex_unlock(&lock);
+}
 
 static void
 scan_rmapbt(
@@ -1218,6 +1242,8 @@ advance:
 		key.rm_flags = 0;
 		key.rm_startblock = be32_to_cpu(kp->rm_startblock);
 		key.rm_owner = be64_to_cpu(kp->rm_owner);
+		if (kp->rm_offset & cpu_to_be64(XFS_RMAP_OFF_UNWRITTEN))
+			warn_rmap_unwritten_key(agno);
 		if (libxfs_rmap_irec_offset_unpack(be64_to_cpu(kp->rm_offset),
 				&key)) {
 			/* Look for impossible flags. */
@@ -1239,6 +1265,8 @@ advance:
 		key.rm_flags = 0;
 		key.rm_startblock = be32_to_cpu(kp->rm_startblock);
 		key.rm_owner = be64_to_cpu(kp->rm_owner);
+		if (kp->rm_offset & cpu_to_be64(XFS_RMAP_OFF_UNWRITTEN))
+			warn_rmap_unwritten_key(agno);
 		if (libxfs_rmap_irec_offset_unpack(be64_to_cpu(kp->rm_offset),
 				&key)) {
 			/* Look for impossible flags. */
