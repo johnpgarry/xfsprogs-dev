@@ -2150,6 +2150,17 @@ validate_sb_features(
 	struct mkfs_params	*cfg,
 	struct cli_params	*cli)
 {
+	if (cli->sb_feat.nci) {
+		/*
+		 * The ascii-ci feature is deprecated in the upstream Linux
+		 * kernel.  In September 2025 it will be turned off by default
+		 * in the kernel and in September 2030 support will be removed
+		 * entirely.
+		 */
+		fprintf(stdout,
+_("ascii-ci filesystems are deprecated and will not be supported by future versions.\n"));
+	}
+
 	/*
 	 * Now we have blocks and sector sizes set up, check parameters that are
 	 * no longer optional for CRC enabled filesystems.  Catch them up front

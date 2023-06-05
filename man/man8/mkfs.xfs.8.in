@@ -828,6 +828,7 @@ This transformation roughly corresponds to case insensitivity in ISO
 The transformations are not compatible with other encodings (e.g. UTF8).
 Do not enable this feature unless your entire environment has been coerced
 to ISO 8859-1.
+This feature is deprecated and will be removed in September 2030.
 .IP
 Note: Version 1 directories are not supported.
 .TP
