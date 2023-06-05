@@ -1176,13 +1176,10 @@ entry_junked(
 	xfs_ino_t	ino2)
 {
 	do_warn(msg, iname, ino1, ino2);
-	if (!no_modify) {
-		if (verbose)
-			do_warn(_(", marking entry to be junked\n"));
-		else
-			do_warn("\n");
-	} else
-		do_warn(_(", would junk entry\n"));
+	if (!no_modify)
+		do_warn(_("junking entry\n"));
+	else
+		do_warn(_("would junk entry\n"));
 	return !no_modify;
 }
 
@@ -1681,7 +1678,7 @@ longform_dir2_entry_check_data(
 		if (irec == NULL)  {
 			nbad++;
 			if (entry_junked(
-	_("entry \"%s\" in directory inode %" PRIu64 " points to non-existent inode %" PRIu64 ""),
+	_("entry \"%s\" in directory inode %" PRIu64 " points to non-existent inode %" PRIu64 ", "),
 					fname, ip->i_ino, inum)) {
 				dep->name[0] = '/';
 				libxfs_dir2_data_log_entry(&da, bp, dep);
@@ -1698,7 +1695,7 @@ longform_dir2_entry_check_data(
 		if (is_inode_free(irec, ino_offset))  {
 			nbad++;
 			if (entry_junked(
-	_("entry \"%s\" in directory inode %" PRIu64 " points to free inode %" PRIu64),
+	_("entry \"%s\" in directory inode %" PRIu64 " points to free inode %" PRIu64 ", "),
 					fname, ip->i_ino, inum)) {
 				dep->name[0] = '/';
 				libxfs_dir2_data_log_entry(&da, bp, dep);
@@ -1716,7 +1713,7 @@ longform_dir2_entry_check_data(
 			if (!inode_isadir(irec, ino_offset)) {
 				nbad++;
 				if (entry_junked(
-	_("%s (ino %" PRIu64 ") in root (%" PRIu64 ") is not a directory"),
+	_("%s (ino %" PRIu64 ") in root (%" PRIu64 ") is not a directory, "),
 						ORPHANAGE, inum, ip->i_ino)) {
 					dep->name[0] = '/';
 					libxfs_dir2_data_log_entry(&da, bp, dep);
@@ -1738,7 +1735,7 @@ longform_dir2_entry_check_data(
 				dep->name, libxfs_dir2_data_get_ftype(mp, dep))) {
 			nbad++;
 			if (entry_junked(
-	_("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name"),
+	_("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name, "),
 					fname, inum, ip->i_ino)) {
 				dep->name[0] = '/';
 				libxfs_dir2_data_log_entry(&da, bp, dep);
@@ -1769,7 +1766,7 @@ longform_dir2_entry_check_data(
 				/* ".." should be in the first block */
 				nbad++;
 				if (entry_junked(
-	_("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is not in the the first block"), fname,
+	_("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is not in the the first block, "), fname,
 						inum, ip->i_ino)) {
 					dir_hash_junkit(hashtab, addr);
 					dep->name[0] = '/';
@@ -1802,7 +1799,7 @@ longform_dir2_entry_check_data(
 				/* "." should be the first entry */
 				nbad++;
 				if (entry_junked(
-	_("entry \"%s\" in dir %" PRIu64 " is not the first entry"),
+	_("entry \"%s\" in dir %" PRIu64 " is not the first entry, "),
 						fname, inum, ip->i_ino)) {
 					dir_hash_junkit(hashtab, addr);
 					dep->name[0] = '/';
