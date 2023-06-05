@@ -992,6 +992,7 @@ scan_rmapbt(
 	uint64_t		lastowner = 0;
 	uint64_t		lastoffset = 0;
 	struct xfs_rmap_key	*kp;
+	struct xfs_rmap_irec	oldkey;
 	struct xfs_rmap_irec	key = {0};
 	struct xfs_perag	*pag;
 
@@ -1211,7 +1212,7 @@ advance:
 	}
 
 	/* check the node's high keys */
-	for (i = 0; !isroot && i < numrecs; i++) {
+	for (i = 0; i < numrecs; i++) {
 		kp = XFS_RMAP_HIGH_KEY_ADDR(block, i + 1);
 
 		key.rm_flags = 0;
@@ -1229,6 +1230,35 @@ advance:
 			do_warn(
 	_("key %d greater than high key of block (%u/%u) in %s tree\n"),
 				i, agno, bno, name);
+	}
+
+	/* check for in-order keys */
+	for (i = 0; i < numrecs; i++)  {
+		kp = XFS_RMAP_KEY_ADDR(block, i + 1);
+
+		key.rm_flags = 0;
+		key.rm_startblock = be32_to_cpu(kp->rm_startblock);
+		key.rm_owner = be64_to_cpu(kp->rm_owner);
+		if (libxfs_rmap_irec_offset_unpack(be64_to_cpu(kp->rm_offset),
+				&key)) {
+			/* Look for impossible flags. */
+			do_warn(
+_("invalid flags in key %u of %s btree block %u/%u\n"),
+				i, name, agno, bno);
+			suspect++;
+			continue;
+		}
+		if (i == 0) {
+			oldkey = key;
+			continue;
+		}
+		if (rmap_diffkeys(&oldkey, &key) > 0) {
+			do_warn(
+_("out of order key %u in %s btree block (%u/%u)\n"),
+				i, name, agno, bno);
+			suspect++;
+		}
+		oldkey = key;
 	}
 
 	pag = libxfs_perag_get(mp, agno);
