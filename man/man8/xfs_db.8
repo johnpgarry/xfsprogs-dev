@@ -763,10 +763,16 @@ Skip write verifiers but perform CRC recalculation; allows invalid data to be
 written to disk to test detection of invalid data.
 .RE
 .TP
-.BI hash " string
+.BI hash [-d]" strings
 Prints the hash value of
 .I string
 using the hash function of the XFS directory and attribute implementation.
+
+If the
+.B \-d
+option is specified, the directory-specific hash function is used.
+This only makes a difference on filesystems with ascii case-insensitive
+lookups enabled.
 .TP
 .BI "hashcoll [-a] [-s seed] [-n " nr "] [-p " path "] -i | " names...
 Create directory entries or extended attributes names that all have the same

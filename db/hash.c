@@ -18,9 +18,15 @@
 static int hash_f(int argc, char **argv);
 static void hash_help(void);
 
-static const cmdinfo_t hash_cmd =
-	{ "hash", NULL, hash_f, 1, 1, 0, N_("string"),
-	  N_("calculate hash value"), hash_help };
+static const cmdinfo_t hash_cmd = {
+	.name		= "hash",
+	.cfunc		= hash_f,
+	.argmin		= 1,
+	.argmax		= -1,
+	.args		= N_("string"),
+	.oneline	= N_("calculate hash value"),
+	.help		= hash_help,
+};
 
 static void
 hash_help(void)
@@ -43,9 +49,35 @@ hash_f(
 	char		**argv)
 {
 	xfs_dahash_t	hashval;
+	bool		use_dir2_hash = false;
+	int		c;
 
-	hashval = libxfs_da_hashname((unsigned char *)argv[1], (int)strlen(argv[1]));
-	dbprintf("0x%x\n", hashval);
+	while ((c = getopt(argc, argv, "d")) != EOF) {
+		switch (c) {
+		case 'd':
+			use_dir2_hash = true;
+			break;
+		default:
+			exitcode = 1;
+			hash_help();
+			return 0;
+		}
+	}
+
+	for (c = optind; c < argc; c++) {
+		if (use_dir2_hash) {
+			struct xfs_name	xname = {
+				.name	= (uint8_t *)argv[c],
+				.len	= strlen(argv[c]),
+			};
+
+			hashval = libxfs_dir2_hashname(mp, &xname);
+		} else {
+			hashval = libxfs_da_hashname(argv[c], strlen(argv[c]));
+		}
+		dbprintf("0x%x\n", hashval);
+	}
+
 	return 0;
 }
 
