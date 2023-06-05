@@ -834,7 +834,7 @@ next_readbuf:
 			do_warn(
 	_("imap claims inode %" PRIu64 " is present, but inode cluster is sparse, "),
 						ino);
-			if (verbose || !no_modify)
+			if (!no_modify)
 				do_warn(_("correcting imap\n"));
 			else
 				do_warn(_("would correct imap\n"));
