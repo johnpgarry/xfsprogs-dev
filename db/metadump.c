@@ -882,7 +882,6 @@ obfuscate_name(
 		*first ^= 0x10;
 		ASSERT(!is_invalid_char(*first));
 	}
-	ASSERT(libxfs_da_hashname(name, name_len) == hash);
 }
 
 /*
@@ -1208,6 +1207,7 @@ generate_obfuscated_name(
 
 	hash = libxfs_da_hashname(name, namelen);
 	obfuscate_name(hash, namelen, name);
+	ASSERT(hash == libxfs_da_hashname(name, namelen));
 
 	/*
 	 * Make sure the name is not something already seen.  If we
@@ -1321,6 +1321,7 @@ obfuscate_path_components(
 			namelen = strnlen((char *)comp, len);
 			hash = libxfs_da_hashname(comp, namelen);
 			obfuscate_name(hash, namelen, comp);
+			ASSERT(hash == libxfs_da_hashname(comp, namelen));
 			break;
 		}
 		namelen = slash - (char *)comp;
@@ -1332,6 +1333,7 @@ obfuscate_path_components(
 		}
 		hash = libxfs_da_hashname(comp, namelen);
 		obfuscate_name(hash, namelen, comp);
+		ASSERT(hash == libxfs_da_hashname(comp, namelen));
 		comp += namelen + 1;
 		len -= namelen + 1;
 	}
