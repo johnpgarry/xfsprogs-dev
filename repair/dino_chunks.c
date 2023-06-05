@@ -871,13 +871,11 @@ next_readbuf:
 		 */
 		if (is_used)  {
 			if (is_inode_free(ino_rec, irec_offset))  {
-				if (verbose || no_modify)  {
-					do_warn(
+				do_warn(
 	_("imap claims in-use inode %" PRIu64 " is free, "),
 						ino);
-				}
 
-				if (verbose || !no_modify)
+				if (!no_modify)
 					do_warn(_("correcting imap\n"));
 				else
 					do_warn(_("would correct imap\n"));
