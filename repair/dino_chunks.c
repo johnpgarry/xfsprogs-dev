@@ -1287,10 +1287,12 @@ process_uncertain_aginodes(xfs_mount_t *mp, xfs_agnumber_t agno)
 			 * process the inode record we just added
 			 * to the good inode tree.  The inode
 			 * processing may add more records to the
-			 * uncertain inode lists.
+			 * uncertain inode lists.  always process the
+			 * extended attribute structure because we might
+			 * decide that some inodes are still in use
 			 */
 			if (process_inode_chunk(mp, agno, igeo->ialloc_inos,
-						nrec, 1, 0, 0, &bogus))  {
+						nrec, 1, 0, 1, &bogus))  {
 				/* XXX - i/o error, we've got a problem */
 				abort();
 			}
