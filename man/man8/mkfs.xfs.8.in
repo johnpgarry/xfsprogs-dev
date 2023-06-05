@@ -809,11 +809,25 @@ can be either 2 or 'ci', defaulting to 2 if unspecified.
 With version 2 directories, the directory block size can be
 any power of 2 size from the filesystem block size up to 65536.
 .IP
-The
+If the
 .B version=ci
-option enables ASCII only case-insensitive filename lookup and version
-2 directories. Filenames are case-preserving, that is, the names
-are stored in directories using the case they were created with.
+option is specified, the kernel will transform certain bytes in filenames
+before performing lookup-related operations.
+The byte sequence given to create a directory entry is persisted without
+alterations.
+The lookup transformations are defined as follows:
+
+    0x41-0x5a -> 0x61-0x7a
+
+    0xc0-0xd6 -> 0xe0-0xf6
+
+    0xd8-0xde -> 0xf8-0xfe
+
+This transformation roughly corresponds to case insensitivity in ISO
+8859-1.
+The transformations are not compatible with other encodings (e.g. UTF8).
+Do not enable this feature unless your entire environment has been coerced
+to ISO 8859-1.
 .IP
 Note: Version 1 directories are not supported.
 .TP
