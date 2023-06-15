@@ -817,13 +817,17 @@ static void
 obfuscate_name(
 	xfs_dahash_t	hash,
 	size_t		name_len,
-	unsigned char	*name)
+	unsigned char	*name,
+	bool		is_dirent)
 {
-	unsigned char	*newp = name;
+	unsigned char	*oldname = NULL;
+	unsigned char	*newp;
 	int		i;
-	xfs_dahash_t	new_hash = 0;
+	xfs_dahash_t	new_hash;
 	unsigned char	*first;
 	unsigned char	high_bit;
+	int		tries = 0;
+	bool		is_ci_name = is_dirent && xfs_has_asciici(mp);
 	int		shift;
 
 	/*
@@ -836,6 +840,26 @@ obfuscate_name(
 	if (name_len < 5)
 		return;
 
+	if (is_ci_name) {
+		oldname = malloc(name_len);
+		if (!oldname)
+			return;
+		memcpy(oldname, name, name_len);
+	}
+
+again:
+	newp = name;
+	new_hash = 0;
+
+	/*
+	 * If we cannot generate a ci-compatible obfuscated name after 1000
+	 * tries, don't bother obfuscating the name.
+	 */
+	if (tries++ > 1000) {
+		memcpy(name, oldname, name_len);
+		goto out_free;
+	}
+
 	/*
 	 * The beginning of the obfuscated name can be pretty much
 	 * anything, so fill it in with random characters.
@@ -843,7 +867,11 @@ obfuscate_name(
 	 */
 	for (i = 0; i < name_len - 5; i++) {
 		*newp = random_filename_char();
-		new_hash = *newp ^ rol32(new_hash, 7);
+		if (is_ci_name)
+			new_hash = xfs_ascii_ci_xfrm(*newp) ^
+							rol32(new_hash, 7);
+		else
+			new_hash = *newp ^ rol32(new_hash, 7);
 		newp++;
 	}
 
@@ -867,6 +895,17 @@ obfuscate_name(
 			high_bit = 0x80;
 		} else
 			high_bit = 0;
+
+		/*
+		 * If ascii-ci is enabled, uppercase characters are converted
+		 * to lowercase characters while computing the name hash.  If
+		 * any of the necessary correction bytes are uppercase, the
+		 * hash of the new name will not match.  Try again with a
+		 * different prefix.
+		 */
+		if (is_ci_name && xfs_ascii_ci_need_xfrm(*newp))
+			goto again;
+
 		ASSERT(!is_invalid_char(*newp));
 		newp++;
 	}
@@ -880,8 +919,15 @@ obfuscate_name(
 	 */
 	if (high_bit) {
 		*first ^= 0x10;
+
+		if (is_ci_name && xfs_ascii_ci_need_xfrm(*first))
+			goto again;
+
 		ASSERT(!is_invalid_char(*first));
 	}
+
+out_free:
+	free(oldname);
 }
 
 /*
@@ -1177,6 +1223,24 @@ handle_duplicate_name(xfs_dahash_t hash, size_t name_len, unsigned char *name)
 	return 1;
 }
 
+static inline xfs_dahash_t
+dirattr_hashname(
+	bool		is_dirent,
+	const uint8_t	*name,
+	int		namelen)
+{
+	if (is_dirent) {
+		struct xfs_name	xname = {
+			.name	= name,
+			.len	= namelen,
+		};
+
+		return libxfs_dir2_hashname(mp, &xname);
+	}
+
+	return libxfs_da_hashname(name, namelen);
+}
+
 static void
 generate_obfuscated_name(
 	xfs_ino_t		ino,
@@ -1205,9 +1269,9 @@ generate_obfuscated_name(
 
 	/* Obfuscate the name (if possible) */
 
-	hash = libxfs_da_hashname(name, namelen);
-	obfuscate_name(hash, namelen, name);
-	ASSERT(hash == libxfs_da_hashname(name, namelen));
+	hash = dirattr_hashname(ino != 0, name, namelen);
+	obfuscate_name(hash, namelen, name, ino != 0);
+	ASSERT(hash == dirattr_hashname(ino != 0, name, namelen));
 
 	/*
 	 * Make sure the name is not something already seen.  If we
@@ -1320,7 +1384,7 @@ obfuscate_path_components(
 			/* last (or single) component */
 			namelen = strnlen((char *)comp, len);
 			hash = libxfs_da_hashname(comp, namelen);
-			obfuscate_name(hash, namelen, comp);
+			obfuscate_name(hash, namelen, comp, false);
 			ASSERT(hash == libxfs_da_hashname(comp, namelen));
 			break;
 		}
@@ -1332,7 +1396,7 @@ obfuscate_path_components(
 			continue;
 		}
 		hash = libxfs_da_hashname(comp, namelen);
-		obfuscate_name(hash, namelen, comp);
+		obfuscate_name(hash, namelen, comp, false);
 		ASSERT(hash == libxfs_da_hashname(comp, namelen));
 		comp += namelen + 1;
 		len -= namelen + 1;
