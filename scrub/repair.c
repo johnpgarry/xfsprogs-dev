@@ -37,7 +37,7 @@
 /* Sort action items in severity order. */
 static int
 PRIO(
-	struct action_item	*aitem,
+	const struct action_item *aitem,
 	int			order)
 {
 	if (aitem->flags & XFS_SCRUB_OFLAG_CORRUPT)
@@ -54,7 +54,7 @@ PRIO(
 /* Sort the repair items in dependency order. */
 static int
 xfs_action_item_priority(
-	struct action_item	*aitem)
+	const struct action_item	*aitem)
 {
 	switch (aitem->type) {
 	case XFS_SCRUB_TYPE_SB:
@@ -95,11 +95,11 @@ xfs_action_item_priority(
 static int
 xfs_action_item_compare(
 	void				*priv,
-	struct list_head		*a,
-	struct list_head		*b)
+	const struct list_head		*a,
+	const struct list_head		*b)
 {
-	struct action_item		*ra;
-	struct action_item		*rb;
+	const struct action_item	*ra;
+	const struct action_item	*rb;
 
 	ra = container_of(a, struct action_item, list);
 	rb = container_of(b, struct action_item, list);

@@ -33,11 +33,11 @@
 static int
 xfs_extent_free_diff_items(
 	void				*priv,
-	struct list_head		*a,
-	struct list_head		*b)
+	const struct list_head		*a,
+	const struct list_head		*b)
 {
-	struct xfs_extent_free_item	*ra;
-	struct xfs_extent_free_item	*rb;
+	const struct xfs_extent_free_item *ra;
+	const struct xfs_extent_free_item *rb;
 
 	ra = container_of(a, struct xfs_extent_free_item, xefi_list);
 	rb = container_of(b, struct xfs_extent_free_item, xefi_list);
@@ -197,11 +197,11 @@ const struct xfs_defer_op_type xfs_agfl_free_defer_type = {
 static int
 xfs_rmap_update_diff_items(
 	void				*priv,
-	struct list_head		*a,
-	struct list_head		*b)
+	const struct list_head		*a,
+	const struct list_head		*b)
 {
-	struct xfs_rmap_intent		*ra;
-	struct xfs_rmap_intent		*rb;
+	const struct xfs_rmap_intent	*ra;
+	const struct xfs_rmap_intent	*rb;
 
 	ra = container_of(a, struct xfs_rmap_intent, ri_list);
 	rb = container_of(b, struct xfs_rmap_intent, ri_list);
@@ -309,11 +309,11 @@ const struct xfs_defer_op_type xfs_rmap_update_defer_type = {
 static int
 xfs_refcount_update_diff_items(
 	void				*priv,
-	struct list_head		*a,
-	struct list_head		*b)
+	const struct list_head		*a,
+	const struct list_head		*b)
 {
-	struct xfs_refcount_intent	*ra;
-	struct xfs_refcount_intent	*rb;
+	const struct xfs_refcount_intent *ra;
+	const struct xfs_refcount_intent *rb;
 
 	ra = container_of(a, struct xfs_refcount_intent, ri_list);
 	rb = container_of(b, struct xfs_refcount_intent, ri_list);
@@ -427,11 +427,11 @@ const struct xfs_defer_op_type xfs_refcount_update_defer_type = {
 static int
 xfs_bmap_update_diff_items(
 	void				*priv,
-	struct list_head		*a,
-	struct list_head		*b)
+	const struct list_head		*a,
+	const struct list_head		*b)
 {
-	struct xfs_bmap_intent		*ba;
-	struct xfs_bmap_intent		*bb;
+	const struct xfs_bmap_intent	*ba;
+	const struct xfs_bmap_intent	*bb;
 
 	ba = container_of(a, struct xfs_bmap_intent, bi_list);
 	bb = container_of(b, struct xfs_bmap_intent, bi_list);
