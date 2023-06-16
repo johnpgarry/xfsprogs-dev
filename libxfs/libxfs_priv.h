@@ -589,8 +589,10 @@ int libxfs_zero_extent(struct xfs_inode *ip, xfs_fsblock_t start_fsb,
                         xfs_off_t count_fsb);
 
 /* xfs_log.c */
+struct xfs_item_ops;
 bool xfs_log_check_lsn(struct xfs_mount *, xfs_lsn_t);
-void xfs_log_item_init(struct xfs_mount *, struct xfs_log_item *, int);
+void xfs_log_item_init(struct xfs_mount *mp, struct xfs_log_item *lip, int type,
+		const struct xfs_item_ops *ops);
 #define xfs_attr_use_log_assist(mp)	(0)
 #define xlog_drop_incompat_feat(log)	do { } while (0)
 #define xfs_log_in_recovery(mp)		(false)

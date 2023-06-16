@@ -59,6 +59,9 @@ xfs_trans_buf_item_match(
  * The following are from fs/xfs/xfs_buf_item.c
  */
 
+static const struct xfs_item_ops xfs_buf_item_ops = {
+};
+
 /*
  * Allocate a new buf log item to go with the given buffer.
  * Set the buffer's b_log_item field to point to the new
@@ -101,7 +104,7 @@ xfs_buf_item_init(
 	fprintf(stderr, "adding buf item %p for not-logged buffer %p\n",
 		bip, bp);
 #endif
-	xfs_log_item_init(mp, &bip->bli_item, XFS_LI_BUF);
+	xfs_log_item_init(mp, &bip->bli_item, XFS_LI_BUF, &xfs_buf_item_ops);
 	bip->bli_buf = bp;
 	bip->__bli_format.blf_type = XFS_LI_BUF;
 	bip->__bli_format.blf_blkno = (int64_t)xfs_buf_daddr(bp);
@@ -127,6 +130,9 @@ xfs_buf_item_log(
 	bip->bli_flags |= XFS_BLI_DIRTY;
 }
 
+static const struct xfs_item_ops xfs_inode_item_ops = {
+};
+
 /*
  * Initialize the inode log item for a newly allocated (in-core) inode.
  */
@@ -146,6 +152,7 @@ xfs_inode_item_init(
 
 	spin_lock_init(&iip->ili_lock);
 
-        xfs_log_item_init(mp, &iip->ili_item, XFS_LI_INODE);
+        xfs_log_item_init(mp, &iip->ili_item, XFS_LI_INODE,
+						&xfs_inode_item_ops);
 	iip->ili_inode = ip;
 }

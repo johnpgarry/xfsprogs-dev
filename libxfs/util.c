@@ -643,10 +643,12 @@ void
 xfs_log_item_init(
 	struct xfs_mount	*mp,
 	struct xfs_log_item	*item,
-	int			type)
+	int			type,
+	const struct xfs_item_ops *ops)
 {
 	item->li_mountp = mp; 
 	item->li_type = type;
+	item->li_ops = ops;
 
 	INIT_LIST_HEAD(&item->li_trans);
 	INIT_LIST_HEAD(&item->li_bio_list);
