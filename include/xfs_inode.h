@@ -14,6 +14,7 @@
 struct xfs_trans;
 struct xfs_mount;
 struct xfs_inode_log_item;
+struct inode;
 
 /*
  * These are not actually used, they are only for userspace build
@@ -22,7 +23,7 @@ struct xfs_inode_log_item;
 #define I_DIRTY_TIME		0
 #define I_DIRTY_TIME_EXPIRED	0
 
-#define IS_I_VERSION(inode)			(0)
+static inline bool IS_I_VERSION(const struct inode *inode) { return false; }
 #define inode_maybe_inc_iversion(inode,flags)	(0)
 
 /*
