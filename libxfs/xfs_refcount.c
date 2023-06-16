@@ -1150,8 +1150,10 @@ xfs_refcount_adjust_extents(
 				fsbno = XFS_AGB_TO_FSB(cur->bc_mp,
 						cur->bc_ag.pag->pag_agno,
 						tmp.rc_startblock);
-				xfs_free_extent_later(cur->bc_tp, fsbno,
+				error = xfs_free_extent_later(cur->bc_tp, fsbno,
 						  tmp.rc_blockcount, NULL);
+				if (error)
+					goto out_error;
 			}
 
 			(*agbno) += tmp.rc_blockcount;
@@ -1209,8 +1211,10 @@ xfs_refcount_adjust_extents(
 			fsbno = XFS_AGB_TO_FSB(cur->bc_mp,
 					cur->bc_ag.pag->pag_agno,
 					ext.rc_startblock);
-			xfs_free_extent_later(cur->bc_tp, fsbno,
+			error = xfs_free_extent_later(cur->bc_tp, fsbno,
 					ext.rc_blockcount, NULL);
+			if (error)
+				goto out_error;
 		}
 
 skip:
@@ -1975,7 +1979,10 @@ xfs_refcount_recover_cow_leftovers(
 				rr->rr_rrec.rc_blockcount);
 
 		/* Free the block. */
-		xfs_free_extent_later(tp, fsb, rr->rr_rrec.rc_blockcount, NULL);
+		error = xfs_free_extent_later(tp, fsb,
+				rr->rr_rrec.rc_blockcount, NULL);
+		if (error)
+			goto out_trans;
 
 		error = xfs_trans_commit(tp);
 		if (error)
