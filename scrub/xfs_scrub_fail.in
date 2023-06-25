@@ -31,6 +31,7 @@ Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset=UTF-8
 
 So sorry, the automatic xfs_scrub of ${mntpoint} on ${hostname} failed.
+Please do not reply to this mesage.
 
 A log of what happened follows:
 ENDL
