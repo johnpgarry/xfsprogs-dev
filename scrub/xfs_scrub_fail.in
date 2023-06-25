@@ -27,6 +27,8 @@ scrub_svc="$(systemd-escape --template "@scrub_svcname@" --path "${mntpoint}")"
 To: $1
 From: <xfs_scrub@${hostname}>
 Subject: xfs_scrub failure on ${mntpoint}
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=UTF-8
 
 So sorry, the automatic xfs_scrub of ${mntpoint} on ${hostname} failed.
 
