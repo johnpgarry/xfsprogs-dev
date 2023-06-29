@@ -253,6 +253,47 @@ render_ino_from_handle(
 }
 
 /*
+ * Check the directory structure for problems that could cause open_by_handle
+ * not to work.  Returns 0 for no problems; EADDRNOTAVAIL if the there are
+ * problems that would prevent name checking.
+ */
+static int
+check_dir_connection(
+	struct scrub_ctx		*ctx,
+	struct descr			*dsc,
+	const struct xfs_bulkstat	*bstat)
+{
+	struct scrub_item		sri = { };
+	int				error;
+
+	/* The dirtree scrubber only works when parent pointers are enabled */
+	if (!(ctx->mnt.fsgeom.flags & XFS_FSOP_GEOM_FLAGS_PARENT))
+		return 0;
+
+	scrub_item_init_file(&sri, bstat);
+	scrub_item_schedule(&sri, XFS_SCRUB_TYPE_DIRTREE);
+
+	error = scrub_item_check_file(ctx, &sri, -1);
+	if (error) {
+		str_liberror(ctx, error, _("checking directory loops"));
+		return error;
+	}
+
+	error = repair_file_corruption(ctx, &sri, -1);
+	if (error) {
+		str_liberror(ctx, error, _("repairing directory loops"));
+		return error;
+	}
+
+	/* No directory tree problems?  Clear this inode if it was deferred. */
+	if (repair_item_count_needsrepair(&sri) == 0)
+		return 0;
+
+	str_corrupt(ctx, descr_render(dsc), _("directory loop uncorrected!"));
+	return EADDRNOTAVAIL;
+}
+
+/*
  * Verify the connectivity of the directory tree.
  * We know that the kernel's open-by-handle function will try to reconnect
  * parents of an opened directory, so we'll accept that as sufficient.
@@ -274,6 +315,20 @@ check_inode_names(
 
 	descr_set(&dsc, bstat);
 	background_sleep();
+
+	/*
+	 * Try to fix directory loops before we have problems opening files by
+	 * handle.
+	 */
+	if (S_ISDIR(bstat->bs_mode)) {
+		error = check_dir_connection(ctx, &dsc, bstat);
+		if (error == EADDRNOTAVAIL) {
+			error = 0;
+			goto out;
+		}
+		if (error)
+			goto err;
+	}
 
 	/* Warn about naming problems in xattrs. */
 	if (bstat->bs_xflags & FS_XFLAG_HASATTR) {
@@ -315,6 +370,7 @@ err_fd:
 err:
 	if (error)
 		*aborted = true;
+out:
 	if (!error && *aborted)
 		error = ECANCELED;
 
