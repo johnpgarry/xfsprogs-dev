@@ -149,6 +149,20 @@ The inode to examine can be specified in the same manner as
 .BR XFS_SCRUB_TYPE_INODE "."
 
 .TP
+.B XFS_SCRUB_TYPE_DIRTREE
+This scrubber looks for problems in the directory tree structure such as loops
+and directories accessible through more than one path.
+Problems are detected by walking parent pointers upwards towards the root.
+Loops are detected by comparing the parent directory at each step against the
+directories already examined.
+Directories with multiple paths are detected by counting the parent pointers
+attached to a directory.
+Non-directories do not have links pointing away from the directory tree root
+and can be skipped.
+The directory to examine can be specified in the same manner as
+.BR XFS_SCRUB_TYPE_INODE "."
+
+.TP
 .B XFS_SCRUB_TYPE_SYMLINK
 Examine the target of a symbolic link for obvious pathname problems.
 The link to examine can be specified in the same manner as

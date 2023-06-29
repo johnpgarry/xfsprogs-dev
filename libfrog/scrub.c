@@ -149,6 +149,11 @@ const struct xfrog_scrub_descr xfrog_scrubbers[XFS_SCRUB_TYPE_NR] = {
 		.descr	= "retained health records",
 		.group	= XFROG_SCRUB_GROUP_NONE,
 	},
+	[XFS_SCRUB_TYPE_DIRTREE] = {
+		.name	= "dirtree",
+		.descr	= "directory tree structure",
+		.group	= XFROG_SCRUB_GROUP_INODE,
+	},
 };
 #undef DEP
 
