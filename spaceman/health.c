@@ -169,6 +169,10 @@ static const struct flag_map inode_flags[] = {
 		.mask = XFS_BS_SICK_PARENT,
 		.descr = "parent pointers",
 	},
+	{
+		.mask = XFS_BS_SICK_DIRTREE,
+		.descr = "directory tree structure",
+	},
 	{0},
 };
 
