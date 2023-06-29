@@ -3018,6 +3018,10 @@ process_inode(
 		default:
 			break;
 		}
+		/* Metadata directory files are not counted in quotas. */
+		if (dip->di_version >= 3 &&
+		    (dip->di_flags2 & cpu_to_be64(XFS_DIFLAG2_METADIR)))
+			ic = 0;
 		if (ic)
 			quota_add(&prid, &gid, &uid, 0, bc, ic, rc);
 	}

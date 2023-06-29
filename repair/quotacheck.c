@@ -217,6 +217,10 @@ quotacheck_adjust(
 		return;
 	}
 
+	/* Metadata directory files aren't counted in quota. */
+	if (xfs_is_metadir_inode(ip))
+		goto out_rele;
+
 	/* Count the file's blocks. */
 	if (XFS_IS_REALTIME_INODE(ip))
 		rtblks = qc_count_rtblocks(ip);
@@ -229,6 +233,7 @@ quotacheck_adjust(
 	if (proj_dquots)
 		qc_adjust(proj_dquots, ip->i_projid, blocks, rtblks);
 
+out_rele:
 	libxfs_irele(ip);
 }
 
