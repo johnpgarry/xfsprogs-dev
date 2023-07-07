@@ -83,4 +83,6 @@ typedef int (*path_walk_fn_t)(const char *name, uint64_t ino, void *arg);
 int path_walk_components(const struct path_list *path, path_walk_fn_t fn,
 		void *arg);
 
+bool path_will_loop(const struct path_list *path, uint64_t ino);
+
 #endif	/* __LIBFROG_PATH_H__ */

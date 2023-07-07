@@ -148,6 +148,9 @@ handle_walk_ppath_rec(
 	if (rec->p_flags & PARENT_IS_ROOT)
 		return wpi->fn(wpi->mntpt, wpi->path, wpi->arg);
 
+	if (path_will_loop(wpi->path, rec->p_ino))
+		return 0;
+
 	ret = path_component_change(wpli->pc, rec->p_name,
 				strlen((char *)rec->p_name), rec->p_ino);
 	if (ret)

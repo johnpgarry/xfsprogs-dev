@@ -734,3 +734,19 @@ path_walk_components(
 
 	return 0;
 }
+
+/* Will this path contain a loop if we add this inode? */
+bool
+path_will_loop(
+	const struct path_list	*path_list,
+	uint64_t		ino)
+{
+	struct path_component	*pc;
+
+	list_for_each_entry(pc, &path_list->p_head, pc_list) {
+		if (pc->pc_ino == ino)
+			return true;
+	}
+
+	return false;
+}
