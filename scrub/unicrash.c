@@ -88,6 +88,7 @@ struct unicrash {
 	struct scrub_ctx	*ctx;
 	USpoofChecker		*spoof;
 	const UNormalizer2	*nfkc;
+	const UNormalizer2	*nfc;
 	bool			compare_ino;
 	bool			is_only_root_writeable;
 	size_t			nr_buckets;
@@ -121,6 +122,12 @@ struct unicrash {
 
 /* Multiple names resolve to the same skeleton string. */
 #define UNICRASH_CONFUSABLE	((__force badname_t)(1U << 5))
+
+/* Possible phony file extension. */
+#define UNICRASH_PHONY_EXTENSION ((__force badname_t)(1U << 6))
+
+/* FULL STOP (aka period), 0x2E */
+#define UCHAR_PERIOD		((UChar32)'.')
 
 /*
  * We only care about validating utf8 collisions if the underlying
@@ -210,6 +217,193 @@ static inline bool is_nonrendering(UChar32 uchr)
 }
 
 /*
+ * Decide if this unicode codepoint looks similar enough to a period (".")
+ * to fool users into thinking that any subsequent alphanumeric sequence is
+ * the file extension.  Most of the fullstop characters do not do this.
+ *
+ * $ grep -i 'full stop' UnicodeData.txt
+ */
+static inline bool is_fullstop_lookalike(UChar32 uchr)
+{
+	switch (uchr) {
+	case 0x0701:	/* syriac supralinear full stop */
+	case 0x0702:	/* syriac sublinear full stop */
+	case 0x2024:	/* one dot leader */
+	case 0xA4F8:	/* lisu letter tone mya ti */
+	case 0xFE52:	/* small full stop */
+	case 0xFF61:	/* haflwidth ideographic full stop */
+	case 0xFF0E:	/* fullwidth full stop */
+		return true;
+	}
+
+	return false;
+}
+
+/* How many UChar do we need to fit a full UChar32 codepoint? */
+#define UCHAR_PER_UCHAR32	2
+
+/* Format this UChar32 into a UChar buffer. */
+static inline int32_t
+uchar32_to_uchar(
+	UChar32		uchr,
+	UChar		*buf)
+{
+	int32_t		i = 0;
+	bool		err = false;
+
+	U16_APPEND(buf, i, UCHAR_PER_UCHAR32, uchr, err);
+	if (err)
+		return 0;
+	return i;
+}
+
+/* Extract a single UChar32 code point from this UChar string. */
+static inline UChar32
+uchar_to_uchar32(
+	UChar		*buf,
+	int32_t		buflen)
+{
+	UChar32		ret;
+	int32_t		i = 0;
+
+	U16_NEXT(buf, i, buflen, ret);
+	return ret;
+}
+
+/*
+ * For characters that are not themselves a full stop (0x2E), let's see if the
+ * compatibility normalization (NFKC) will turn it into a full stop.  If so,
+ * then this could be the start of a phony file extension.
+ */
+static bool
+is_period_lookalike(
+	struct unicrash	*uc,
+	UChar32		uchr)
+{
+	UChar		uchrstr[UCHAR_PER_UCHAR32];
+	UChar		nfkcstr[UCHAR_PER_UCHAR32];
+	int32_t		uchrstrlen, nfkcstrlen;
+	UChar32		nfkc_uchr;
+	UErrorCode	uerr = U_ZERO_ERROR;
+
+	if (uchr == UCHAR_PERIOD)
+		return false;
+
+	uchrstrlen = uchar32_to_uchar(uchr, uchrstr);
+	if (!uchrstrlen)
+		return false;
+
+	/*
+	 * Normalize the UChar string to NFKC form, which does all the
+	 * compatibility transformations.
+	 */
+	nfkcstrlen = unorm2_normalize(uc->nfkc, uchrstr, uchrstrlen, NULL,
+			0, &uerr);
+	if (uerr == U_BUFFER_OVERFLOW_ERROR)
+		return false;
+
+	uerr = U_ZERO_ERROR;
+	unorm2_normalize(uc->nfkc, uchrstr, uchrstrlen, nfkcstr, nfkcstrlen,
+			&uerr);
+	if (U_FAILURE(uerr))
+		return false;
+
+	nfkc_uchr = uchar_to_uchar32(nfkcstr, nfkcstrlen);
+	return nfkc_uchr == UCHAR_PERIOD;
+}
+
+/*
+ * Detect directory entry names that contain deceptive sequences that look like
+ * file extensions but are not.  This we define as a sequence that begins with
+ * a code point that renders like a period ("full stop" in unicode parlance)
+ * but is not actually a period, followed by any number of alphanumeric code
+ * points or a period, all the way to the end.
+ *
+ * The 3cx attack used a zip file containing an executable file named "job
+ * offer․pdf".  Note that the dot mark in the extension is /not/ a period but
+ * the Unicode codepoint "leader dot".  The file was also marked executable
+ * inside the zip file, which meant that naïve file explorers could inflate
+ * the file and restore the execute bit.  If a user double-clicked on the file,
+ * the binary would open a decoy pdf while infecting the system.
+ *
+ * For this check, we need to normalize with canonical (and not compatibility)
+ * decomposition, because compatibility mode will turn certain code points
+ * (e.g. one dot leader, 0x2024) into actual periods (0x2e).  The NFC
+ * composition is not needed after this, so we save some memory by keeping this
+ * a separate function from name_entry_examine.
+ */
+static badname_t
+name_entry_phony_extension(
+	struct unicrash	*uc,
+	const UChar	*unistr,
+	int32_t		unistrlen)
+{
+	UCharIterator	uiter;
+	UChar		*nfcstr;
+	int32_t		nfcstrlen;
+	UChar32		uchr;
+	bool		maybe_phony_extension = false;
+	badname_t	ret = UNICRASH_OK;
+	UErrorCode	uerr = U_ZERO_ERROR;
+
+	/* Normalize with NFC. */
+	nfcstrlen = unorm2_normalize(uc->nfc, unistr, unistrlen, NULL,
+			0, &uerr);
+	if (uerr != U_BUFFER_OVERFLOW_ERROR || nfcstrlen < 0)
+		return ret;
+	uerr = U_ZERO_ERROR;
+	nfcstr = calloc(nfcstrlen + 1, sizeof(UChar));
+	if (!nfcstr)
+		return ret;
+	unorm2_normalize(uc->nfc, unistr, unistrlen, nfcstr, nfcstrlen,
+			&uerr);
+	if (U_FAILURE(uerr))
+		goto out_nfcstr;
+
+	/* Examine the NFC normalized string... */
+	uiter_setString(&uiter, nfcstr, nfcstrlen);
+	while ((uchr = uiter_next32(&uiter)) != U_SENTINEL) {
+		/*
+		 * If this *looks* like, but is not, a full stop (0x2E), this
+		 * could be the start of a phony file extension.
+		 */
+		if (is_period_lookalike(uc, uchr)) {
+			maybe_phony_extension = true;
+			continue;
+		}
+
+		if (is_fullstop_lookalike(uchr)) {
+			/*
+			 * The normalizer above should catch most of these
+			 * codepoints that look like periods, but record the
+			 * ones known to have been used in attacks.
+			 */
+			maybe_phony_extension = true;
+		} else if (uchr == UCHAR_PERIOD) {
+			/*
+			 * Due to the propensity of file explores to obscure
+			 * file extensions in the name of "user friendliness",
+			 * this classifier ignores periods.
+			 */
+		} else {
+			/*
+			 * File extensions (as far as the author knows) tend
+			 * only to use ascii alphanumerics.
+			 */
+			if (maybe_phony_extension &&
+			    !u_isalnum(uchr) && !is_nonrendering(uchr))
+				maybe_phony_extension = false;
+		}
+	}
+	if (maybe_phony_extension)
+		ret |= UNICRASH_PHONY_EXTENSION;
+
+out_nfcstr:
+	free(nfcstr);
+	return ret;
+}
+
+/*
  * Generate normalized form and skeleton of the name.  If this fails, just
  * forget everything and return false; this is an advisory checker.
  */
@@ -268,6 +462,11 @@ name_entry_compute_checknames(
 		goto out_skelstr;
 
 	skelstrlen = remove_ignorable(skelstr, skelstrlen);
+
+	/* Check for deceptive file extensions in directory entry names. */
+	if (entry->ino)
+		entry->badflags |= name_entry_phony_extension(uc, unistr,
+						unistrlen);
 
 	entry->skelstr = skelstr;
 	entry->skelstrlen = skelstrlen;
@@ -365,7 +564,7 @@ name_entry_create(
 	if (!name_entry_compute_checknames(uc, new_entry))
 		goto out;
 
-	new_entry->badflags = name_entry_examine(new_entry);
+	new_entry->badflags |= name_entry_examine(new_entry);
 	*entry = new_entry;
 	return true;
 
@@ -456,6 +655,9 @@ unicrash_init(
 	p->nr_buckets = nr_buckets;
 	p->compare_ino = compare_ino;
 	p->nfkc = unorm2_getNFKCInstance(&uerr);
+	if (U_FAILURE(uerr))
+		goto out_free;
+	p->nfc = unorm2_getNFCInstance(&uerr);
 	if (U_FAILURE(uerr))
 		goto out_free;
 	p->spoof = uspoof_open(&uerr);
@@ -599,6 +801,17 @@ _("Unicode name \"%s\" in %s renders identically to \"%s\"."),
 		str_warn(uc->ctx, descr_render(dsc),
 _("Unicode name \"%s\" in %s could be confused with '%s' due to invisible characters."),
 				bad1, what, bad2);
+		goto out;
+	}
+
+	/*
+	 * Fake looking file extensions have tricked Linux users into thinking
+	 * that an executable is actually a pdf.  See Lazarus 3cx attack.
+	 */
+	if (badflags & UNICRASH_PHONY_EXTENSION) {
+		str_warn(uc->ctx, descr_render(dsc),
+_("Unicode name \"%s\" in %s contains a possibly deceptive file extension."),
+				bad1, what);
 		goto out;
 	}
 
