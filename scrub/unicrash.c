@@ -57,18 +57,20 @@
  * In other words, skel = remove_invisible(nfd(remap_confusables(nfd(name)))).
  */
 
-typedef unsigned int __bitwise	badname_t;
+typedef uint16_t __bitwise	badname_t;
 
 struct name_entry {
 	struct name_entry	*next;
 
 	/* NFKC normalized name */
 	UChar			*normstr;
-	size_t			normstrlen;
 
 	/* Unicode skeletonized name */
 	UChar			*skelstr;
-	size_t			skelstrlen;
+
+	/* Lengths for normstr and skelstr */
+	int32_t			normstrlen;
+	int32_t			skelstrlen;
 
 	xfs_ino_t		ino;
 
@@ -76,7 +78,7 @@ struct name_entry {
 	badname_t		badflags;
 
 	/* Raw dirent name */
-	size_t			namelen;
+	uint16_t		namelen;
 	char			name[0];
 };
 #define NAME_ENTRY_SZ(nl)	(sizeof(struct name_entry) + 1 + \
@@ -342,6 +344,12 @@ name_entry_create(
 {
 	struct name_entry	*new_entry;
 	size_t			namelen = strlen(name);
+
+	/* should never happen */
+	if (namelen > UINT16_MAX) {
+		ASSERT(namelen <= UINT16_MAX);
+		return false;
+	}
 
 	/* Create new entry */
 	new_entry = calloc(NAME_ENTRY_SZ(namelen), 1);
