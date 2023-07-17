@@ -87,7 +87,7 @@ struct name_entry {
 struct unicrash {
 	struct scrub_ctx	*ctx;
 	USpoofChecker		*spoof;
-	const UNormalizer2	*normalizer;
+	const UNormalizer2	*nfkc;
 	bool			compare_ino;
 	bool			is_only_root_writeable;
 	size_t			nr_buckets;
@@ -240,7 +240,7 @@ name_entry_compute_checknames(
 		goto out_unistr;
 
 	/* Normalize the string. */
-	normstrlen = unorm2_normalize(uc->normalizer, unistr, unistrlen, NULL,
+	normstrlen = unorm2_normalize(uc->nfkc, unistr, unistrlen, NULL,
 			0, &uerr);
 	if (uerr != U_BUFFER_OVERFLOW_ERROR || normstrlen < 0)
 		goto out_unistr;
@@ -248,7 +248,7 @@ name_entry_compute_checknames(
 	normstr = calloc(normstrlen + 1, sizeof(UChar));
 	if (!normstr)
 		goto out_unistr;
-	unorm2_normalize(uc->normalizer, unistr, unistrlen, normstr, normstrlen,
+	unorm2_normalize(uc->nfkc, unistr, unistrlen, normstr, normstrlen,
 			&uerr);
 	if (U_FAILURE(uerr))
 		goto out_normstr;
@@ -455,7 +455,7 @@ unicrash_init(
 	p->ctx = ctx;
 	p->nr_buckets = nr_buckets;
 	p->compare_ino = compare_ino;
-	p->normalizer = unorm2_getNFKCInstance(&uerr);
+	p->nfkc = unorm2_getNFKCInstance(&uerr);
 	if (U_FAILURE(uerr))
 		goto out_free;
 	p->spoof = uspoof_open(&uerr);
