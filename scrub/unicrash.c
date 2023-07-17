@@ -189,7 +189,7 @@ name_entry_compute_checknames(
 
 	/* Convert bytestr to unistr for normalization */
 	u_strFromUTF8(NULL, 0, &unistrlen, entry->name, entry->namelen, &uerr);
-	if (uerr != U_BUFFER_OVERFLOW_ERROR)
+	if (uerr != U_BUFFER_OVERFLOW_ERROR || unistrlen < 0)
 		return false;
 	uerr = U_ZERO_ERROR;
 	unistr = calloc(unistrlen + 1, sizeof(UChar));
@@ -203,7 +203,7 @@ name_entry_compute_checknames(
 	/* Normalize the string. */
 	normstrlen = unorm2_normalize(uc->normalizer, unistr, unistrlen, NULL,
 			0, &uerr);
-	if (uerr != U_BUFFER_OVERFLOW_ERROR)
+	if (uerr != U_BUFFER_OVERFLOW_ERROR || normstrlen < 0)
 		goto out_unistr;
 	uerr = U_ZERO_ERROR;
 	normstr = calloc(normstrlen + 1, sizeof(UChar));
@@ -217,7 +217,7 @@ name_entry_compute_checknames(
 	/* Compute skeleton. */
 	skelstrlen = uspoof_getSkeleton(uc->spoof, 0, unistr, unistrlen, NULL,
 			0, &uerr);
-	if (uerr != U_BUFFER_OVERFLOW_ERROR)
+	if (uerr != U_BUFFER_OVERFLOW_ERROR || skelstrlen < 0)
 		goto out_normstr;
 	uerr = U_ZERO_ERROR;
 	skelstr = calloc(skelstrlen + 1, sizeof(UChar));
