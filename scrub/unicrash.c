@@ -626,10 +626,11 @@ out:
 static void
 unicrash_add(
 	struct unicrash		*uc,
-	struct name_entry	*new_entry,
+	struct name_entry	**new_entryp,
 	unsigned int		*badflags,
 	struct name_entry	**existing_entry)
 {
+	struct name_entry	*new_entry = *new_entryp;
 	struct name_entry	*entry;
 	size_t			bucket;
 	xfs_dahash_t		hash;
@@ -652,7 +653,7 @@ unicrash_add(
 			entry->ino = new_entry->ino;
 			uc->buckets[bucket] = new_entry->next;
 			name_entry_free(new_entry);
-			*badflags = 0;
+			*new_entryp = NULL;
 			return;
 		}
 
@@ -695,8 +696,8 @@ __unicrash_check_name(
 		return 0;
 
 	name_entry_examine(new_entry, &badflags);
-	unicrash_add(uc, new_entry, &badflags, &dup_entry);
-	if (badflags)
+	unicrash_add(uc, &new_entry, &badflags, &dup_entry);
+	if (new_entry && badflags)
 		unicrash_complain(uc, dsc, namedescr, new_entry, badflags,
 				dup_entry);
 
