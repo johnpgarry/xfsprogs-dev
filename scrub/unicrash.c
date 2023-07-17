@@ -4,6 +4,7 @@
  * Author: Darrick J. Wong <djwong@kernel.org>
  */
 #include "xfs.h"
+#include "xfs_arch.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <dirent.h>
@@ -56,6 +57,8 @@
  * In other words, skel = remove_invisible(nfd(remap_confusables(nfd(name)))).
  */
 
+typedef unsigned int __bitwise	badname_t;
+
 struct name_entry {
 	struct name_entry	*next;
 
@@ -70,7 +73,7 @@ struct name_entry {
 	xfs_ino_t		ino;
 
 	/* Everything that we don't like about this name. */
-	unsigned int		badflags;
+	badname_t		badflags;
 
 	/* Raw dirent name */
 	size_t			namelen;
@@ -93,26 +96,29 @@ struct unicrash {
 
 /* Things to complain about in Unicode naming. */
 
+/* Everything is ok */
+#define UNICRASH_OK		((__force badname_t)0)
+
 /*
  * Multiple names resolve to the same normalized string and therefore render
  * identically.
  */
-#define UNICRASH_NOT_UNIQUE	(1 << 0)
+#define UNICRASH_NOT_UNIQUE	((__force badname_t)(1U << 0))
 
 /* Name contains directional overrides. */
-#define UNICRASH_BIDI_OVERRIDE	(1 << 1)
+#define UNICRASH_BIDI_OVERRIDE	((__force badname_t)(1U << 1))
 
 /* Name mixes left-to-right and right-to-left characters. */
-#define UNICRASH_BIDI_MIXED	(1 << 2)
+#define UNICRASH_BIDI_MIXED	((__force badname_t)(1U << 2))
 
 /* Control characters in name. */
-#define UNICRASH_CONTROL_CHAR	(1 << 3)
+#define UNICRASH_CONTROL_CHAR	((__force badname_t)(1U << 3))
 
 /* Invisible characters.  Only a problem if we have collisions. */
-#define UNICRASH_INVISIBLE	(1 << 4)
+#define UNICRASH_INVISIBLE	((__force badname_t)(1U << 4))
 
 /* Multiple names resolve to the same skeleton string. */
-#define UNICRASH_CONFUSABLE	(1 << 5)
+#define UNICRASH_CONFUSABLE	((__force badname_t)(1U << 5))
 
 /*
  * We only care about validating utf8 collisions if the underlying
@@ -540,7 +546,7 @@ unicrash_complain(
 	struct descr		*dsc,
 	const char		*what,
 	struct name_entry	*entry,
-	unsigned int		badflags,
+	badname_t		badflags,
 	struct name_entry	*dup_entry)
 {
 	char			*bad1 = NULL;
@@ -643,7 +649,7 @@ out:
  * must be skeletonized according to Unicode TR39 to detect names that
  * could be visually confused with each other.
  */
-static unsigned int
+static badname_t
 unicrash_add(
 	struct unicrash		*uc,
 	struct name_entry	**new_entryp,
@@ -653,7 +659,7 @@ unicrash_add(
 	struct name_entry	*entry;
 	size_t			bucket;
 	xfs_dahash_t		hash;
-	unsigned int		badflags = new_entry->badflags;
+	badname_t		badflags = new_entry->badflags;
 
 	/* Store name in hashtable. */
 	hash = name_entry_hash(new_entry);
@@ -711,14 +717,14 @@ __unicrash_check_name(
 {
 	struct name_entry	*dup_entry = NULL;
 	struct name_entry	*new_entry = NULL;
-	unsigned int		badflags;
+	badname_t		badflags;
 
 	/* If we can't create entry data, just skip it. */
 	if (!name_entry_create(uc, name, ino, &new_entry))
 		return 0;
 
 	badflags = unicrash_add(uc, &new_entry, &dup_entry);
-	if (new_entry && badflags)
+	if (new_entry && badflags != UNICRASH_OK)
 		unicrash_complain(uc, dsc, namedescr, new_entry, badflags,
 				dup_entry);
 
