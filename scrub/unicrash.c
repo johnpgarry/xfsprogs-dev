@@ -69,6 +69,9 @@ struct name_entry {
 
 	xfs_ino_t		ino;
 
+	/* Everything that we don't like about this name. */
+	unsigned int		badflags;
+
 	/* Raw dirent name */
 	size_t			namelen;
 	char			name[0];
@@ -274,6 +277,55 @@ out_unistr:
 	return false;
 }
 
+/*
+ * Check a name for suspicious elements that have appeared in filename
+ * spoofing attacks.  This includes names that mixed directions or contain
+ * direction overrides control characters, both of which have appeared in
+ * filename spoofing attacks.
+ */
+static unsigned int
+name_entry_examine(
+	const struct name_entry	*entry)
+{
+	UCharIterator		uiter;
+	UChar32			uchr;
+	uint8_t			mask = 0;
+	unsigned int		ret = 0;
+
+	uiter_setString(&uiter, entry->normstr, entry->normstrlen);
+	while ((uchr = uiter_next32(&uiter)) != U_SENTINEL) {
+	/* characters are invisible */
+		if (is_nonrendering(uchr))
+			ret |= UNICRASH_ZERO_WIDTH;
+
+		/* control characters */
+		if (u_iscntrl(uchr))
+			ret |= UNICRASH_CONTROL_CHAR;
+
+		switch (u_charDirection(uchr)) {
+		case U_LEFT_TO_RIGHT:
+			mask |= 0x01;
+			break;
+		case U_RIGHT_TO_LEFT:
+			mask |= 0x02;
+			break;
+		case U_RIGHT_TO_LEFT_OVERRIDE:
+			ret |= UNICRASH_BIDI_OVERRIDE;
+			break;
+		case U_LEFT_TO_RIGHT_OVERRIDE:
+			ret |= UNICRASH_BIDI_OVERRIDE;
+			break;
+		default:
+			break;
+		}
+	}
+
+	/* mixing left-to-right and right-to-left chars */
+	if (mask == 0x3)
+		ret |= UNICRASH_BIDI_MIXED;
+	return ret;
+}
+
 /* Create a new name entry, returns false if we could not succeed. */
 static bool
 name_entry_create(
@@ -299,6 +351,7 @@ name_entry_create(
 	if (!name_entry_compute_checknames(uc, new_entry))
 		goto out;
 
+	new_entry->badflags = name_entry_examine(new_entry);
 	*entry = new_entry;
 	return true;
 
@@ -358,54 +411,6 @@ name_entry_hash(
 	default: /* case 0: */
 		return hash;
 	}
-}
-
-/*
- * Check a name for suspicious elements that have appeared in filename
- * spoofing attacks.  This includes names that mixed directions or contain
- * direction overrides control characters, both of which have appeared in
- * filename spoofing attacks.
- */
-static void
-name_entry_examine(
-	struct name_entry	*entry,
-	unsigned int		*badflags)
-{
-	UCharIterator		uiter;
-	UChar32			uchr;
-	uint8_t			mask = 0;
-
-	uiter_setString(&uiter, entry->normstr, entry->normstrlen);
-	while ((uchr = uiter_next32(&uiter)) != U_SENTINEL) {
-		/* characters are invisible */
-		if (is_nonrendering(uchr))
-			*badflags |= UNICRASH_ZERO_WIDTH;
-
-		/* control characters */
-		if (u_iscntrl(uchr))
-			*badflags |= UNICRASH_CONTROL_CHAR;
-
-		switch (u_charDirection(uchr)) {
-		case U_LEFT_TO_RIGHT:
-			mask |= 0x01;
-			break;
-		case U_RIGHT_TO_LEFT:
-			mask |= 0x02;
-			break;
-		case U_RIGHT_TO_LEFT_OVERRIDE:
-			*badflags |= UNICRASH_BIDI_OVERRIDE;
-			break;
-		case U_LEFT_TO_RIGHT_OVERRIDE:
-			*badflags |= UNICRASH_BIDI_OVERRIDE;
-			break;
-		default:
-			break;
-		}
-	}
-
-	/* mixing left-to-right and right-to-left chars */
-	if (mask == 0x3)
-		*badflags |= UNICRASH_BIDI_MIXED;
 }
 
 /* Initialize the collision detector. */
@@ -638,17 +643,17 @@ out:
  * must be skeletonized according to Unicode TR39 to detect names that
  * could be visually confused with each other.
  */
-static void
+static unsigned int
 unicrash_add(
 	struct unicrash		*uc,
 	struct name_entry	**new_entryp,
-	unsigned int		*badflags,
 	struct name_entry	**existing_entry)
 {
 	struct name_entry	*new_entry = *new_entryp;
 	struct name_entry	*entry;
 	size_t			bucket;
 	xfs_dahash_t		hash;
+	unsigned int		badflags = new_entry->badflags;
 
 	/* Store name in hashtable. */
 	hash = name_entry_hash(new_entry);
@@ -669,28 +674,30 @@ unicrash_add(
 			uc->buckets[bucket] = new_entry->next;
 			name_entry_free(new_entry);
 			*new_entryp = NULL;
-			return;
+			return 0;
 		}
 
 		/* Same normalization? */
 		if (new_entry->normstrlen == entry->normstrlen &&
 		    !u_strcmp(new_entry->normstr, entry->normstr) &&
 		    (uc->compare_ino ? entry->ino != new_entry->ino : true)) {
-			*badflags |= UNICRASH_NOT_UNIQUE;
+			badflags |= UNICRASH_NOT_UNIQUE;
 			*existing_entry = entry;
-			return;
+			break;
 		}
 
 		/* Confusable? */
 		if (new_entry->skelstrlen == entry->skelstrlen &&
 		    !u_strcmp(new_entry->skelstr, entry->skelstr) &&
 		    (uc->compare_ino ? entry->ino != new_entry->ino : true)) {
-			*badflags |= UNICRASH_CONFUSABLE;
+			badflags |= UNICRASH_CONFUSABLE;
 			*existing_entry = entry;
-			return;
+			break;
 		}
 		entry = entry->next;
 	}
+
+	return badflags;
 }
 
 /* Check a name for unicode normalization problems or collisions. */
@@ -704,14 +711,13 @@ __unicrash_check_name(
 {
 	struct name_entry	*dup_entry = NULL;
 	struct name_entry	*new_entry = NULL;
-	unsigned int		badflags = 0;
+	unsigned int		badflags;
 
 	/* If we can't create entry data, just skip it. */
 	if (!name_entry_create(uc, name, ino, &new_entry))
 		return 0;
 
-	name_entry_examine(new_entry, &badflags);
-	unicrash_add(uc, &new_entry, &badflags, &dup_entry);
+	badflags = unicrash_add(uc, &new_entry, &dup_entry);
 	if (new_entry && badflags)
 		unicrash_complain(uc, dsc, namedescr, new_entry, badflags,
 				dup_entry);
