@@ -330,13 +330,12 @@ name_entry_examine(
 	struct name_entry	*entry,
 	unsigned int		*badflags)
 {
+	UCharIterator		uiter;
 	UChar32			uchr;
-	int32_t			i;
 	uint8_t			mask = 0;
 
-	for (i = 0; i < entry->normstrlen;) {
-		U16_NEXT_UNSAFE(entry->normstr, i, uchr);
-
+	uiter_setString(&uiter, entry->normstr, entry->normstrlen);
+	while ((uchr = uiter_next32(&uiter)) != U_SENTINEL) {
 		/* zero width character sequences */
 		switch (uchr) {
 		case 0x200B:	/* zero width space */
