@@ -351,15 +351,17 @@ name_entry_examine(
 	while ((uchr = uiter_next32(&uiter)) != U_SENTINEL) {
 		/* zero width character sequences */
 		switch (uchr) {
+		case 0x034F:	/* combining grapheme joiner */
 		case 0x200B:	/* zero width space */
 		case 0x200C:	/* zero width non-joiner */
 		case 0x200D:	/* zero width joiner */
-		case 0xFEFF:	/* zero width non breaking space */
 		case 0x2060:	/* word joiner */
 		case 0x2061:	/* function application */
 		case 0x2062:	/* invisible times (multiply) */
 		case 0x2063:	/* invisible separator (comma) */
 		case 0x2064:	/* invisible plus (addition) */
+		case 0x2D7F:	/* tifinagh consonant joiner */
+		case 0xFEFF:	/* zero width non breaking space */
 			*badflags |= UNICRASH_ZERO_WIDTH;
 			break;
 		}
