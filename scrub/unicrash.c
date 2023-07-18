@@ -5,6 +5,7 @@
  */
 #include "xfs.h"
 #include "xfs_arch.h"
+#include "list.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <dirent.h>
@@ -1001,14 +1002,68 @@ unicrash_check_fs_label(
 			label, 0);
 }
 
+/* Dump a unicode code point and its properties. */
+static inline void dump_uchar32(UChar32 c)
+{
+	UChar		uchrstr[UCHAR_PER_UCHAR32];
+	const char	*descr;
+	char		buf[16];
+	int32_t		uchrstrlen, buflen;
+	UProperty	p;
+	UErrorCode	uerr = U_ZERO_ERROR;
+
+	printf("Unicode point 0x%x:", c);
+
+	/* Convert UChar32 to UTF8 representation. */
+	uchrstrlen = uchar32_to_uchar(c, uchrstr);
+	if (!uchrstrlen)
+		return;
+
+	u_strToUTF8(buf, sizeof(buf), &buflen, uchrstr, uchrstrlen, &uerr);
+	if (!U_FAILURE(uerr) && buflen > 0) {
+		int32_t	i;
+
+		printf(" \"");
+		for (i = 0; i < buflen; i++)
+			printf("\\x%02x", buf[i]);
+		printf("\"");
+	}
+	printf("\n");
+
+	for (p = 0; p < UCHAR_BINARY_LIMIT; p++) {
+		int	has;
+
+		descr = u_getPropertyName(p, U_LONG_PROPERTY_NAME);
+		if (!descr)
+			descr = u_getPropertyName(p, U_SHORT_PROPERTY_NAME);
+
+		has = u_hasBinaryProperty(c, p) ? 1 : 0;
+		if (descr) {
+			printf("  %s(%u) = %d\n", descr, p, has);
+		} else {
+			printf("  ?(%u) = %d\n", p, has);
+		}
+	}
+}
+
 /* Load libicu and initialize it. */
 bool
 unicrash_load(void)
 {
-	UErrorCode		uerr = U_ZERO_ERROR;
+	char		*dbgstr;
+	UChar32		uchr;
+	UErrorCode	uerr = U_ZERO_ERROR;
 
 	u_init(&uerr);
-	return U_FAILURE(uerr);
+	if (U_FAILURE(uerr))
+		return true;
+
+	dbgstr = getenv("XFS_SCRUB_DUMP_CHAR");
+	if (dbgstr) {
+		uchr = strtol(dbgstr, NULL, 0);
+		dump_uchar32(uchr);
+	}
+	return false;
 }
 
 /* Unload libicu once we're done with it. */
