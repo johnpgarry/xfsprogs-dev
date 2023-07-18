@@ -109,7 +109,7 @@ struct unicrash {
 #define UNICRASH_CONTROL_CHAR	(1 << 3)
 
 /* Invisible characters.  Only a problem if we have collisions. */
-#define UNICRASH_ZERO_WIDTH	(1 << 4)
+#define UNICRASH_INVISIBLE	(1 << 4)
 
 /* Multiple names resolve to the same skeleton string. */
 #define UNICRASH_CONFUSABLE	(1 << 5)
@@ -296,7 +296,7 @@ name_entry_examine(
 	while ((uchr = uiter_next32(&uiter)) != U_SENTINEL) {
 	/* characters are invisible */
 		if (is_nonrendering(uchr))
-			ret |= UNICRASH_ZERO_WIDTH;
+			ret |= UNICRASH_INVISIBLE;
 
 		/* control characters */
 		if (u_iscntrl(uchr))
@@ -580,7 +580,7 @@ _("Unicode name \"%s\" in %s renders identically to \"%s\"."),
 	 * confused with another name as a result, we should complain.
 	 * "moo<zerowidthspace>cow" and "moocow" are misleading.
 	 */
-	if ((badflags & UNICRASH_ZERO_WIDTH) &&
+	if ((badflags & UNICRASH_INVISIBLE) &&
 	    (badflags & UNICRASH_CONFUSABLE)) {
 		str_warn(uc->ctx, descr_render(dsc),
 _("Unicode name \"%s\" in %s could be confused with '%s' due to invisible characters."),
