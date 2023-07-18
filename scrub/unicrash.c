@@ -146,6 +146,31 @@ is_utf8_locale(void)
 }
 
 /*
+ * Remove control/formatting characters from this string and return its new
+ * length.  UChar32 is required for U16_NEXT, despite the name.
+ */
+static int32_t
+remove_ignorable(
+	UChar		*ustr,
+	int32_t		ustrlen)
+{
+	UChar32		uchr;
+	int32_t		src, dest;
+
+	for (src = 0, dest = 0; src < ustrlen; dest = src) {
+		U16_NEXT(ustr, src, ustrlen, uchr);
+		if (!u_isIDIgnorable(uchr))
+			continue;
+		memmove(&ustr[dest], &ustr[src],
+				(ustrlen - src + 1) * sizeof(UChar));
+		ustrlen -= (src - dest);
+		src = dest;
+	}
+
+	return dest;
+}
+
+/*
  * Generate normalized form and skeleton of the name.  If this fails, just
  * forget everything and return false; this is an advisory checker.
  */
@@ -160,9 +185,6 @@ name_entry_compute_checknames(
 	int32_t			normstrlen;
 	int32_t			unistrlen;
 	int32_t			skelstrlen;
-	UChar32			uchr;
-	int32_t			i, j;
-
 	UErrorCode		uerr = U_ZERO_ERROR;
 
 	/* Convert bytestr to unistr for normalization */
@@ -206,16 +228,7 @@ name_entry_compute_checknames(
 	if (U_FAILURE(uerr))
 		goto out_skelstr;
 
-	/* Remove control/formatting characters from skeleton. */
-	for (i = 0, j = 0; i < skelstrlen; j = i) {
-		U16_NEXT_UNSAFE(skelstr, i, uchr);
-		if (!u_isIDIgnorable(uchr))
-			continue;
-		memmove(&skelstr[j], &skelstr[i],
-				(skelstrlen - i + 1) * sizeof(UChar));
-		skelstrlen -= (i - j);
-		i = j;
-	}
+	skelstrlen = remove_ignorable(skelstr, skelstrlen);
 
 	entry->skelstr = skelstr;
 	entry->skelstrlen = skelstrlen;
