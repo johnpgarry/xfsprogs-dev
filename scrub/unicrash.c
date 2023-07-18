@@ -171,6 +171,34 @@ remove_ignorable(
 }
 
 /*
+ * Certain unicode codepoints are formatting hints that are not themselves
+ * supposed to be rendered by a display system.  These codepoints can be
+ * encoded in file names to try to confuse users.
+ *
+ * Download https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt and
+ * $ grep -E '(zero width|invisible|joiner|application)' -i UnicodeData.txt
+ */
+static inline bool is_nonrendering(UChar32 uchr)
+{
+	switch (uchr) {
+	case 0x034F:	/* combining grapheme joiner */
+	case 0x200B:	/* zero width space */
+	case 0x200C:	/* zero width non-joiner */
+	case 0x200D:	/* zero width joiner */
+	case 0x2060:	/* word joiner */
+	case 0x2061:	/* function application */
+	case 0x2062:	/* invisible times (multiply) */
+	case 0x2063:	/* invisible separator (comma) */
+	case 0x2064:	/* invisible plus (addition) */
+	case 0x2D7F:	/* tifinagh consonant joiner */
+	case 0xFEFF:	/* zero width non breaking space */
+		return true;
+	}
+
+	return false;
+}
+
+/*
  * Generate normalized form and skeleton of the name.  If this fails, just
  * forget everything and return false; this is an advisory checker.
  */
@@ -349,22 +377,9 @@ name_entry_examine(
 
 	uiter_setString(&uiter, entry->normstr, entry->normstrlen);
 	while ((uchr = uiter_next32(&uiter)) != U_SENTINEL) {
-		/* zero width character sequences */
-		switch (uchr) {
-		case 0x034F:	/* combining grapheme joiner */
-		case 0x200B:	/* zero width space */
-		case 0x200C:	/* zero width non-joiner */
-		case 0x200D:	/* zero width joiner */
-		case 0x2060:	/* word joiner */
-		case 0x2061:	/* function application */
-		case 0x2062:	/* invisible times (multiply) */
-		case 0x2063:	/* invisible separator (comma) */
-		case 0x2064:	/* invisible plus (addition) */
-		case 0x2D7F:	/* tifinagh consonant joiner */
-		case 0xFEFF:	/* zero width non breaking space */
+		/* characters are invisible */
+		if (is_nonrendering(uchr))
 			*badflags |= UNICRASH_ZERO_WIDTH;
-			break;
-		}
 
 		/* control characters */
 		if (u_iscntrl(uchr))
