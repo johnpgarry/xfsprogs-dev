@@ -884,6 +884,21 @@ will result in truncation and a warning will be issued. If no
 .I label
 is given, the current filesystem label is printed.
 .TP
+.BI "link [-i " ino "] [-p " path "] [-t " ftype "] name"
+In the current directory, create a directory entry with the given
+.I name
+pointing to a file.
+The file must be specified either as a directory tree path as given by the
+.I path
+option; or directly as an inode number as given by the
+.I ino
+option.
+The file type in the directory entry will be determined from the mode of the
+child file unless the
+.I ftype
+option is given.
+The file being targetted must not be on the iunlink list.
+.TP
 .BI "log [stop | start " filename ]
 Start logging output to
 .IR filename ,
@@ -1034,6 +1049,11 @@ Print all limits as raw values on a single line.
 Print the timestamps in the current locale's date and time format instead of
 raw seconds since the Unix epoch.
 .RE
+.TP
+.BI "unlink name"
+In the current directory, remove a directory entry with the given
+.IR name .
+The file being targetted will not be put on the iunlink list.
 .TP
 .BI "uuid [" uuid " | " generate " | " rewrite " | " restore ]
 Set the filesystem universally unique identifier (UUID).

@@ -315,6 +315,10 @@ static inline void inc_nlink(struct inode *inode)
 {
 	inode->i_nlink++;
 }
+static inline void drop_nlink(struct inode *inode)
+{
+	inode->i_nlink--;
+}
 
 static inline bool xfs_is_reflink_inode(struct xfs_inode *ip)
 {

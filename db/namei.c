@@ -930,6 +930,372 @@ static struct cmdinfo parent_cmd = {
 	.help		= parent_help,
 };
 
+static void
+link_help(void)
+{
+	dbprintf(_(
+"\n"
+" Create a directory entry in the current directory that points to the\n"
+" specified file.\n"
+"\n"
+" Options:\n"
+"   -i   -- Point to this specific inode number.\n"
+"   -p   -- Point to the inode given by this path.\n"
+"   -t   -- Set the file type to this value.\n"
+"   name -- Create this directory entry with this name.\n"
+	));
+}
+
+static int
+create_child(
+	struct xfs_mount	*mp,
+	xfs_ino_t		parent_ino,
+	const char		*name,
+	unsigned int		ftype,
+	xfs_ino_t		child_ino)
+{
+	struct xfs_name		xname = {
+		.name		= name,
+		.len		= strlen(name),
+		.type		= ftype,
+	};
+	struct xfs_parent_args	*ppargs;
+	struct xfs_trans	*tp;
+	struct xfs_inode	*dp, *ip;
+	unsigned int		resblks;
+	bool			isdir;
+	int			error;
+
+	error = -libxfs_iget(mp, NULL, parent_ino, 0, &dp);
+	if (error)
+		return error;
+
+	if (!S_ISDIR(VFS_I(dp)->i_mode)) {
+		error = -ENOTDIR;
+		goto out_dp;
+	}
+
+	error = -libxfs_iget(mp, NULL, child_ino, 0, &ip);
+	if (error)
+		goto out_dp;
+	isdir = S_ISDIR(VFS_I(ip)->i_mode);
+
+	if (xname.type == XFS_DIR3_FT_UNKNOWN)
+		xname.type = libxfs_mode_to_ftype(VFS_I(ip)->i_mode);
+
+	error = -libxfs_parent_start(mp, &ppargs);
+	if (error)
+		goto out_ip;
+
+	resblks = libxfs_link_space_res(mp, MAXNAMELEN);
+	error = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_link, resblks, 0, 0,
+			&tp);
+	if (error)
+		goto out_parent;
+
+	libxfs_trans_ijoin(tp, dp, 0);
+	libxfs_trans_ijoin(tp, ip, 0);
+
+	error = -libxfs_dir_createname(tp, dp, &xname, ip->i_ino, resblks);
+	if (error)
+		goto out_trans;
+
+	/* bump dp's link to ip */
+	libxfs_bumplink(tp, ip);
+
+	/* bump ip's dotdot link to dp */
+	if (isdir)
+		libxfs_bumplink(tp, dp);
+
+	/* Replace the dotdot entry in the child directory. */
+	if (isdir) {
+		error = -libxfs_dir_replace(tp, ip, &xfs_name_dotdot,
+				dp->i_ino, resblks);
+		if (error)
+			goto out_trans;
+	}
+
+	error = -libxfs_parent_add(tp, ppargs, dp, &xname, ip);
+	if (error)
+		goto out_trans;
+
+	error = -libxfs_trans_commit(tp);
+	goto out_parent;
+
+out_trans:
+	libxfs_trans_cancel(tp);
+out_parent:
+	libxfs_parent_finish(mp, ppargs);
+out_ip:
+	libxfs_irele(ip);
+out_dp:
+	libxfs_irele(dp);
+	return error;
+}
+
+static const char *ftype_map[] = {
+	[XFS_DIR3_FT_REG_FILE]	= "reg",
+	[XFS_DIR3_FT_DIR]	= "dir",
+	[XFS_DIR3_FT_CHRDEV]	= "cdev",
+	[XFS_DIR3_FT_BLKDEV]	= "bdev",
+	[XFS_DIR3_FT_FIFO]	= "fifo",
+	[XFS_DIR3_FT_SOCK]	= "sock",
+	[XFS_DIR3_FT_SYMLINK]	= "symlink",
+	[XFS_DIR3_FT_WHT]	= "whiteout",
+};
+
+static int
+link_f(
+	int			argc,
+	char			**argv)
+{
+	xfs_ino_t		child_ino = NULLFSINO;
+	int			ftype = XFS_DIR3_FT_UNKNOWN;
+	unsigned int		i;
+	int			c;
+	int			error = 0;
+
+	while ((c = getopt(argc, argv, "i:p:t:")) != -1) {
+		switch (c) {
+		case 'i':
+			errno = 0;
+			child_ino = strtoull(optarg, NULL, 0);
+			if (errno == ERANGE) {
+				printf("%s: unknown inode number\n", optarg);
+				exitcode = 1;
+				return 0;
+			}
+			break;
+		case 'p':
+			push_cur();
+			error = path_walk(optarg);
+			if (error) {
+				printf("%s: %s\n", optarg, strerror(error));
+				exitcode = 1;
+				return 0;
+			} else if (iocur_top->typ != &typtab[TYP_INODE]) {
+				printf("%s: does not point to an inode\n",
+						optarg);
+				exitcode = 1;
+				return 0;
+			} else {
+				child_ino = iocur_top->ino;
+			}
+			pop_cur();
+			break;
+		case 't':
+			for (i = 0; i < ARRAY_SIZE(ftype_map); i++) {
+				if (ftype_map[i] &&
+				    !strcmp(ftype_map[i], optarg)) {
+					ftype = i;
+					break;
+				}
+			}
+			if (i == ARRAY_SIZE(ftype_map)) {
+				printf("%s: unknown file type\n", optarg);
+				exitcode = 1;
+				return 0;
+			}
+			break;
+		default:
+			link_help();
+			return 0;
+		}
+	}
+
+	if (child_ino == NULLFSINO) {
+		printf("link: need to specify child via -i or -p\n");
+		exitcode = 1;
+		return 0;
+	}
+
+	if (iocur_top->typ != &typtab[TYP_INODE]) {
+		printf("io cursor does not point to an inode.\n");
+		exitcode = 1;
+		return 0;
+	}
+
+	if (optind + 1 != argc) {
+		printf("link: need directory entry name");
+		exitcode = 1;
+		return 0;
+	}
+
+	error = create_child(mp, iocur_top->ino, argv[optind], ftype,
+			child_ino);
+	if (error) {
+		printf("link failed: %s\n", strerror(error));
+		exitcode = 1;
+		return 0;
+	}
+
+	return 0;
+}
+
+static struct cmdinfo link_cmd = {
+	.name		= "link",
+	.cfunc		= link_f,
+	.argmin		= 0,
+	.argmax		= -1,
+	.canpush	= 0,
+	.args		= "[-i ino] [-p path] [-t ftype] name",
+	.help		= link_help,
+};
+
+static void
+unlink_help(void)
+{
+	dbprintf(_(
+"\n"
+" Remove a directory entry from the current directory.\n"
+"\n"
+" Options:\n"
+"   name -- Remove the directory entry with this name.\n"
+	));
+}
+
+static void
+droplink(
+	struct xfs_trans	*tp,
+	struct xfs_inode	*ip)
+{
+	struct inode		*inode = VFS_I(ip);
+
+	libxfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_CHG);
+
+	if (inode->i_nlink != XFS_NLINK_PINNED)
+		drop_nlink(VFS_I(ip));
+
+	libxfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
+}
+
+static int
+remove_child(
+	struct xfs_mount	*mp,
+	xfs_ino_t		parent_ino,
+	const char		*name)
+{
+	struct xfs_name		xname = {
+		.name		= name,
+		.len		= strlen(name),
+	};
+	struct xfs_parent_args	*ppargs;
+	struct xfs_trans	*tp;
+	struct xfs_inode	*dp, *ip;
+	xfs_ino_t		child_ino;
+	unsigned int		resblks;
+	int			error;
+
+	error = -libxfs_iget(mp, NULL, parent_ino, 0, &dp);
+	if (error)
+		return error;
+
+	if (!S_ISDIR(VFS_I(dp)->i_mode)) {
+		error = -ENOTDIR;
+		goto out_dp;
+	}
+
+	error = -libxfs_dir_lookup(NULL, dp, &xname, &child_ino, NULL);
+	if (error)
+		goto out_dp;
+
+	error = -libxfs_iget(mp, NULL, child_ino, 0, &ip);
+	if (error)
+		goto out_dp;
+
+	error = -libxfs_parent_start(mp, &ppargs);
+	if (error)
+		goto out_ip;
+
+	resblks = libxfs_remove_space_res(mp, MAXNAMELEN);
+	error = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_remove, resblks, 0, 0,
+			&tp);
+	if (error)
+		goto out_parent;
+
+	libxfs_trans_ijoin(tp, dp, 0);
+	libxfs_trans_ijoin(tp, ip, 0);
+
+	if (S_ISDIR(VFS_I(ip)->i_mode)) {
+		/* drop ip's dotdot link to dp */
+		droplink(tp, dp);
+	} else {
+		libxfs_trans_log_inode(tp, dp, XFS_ILOG_CORE);
+	}
+
+	/* drop dp's link to ip */
+	droplink(tp, ip);
+
+	error = -libxfs_dir_removename(tp, dp, &xname, ip->i_ino, resblks);
+	if (error)
+		goto out_trans;
+
+	error = -libxfs_parent_remove(tp, ppargs, dp, &xname, ip);
+	if (error)
+		goto out_trans;
+
+	error = -libxfs_trans_commit(tp);
+	goto out_parent;
+
+out_trans:
+	libxfs_trans_cancel(tp);
+out_parent:
+	libxfs_parent_finish(mp, ppargs);
+out_ip:
+	libxfs_irele(ip);
+out_dp:
+	libxfs_irele(dp);
+	return error;
+}
+
+static int
+unlink_f(
+	int			argc,
+	char			**argv)
+{
+	int			c;
+	int			error = 0;
+
+	while ((c = getopt(argc, argv, "")) != -1) {
+		switch (c) {
+		default:
+			unlink_help();
+			return 0;
+		}
+	}
+
+	if (iocur_top->typ != &typtab[TYP_INODE]) {
+		printf("io cursor does not point to an inode.\n");
+		exitcode = 1;
+		return 0;
+	}
+
+	if (optind + 1 != argc) {
+		printf("unlink: need directory entry name");
+		exitcode = 1;
+		return 0;
+	}
+
+	error = remove_child(mp, iocur_top->ino, argv[optind]);
+	if (error) {
+		printf("unlink failed: %s\n", strerror(error));
+		exitcode = 1;
+		return 0;
+	}
+
+	return 0;
+}
+
+static struct cmdinfo unlink_cmd = {
+	.name		= "unlink",
+	.cfunc		= unlink_f,
+	.argmin		= 0,
+	.argmax		= -1,
+	.canpush	= 0,
+	.args		= "name",
+	.help		= unlink_help,
+};
+
 void
 namei_init(void)
 {
@@ -941,4 +1307,12 @@ namei_init(void)
 
 	parent_cmd.oneline = _("list parent pointers");
 	add_command(&parent_cmd);
+
+	if (expert_mode) {
+		link_cmd.oneline = _("create directory link");
+		add_command(&link_cmd);
+
+		unlink_cmd.oneline = _("remove directory link");
+		add_command(&unlink_cmd);
+	}
 }
