@@ -279,7 +279,7 @@ check_inode_names(
 	if (bstat->bs_xflags & FS_XFLAG_HASATTR) {
 		error = check_xattr_names(ctx, &dsc, handle, bstat);
 		if (error)
-			goto out;
+			goto err;
 	}
 
 	/*
@@ -295,16 +295,16 @@ check_inode_names(
 			if (error == ESTALE)
 				return ESTALE;
 			str_errno(ctx, descr_render(&dsc));
-			goto out;
+			goto err;
 		}
 
 		error = check_dirent_names(ctx, &dsc, &fd, bstat);
 		if (error)
-			goto out;
+			goto err_fd;
 	}
 
-out:
 	progress_add(1);
+err_fd:
 	if (fd >= 0) {
 		err2 = close(fd);
 		if (err2)
@@ -312,7 +312,7 @@ out:
 		if (!error && err2)
 			error = err2;
 	}
-
+err:
 	if (error)
 		*aborted = true;
 	if (!error && *aborted)
