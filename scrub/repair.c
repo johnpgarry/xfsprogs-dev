@@ -732,6 +732,19 @@ repair_file_corruption(
 			XRM_REPAIR_ONLY | XRM_NOPROGRESS);
 }
 
+/* Repair all parts of this file or complain if we cannot. */
+int
+repair_file_corruption_now(
+	struct scrub_ctx	*ctx,
+	struct scrub_item	*sri,
+	int			override_fd)
+{
+	repair_item_boost_priorities(sri);
+
+	return repair_item_class(ctx, sri, override_fd, SCRUB_ITEM_CORRUPT,
+			XRM_REPAIR_ONLY | XRM_NOPROGRESS | XRM_FINAL_WARNING);
+}
+
 /*
  * Repair everything in this filesystem object that needs it.  This includes
  * cross-referencing and preening.

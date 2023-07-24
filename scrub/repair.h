@@ -76,6 +76,8 @@ int action_list_process(struct scrub_ctx *ctx, struct action_list *alist,
 int repair_item_corruption(struct scrub_ctx *ctx, struct scrub_item *sri);
 int repair_file_corruption(struct scrub_ctx *ctx, struct scrub_item *sri,
 		int override_fd);
+int repair_file_corruption_now(struct scrub_ctx *ctx, struct scrub_item *sri,
+		int override_fd);
 int repair_item(struct scrub_ctx *ctx, struct scrub_item *sri,
 		unsigned int repair_flags);
 int repair_item_to_action_item(struct scrub_ctx *ctx,
