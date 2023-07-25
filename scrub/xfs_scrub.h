@@ -22,6 +22,7 @@ extern bool			stderr_isatty;
 extern bool			stdout_isatty;
 extern bool			is_service;
 extern bool			use_force_rebuild;
+extern bool			info_is_warning;
 
 enum scrub_mode {
 	SCRUB_MODE_DRY_RUN,

@@ -110,6 +110,8 @@ __str_out(
 	/* print strerror or format of choice but not both */
 	assert(!(error && format));
 
+	if (level == S_INFO && info_is_warning)
+		level = S_WARN;
 	if (level >= S_INFO)
 		stream = stdout;
 

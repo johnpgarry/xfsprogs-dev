@@ -160,6 +160,9 @@ bool				is_service;
 /* Set to true if the kernel supports XFS_SCRUB_IFLAG_FORCE_REBUILD */
 bool				use_force_rebuild;
 
+/* Should we count informational messages as warnings? */
+bool				info_is_warning;
+
 #define SCRUB_RET_SUCCESS	(0)	/* no problems left behind */
 #define SCRUB_RET_CORRUPT	(1)	/* corruption remains on fs */
 #define SCRUB_RET_UNOPTIMIZED	(2)	/* fs could be optimized */
@@ -604,6 +607,43 @@ report_outcome(
 # define XFS_SCRUB_HAVE_UNICODE	"-"
 #endif
 
+/*
+ * -o: user-supplied override options
+ */
+enum o_opt_nums {
+	IWARN = 0,
+	O_MAX_OPTS,
+};
+
+static char *o_opts[] = {
+	[IWARN]			= "iwarn",
+	[O_MAX_OPTS]		= NULL,
+};
+
+static void
+parse_o_opts(
+	struct scrub_ctx	*ctx,
+	char			*p)
+{
+	while (*p != '\0')  {
+		char		*val;
+
+		switch (getsubopt(&p, o_opts, &val))  {
+		case IWARN:
+			if (val) {
+				fprintf(stderr,
+ _("iwarn does not take an argument\n"));
+				usage();
+			}
+			info_is_warning = true;
+			break;
+		default:
+			usage();
+			break;
+		}
+	}
+}
+
 int
 main(
 	int			argc,
@@ -637,7 +677,7 @@ main(
 	pthread_mutex_init(&ctx.lock, NULL);
 	ctx.mode = SCRUB_MODE_REPAIR;
 	ctx.error_action = ERRORS_CONTINUE;
-	while ((c = getopt(argc, argv, "a:bC:de:km:nTvxV")) != EOF) {
+	while ((c = getopt(argc, argv, "a:bC:de:km:no:TvxV")) != EOF) {
 		switch (c) {
 		case 'a':
 			ctx.max_errors = cvt_u64(optarg, 10);
@@ -686,6 +726,9 @@ main(
 			break;
 		case 'n':
 			ctx.mode = SCRUB_MODE_DRY_RUN;
+			break;
+		case 'o':
+			parse_o_opts(&ctx, optarg);
 			break;
 		case 'T':
 			display_rusage = true;

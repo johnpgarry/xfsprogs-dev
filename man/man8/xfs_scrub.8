@@ -85,6 +85,25 @@ Search this file for mounted filesystems instead of /etc/mtab.
 .B \-n
 Only check filesystem metadata.
 Do not repair or optimize anything.
+.HP
+.B \-o
+.I subopt\c
+[\c
+.B =\c
+.IR value ]
+.BR
+Override what the program might conclude about the filesystem
+if left to its own devices.
+.IP
+The
+.IR subopt ions
+supported are:
+.RS 1.0i
+.TP
+.BI iwarn
+Treat informational messages as warnings.
+This will result in a nonzero return code, and a higher logging level.
+.RE
 .TP
 .BI \-T
 Print timing and memory usage information for each phase.
