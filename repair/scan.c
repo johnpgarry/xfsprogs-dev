@@ -185,7 +185,7 @@ scan_lbtree(
 
 	ASSERT(dirty == 0 || (dirty && !no_modify));
 
-	if ((dirty || badcrc) && !no_modify) {
+	if (!err && (dirty || badcrc) && !no_modify) {
 		libxfs_buf_mark_dirty(bp);
 		libxfs_buf_relse(bp);
 	}
