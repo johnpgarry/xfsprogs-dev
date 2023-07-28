@@ -323,13 +323,6 @@ option set. When the option
 .B \-m crc=0
 is used, the reference count btree feature is not supported and reflink is
 disabled.
-.IP
-Note: the filesystem DAX mount option (
-.B \-o dax
-) is incompatible with
-reflink-enabled XFS filesystems.  To use filesystem DAX with XFS, specify the
-.B \-m reflink=0
-option to mkfs.xfs to disable the reflink feature.
 .RE
 .PP
 .PD 0
