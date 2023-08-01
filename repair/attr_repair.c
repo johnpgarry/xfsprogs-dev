@@ -212,6 +212,7 @@ process_shortform_attr(
 {
 	struct xfs_attr_shortform	*asf;
 	struct xfs_attr_sf_entry	*currententry, *nextentry, *tempentry;
+	xfs_failaddr_t			fa;
 	int				i, junkit;
 	int				currentsize, remainingspace;
 
@@ -371,6 +372,22 @@ process_shortform_attr(
 				ino, be16_to_cpu(asf->hdr.totsize),
 				currentsize);
 			asf->hdr.totsize = cpu_to_be16(currentsize);
+			*repair = 1;
+		}
+	}
+
+	fa = libxfs_attr_shortform_verify(asf, be16_to_cpu(asf->hdr.totsize));
+	if (fa) {
+		if (no_modify) {
+			do_warn(
+	_("inode %" PRIu64 " shortform attr verifier failure, would have cleared attrs\n"),
+				ino);
+		} else {
+			do_warn(
+	_("inode %" PRIu64 " shortform attr verifier failure, cleared attrs\n"),
+				ino);
+			asf->hdr.count = 0;
+			asf->hdr.totsize = cpu_to_be16(sizeof(struct xfs_attr_sf_hdr));
 			*repair = 1;
 		}
 	}
