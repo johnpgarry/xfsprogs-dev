@@ -15,18 +15,12 @@
 #include <linux/fsmap.h>
 #include "space.h"
 #include "input.h"
+#include "relocation.h"
 
 static cmdinfo_t find_owner_cmd;
 static cmdinfo_t resolve_owner_cmd;
 
 #define NR_EXTENTS 128
-
-static RADIX_TREE(inode_tree, 0);
-#define MOVE_INODE	0
-#define MOVE_BLOCKS	1
-#define INODE_PATH	2
-int inode_count;
-int inode_paths;
 
 static void
 track_inode_chunks(
@@ -39,7 +33,7 @@ track_inode_chunks(
 	uint64_t	first_ino = cvt_agino_to_ino(xfd, agno,
 						cvt_agbno_to_agino(xfd, agbno));
 	uint64_t	num_inodes = cvt_b_to_inode_count(xfd, length);
-	int		i;
+	uint64_t	i;
 
 	printf(_("AG %d\tInode Range to move: 0x%llx - 0x%llx (length 0x%llx)\n"),
 			agno,
@@ -47,14 +41,8 @@ track_inode_chunks(
 			(unsigned long long)first_ino + num_inodes - 1,
 			(unsigned long long)length);
 
-	for (i = 0; i < num_inodes; i++) {
-		if (!radix_tree_lookup(&inode_tree, first_ino + i)) {
-			radix_tree_insert(&inode_tree, first_ino + i,
-					(void *)first_ino + i);
-			inode_count++;
-		}
-		radix_tree_tag_set(&inode_tree, first_ino + i, MOVE_INODE);
-	}
+	for (i = 0; i < num_inodes; i++)
+		set_reloc_iflag(first_ino + i, MOVE_INODE);
 }
 
 static void
@@ -65,7 +53,7 @@ track_inode(
 	uint64_t	physaddr,
 	uint64_t	length)
 {
-	if (radix_tree_tag_get(&inode_tree, owner, MOVE_BLOCKS))
+	if (test_reloc_iflag(owner, MOVE_BLOCKS))
 		return;
 
 	printf(_("AG %d\tInode 0x%llx: blocks to move to move: 0x%llx - 0x%llx\n"),
@@ -73,11 +61,8 @@ track_inode(
 			(unsigned long long)owner,
 			(unsigned long long)physaddr,
 			(unsigned long long)physaddr + length - 1);
-	if (!radix_tree_lookup(&inode_tree, owner)) {
-		radix_tree_insert(&inode_tree, owner, (void *)owner);
-		inode_count++;
-	}
-	radix_tree_tag_set(&inode_tree, owner, MOVE_BLOCKS);
+
+	set_reloc_iflag(owner, MOVE_BLOCKS);
 }
 
 static void
@@ -111,7 +96,7 @@ scan_ag(
 	h->fmr_offset = ULLONG_MAX;
 
 	while (true) {
-		printf("Inode count %d\n", inode_count);
+		printf("Inode count %llu\n", get_reloc_count());
 		ret = ioctl(xfd->fd, FS_IOC_GETFSMAP, fsmap);
 		if (ret < 0) {
 			fprintf(stderr, _("%s: FS_IOC_GETFSMAP [\"%s\"]: %s\n"),
@@ -245,18 +230,6 @@ find_owner_init(void)
 	add_command(&find_owner_cmd);
 }
 
-/*
- * for each dirent we get returned, look up the inode tree to see if it is an
- * inode we need to process. If it is, then replace the entry in the tree with
- * a structure containing the current path and mark the entry as resolved.
- */
-struct inode_path {
-	uint64_t		ino;
-	struct list_head	path_list;
-	uint32_t		link_count;
-	char			path[1];
-};
-
 static int
 resolve_owner_cb(
 	const char		*path,
@@ -266,14 +239,14 @@ resolve_owner_cb(
 {
 	struct inode_path	*ipath, *slot_ipath;
 	int			pathlen;
-	void			**slot;
+	struct inode_path	**slot;
 
 	/*
 	 * Lookup the slot rather than the entry so we can replace the contents
 	 * without another lookup later on.
 	 */
-	slot = radix_tree_lookup_slot(&inode_tree, stat->st_ino);
-	if (!slot || *slot == NULL)
+	slot = get_reloc_ipath_slot(stat->st_ino);
+	if (!slot)
 		return 0;
 
 	/* Could not get stat data? Fail! */
@@ -303,11 +276,10 @@ _("Aborting: Storing path %s for inode 0x%lx failed: %s\n"),
 	 * set the link count of the path to 1 and replace the slot contents
 	 * with our new_ipath.
 	 */
-	if (stat->st_ino == (uint64_t)*slot) {
+	if (*slot == UNLINKED_IPATH) {
 		ipath->link_count = 1;
 		*slot = ipath;
-		radix_tree_tag_set(&inode_tree, stat->st_ino, INODE_PATH);
-		inode_paths++;
+		set_reloc_iflag(stat->st_ino, INODE_PATH);
 		return 0;
 	}
 
@@ -351,18 +323,15 @@ list_inode_paths(void)
 		bool		move_blocks;
 		bool		move_inode;
 
-		ret = radix_tree_gang_lookup_tag(&inode_tree, (void **)&ipath,
-						idx, 1, INODE_PATH);
-		if (!ret)
+		ipath = get_next_reloc_ipath(idx);
+		if (!ipath)
 			break;
 		idx = ipath->ino + 1;
 
 		/* Grab status tags and remove from tree. */
-		move_blocks = radix_tree_tag_get(&inode_tree, ipath->ino,
-						MOVE_BLOCKS);
-		move_inode = radix_tree_tag_get(&inode_tree, ipath->ino,
-						MOVE_INODE);
-		radix_tree_delete(&inode_tree, ipath->ino);
+		move_blocks = test_reloc_iflag(ipath->ino, MOVE_BLOCKS);
+		move_inode = test_reloc_iflag(ipath->ino, MOVE_INODE);
+		forget_reloc_ino(ipath->ino);
 
 		/* Print the initial path with inode number and state. */
 		printf("0x%.16llx\t%s\t%s\t%8d\t%s\n",
@@ -400,9 +369,8 @@ list_inode_paths(void)
 	do {
 		uint64_t	ino;
 
-
-		ret = radix_tree_gang_lookup(&inode_tree, (void **)&ino, idx, 1);
-		if (!ret) {
+		ino = get_next_reloc_unlinked(idx);
+		if (!ino) {
 			if (idx != 0)
 				ret = -EBUSY;
 			break;
@@ -410,7 +378,7 @@ list_inode_paths(void)
 		idx = ino + 1;
 		printf(_("No path found for inode 0x%llx!\n"),
 				(unsigned long long)ino);
-		radix_tree_delete(&inode_tree, ino);
+		forget_reloc_ino(ino);
 	} while (true);
 
 	return ret;
@@ -426,7 +394,7 @@ resolve_owner_f(
 {
 	int	ret;
 
-	if (!inode_tree.rnode) {
+	if (!is_reloc_populated()) {
 		fprintf(stderr,
 _("Inode list has not been populated. No inodes to resolve.\n"));
 		return 0;
