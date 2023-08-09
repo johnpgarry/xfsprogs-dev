@@ -612,3 +612,23 @@ AC_DEFUN([AC_HAVE_MKOSTEMP_CLOEXEC],
        AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no)])
     AC_SUBST(have_mkostemp_cloexec)
   ])
+
+#
+# Check if the radix tree index (unsigned long) is large enough to hold a
+# 64-bit inode number
+#
+AC_DEFUN([AC_USE_RADIX_TREE_FOR_INUMS],
+  [ AC_MSG_CHECKING([if radix tree can store XFS inums])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/param.h>
+#include <stdint.h>
+#define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
+    ]], [[
+         typedef uint64_t    xfs_ino_t;
+
+         BUILD_BUG_ON(sizeof(unsigned long) < sizeof(xfs_ino_t));
+         return 0;
+    ]])],[use_radix_tree_for_inums=yes
+       AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no)])
+    AC_SUBST(use_radix_tree_for_inums)
+  ])

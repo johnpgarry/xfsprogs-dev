@@ -138,6 +138,7 @@ HAVE_MEMFD_CLOEXEC = @have_memfd_cloexec@
 HAVE_MEMFD_NOEXEC_SEAL = @have_memfd_noexec_seal@
 HAVE_O_TMPFILE = @have_o_tmpfile@
 HAVE_MKOSTEMP_CLOEXEC = @have_mkostemp_cloexec@
+USE_RADIX_TREE_FOR_INUMS = @use_radix_tree_for_inums@
 
 GCCFLAGS = -funsigned-char -fno-strict-aliasing -Wall
 #	   -Wbitwise -Wno-transparent-union -Wno-old-initializer -Wno-decl

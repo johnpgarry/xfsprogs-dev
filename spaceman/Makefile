@@ -22,6 +22,10 @@ ifeq ($(HAVE_GETFSMAP),yes)
 CFILES += freesp.c clearfree.c
 endif
 
+ifeq ($(USE_RADIX_TREE_FOR_INUMS),yes)
+LCFLAGS += -DUSE_RADIX_TREE_FOR_INUMS
+endif
+
 default: depend $(LTCOMMAND)
 
 include $(BUILDRULES)
