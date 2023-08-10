@@ -193,6 +193,15 @@ device.
 The filesystem cannot be downgraded after this feature is enabled.
 This upgrade can fail if any AG has less than 5% free space remaining.
 This feature is not upstream yet.
+.TP 0.4i
+.B rtgroups
+Create allocation groups for the realtime volume, to increase parallelism.
+This is required for reverse mapping btrees and reflink support on the realtime
+device.
+The filesystem cannot be downgraded after this feature is enabled.
+This upgrade is not possible if a realtime volume has already been added to the
+filesystem.
+This feature is not upstream yet.
 .RE
 .TP
 .BI \-U " uuid"

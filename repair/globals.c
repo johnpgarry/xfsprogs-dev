@@ -57,6 +57,7 @@ bool	add_reflink;		/* add reference count btrees */
 bool	add_rmapbt;		/* add reverse mapping btrees */
 bool	add_parent;		/* add parent pointers */
 bool	add_metadir;		/* add metadata directory tree */
+bool	add_rtgroups;		/* add realtime allocation groups */
 
 /* misc status variables */
 
