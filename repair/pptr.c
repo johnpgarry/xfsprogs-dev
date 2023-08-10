@@ -809,7 +809,7 @@ add_missing_parent_ptr(
 				ag_pptr->namelen,
 				name);
 		return;
-	} else {
+	} else if (!add_parent) {
 		do_warn(
  _("adding missing ino %llu parent pointer (ino %llu gen 0x%x name '%.*s')\n"),
 				(unsigned long long)ip->i_ino,
@@ -817,6 +817,19 @@ add_missing_parent_ptr(
 				ag_pptr->parent_gen,
 				ag_pptr->namelen,
 				name);
+	} else {
+		static bool		warned = false;
+		static pthread_mutex_t	lock = PTHREAD_MUTEX_INITIALIZER;
+
+		if (!warned) {
+			pthread_mutex_lock(&lock);
+			if (!warned) {
+				do_warn(
+ _("setting parent pointers to upgrade filesystem\n"));
+				warned = true;
+			}
+			pthread_mutex_unlock(&lock);
+		}
 	}
 
 	error = add_file_pptr(ip, ag_pptr, name);

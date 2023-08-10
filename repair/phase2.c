@@ -265,6 +265,28 @@ set_rmapbt(
 	return true;
 }
 
+static bool
+set_parent(
+	struct xfs_mount	*mp,
+	struct xfs_sb		*new_sb)
+{
+	if (xfs_has_parent(mp)) {
+		printf(_("Filesystem already supports parent pointers.\n"));
+		exit(0);
+	}
+
+	if (!xfs_has_crc(mp)) {
+		printf(
+	_("Parent pointer feature only supported on V5 filesystems.\n"));
+		exit(0);
+	}
+
+	printf(_("Adding parent pointers to filesystem.\n"));
+	new_sb->sb_features_incompat |= XFS_SB_FEAT_INCOMPAT_PARENT;
+	new_sb->sb_features_incompat |= XFS_SB_FEAT_INCOMPAT_NEEDSREPAIR;
+	return true;
+}
+
 struct check_state {
 	struct xfs_sb		sb;
 	uint64_t		features;
@@ -407,6 +429,19 @@ check_fs_free_space(
 	}
 
 	/*
+	 * If we're adding parent pointers, we need at least 25% free since
+	 * scanning the entire filesystem to guesstimate the overhead is
+	 * prohibitively expensive.
+	 */
+	if (xfs_has_parent(mp) && !(old->features & XFS_FEAT_PARENT)) {
+		if (mp->m_sb.sb_fdblocks < mp->m_sb.sb_dblocks / 4) {
+			printf(
+ _("Filesystem does not have enough space to add parent pointers.\n"));
+			exit(1);
+		}
+	}
+
+	/*
 	 * Would the post-upgrade filesystem have enough free space on the data
 	 * device after making per-AG reservations?
 	 */
@@ -437,6 +472,8 @@ need_check_fs_free_space(
 	if (xfs_has_reflink(mp) && !(old->features & XFS_FEAT_REFLINK))
 		return true;
 	if (xfs_has_rmapbt(mp) && !(old->features & XFS_FEAT_RMAPBT))
+		return true;
+	if (xfs_has_parent(mp) && !(old->features & XFS_FEAT_PARENT))
 		return true;
 	return false;
 }
@@ -519,6 +556,8 @@ upgrade_filesystem(
 		dirty |= set_reflink(mp, &new_sb);
 	if (add_rmapbt)
 		dirty |= set_rmapbt(mp, &new_sb);
+	if (add_parent)
+		dirty |= set_parent(mp, &new_sb);
 	if (!dirty)
 		return;
 

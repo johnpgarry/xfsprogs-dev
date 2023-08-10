@@ -96,6 +96,7 @@ extern bool	add_nrext64;
 extern bool	add_finobt;		/* add free inode btrees */
 extern bool	add_reflink;		/* add reference count btrees */
 extern bool	add_rmapbt;		/* add reverse mapping btrees */
+extern bool	add_parent;		/* add parent pointers */
 
 /* misc status variables */
 
