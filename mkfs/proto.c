@@ -460,6 +460,9 @@ creatproto(
 		ip->i_diflags2 = xfs_flags2diflags2(ip, fsx->fsx_xflags);
 		ip->i_cowextsize = fsx->fsx_cowextsize;
 	}
+	/* xfsdump breaks if the root dir has a nonzero generation */
+	if (!dp)
+		VFS_I(ip)->i_generation = 0;
 	libxfs_trans_log_inode(*tpp, ip, XFS_ILOG_CORE);
 	return 0;
 }
