@@ -118,9 +118,11 @@ scrub_item_init_file(struct scrub_item *sri, const struct xfs_bulkstat *bstat)
 }
 
 static inline void
-scrub_item_init_metapath(struct scrub_item *sri, uint64_t metapath)
+scrub_item_init_metapath(struct scrub_item *sri, xfs_rgnumber_t rgno,
+		uint64_t metapath)
 {
 	memset(sri, 0, sizeof(*sri));
+	sri->sri_agno = rgno;
 	sri->sri_ino = metapath;
 }
 

@@ -743,6 +743,7 @@ static int
 queue_metapath_scan(
 	struct workqueue	*wq,
 	bool			*abortedp,
+	xfs_rgnumber_t		rgno,
 	uint64_t		type)
 {
 	struct fs_scan_item	*item;
@@ -755,7 +756,7 @@ queue_metapath_scan(
 		str_liberror(ctx, ret, _("setting up metapath scan"));
 		return ret;
 	}
-	scrub_item_init_metapath(&item->sri, type);
+	scrub_item_init_metapath(&item->sri, rgno, type);
 	scrub_item_schedule(&item->sri, XFS_SCRUB_TYPE_METAPATH);
 	item->abortedp = abortedp;
 
@@ -778,6 +779,7 @@ run_kernel_metadir_path_scrubbers(
 	const struct xfrog_scrub_descr	*sc;
 	uint64_t		type;
 	unsigned int		nr_threads = scrub_nproc_workqueue(ctx);
+	xfs_rgnumber_t		rgno;
 	bool			aborted = false;
 	int			ret, ret2;
 
@@ -797,11 +799,29 @@ run_kernel_metadir_path_scrubbers(
 		if (sc->group != XFROG_SCRUB_GROUP_FS)
 			continue;
 
-		ret = queue_metapath_scan(&wq, &aborted, type);
+		ret = queue_metapath_scan(&wq, &aborted, 0, type);
 		if (ret) {
 			str_liberror(ctx, ret,
  _("queueing metapath scrub work"));
 			goto wait;
+		}
+	}
+
+	/* Scan all rtgroup metadata files */
+	for (rgno = 0;
+	     rgno < ctx->mnt.fsgeom.rgcount && !aborted;
+	     rgno++) {
+		for (type = 0; type < XFS_SCRUB_METAPATH_NR; type++) {
+			sc = &xfrog_metapaths[type];
+			if (sc->group != XFROG_SCRUB_GROUP_RTGROUP)
+				continue;
+
+			ret = queue_metapath_scan(&wq, &aborted, rgno, type);
+			if (ret) {
+				str_liberror(ctx, ret,
+  _("queueing metapath scrub work"));
+				goto wait;
+			}
 		}
 	}
 
