@@ -109,12 +109,11 @@ must be zero.
 .nf
 .B XFS_SCRUB_TYPE_BMBTD
 .B XFS_SCRUB_TYPE_BMBTA
-.B XFS_SCRUB_TYPE_BMBTC
 .fi
 .TP
-.B XFS_SCRUB_TYPE_PARENT
+.B XFS_SCRUB_TYPE_BMBTC
 Examine a given inode's data block map, extended attribute block map,
-copy on write block map, or parent inode pointer.
+or copy on write block map.
 Inode records are examined for obviously incorrect values and
 discrepancies with the three block map types.
 The block maps are checked for obviously wrong values and
@@ -133,7 +132,20 @@ The inode to examine can be specified in the same manner as
 .TP
 .B XFS_SCRUB_TYPE_DIR
 Examine the entries in a given directory for invalid data or dangling pointers.
+If the filesystem supports directory parent pointers, each entry will be
+checked to confirm that the child file has a matching parent pointer.
 The directory to examine can be specified in the same manner as
+.BR XFS_SCRUB_TYPE_INODE "."
+
+.TP
+.B XFS_SCRUB_TYPE_PARENT
+For filesystems that support directory parent pointers, this scrubber
+examines all the parent pointers attached to a file and confirms that the
+parent directory has an entry matching the parent pointer.
+For filesystems that do not support directory parent pointers, this scrubber
+checks that a subdirectory's dotdot entry points to a directory with an entry
+that points back to the subdirectory.
+The inode to examine can be specified in the same manner as
 .BR XFS_SCRUB_TYPE_INODE "."
 
 .TP
