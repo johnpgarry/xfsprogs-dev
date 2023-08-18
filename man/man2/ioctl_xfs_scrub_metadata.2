@@ -200,6 +200,44 @@ Scan all inodes in the filesystem to verify each file's link count.
 Mark everything healthy after a clean scrub run.
 This clears out all the indirect health problem markers that might remain
 in the system.
+
+.TP
+.B XFS_SCRUB_TYPE_METAPATH
+Check that a metadata directory path actually points to the active metadata
+inode.
+Metadata inodes are usually cached for the duration of the mount, so this
+scrubber ensures that the same inode will still be reachable after an unmount
+and mount cycle.
+Discrepancies can happen if the directory or parent pointer scrubbers rebuild
+a metadata directory but lose a link in the process.
+The
+.B sm_ino
+field should be passed one of the following special values to communicate which
+path to check:
+
+.RS 7
+.TP
+.B XFS_SCRUB_METAPATH_RTBITMAP
+Realtime bitmap file.
+.TP
+.B XFS_SCRUB_METAPATH_RTSUMMARY
+Realtime summary file.
+.TP
+.B XFS_SCRUB_METAPATH_USRQUOTA
+User quota file.
+.TP
+.B XFS_SCRUB_METAPATH_GRPQUOTA
+Group quota file.
+.TP
+.B XFS_SCRUB_METAPATH_PRJQUOTA
+Project quota file.
+.RE
+
+The values of
+.I sm_agno
+and
+.I sm_gen
+must be zero.
 .RE
 
 .PD 1
