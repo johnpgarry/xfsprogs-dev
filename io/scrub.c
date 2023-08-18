@@ -136,21 +136,23 @@ parse_metapath(
 	int		argc,
 	char		**argv,
 	int		optind,
-	__u64		*ino)
+	__u64		*ino,
+	__u32		*group)
 {
 	char		*p;
 	unsigned long long control;
+	unsigned long	control2 = 0;
 	int		i;
 
-	if (optind != argc - 1) {
+	if (optind != argc - 1 && optind != argc - 2) {
 		fprintf(stderr, _("Must specify metapath number.\n"));
 		return false;
 	}
 
 	for (i = 0; i < XFS_SCRUB_METAPATH_NR; i++) {
 		if (!strcmp(argv[optind], xfrog_metapaths[i].name)) {
-			*ino = i;
-			return true;
+			control = i;
+			goto find_group;
 		}
 	}
 
@@ -161,7 +163,32 @@ parse_metapath(
 		return false;
 	}
 
+find_group:
+	if (xfrog_metapaths[*ino].group == XFROG_SCRUB_GROUP_RTGROUP) {
+		if (optind == argc - 1) {
+			fprintf(stderr,
+_("%s: Metapath requires a group number.\n"),
+					xfrog_metapaths[*ino].name);
+			return false;
+		}
+		control2 = strtoul(argv[optind + 1], &p, 0);
+		if (*p != '\0') {
+			fprintf(stderr,
+ _("Bad group number '%s'.\n"),
+				argv[optind + 1]);
+			return false;
+		}
+	} else {
+		if (optind == argc - 2) {
+			fprintf(stderr,
+_("%s: Metapath does not take a second argument.\n"),
+					xfrog_metapaths[*ino].name);
+			return false;
+		}
+	}
+
 	*ino = control;
+	*group = control2;
 	return true;
 }
 
@@ -237,7 +264,8 @@ parse_args(
 
 	switch (d->group) {
 	case XFROG_SCRUB_GROUP_METAPATH:
-		if (!parse_metapath(argc, argv, optind, &meta->sm_ino)) {
+		if (!parse_metapath(argc, argv, optind, &meta->sm_ino,
+							&meta->sm_agno)) {
 			exitcode = 1;
 			return command_usage(cmdinfo);
 		}
@@ -587,7 +615,8 @@ scrubv_f(
 
 	switch (group) {
 	case XFROG_SCRUB_GROUP_METAPATH:
-		if (!parse_metapath(argc, argv, optind, &vhead->svh_ino)) {
+		if (!parse_metapath(argc, argv, optind, &vhead->svh_ino,
+							&vhead->svh_agno)) {
 			exitcode = 1;
 			return command_usage(&scrubv_cmd);
 		}
