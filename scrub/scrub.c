@@ -66,6 +66,9 @@ format_metapath_descr(
 				(unsigned long long)vhead->svh_ino);
 
 	sc = &xfrog_metapaths[vhead->svh_ino];
+	if (sc->group == XFROG_SCRUB_GROUP_RTGROUP)
+		return snprintf(buf, buflen, _("rtgroup %u %s"),
+				vhead->svh_agno, _(sc->descr));
 	return snprintf(buf, buflen, "%s", _(sc->descr));
 }
 

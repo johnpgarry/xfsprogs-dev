@@ -197,6 +197,11 @@ const struct xfrog_scrub_descr xfrog_metapaths[XFS_SCRUB_METAPATH_NR] = {
 		.descr	= "project quota metadir path",
 		.group	= XFROG_SCRUB_GROUP_FS,
 	},
+	[XFS_SCRUB_METAPATH_RTRMAPBT]	= {
+		.name	= "rtrmapbt",
+		.descr	= "rmap btree file metadir path",
+		.group	= XFROG_SCRUB_GROUP_RTGROUP,
+	},
 };
 
 /* Invoke the scrub ioctl.  Returns zero or negative error code. */
