@@ -154,8 +154,40 @@ const struct xfrog_scrub_descr xfrog_scrubbers[XFS_SCRUB_TYPE_NR] = {
 		.descr	= "directory tree structure",
 		.group	= XFROG_SCRUB_GROUP_INODE,
 	},
+	[XFS_SCRUB_TYPE_METAPATH] = {
+		.name	= "metapath",
+		.descr	= "metadata directory paths",
+		.group	= XFROG_SCRUB_GROUP_METAPATH,
+	},
 };
-#undef DEP
+
+const struct xfrog_scrub_descr xfrog_metapaths[XFS_SCRUB_METAPATH_NR] = {
+	[XFS_SCRUB_METAPATH_RTBITMAP]	= {
+		.name	= "rtbitmap",
+		.descr	= "realtime bitmap metadir path",
+		.group	= XFROG_SCRUB_GROUP_FS,
+	},
+	[XFS_SCRUB_METAPATH_RTSUMMARY]	= {
+		.name	= "rtsummary",
+		.descr	= "realtime summary metadir path",
+		.group	= XFROG_SCRUB_GROUP_FS,
+	},
+	[XFS_SCRUB_METAPATH_USRQUOTA]	= {
+		.name	= "usrquota",
+		.descr	= "user quota metadir path",
+		.group	= XFROG_SCRUB_GROUP_FS,
+	},
+	[XFS_SCRUB_METAPATH_GRPQUOTA]	= {
+		.name	= "grpquota",
+		.descr	= "group quota metadir path",
+		.group	= XFROG_SCRUB_GROUP_FS,
+	},
+	[XFS_SCRUB_METAPATH_PRJQUOTA]	= {
+		.name	= "prjquota",
+		.descr	= "project quota metadir path",
+		.group	= XFROG_SCRUB_GROUP_FS,
+	},
+};
 
 /* Invoke the scrub ioctl.  Returns zero or negative error code. */
 int

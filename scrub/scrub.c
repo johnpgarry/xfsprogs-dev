@@ -53,6 +53,22 @@ static const unsigned int scrub_deps[XFS_SCRUB_TYPE_NR] = {
 };
 #undef DEP
 
+static int
+format_metapath_descr(
+	char				*buf,
+	size_t				buflen,
+	struct xfs_scrub_vec_head	*vhead)
+{
+	const struct xfrog_scrub_descr	*sc;
+
+	if (vhead->svh_ino >= XFS_SCRUB_METAPATH_NR)
+		return snprintf(buf, buflen, _("unknown metadir path %llu"),
+				(unsigned long long)vhead->svh_ino);
+
+	sc = &xfrog_metapaths[vhead->svh_ino];
+	return snprintf(buf, buflen, "%s", _(sc->descr));
+}
+
 /* Describe the current state of a vectored scrub. */
 int
 format_scrubv_descr(
@@ -80,6 +96,8 @@ format_scrubv_descr(
 	case XFROG_SCRUB_GROUP_ISCAN:
 	case XFROG_SCRUB_GROUP_NONE:
 		return snprintf(buf, buflen, _("%s"), _(sc->descr));
+	case XFROG_SCRUB_GROUP_METAPATH:
+		return format_metapath_descr(buf, buflen, vhead);
 	}
 	return -1;
 }
