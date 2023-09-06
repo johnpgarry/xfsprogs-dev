@@ -471,7 +471,7 @@ void __xfs_buf_mark_corrupt(struct xfs_buf *bp, xfs_failaddr_t fa);
 	*(busy_gen) = __foo;					\
 	false;							\
 })
-#define xfs_extent_busy_flush(mp,pag,busy_gen)		((void)(0))
+#define xfs_extent_busy_flush(mp,pag,busy_gen,alloc_flags)	((void)(0))
 
 #define xfs_rotorstep				1
 #define xfs_bmap_rtalloc(a)			(-ENOSYS)
