@@ -1475,7 +1475,7 @@ process_attr_block(
 			nlen = local->namelen;
 			vlen = be16_to_cpu(local->valuelen);
 			zlen = xfs_attr_leaf_entsize_local(nlen, vlen) -
-				(sizeof(xfs_attr_leaf_name_local_t) - 1 +
+				(offsetof(struct xfs_attr_leaf_name_local, nameval) +
 				 nlen + vlen);
 			if (zero_stale_data)
 				memset(&local->nameval[nlen + vlen], 0, zlen);
@@ -1497,7 +1497,7 @@ process_attr_block(
 			/* zero from end of name[] to next name start */
 			nlen = remote->namelen;
 			zlen = xfs_attr_leaf_entsize_remote(nlen) -
-				(sizeof(xfs_attr_leaf_name_remote_t) - 1 +
+				(offsetof(struct xfs_attr_leaf_name_remote, name) +
 				 nlen);
 			if (zero_stale_data)
 				memset(&remote->name[nlen], 0, zlen);
