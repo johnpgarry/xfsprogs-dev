@@ -23,39 +23,64 @@ bulkload_init_ag(
 }
 
 /* Designate specific blocks to be used to build our new btree. */
-int
+static int
 bulkload_add_blocks(
-	struct bulkload		*bkl,
-	xfs_fsblock_t		fsbno,
-	xfs_extlen_t		len)
+	struct bulkload			*bkl,
+	struct xfs_perag		*pag,
+	const struct xfs_alloc_arg	*args)
 {
-	struct bulkload_resv	*resv;
+	struct xfs_mount		*mp = bkl->sc->mp;
+	struct bulkload_resv		*resv;
 
-	resv = kmem_alloc(sizeof(struct bulkload_resv), KM_MAYFAIL);
+	resv = kmalloc(sizeof(struct bulkload_resv), GFP_KERNEL);
 	if (!resv)
 		return ENOMEM;
 
 	INIT_LIST_HEAD(&resv->list);
-	resv->fsbno = fsbno;
-	resv->len = len;
+	resv->agbno = XFS_FSB_TO_AGBNO(mp, args->fsbno);
+	resv->len = args->len;
 	resv->used = 0;
-	list_add_tail(&resv->list, &bkl->resv_list);
-	bkl->nr_reserved += len;
+	resv->pag = libxfs_perag_hold(pag);
 
+	list_add_tail(&resv->list, &bkl->resv_list);
+	bkl->nr_reserved += args->len;
 	return 0;
+}
+
+/*
+ * Add an extent to the new btree reservation pool.  Callers are required to
+ * reap this reservation manually if the repair is cancelled.  @pag must be a
+ * passive reference.
+ */
+int
+bulkload_add_extent(
+	struct bulkload		*bkl,
+	struct xfs_perag	*pag,
+	xfs_agblock_t		agbno,
+	xfs_extlen_t		len)
+{
+	struct xfs_mount	*mp = bkl->sc->mp;
+	struct xfs_alloc_arg	args = {
+		.tp		= NULL, /* no autoreap */
+		.oinfo		= bkl->oinfo,
+		.fsbno		= XFS_AGB_TO_FSB(mp, pag->pag_agno, agbno),
+		.len		= len,
+		.resv		= XFS_AG_RESV_NONE,
+	};
+
+	return bulkload_add_blocks(bkl, pag, &args);
 }
 
 /* Free all the accounting info and disk space we reserved for a new btree. */
 void
-bulkload_destroy(
-	struct bulkload		*bkl,
-	int			error)
+bulkload_commit(
+	struct bulkload		*bkl)
 {
 	struct bulkload_resv	*resv, *n;
 
 	list_for_each_entry_safe(resv, n, &bkl->resv_list, list) {
 		list_del(&resv->list);
-		kmem_free(resv);
+		kfree(resv);
 	}
 }
 
@@ -67,7 +92,8 @@ bulkload_claim_block(
 	union xfs_btree_ptr	*ptr)
 {
 	struct bulkload_resv	*resv;
-	xfs_fsblock_t		fsb;
+	struct xfs_mount	*mp = cur->bc_mp;
+	xfs_agblock_t		agbno;
 
 	/*
 	 * The first item in the list should always have a free block unless
@@ -84,7 +110,7 @@ bulkload_claim_block(
 	 * decreasing order, which hopefully results in leaf blocks ending up
 	 * together.
 	 */
-	fsb = resv->fsbno + resv->used;
+	agbno = resv->agbno + resv->used;
 	resv->used++;
 
 	/* If we used all the blocks in this reservation, move it to the end. */
@@ -92,9 +118,10 @@ bulkload_claim_block(
 		list_move_tail(&resv->list, &bkl->resv_list);
 
 	if (cur->bc_flags & XFS_BTREE_LONG_PTRS)
-		ptr->l = cpu_to_be64(fsb);
+		ptr->l = cpu_to_be64(XFS_AGB_TO_FSB(mp, resv->pag->pag_agno,
+								agbno));
 	else
-		ptr->s = cpu_to_be32(XFS_FSB_TO_AGBNO(cur->bc_mp, fsb));
+		ptr->s = cpu_to_be32(agbno);
 	return 0;
 }
 
