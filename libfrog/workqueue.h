@@ -29,6 +29,7 @@ struct workqueue {
 	pthread_cond_t		wakeup;
 	unsigned int		item_count;
 	unsigned int		thread_count;
+	unsigned int		active_threads;
 	bool			terminate;
 	bool			terminated;
 	int			max_queued;
