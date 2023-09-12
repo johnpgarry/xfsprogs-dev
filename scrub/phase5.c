@@ -202,6 +202,7 @@ check_xattr_ns_names(
 	if (error) {
 		if (errno == ESTALE)
 			errno = 0;
+		error = errno;
 		if (errno)
 			str_errno(ctx, descr_render(dsc));
 	}
