@@ -2078,7 +2078,6 @@ process_inode_attr_fork(
 		if (!no_modify)  {
 			do_warn(_(", clearing attr fork\n"));
 			*dirty += clear_dinode_attr(mp, dino, lino);
-			dino->di_aformat = XFS_DINODE_FMT_LOCAL;
 			ASSERT(*dirty > 0);
 		} else  {
 			do_warn(_(", would clear attr fork\n"));
@@ -2135,7 +2134,6 @@ process_inode_attr_fork(
 			/* clear attributes if not done already */
 			if (!no_modify)  {
 				*dirty += clear_dinode_attr(mp, dino, lino);
-				dino->di_aformat = XFS_DINODE_FMT_LOCAL;
 			} else  {
 				do_warn(_("would clear attr fork\n"));
 			}
