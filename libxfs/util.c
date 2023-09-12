@@ -260,7 +260,7 @@ libxfs_init_new_inode(
 	unsigned int		flags;
 	int			error;
 
-	error = libxfs_iget(tp->t_mountp, tp, ino, 0, &ip);
+	error = libxfs_iget(tp->t_mountp, tp, ino, XFS_IGET_CREATE, &ip);
 	if (error != 0)
 		return error;
 	ASSERT(ip != NULL);
