@@ -855,6 +855,8 @@ version_string(
 		strcat(s, ",METADIR");
 	if (xfs_has_rtgroups(mp))
 		strcat(s, ",RTGROUPS");
+	if (xfs_has_forcealign(mp))
+		strcat(s, ",FORCEALIGN");
 	return s;
 }
 

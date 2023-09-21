@@ -213,6 +213,9 @@ const field_t	inode_v3_flds[] = {
 	{ "metadir", FLDT_UINT1,
 	  OI(COFF(flags2) + bitsz(uint64_t) - XFS_DIFLAG2_METADIR_BIT-1), C1,
 	  0, TYP_NONE },
+	{ "forcealign", FLDT_UINT1,
+	  OI(COFF(flags2) + bitsz(uint64_t) - XFS_DIFLAG2_FORCEALIGN_BIT-1), C1,
+	  0, TYP_NONE },
 	{ NULL }
 };
 
