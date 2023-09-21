@@ -2849,6 +2849,60 @@ _("Bad CoW extent size hint %u on inode %" PRIu64 ", "),
 	}
 }
 
+static void
+validate_forcealign(
+	struct xfs_mount	*mp,
+	struct xfs_dinode	*dino,
+	xfs_ino_t		lino,
+	int			*dirty)
+{
+	uint16_t		mode;
+	uint64_t		flags2;
+
+	mode = be16_to_cpu(dino->di_mode);
+	flags2 = be64_to_cpu(dino->di_flags2);
+
+	if (!(flags2 & XFS_DIFLAG2_FORCEALIGN))
+		return;
+
+	if (!xfs_has_forcealign(mp)) {
+		do_warn(
+ _("Filesystem does not support forcealign flag set on inode %" PRIu64 ", "),
+					lino);
+		goto zap;
+	}
+
+	if (!S_ISDIR(mode) && !S_ISREG(mode)) {
+		do_warn(
+ _("Cannot have forcealign inode flag set on special file inode %" PRIu64 "\n"),
+					lino);
+		goto zap;
+	}
+
+	if (dino->di_extsize != 0) {
+		do_warn(
+ _("Cannot have forcealign inode flag set with an extent size hint on inode %" PRIu64 "\n"),
+					lino);
+		goto zap;
+	}
+
+	if (dino->di_cowextsize != 0) {
+		do_warn(
+ _("Cannot have forcealign inode flag set with nonzero CoW extent size hint on inode %" PRIu64 "\n"),
+					lino);
+		goto zap;
+	}
+
+	return;
+zap:
+	if (!no_modify) {
+		do_warn(_("clearing flag\n"));
+		dino->di_flags2 &= ~cpu_to_be64(XFS_DIFLAG2_FORCEALIGN);
+		*dirty = 1;
+	} else
+		do_warn(_("would clear flag\n"));
+}
+
 /*
  * returns 0 if the inode is ok, 1 if the inode is corrupt
  * check_dups can be set to 1 *only* when called by the
@@ -3426,8 +3480,10 @@ _("bad (negative) size %" PRId64 " on inode %" PRIu64 "\n"),
 
 	validate_extsize(mp, dino, lino, dirty);
 
-	if (dino->di_version >= 3)
+	if (dino->di_version >= 3) {
 		validate_cowextsize(mp, dino, lino, dirty);
+		validate_forcealign(mp, dino, lino, dirty);
+	}
 
 	/* nsec fields cannot be larger than 1 billion */
 	check_nsec("atime", lino, dino, &dino->di_atime, dirty);
