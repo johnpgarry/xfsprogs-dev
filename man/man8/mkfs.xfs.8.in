@@ -384,6 +384,27 @@ If the value is zero, the default value (currently 32 blocks) will be used.
 Directories will pass on this hint to newly created regular files and
 directories.
 .TP
+.BI forcealign= value
+Require the allocation group size to be an exact multiple of
+.BR value .
+The realtime extent size will be set to
+.B value
+and cannot be changed after formatting.
+The root directory will be marked with the
+.I FORCEALIGN
+flag so that all subdirectories and regular files will inherit that flag,
+and that all file data mappings and space allocations will be
+aligned to
+.BR value .
+
+The
+.BR "-d extszinherit" ,
+.BR "-d cowextsize" ,
+and
+.B -r extsize
+options cannot be specified.
+This feature is only available for filesystems formatted with -m crc=1.
+.TP
 .BI name= value
 This can be used to specify the name of the special file containing
 the filesystem. In this case, the log section must be specified as
@@ -695,7 +716,6 @@ Extend maximum values of inode data and attr fork extent counters from 2^31 -
 If the value is omitted, 1 is assumed.
 This feature will be enabled when possible.
 This feature is only available for filesystems formatted with -m crc=1.
-.TP
 .RE
 .PP
 .PD 0

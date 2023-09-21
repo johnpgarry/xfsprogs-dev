@@ -80,6 +80,7 @@ enum {
 	D_COWEXTSIZE,
 	D_DAXINHERIT,
 	D_CONCURRENCY,
+	D_FORCEALIGN,
 	D_MAX_OPTS,
 };
 
@@ -307,6 +308,8 @@ static struct opt_params copts = {
 	},
 };
 
+static struct opt_params ropts;
+
 static struct opt_params dopts = {
 	.name = 'd',
 	.ini_section = "data",
@@ -329,6 +332,7 @@ static struct opt_params dopts = {
 		[D_COWEXTSIZE] = "cowextsize",
 		[D_DAXINHERIT] = "daxinherit",
 		[D_CONCURRENCY] = "concurrency",
+		[D_FORCEALIGN] = "forcealign",
 		[D_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
@@ -469,6 +473,16 @@ static struct opt_params dopts = {
 		  .minval = 0,
 		  .maxval = INT_MAX,
 		  .defaultval = 1,
+		},
+		{ .index = D_FORCEALIGN,
+		  .conflicts = { { &dopts, D_EXTSIZE },
+				 { &dopts, D_COWEXTSIZE },
+				 { &ropts, R_EXTSIZE },
+				 { NULL, LAST_CONFLICT } },
+		  .convert = true,
+		  .minval = XFS_MIN_RTEXTSIZE,
+		  .maxval = XFS_MAX_RTEXTSIZE,
+		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 	},
 };
@@ -944,6 +958,7 @@ struct sb_feat_args {
 	bool	inobtcnt;		/* XFS_SB_FEAT_RO_COMPAT_INOBTCNT */
 	bool	bigtime;		/* XFS_SB_FEAT_INCOMPAT_BIGTIME */
 	bool	metadir;		/* XFS_SB_FEAT_INCOMPAT_METADIR */
+	bool	forcealign;		/* XFS_SB_FEAT_RO_COMPAT_FORCEALIGN */
 	bool	nodalign;
 	bool	nortalign;
 	bool	nrext64;
@@ -968,6 +983,7 @@ struct cli_params {
 	char	*rtextsize;
 	char	*rtsize;
 	char	*extsize;
+	char	*forcealign;
 
 	/* parameters where 0 is a valid CLI value */
 	int	dsunit;
@@ -1086,7 +1102,7 @@ usage( void )
 			    inobtcount=0|1,bigtime=0|1,metadir=0|1]\n\
 /* data subvol */	[-d agcount=n,agsize=n,file,name=xxx,size=num,\n\
 			    (sunit=value,swidth=value|su=num,sw=num|noalign),\n\
-			    sectsize=num,concurrency=num,extsize=num]\n\
+			    sectsize=num,concurrency=num,extsize=num,forcealign=num]\n\
 /* force overwrite */	[-f]\n\
 /* inode size */	[-i perblock=n|size=num,maxpct=n,attr=0|1|2,\n\
 			    projid32bit=0|1,sparse=0|1,nrext64=0|1]\n\
@@ -1753,6 +1769,9 @@ data_opts_parser(
 	case D_CONCURRENCY:
 		set_data_concurrency(opts, subopt, cli, value);
 		break;
+	case D_FORCEALIGN:
+		cli->forcealign = getstr(value, opts, subopt);
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -2280,6 +2299,33 @@ set_extsize(
 }
 
 /*
+ * Convert the -d forcelign= option to a number, then set the required space
+ * alignment to that number.
+ */
+static void
+set_forcealign(
+	struct mkfs_params	*cfg,
+	struct cli_params	*cli)
+{
+	uint64_t		align_bytes;
+
+	if (!cli->forcealign)
+		return;
+
+	align_bytes = getnum(cli->forcealign, &dopts, D_FORCEALIGN);
+	if (align_bytes == 0)
+		illegal_option(cli->forcealign, &dopts, D_FORCEALIGN,
+				_("Value cannot be zero."));
+	if (align_bytes % blocksize)
+		illegal_option(cli->forcealign, &dopts, D_FORCEALIGN,
+				_("Value must be a multiple of block size."));
+
+	cli->sb_feat.forcealign = true;
+	cli->fsx.fsx_xflags |= FS_XFLAG_FORCEALIGN;
+	cfg->rtextblocks = (xfs_extlen_t)(align_bytes >> cfg->blocklog);
+}
+
+/*
  * Grab log sector size and validate.
  *
  * XXX: should we probe sector size on external log device rather than using
@@ -2489,6 +2535,13 @@ _("metadata directory not supported without CRC support\n"));
 			usage();
 		}
 		cli->sb_feat.metadir = false;
+
+		if (cli->sb_feat.forcealign) {
+			fprintf(stderr,
+_("forced file data alignment not supported without CRC support\n"));
+			usage();
+		}
+		cli->sb_feat.forcealign = false;
 	}
 
 	if (!cli->sb_feat.finobt) {
@@ -2678,7 +2731,9 @@ validate_rtextsize(
 	/*
 	 * If specified, check rt extent size against its constraints.
 	 */
-	if (cli->rtextsize) {
+	if (cli->forcealign) {
+		/* already done by set_forcealign */
+	} else if (cli->rtextsize) {
 
 		rtextbytes = getnum(cli->rtextsize, &ropts, R_EXTSIZE);
 		if (rtextbytes % cfg->blocksize) {
@@ -2817,6 +2872,28 @@ _("illegal CoW extent size hint %lld, must be less than %u and a multiple of %u.
 				(long long)cli->fsx.fsx_cowextsize,
 				min(XFS_MAX_BMBT_EXTLEN, mp->m_sb.sb_agblocks / 2),
 				mp->m_sb.sb_rextsize, fa);
+		usage();
+	}
+}
+
+/* Validate the incoming forcealign flag. */
+static void
+validate_forcealign_hints(
+	struct xfs_mount	*mp,
+	struct cli_params	*cli)
+{
+	if (!(cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN))
+		return;
+
+	if (cli->fsx.fsx_cowextsize != 0) {
+		fprintf(stderr,
+ _("cannot set CoW extent size hint when forcealign is enabled.\n"));
+		usage();
+	}
+
+	if (cli->fsx.fsx_extsize != 0) {
+		fprintf(stderr,
+ _("cannot set extent size hint when forcealign is enabled.\n"));
 		usage();
 	}
 }
@@ -3428,10 +3505,61 @@ _("agsize (%s) not a multiple of fs blk size (%d)\n"),
  */
 static void
 align_ag_geometry(
-	struct mkfs_params	*cfg)
+	struct mkfs_params	*cfg,
+	struct cli_params	*cli)
 {
 	uint64_t	tmp_agsize;
 	int		dsunit = cfg->dsunit;
+
+	/*
+	 * If the sysadmin wants to force all file data space mappings to be
+	 * aligned to the extszinherit value, then we need the AGs to be
+	 * aligned to the same value.  Skip these checks if the extent size
+	 * hint is zero; the extszinherit validation will fail the format
+	 * later.
+	 */
+	if (cli->sb_feat.forcealign) {
+		/* Perfect alignment; we're done. */
+		if (cfg->agsize % cfg->rtextblocks == 0)
+			goto validate;
+
+		/*
+		 * Round up to file extent size boundary.  Make sure that
+		 * agsize is still larger than XFS_AG_MIN_BLOCKS(blocklog).
+		 */
+		tmp_agsize = roundup_64(cfg->agsize, cfg->rtextblocks);
+
+		/*
+		 * Round down to file extent size boundary if rounding up
+		 * created an AG size that is larger than the AG max.
+		 */
+		if (tmp_agsize > XFS_AG_MAX_BLOCKS(cfg->blocklog))
+			tmp_agsize = rounddown_64(cfg->agsize,
+						  cfg->rtextblocks);
+
+		if (tmp_agsize < XFS_AG_MIN_BLOCKS(cfg->blocklog) &&
+		    tmp_agsize > XFS_AG_MAX_BLOCKS(cfg->blocklog)) {
+			/*
+			 * Set the agsize to the invalid value so the following
+			 * validation of the ag will fail and print a nice error
+			 * and exit.
+			 */
+			cfg->agsize = tmp_agsize;
+			goto validate;
+		}
+
+		/* Update geometry to be file extent size aligned */
+		cfg->agsize = tmp_agsize;
+		if (!cli_opt_set(&dopts, D_AGCOUNT))
+			cfg->agcount = howmany_64(cfg->dblocks, cfg->agsize);
+
+		if (cli_opt_set(&dopts, D_AGSIZE))
+			fprintf(stderr,
+_("agsize rounded to %lld, forcealign = %lld\n"),
+				(long long)cfg->agsize,
+				(long long)cfg->rtextblocks);
+		goto validate;
+	}
 
 	if (!dsunit)
 		goto validate;
@@ -3826,6 +3954,8 @@ sb_set_features(
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_REFLINK;
 	if (fp->inobtcnt)
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_INOBTCNT;
+	if (fp->forcealign)
+		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_FORCEALIGN;
 	if (fp->bigtime)
 		sbp->sb_features_incompat |= XFS_SB_FEAT_INCOMPAT_BIGTIME;
 	if (fp->parent_pointers) {
@@ -4881,6 +5011,7 @@ main(
 	sectorsize = cfg.sectorsize;
 
 	set_extsize(&cli, cli.extsize, &dopts, D_EXTSIZE);
+	set_forcealign(&cfg, &cli);
 
 	validate_log_sectorsize(&cfg, &cli, &dft);
 	validate_sb_features(&cfg, &cli);
@@ -4921,7 +5052,7 @@ main(
 	 * aligns to device geometry correctly.
 	 */
 	calculate_initial_ag_geometry(&cfg, &cli, &xi);
-	align_ag_geometry(&cfg);
+	align_ag_geometry(&cfg, &cli);
 	calculate_rtgroup_geometry(&cfg, &cli);
 
 	calculate_imaxpct(&cfg, &cli);
@@ -4945,6 +5076,7 @@ main(
 	/* Validate the extent size hints now that @mp is fully set up. */
 	validate_extsize_hint(mp, &cli);
 	validate_cowextsize_hint(mp, &cli);
+	validate_forcealign_hints(mp, &cli);
 
 	validate_supported(mp, &cli);
 
