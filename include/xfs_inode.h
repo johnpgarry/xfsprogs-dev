@@ -399,6 +399,11 @@ static inline bool xfs_is_metadir_inode(struct xfs_inode *ip)
 	return ip->i_diflags2 & XFS_DIFLAG2_METADIR;
 }
 
+static inline bool xfs_inode_force_align(struct xfs_inode *ip)
+{
+	return ip->i_diflags2 & XFS_DIFLAG2_FORCEALIGN;
+}
+
 extern void	libxfs_trans_inode_alloc_buf (struct xfs_trans *,
 				struct xfs_buf *);
 
