@@ -96,6 +96,7 @@ init(
 		x.volname = fsdevice;
 	else
 		x.dname = fsdevice;
+	x.isdirect = LIBXFS_DIRECT;
 
 	x.bcache_flags = CACHE_MISCOMPARE_PURGE;
 	if (!libxfs_init(&x)) {
