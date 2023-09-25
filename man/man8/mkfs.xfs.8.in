@@ -289,8 +289,8 @@ pinpoint exactly which data has been lost when a disk error occurs.
 .IP
 By default,
 .B mkfs.xfs
-will not create reverse mapping btrees.  This feature is only available
-for filesystems created with the (default)
+will create reverse mapping btrees when possible.
+This feature is only available for filesystems created with the (default)
 .B \-m crc=1
 option set. When the option
 .B \-m crc=0
