@@ -493,6 +493,18 @@ will be assigned the project quota id provided in
 Directories will pass on the project id to newly created regular files and
 directories.
 .TP
+.BI extsize= num
+All inodes created by
+.B mkfs.xfs
+will have this
+.I value
+extent size hint applied.
+Directories will pass on this hint to newly created regular files and
+directories.
+This option cannot be combined with the
+.B extszinherit
+option.
+.TP
 .BI extszinherit= value
 All inodes created by
 .B mkfs.xfs
@@ -502,6 +514,9 @@ extent size hint applied.
 The value must be provided in units of filesystem blocks.
 Directories will pass on this hint to newly created regular files and
 directories.
+This option cannot be combined with the
+.B extsize
+option.
 .TP
 .BI daxinherit= value
 If
