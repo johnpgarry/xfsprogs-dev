@@ -15,7 +15,8 @@ CFGFILES = \
 	lts_5.4.conf \
 	lts_5.10.conf \
 	lts_5.15.conf \
-	lts_6.1.conf
+	lts_6.1.conf \
+	lts_6.6.conf
 
 LLDLIBS += $(LIBXFS) $(LIBXCMD) $(LIBFROG) $(LIBRT) $(LIBBLKID) \
 	$(LIBUUID) $(LIBINIH) $(LIBURCU) $(LIBPTHREAD)
