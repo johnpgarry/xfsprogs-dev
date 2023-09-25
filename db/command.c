@@ -141,4 +141,5 @@ init_commands(void)
 	dquot_init();
 	fuzz_init();
 	timelimit_init();
+	iunlink_init();
 }

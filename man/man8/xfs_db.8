@@ -579,6 +579,25 @@ print the current debug option bits. These are for the use of the implementor.
 .BI "dquot [" \-g | \-p | \-u ] " id"
 Set current address to a group, project or user quota block for the given ID. Defaults to user quota.
 .TP
+.BI "dump_iunlinked [-a " agno " ] [-b " bucket " ] [-q] [-v]"
+Dump the contents of unlinked buckets.
+
+Options include:
+.RS 1.0i
+.TP 0.4i
+.B \-a
+Print only this AG's unlinked buckets.
+.TP 0.4i
+.B \-b
+Print only this bucket within each AGI.
+.TP 0.4i
+.B \-q
+Only print the essentials.
+.TP 0.4i
+.B \-v
+Print resource usage of each file on the unlinked lists.
+.RE
+.TP
 .BI "echo [" arg "] ..."
 Echo the arguments to the output.
 .TP
