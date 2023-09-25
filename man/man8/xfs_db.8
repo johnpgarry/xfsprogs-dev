@@ -840,6 +840,17 @@ Set the current inode number. If no
 .I inode#
 is given, print the current inode number.
 .TP
+.BI "iunlink [-n " nr " ]"
+Allocate inodes and put them on the unlinked list.
+
+Options include:
+.RS 1.0i
+.TP 0.4i
+.B \-n
+Create this number of unlinked inodes.
+If not specified, 1 inode will be created.
+.RE
+.TP
 .BI "label [" label ]
 Set the filesystem label. The filesystem label can be used by
 .BR mount (8)

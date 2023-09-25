@@ -197,8 +197,204 @@ static const cmdinfo_t	dump_iunlinked_cmd =
 	  N_("[-a agno] [-b bucket] [-q] [-v]"),
 	  N_("dump chain of unlinked inode buckets"), NULL };
 
+/*
+ * Look up the inode cluster buffer and log the on-disk unlinked inode change
+ * we need to make.
+ */
+static int
+iunlink_log_dinode(
+	struct xfs_trans	*tp,
+	struct xfs_inode	*ip,
+	struct xfs_perag	*pag,
+	xfs_agino_t		next_agino)
+{
+	struct xfs_mount	*mp = tp->t_mountp;
+	struct xfs_dinode	*dip;
+	struct xfs_buf		*ibp;
+	int			offset;
+	int			error;
+
+	error = -libxfs_imap_to_bp(mp, tp, &ip->i_imap, &ibp);
+	if (error)
+		return error;
+
+	dip = xfs_buf_offset(ibp, ip->i_imap.im_boffset);
+
+	dip->di_next_unlinked = cpu_to_be32(next_agino);
+	offset = ip->i_imap.im_boffset +
+			offsetof(struct xfs_dinode, di_next_unlinked);
+
+	libxfs_dinode_calc_crc(mp, dip);
+	libxfs_trans_log_buf(tp, ibp, offset, offset + sizeof(xfs_agino_t) - 1);
+	return 0;
+}
+
+static int
+iunlink_insert_inode(
+	struct xfs_trans	*tp,
+	struct xfs_perag	*pag,
+	struct xfs_buf		*agibp,
+	struct xfs_inode	*ip)
+{
+	struct xfs_mount	*mp = tp->t_mountp;
+	struct xfs_agi		*agi = agibp->b_addr;
+	xfs_agino_t		next_agino;
+	xfs_agino_t		agino = XFS_INO_TO_AGINO(mp, ip->i_ino);
+	short			bucket_index = agino % XFS_AGI_UNLINKED_BUCKETS;
+	int			offset;
+	int			error;
+
+	/*
+	 * Get the index into the agi hash table for the list this inode will
+	 * go on.  Make sure the pointer isn't garbage and that this inode
+	 * isn't already on the list.
+	 */
+	next_agino = be32_to_cpu(agi->agi_unlinked[bucket_index]);
+	if (next_agino == agino || !xfs_verify_agino_or_null(pag, next_agino))
+		return EFSCORRUPTED;
+
+	if (next_agino != NULLAGINO) {
+		/*
+		 * There is already another inode in the bucket, so point this
+		 * inode to the current head of the list.
+		 */
+		error = iunlink_log_dinode(tp, ip, pag, next_agino);
+		if (error)
+			return error;
+	}
+
+	/* Update the bucket. */
+	agi->agi_unlinked[bucket_index] = cpu_to_be32(agino);
+	offset = offsetof(struct xfs_agi, agi_unlinked) +
+			(sizeof(xfs_agino_t) * bucket_index);
+	libxfs_trans_log_buf(tp, agibp, offset,
+			offset + sizeof(xfs_agino_t) - 1);
+	return 0;
+}
+
+/*
+ * This is called when the inode's link count has gone to 0 or we are creating
+ * a tmpfile via O_TMPFILE.  The inode @ip must have nlink == 0.
+ *
+ * We place the on-disk inode on a list in the AGI.  It will be pulled from this
+ * list when the inode is freed.
+ */
+static int
+iunlink(
+	struct xfs_trans	*tp,
+	struct xfs_inode	*ip)
+{
+	struct xfs_mount	*mp = tp->t_mountp;
+	struct xfs_perag	*pag;
+	struct xfs_buf		*agibp;
+	int			error;
+
+	ASSERT(VFS_I(ip)->i_nlink == 0);
+	ASSERT(VFS_I(ip)->i_mode != 0);
+
+	pag = libxfs_perag_get(mp, XFS_INO_TO_AGNO(mp, ip->i_ino));
+
+	/* Get the agi buffer first.  It ensures lock ordering on the list. */
+	error = -libxfs_read_agi(pag, tp, &agibp);
+	if (error)
+		goto out;
+
+	error = iunlink_insert_inode(tp, pag, agibp, ip);
+out:
+	libxfs_perag_put(pag);
+	return error;
+}
+
+static int
+create_unlinked(
+	struct xfs_mount	*mp)
+{
+	struct cred		cr = { };
+	struct fsxattr		fsx = { };
+	struct xfs_inode	*ip;
+	struct xfs_trans	*tp;
+	unsigned int		resblks;
+	int			error;
+
+	resblks = XFS_IALLOC_SPACE_RES(mp);
+	error = -libxfs_trans_alloc(mp, &M_RES(mp)->tr_create_tmpfile, resblks,
+			0, 0, &tp);
+	if (error) {
+		dbprintf(_("alloc trans: %s\n"), strerror(error));
+		return error;
+	}
+
+	error = -libxfs_dir_ialloc(&tp, NULL, S_IFREG | 0600, 0, 0, &cr, &fsx,
+			&ip);
+	if (error) {
+		dbprintf(_("create inode: %s\n"), strerror(error));
+		goto out_cancel;
+	}
+
+	error = iunlink(tp, ip);
+	if (error) {
+		dbprintf(_("unlink inode: %s\n"), strerror(error));
+		goto out_rele;
+	}
+
+	error = -libxfs_trans_commit(tp);
+	if (error)
+		dbprintf(_("commit inode: %s\n"), strerror(error));
+
+	dbprintf(_("Created unlinked inode %llu in agno %u\n"),
+			(unsigned long long)ip->i_ino,
+			XFS_INO_TO_AGNO(mp, ip->i_ino));
+	libxfs_irele(ip);
+	return error;
+out_rele:
+	libxfs_irele(ip);
+out_cancel:
+	libxfs_trans_cancel(tp);
+	return error;
+}
+
+static int
+iunlink_f(
+	int		argc,
+	char		**argv)
+{
+	int		nr = 1;
+	int		c;
+	int		error;
+
+	while ((c = getopt(argc, argv, "n:")) != EOF) {
+		switch (c) {
+		case 'n':
+			nr = atoi(optarg);
+			if (nr <= 0) {
+				dbprintf(_("%s: need positive number\n"));
+				return 0;
+			}
+			break;
+		default:
+			dbprintf(_("Bad option for iunlink command.\n"));
+			return 0;
+		}
+	}
+
+	for (c = 0; c < nr; c++) {
+		error = create_unlinked(mp);
+		if (error)
+			return 1;
+	}
+
+	return 0;
+}
+
+static const cmdinfo_t	iunlink_cmd =
+	{ "iunlink", NULL, iunlink_f, 0, -1, 0,
+	  N_("[-n nr]"),
+	  N_("allocate inodes and put them on the unlinked list"), NULL };
+
 void
 iunlink_init(void)
 {
 	add_command(&dump_iunlinked_cmd);
+	if (expert_mode)
+		add_command(&iunlink_cmd);
 }

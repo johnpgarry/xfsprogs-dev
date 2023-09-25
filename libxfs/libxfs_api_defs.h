@@ -149,6 +149,7 @@
 #define xfs_prealloc_blocks		libxfs_prealloc_blocks
 
 #define xfs_read_agf			libxfs_read_agf
+#define xfs_read_agi			libxfs_read_agi
 #define xfs_refc_block			libxfs_refc_block
 #define xfs_refcountbt_calc_reserves	libxfs_refcountbt_calc_reserves
 #define xfs_refcountbt_calc_size	libxfs_refcountbt_calc_size
