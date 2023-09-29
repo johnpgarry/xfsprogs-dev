@@ -74,6 +74,7 @@ enum {
 	D_NOALIGN,
 	D_RTINHERIT,
 	D_PROJINHERIT,
+	D_EXTSIZE,
 	D_EXTSZINHERIT,
 	D_COWEXTSIZE,
 	D_DAXINHERIT,
@@ -315,6 +316,7 @@ static struct opt_params dopts = {
 		[D_NOALIGN] = "noalign",
 		[D_RTINHERIT] = "rtinherit",
 		[D_PROJINHERIT] = "projinherit",
+		[D_EXTSIZE] = "extsize",
 		[D_EXTSZINHERIT] = "extszinherit",
 		[D_COWEXTSIZE] = "cowextsize",
 		[D_DAXINHERIT] = "daxinherit",
@@ -422,8 +424,17 @@ static struct opt_params dopts = {
 		  .maxval = UINT_MAX,
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
+		{ .index = D_EXTSIZE,
+		  .conflicts = { { &dopts, D_EXTSZINHERIT },
+				 { NULL, LAST_CONFLICT } },
+		  .convert = true,
+		  .minval = 0,
+		  .maxval = XFS_AG_MAX_BYTES,
+		  .defaultval = SUBOPT_NEEDS_VAL,
+		},
 		{ .index = D_EXTSZINHERIT,
-		  .conflicts = { { NULL, LAST_CONFLICT } },
+		  .conflicts = { { &dopts, D_EXTSIZE },
+				 { NULL, LAST_CONFLICT } },
 		  .minval = 0,
 		  .maxval = UINT_MAX,
 		  .defaultval = SUBOPT_NEEDS_VAL,
@@ -881,6 +892,7 @@ struct cli_params {
 	char	*lsu;
 	char	*rtextsize;
 	char	*rtsize;
+	char	*extsize;
 
 	/* parameters where 0 is a valid CLI value */
 	int	dsunit;
@@ -993,7 +1005,7 @@ usage( void )
 			    inobtcount=0|1,bigtime=0|1]\n\
 /* data subvol */	[-d agcount=n,agsize=n,file,name=xxx,size=num,\n\
 			    (sunit=value,swidth=value|su=num,sw=num|noalign),\n\
-			    sectsize=num\n\
+			    sectsize=num,extsize=num\n\
 /* force overwrite */	[-f]\n\
 /* inode size */	[-i perblock=n|size=num,maxpct=n,attr=0|1|2,\n\
 			    projid32bit=0|1,sparse=0|1,nrext64=0|1]\n\
@@ -1601,6 +1613,9 @@ data_opts_parser(
 		cli->fsx.fsx_projid = getnum(value, opts, subopt);
 		cli->fsx.fsx_xflags |= FS_XFLAG_PROJINHERIT;
 		break;
+	case D_EXTSIZE:
+		cli->extsize = getstr(value, opts, subopt);
+		break;
 	case D_EXTSZINHERIT:
 		cli->fsx.fsx_extsize = getnum(value, opts, subopt);
 		if (cli->fsx.fsx_extsize)
@@ -2082,6 +2097,33 @@ _("Minimum block size for CRC enabled filesystems is %d bytes.\n"),
 		usage();
 	}
 
+}
+
+/*
+ * Convert the -d extsize= option to a number, then set the extent size hint
+ * to that number.
+ */
+static void
+set_extsize(
+	struct cli_params	*cli,
+	char			*extsize,
+	struct opt_params	*opts,
+	int			subopt)
+{
+	uint64_t		extsz_bytes;
+	if (!extsize)
+		return;
+
+	extsz_bytes = getnum(extsize, opts, subopt);
+	if (extsz_bytes % blocksize)
+		illegal_option(extsize, opts, subopt,
+				_("Value must be a multiple of block size."));
+
+	cli->fsx.fsx_extsize = extsz_bytes / blocksize;
+	if (cli->fsx.fsx_extsize)
+		cli->fsx.fsx_xflags |= FS_XFLAG_EXTSZINHERIT;
+	else
+		cli->fsx.fsx_xflags &= ~FS_XFLAG_EXTSZINHERIT;
 }
 
 /*
@@ -4250,6 +4292,8 @@ main(
 	 */
 	blocksize = cfg.blocksize;
 	sectorsize = cfg.sectorsize;
+
+	set_extsize(&cli, cli.extsize, &dopts, D_EXTSIZE);
 
 	validate_log_sectorsize(&cfg, &cli, &dft);
 	validate_sb_features(&cfg, &cli);
