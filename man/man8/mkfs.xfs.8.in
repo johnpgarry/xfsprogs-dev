@@ -697,6 +697,19 @@ via the XFS_IOC_EXCHANGE_RANGE ioctl.
 Online repair uses this functionality to rebuild extended attributes,
 directories, symbolic links, and realtime metadata files.
 This feature is disabled by default.
+.BI forcealign[= value]
+If
+.B value
+is 1, mark the root directory so that all file data extent allocations will be
+aligned to the extent size hint.
+These allocations will be mapped into the file range at offsets that are
+aligned to the extent size hint.
+The
+.B extszinherit
+option must be specified.
+The
+.B cowextsize
+option must not be specified.
 This feature is only available for filesystems formatted with -m crc=1.
 .RE
 .PP

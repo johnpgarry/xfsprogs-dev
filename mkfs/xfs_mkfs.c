@@ -93,6 +93,7 @@ enum {
 	I_SPINODES,
 	I_NREXT64,
 	I_EXCHANGE,
+	I_FORCEALIGN,
 	I_MAX_OPTS,
 };
 
@@ -485,6 +486,7 @@ static struct opt_params iopts = {
 		[I_SPINODES] = "sparse",
 		[I_NREXT64] = "nrext64",
 		[I_EXCHANGE] = "exchange",
+		[I_FORCEALIGN] = "forcealign",
 		[I_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
@@ -540,7 +542,13 @@ static struct opt_params iopts = {
 		  .maxval = 1,
 		  .defaultval = 1,
 		},
-		{ .index = I_EXCHANGE,
+		{ .index = I_FORCEALIGN,
+		  .conflicts = { { NULL, LAST_CONFLICT } },
+		  .minval = 0,
+		  .maxval = 1,
+		  .defaultval = 1,
+		},
+		{ .index = I_FORCEALIGN,
 		  .conflicts = { { NULL, LAST_CONFLICT } },
 		  .minval = 0,
 		  .maxval = 1,
@@ -928,6 +936,7 @@ struct sb_feat_args {
 	bool	nortalign;
 	bool	nrext64;
 	bool	exchrange;		/* XFS_SB_FEAT_INCOMPAT_EXCHRANGE */
+	bool	forcealign;		/* XFS_SB_FEAT_RO_COMPAT_FORCEALIGN */
 };
 
 struct cli_params {
@@ -1067,7 +1076,7 @@ usage( void )
 /* force overwrite */	[-f]\n\
 /* inode size */	[-i perblock=n|size=num,maxpct=n,attr=0|1|2,\n\
 			    projid32bit=0|1,sparse=0|1,nrext64=0|1,\n\
-			    exchange=0|1]\n\
+			    exchange=0|1],forcealign=0|1\n\
 /* no discard */	[-K]\n\
 /* log subvol */	[-l agnum=n,internal,size=num,logdev=xxx,version=n\n\
 			    sunit=value|su=num,sectsize=num,lazy-count=0|1,\n\
@@ -1770,6 +1779,17 @@ inode_opts_parser(
 		break;
 	case I_EXCHANGE:
 		cli->sb_feat.exchrange = getnum(value, opts, subopt);
+		break;
+	case I_FORCEALIGN:
+		long long	val = getnum(value, opts, subopt);
+
+		if (val == 1) {
+			cli->sb_feat.forcealign = true;
+			cli->fsx.fsx_xflags |= FS_XFLAG_FORCEALIGN;
+		} else {
+			cli->sb_feat.forcealign = false;
+			cli->fsx.fsx_xflags &= ~FS_XFLAG_FORCEALIGN;
+		}
 		break;
 	default:
 		return -EINVAL;
@@ -2507,6 +2527,13 @@ _("autofsck not supported without CRC support\n"));
 			usage();
 		}
 		cli->autofsck = FSPROP_AUTOFSCK_UNSET;
+
+		if (cli->sb_feat.forcealign) {
+			fprintf(stderr,
+_("forced file data alignment not supported without CRC support\n"));
+			usage();
+		}
+		cli->sb_feat.forcealign = false;
 	}
 
 	if (!cli->sb_feat.finobt) {
@@ -2541,15 +2568,19 @@ _("cowextsize not supported without reflink support\n"));
 		usage();
 	}
 
-	/*
-	 * Turn on exchange-range if parent pointers are enabled and the caller
-	 * did not provide an explicit exchange-range parameter so that users
-	 * can take advantage of online repair.  It's not required for correct
-	 * operation, but it costs us nothing to enable it.
-	 */
-	if (cli->sb_feat.parent_pointers && !cli->sb_feat.exchrange &&
-	    !cli_opt_set(&iopts, I_EXCHANGE)) {
-		cli->sb_feat.exchrange = true;
+	if (cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN) {
+		if (cli->fsx.fsx_cowextsize > 0 || cli->fsx.fsx_extsize == 0) {
+		fprintf(stderr,
+		_("forcealign requires a non-zero extent size hint and no cow extent size hint\n"));
+		usage();
+		}
+
+		if (cli->sb_feat.reflink && cli_opt_set(&mopts, M_REFLINK)) {
+			fprintf(stderr,
+		_("reflink not supported with forcealign\n"));
+			usage();
+		}
+		cli->sb_feat.reflink = false;
 	}
 
 	/*
@@ -2801,6 +2832,40 @@ _("illegal CoW extent size hint %lld, must be less than %u.\n"),
 	}
 }
 
+/* Validate the incoming forcealign flag. */
+static void
+validate_forcealign(
+	struct xfs_mount	*mp,
+	struct cli_params	*cli)
+{
+	if (!(cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN))
+		return;
+
+	if (cli->fsx.fsx_xflags & (FS_XFLAG_REALTIME | FS_XFLAG_RTINHERIT)) {
+		fprintf(stderr,
+_("cannot set forcealign and realtime flags.\n"));
+		usage();
+	}
+
+	if (cli->fsx.fsx_cowextsize != 0) {
+		fprintf(stderr,
+_("cannot set CoW extent size hint when forcealign is set.\n"));
+		usage();
+	}
+
+	if (cli->fsx.fsx_extsize == 0) {
+		fprintf(stderr,
+_("cannot set forcealign without an extent size hint.\n"));
+		usage();
+	}
+
+	if (cli->fsx.fsx_xflags & (FS_XFLAG_REALTIME | FS_XFLAG_RTINHERIT)) {
+		fprintf(stderr,
+_("cannot set forcealign and realtime flags.\n"));
+		usage();
+	}
+}
+
 /* Complain if this filesystem is not a supported configuration. */
 static void
 validate_supported(
@@ -3009,6 +3074,16 @@ _("%s: Stripe unit(%d) or stripe width(%d) is not a multiple of the block size(%
 	/* convert from 512 byte blocks to fs blocksize */
 	cfg->dsunit = DTOBT(dsunit, cfg->blocklog);
 	cfg->dswidth = DTOBT(dswidth, cfg->blocklog);
+
+	if (cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN) {
+		if ((cfg->dsunit % cli->fsx.fsx_extsize) ||
+		    (cfg->dswidth % cli->fsx.fsx_extsize)) {
+			fprintf(stderr,
+		_("Stripe unit(%d) or stripe width(%d) is not a multiple of the extsize (%d) for forcealign\n"),
+				cfg->dsunit, cfg->dswidth, cli->fsx.fsx_extsize);
+			usage();
+		}
+	}
 
 check_lsunit:
 	/* log sunit options */
@@ -3406,10 +3481,62 @@ _("agsize (%s) not a multiple of fs blk size (%d)\n"),
  */
 static void
 align_ag_geometry(
-	struct mkfs_params	*cfg)
+	struct mkfs_params	*cfg,
+	struct cli_params	*cli)
 {
 	uint64_t	tmp_agsize;
 	int		dsunit = cfg->dsunit;
+
+	/*
+	 * If the sysadmin wants to force all file data space mappings to be
+	 * aligned to the extszinherit value, then we need the AGs to be
+	 * aligned to the same value.  Skip these checks if the extent size
+	 * hint is zero; the extszinherit validation will fail the format
+	 * later.
+	 */
+	if (cli->sb_feat.forcealign && cli->fsx.fsx_extsize != 0) {
+		/* Perfect alignment; we're done. */
+		if (cfg->agsize % cli->fsx.fsx_extsize == 0)
+			goto validate;
+
+		/*
+		 * Round up to file extent size boundary.  Make sure that
+		 * agsize is still larger than XFS_AG_MIN_BLOCKS(blocklog).
+		 */
+		tmp_agsize = ((cfg->agsize + cli->fsx.fsx_extsize - 1) /
+				cli->fsx.fsx_extsize) * cli->fsx.fsx_extsize;
+
+		/*
+		 * Round down to file extent size boundary if rounding up
+		 * created an AG size that is larger than the AG max.
+		 */
+		if (tmp_agsize > XFS_AG_MAX_BLOCKS(cfg->blocklog))
+			tmp_agsize = (cfg->agsize / cli->fsx.fsx_extsize) *
+							cli->fsx.fsx_extsize;
+
+		if (tmp_agsize < XFS_AG_MIN_BLOCKS(cfg->blocklog) &&
+		    tmp_agsize > XFS_AG_MAX_BLOCKS(cfg->blocklog)) {
+			/*
+			 * Set the agsize to the invalid value so the following
+			 * validation of the ag will fail and print a nice error
+			 * and exit.
+			 */
+			cfg->agsize = tmp_agsize;
+			goto validate;
+		}
+
+		/* Update geometry to be file extent size aligned */
+		cfg->agsize = tmp_agsize;
+		if (!cli_opt_set(&dopts, D_AGCOUNT))
+			cfg->agcount = cfg->dblocks / cfg->agsize +
+					(cfg->dblocks % cfg->agsize != 0);
+
+		if (cli_opt_set(&dopts, D_AGSIZE))
+			fprintf(stderr,
+_("agsize rounded to %lld, extszhint = %d\n"),
+				(long long)cfg->agsize, cli->fsx.fsx_extsize);
+		goto validate;
+	}
 
 	if (!dsunit)
 		goto validate;
@@ -3629,6 +3756,8 @@ sb_set_features(
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_REFLINK;
 	if (fp->inobtcnt)
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_INOBTCNT;
+	if (fp->forcealign)
+		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_FORCEALIGN;
 	if (fp->bigtime)
 		sbp->sb_features_incompat |= XFS_SB_FEAT_INCOMPAT_BIGTIME;
 
@@ -4707,7 +4836,7 @@ main(
 	 * aligns to device geometry correctly.
 	 */
 	calculate_initial_ag_geometry(&cfg, &cli, &xi);
-	align_ag_geometry(&cfg);
+	align_ag_geometry(&cfg, &cli);
 
 	calculate_imaxpct(&cfg, &cli);
 
@@ -4730,6 +4859,7 @@ main(
 	/* Validate the extent size hints now that @mp is fully set up. */
 	validate_extsize_hint(mp, &cli);
 	validate_cowextsize_hint(mp, &cli);
+	validate_forcealign(mp, &cli);
 
 	validate_supported(mp, &cli);
 
