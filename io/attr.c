@@ -38,9 +38,10 @@ static struct xflags {
 	{ FS_XFLAG_DAX,			"x", "dax"		},
 	{ FS_XFLAG_COWEXTSIZE,		"C", "cowextsize"	},
 	{ FS_XFLAG_HASATTR,		"X", "has-xattr"	},
+	{ FS_XFLAG_FORCEALIGN,		"F", "force-align"	},
 	{ 0, NULL, NULL }
 };
-#define CHATTR_XFLAG_LIST	"r"/*p*/"iasAdtPneEfSxC"/*X*/
+#define CHATTR_XFLAG_LIST	"r"/*p*/"iasAdtPneEfSxC"/*X*/"F"
 
 static void
 lsattr_help(void)
@@ -67,6 +68,7 @@ lsattr_help(void)
 " x -- Use direct access (DAX) for data in this file\n"
 " C -- for files with shared blocks, observe the inode CoW extent size value\n"
 " X -- file has extended attributes (cannot be changed using chattr)\n"
+" F -- data extent mappings must be aligned to extent size hint\n"
 "\n"
 " Options:\n"
 " -R -- recursively descend (useful when current file is a directory)\n"
@@ -104,6 +106,7 @@ chattr_help(void)
 " +/-S -- set/clear the filestreams allocator flag\n"
 " +/-x -- set/clear the direct access (DAX) flag\n"
 " +/-C -- set/clear the CoW extent-size flag\n"
+" +/-F -- set/clear the forcealign flag\n"
 " Note1: user must have certain capabilities to modify immutable/append-only.\n"
 " Note2: immutable/append-only files cannot be deleted; removing these files\n"
 "        requires the immutable/append-only flag to be cleared first.\n"
