@@ -44,6 +44,12 @@ struct iomap;
 #define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
 #define unlikely(x) (x)
 
+static inline __attribute__((const))
+int is_power_of_2(unsigned long n)
+{
+	return (n != 0 && ((n & (n - 1)) == 0));
+}
+
 /*
  * This mirrors the kernel include for xfs_buf.h - it's implicitly included in
  * every files via a similar include in the kernel xfs_linux.h.
