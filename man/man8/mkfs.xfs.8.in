@@ -657,6 +657,20 @@ Extend maximum values of inode data and attr fork extent counters from 2^31 -
 omitted, 1 is assumed. This feature is disabled by default. This feature is
 only available for filesystems formatted with -m crc=1.
 .TP
+.BI forcealign[= value]
+If
+.B value
+is 1, mark the root directory so that all file data extent allocations will be
+aligned to the extent size hint.
+These allocations will be mapped into the file range at offsets that are
+aligned to the extent size hint.
+The
+.B extszinherit
+option must be specified.
+The
+.B cowextsize
+option must not be specified.
+This feature is only available for filesystems formatted with -m crc=1.
 .RE
 .PP
 .PD 0
