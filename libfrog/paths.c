@@ -457,7 +457,8 @@ fs_table_insert_mount(
 
 static int
 fs_table_initialise_projects(
-	char		*project)
+	char		*project,
+	bool		all_mps_initialised)
 {
 	fs_project_path_t *path;
 	fs_path_t	*fs;
@@ -473,8 +474,10 @@ fs_table_initialise_projects(
 			continue;
 		fs = fs_mount_point_from_path(path->pp_pathname);
 		if (!fs) {
-			fprintf(stderr, _("%s: cannot find mount point for path `%s': %s\n"),
-					progname, path->pp_pathname, strerror(errno));
+			if (all_mps_initialised)
+				fprintf(stderr,
+	_("%s: cannot find mount point for path `%s': %s\n"), progname,
+					path->pp_pathname, strerror(errno));
 			continue;
 		}
 		(void) fs_table_insert(path->pp_pathname, path->pp_prid,
@@ -495,11 +498,12 @@ fs_table_initialise_projects(
 
 static void
 fs_table_insert_project(
-	char		*project)
+	char		*project,
+	bool		all_mps_initialised)
 {
 	int		error;
 
-	error = fs_table_initialise_projects(project);
+	error = fs_table_initialise_projects(project, all_mps_initialised);
 	if (error)
 		fprintf(stderr, _("%s: cannot setup path for project %s: %s\n"),
 			progname, project, strerror(error));
@@ -532,9 +536,9 @@ fs_table_initialise(
 	}
 	if (project_count) {
 		for (i = 0; i < project_count; i++)
-			fs_table_insert_project(projects[i]);
+			fs_table_insert_project(projects[i], mount_count == 0);
 	} else {
-		error = fs_table_initialise_projects(NULL);
+		error = fs_table_initialise_projects(NULL, mount_count == 0);
 		if (error)
 			goto out_error;
 	}
