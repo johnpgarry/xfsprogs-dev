@@ -327,6 +327,27 @@ AC_DEFUN([AC_NEED_INTERNAL_FSCRYPT_ADD_KEY_ARG],
   ])
 
 #
+# Check if we need to override the system struct fscrypt_policy_v2
+# with the internal definition.  This /only/ happens if the system
+# actually defines struct fscrypt_policy_v2 /and/ the system
+# definition is missing certain fields.
+#
+AC_DEFUN([AC_NEED_INTERNAL_FSCRYPT_POLICY_V2],
+  [
+    AC_CHECK_TYPE(struct fscrypt_policy_v2,
+      [
+        AC_CHECK_MEMBER(struct fscrypt_policy_v2.log2_data_unit_size,
+          ,
+          need_internal_fscrypt_policy_v2=yes,
+          [#include <linux/fs.h>]
+        )
+      ],,
+      [#include <linux/fs.h>]
+    )
+    AC_SUBST(need_internal_fscrypt_policy_v2)
+  ])
+
+#
 # Check if we have a FS_IOC_GETFSMAP ioctl (Linux)
 #
 AC_DEFUN([AC_HAVE_GETFSMAP],
