@@ -403,6 +403,11 @@ The
 and
 .B -r extsize
 options cannot be specified.
+
+The magic value
+.I hugepage
+will set the alignment value to the size of a huge page on the running system.
+
 This feature is only available for filesystems formatted with -m crc=1.
 .TP
 .BI name= value

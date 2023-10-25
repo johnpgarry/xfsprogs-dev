@@ -13,6 +13,7 @@
 #include "libfrog/convert.h"
 #include "libfrog/crc32cselftest.h"
 #include "libfrog/dahashselftest.h"
+#include "libfrog/platform.h"
 #include "proto.h"
 #include <ini.h>
 
@@ -2312,7 +2313,11 @@ set_forcealign(
 	if (!cli->forcealign)
 		return;
 
-	align_bytes = getnum(cli->forcealign, &dopts, D_FORCEALIGN);
+	if (!strcmp("hugepage", cli->forcealign))
+		align_bytes = hugepage_size();
+	else
+		align_bytes = getnum(cli->forcealign, &dopts, D_FORCEALIGN);
+
 	if (align_bytes == 0)
 		illegal_option(cli->forcealign, &dopts, D_FORCEALIGN,
 				_("Value cannot be zero."));

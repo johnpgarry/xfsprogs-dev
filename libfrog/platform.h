@@ -24,4 +24,6 @@ void platform_findsizes(char *path, int fd, long long *sz, int *bsz);
 char *kvasprintf(const char *fmt, va_list ap);
 char *kasprintf(const char *fmt, ...);
 
+long hugepage_size(void);
+
 #endif /* __LIBFROG_PLATFORM_H__ */
