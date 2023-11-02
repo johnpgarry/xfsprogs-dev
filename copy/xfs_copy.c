@@ -827,13 +827,9 @@ main(int argc, char **argv)
 			do_out(_("Creating file %s\n"), target[i].name);
 
 			open_flags |= O_CREAT;
-			if (!buffered_output)
-				open_flags |= O_DIRECT;
 			write_last_block = 1;
 		} else if (S_ISREG(statbuf.st_mode))  {
 			open_flags |= O_TRUNC;
-			if (!buffered_output)
-				open_flags |= O_DIRECT;
 			write_last_block = 1;
 		} else  {
 			/*
@@ -850,6 +846,8 @@ main(int argc, char **argv)
 				exit(1);
 			}
 		}
+		if (!buffered_output)
+			open_flags |= O_DIRECT;
 
 		target[i].fd = open(target[i].name, open_flags, 0644);
 		if (target[i].fd < 0)  {
@@ -882,14 +880,15 @@ main(int argc, char **argv)
 				}
 			}
 		} else  {
-			char	*lb[XFS_MAX_SECTORSIZE] = { NULL };
+			char	*lb = memalign(wbuf_align, XFS_MAX_SECTORSIZE);
 			off64_t	off;
 			ssize_t	len;
 
 			/* ensure device files are sufficiently large */
+			memset(lb, 0, XFS_MAX_SECTORSIZE);
 
 			off = mp->m_sb.sb_dblocks * source_blocksize;
-			off -= sizeof(lb);
+			off -= XFS_MAX_SECTORSIZE;
 			len = pwrite(target[i].fd, lb, XFS_MAX_SECTORSIZE, off);
 			if (len < 0) {
 				do_log(_("%s:  failed to write last block\n"),
@@ -906,6 +905,7 @@ main(int argc, char **argv)
 					target[i].name);
 				exit(1);
 			}
+			free(lb);
 		}
 	}
 
