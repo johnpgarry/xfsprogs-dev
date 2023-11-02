@@ -28,6 +28,7 @@
 #include "xfs_ag.h"
 #include "xfs_swapext.h"
 #include "defer_item.h"
+#include "xfs_btree.h"
 
 /* Dummy defer item ops, since we don't do logging. */
 
@@ -368,6 +369,23 @@ STATIC void
 xfs_rmap_update_abort_intent(
 	struct xfs_log_item		*intent)
 {
+}
+
+/* Clean up after calling xfs_rmap_finish_one. */
+STATIC void
+xfs_rmap_finish_one_cleanup(
+	struct xfs_trans	*tp,
+	struct xfs_btree_cur	*rcur,
+	int			error)
+{
+	struct xfs_buf		*agbp = NULL;
+
+	if (rcur == NULL)
+		return;
+	agbp = rcur->bc_ag.agbp;
+	xfs_btree_del_cursor(rcur, error);
+	if (error && agbp)
+		xfs_trans_brelse(tp, agbp);
 }
 
 const struct xfs_defer_op_type xfs_rmap_update_defer_type = {
