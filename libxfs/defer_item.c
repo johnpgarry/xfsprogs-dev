@@ -79,10 +79,7 @@ xfs_extent_free_get_group(
 	struct xfs_mount		*mp,
 	struct xfs_extent_free_item	*xefi)
 {
-	xfs_agnumber_t			agno;
-
-	agno = XFS_FSB_TO_AGNO(mp, xefi->xefi_startblock);
-	xefi->xefi_pag = xfs_perag_intent_get(mp, agno);
+	xefi->xefi_pag = xfs_perag_intent_get(mp, xefi->xefi_startblock);
 }
 
 /* Release an active AG ref after some freeing work. */
@@ -256,10 +253,7 @@ xfs_rmap_update_get_group(
 	struct xfs_mount	*mp,
 	struct xfs_rmap_intent	*ri)
 {
-	xfs_agnumber_t	agno;
-
-	agno = XFS_FSB_TO_AGNO(mp, ri->ri_bmap.br_startblock);
-	ri->ri_pag = xfs_perag_intent_get(mp, agno);
+	ri->ri_pag = xfs_perag_intent_get(mp, ri->ri_bmap.br_startblock);
 }
 
 /* Release an active AG ref after finishing rmapping work. */
@@ -369,10 +363,7 @@ xfs_refcount_update_get_group(
 	struct xfs_mount		*mp,
 	struct xfs_refcount_intent	*ri)
 {
-	xfs_agnumber_t			agno;
-
-	agno = XFS_FSB_TO_AGNO(mp, ri->ri_startblock);
-	ri->ri_pag = xfs_perag_intent_get(mp, agno);
+	ri->ri_pag = xfs_perag_intent_get(mp, ri->ri_startblock);
 }
 
 /* Release an active AG ref after finishing refcounting work. */
@@ -490,8 +481,6 @@ xfs_bmap_update_get_group(
 	struct xfs_mount	*mp,
 	struct xfs_bmap_intent	*bi)
 {
-	xfs_agnumber_t		agno;
-
 	if (xfs_ifork_is_realtime(bi->bi_owner, bi->bi_whichfork)) {
 		if (xfs_has_rtgroups(mp)) {
 			xfs_rgnumber_t	rgno;
@@ -505,8 +494,6 @@ xfs_bmap_update_get_group(
 		return;
 	}
 
-	agno = XFS_FSB_TO_AGNO(mp, bi->bi_bmap.br_startblock);
-
 	/*
 	 * Bump the intent count on behalf of the deferred rmap and refcount
 	 * intent items that that we can queue when we finish this bmap work.
@@ -514,7 +501,7 @@ xfs_bmap_update_get_group(
 	 * intent drops the intent count, ensuring that the intent count
 	 * remains nonzero across the transaction roll.
 	 */
-	bi->bi_pag = xfs_perag_intent_get(mp, agno);
+	bi->bi_pag = xfs_perag_intent_get(mp, bi->bi_bmap.br_startblock);
 }
 
 /* Add this deferred BUI to the transaction. */
