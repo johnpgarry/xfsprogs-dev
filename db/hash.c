@@ -65,16 +65,15 @@ hash_f(
 	}
 
 	for (c = optind; c < argc; c++) {
-		if (use_dir2_hash) {
-			struct xfs_name	xname = {
-				.name	= (uint8_t *)argv[c],
-				.len	= strlen(argv[c]),
-			};
+		struct xfs_name	xname = {
+			.name	= (uint8_t *)argv[c],
+			.len	= strlen(argv[c]),
+		};
 
+		if (use_dir2_hash)
 			hashval = libxfs_dir2_hashname(mp, &xname);
-		} else {
-			hashval = libxfs_da_hashname(argv[c], strlen(argv[c]));
-		}
+		else
+			hashval = libxfs_da_hashname(xname.name, xname.len);
 		dbprintf("0x%x\n", hashval);
 	}
 
@@ -103,7 +102,7 @@ struct name_dup {
 	struct name_dup	*next;
 	uint32_t	crc;
 	uint8_t		namelen;
-	uint8_t		name[];
+	char		name[];
 };
 
 static inline size_t
@@ -175,7 +174,7 @@ dup_table_free(
 static struct name_dup *
 dup_table_find(
 	struct dup_table	*tab,
-	unsigned char		*name,
+	char			*name,
 	size_t			namelen)
 {
 	struct name_dup		*ent;
@@ -197,7 +196,7 @@ dup_table_find(
 static int
 dup_table_store(
 	struct dup_table	*tab,
-	unsigned char		*name,
+	char			*name,
 	size_t			namelen)
 {
 	struct name_dup		*dup;
@@ -209,7 +208,7 @@ dup_table_store(
 		int		ret;
 
 		do {
-			ret = find_alternate(namelen, name, seq++);
+			ret = find_alternate(namelen, (uint8_t *)name, seq++);
 		} while (ret == 0);
 		if (ret < 0)
 			return EEXIST;
@@ -231,15 +230,15 @@ dup_table_store(
 static int
 collide_dirents(
 	unsigned long		nr,
-	const unsigned char	*name,
+	char			*name,
 	size_t			namelen,
 	int			fd)
 {
 	struct xfs_name		dname = {
-		.name		= name,
+		.name		= (uint8_t *)name,
 		.len		= namelen,
 	};
-	unsigned char		direntname[MAXNAMELEN + 1];
+	char			direntname[MAXNAMELEN + 1];
 	struct dup_table	*tab = NULL;
 	xfs_dahash_t		old_hash;
 	unsigned long		i;
@@ -268,10 +267,10 @@ collide_dirents(
 			return error;
 	}
 
-	dname.name = direntname;
+	dname.name = (uint8_t *)direntname;
 	for (i = 0; i < nr; i++) {
 		strncpy(direntname, name, MAXNAMELEN);
-		obfuscate_name(old_hash, namelen, direntname, true);
+		obfuscate_name(old_hash, namelen, (uint8_t *)direntname, true);
 		ASSERT(old_hash == libxfs_dir2_hashname(mp, &dname));
 
 		if (fd >= 0) {
@@ -297,17 +296,17 @@ collide_dirents(
 static int
 collide_xattrs(
 	unsigned long		nr,
-	const unsigned char	*name,
+	char			*name,
 	size_t			namelen,
 	int			fd)
 {
-	unsigned char		xattrname[MAXNAMELEN + 5];
+	char			xattrname[MAXNAMELEN + 5];
 	struct dup_table	*tab = NULL;
 	xfs_dahash_t		old_hash;
 	unsigned long		i;
 	int			error;
 
-	old_hash = libxfs_da_hashname(name, namelen);
+	old_hash = libxfs_da_hashname((uint8_t *)name, namelen);
 
 	if (fd >= 0) {
 		/*
@@ -330,8 +329,10 @@ collide_xattrs(
 
 	for (i = 0; i < nr; i++) {
 		snprintf(xattrname, MAXNAMELEN + 5, "user.%s", name);
-		obfuscate_name(old_hash, namelen, xattrname + 5, false);
-		ASSERT(old_hash == libxfs_da_hashname(xattrname + 5, namelen));
+		obfuscate_name(old_hash, namelen, (uint8_t *)xattrname + 5,
+				false);
+		ASSERT(old_hash == libxfs_da_hashname((uint8_t *)xattrname + 5,
+				namelen));
 
 		if (fd >= 0) {
 			error = fsetxattr(fd, xattrname, "1", 1, 0);
