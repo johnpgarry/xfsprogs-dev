@@ -8,6 +8,11 @@
 #include "xfs_metadump.h"
 #include <libfrog/platform.h>
 
+union mdrestore_headers {
+	__be32			magic;
+	struct xfs_metablock	v1;
+};
+
 static struct mdrestore {
 	bool	show_progress;
 	bool	show_info;
@@ -78,27 +83,25 @@ open_device(
 
 static void
 read_header(
-	struct xfs_metablock	*mb,
+	union mdrestore_headers	*h,
 	FILE			*md_fp)
 {
-	mb->mb_magic = cpu_to_be32(XFS_MD_MAGIC_V1);
-
-	if (fread((uint8_t *)mb + sizeof(mb->mb_magic),
-			sizeof(*mb) - sizeof(mb->mb_magic), 1, md_fp) != 1)
+	if (fread((uint8_t *)&(h->v1.mb_count),
+			sizeof(h->v1) - sizeof(h->magic), 1, md_fp) != 1)
 		fatal("error reading from metadump file\n");
 }
 
 static void
 show_info(
-	struct xfs_metablock	*mb,
+	union mdrestore_headers	*h,
 	const char		*md_file)
 {
-	if (mb->mb_info & XFS_METADUMP_INFO_FLAGS) {
+	if (h->v1.mb_info & XFS_METADUMP_INFO_FLAGS) {
 		printf("%s: %sobfuscated, %s log, %s metadata blocks\n",
 			md_file,
-			mb->mb_info & XFS_METADUMP_OBFUSCATED ? "":"not ",
-			mb->mb_info & XFS_METADUMP_DIRTYLOG ? "dirty":"clean",
-			mb->mb_info & XFS_METADUMP_FULLBLOCKS ? "full":"zeroed");
+			h->v1.mb_info & XFS_METADUMP_OBFUSCATED ? "":"not ",
+			h->v1.mb_info & XFS_METADUMP_DIRTYLOG ? "dirty":"clean",
+			h->v1.mb_info & XFS_METADUMP_FULLBLOCKS ? "full":"zeroed");
 	} else {
 		printf("%s: no informational flags present\n", md_file);
 	}
@@ -116,10 +119,10 @@ show_info(
  */
 static void
 restore(
+	union mdrestore_headers *h,
 	FILE			*md_fp,
 	int			ddev_fd,
-	int			is_target_file,
-	const struct xfs_metablock	*mbp)
+	int			is_target_file)
 {
 	struct xfs_metablock	*metablock;	/* header + index + blocks */
 	__be64			*block_index;
@@ -131,14 +134,14 @@ restore(
 	xfs_sb_t		sb;
 	int64_t			bytes_read;
 
-	block_size = 1 << mbp->mb_blocklog;
+	block_size = 1 << h->v1.mb_blocklog;
 	max_indices = (block_size - sizeof(xfs_metablock_t)) / sizeof(__be64);
 
 	metablock = (xfs_metablock_t *)calloc(max_indices + 1, block_size);
 	if (metablock == NULL)
 		fatal("memory allocation failure\n");
 
-	mb_count = be16_to_cpu(mbp->mb_count);
+	mb_count = be16_to_cpu(h->v1.mb_count);
 	if (mb_count == 0 || mb_count > max_indices)
 		fatal("bad block count: %u\n", mb_count);
 
@@ -152,8 +155,7 @@ restore(
 	if (block_index[0] != 0)
 		fatal("first block is not the primary superblock\n");
 
-
-	if (fread(block_buffer, mb_count << mbp->mb_blocklog, 1, md_fp) != 1)
+	if (fread(block_buffer, mb_count << h->v1.mb_blocklog, 1, md_fp) != 1)
 		fatal("error reading from metadump file\n");
 
 	libxfs_sb_from_disk(&sb, (struct xfs_dsb *)block_buffer);
@@ -200,7 +202,7 @@ restore(
 
 		for (cur_index = 0; cur_index < mb_count; cur_index++) {
 			if (pwrite(ddev_fd, &block_buffer[cur_index <<
-					mbp->mb_blocklog], block_size,
+					h->v1.mb_blocklog], block_size,
 					be64_to_cpu(block_index[cur_index]) <<
 						BBSHIFT) < 0)
 				fatal("error writing block %llu: %s\n",
@@ -219,11 +221,11 @@ restore(
 		if (mb_count > max_indices)
 			fatal("bad block count: %u\n", mb_count);
 
-		if (fread(block_buffer, mb_count << mbp->mb_blocklog,
+		if (fread(block_buffer, mb_count << h->v1.mb_blocklog,
 				1, md_fp) != 1)
 			fatal("error reading from metadump file\n");
 
-		bytes_read += block_size + (mb_count << mbp->mb_blocklog);
+		bytes_read += block_size + (mb_count << h->v1.mb_blocklog);
 	}
 
 	if (mdrestore.progress_since_warning)
@@ -252,15 +254,14 @@ usage(void)
 
 int
 main(
-	int 		argc,
-	char 		**argv)
+	int			argc,
+	char			**argv)
 {
-	FILE		*src_f;
-	int		dst_fd;
-	int		c;
-	bool		is_target_file;
-	uint32_t	magic;
-	struct xfs_metablock	mb;
+	union mdrestore_headers headers;
+	FILE			*src_f;
+	int			dst_fd;
+	int			c;
+	bool			is_target_file;
 
 	mdrestore.show_progress = false;
 	mdrestore.show_info = false;
@@ -307,20 +308,21 @@ main(
 			fatal("cannot open source dump file\n");
 	}
 
-	if (fread(&magic, sizeof(magic), 1, src_f) != 1)
+	if (fread(&headers.magic, sizeof(headers.magic), 1, src_f) != 1)
 		fatal("Unable to read metadump magic from metadump file\n");
 
-	switch (be32_to_cpu(magic)) {
+	switch (be32_to_cpu(headers.magic)) {
 	case XFS_MD_MAGIC_V1:
-		read_header(&mb, src_f);
 		break;
 	default:
 		fatal("specified file is not a metadata dump\n");
 		break;
 	}
 
+	read_header(&headers, src_f);
+
 	if (mdrestore.show_info) {
-		show_info(&mb, argv[optind]);
+		show_info(&headers, argv[optind]);
 
 		if (argc - optind == 1)
 			exit(0);
@@ -331,7 +333,7 @@ main(
 	/* check and open target */
 	dst_fd = open_device(argv[optind], &is_target_file);
 
-	restore(src_f, dst_fd, is_target_file, &mb);
+	restore(&headers, src_f, dst_fd, is_target_file);
 
 	close(dst_fd);
 	if (src_f != stdin)
