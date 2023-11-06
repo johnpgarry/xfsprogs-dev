@@ -5,6 +5,9 @@ xfs_mdrestore \- restores an XFS metadump image to a filesystem image
 .B xfs_mdrestore
 [
 .B \-gi
+] [
+.B \-l
+.I logdev
 ]
 .I source
 .I target
@@ -48,6 +51,11 @@ Shows metadump information on stdout.  If no
 .I target
 is specified, exits after displaying information.  Older metadumps man not
 include any descriptive information.
+.TP
+.B \-l " logdev"
+Metadump in v2 format can contain metadata dumped from an external log.
+In such a scenario, the user has to provide a device to which the log device
+contents from the metadump file are copied.
 .TP
 .B \-V
 Prints the version number and exits.
