@@ -198,6 +198,7 @@ main(
 	int		open_flags;
 	struct stat	statbuf;
 	int		is_target_file;
+	uint32_t	magic;
 	struct xfs_metablock	mb;
 
 	mdrestore.show_progress = false;
@@ -245,10 +246,21 @@ main(
 			fatal("cannot open source dump file\n");
 	}
 
-	if (fread(&mb, sizeof(mb), 1, src_f) != 1)
-		fatal("error reading from metadump file\n");
-	if (mb.mb_magic != cpu_to_be32(XFS_MD_MAGIC_V1))
+	if (fread(&magic, sizeof(magic), 1, src_f) != 1)
+		fatal("Unable to read metadump magic from metadump file\n");
+
+	switch (be32_to_cpu(magic)) {
+	case XFS_MD_MAGIC_V1:
+		mb.mb_magic = cpu_to_be32(XFS_MD_MAGIC_V1);
+		if (fread((uint8_t *)&mb + sizeof(mb.mb_magic),
+				sizeof(mb) - sizeof(mb.mb_magic), 1,
+				src_f) != 1)
+			fatal("error reading from metadump file\n");
+		break;
+	default:
 		fatal("specified file is not a metadata dump\n");
+		break;
+	}
 
 	if (mdrestore.show_info) {
 		if (mb.mb_info & XFS_METADUMP_INFO_FLAGS) {
