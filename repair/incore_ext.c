@@ -532,18 +532,20 @@ static avlops_t avl_extent_tree_ops = {
  * startblocks can be 64-bit values.
  */
 static rt_extent_tree_node_t *
-mk_rt_extent_tree_nodes(xfs_rtblock_t new_startblock,
-	xfs_extlen_t new_blockcount, extent_state_t new_state)
+mk_rt_extent_tree_nodes(
+	xfs_rtblock_t			new_startrtx,
+	xfs_extlen_t			new_rtxlen,
+	extent_state_t			new_state)
 {
-	rt_extent_tree_node_t *new;
+	struct rt_extent_tree_node	*new;
 
 	new = malloc(sizeof(*new));
 	if (!new)
 		do_error(_("couldn't allocate new extent descriptor.\n"));
 
 	new->avl_node.avl_nextino = NULL;
-	new->rt_startblock = new_startblock;
-	new->rt_blockcount = new_blockcount;
+	new->rt_startrtx = new_startrtx;
+	new->rt_rtxlen = new_rtxlen;
 	new->rt_state = new_state;
 	return new;
 }
@@ -600,24 +602,25 @@ free_rt_dup_extent_tree(xfs_mount_t *mp)
  * add a duplicate real-time extent
  */
 void
-add_rt_dup_extent(xfs_rtblock_t startblock, xfs_extlen_t blockcount)
+add_rt_dup_extent(
+	xfs_rtblock_t			startrtx,
+	xfs_extlen_t			rtxlen)
 {
-	rt_extent_tree_node_t *first, *last, *ext, *next_ext;
-	xfs_rtblock_t new_startblock;
-	xfs_extlen_t new_blockcount;
+	struct rt_extent_tree_node	*first, *last, *ext, *next_ext;
+	xfs_rtblock_t			new_startrtx;
+	xfs_extlen_t			new_rtxlen;
 
 	pthread_mutex_lock(&rt_ext_tree_lock);
-	avl64_findranges(rt_ext_tree_ptr, startblock - 1,
-		startblock + blockcount + 1,
-		(avl64node_t **) &first, (avl64node_t **) &last);
+	avl64_findranges(rt_ext_tree_ptr, startrtx - 1,
+			startrtx + rtxlen + 1,
+			(avl64node_t **) &first, (avl64node_t **) &last);
 	/*
 	 * find adjacent and overlapping extent blocks
 	 */
 	if (first == NULL && last == NULL)  {
 		/* nothing, just make and insert new extent */
 
-		ext = mk_rt_extent_tree_nodes(startblock,
-				blockcount, XR_E_MULT);
+		ext = mk_rt_extent_tree_nodes(startrtx, rtxlen, XR_E_MULT);
 
 		if (avl64_insert(rt_ext_tree_ptr,
 				(avl64node_t *) ext) == NULL)  {
@@ -634,8 +637,8 @@ add_rt_dup_extent(xfs_rtblock_t startblock, xfs_extlen_t blockcount)
 	 * find the new composite range, delete old extent nodes
 	 * as we go
 	 */
-	new_startblock = startblock;
-	new_blockcount = blockcount;
+	new_startrtx = startrtx;
+	new_rtxlen = rtxlen;
 
 	for (ext = first;
 		ext != (rt_extent_tree_node_t *) last->avl_node.avl_nextino;
@@ -647,33 +650,32 @@ add_rt_dup_extent(xfs_rtblock_t startblock, xfs_extlen_t blockcount)
 		/*
 		 * just bail if the new extent is contained within an old one
 		 */
-		if (ext->rt_startblock <= startblock &&
-				ext->rt_blockcount >= blockcount) {
+		if (ext->rt_startrtx <= startrtx &&
+		    ext->rt_rtxlen >= rtxlen) {
 			pthread_mutex_unlock(&rt_ext_tree_lock);
 			return;
 		}
 		/*
 		 * now check for overlaps and adjacent extents
 		 */
-		if (ext->rt_startblock + ext->rt_blockcount >= startblock
-			|| ext->rt_startblock <= startblock + blockcount)  {
+		if (ext->rt_startrtx + ext->rt_rtxlen >= startrtx ||
+		    ext->rt_startrtx <= startrtx + rtxlen)  {
 
-			if (ext->rt_startblock < new_startblock)
-				new_startblock = ext->rt_startblock;
+			if (ext->rt_startrtx < new_startrtx)
+				new_startrtx = ext->rt_startrtx;
 
-			if (ext->rt_startblock + ext->rt_blockcount >
-					new_startblock + new_blockcount)
-				new_blockcount = ext->rt_startblock +
-							ext->rt_blockcount -
-							new_startblock;
+			if (ext->rt_startrtx + ext->rt_rtxlen >
+					new_startrtx + new_rtxlen)
+				new_rtxlen = ext->rt_startrtx +
+							ext->rt_rtxlen -
+							new_startrtx;
 
 			avl64_delete(rt_ext_tree_ptr, (avl64node_t *) ext);
 			continue;
 		}
 	}
 
-	ext = mk_rt_extent_tree_nodes(new_startblock,
-				new_blockcount, XR_E_MULT);
+	ext = mk_rt_extent_tree_nodes(new_startrtx, new_rtxlen, XR_E_MULT);
 
 	if (avl64_insert(rt_ext_tree_ptr, (avl64node_t *) ext) == NULL)  {
 		do_error(_("duplicate extent range\n"));
@@ -688,12 +690,14 @@ add_rt_dup_extent(xfs_rtblock_t startblock, xfs_extlen_t blockcount)
  */
 /* ARGSUSED */
 int
-search_rt_dup_extent(xfs_mount_t *mp, xfs_rtblock_t bno)
+search_rt_dup_extent(
+	struct xfs_mount	*mp,
+	xfs_rtblock_t		rtx)
 {
-	int ret;
+	int			ret;
 
 	pthread_mutex_lock(&rt_ext_tree_lock);
-	if (avl64_findrange(rt_ext_tree_ptr, bno) != NULL)
+	if (avl64_findrange(rt_ext_tree_ptr, rtx) != NULL)
 		ret = 1;
 	else
 		ret = 0;
@@ -704,14 +708,14 @@ search_rt_dup_extent(xfs_mount_t *mp, xfs_rtblock_t bno)
 static uint64_t
 avl64_rt_ext_start(avl64node_t *node)
 {
-	return(((rt_extent_tree_node_t *) node)->rt_startblock);
+	return(((rt_extent_tree_node_t *) node)->rt_startrtx);
 }
 
 static uint64_t
 avl64_ext_end(avl64node_t *node)
 {
-	return(((rt_extent_tree_node_t *) node)->rt_startblock +
-		((rt_extent_tree_node_t *) node)->rt_blockcount);
+	return(((rt_extent_tree_node_t *) node)->rt_startrtx +
+		((rt_extent_tree_node_t *) node)->rt_rtxlen);
 }
 
 static avl64ops_t avl64_extent_tree_ops = {
