@@ -1060,10 +1060,14 @@ xfs_rtfree_extent(
 		if (!(mp->m_rbmip->i_diflags & XFS_DIFLAG_NEWRTBM))
 			mp->m_rbmip->i_diflags |= XFS_DIFLAG_NEWRTBM;
 
-		atime = inode_get_atime(VFS_I(mp->m_rbmip));
-		atime.tv_sec = 0;
-		inode_set_atime_to_ts(VFS_I(mp->m_rbmip), atime);
-		xfs_trans_log_inode(tp, mp->m_rbmip, XFS_ILOG_CORE);
+		if (xfs_has_rtgroups(mp)) {
+			mp->m_rtgrotor = 0;
+		} else {
+			atime = inode_get_atime(VFS_I(mp->m_rbmip));
+			atime.tv_sec = 0;
+			inode_set_atime_to_ts(VFS_I(mp->m_rbmip), atime);
+			xfs_trans_log_inode(tp, mp->m_rbmip, XFS_ILOG_CORE);
+		}
 	}
 	error = 0;
 out:

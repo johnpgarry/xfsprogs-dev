@@ -52,6 +52,7 @@ typedef struct xfs_mount {
 	char			*m_fsname;	/* filesystem name */
 	int			m_bsize;	/* fs logical block size */
 	spinlock_t		m_agirotor_lock;
+	xfs_rgnumber_t		m_rtgrotor;	/* last rtgroup rtpicked */
 	xfs_agnumber_t		m_agfrotor;	/* last ag where space found */
 	xfs_agnumber_t		m_agirotor;	/* last ag dir inode alloced */
 	xfs_agnumber_t		m_maxagi;	/* highest inode alloc group */
