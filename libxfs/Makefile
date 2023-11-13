@@ -50,6 +50,7 @@ HFILES = \
 	xfs_refcount_btree.h \
 	xfs_rmap.h \
 	xfs_rmap_btree.h \
+	xfs_rtbitmap.h \
 	xfs_sb.h \
 	xfs_shared.h \
 	xfs_trans_resv.h \

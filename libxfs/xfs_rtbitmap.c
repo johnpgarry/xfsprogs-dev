@@ -14,6 +14,7 @@
 #include "xfs_inode.h"
 #include "xfs_bmap.h"
 #include "xfs_trans.h"
+#include "xfs_rtbitmap.h"
 
 /*
  * Realtime allocator bitmap functions shared with userspace.
