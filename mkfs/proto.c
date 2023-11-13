@@ -688,7 +688,7 @@ rtinit(
 	mp->m_sb.sb_rbmino = rbmip->i_ino;
 	rbmip->i_disk_size = mp->m_sb.sb_rbmblocks * mp->m_sb.sb_blocksize;
 	rbmip->i_diflags = XFS_DIFLAG_NEWRTBM;
-	*(uint64_t *)&VFS_I(rbmip)->__i_atime = 0;
+	inode_set_atime(VFS_I(rbmip), 0, 0);
 	libxfs_trans_log_inode(tp, rbmip, XFS_ILOG_CORE);
 	libxfs_log_sb(tp);
 	mp->m_rbmip = rbmip;
