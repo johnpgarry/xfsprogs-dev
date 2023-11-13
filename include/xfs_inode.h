@@ -41,8 +41,8 @@ struct inode {
 	unsigned long		i_state; /* Not actually used in userspace */
 	uint32_t		i_generation;
 	uint64_t		i_version;
-	struct timespec64	i_atime;
-	struct timespec64	i_mtime;
+	struct timespec64	__i_atime;
+	struct timespec64	__i_mtime;
 	struct timespec64	__i_ctime; /* use inode_*_ctime accessors! */
 	spinlock_t		i_lock;
 };
@@ -71,23 +71,23 @@ static inline void ihold(struct inode *inode)
 
 static inline time64_t inode_get_atime_sec(const struct inode *inode)
 {
-	return inode->i_atime.tv_sec;
+	return inode->__i_atime.tv_sec;
 }
 
 static inline long inode_get_atime_nsec(const struct inode *inode)
 {
-	return inode->i_atime.tv_nsec;
+	return inode->__i_atime.tv_nsec;
 }
 
 static inline struct timespec64 inode_get_atime(const struct inode *inode)
 {
-	return inode->i_atime;
+	return inode->__i_atime;
 }
 
 static inline struct timespec64 inode_set_atime_to_ts(struct inode *inode,
 						      struct timespec64 ts)
 {
-	inode->i_atime = ts;
+	inode->__i_atime = ts;
 	return ts;
 }
 
@@ -101,23 +101,23 @@ static inline struct timespec64 inode_set_atime(struct inode *inode,
 
 static inline time64_t inode_get_mtime_sec(const struct inode *inode)
 {
-	return inode->i_mtime.tv_sec;
+	return inode->__i_mtime.tv_sec;
 }
 
 static inline long inode_get_mtime_nsec(const struct inode *inode)
 {
-	return inode->i_mtime.tv_nsec;
+	return inode->__i_mtime.tv_nsec;
 }
 
 static inline struct timespec64 inode_get_mtime(const struct inode *inode)
 {
-	return inode->i_mtime;
+	return inode->__i_mtime;
 }
 
 static inline struct timespec64 inode_set_mtime_to_ts(struct inode *inode,
 						      struct timespec64 ts)
 {
-	inode->i_mtime = ts;
+	inode->__i_mtime = ts;
 	return ts;
 }
 

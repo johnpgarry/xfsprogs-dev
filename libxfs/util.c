@@ -291,7 +291,7 @@ libxfs_init_new_inode(
 		if (!pip)
 			ip->i_diflags2 = xfs_flags2diflags2(ip,
 							fsx->fsx_xflags);
-		ip->i_crtime = VFS_I(ip)->i_mtime; /* struct copy */
+		ip->i_crtime = VFS_I(ip)->__i_mtime; /* struct copy */
 		ip->i_cowextsize = pip ? 0 : fsx->fsx_cowextsize;
 	}
 
