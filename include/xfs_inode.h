@@ -69,17 +69,9 @@ static inline void ihold(struct inode *inode)
 	inode->i_count++;
 }
 
-/* Userspace does not support multigrain timestamps incore. */
-#define I_CTIME_QUERIED			(0)
-
 static inline struct timespec64 inode_get_ctime(const struct inode *inode)
 {
-	struct timespec64 ctime;
-
-	ctime.tv_sec = inode->__i_ctime.tv_sec;
-	ctime.tv_nsec = inode->__i_ctime.tv_nsec & ~I_CTIME_QUERIED;
-
-	return ctime;
+	return inode->__i_ctime;
 }
 
 static inline struct timespec64 inode_set_ctime_to_ts(struct inode *inode,
