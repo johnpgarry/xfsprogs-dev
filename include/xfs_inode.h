@@ -43,7 +43,7 @@ struct inode {
 	uint64_t		i_version;
 	struct timespec64	i_atime;
 	struct timespec64	i_mtime;
-	struct timespec64	i_ctime;
+	struct timespec64	__i_ctime; /* use inode_*_ctime accessors! */
 	spinlock_t		i_lock;
 };
 
@@ -67,6 +67,26 @@ static inline void i_gid_write(struct inode *inode, uint32_t gid)
 static inline void ihold(struct inode *inode)
 {
 	inode->i_count++;
+}
+
+/* Userspace does not support multigrain timestamps incore. */
+#define I_CTIME_QUERIED			(0)
+
+static inline struct timespec64 inode_get_ctime(const struct inode *inode)
+{
+	struct timespec64 ctime;
+
+	ctime.tv_sec = inode->__i_ctime.tv_sec;
+	ctime.tv_nsec = inode->__i_ctime.tv_nsec & ~I_CTIME_QUERIED;
+
+	return ctime;
+}
+
+static inline struct timespec64 inode_set_ctime_to_ts(struct inode *inode,
+						     struct timespec64 ts)
+{
+	inode->__i_ctime = ts;
+	return ts;
 }
 
 typedef struct xfs_inode {
