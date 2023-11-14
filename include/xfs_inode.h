@@ -89,6 +89,16 @@ static inline struct timespec64 inode_set_ctime_to_ts(struct inode *inode,
 	return ts;
 }
 
+extern struct timespec64 current_time(struct inode *inode);
+
+static inline struct timespec64 inode_set_ctime_current(struct inode *inode)
+{
+	struct timespec64 now = current_time(inode);
+
+	inode_set_ctime_to_ts(inode, now);
+	return now;
+}
+
 typedef struct xfs_inode {
 	struct cache_node	i_node;
 	struct xfs_mount	*i_mount;	/* fs mount struct ptr */
@@ -270,8 +280,6 @@ extern void	libxfs_trans_inode_alloc_buf (struct xfs_trans *,
 extern void	libxfs_trans_ichgtime(struct xfs_trans *,
 				struct xfs_inode *, int);
 extern int	libxfs_iflush_int (struct xfs_inode *, struct xfs_buf *);
-
-extern struct timespec64 current_time(struct inode *inode);
 
 /* Inode Cache Interfaces */
 extern int	libxfs_iget(struct xfs_mount *, struct xfs_trans *, xfs_ino_t,
