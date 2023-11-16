@@ -528,21 +528,18 @@ xfs_refcount_update_create_done(
 	return NULL;
 }
 
-/* Take an active ref to the AG containing the space we're refcounting. */
+/* Add this deferred CUI to the transaction. */
 void
-xfs_refcount_update_get_group(
-	struct xfs_mount		*mp,
+xfs_refcount_defer_add(
+	struct xfs_trans		*tp,
 	struct xfs_refcount_intent	*ri)
 {
-	ri->ri_pag = xfs_perag_intent_get(mp, ri->ri_startblock);
-}
+	struct xfs_mount		*mp = tp->t_mountp;
 
-/* Release an active AG ref after finishing refcounting work. */
-static inline void
-xfs_refcount_update_put_group(
-	struct xfs_refcount_intent	*ri)
-{
-	xfs_perag_intent_put(ri->ri_pag);
+	trace_xfs_refcount_defer(mp, ri);
+
+	ri->ri_pag = xfs_perag_intent_get(mp, ri->ri_startblock);
+	xfs_defer_add(tp, &ri->ri_list, &xfs_refcount_update_defer_type);
 }
 
 /* Cancel a deferred refcount update. */
@@ -552,7 +549,7 @@ xfs_refcount_update_cancel_item(
 {
 	struct xfs_refcount_intent	*ri = ci_entry(item);
 
-	xfs_refcount_update_put_group(ri);
+	xfs_perag_intent_put(ri->ri_pag);
 	kmem_cache_free(xfs_refcount_intent_cache, ri);
 }
 
