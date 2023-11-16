@@ -274,6 +274,7 @@ xlog_print_trans_rui(
 	uint			src_len,
 	int			continued)
 {
+	const char		*item_name = "RUI?";
 	struct xfs_rui_log_format	*src_f, *f = NULL;
 	uint			dst_len;
 	uint			nextents;
@@ -318,8 +319,14 @@ xlog_print_trans_rui(
 		goto error;
 	}
 
-	printf(_("RUI:  #regs: %d	num_extents: %d  id: 0x%llx\n"),
-		f->rui_size, f->rui_nextents, (unsigned long long)f->rui_id);
+	switch (f->rui_type) {
+	case XFS_LI_RUI:	item_name = "RUI"; break;
+	case XFS_LI_RUI_RT:	item_name = "RUI_RT"; break;
+	}
+
+	printf(_("%s:  #regs: %d	num_extents: %d  id: 0x%llx\n"),
+			item_name, f->rui_size, f->rui_nextents,
+			(unsigned long long)f->rui_id);
 
 	if (continued) {
 		printf(_("RUI extent data skipped (CONTINUE set, no space)\n"));
@@ -359,6 +366,7 @@ xlog_print_trans_rud(
 	char				**ptr,
 	uint				len)
 {
+	const char			*item_name = "RUD?";
 	struct xfs_rud_log_format	*f;
 	struct xfs_rud_log_format	lbuf;
 
@@ -371,11 +379,17 @@ xlog_print_trans_rud(
 	 */
 	memmove(&lbuf, *ptr, min(core_size, len));
 	f = &lbuf;
+
+	switch (f->rud_type) {
+	case XFS_LI_RUD:	item_name = "RUD"; break;
+	case XFS_LI_RUD_RT:	item_name = "RUD_RT"; break;
+	}
+
 	*ptr += len;
 	if (len >= core_size) {
-		printf(_("RUD:  #regs: %d	                 id: 0x%llx\n"),
-			f->rud_size,
-			(unsigned long long)f->rud_rui_id);
+		printf(_("%s:  #regs: %d	                 id: 0x%llx\n"),
+				item_name, f->rud_size,
+				(unsigned long long)f->rud_rui_id);
 
 		/* don't print extents as they are not used */
 

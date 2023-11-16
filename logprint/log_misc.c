@@ -1021,12 +1021,14 @@ xlog_print_record(
 					be32_to_cpu(op_head->oh_len));
 			break;
 		    }
+		    case XFS_LI_RUI_RT:
 		    case XFS_LI_RUI: {
 			skip = xlog_print_trans_rui(&ptr,
 					be32_to_cpu(op_head->oh_len),
 					continued);
 			break;
 		    }
+		    case XFS_LI_RUD_RT:
 		    case XFS_LI_RUD: {
 			skip = xlog_print_trans_rud(&ptr,
 					be32_to_cpu(op_head->oh_len));
