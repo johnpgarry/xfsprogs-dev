@@ -20,6 +20,7 @@ PKGHFILES = xfs_fs.h \
 	xfs_log_format.h
 
 HFILES = \
+	defer_item.h \
 	libxfs_io.h \
 	libxfs_api_defs.h \
 	init.h \
