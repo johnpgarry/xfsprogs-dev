@@ -440,6 +440,7 @@ xlog_print_trans_cui(
 	uint			src_len,
 	int			continued)
 {
+	const char		*item_name = "CUI?";
 	struct xfs_cui_log_format	*src_f, *f = NULL;
 	uint			dst_len;
 	uint			nextents;
@@ -480,8 +481,14 @@ xlog_print_trans_cui(
 		goto error;
 	}
 
-	printf(_("CUI:  #regs: %d	num_extents: %d  id: 0x%llx\n"),
-		f->cui_size, f->cui_nextents, (unsigned long long)f->cui_id);
+	switch (f->cui_type) {
+	case XFS_LI_CUI:	item_name = "CUI"; break;
+	case XFS_LI_CUI_RT:	item_name = "CUI_RT"; break;
+	}
+
+	printf(_("%s:  #regs: %d	num_extents: %d  id: 0x%llx\n"),
+			item_name, f->cui_size, f->cui_nextents,
+			(unsigned long long)f->cui_id);
 
 	if (continued) {
 		printf(_("CUI extent data skipped (CONTINUE set, no space)\n"));
@@ -520,6 +527,7 @@ xlog_print_trans_cud(
 	char				**ptr,
 	uint				len)
 {
+	const char			*item_name = "CUD?";
 	struct xfs_cud_log_format	*f;
 	struct xfs_cud_log_format	lbuf;
 
@@ -528,11 +536,17 @@ xlog_print_trans_cud(
 
 	memcpy(&lbuf, *ptr, min(core_size, len));
 	f = &lbuf;
+
+	switch (f->cud_type) {
+	case XFS_LI_CUD:	item_name = "CUD"; break;
+	case XFS_LI_CUD_RT:	item_name = "CUD_RT"; break;
+	}
+
 	*ptr += len;
 	if (len >= core_size) {
-		printf(_("CUD:  #regs: %d	                 id: 0x%llx\n"),
-			f->cud_size,
-			(unsigned long long)f->cud_cui_id);
+		printf(_("%s:  #regs: %d	                 id: 0x%llx\n"),
+				item_name, f->cud_size,
+				(unsigned long long)f->cud_cui_id);
 
 		/* don't print extents as they are not used */
 

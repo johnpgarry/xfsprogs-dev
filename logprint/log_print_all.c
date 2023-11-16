@@ -432,9 +432,11 @@ xlog_recover_print_logitem(
 	case XFS_LI_RUI:
 		xlog_recover_print_rui(item);
 		break;
+	case XFS_LI_CUD_RT:
 	case XFS_LI_CUD:
 		xlog_recover_print_cud(item);
 		break;
+	case XFS_LI_CUI_RT:
 	case XFS_LI_CUI:
 		xlog_recover_print_cui(item);
 		break;
@@ -513,6 +515,12 @@ xlog_recover_print_item(
 		break;
 	case XFS_LI_CUI:
 		printf("CUI");
+		break;
+	case XFS_LI_CUD_RT:
+		printf("CUD_RT");
+		break;
+	case XFS_LI_CUI_RT:
+		printf("CUI_RT");
 		break;
 	case XFS_LI_BUD:
 		printf("BUD");
