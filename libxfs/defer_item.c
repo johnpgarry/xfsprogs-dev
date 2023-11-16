@@ -587,6 +587,23 @@ xfs_refcount_update_abort_intent(
 {
 }
 
+/* Clean up after calling xfs_refcount_finish_one. */
+STATIC void
+xfs_refcount_finish_one_cleanup(
+	struct xfs_trans	*tp,
+	struct xfs_btree_cur	*rcur,
+	int			error)
+{
+	struct xfs_buf		*agbp;
+
+	if (rcur == NULL)
+		return;
+	agbp = rcur->bc_ag.agbp;
+	xfs_btree_del_cursor(rcur, error);
+	if (error)
+		xfs_trans_brelse(tp, agbp);
+}
+
 const struct xfs_defer_op_type xfs_refcount_update_defer_type = {
 	.name		= "refcount",
 	.create_intent	= xfs_refcount_update_create_intent,
