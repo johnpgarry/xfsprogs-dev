@@ -598,9 +598,6 @@ xfs_dinode_verify(
 	if (mode && nextents + naextents > nblocks)
 		return __this_address;
 
-	if (nextents + naextents == 0 && nblocks != 0)
-		return __this_address;
-
 	if (S_ISDIR(mode) && nextents > mp->m_dir_geo->max_extents)
 		return __this_address;
 
@@ -703,6 +700,19 @@ xfs_dinode_verify(
 		if (fa)
 			return fa;
 	}
+
+	/* metadata inodes containing btrees always have zero extent count */
+	if (flags2 & XFS_DIFLAG2_METADIR) {
+		switch (XFS_DFORK_FORMAT(dip, XFS_DATA_FORK)) {
+		case XFS_DINODE_FMT_RMAP:
+			break;
+		default:
+			if (nextents + naextents == 0 && nblocks != 0)
+				return __this_address;
+			break;
+		}
+	} else if (nextents + naextents == 0 && nblocks != 0)
+		return __this_address;
 
 	return NULL;
 }
