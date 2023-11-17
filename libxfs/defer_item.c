@@ -115,6 +115,13 @@ xfs_extent_free_finish_item(
 	error = xfs_free_extent(tp, xefi->xefi_pag, agbno,
 			xefi->xefi_blockcount, &oinfo, XFS_AG_RESV_NONE);
 
+	/*
+	 * Don't free the XEFI if we need a new transaction to complete
+	 * processing of it.
+	 */
+	if (error == -EAGAIN)
+		return error;
+
 	xfs_extent_free_put_group(xefi);
 	kmem_cache_free(xfs_extfree_item_cache, xefi);
 	return error;
