@@ -92,6 +92,17 @@ xfs_extent_free_put_group(
 	xfs_perag_intent_put(xefi->xefi_pag);
 }
 
+/* Cancel a free extent. */
+STATIC void
+xfs_extent_free_cancel_item(
+	struct list_head		*item)
+{
+	struct xfs_extent_free_item	*xefi = xefi_entry(item);
+
+	xfs_extent_free_put_group(xefi);
+	kmem_cache_free(xfs_extfree_item_cache, xefi);
+}
+
 /* Process a free extent. */
 STATIC int
 xfs_extent_free_finish_item(
@@ -123,11 +134,8 @@ xfs_extent_free_finish_item(
 	 * Don't free the XEFI if we need a new transaction to complete
 	 * processing of it.
 	 */
-	if (error == -EAGAIN)
-		return error;
-
-	xfs_extent_free_put_group(xefi);
-	kmem_cache_free(xfs_extfree_item_cache, xefi);
+	if (error != -EAGAIN)
+		xfs_extent_free_cancel_item(item);
 	return error;
 }
 
@@ -136,17 +144,6 @@ STATIC void
 xfs_extent_free_abort_intent(
 	struct xfs_log_item		*intent)
 {
-}
-
-/* Cancel a free extent. */
-STATIC void
-xfs_extent_free_cancel_item(
-	struct list_head		*item)
-{
-	struct xfs_extent_free_item	*xefi = xefi_entry(item);
-
-	xfs_extent_free_put_group(xefi);
-	kmem_cache_free(xfs_extfree_item_cache, xefi);
 }
 
 const struct xfs_defer_op_type xfs_extent_free_defer_type = {
@@ -185,8 +182,7 @@ xfs_agfl_free_finish_item(
 		error = xfs_free_agfl_block(tp, xefi->xefi_pag->pag_agno,
 				agbno, agbp, &oinfo);
 
-	xfs_extent_free_put_group(xefi);
-	kmem_cache_free(xfs_extfree_item_cache, xefi);
+	xfs_extent_free_cancel_item(item);
 	return error;
 }
 
