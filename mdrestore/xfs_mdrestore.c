@@ -268,7 +268,7 @@ read_header_v2(
 	union mdrestore_headers		*h,
 	FILE				*md_fp)
 {
-	bool				want_external_log;
+	unsigned int			compat;
 
 	if (fread((uint8_t *)&(h->v2) + sizeof(h->v2.xmh_magic),
 			sizeof(h->v2) - sizeof(h->v2.xmh_magic), 1, md_fp) != 1)
@@ -280,10 +280,9 @@ read_header_v2(
 	if (h->v2.xmh_reserved != 0)
 		fatal("Metadump header's reserved field has a non-zero value\n");
 
-	want_external_log = !!(be32_to_cpu(h->v2.xmh_incompat_flags) &
-			XFS_MD2_COMPAT_EXTERNALLOG);
+	compat = be32_to_cpu(h->v2.xmh_compat_flags);
 
-	if (want_external_log && !mdrestore.external_log)
+	if (!mdrestore.external_log && (compat & XFS_MD2_COMPAT_EXTERNALLOG))
 		fatal("External Log device is required\n");
 }
 
