@@ -275,10 +275,10 @@ read_header_v2(
 		fatal("error reading from metadump file\n");
 
 	if (h->v2.xmh_incompat_flags != 0)
-		fatal("Metadump header has unknown incompat flags set");
+		fatal("Metadump header has unknown incompat flags set\n");
 
 	if (h->v2.xmh_reserved != 0)
-		fatal("Metadump header's reserved field has a non-zero value");
+		fatal("Metadump header's reserved field has a non-zero value\n");
 
 	want_external_log = !!(be32_to_cpu(h->v2.xmh_incompat_flags) &
 			XFS_MD2_COMPAT_EXTERNALLOG);
