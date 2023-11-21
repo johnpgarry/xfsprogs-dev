@@ -137,18 +137,47 @@ pop_help(void)
 		));
 }
 
+bool
+iocur_is_ddev(const struct iocur *ioc)
+{
+	if (!ioc->bp)
+		return false;
+
+	return ioc->bp->b_target == ioc->bp->b_mount->m_ddev_targp;
+}
+
+bool
+iocur_is_extlogdev(const struct iocur *ioc)
+{
+	struct xfs_buf	*bp = ioc->bp;
+
+	if (!bp)
+		return false;
+	if (bp->b_mount->m_logdev_targp == bp->b_mount->m_ddev_targp)
+		return false;
+
+	return bp->b_target == bp->b_mount->m_logdev_targp;
+}
+
 void
 print_iocur(
 	char	*tag,
 	iocur_t	*ioc)
 {
+	const char	*block_unit = "fsbno?";
 	int	i;
+
+	if (iocur_is_ddev(ioc))
+		block_unit = "fsbno";
+	else if (iocur_is_extlogdev(ioc))
+		block_unit = "logbno";
 
 	dbprintf("%s\n", tag);
 	dbprintf(_("\tbyte offset %lld, length %d\n"), ioc->off, ioc->len);
-	dbprintf(_("\tbuffer block %lld (fsbno %lld), %d bb%s\n"), ioc->bb,
-		(xfs_fsblock_t)XFS_DADDR_TO_FSB(mp, ioc->bb), ioc->blen,
-		ioc->blen == 1 ? "" : "s");
+	dbprintf(_("\tbuffer block %lld (%s %lld), %d bb%s\n"), ioc->bb,
+			block_unit,
+			(xfs_fsblock_t)XFS_DADDR_TO_FSB(mp, ioc->bb),
+			ioc->blen, ioc->blen == 1 ? "" : "s");
 	if (ioc->bbmap) {
 		dbprintf(_("\tblock map"));
 		for (i = 0; i < ioc->bbmap->nmaps; i++)

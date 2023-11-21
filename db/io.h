@@ -56,6 +56,9 @@ extern void	set_iocur_type(const struct typ *type);
 extern void	xfs_dummy_verify(struct xfs_buf *bp);
 extern void	xfs_verify_recalc_crc(struct xfs_buf *bp);
 
+bool iocur_is_ddev(const struct iocur *ioc);
+bool iocur_is_extlogdev(const struct iocur *ioc);
+
 /*
  * returns -1 for unchecked, 0 for bad and 1 for good
  */
