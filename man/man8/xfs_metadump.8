@@ -132,8 +132,11 @@ is stdout.
 .TP
 .BI \-l " logdev"
 For filesystems which use an external log, this specifies the device where the
-external log resides. The external log is not copied, only internal logs are
-copied.
+external log resides.
+If the v2 metadump format is selected, the contents of the external log will be
+copied to the metadump.
+The v2 metadump format will be selected automatically if this option is
+specified.
 .TP
 .B \-m
 Set the maximum size of an allowed metadata extent.  Extremely large metadata
