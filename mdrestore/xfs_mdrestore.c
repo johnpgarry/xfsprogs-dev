@@ -472,11 +472,11 @@ main(
 	union mdrestore_headers	headers;
 	FILE			*src_f;
 	char			*logdev = NULL;
-	int			data_dev_fd;
-	int			log_dev_fd;
+	int			data_dev_fd = -1;
+	int			log_dev_fd = -1;
 	int			c;
-	bool			is_data_dev_file;
-	bool			is_log_dev_file;
+	bool			is_data_dev_file = false;
+	bool			is_log_dev_file = false;
 
 	mdrestore.show_progress = false;
 	mdrestore.show_info = false;
@@ -561,7 +561,6 @@ main(
 	/* check and open data device */
 	data_dev_fd = open_device(argv[optind], &is_data_dev_file);
 
-	log_dev_fd = -1;
 	if (mdrestore.external_log)
 		/* check and open log device */
 		log_dev_fd = open_device(logdev, &is_log_dev_file);
