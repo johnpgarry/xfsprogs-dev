@@ -884,17 +884,27 @@ main(int argc, char **argv)
 		} else  {
 			char	*lb[XFS_MAX_SECTORSIZE] = { NULL };
 			off64_t	off;
+			ssize_t	len;
 
 			/* ensure device files are sufficiently large */
 
 			off = mp->m_sb.sb_dblocks * source_blocksize;
 			off -= sizeof(lb);
-			if (pwrite(target[i].fd, lb, sizeof(lb), off) < 0)  {
+			len = pwrite(target[i].fd, lb, XFS_MAX_SECTORSIZE, off);
+			if (len < 0) {
 				do_log(_("%s:  failed to write last block\n"),
 					progname);
 				do_log(_("\tIs target \"%s\" too small?\n"),
 					target[i].name);
 				die_perror();
+			}
+			if (len != XFS_MAX_SECTORSIZE) {
+				do_log(
+ _("%s:  short write to last block: %zd bytes, %zu expected\n"),
+					progname, len, XFS_MAX_SECTORSIZE);
+				do_log(_("\tIs target \"%s\" too small?\n"),
+					target[i].name);
+				exit(1);
 			}
 		}
 	}
