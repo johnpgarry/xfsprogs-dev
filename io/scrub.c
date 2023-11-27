@@ -41,57 +41,12 @@ scrub_help(void)
 	printf("\n");
 }
 
-static void
-scrub_ioctl(
-	int				fd,
-	int				type,
-	uint64_t			control,
-	uint32_t			control2)
-{
-	struct xfs_scrub_metadata	meta;
-	const struct xfrog_scrub_descr	*sc;
-	int				error;
-
-	sc = &xfrog_scrubbers[type];
-	memset(&meta, 0, sizeof(meta));
-	meta.sm_type = type;
-	switch (sc->type) {
-	case XFROG_SCRUB_TYPE_AGHEADER:
-	case XFROG_SCRUB_TYPE_PERAG:
-		meta.sm_agno = control;
-		break;
-	case XFROG_SCRUB_TYPE_INODE:
-		meta.sm_ino = control;
-		meta.sm_gen = control2;
-		break;
-	case XFROG_SCRUB_TYPE_NONE:
-	case XFROG_SCRUB_TYPE_FS:
-		/* no control parameters */
-		break;
-	}
-	meta.sm_flags = 0;
-
-	error = ioctl(fd, XFS_IOC_SCRUB_METADATA, &meta);
-	if (error)
-		perror("scrub");
-	if (meta.sm_flags & XFS_SCRUB_OFLAG_CORRUPT)
-		printf(_("Corruption detected.\n"));
-	if (meta.sm_flags & XFS_SCRUB_OFLAG_PREEN)
-		printf(_("Optimization possible.\n"));
-	if (meta.sm_flags & XFS_SCRUB_OFLAG_XFAIL)
-		printf(_("Cross-referencing failed.\n"));
-	if (meta.sm_flags & XFS_SCRUB_OFLAG_XCORRUPT)
-		printf(_("Corruption detected during cross-referencing.\n"));
-	if (meta.sm_flags & XFS_SCRUB_OFLAG_INCOMPLETE)
-		printf(_("Scan was not complete.\n"));
-}
-
 static int
 parse_args(
 	int				argc,
 	char				**argv,
-	struct cmdinfo			*cmdinfo,
-	void				(*fn)(int, int, uint64_t, uint32_t))
+	const struct cmdinfo		*cmdinfo,
+	struct xfs_scrub_metadata	*meta)
 {
 	char				*p;
 	int				type = -1;
@@ -100,6 +55,7 @@ parse_args(
 	uint32_t			control2 = 0;
 	const struct xfrog_scrub_descr	*d = NULL;
 
+	memset(meta, 0, sizeof(struct xfs_scrub_metadata));
 	while ((c = getopt(argc, argv, "")) != EOF) {
 		switch (c) {
 		default:
@@ -124,6 +80,8 @@ parse_args(
 		return command_usage(cmdinfo);
 	}
 	optind++;
+
+	meta->sm_type = type;
 
 	switch (d->type) {
 	case XFROG_SCRUB_TYPE_INODE:
@@ -153,6 +111,8 @@ parse_args(
 			exitcode = 1;
 			return command_usage(cmdinfo);
 		}
+		meta->sm_ino = control;
+		meta->sm_gen = control2;
 		break;
 	case XFROG_SCRUB_TYPE_AGHEADER:
 	case XFROG_SCRUB_TYPE_PERAG:
@@ -169,6 +129,7 @@ parse_args(
 			exitcode = 1;
 			return command_usage(cmdinfo);
 		}
+		meta->sm_agno = control;
 		break;
 	case XFROG_SCRUB_TYPE_FS:
 	case XFROG_SCRUB_TYPE_NONE:
@@ -178,13 +139,12 @@ parse_args(
 			exitcode = 1;
 			return command_usage(cmdinfo);
 		}
+		/* no control parameters */
 		break;
 	default:
 		ASSERT(0);
 		break;
 	}
-	fn(file->fd, type, control, control2);
-
 	return 0;
 }
 
@@ -193,7 +153,27 @@ scrub_f(
 	int				argc,
 	char				**argv)
 {
-	return parse_args(argc, argv, &scrub_cmd, scrub_ioctl);
+	struct xfs_scrub_metadata	meta;
+	int				error;
+
+	error = parse_args(argc, argv, &scrub_cmd, &meta);
+	if (error)
+		return error;
+
+	error = ioctl(file->fd, XFS_IOC_SCRUB_METADATA, &meta);
+	if (error)
+		perror("scrub");
+	if (meta.sm_flags & XFS_SCRUB_OFLAG_CORRUPT)
+		printf(_("Corruption detected.\n"));
+	if (meta.sm_flags & XFS_SCRUB_OFLAG_PREEN)
+		printf(_("Optimization possible.\n"));
+	if (meta.sm_flags & XFS_SCRUB_OFLAG_XFAIL)
+		printf(_("Cross-referencing failed.\n"));
+	if (meta.sm_flags & XFS_SCRUB_OFLAG_XCORRUPT)
+		printf(_("Corruption detected during cross-referencing.\n"));
+	if (meta.sm_flags & XFS_SCRUB_OFLAG_INCOMPLETE)
+		printf(_("Scan was not complete.\n"));
+	return 0;
 }
 
 void
@@ -236,37 +216,20 @@ repair_help(void)
 	printf("\n");
 }
 
-static void
-repair_ioctl(
-	int				fd,
-	int				type,
-	uint64_t			control,
-	uint32_t			control2)
+static int
+repair_f(
+	int				argc,
+	char				**argv)
 {
 	struct xfs_scrub_metadata	meta;
-	const struct xfrog_scrub_descr	*sc;
 	int				error;
 
-	sc = &xfrog_scrubbers[type];
-	memset(&meta, 0, sizeof(meta));
-	meta.sm_type = type;
-	switch (sc->type) {
-	case XFROG_SCRUB_TYPE_AGHEADER:
-	case XFROG_SCRUB_TYPE_PERAG:
-		meta.sm_agno = control;
-		break;
-	case XFROG_SCRUB_TYPE_INODE:
-		meta.sm_ino = control;
-		meta.sm_gen = control2;
-		break;
-	case XFROG_SCRUB_TYPE_NONE:
-	case XFROG_SCRUB_TYPE_FS:
-		/* no control parameters */
-		break;
-	}
-	meta.sm_flags = XFS_SCRUB_IFLAG_REPAIR;
+	error = parse_args(argc, argv, &repair_cmd, &meta);
+	if (error)
+		return error;
+	meta.sm_flags |= XFS_SCRUB_IFLAG_REPAIR;
 
-	error = ioctl(fd, XFS_IOC_SCRUB_METADATA, &meta);
+	error = ioctl(file->fd, XFS_IOC_SCRUB_METADATA, &meta);
 	if (error)
 		perror("repair");
 	if (meta.sm_flags & XFS_SCRUB_OFLAG_CORRUPT)
@@ -281,14 +244,7 @@ repair_ioctl(
 		printf(_("Repair was not complete.\n"));
 	if (meta.sm_flags & XFS_SCRUB_OFLAG_NO_REPAIR_NEEDED)
 		printf(_("Metadata did not need repair or optimization.\n"));
-}
-
-static int
-repair_f(
-	int				argc,
-	char				**argv)
-{
-	return parse_args(argc, argv, &repair_cmd, repair_ioctl);
+	return 0;
 }
 
 void
