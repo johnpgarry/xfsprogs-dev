@@ -41,6 +41,87 @@ scrub_help(void)
 	printf("\n");
 }
 
+static bool
+parse_inode(
+	int		argc,
+	char		**argv,
+	int		optind,
+	__u64		*ino,
+	__u32		*gen)
+{
+	char		*p;
+	unsigned long long control;
+	unsigned long	control2;
+
+	if (optind == argc) {
+		*ino = 0;
+		*gen = 0;
+		return true;
+	}
+
+	if (optind != argc - 2) {
+		fprintf(stderr,
+ _("Must specify inode number and generation.\n"));
+		return false;
+	}
+
+	control = strtoull(argv[optind], &p, 0);
+	if (*p != '\0') {
+		fprintf(stderr, _("Bad inode number '%s'.\n"),
+				argv[optind]);
+		return false;
+	}
+	control2 = strtoul(argv[optind + 1], &p, 0);
+	if (*p != '\0') {
+		fprintf(stderr, _("Bad generation number '%s'.\n"),
+				argv[optind + 1]);
+		return false;
+	}
+
+	*ino = control;
+	*gen = control2;
+	return true;
+}
+
+static bool
+parse_agno(
+	int		argc,
+	char		**argv,
+	int		optind,
+	__u32		*agno)
+{
+	char		*p;
+	unsigned long	control;
+
+	if (optind != argc - 1) {
+		fprintf(stderr, _("Must specify one AG number.\n"));
+		return false;
+	}
+
+	control = strtoul(argv[optind], &p, 0);
+	if (*p != '\0') {
+		fprintf(stderr, _("Bad AG number '%s'.\n"), argv[optind]);
+		return false;
+	}
+
+	*agno = control;
+	return true;
+}
+
+static bool
+parse_none(
+	int		argc,
+	int		optind)
+{
+	if (optind != argc) {
+		fprintf(stderr, _("No parameters allowed.\n"));
+		return false;
+	}
+
+	/* no control parameters */
+	return true;
+}
+
 static int
 parse_args(
 	int				argc,
@@ -48,11 +129,8 @@ parse_args(
 	const struct cmdinfo		*cmdinfo,
 	struct xfs_scrub_metadata	*meta)
 {
-	char				*p;
 	int				type = -1;
 	int				i, c;
-	uint64_t			control = 0;
-	uint32_t			control2 = 0;
 	const struct xfrog_scrub_descr	*d = NULL;
 
 	memset(meta, 0, sizeof(struct xfs_scrub_metadata));
@@ -85,61 +163,25 @@ parse_args(
 
 	switch (d->type) {
 	case XFROG_SCRUB_TYPE_INODE:
-		if (optind == argc) {
-			control = 0;
-			control2 = 0;
-		} else if (optind == argc - 2) {
-			control = strtoull(argv[optind], &p, 0);
-			if (*p != '\0') {
-				fprintf(stderr,
-					_("Bad inode number '%s'.\n"),
-					argv[optind]);
-				exitcode = 1;
-				return command_usage(cmdinfo);
-			}
-			control2 = strtoul(argv[optind + 1], &p, 0);
-			if (*p != '\0') {
-				fprintf(stderr,
-					_("Bad generation number '%s'.\n"),
-					argv[optind + 1]);
-				exitcode = 1;
-				return command_usage(cmdinfo);
-			}
-		} else {
-			fprintf(stderr,
-				_("Must specify inode number and generation.\n"));
+		if (!parse_inode(argc, argv, optind, &meta->sm_ino,
+						     &meta->sm_gen)) {
 			exitcode = 1;
 			return command_usage(cmdinfo);
 		}
-		meta->sm_ino = control;
-		meta->sm_gen = control2;
 		break;
 	case XFROG_SCRUB_TYPE_AGHEADER:
 	case XFROG_SCRUB_TYPE_PERAG:
-		if (optind != argc - 1) {
-			fprintf(stderr,
-				_("Must specify one AG number.\n"));
+		if (!parse_agno(argc, argv, optind, &meta->sm_agno)) {
 			exitcode = 1;
 			return command_usage(cmdinfo);
 		}
-		control = strtoul(argv[optind], &p, 0);
-		if (*p != '\0') {
-			fprintf(stderr,
-				_("Bad AG number '%s'.\n"), argv[optind]);
-			exitcode = 1;
-			return command_usage(cmdinfo);
-		}
-		meta->sm_agno = control;
 		break;
 	case XFROG_SCRUB_TYPE_FS:
 	case XFROG_SCRUB_TYPE_NONE:
-		if (optind != argc) {
-			fprintf(stderr,
-				_("No parameters allowed.\n"));
+		if (!parse_none(argc, optind)) {
 			exitcode = 1;
 			return command_usage(cmdinfo);
 		}
-		/* no control parameters */
 		break;
 	default:
 		ASSERT(0);
