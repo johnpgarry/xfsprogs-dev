@@ -103,11 +103,14 @@ parse_args(
 	while ((c = getopt(argc, argv, "")) != EOF) {
 		switch (c) {
 		default:
+			exitcode = 1;
 			return command_usage(cmdinfo);
 		}
 	}
-	if (optind > argc - 1)
+	if (optind > argc - 1) {
+		exitcode = 1;
 		return command_usage(cmdinfo);
+	}
 
 	for (i = 0, d = xfrog_scrubbers; i < XFS_SCRUB_TYPE_NR; i++, d++) {
 		if (strcmp(d->name, argv[optind]) == 0) {
@@ -117,6 +120,7 @@ parse_args(
 	}
 	if (type < 0) {
 		printf(_("Unknown type '%s'.\n"), argv[optind]);
+		exitcode = 1;
 		return command_usage(cmdinfo);
 	}
 	optind++;
@@ -132,19 +136,22 @@ parse_args(
 				fprintf(stderr,
 					_("Bad inode number '%s'.\n"),
 					argv[optind]);
-				return 0;
+				exitcode = 1;
+				return command_usage(cmdinfo);
 			}
 			control2 = strtoul(argv[optind + 1], &p, 0);
 			if (*p != '\0') {
 				fprintf(stderr,
 					_("Bad generation number '%s'.\n"),
 					argv[optind + 1]);
-				return 0;
+				exitcode = 1;
+				return command_usage(cmdinfo);
 			}
 		} else {
 			fprintf(stderr,
 				_("Must specify inode number and generation.\n"));
-			return 0;
+			exitcode = 1;
+			return command_usage(cmdinfo);
 		}
 		break;
 	case XFROG_SCRUB_TYPE_AGHEADER:
@@ -152,13 +159,15 @@ parse_args(
 		if (optind != argc - 1) {
 			fprintf(stderr,
 				_("Must specify one AG number.\n"));
-			return 0;
+			exitcode = 1;
+			return command_usage(cmdinfo);
 		}
 		control = strtoul(argv[optind], &p, 0);
 		if (*p != '\0') {
 			fprintf(stderr,
 				_("Bad AG number '%s'.\n"), argv[optind]);
-			return 0;
+			exitcode = 1;
+			return command_usage(cmdinfo);
 		}
 		break;
 	case XFROG_SCRUB_TYPE_FS:
@@ -166,7 +175,8 @@ parse_args(
 		if (optind != argc) {
 			fprintf(stderr,
 				_("No parameters allowed.\n"));
-			return 0;
+			exitcode = 1;
+			return command_usage(cmdinfo);
 		}
 		break;
 	default:
