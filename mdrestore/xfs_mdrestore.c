@@ -58,6 +58,58 @@ print_progress(const char *fmt, ...)
 	mdrestore.progress_since_warning = true;
 }
 
+static inline void
+maybe_print_progress(
+	int64_t		*cursor,
+	int64_t		bytes_read)
+{
+	int64_t		mb_now = bytes_read >> 20;
+
+	if (!mdrestore.show_progress)
+		return;
+
+	if (mb_now != *cursor) {
+		print_progress("%lld MB read", mb_now);
+		*cursor = mb_now;
+	}
+}
+
+static inline void
+final_print_progress(
+	int64_t		*cursor,
+	int64_t		bytes_read)
+{
+	if (!mdrestore.show_progress)
+		goto done;
+
+	if (bytes_read <= (*cursor << 20))
+		goto done;
+
+	print_progress("%lld MB read", howmany_64(bytes_read, 1U << 20));
+
+done:
+	if (mdrestore.progress_since_warning)
+		putchar('\n');
+}
+
+static void
+fixup_superblock(
+	int		ddev_fd,
+	char		*block_buffer,
+	struct xfs_sb	*sb)
+{
+	memset(block_buffer, 0, sb->sb_sectsize);
+	sb->sb_inprogress = 0;
+	libxfs_sb_to_disk((struct xfs_dsb *)block_buffer, sb);
+	if (xfs_sb_version_hascrc(sb)) {
+		xfs_update_cksum(block_buffer, sb->sb_sectsize,
+				 offsetof(struct xfs_sb, sb_crc));
+	}
+
+	if (pwrite(ddev_fd, block_buffer, sb->sb_sectsize, 0) < 0)
+		fatal("error writing primary superblock: %s\n", strerror(errno));
+}
+
 static int
 open_device(
 	char		*path,
@@ -210,14 +262,7 @@ restore_v1(
 	bytes_read = 0;
 
 	for (;;) {
-		if (mdrestore.show_progress) {
-			int64_t		mb_now = bytes_read >> 20;
-
-			if (mb_now != mb_read) {
-				print_progress("%lld MB read", mb_now);
-				mb_read = mb_now;
-			}
-		}
+		maybe_print_progress(&mb_read, bytes_read);
 
 		for (cur_index = 0; cur_index < mb_count; cur_index++) {
 			if (pwrite(ddev_fd, &block_buffer[cur_index <<
@@ -247,22 +292,9 @@ restore_v1(
 		bytes_read += block_size + (mb_count << h->v1.mb_blocklog);
 	}
 
-	if (mdrestore.show_progress && bytes_read > (mb_read << 20))
-		print_progress("%lld MB read", howmany_64(bytes_read, 1U << 20));
+	final_print_progress(&mb_read, bytes_read);
 
-	if (mdrestore.progress_since_warning)
-		putchar('\n');
-
-	memset(block_buffer, 0, sb.sb_sectsize);
-	sb.sb_inprogress = 0;
-	libxfs_sb_to_disk((struct xfs_dsb *)block_buffer, &sb);
-	if (xfs_sb_version_hascrc(&sb)) {
-		xfs_update_cksum(block_buffer, sb.sb_sectsize,
-				 offsetof(struct xfs_sb, sb_crc));
-	}
-
-	if (pwrite(ddev_fd, block_buffer, sb.sb_sectsize, 0) < 0)
-		fatal("error writing primary superblock: %s\n", strerror(errno));
+	fixup_superblock(ddev_fd, block_buffer, &sb);
 
 	free(metablock);
 }
@@ -401,6 +433,8 @@ restore_v2(
 		char *device;
 		int fd;
 
+		maybe_print_progress(&mb_read, bytes_read);
+
 		if (fread(&xme, sizeof(xme), 1, md_fp) != 1) {
 			if (feof(md_fp))
 				break;
@@ -428,38 +462,13 @@ restore_v2(
 				len);
 
 		bytes_read += len;
-
-		if (mdrestore.show_progress) {
-			int64_t	mb_now = bytes_read >> 20;
-
-			if (mb_now != mb_read) {
-				print_progress("%lld mb read", mb_now);
-				mb_read = mb_now;
-			}
-		}
 	} while (1);
 
-	if (mdrestore.show_progress && bytes_read > (mb_read << 20))
-		print_progress("%lld mb read", howmany_64(bytes_read, 1U << 20));
+	final_print_progress(&mb_read, bytes_read);
 
-	if (mdrestore.progress_since_warning)
-		putchar('\n');
-
-	memset(block_buffer, 0, sb.sb_sectsize);
-	sb.sb_inprogress = 0;
-	libxfs_sb_to_disk((struct xfs_dsb *)block_buffer, &sb);
-	if (xfs_sb_version_hascrc(&sb)) {
-		xfs_update_cksum(block_buffer, sb.sb_sectsize,
-				offsetof(struct xfs_sb, sb_crc));
-	}
-
-	if (pwrite(ddev_fd, block_buffer, sb.sb_sectsize, 0) < 0)
-		fatal("error writing primary superblock: %s\n",
-			strerror(errno));
+	fixup_superblock(ddev_fd, block_buffer, &sb);
 
 	free(block_buffer);
-
-	return;
 }
 
 static struct mdrestore_ops mdrestore_ops_v2 = {
