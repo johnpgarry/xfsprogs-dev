@@ -106,9 +106,10 @@ bulkload_claim_block(
  * exceptions to this rule:
  *
  * (1) If someone turned one of the debug knobs.
- * (2) The AG has less than ~9% space free.
+ * (2) The AG has less than ~10% space free.
  *
- * Note that we actually use 3/32 for the comparison to avoid division.
+ * In the latter case, format the new btree blocks almost completely full to
+ * minimize space usage.
  */
 void
 bulkload_estimate_ag_slack(
@@ -124,8 +125,8 @@ bulkload_estimate_ag_slack(
 	bload->leaf_slack = bload_leaf_slack;
 	bload->node_slack = bload_node_slack;
 
-	/* No further changes if there's more than 3/32ths space left. */
-	if (free >= ((sc->mp->m_sb.sb_agblocks * 3) >> 5))
+	/* No further changes if there's more than 10% space left. */
+	if (free >= sc->mp->m_sb.sb_agblocks / 10)
 		return;
 
 	/*
