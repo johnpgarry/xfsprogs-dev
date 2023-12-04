@@ -23,6 +23,11 @@
 #include "xfs_refcount_btree.h"
 #include "libfrog/platform.h"
 
+#include "xfs_format.h"
+#include "xfs_da_format.h"
+#include "xfs_log_format.h"
+#include "xfs_ondisk.h"
+
 #include "libxfs.h"		/* for now */
 
 #ifndef HAVE_LIBURCU_ATOMIC64
@@ -248,6 +253,7 @@ libxfs_close_devices(
 int
 libxfs_init(struct libxfs_init *a)
 {
+	xfs_check_ondisk_structs();
 	rcu_init();
 	rcu_register_thread();
 	radix_tree_init();
