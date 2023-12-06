@@ -336,4 +336,6 @@
 
 #define trace_xfs_fs_mark_healthy(a,b)		((void) 0)
 
+#define trace_xlog_intent_recovery_failed(...)	((void) 0)
+
 #endif /* __TRACE_H__ */
