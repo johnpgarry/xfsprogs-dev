@@ -3983,7 +3983,7 @@ finish_superblock_setup(
 	sbp->sb_agcount = (xfs_agnumber_t)cfg->agcount;
 	sbp->sb_rbmblocks = cfg->rtbmblocks;
 	sbp->sb_logblocks = (xfs_extlen_t)cfg->logblocks;
-	sbp->sb_rextslog = libxfs_compute_rextslog(cfg->rtextents);
+	sbp->sb_rextslog = libxfs_compute_rextslog(sbp, cfg->rtextents);
 	sbp->sb_imax_pct = cfg->imaxpct;
 	sbp->sb_icount = 0;
 	sbp->sb_ifree = 0;

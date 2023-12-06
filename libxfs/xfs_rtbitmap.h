@@ -351,7 +351,7 @@ xfs_rtfree_extent(
 int xfs_rtfree_blocks(struct xfs_trans *tp, xfs_fsblock_t rtbno,
 		xfs_filblks_t rtlen);
 
-uint8_t xfs_compute_rextslog(xfs_rtbxlen_t rtextents);
+uint8_t xfs_compute_rextslog(const struct xfs_sb *sbp, xfs_rtbxlen_t rtextents);
 
 /* Do we support an rt volume having this number of rtextents? */
 static inline bool
@@ -396,7 +396,7 @@ void xfs_rtbitmap_unlock_shared(struct xfs_mount *mp,
 # define xfs_rtsummary_read_buf(a,b)			(-ENOSYS)
 # define xfs_rtbuf_cache_relse(a)			(0)
 # define xfs_rtalloc_extent_is_free(m,t,s,l,i)		(-ENOSYS)
-# define xfs_compute_rextslog(rtx)			(0)
+# define xfs_compute_rextslog(sbp, rtx)			(0)
 # define xfs_validate_rtextents(rtx)			(false)
 static inline xfs_filblks_t
 xfs_rtbitmap_blockcount(struct xfs_mount *mp, xfs_rtbxlen_t rtextents)

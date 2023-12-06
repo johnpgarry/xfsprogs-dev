@@ -482,7 +482,8 @@ verify_sb(char *sb_buf, xfs_sb_t *sb, int is_primary_sb)
 		if (sb->sb_rextents == 0)
 			return XR_BAD_RT_GEO_DATA;
 
-		if (sb->sb_rextslog != libxfs_compute_rextslog(sb->sb_rextents))
+		if (sb->sb_rextslog != libxfs_compute_rextslog(sb,
+							sb->sb_rextents))
 			return(XR_BAD_RT_GEO_DATA);
 
 		if (sb->sb_rbmblocks != (xfs_extlen_t) howmany(sb->sb_rextents,

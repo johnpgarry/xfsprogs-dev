@@ -1142,10 +1142,21 @@ xfs_rtbitmap_blockcount(
  */
 uint8_t
 xfs_compute_rextslog(
+	const struct xfs_sb	*sbp,
 	xfs_rtbxlen_t		rtextents)
 {
 	if (!rtextents)
 		return 0;
+
+	/*
+	 * Realtime groups are never larger than 2^32 extents and are never
+	 * fully free, so we can use highbit32 on the number of rtextents per
+	 * group.
+	 */
+	if (xfs_sb_is_v5(sbp) &&
+	    (sbp->sb_features_incompat & XFS_SB_FEAT_INCOMPAT_RTGROUPS))
+		return xfs_highbit32(sbp->sb_rgblocks / sbp->sb_rextsize);
+
 	return xfs_highbit64(rtextents);
 }
 
