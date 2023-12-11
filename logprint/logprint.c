@@ -58,7 +58,6 @@ logstat(
 {
 	int		fd;
 	char		buf[BBSIZE];
-	xfs_sb_t	*sb;
 
 	/* On Linux we always read the superblock of the
 	 * filesystem. We need this to get the length of the
@@ -77,19 +76,16 @@ logstat(
 	close (fd);
 
 	if (!x.disfile) {
+		struct xfs_sb	*sb = &mp->m_sb;
+
 		/*
 		 * Conjure up a mount structure
 		 */
-		sb = &mp->m_sb;
 		libxfs_sb_from_disk(sb, (struct xfs_dsb *)buf);
 		mp->m_features |= libxfs_sb_version_to_features(&mp->m_sb);
 		mp->m_blkbb_log = sb->sb_blocklog - BBSHIFT;
 
-		x.logBBsize = XFS_FSB_TO_BB(mp, sb->sb_logblocks);
-		x.logBBstart = XFS_FSB_TO_DADDR(mp, sb->sb_logstart);
-		x.lbsize = BBSIZE;
-		if (xfs_has_sector(mp))
-			x.lbsize <<= (sb->sb_logsectlog - BBSHIFT);
+		xlog_init(mp, log, &x);
 
 		if (!x.logname && sb->sb_logstart == 0) {
 			fprintf(stderr, _("    external log device not specified\n\n"));
@@ -100,16 +96,13 @@ logstat(
 		struct stat	s;
 
 		stat(x.dname, &s);
-		x.logBBsize = s.st_size >> 9;
-		x.logBBstart = 0;
-		x.lbsize = BBSIZE;
-	}
 
-	log->l_dev = mp->m_logdev_targp;
-	log->l_logBBstart = x.logBBstart;
-	log->l_logBBsize = x.logBBsize;
-	log->l_sectBBsize = BTOBB(x.lbsize);
-	log->l_mp = mp;
+		log->l_logBBsize = s.st_size >> 9;
+		log->l_logBBstart = 0;
+		log->l_sectBBsize = BTOBB(BBSIZE);
+		log->l_dev = mp->m_logdev_targp;
+		log->l_mp = mp;
+	}
 
 	if (x.logname && *x.logname) {    /* External log */
 		if ((fd = open(x.logname, O_RDONLY)) == -1) {

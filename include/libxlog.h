@@ -71,6 +71,7 @@ extern int	print_record_header;
 /* libxfs parameters */
 extern libxfs_init_t	x;
 
+void xlog_init(struct xfs_mount *mp, struct xlog *log, libxfs_init_t *x);
 int xlog_is_dirty(struct xfs_mount *mp, struct xlog *log, libxfs_init_t *x);
 
 extern struct xfs_buf *xlog_get_bp(struct xlog *, int);

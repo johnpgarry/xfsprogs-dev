@@ -30,28 +30,7 @@ zero_log(
 	xfs_daddr_t		tail_blk;
 	struct xlog		*log = mp->m_log;
 
-	memset(log, 0, sizeof(struct xlog));
-	x.logBBsize = XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
-	x.logBBstart = XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart);
-	x.lbsize = BBSIZE;
-	if (xfs_has_sector(mp))
-		x.lbsize <<= (mp->m_sb.sb_logsectlog - BBSHIFT);
-
-	log->l_dev = mp->m_logdev_targp;
-	log->l_logBBsize = x.logBBsize;
-	log->l_logBBstart = x.logBBstart;
-	log->l_sectBBsize  = BTOBB(x.lbsize);
-	log->l_mp = mp;
-	if (xfs_has_sector(mp)) {
-		log->l_sectbb_log = mp->m_sb.sb_logsectlog - BBSHIFT;
-		ASSERT(log->l_sectbb_log <= mp->m_sectbb_log);
-		/* for larger sector sizes, must have v2 or external log */
-		ASSERT(log->l_sectbb_log == 0 ||
-			log->l_logBBstart == 0 ||
-			xfs_has_logv2(mp));
-		ASSERT(mp->m_sb.sb_logsectlog >= BBSHIFT);
-	}
-	log->l_sectbb_mask = (1 << log->l_sectbb_log) - 1;
+	xlog_init(mp, mp->m_log, &x);
 
 	/*
 	 * Find the log head and tail and alert the user to the situation if the
