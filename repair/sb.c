@@ -176,7 +176,7 @@ static int
 guess_default_geometry(
 	uint64_t		*agsize,
 	uint64_t		*agcount,
-	libxfs_init_t		*x)
+	struct libxfs_init	*x)
 {
 	struct fs_topology	ft;
 	int			blocklog;

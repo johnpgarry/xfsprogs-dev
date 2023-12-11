@@ -907,7 +907,7 @@ struct cli_params {
 	struct fsxattr		fsx;
 
 	/* libxfs device setup */
-	struct libxfs_xinit	*xi;
+	struct libxfs_init	*xi;
 };
 
 /*
@@ -1246,7 +1246,7 @@ validate_ag_geometry(
 
 static void
 zero_old_xfs_structures(
-	libxfs_init_t		*xi,
+	struct libxfs_init	*xi,
 	xfs_sb_t		*new_sb)
 {
 	void 			*buf;
@@ -2834,7 +2834,7 @@ _("log stripe unit (%d bytes) is too large (maximum is 256KiB)\n"
 static void
 open_devices(
 	struct mkfs_params	*cfg,
-	struct libxfs_xinit	*xi)
+	struct libxfs_init	*xi)
 {
 	uint64_t		sector_mask;
 
@@ -2867,7 +2867,7 @@ open_devices(
 
 static void
 discard_devices(
-	struct libxfs_xinit	*xi,
+	struct libxfs_init	*xi,
 	int			quiet)
 {
 	/*
@@ -2887,7 +2887,7 @@ validate_datadev(
 	struct mkfs_params	*cfg,
 	struct cli_params	*cli)
 {
-	struct libxfs_xinit	*xi = cli->xi;
+	struct libxfs_init	*xi = cli->xi;
 
 	if (!xi->dsize) {
 		/*
@@ -2934,7 +2934,7 @@ validate_logdev(
 	struct mkfs_params	*cfg,
 	struct cli_params	*cli)
 {
-	struct libxfs_xinit	*xi = cli->xi;
+	struct libxfs_init	*xi = cli->xi;
 
 	cfg->loginternal = cli->loginternal;
 
@@ -2998,7 +2998,7 @@ validate_rtdev(
 	struct mkfs_params	*cfg,
 	struct cli_params	*cli)
 {
-	struct libxfs_xinit	*xi = cli->xi;
+	struct libxfs_init	*xi = cli->xi;
 
 	if (!xi->rtdev) {
 		if (cli->rtsize) {
@@ -3750,7 +3750,7 @@ alloc_write_buf(
 static void
 prepare_devices(
 	struct mkfs_params	*cfg,
-	struct libxfs_xinit	*xi,
+	struct libxfs_init	*xi,
 	struct xfs_mount	*mp,
 	struct xfs_sb		*sbp,
 	bool			clear_stale)
@@ -4055,7 +4055,7 @@ main(
 	char			*protostring = NULL;
 	int			worst_freelist = 0;
 
-	struct libxfs_xinit	xi = {
+	struct libxfs_init	xi = {
 		.isdirect = LIBXFS_DIRECT,
 		.isreadonly = LIBXFS_EXCLUSIVELY,
 	};

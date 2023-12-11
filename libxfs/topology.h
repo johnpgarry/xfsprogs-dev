@@ -18,9 +18,9 @@ typedef struct fs_topology {
 	int	psectorsize;	/* physical sector size */
 } fs_topology_t;
 
-extern void
+void
 get_topology(
-	libxfs_init_t		*xi,
+	struct libxfs_init	*xi,
 	struct fs_topology	*ft,
 	int			force_overwrite);
 

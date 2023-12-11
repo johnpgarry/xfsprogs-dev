@@ -8,5 +8,5 @@ extern int		blkbb;
 extern int		exitcode;
 extern int		expert_mode;
 extern xfs_mount_t	*mp;
-extern libxfs_init_t	x;
+extern struct libxfs_init x;
 extern xfs_agnumber_t	cur_agno;

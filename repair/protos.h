@@ -4,7 +4,7 @@
  * All Rights Reserved.
  */
 
-void	xfs_init(libxfs_init_t *args);
+void	xfs_init(struct libxfs_init *args);
 
 int	verify_sb(char			*sb_buf,
 		xfs_sb_t		*sb,

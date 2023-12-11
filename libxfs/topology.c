@@ -286,8 +286,9 @@ static void blkid_get_topology(
 
 #endif /* ENABLE_BLKID */
 
-void get_topology(
-	libxfs_init_t		*xi,
+void
+get_topology(
+	struct libxfs_init	*xi,
 	struct fs_topology	*ft,
 	int			force_overwrite)
 {

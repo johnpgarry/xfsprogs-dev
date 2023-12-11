@@ -273,7 +273,7 @@ destroy_caches(void)
 
 static void
 libxfs_close_devices(
-	struct libxfs_xinit	*li)
+	struct libxfs_init	*li)
 {
 	if (li->ddev)
 		libxfs_device_close(li->ddev);
@@ -291,7 +291,7 @@ libxfs_close_devices(
  * Caller gets a 0 on failure (and we print a message), 1 on success.
  */
 int
-libxfs_init(libxfs_init_t *a)
+libxfs_init(struct libxfs_init *a)
 {
 	char		*dname;
 	char		*logname;
@@ -1034,7 +1034,7 @@ libxfs_umount(
  */
 void
 libxfs_destroy(
-	struct libxfs_xinit	*li)
+	struct libxfs_init	*li)
 {
 	int			leaked;
 

@@ -169,6 +169,6 @@ extern int		thread_count;
 /* If nonzero, simulate failure after this phase. */
 extern int		fail_after_phase;
 
-extern libxfs_init_t	x;
+extern struct libxfs_init x;
 
 #endif /* _XFS_REPAIR_GLOBAL_H */

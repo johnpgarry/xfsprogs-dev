@@ -582,7 +582,7 @@ main(int argc, char **argv)
 	xfs_alloc_rec_t	*rec_ptr;
 	extern char	*optarg;
 	extern int	optind;
-	libxfs_init_t	xargs;
+	struct libxfs_init xargs;
 	thread_args	*tcarg;
 	struct stat	statbuf;
 	int		error;

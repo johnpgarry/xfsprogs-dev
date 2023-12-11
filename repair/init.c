@@ -18,7 +18,7 @@
 #include "libfrog/dahashselftest.h"
 #include <sys/resource.h>
 
-struct libxfs_xinit	x;
+struct libxfs_init	x;
 
 static void
 ts_create(void)
@@ -52,9 +52,9 @@ increase_rlimit(void)
 }
 
 void
-xfs_init(libxfs_init_t *args)
+xfs_init(struct libxfs_init *args)
 {
-	memset(args, 0, sizeof(libxfs_init_t));
+	memset(args, 0, sizeof(*args));
 
 	args->dname = fs_name;
 	args->disfile = isa_file;

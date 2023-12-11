@@ -92,7 +92,7 @@ struct iomap;
 /*
  * Argument structure for libxfs_init().
  */
-typedef struct libxfs_xinit {
+struct libxfs_init {
 				/* input parameters */
 	char            *dname;         /* pathname of data "subvolume" */
 	char            *logname;       /* pathname of log "subvolume" */
@@ -123,7 +123,7 @@ typedef struct libxfs_xinit {
 	int             logfd;          /* log subvolume file descriptor */
 	int             rtfd;           /* realtime subvolume file descriptor */
 	int		bcache_flags;	/* cache init flags */
-} libxfs_init_t;
+};
 
 #define LIBXFS_ISREADONLY	0x0002	/* disallow all mounted filesystems */
 #define LIBXFS_ISINACTIVE	0x0004	/* allow mounted only if mounted ro */
@@ -133,8 +133,10 @@ typedef struct libxfs_xinit {
 
 extern char	*progname;
 extern xfs_lsn_t libxfs_max_lsn;
-extern int	libxfs_init (libxfs_init_t *);
-void		libxfs_destroy(struct libxfs_xinit *li);
+
+int		libxfs_init(struct libxfs_init *);
+void		libxfs_destroy(struct libxfs_init *li);
+
 extern int	libxfs_device_to_fd (dev_t);
 extern dev_t	libxfs_device_open (char *, int, int, int);
 extern void	libxfs_device_close (dev_t);

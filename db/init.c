@@ -27,7 +27,7 @@ static struct xfs_mount	xmount;
 struct xfs_mount	*mp;
 static struct xlog	xlog;
 xfs_agnumber_t		cur_agno = NULLAGNUMBER;
-libxfs_init_t		x;
+struct libxfs_init	x;
 
 static void
 usage(void)

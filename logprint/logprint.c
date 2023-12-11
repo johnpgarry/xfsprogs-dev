@@ -25,7 +25,7 @@ int	print_overwrite;
 int     print_no_data;
 int     print_no_print;
 static int	print_operation = OP_PRINT;
-static struct libxfs_xinit x;
+static struct libxfs_init x;
 
 static void
 usage(void)

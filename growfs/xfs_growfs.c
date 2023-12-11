@@ -61,7 +61,7 @@ main(int argc, char **argv)
 	char			*logdev;  /*  log device name */
 	char			*rtdev;	/*   RT device name */
 	fs_path_t		*fs;	/* mount point information */
-	libxfs_init_t		xi;	/* libxfs structure */
+	struct libxfs_init	xi;	/* libxfs structure */
 	char			rpath[PATH_MAX];
 	int			ret;
 
