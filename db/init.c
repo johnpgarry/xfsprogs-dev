@@ -19,7 +19,6 @@
 
 static char		**cmdline;
 static int		ncmdline;
-char			*fsdevice;
 int			blkbb;
 int			exitcode;
 int			expert_mode;
@@ -91,11 +90,7 @@ init(
 	if (optind + 1 != argc)
 		usage();
 
-	fsdevice = argv[optind];
-	if (!x.disfile)
-		x.volname = fsdevice;
-	else
-		x.dname = fsdevice;
+	x.dname = argv[optind];
 	x.isdirect = LIBXFS_DIRECT;
 
 	x.bcache_flags = CACHE_MISCOMPARE_PURGE;
@@ -115,7 +110,7 @@ init(
 			1 << (XFS_MAX_SECTORSIZE_LOG - BBSHIFT), 0, &bp, NULL);
 	if (error) {
 		fprintf(stderr, _("%s: %s is invalid (cannot read first 512 "
-			"bytes)\n"), progname, fsdevice);
+			"bytes)\n"), progname, x.dname);
 		exit(1);
 	}
 
@@ -126,7 +121,7 @@ init(
 	sbp = &xmount.m_sb;
 	if (sbp->sb_magicnum != XFS_SB_MAGIC) {
 		fprintf(stderr, _("%s: %s is not a valid XFS filesystem (unexpected SB magic number 0x%08x)\n"),
-			progname, fsdevice, sbp->sb_magicnum);
+			progname, x.dname, sbp->sb_magicnum);
 		if (!force) {
 			fprintf(stderr, _("Use -F to force a read attempt.\n"));
 			exit(EXIT_FAILURE);
@@ -139,7 +134,7 @@ init(
 	if (!mp) {
 		fprintf(stderr,
 			_("%s: device %s unusable (not an XFS filesystem?)\n"),
-			progname, fsdevice);
+			progname, x.dname);
 		exit(1);
 	}
 	mp->m_log = &xlog;

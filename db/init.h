@@ -4,7 +4,6 @@
  * All Rights Reserved.
  */
 
-extern char		*fsdevice;
 extern int		blkbb;
 extern int		exitcode;
 extern int		expert_mode;

@@ -292,7 +292,6 @@ void get_topology(
 	int			force_overwrite)
 {
 	struct stat statbuf;
-	char *dfile = xi->volname ? xi->volname : xi->dname;
 
 	/*
 	 * If our target is a regular file, use platform_findsizes
@@ -300,7 +299,7 @@ void get_topology(
 	 * for direct IO; we'll set our sector size to that if possible.
 	 */
 	if (xi->disfile ||
-	    (!stat(dfile, &statbuf) && S_ISREG(statbuf.st_mode))) {
+	    (!stat(xi->dname, &statbuf) && S_ISREG(statbuf.st_mode))) {
 		int fd;
 		int flags = O_RDONLY;
 		long long dummy;
@@ -309,15 +308,16 @@ void get_topology(
 		if (xi->disfile)
 			flags |= O_CREAT;
 
-		fd = open(dfile, flags, 0666);
+		fd = open(xi->dname, flags, 0666);
 		if (fd >= 0) {
-			platform_findsizes(dfile, fd, &dummy, &ft->lsectorsize);
+			platform_findsizes(xi->dname, fd, &dummy,
+					&ft->lsectorsize);
 			close(fd);
 			ft->psectorsize = ft->lsectorsize;
 		} else
 			ft->psectorsize = ft->lsectorsize = BBSIZE;
 	} else {
-		blkid_get_topology(dfile, &ft->dsunit, &ft->dswidth,
+		blkid_get_topology(xi->dname, &ft->dsunit, &ft->dswidth,
 				   &ft->lsectorsize, &ft->psectorsize,
 				   force_overwrite);
 	}

@@ -294,10 +294,8 @@ int
 libxfs_init(libxfs_init_t *a)
 {
 	char		*dname;
-	int		fd;
 	char		*logname;
 	char		*rtname;
-	int		rval = 0;
 	int		flags;
 
 	dname = a->dname;
@@ -308,20 +306,12 @@ libxfs_init(libxfs_init_t *a)
 	a->dsize = a->lbsize = a->rtbsize = 0;
 	a->dbsize = a->logBBsize = a->logBBstart = a->rtsize = 0;
 
-	fd = -1;
 	flags = (a->isreadonly | a->isdirect);
 
 	rcu_init();
 	rcu_register_thread();
 	radix_tree_init();
 
-	if (a->volname) {
-		if (!check_open(a->volname, flags))
-			goto done;
-		fd = open(a->volname, O_RDONLY);
-		dname = a->dname = a->volname;
-		a->volname = NULL;
-	}
 	if (dname) {
 		if (a->disfile) {
 			a->ddev= libxfs_device_open(dname, a->dcreat, flags,
@@ -398,16 +388,12 @@ libxfs_init(libxfs_init_t *a)
 	use_xfs_buf_lock = a->usebuflock;
 	xfs_dir_startup();
 	init_caches();
-	rval = 1;
-done:
-	if (fd >= 0)
-		close(fd);
-	if (!rval) {
-		libxfs_close_devices(a);
-		rcu_unregister_thread();
-	}
+	return 1;
 
-	return rval;
+done:
+	libxfs_close_devices(a);
+	rcu_unregister_thread();
+	return 0;
 }
 
 

@@ -718,11 +718,8 @@ main(int argc, char **argv)
 	xargs.isdirect = LIBXFS_DIRECT;
 	xargs.isreadonly = LIBXFS_ISREADONLY;
 
-	if (source_is_file)  {
-		xargs.dname = source_name;
-		xargs.disfile = 1;
-	} else
-		xargs.volname = source_name;
+	xargs.dname = source_name;
+	xargs.disfile = source_is_file;
 
 	if (!libxfs_init(&xargs))  {
 		do_log(_("%s: couldn't initialize XFS library\n"

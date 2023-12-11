@@ -94,7 +94,6 @@ struct iomap;
  */
 typedef struct libxfs_xinit {
 				/* input parameters */
-	char            *volname;       /* pathname of volume */
 	char            *dname;         /* pathname of data "subvolume" */
 	char            *logname;       /* pathname of log "subvolume" */
 	char            *rtname;        /* pathname of realtime "subvolume" */

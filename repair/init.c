@@ -54,15 +54,8 @@ xfs_init(libxfs_init_t *args)
 {
 	memset(args, 0, sizeof(libxfs_init_t));
 
-	if (isa_file)  {
-		args->disfile = 1;
-		args->dname = fs_name;
-		args->volname = NULL;
-	} else  {
-		args->disfile = 0;
-		args->volname = fs_name;
-		args->dname = NULL;
-	}
+	args->dname = fs_name;
+	args->disfile = isa_file;
 
 	if (log_spec)  {	/* External log specified */
 		args->logname = log_name;

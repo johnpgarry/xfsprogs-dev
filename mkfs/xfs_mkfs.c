@@ -1959,7 +1959,6 @@ validate_sectorsize(
 	struct cli_params	*cli,
 	struct mkfs_default_params *dft,
 	struct fs_topology	*ft,
-	char			*dfile,
 	int			dry_run,
 	int			force_overwrite)
 {
@@ -1967,7 +1966,8 @@ validate_sectorsize(
 	 * Before anything else, verify that we are correctly operating on
 	 * files or block devices and set the control parameters correctly.
 	 */
-	check_device_type(dfile, &cli->xi->disfile, !cli->dsize, !dfile,
+	check_device_type(cli->xi->dname, &cli->xi->disfile,
+			  !cli->dsize, !cli->xi->dname,
 			  dry_run ? NULL : &cli->xi->dcreat, "d");
 	if (!cli->loginternal)
 		check_device_type(cli->xi->logname, &cli->xi->lisfile,
@@ -2929,36 +2929,17 @@ reported by the device (%u).\n"),
 	}
 }
 
-/*
- * This is more complex than it needs to be because we still support volume
- * based external logs. They are only discovered *after* the devices have been
- * opened, hence the crazy "is this really an internal log" checks here.
- */
 static void
 validate_logdev(
 	struct mkfs_params	*cfg,
-	struct cli_params	*cli,
-	char			**devname)
+	struct cli_params	*cli)
 {
 	struct libxfs_xinit	*xi = cli->xi;
 
-	*devname = NULL;
-
-	/* check for volume log first */
-	if (cli->loginternal && xi->volname && xi->logdev) {
-		*devname = _("volume log");
-		cfg->loginternal = false;
-	} else
-		cfg->loginternal = cli->loginternal;
+	cfg->loginternal = cli->loginternal;
 
 	/* now run device checks */
 	if (cfg->loginternal) {
-		if (xi->logdev) {
-			fprintf(stderr,
-_("can't have both external and internal logs\n"));
-			usage();
-		}
-
 		/*
 		 * if no sector size has been specified on the command line,
 		 * use what has been configured and validated for the data
@@ -2980,14 +2961,11 @@ _("log size %lld too large for internal log\n"),
 				(long long)cfg->logblocks);
 			usage();
 		}
-		*devname = _("internal log");
 		return;
 	}
 
 	/* External/log subvolume checks */
-	if (xi->logname)
-		*devname = xi->logname;
-	if (!*devname || !xi->logdev) {
+	if (!*xi->logname || !xi->logdev) {
 		fprintf(stderr, _("no log subvolume or external log.\n"));
 		usage();
 	}
@@ -3018,12 +2996,9 @@ reported by the device (%u).\n"),
 static void
 validate_rtdev(
 	struct mkfs_params	*cfg,
-	struct cli_params	*cli,
-	char			**devname)
+	struct cli_params	*cli)
 {
 	struct libxfs_xinit	*xi = cli->xi;
-
-	*devname = NULL;
 
 	if (!xi->rtdev) {
 		if (cli->rtsize) {
@@ -3032,7 +3007,6 @@ _("size specified for non-existent rt subvolume\n"));
 			usage();
 		}
 
-		*devname = _("none");
 		cfg->rtblocks = 0;
 		cfg->rtextents = 0;
 		cfg->rtbmblocks = 0;
@@ -3042,12 +3016,6 @@ _("size specified for non-existent rt subvolume\n"));
 		fprintf(stderr, _("Invalid zero length rt subvolume found\n"));
 		usage();
 	}
-
-	/* volume rtdev */
-	if (xi->volname)
-		*devname = _("volume rt");
-	else
-		*devname = xi->rtname;
 
 	if (cli->rtsize) {
 		if (cfg->rtblocks > DTOBT(xi->rtsize, cfg->blocklog)) {
@@ -4080,9 +4048,6 @@ main(
 	xfs_agnumber_t		agno;
 	struct xfs_buf		*buf;
 	int			c;
-	char			*dfile = NULL;
-	char			*logfile = NULL;
-	char			*rtfile = NULL;
 	int			dry_run = 0;
 	int			discard = 1;
 	int			force_overwrite = 0;
@@ -4222,9 +4187,8 @@ main(
 		fprintf(stderr, _("extra arguments\n"));
 		usage();
 	} else if (argc - optind == 1) {
-		dfile = xi.volname = getstr(argv[optind], &dopts, D_NAME);
-	} else
-		dfile = xi.dname;
+		xi.dname = getstr(argv[optind], &dopts, D_NAME);
+	}
 
 	/*
 	 * Now we have all the options parsed, we can read in the option file
@@ -4241,8 +4205,7 @@ main(
 	 * before opening the libxfs devices.
 	 */
 	validate_blocksize(&cfg, &cli, &dft);
-	validate_sectorsize(&cfg, &cli, &dft, &ft, dfile, dry_run,
-			    force_overwrite);
+	validate_sectorsize(&cfg, &cli, &dft, &ft, dry_run, force_overwrite);
 
 	/*
 	 * XXX: we still need to set block size and sector size global variables
@@ -4277,10 +4240,10 @@ main(
 	 * Open and validate the device configurations
 	 */
 	open_devices(&cfg, &xi);
-	validate_overwrite(dfile, force_overwrite);
+	validate_overwrite(xi.dname, force_overwrite);
 	validate_datadev(&cfg, &cli);
-	validate_logdev(&cfg, &cli, &logfile);
-	validate_rtdev(&cfg, &cli, &rtfile);
+	validate_logdev(&cfg, &cli);
+	validate_rtdev(&cfg, &cli);
 	calc_stripe_factors(&cfg, &cli, &ft);
 
 	/*
@@ -4321,7 +4284,7 @@ main(
 		struct xfs_fsop_geom	geo;
 
 		libxfs_fs_geometry(mp, &geo, XFS_FS_GEOM_MAX_STRUCT_VER);
-		xfs_report_geom(&geo, dfile, logfile, rtfile);
+		xfs_report_geom(&geo, xi.dname, xi.logname, xi.rtname);
 		if (dry_run)
 			exit(0);
 	}
