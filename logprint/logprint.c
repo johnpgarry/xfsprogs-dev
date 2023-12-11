@@ -52,7 +52,9 @@ Options:\n\
 }
 
 static int
-logstat(xfs_mount_t *mp)
+logstat(
+	struct xfs_mount	*mp,
+	struct xlog		*log)
 {
 	int		fd;
 	char		buf[BBSIZE];
@@ -103,6 +105,11 @@ logstat(xfs_mount_t *mp)
 		x.lbsize = BBSIZE;
 	}
 
+	log->l_dev = mp->m_logdev_targp;
+	log->l_logBBstart = x.logBBstart;
+	log->l_logBBsize = x.logBBsize;
+	log->l_sectBBsize = BTOBB(x.lbsize);
+	log->l_mp = mp;
 
 	if (x.logname && *x.logname) {    /* External log */
 		if ((fd = open(x.logname, O_RDONLY)) == -1) {
@@ -212,8 +219,8 @@ main(int argc, char **argv)
 	if (!libxfs_init(&x))
 		exit(1);
 
-	logstat(&mount);
 	libxfs_buftarg_init(&mount, x.ddev, x.logdev, x.rtdev);
+	logstat(&mount, &log);
 
 	logfd = (x.logfd < 0) ? x.dfd : x.logfd;
 
@@ -226,15 +233,9 @@ main(int argc, char **argv)
 	}
 
 	printf(_("daddr: %lld length: %lld\n\n"),
-		(long long)x.logBBstart, (long long)x.logBBsize);
+		(long long)log.l_logBBstart, (long long)log.l_logBBsize);
 
-	ASSERT(x.logBBsize <= INT_MAX);
-
-	log.l_dev = mount.m_logdev_targp;
-	log.l_logBBstart  = x.logBBstart;
-	log.l_logBBsize   = x.logBBsize;
-	log.l_sectBBsize  = BTOBB(x.lbsize);
-	log.l_mp          = &mount;
+	ASSERT(log.l_logBBsize <= INT_MAX);
 
 	switch (print_operation) {
 	case OP_PRINT:
