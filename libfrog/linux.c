@@ -232,18 +232,6 @@ platform_findsizes(char *path, int fd, long long *sz, int *bsz)
 		max_block_alignment = *bsz;
 }
 
-char *
-platform_findrawpath(char *path)
-{
-	return path;
-}
-
-char *
-platform_findblockpath(char *path)
-{
-	return path;
-}
-
 int
 platform_direct_blockdev(void)
 {

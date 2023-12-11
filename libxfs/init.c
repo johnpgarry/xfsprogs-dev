@@ -197,7 +197,7 @@ libxfs_device_close(dev_t dev)
 }
 
 static int
-check_open(char *path, int flags, char **rawfile, char **blockfile)
+check_open(char *path, int flags)
 {
 	int readonly = (flags & LIBXFS_ISREADONLY);
 	int inactive = (flags & LIBXFS_ISINACTIVE);
@@ -208,22 +208,10 @@ check_open(char *path, int flags, char **rawfile, char **blockfile)
 		perror(path);
 		return 0;
 	}
-	if (!(*rawfile = platform_findrawpath(path))) {
-		fprintf(stderr, _("%s: "
-				  "can't find a character device matching %s\n"),
-			progname, path);
-		return 0;
-	}
-	if (!(*blockfile = platform_findblockpath(path))) {
-		fprintf(stderr, _("%s: "
-				  "can't find a block device matching %s\n"),
-			progname, path);
-		return 0;
-	}
-	if (!readonly && !inactive && platform_check_ismounted(path, *blockfile, NULL, 1))
+	if (!readonly && !inactive && platform_check_ismounted(path, path, NULL, 1))
 		return 0;
 
-	if (inactive && check_isactive(path, *blockfile, ((readonly|dangerously)?1:0)))
+	if (inactive && check_isactive(path, path, ((readonly|dangerously)?1:0)))
 		return 0;
 
 	return 1;
@@ -305,11 +293,9 @@ libxfs_close_devices(
 int
 libxfs_init(libxfs_init_t *a)
 {
-	char		*blockfile;
 	char		*dname;
 	int		fd;
 	char		*logname;
-	char		*rawfile;
 	char		*rtname;
 	int		rval = 0;
 	int		flags;
@@ -330,9 +316,9 @@ libxfs_init(libxfs_init_t *a)
 	radix_tree_init();
 
 	if (a->volname) {
-		if(!check_open(a->volname,flags,&rawfile,&blockfile))
+		if (!check_open(a->volname, flags))
 			goto done;
-		fd = open(rawfile, O_RDONLY);
+		fd = open(a->volname, O_RDONLY);
 		dname = a->dname = a->volname;
 		a->volname = NULL;
 	}
@@ -344,12 +330,12 @@ libxfs_init(libxfs_init_t *a)
 			platform_findsizes(dname, a->dfd, &a->dsize,
 					   &a->dbsize);
 		} else {
-			if (!check_open(dname, flags, &rawfile, &blockfile))
+			if (!check_open(dname, flags))
 				goto done;
-			a->ddev = libxfs_device_open(rawfile,
+			a->ddev = libxfs_device_open(dname,
 					a->dcreat, flags, a->setblksize);
 			a->dfd = libxfs_device_to_fd(a->ddev);
-			platform_findsizes(rawfile, a->dfd,
+			platform_findsizes(dname, a->dfd,
 					   &a->dsize, &a->dbsize);
 		}
 	} else
@@ -362,12 +348,12 @@ libxfs_init(libxfs_init_t *a)
 			platform_findsizes(dname, a->logfd, &a->logBBsize,
 					   &a->lbsize);
 		} else {
-			if (!check_open(logname, flags, &rawfile, &blockfile))
+			if (!check_open(logname, flags))
 				goto done;
-			a->logdev = libxfs_device_open(rawfile,
+			a->logdev = libxfs_device_open(logname,
 					a->lcreat, flags, a->setblksize);
 			a->logfd = libxfs_device_to_fd(a->logdev);
-			platform_findsizes(rawfile, a->logfd,
+			platform_findsizes(logname, a->logfd,
 					   &a->logBBsize, &a->lbsize);
 		}
 	} else
@@ -380,12 +366,12 @@ libxfs_init(libxfs_init_t *a)
 			platform_findsizes(dname, a->rtfd, &a->rtsize,
 					   &a->rtbsize);
 		} else {
-			if (!check_open(rtname, flags, &rawfile, &blockfile))
+			if (!check_open(rtname, flags))
 				goto done;
-			a->rtdev = libxfs_device_open(rawfile,
+			a->rtdev = libxfs_device_open(rtname,
 					a->rcreat, flags, a->setblksize);
 			a->rtfd = libxfs_device_to_fd(a->rtdev);
-			platform_findsizes(rawfile, a->rtfd,
+			platform_findsizes(rtname, a->rtfd,
 					   &a->rtsize, &a->rtbsize);
 		}
 	} else
