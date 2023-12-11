@@ -313,59 +313,31 @@ libxfs_init(struct libxfs_init *a)
 	radix_tree_init();
 
 	if (dname) {
-		if (a->disfile) {
-			a->ddev= libxfs_device_open(dname, a->dcreat, flags,
-						    a->setblksize);
-			a->dfd = libxfs_device_to_fd(a->ddev);
-			platform_findsizes(dname, a->dfd, &a->dsize,
-					   &a->dbsize);
-		} else {
-			if (!check_open(dname, flags))
-				goto done;
-			a->ddev = libxfs_device_open(dname,
-					a->dcreat, flags, a->setblksize);
-			a->dfd = libxfs_device_to_fd(a->ddev);
-			platform_findsizes(dname, a->dfd,
-					   &a->dsize, &a->dbsize);
-		}
-	} else
-		a->dsize = 0;
+		if (!a->disfile && !check_open(dname, flags))
+			goto done;
+		a->ddev = libxfs_device_open(dname, a->dcreat, flags,
+				a->setblksize);
+		a->dfd = libxfs_device_to_fd(a->ddev);
+		platform_findsizes(dname, a->dfd, &a->dsize, &a->dbsize);
+	}
 	if (logname) {
-		if (a->lisfile) {
-			a->logdev = libxfs_device_open(logname,
-					a->lcreat, flags, a->setblksize);
-			a->logfd = libxfs_device_to_fd(a->logdev);
-			platform_findsizes(dname, a->logfd, &a->logBBsize,
-					   &a->lbsize);
-		} else {
-			if (!check_open(logname, flags))
-				goto done;
-			a->logdev = libxfs_device_open(logname,
-					a->lcreat, flags, a->setblksize);
-			a->logfd = libxfs_device_to_fd(a->logdev);
-			platform_findsizes(logname, a->logfd,
-					   &a->logBBsize, &a->lbsize);
-		}
-	} else
-		a->logBBsize = 0;
+		if (!a->lisfile && !check_open(logname, flags))
+			goto done;
+		a->logdev = libxfs_device_open(logname, a->lcreat, flags,
+				a->setblksize);
+		a->logfd = libxfs_device_to_fd(a->logdev);
+		platform_findsizes(logname, a->logfd, &a->logBBsize,
+				&a->lbsize);
+	}
 	if (rtname) {
-		if (a->risfile) {
-			a->rtdev = libxfs_device_open(rtname,
-					a->rcreat, flags, a->setblksize);
-			a->rtfd = libxfs_device_to_fd(a->rtdev);
-			platform_findsizes(dname, a->rtfd, &a->rtsize,
-					   &a->rtbsize);
-		} else {
-			if (!check_open(rtname, flags))
-				goto done;
-			a->rtdev = libxfs_device_open(rtname,
-					a->rcreat, flags, a->setblksize);
-			a->rtfd = libxfs_device_to_fd(a->rtdev);
-			platform_findsizes(rtname, a->rtfd,
-					   &a->rtsize, &a->rtbsize);
-		}
-	} else
-		a->rtsize = 0;
+		if (a->risfile && !check_open(rtname, flags))
+			goto done;
+		a->rtdev = libxfs_device_open(rtname, a->rcreat, flags,
+				a->setblksize);
+		a->rtfd = libxfs_device_to_fd(a->rtdev);
+		platform_findsizes(dname, a->rtfd, &a->rtsize, &a->rtbsize);
+	}
+
 	if (a->dsize < 0) {
 		fprintf(stderr, _("%s: can't get size for data subvolume\n"),
 			progname);
