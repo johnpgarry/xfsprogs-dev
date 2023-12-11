@@ -18,6 +18,8 @@
 #include "libfrog/dahashselftest.h"
 #include <sys/resource.h>
 
+struct libxfs_xinit	x;
+
 static void
 ts_create(void)
 {

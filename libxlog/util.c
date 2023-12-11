@@ -10,7 +10,6 @@
 int print_exit;
 int print_skip_uuid;
 int print_record_header;
-libxfs_init_t x;
 
 void
 xlog_init(
