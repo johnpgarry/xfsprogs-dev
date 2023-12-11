@@ -56,19 +56,19 @@ xfs_init(struct libxfs_init *args)
 {
 	memset(args, 0, sizeof(*args));
 
-	args->dname = fs_name;
-	args->disfile = isa_file;
+	args->data.name = fs_name;
+	args->data.isfile = isa_file;
 
 	if (log_spec)  {	/* External log specified */
-		args->logname = log_name;
-		args->lisfile = (isa_file?1:0);
+		args->log.name = log_name;
+		args->log.isfile = isa_file;
 		/* XXX assume data file also means log file */
 		/* REVISIT: Need to do fs sanity / log validity checking */
 	}
 
 	if (rt_spec)  {	/* RT device specified */
-		args->rtname = rt_name;
-		args->risfile = (isa_file?1:0);
+		args->rt.name = rt_name;
+		args->rt.isfile = isa_file;
 		/* XXX assume data file also means rt file */
 	}
 

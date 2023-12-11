@@ -716,8 +716,8 @@ main(int argc, char **argv)
 
 	memset(&xargs, 0, sizeof(xargs));
 	xargs.flags = LIBXFS_ISREADONLY | LIBXFS_DIRECT;
-	xargs.dname = source_name;
-	xargs.disfile = source_is_file;
+	xargs.data.name = source_name;
+	xargs.data.isfile = source_is_file;
 
 	if (!libxfs_init(&xargs))  {
 		do_log(_("%s: couldn't initialize XFS library\n"

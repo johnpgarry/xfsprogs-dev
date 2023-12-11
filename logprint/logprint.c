@@ -64,9 +64,9 @@ logstat(
 	 * filesystem. We need this to get the length of the
 	 * log. Otherwise we end up seeking forever. -- mkp
 	 */
-	if ((fd = open(x.dname, O_RDONLY)) == -1) {
+	if ((fd = open(x.data.name, O_RDONLY)) == -1) {
 		fprintf(stderr, _("    Can't open device %s: %s\n"),
-			x.dname, strerror(errno));
+			x.data.name, strerror(errno));
 		exit(1);
 	}
 	lseek(fd, 0, SEEK_SET);
@@ -76,7 +76,7 @@ logstat(
 	}
 	close (fd);
 
-	if (!x.disfile) {
+	if (!x.data.isfile) {
 		struct xfs_sb	*sb = &mp->m_sb;
 
 		/*
@@ -88,7 +88,7 @@ logstat(
 
 		xlog_init(mp, log);
 
-		if (!x.logname && sb->sb_logstart == 0) {
+		if (!x.log.name && sb->sb_logstart == 0) {
 			fprintf(stderr, _("    external log device not specified\n\n"));
 			usage();
 			/*NOTREACHED*/
@@ -96,7 +96,7 @@ logstat(
 	} else {
 		struct stat	s;
 
-		stat(x.dname, &s);
+		stat(x.data.name, &s);
 
 		log->l_logBBsize = s.st_size >> 9;
 		log->l_logBBstart = 0;
@@ -105,15 +105,15 @@ logstat(
 		log->l_mp = mp;
 	}
 
-	if (x.logname && *x.logname) {    /* External log */
-		if ((fd = open(x.logname, O_RDONLY)) == -1) {
+	if (x.log.name && *x.log.name) {    /* External log */
+		if ((fd = open(x.log.name, O_RDONLY)) == -1) {
 			fprintf(stderr, _("Can't open file %s: %s\n"),
-				x.logname, strerror(errno));
+				x.log.name, strerror(errno));
 			exit(1);
 		}
 		close(fd);
 	} else {                            /* Internal log */
-		x.logdev = x.ddev;
+		x.log.dev = x.data.dev;
 	}
 
 	return 0;
@@ -165,11 +165,11 @@ main(int argc, char **argv)
 				break;
 			case 'f':
 				print_skip_uuid++;
-				x.disfile = 1;
+				x.data.isfile = 1;
 				break;
 			case 'l':
-				x.logname = optarg;
-				x.lisfile = 1;
+				x.log.name = optarg;
+				x.log.isfile = 1;
 				break;
 			case 'i':
 				print_inode++;
@@ -203,9 +203,9 @@ main(int argc, char **argv)
 	if (argc - optind != 1)
 		usage();
 
-	x.dname = argv[optind];
+	x.data.name = argv[optind];
 
-	if (x.dname == NULL)
+	if (x.data.name == NULL)
 		usage();
 
 	x.flags = LIBXFS_ISINACTIVE;
@@ -216,20 +216,20 @@ main(int argc, char **argv)
 	libxfs_buftarg_init(&mount, &x);
 	logstat(&mount, &log);
 
-	logfd = (x.logfd < 0) ? x.dfd : x.logfd;
+	logfd = (x.log.fd < 0) ? x.data.fd : x.log.fd;
 
-	printf(_("    data device: 0x%llx\n"), (unsigned long long)x.ddev);
+	printf(_("    data device: 0x%llx\n"), (unsigned long long)x.data.dev);
 
-	if (x.logname) {
-		printf(_("    log file: \"%s\" "), x.logname);
+	if (x.log.name) {
+		printf(_("    log file: \"%s\" "), x.log.name);
 	} else {
-		printf(_("    log device: 0x%llx "), (unsigned long long)x.logdev);
+		printf(_("    log device: 0x%llx "), (unsigned long long)x.log.dev);
 	}
 
 	printf(_("daddr: %lld length: %lld\n\n"),
 		(long long)log.l_logBBstart, (long long)log.l_logBBsize);
 
-	ASSERT(log.l_logBBsize <= INT_MAX);
+	ASSERT(x.log.size <= INT_MAX);
 
 	switch (print_operation) {
 	case OP_PRINT:

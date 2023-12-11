@@ -89,38 +89,31 @@ struct iomap;
 
 #define xfs_isset(a,i)	((a)[(i)/(sizeof(*(a))*NBBY)] & (1ULL<<((i)%(sizeof(*(a))*NBBY))))
 
+struct libxfs_dev {
+	/* input parameters */
+	char		*name;	/* pathname of the device */
+	bool		isfile;	/* is the device a file? */
+	bool		create;	/* create file if it doesn't exist */
+
+	/* output parameters */
+	dev_t		dev;	/* device name for the device */
+	long long       size;	/* size of subvolume (BBs) */
+	int		bsize;	/* device blksize */
+	int		fd;	/* file descriptor */
+};
+
 /*
  * Argument structure for libxfs_init().
  */
 struct libxfs_init {
-				/* input parameters */
-	char            *dname;         /* pathname of data "subvolume" */
-	char            *logname;       /* pathname of log "subvolume" */
-	char            *rtname;        /* pathname of realtime "subvolume" */
+	struct libxfs_dev	data;
+	struct libxfs_dev	log;
+	struct libxfs_dev	rt;
+
+	/* input parameters */
 	unsigned	flags;		/* LIBXFS_* flags below */
-	int             disfile;        /* data "subvolume" is a regular file */
-	int             dcreat;         /* try to create data subvolume */
-	int             lisfile;        /* log "subvolume" is a regular file */
-	int             lcreat;         /* try to create log subvolume */
-	int             risfile;        /* realtime "subvolume" is a reg file */
-	int             rcreat;         /* try to create realtime subvolume */
-	int		setblksize;	/* attempt to set device blksize */
-				/* output results */
-	dev_t           ddev;           /* device for data subvolume */
-	dev_t           logdev;         /* device for log subvolume */
-	dev_t           rtdev;          /* device for realtime subvolume */
-	long long       dsize;          /* size of data subvolume (BBs) */
-	long long       logBBsize;      /* size of log subvolume (BBs) */
-					/* (blocks allocated for use as
-					 * log is stored in mount structure) */
-	long long       rtsize;         /* size of realtime subvolume (BBs) */
-	int		dbsize;		/* data subvolume device blksize */
-	int		lbsize;		/* log subvolume device blksize */
-	int		rtbsize;	/* realtime subvolume device blksize */
-	int             dfd;            /* data subvolume file descriptor */
-	int             logfd;          /* log subvolume file descriptor */
-	int             rtfd;           /* realtime subvolume file descriptor */
 	int		bcache_flags;	/* cache init flags */
+	int		setblksize;	/* value to set device blksizes to */
 };
 
 /* disallow all mounted filesystems: */

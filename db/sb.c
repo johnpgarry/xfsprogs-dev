@@ -220,13 +220,13 @@ sb_logcheck(void)
 	int		dirty;
 
 	if (mp->m_sb.sb_logstart) {
-		if (x.logdev && x.logdev != x.ddev) {
+		if (x.log.dev && x.log.dev != x.data.dev) {
 			dbprintf(_("aborting - external log specified for FS "
 				 "with an internal log\n"));
 			return 0;
 		}
 	} else {
-		if (!x.logdev || (x.logdev == x.ddev)) {
+		if (!x.log.dev || (x.log.dev == x.data.dev)) {
 			dbprintf(_("aborting - no external log specified for FS "
 				 "with an external log\n"));
 			return 0;
@@ -452,10 +452,10 @@ uuid_f(
 			}
 		}
 		if (mp->m_sb.sb_logstart) {
-			if (x.logdev && x.logdev != x.ddev)
+			if (x.log.dev && x.log.dev != x.data.dev)
 				dbprintf(_("warning - external log specified "
 					 "for FS with an internal log\n"));
-		} else if (!x.logdev || (x.logdev == x.ddev)) {
+		} else if (!x.log.dev || (x.log.dev == x.data.dev)) {
 			dbprintf(_("warning - no external log specified "
 				 "for FS with an external log\n"));
 		}

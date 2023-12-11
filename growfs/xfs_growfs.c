@@ -183,26 +183,26 @@ main(int argc, char **argv)
 	 */
 
 	memset(&xi, 0, sizeof(xi));
-	xi.dname = datadev;
-	xi.logname = logdev;
-	xi.rtname = rtdev;
+	xi.data.name = datadev;
+	xi.log.name = logdev;
+	xi.rt.name = rtdev;
 	xi.flags = LIBXFS_ISREADONLY;
 
 	if (!libxfs_init(&xi))
 		usage();
 
 	/* check we got the info for all the sections we are trying to modify */
-	if (!xi.ddev) {
+	if (!xi.data.dev) {
 		fprintf(stderr, _("%s: failed to access data device for %s\n"),
 			progname, fname);
 		exit(1);
 	}
-	if (lflag && !isint && !xi.logdev) {
+	if (lflag && !isint && !xi.log.dev) {
 		fprintf(stderr, _("%s: failed to access external log for %s\n"),
 			progname, fname);
 		exit(1);
 	}
-	if (rflag && !xi.rtdev) {
+	if (rflag && !xi.rt.dev) {
 		fprintf(stderr,
 			_("%s: failed to access realtime device for %s\n"),
 			progname, fname);
@@ -211,10 +211,10 @@ main(int argc, char **argv)
 
 	xfs_report_geom(&geo, datadev, logdev, rtdev);
 
-	ddsize = xi.dsize;
-	dlsize = ( xi.logBBsize? xi.logBBsize :
+	ddsize = xi.data.size;
+	dlsize = (xi.log.size ? xi.log.size :
 			geo.logblocks * (geo.blocksize / BBSIZE) );
-	drsize = xi.rtsize;
+	drsize = xi.rt.size;
 
 	/*
 	 * Ok, Linux only has a 1024-byte resolution on device _size_,
@@ -328,7 +328,7 @@ _("[EXPERIMENTAL] try to shrink unused space %lld, old size is %lld\n"),
 		else if (xflag)
 			in.isint = 0;
 		else
-			in.isint = xi.logBBsize == 0;
+			in.isint = xi.log.size == 0;
 		if (lsize == geo.logblocks && (in.isint == isint)) {
 			if (lflag)
 				fprintf(stderr,

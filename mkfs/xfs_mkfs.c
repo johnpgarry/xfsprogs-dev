@@ -1092,37 +1092,35 @@ invalid_cfgfile_opt(
 
 static void
 check_device_type(
-	const char	*name,
-	int		*isfile,
-	bool		no_size,
-	bool		no_name,
-	int		*create,
-	const char	*optname)
+	struct libxfs_dev	*dev,
+	bool			no_size,
+	bool			dry_run,
+	const char		*optname)
 {
 	struct stat statbuf;
 
-	if (*isfile && (no_size || no_name)) {
+	if (dev->isfile && (no_size || !dev->name)) {
 		fprintf(stderr,
 	_("if -%s file then -%s name and -%s size are required\n"),
 			optname, optname, optname);
 		usage();
 	}
 
-	if (!name) {
+	if (!dev->name) {
 		fprintf(stderr, _("No device name specified\n"));
 		usage();
 	}
 
-	if (stat(name, &statbuf)) {
-		if (errno == ENOENT && *isfile) {
-			if (create)
-				*create = 1;
+	if (stat(dev->name, &statbuf)) {
+		if (errno == ENOENT && dev->isfile) {
+			if (!dry_run)
+				dev->create = 1;
 			return;
 		}
 
 		fprintf(stderr,
 	_("Error accessing specified device %s: %s\n"),
-				name, strerror(errno));
+				dev->name, strerror(errno));
 		usage();
 		return;
 	}
@@ -1133,18 +1131,18 @@ check_device_type(
 	 * this case to trigger that behaviour.
 	 */
 	if (S_ISREG(statbuf.st_mode)) {
-		if (!*isfile)
-			*isfile = 1;
-		else if (create)
-			*create = 1;
+		if (!dev->isfile)
+			dev->isfile = 1;
+		else if (!dry_run)
+			dev->create = 1;
 		return;
 	}
 
 	if (S_ISBLK(statbuf.st_mode)) {
-		if (*isfile) {
+		if (dev->isfile) {
 			fprintf(stderr,
 	_("specified \"-%s file\" on a block device %s\n"),
-				optname, name);
+				optname, dev->name);
 			usage();
 		}
 		return;
@@ -1152,7 +1150,7 @@ check_device_type(
 
 	fprintf(stderr,
 	_("specified device %s not a file or block device\n"),
-		name);
+		dev->name);
 	usage();
 }
 
@@ -1258,7 +1256,7 @@ zero_old_xfs_structures(
 	/*
 	 * We open regular files with O_TRUNC|O_CREAT. Nothing to do here...
 	 */
-	if (xi->disfile && xi->dcreat)
+	if (xi->data.isfile && xi->data.create)
 		return;
 
 	/*
@@ -1279,9 +1277,9 @@ zero_old_xfs_structures(
 	 * return zero bytes. It's not a failure we need to warn about in this
 	 * case.
 	 */
-	off = pread(xi->dfd, buf, new_sb->sb_sectsize, 0);
+	off = pread(xi->data.fd, buf, new_sb->sb_sectsize, 0);
 	if (off != new_sb->sb_sectsize) {
-		if (!xi->disfile)
+		if (!xi->data.isfile)
 			fprintf(stderr,
 	_("error reading existing superblock: %s\n"),
 				strerror(errno));
@@ -1316,7 +1314,7 @@ zero_old_xfs_structures(
 	off = 0;
 	for (i = 1; i < sb.sb_agcount; i++)  {
 		off += sb.sb_agblocks;
-		if (pwrite(xi->dfd, buf, new_sb->sb_sectsize,
+		if (pwrite(xi->data.fd, buf, new_sb->sb_sectsize,
 					off << sb.sb_blocklog) == -1)
 			break;
 	}
@@ -1561,10 +1559,10 @@ data_opts_parser(
 		cli->agsize = getstr(value, opts, subopt);
 		break;
 	case D_FILE:
-		cli->xi->disfile = getnum(value, opts, subopt);
+		cli->xi->data.isfile = getnum(value, opts, subopt);
 		break;
 	case D_NAME:
-		cli->xi->dname = getstr(value, opts, subopt);
+		cli->xi->data.name = getstr(value, opts, subopt);
 		break;
 	case D_SIZE:
 		cli->dsize = getstr(value, opts, subopt);
@@ -1673,7 +1671,7 @@ log_opts_parser(
 		cli->logagno = getnum(value, opts, subopt);
 		break;
 	case L_FILE:
-		cli->xi->lisfile = getnum(value, opts, subopt);
+		cli->xi->log.isfile = getnum(value, opts, subopt);
 		break;
 	case L_INTERNAL:
 		cli->loginternal = getnum(value, opts, subopt);
@@ -1686,7 +1684,7 @@ log_opts_parser(
 		break;
 	case L_NAME:
 	case L_DEV:
-		cli->xi->logname = getstr(value, opts, subopt);
+		cli->xi->log.name = getstr(value, opts, subopt);
 		cli->loginternal = 0;
 		break;
 	case L_VERSION:
@@ -1819,11 +1817,11 @@ rtdev_opts_parser(
 		cli->rtextsize = getstr(value, opts, subopt);
 		break;
 	case R_FILE:
-		cli->xi->risfile = getnum(value, opts, subopt);
+		cli->xi->rt.isfile = getnum(value, opts, subopt);
 		break;
 	case R_NAME:
 	case R_DEV:
-		cli->xi->rtname = getstr(value, opts, subopt);
+		cli->xi->rt.name = getstr(value, opts, subopt);
 		break;
 	case R_SIZE:
 		cli->rtsize = getstr(value, opts, subopt);
@@ -1962,24 +1960,18 @@ validate_sectorsize(
 	 * Before anything else, verify that we are correctly operating on
 	 * files or block devices and set the control parameters correctly.
 	 */
-	check_device_type(cli->xi->dname, &cli->xi->disfile,
-			  !cli->dsize, !cli->xi->dname,
-			  dry_run ? NULL : &cli->xi->dcreat, "d");
+	check_device_type(&cli->xi->data, !cli->dsize, dry_run, "d");
 	if (!cli->loginternal)
-		check_device_type(cli->xi->logname, &cli->xi->lisfile,
-				  !cli->logsize, !cli->xi->logname,
-				  dry_run ? NULL : &cli->xi->lcreat, "l");
-	if (cli->xi->rtname)
-		check_device_type(cli->xi->rtname, &cli->xi->risfile,
-				  !cli->rtsize, !cli->xi->rtname,
-				  dry_run ? NULL : &cli->xi->rcreat, "r");
+		check_device_type(&cli->xi->log, !cli->logsize, dry_run, "l");
+	if (cli->xi->rt.name)
+		check_device_type(&cli->xi->rt, !cli->rtsize, dry_run, "r");
 
 	/*
 	 * Explicitly disable direct IO for image files so we don't error out on
 	 * sector size mismatches between the new filesystem and the underlying
 	 * host filesystem.
 	 */
-	if (cli->xi->disfile || cli->xi->lisfile || cli->xi->risfile)
+	if (cli->xi->data.isfile || cli->xi->log.isfile || cli->xi->rt.isfile)
 		cli->xi->flags &= ~LIBXFS_DIRECT;
 
 	memset(ft, 0, sizeof(*ft));
@@ -2294,7 +2286,7 @@ _("inode btree counters not supported without finobt support\n"));
 		cli->sb_feat.inobtcnt = false;
 	}
 
-	if (cli->xi->rtname) {
+	if (cli->xi->rt.name) {
 		if (cli->sb_feat.reflink && cli_opt_set(&mopts, M_REFLINK)) {
 			fprintf(stderr,
 _("reflink not supported with realtime devices\n"));
@@ -2461,8 +2453,8 @@ validate_rtextsize(
 		 */
 		uint64_t	rswidth;
 
-		if (!cfg->sb_feat.nortalign && !cli->xi->risfile &&
-		    !(!cli->rtsize && cli->xi->disfile))
+		if (!cfg->sb_feat.nortalign && !cli->xi->rt.isfile &&
+		    !(!cli->rtsize && cli->xi->data.isfile))
 			rswidth = ft->rtswidth;
 		else
 			rswidth = 0;
@@ -2840,7 +2832,7 @@ open_devices(
 	xi->setblksize = cfg->sectorsize;
 	if (!libxfs_init(xi))
 		usage();
-	if (!xi->ddev) {
+	if (!xi->data.dev) {
 		fprintf(stderr, _("no device name given in argument list\n"));
 		usage();
 	}
@@ -2856,9 +2848,9 @@ open_devices(
 	 * multiple of the sector size, or 1024, whichever is larger.
 	 */
 	sector_mask = (uint64_t)-1 << (max(cfg->sectorlog, 10) - BBSHIFT);
-	xi->dsize &= sector_mask;
-	xi->rtsize &= sector_mask;
-	xi->logBBsize &= (uint64_t)-1 << (max(cfg->lsectorlog, 10) - BBSHIFT);
+	xi->data.size &= sector_mask;
+	xi->rt.size &= sector_mask;
+	xi->log.size &= (uint64_t)-1 << (max(cfg->lsectorlog, 10) - BBSHIFT);
 }
 
 static void
@@ -2870,12 +2862,12 @@ discard_devices(
 	 * This function has to be called after libxfs has been initialized.
 	 */
 
-	if (!xi->disfile)
-		discard_blocks(xi->dfd, xi->dsize, quiet);
-	if (xi->rtdev && !xi->risfile)
-		discard_blocks(xi->rtfd, xi->rtsize, quiet);
-	if (xi->logdev && xi->logdev != xi->ddev && !xi->lisfile)
-		discard_blocks(xi->logfd, xi->logBBsize, quiet);
+	if (!xi->data.isfile)
+		discard_blocks(xi->data.fd, xi->data.size, quiet);
+	if (xi->rt.dev && !xi->rt.isfile)
+		discard_blocks(xi->rt.fd, xi->rt.size, quiet);
+	if (xi->log.dev && xi->log.dev != xi->data.dev && !xi->log.isfile)
+		discard_blocks(xi->log.fd, xi->log.size, quiet);
 }
 
 static void
@@ -2885,29 +2877,29 @@ validate_datadev(
 {
 	struct libxfs_init	*xi = cli->xi;
 
-	if (!xi->dsize) {
+	if (!xi->data.size) {
 		/*
 		 * if the device is a file, we can't validate the size here.
 		 * Instead, the file will be truncated to the correct length
 		 * later on. if it's not a file, we've got a dud device.
 		 */
-		if (!xi->disfile) {
+		if (!xi->data.isfile) {
 			fprintf(stderr, _("can't get size of data subvolume\n"));
 			usage();
 		}
 		ASSERT(cfg->dblocks);
 	} else if (cfg->dblocks) {
 		/* check the size fits into the underlying device */
-		if (cfg->dblocks > DTOBT(xi->dsize, cfg->blocklog)) {
+		if (cfg->dblocks > DTOBT(xi->data.size, cfg->blocklog)) {
 			fprintf(stderr,
 _("size %s specified for data subvolume is too large, maximum is %lld blocks\n"),
 				cli->dsize,
-				(long long)DTOBT(xi->dsize, cfg->blocklog));
+				(long long)DTOBT(xi->data.size, cfg->blocklog));
 			usage();
 		}
 	} else {
 		/* no user size, so use the full block device */
-		cfg->dblocks = DTOBT(xi->dsize, cfg->blocklog);
+		cfg->dblocks = DTOBT(xi->data.size, cfg->blocklog);
 	}
 
 	if (cfg->dblocks < XFS_MIN_DATA_BLOCKS(cfg)) {
@@ -2917,11 +2909,11 @@ _("size %lld of data subvolume is too small, minimum %lld blocks\n"),
 		usage();
 	}
 
-	if (xi->dbsize > cfg->sectorsize) {
+	if (xi->data.bsize > cfg->sectorsize) {
 		fprintf(stderr, _(
 "Warning: the data subvolume sector size %u is less than the sector size \n\
 reported by the device (%u).\n"),
-			cfg->sectorsize, xi->dbsize);
+			cfg->sectorsize, xi->data.bsize);
 	}
 }
 
@@ -2961,31 +2953,31 @@ _("log size %lld too large for internal log\n"),
 	}
 
 	/* External/log subvolume checks */
-	if (!*xi->logname || !xi->logdev) {
+	if (!*xi->log.name || !xi->log.dev) {
 		fprintf(stderr, _("no log subvolume or external log.\n"));
 		usage();
 	}
 
 	if (!cfg->logblocks) {
-		if (xi->logBBsize == 0) {
+		if (xi->log.size == 0) {
 			fprintf(stderr,
 _("unable to get size of the log subvolume.\n"));
 			usage();
 		}
-		cfg->logblocks = DTOBT(xi->logBBsize, cfg->blocklog);
-	} else if (cfg->logblocks > DTOBT(xi->logBBsize, cfg->blocklog)) {
+		cfg->logblocks = DTOBT(xi->log.size, cfg->blocklog);
+	} else if (cfg->logblocks > DTOBT(xi->log.size, cfg->blocklog)) {
 		fprintf(stderr,
 _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 			cli->logsize,
-			(long long)DTOBT(xi->logBBsize, cfg->blocklog));
+			(long long)DTOBT(xi->log.size, cfg->blocklog));
 		usage();
 	}
 
-	if (xi->lbsize > cfg->lsectorsize) {
+	if (xi->log.bsize > cfg->lsectorsize) {
 		fprintf(stderr, _(
 "Warning: the log subvolume sector size %u is less than the sector size\n\
 reported by the device (%u).\n"),
-			cfg->lsectorsize, xi->lbsize);
+			cfg->lsectorsize, xi->log.bsize);
 	}
 }
 
@@ -2996,7 +2988,7 @@ validate_rtdev(
 {
 	struct libxfs_init	*xi = cli->xi;
 
-	if (!xi->rtdev) {
+	if (!xi->rt.dev) {
 		if (cli->rtsize) {
 			fprintf(stderr,
 _("size specified for non-existent rt subvolume\n"));
@@ -3008,28 +3000,28 @@ _("size specified for non-existent rt subvolume\n"));
 		cfg->rtbmblocks = 0;
 		return;
 	}
-	if (!xi->rtsize) {
+	if (!xi->rt.size) {
 		fprintf(stderr, _("Invalid zero length rt subvolume found\n"));
 		usage();
 	}
 
 	if (cli->rtsize) {
-		if (cfg->rtblocks > DTOBT(xi->rtsize, cfg->blocklog)) {
+		if (cfg->rtblocks > DTOBT(xi->rt.size, cfg->blocklog)) {
 			fprintf(stderr,
 _("size %s specified for rt subvolume is too large, maxi->um is %lld blocks\n"),
 				cli->rtsize,
-				(long long)DTOBT(xi->rtsize, cfg->blocklog));
+				(long long)DTOBT(xi->rt.size, cfg->blocklog));
 			usage();
 		}
-		if (xi->rtbsize > cfg->sectorsize) {
+		if (xi->rt.bsize > cfg->sectorsize) {
 			fprintf(stderr, _(
 "Warning: the realtime subvolume sector size %u is less than the sector size\n\
 reported by the device (%u).\n"),
-				cfg->sectorsize, xi->rtbsize);
+				cfg->sectorsize, xi->rt.bsize);
 		}
 	} else {
 		/* grab volume size */
-		cfg->rtblocks = DTOBT(xi->rtsize, cfg->blocklog);
+		cfg->rtblocks = DTOBT(xi->rt.size, cfg->blocklog);
 	}
 
 	cfg->rtextents = cfg->rtblocks / cfg->rtextblocks;
@@ -3770,9 +3762,9 @@ prepare_devices(
 	 * needed so that the reads for the end of the device in the mount code
 	 * will succeed.
 	 */
-	if (xi->disfile &&
-	    xi->dsize * xi->dbsize < cfg->dblocks * cfg->blocksize) {
-		if (ftruncate(xi->dfd, cfg->dblocks * cfg->blocksize) < 0) {
+	if (xi->data.isfile &&
+	    xi->data.size * xi->data.bsize < cfg->dblocks * cfg->blocksize) {
+		if (ftruncate(xi->data.fd, cfg->dblocks * cfg->blocksize) < 0) {
 			fprintf(stderr,
 				_("%s: Growing the data section failed\n"),
 				progname);
@@ -3780,7 +3772,7 @@ prepare_devices(
 		}
 
 		/* update size to be able to whack blocks correctly */
-		xi->dsize = BTOBB(cfg->dblocks * cfg->blocksize);
+		xi->data.size = BTOBB(cfg->dblocks * cfg->blocksize);
 	}
 
 	/*
@@ -3788,7 +3780,7 @@ prepare_devices(
 	 * the end of the device.  (MD sb is ~64k from the end, take out a wider
 	 * swath to be sure)
 	 */
-	buf = alloc_write_buf(mp->m_ddev_targp, (xi->dsize - whack_blks),
+	buf = alloc_write_buf(mp->m_ddev_targp, (xi->data.size - whack_blks),
 			whack_blks);
 	memset(buf->b_addr, 0, WHACK_SIZE);
 	libxfs_buf_mark_dirty(buf);
@@ -4183,7 +4175,7 @@ main(
 		fprintf(stderr, _("extra arguments\n"));
 		usage();
 	} else if (argc - optind == 1) {
-		xi.dname = getstr(argv[optind], &dopts, D_NAME);
+		xi.data.name = getstr(argv[optind], &dopts, D_NAME);
 	}
 
 	/*
@@ -4236,7 +4228,7 @@ main(
 	 * Open and validate the device configurations
 	 */
 	open_devices(&cfg, &xi);
-	validate_overwrite(xi.dname, force_overwrite);
+	validate_overwrite(xi.data.name, force_overwrite);
 	validate_datadev(&cfg, &cli);
 	validate_logdev(&cfg, &cli);
 	validate_rtdev(&cfg, &cli);
@@ -4280,7 +4272,7 @@ main(
 		struct xfs_fsop_geom	geo;
 
 		libxfs_fs_geometry(mp, &geo, XFS_FS_GEOM_MAX_STRUCT_VER);
-		xfs_report_geom(&geo, xi.dname, xi.logname, xi.rtname);
+		xfs_report_geom(&geo, xi.data.name, xi.log.name, xi.rt.name);
 		if (dry_run)
 			exit(0);
 	}

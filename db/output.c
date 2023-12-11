@@ -34,7 +34,7 @@ dbprintf(const char *fmt, ...)
 	blockint();
 	i = 0;
 	if (dbprefix)
-		i += printf("%s: ", x.dname);
+		i += printf("%s: ", x.data.name);
 	i += vprintf(fmt, ap);
 	unblockint();
 	va_end(ap);

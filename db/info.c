@@ -30,7 +30,7 @@ info_f(
 	struct xfs_fsop_geom	geo;
 
 	libxfs_fs_geometry(mp, &geo, XFS_FS_GEOM_MAX_STRUCT_VER);
-	xfs_report_geom(&geo, x.dname, x.logname, x.rtname);
+	xfs_report_geom(&geo, x.data.name, x.log.name, x.rt.name);
 	return 0;
 }
 

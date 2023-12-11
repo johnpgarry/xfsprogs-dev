@@ -341,11 +341,11 @@ phase2(
 
 	/* Check whether this fs has internal or external log */
 	if (mp->m_sb.sb_logstart == 0) {
-		if (!x.logname)
+		if (!x.log.name)
 			do_error(_("This filesystem has an external log.  "
 				   "Specify log device with the -l option.\n"));
 
-		do_log(_("Phase 2 - using external log on %s\n"), x.logname);
+		do_log(_("Phase 2 - using external log on %s\n"), x.log.name);
 	} else
 		do_log(_("Phase 2 - using internal log\n"));
 

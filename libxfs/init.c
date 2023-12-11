@@ -62,93 +62,117 @@ check_isactive(char *name, char *block, int fatal)
 	return 0;
 }
 
-/* libxfs_device_open:
- *     open a device and return its device number
- */
-static dev_t
-libxfs_device_open(char *path, int creat, int xflags, int setblksize, int *fdp)
+static int
+check_open(
+	struct libxfs_init	*xi,
+	struct libxfs_dev	*dev)
 {
-	int		fd, flags;
-	int		readonly, dio, excl;
-	struct stat	statb;
+	struct stat	stbuf;
 
-	readonly = (xflags & LIBXFS_ISREADONLY);
-	excl = (xflags & LIBXFS_EXCLUSIVELY) && !creat;
-	dio = (xflags & LIBXFS_DIRECT) && !creat && platform_direct_blockdev();
+	if (stat(dev->name, &stbuf) < 0) {
+		perror(dev->name);
+		return 0;
+	}
+	if (!(xi->flags & LIBXFS_ISREADONLY) &&
+	    !(xi->flags & LIBXFS_ISINACTIVE) &&
+	    platform_check_ismounted(dev->name, dev->name, NULL, 1))
+		return 0;
+
+	if ((xi->flags & LIBXFS_ISINACTIVE) &&
+	    check_isactive(dev->name, dev->name, !!(xi->flags &
+			(LIBXFS_ISREADONLY | LIBXFS_DANGEROUSLY))))
+		return 0;
+
+	return 1;
+}
+
+static bool
+libxfs_device_open(
+	struct libxfs_init	*xi,
+	struct libxfs_dev	*dev)
+{
+	struct stat		statb;
+	int			flags;
+
+	dev->fd = -1;
+
+	if (!dev->name)
+		return true;
+	if (!dev->isfile && !check_open(xi, dev))
+		return false;
+
+	if (xi->flags & LIBXFS_ISREADONLY)
+		flags = O_RDONLY;
+	else
+		flags = O_RDWR;
+
+	if (dev->create) {
+		flags |= O_CREAT | O_TRUNC;
+	} else {
+		if (xi->flags & LIBXFS_EXCLUSIVELY)
+			flags |= O_EXCL;
+		if ((xi->flags & LIBXFS_DIRECT) && platform_direct_blockdev())
+			flags |= O_DIRECT;
+	}
 
 retry:
-	flags = (readonly ? O_RDONLY : O_RDWR) | \
-		(creat ? (O_CREAT|O_TRUNC) : 0) | \
-		(dio ? O_DIRECT : 0) | \
-		(excl ? O_EXCL : 0);
-
-	if ((fd = open(path, flags, 0666)) < 0) {
-		if (errno == EINVAL && --dio == 0)
+	dev->fd = open(dev->name, flags, 0666);
+	if (dev->fd < 0) {
+		if (errno == EINVAL && (flags & O_DIRECT)) {
+			flags &= ~O_DIRECT;
 			goto retry;
+		}
 		fprintf(stderr, _("%s: cannot open %s: %s\n"),
-			progname, path, strerror(errno));
+			progname, dev->name, strerror(errno));
 		exit(1);
 	}
 
-	if (fstat(fd, &statb) < 0) {
+	if (fstat(dev->fd, &statb) < 0) {
 		fprintf(stderr, _("%s: cannot stat %s: %s\n"),
-			progname, path, strerror(errno));
+			progname, dev->name, strerror(errno));
 		exit(1);
 	}
 
-	if (!readonly && setblksize && (statb.st_mode & S_IFMT) == S_IFBLK) {
+	if (!(xi->flags & LIBXFS_ISREADONLY) &&
+	    xi->setblksize &&
+	    (statb.st_mode & S_IFMT) == S_IFBLK) {
 		/*
 		 * Try to use the given explicit blocksize.  Failure to set the
 		 * block size is only fatal for direct I/O.
 		 */
-		platform_set_blocksize(fd, path, statb.st_rdev, setblksize,
-				dio);
+		platform_set_blocksize(dev->fd, dev->name, statb.st_rdev,
+				xi->setblksize, flags & O_DIRECT);
 	}
 
 	/*
 	 * Get the device number from the stat buf - unless we're not opening a
 	 * real device, in which case choose a new fake device number.
 	 */
-	*fdp = fd;
 	if (statb.st_rdev)
-		return statb.st_rdev;
-	return nextfakedev--;
+		dev->dev = statb.st_rdev;
+	else
+		dev->dev = nextfakedev--;
+	platform_findsizes(dev->name, dev->fd, &dev->size, &dev->bsize);
+	return true;
 }
 
 static void
-libxfs_device_close(int fd, dev_t dev)
+libxfs_device_close(
+	struct libxfs_dev	*dev)
 {
-	int	ret;
+	int			ret;
 
-	ret = platform_flush_device(fd, dev);
+	ret = platform_flush_device(dev->fd, dev->dev);
 	if (ret) {
 		ret = -errno;
 		fprintf(stderr,
 	_("%s: flush of device %lld failed, err=%d"),
 			progname, (long long)dev, ret);
 	}
-	close(fd);
-}
+	close(dev->fd);
 
-static int
-check_open(char *path, int flags)
-{
-	int readonly = (flags & LIBXFS_ISREADONLY);
-	int inactive = (flags & LIBXFS_ISINACTIVE);
-	int dangerously = (flags & LIBXFS_DANGEROUSLY);
-	struct stat	stbuf;
-
-	if (stat(path, &stbuf) < 0) {
-		perror(path);
-		return 0;
-	}
-	if (!readonly && !inactive && platform_check_ismounted(path, path, NULL, 1))
-		return 0;
-
-	if (inactive && check_isactive(path, path, ((readonly|dangerously)?1:0)))
-		return 0;
-
-	return 1;
+	dev->fd = -1;
+	dev->dev = 0;
 }
 
 /*
@@ -209,15 +233,12 @@ static void
 libxfs_close_devices(
 	struct libxfs_init	*li)
 {
-	if (li->ddev)
-		libxfs_device_close(li->dfd, li->ddev);
-	if (li->logdev && li->logdev != li->ddev)
-		libxfs_device_close(li->logfd, li->logdev);
-	if (li->rtdev)
-		libxfs_device_close(li->rtfd, li->rtdev);
-
-	li->ddev = li->logdev = li->rtdev = 0;
-	li->dfd = li->logfd = li->rtfd = -1;
+	if (li->data.dev)
+		libxfs_device_close(&li->data);
+	if (li->log.dev && li->log.dev != li->data.dev)
+		libxfs_device_close(&li->log);
+	if (li->rt.dev)
+		libxfs_device_close(&li->rt);
 }
 
 /*
@@ -227,44 +248,16 @@ libxfs_close_devices(
 int
 libxfs_init(struct libxfs_init *a)
 {
-	char		*dname;
-	char		*logname;
-	char		*rtname;
-
-	dname = a->dname;
-	logname = a->logname;
-	rtname = a->rtname;
-	a->dfd = a->logfd = a->rtfd = -1;
-	a->ddev = a->logdev = a->rtdev = 0;
-	a->dsize = a->lbsize = a->rtbsize = 0;
-	a->dbsize = a->logBBsize = a->rtsize = 0;
-
 	rcu_init();
 	rcu_register_thread();
 	radix_tree_init();
 
-	if (dname) {
-		if (!a->disfile && !check_open(dname, a->flags))
-			goto done;
-		a->ddev = libxfs_device_open(dname, a->dcreat, a->flags,
-				a->setblksize, &a->dfd);
-		platform_findsizes(dname, a->dfd, &a->dsize, &a->dbsize);
-	}
-	if (logname) {
-		if (!a->lisfile && !check_open(logname, a->flags))
-			goto done;
-		a->logdev = libxfs_device_open(logname, a->lcreat, a->flags,
-				a->setblksize, &a->logfd);
-		platform_findsizes(logname, a->logfd, &a->logBBsize,
-				&a->lbsize);
-	}
-	if (rtname) {
-		if (a->risfile && !check_open(rtname, a->flags))
-			goto done;
-		a->rtdev = libxfs_device_open(rtname, a->rcreat, a->flags,
-				a->setblksize, &a->rtfd);
-		platform_findsizes(dname, a->rtfd, &a->rtsize, &a->rtbsize);
-	}
+	if (!libxfs_device_open(a, &a->data))
+		goto done;
+	if (!libxfs_device_open(a, &a->log))
+		goto done;
+	if (!libxfs_device_open(a, &a->rt))
+		goto done;
 
 	if (!libxfs_bhash_size)
 		libxfs_bhash_size = LIBXFS_BHASHSIZE(sbp);
@@ -452,8 +445,7 @@ xfs_set_inode_alloc(
 static struct xfs_buftarg *
 libxfs_buftarg_alloc(
 	struct xfs_mount	*mp,
-	dev_t			dev,
-	int			fd,
+	struct libxfs_dev	*dev,
 	unsigned long		write_fails)
 {
 	struct xfs_buftarg	*btp;
@@ -465,8 +457,8 @@ libxfs_buftarg_alloc(
 		exit(1);
 	}
 	btp->bt_mount = mp;
-	btp->bt_bdev = dev;
-	btp->bt_bdev_fd = fd;
+	btp->bt_bdev = dev->dev;
+	btp->bt_bdev_fd = dev->fd;
 	btp->flags = 0;
 	if (write_fails) {
 		btp->writes_left = write_fails;
@@ -538,29 +530,29 @@ libxfs_buftarg_init(
 
 	if (mp->m_ddev_targp) {
 		/* should already have all buftargs initialised */
-		if (mp->m_ddev_targp->bt_bdev != xi->ddev ||
+		if (mp->m_ddev_targp->bt_bdev != xi->data.dev ||
 		    mp->m_ddev_targp->bt_mount != mp) {
 			fprintf(stderr,
 				_("%s: bad buftarg reinit, ddev\n"),
 				progname);
 			exit(1);
 		}
-		if (!xi->logdev || xi->logdev == xi->ddev) {
+		if (!xi->log.dev || xi->log.dev == xi->data.dev) {
 			if (mp->m_logdev_targp != mp->m_ddev_targp) {
 				fprintf(stderr,
 				_("%s: bad buftarg reinit, ldev mismatch\n"),
 					progname);
 				exit(1);
 			}
-		} else if (mp->m_logdev_targp->bt_bdev != xi->logdev ||
+		} else if (mp->m_logdev_targp->bt_bdev != xi->log.dev ||
 			   mp->m_logdev_targp->bt_mount != mp) {
 			fprintf(stderr,
 				_("%s: bad buftarg reinit, logdev\n"),
 				progname);
 			exit(1);
 		}
-		if (xi->rtdev &&
-		    (mp->m_rtdev_targp->bt_bdev != xi->rtdev ||
+		if (xi->rt.dev &&
+		    (mp->m_rtdev_targp->bt_bdev != xi->rt.dev ||
 		     mp->m_rtdev_targp->bt_mount != mp)) {
 			fprintf(stderr,
 				_("%s: bad buftarg reinit, rtdev\n"),
@@ -570,14 +562,12 @@ libxfs_buftarg_init(
 		return;
 	}
 
-	mp->m_ddev_targp = libxfs_buftarg_alloc(mp, xi->ddev, xi->dfd, dfail);
-	if (!xi->logdev || xi->logdev == xi->ddev)
+	mp->m_ddev_targp = libxfs_buftarg_alloc(mp, &xi->data, dfail);
+	if (!xi->log.dev || xi->log.dev == xi->data.dev)
 		mp->m_logdev_targp = mp->m_ddev_targp;
 	else
-		mp->m_logdev_targp = libxfs_buftarg_alloc(mp, xi->logdev,
-				xi->logfd, lfail);
-	mp->m_rtdev_targp = libxfs_buftarg_alloc(mp, xi->rtdev, xi->rtfd,
-			rfail);
+		mp->m_logdev_targp = libxfs_buftarg_alloc(mp, &xi->log, lfail);
+	mp->m_rtdev_targp = libxfs_buftarg_alloc(mp, &xi->rt, rfail);
 }
 
 /* Compute maximum possible height for per-AG btree types for this fs. */
@@ -711,7 +701,7 @@ libxfs_mount(
 	/* Initialize the precomputed transaction reservations values */
 	xfs_trans_init(mp);
 
-	if (xi->ddev == 0)	/* maxtrres, we have no device so leave now */
+	if (xi->data.dev == 0)	/* maxtrres, we have no device so leave now */
 		return mp;
 
 	/* device size checks must pass unless we're a debugger. */

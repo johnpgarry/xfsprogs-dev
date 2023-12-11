@@ -61,7 +61,7 @@ init(
 			cmdline[ncmdline++] = optarg;
 			break;
 		case 'f':
-			x.disfile = 1;
+			x.data.isfile = 1;
 			break;
 		case 'F':
 			force = 1;
@@ -76,7 +76,7 @@ init(
 			x.flags = LIBXFS_ISREADONLY;
 			break;
 		case 'l':
-			x.logname = optarg;
+			x.log.name = optarg;
 			break;
 		case 'x':
 			expert_mode = 1;
@@ -91,7 +91,7 @@ init(
 	if (optind + 1 != argc)
 		usage();
 
-	x.dname = argv[optind];
+	x.data.name = argv[optind];
 	x.flags |= LIBXFS_DIRECT;
 
 	x.bcache_flags = CACHE_MISCOMPARE_PURGE;
@@ -111,7 +111,7 @@ init(
 			1 << (XFS_MAX_SECTORSIZE_LOG - BBSHIFT), 0, &bp, NULL);
 	if (error) {
 		fprintf(stderr, _("%s: %s is invalid (cannot read first 512 "
-			"bytes)\n"), progname, x.dname);
+			"bytes)\n"), progname, x.data.name);
 		exit(1);
 	}
 
@@ -122,7 +122,7 @@ init(
 	sbp = &xmount.m_sb;
 	if (sbp->sb_magicnum != XFS_SB_MAGIC) {
 		fprintf(stderr, _("%s: %s is not a valid XFS filesystem (unexpected SB magic number 0x%08x)\n"),
-			progname, x.dname, sbp->sb_magicnum);
+			progname, x.data.name, sbp->sb_magicnum);
 		if (!force) {
 			fprintf(stderr, _("Use -F to force a read attempt.\n"));
 			exit(EXIT_FAILURE);
@@ -134,7 +134,7 @@ init(
 	if (!mp) {
 		fprintf(stderr,
 			_("%s: device %s unusable (not an XFS filesystem?)\n"),
-			progname, x.dname);
+			progname, x.data.name);
 		exit(1);
 	}
 	mp->m_log = &xlog;
