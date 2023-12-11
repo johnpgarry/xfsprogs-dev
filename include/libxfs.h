@@ -147,7 +147,6 @@ extern xfs_lsn_t libxfs_max_lsn;
 int		libxfs_init(struct libxfs_init *);
 void		libxfs_destroy(struct libxfs_init *li);
 
-extern int	libxfs_device_to_fd (dev_t);
 extern int	libxfs_device_alignment (void);
 extern void	libxfs_report(FILE *);
 

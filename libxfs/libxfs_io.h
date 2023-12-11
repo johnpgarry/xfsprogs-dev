@@ -26,6 +26,7 @@ struct xfs_buftarg {
 	pthread_mutex_t		lock;
 	unsigned long		writes_left;
 	dev_t			bt_bdev;
+	int			bt_bdev_fd;
 	unsigned int		flags;
 };
 

@@ -876,7 +876,7 @@ init_prefetch(
 	xfs_mount_t		*pmp)
 {
 	mp = pmp;
-	mp_fd = libxfs_device_to_fd(mp->m_ddev_targp->bt_bdev);
+	mp_fd = mp->m_ddev_targp->bt_bdev_fd;;
 	pf_max_bytes = sysconf(_SC_PAGE_SIZE) << 7;
 	pf_max_bbs = pf_max_bytes >> BBSHIFT;
 	pf_max_fsbs = pf_max_bytes >> mp->m_sb.sb_blocklog;

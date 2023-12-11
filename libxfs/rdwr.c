@@ -62,13 +62,13 @@ static void libxfs_brelse(struct cache_node *node);
 int
 libxfs_device_zero(struct xfs_buftarg *btp, xfs_daddr_t start, uint len)
 {
+	int		fd = btp->bt_bdev_fd;
 	xfs_off_t	start_offset, end_offset, offset;
 	ssize_t		zsize, bytes;
 	size_t		len_bytes;
 	char		*z;
-	int		error, fd;
+	int		error;
 
-	fd = libxfs_device_to_fd(btp->bt_bdev);
 	start_offset = LIBXFS_BBTOOFF64(start);
 
 	/* try to use special zeroing methods, fall back to writes if needed */
@@ -598,7 +598,7 @@ int
 libxfs_readbufr(struct xfs_buftarg *btp, xfs_daddr_t blkno, struct xfs_buf *bp,
 		int len, int flags)
 {
-	int	fd = libxfs_device_to_fd(btp->bt_bdev);
+	int	fd = btp->bt_bdev_fd;
 	int	bytes = BBTOB(len);
 	int	error;
 
@@ -631,12 +631,11 @@ libxfs_readbuf_verify(
 int
 libxfs_readbufr_map(struct xfs_buftarg *btp, struct xfs_buf *bp, int flags)
 {
-	int	fd;
+	int	fd = btp->bt_bdev_fd;
 	int	error = 0;
 	void	*buf;
 	int	i;
 
-	fd = libxfs_device_to_fd(btp->bt_bdev);
 	buf = bp->b_addr;
 	for (i = 0; i < bp->b_nmaps; i++) {
 		off64_t	offset = LIBXFS_BBTOOFF64(bp->b_maps[i].bm_bn);
@@ -820,7 +819,7 @@ int
 libxfs_bwrite(
 	struct xfs_buf	*bp)
 {
-	int		fd = libxfs_device_to_fd(bp->b_target->bt_bdev);
+	int		fd = bp->b_target->bt_bdev_fd;
 
 	/*
 	 * we never write buffers that are marked stale. This indicates they
@@ -1171,13 +1170,12 @@ int
 libxfs_blkdev_issue_flush(
 	struct xfs_buftarg	*btp)
 {
-	int			fd, ret;
+	int			ret;
 
 	if (btp->bt_bdev == 0)
 		return 0;
 
-	fd = libxfs_device_to_fd(btp->bt_bdev);
-	ret = platform_flush_device(fd, btp->bt_bdev);
+	ret = platform_flush_device(btp->bt_bdev_fd, btp->bt_bdev);
 	return ret ? -errno : 0;
 }
 

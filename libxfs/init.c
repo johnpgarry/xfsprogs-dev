@@ -36,15 +36,7 @@ int libxfs_bhash_size;		/* #buckets in bcache */
 
 int	use_xfs_buf_lock;	/* global flag: use xfs_buf locks for MT */
 
-/*
- * dev_map - map open devices to fd.
- */
-#define MAX_DEVS 10	/* arbitary maximum */
 static int nextfakedev = -1;	/* device number to give to next fake device */
-static struct dev_to_fd {
-	dev_t	dev;
-	int	fd;
-} dev_map[MAX_DEVS]={{0}};
 
 /*
  * Checks whether a given device has a mounted, writable
@@ -70,33 +62,13 @@ check_isactive(char *name, char *block, int fatal)
 	return 0;
 }
 
-/* libxfs_device_to_fd:
- *     lookup a device number in the device map
- *     return the associated fd
- */
-int
-libxfs_device_to_fd(dev_t device)
-{
-	int	d;
-
-	for (d = 0; d < MAX_DEVS; d++)
-		if (dev_map[d].dev == device)
-			return dev_map[d].fd;
-
-	fprintf(stderr, _("%s: %s: device %lld is not open\n"),
-		progname, __FUNCTION__, (long long)device);
-	exit(1);
-	/* NOTREACHED */
-}
-
 /* libxfs_device_open:
  *     open a device and return its device number
  */
 static dev_t
 libxfs_device_open(char *path, int creat, int xflags, int setblksize, int *fdp)
 {
-	dev_t		dev;
-	int		fd, d, flags;
+	int		fd, flags;
 	int		readonly, dio, excl;
 	struct stat	statb;
 
@@ -134,61 +106,28 @@ retry:
 	}
 
 	/*
-	 * Get the device number from the stat buf - unless
-	 * we're not opening a real device, in which case
-	 * choose a new fake device number.
+	 * Get the device number from the stat buf - unless we're not opening a
+	 * real device, in which case choose a new fake device number.
 	 */
-	dev = (statb.st_rdev) ? (statb.st_rdev) : (nextfakedev--);
-
-	for (d = 0; d < MAX_DEVS; d++)
-		if (dev_map[d].dev == dev) {
-			fprintf(stderr, _("%s: device %lld is already open\n"),
-			    progname, (long long)dev);
-			exit(1);
-		}
-
-	for (d = 0; d < MAX_DEVS; d++)
-		if (!dev_map[d].dev) {
-			dev_map[d].dev = dev;
-			dev_map[d].fd = fd;
-			*fdp = fd;
-
-			return dev;
-		}
-
-	fprintf(stderr, _("%s: %s: too many open devices\n"),
-		progname, __FUNCTION__);
-	exit(1);
-	/* NOTREACHED */
+	*fdp = fd;
+	if (statb.st_rdev)
+		return statb.st_rdev;
+	return nextfakedev--;
 }
 
 static void
-libxfs_device_close(dev_t dev)
+libxfs_device_close(int fd, dev_t dev)
 {
-	int	d;
+	int	ret;
 
-	for (d = 0; d < MAX_DEVS; d++)
-		if (dev_map[d].dev == dev) {
-			int	fd, ret;
-
-			fd = dev_map[d].fd;
-			dev_map[d].dev = dev_map[d].fd = 0;
-
-			ret = platform_flush_device(fd, dev);
-			if (ret) {
-				ret = -errno;
-				fprintf(stderr,
+	ret = platform_flush_device(fd, dev);
+	if (ret) {
+		ret = -errno;
+		fprintf(stderr,
 	_("%s: flush of device %lld failed, err=%d"),
-						progname, (long long)dev, ret);
-			}
-			close(fd);
-
-			return;
-		}
-
-	fprintf(stderr, _("%s: %s: device %lld is not open\n"),
-			progname, __FUNCTION__, (long long)dev);
-	exit(1);
+			progname, (long long)dev, ret);
+	}
+	close(fd);
 }
 
 static int
@@ -271,11 +210,11 @@ libxfs_close_devices(
 	struct libxfs_init	*li)
 {
 	if (li->ddev)
-		libxfs_device_close(li->ddev);
+		libxfs_device_close(li->dfd, li->ddev);
 	if (li->logdev && li->logdev != li->ddev)
-		libxfs_device_close(li->logdev);
+		libxfs_device_close(li->logfd, li->logdev);
 	if (li->rtdev)
-		libxfs_device_close(li->rtdev);
+		libxfs_device_close(li->rtfd, li->rtdev);
 
 	li->ddev = li->logdev = li->rtdev = 0;
 	li->dfd = li->logfd = li->rtfd = -1;
@@ -514,6 +453,7 @@ static struct xfs_buftarg *
 libxfs_buftarg_alloc(
 	struct xfs_mount	*mp,
 	dev_t			dev,
+	int			fd,
 	unsigned long		write_fails)
 {
 	struct xfs_buftarg	*btp;
@@ -526,6 +466,7 @@ libxfs_buftarg_alloc(
 	}
 	btp->bt_mount = mp;
 	btp->bt_bdev = dev;
+	btp->bt_bdev_fd = fd;
 	btp->flags = 0;
 	if (write_fails) {
 		btp->writes_left = write_fails;
@@ -629,13 +570,14 @@ libxfs_buftarg_init(
 		return;
 	}
 
-	mp->m_ddev_targp = libxfs_buftarg_alloc(mp, xi->ddev, dfail);
+	mp->m_ddev_targp = libxfs_buftarg_alloc(mp, xi->ddev, xi->dfd, dfail);
 	if (!xi->logdev || xi->logdev == xi->ddev)
 		mp->m_logdev_targp = mp->m_ddev_targp;
 	else
 		mp->m_logdev_targp = libxfs_buftarg_alloc(mp, xi->logdev,
-				lfail);
-	mp->m_rtdev_targp = libxfs_buftarg_alloc(mp, xi->rtdev, rfail);
+				xi->logfd, lfail);
+	mp->m_rtdev_targp = libxfs_buftarg_alloc(mp, xi->rtdev, xi->rtfd,
+			rfail);
 }
 
 /* Compute maximum possible height for per-AG btree types for this fs. */
