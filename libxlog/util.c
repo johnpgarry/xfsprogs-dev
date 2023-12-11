@@ -19,8 +19,7 @@ int
 xlog_is_dirty(
 	struct xfs_mount	*mp,
 	struct xlog		*log,
-	libxfs_init_t		*x,
-	int			verbose)
+	libxfs_init_t		*x)
 {
 	int			error;
 	xfs_daddr_t		head_blk, tail_blk;
@@ -57,11 +56,6 @@ xlog_is_dirty(
 			__func__, error);
 		return -1;
 	}
-
-	if (verbose)
-		xlog_warn(
-	_("%s: head block %" PRId64 " tail block %" PRId64 "\n"),
-			__func__, head_blk, tail_blk);
 
 	if (head_blk != tail_blk)
 		return 1;

@@ -2615,7 +2615,7 @@ copy_log(void)
 	if (!metadump.obfuscate && !metadump.zero_stale_data)
 		goto done;
 
-	dirty = xlog_is_dirty(mp, &log, &x, 0);
+	dirty = xlog_is_dirty(mp, &log, &x);
 
 	switch (dirty) {
 	case 0:
@@ -2945,7 +2945,7 @@ metadump_f(
 		if (iocur_top->data) {	/* best effort */
 			struct xlog	log;
 
-			if (xlog_is_dirty(mp, &log, &x, 0))
+			if (xlog_is_dirty(mp, &log, &x))
 				metadump.dirty_log = true;
 		}
 		pop_cur();
