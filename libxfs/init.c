@@ -92,7 +92,7 @@ libxfs_device_to_fd(dev_t device)
 /* libxfs_device_open:
  *     open a device and return its device number
  */
-dev_t
+static dev_t
 libxfs_device_open(char *path, int creat, int xflags, int setblksize)
 {
 	dev_t		dev;
@@ -161,7 +161,7 @@ retry:
 	/* NOTREACHED */
 }
 
-void
+static void
 libxfs_device_close(dev_t dev)
 {
 	int	d;
