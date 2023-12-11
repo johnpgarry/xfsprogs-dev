@@ -72,21 +72,22 @@ xfs_init(struct libxfs_init *args)
 		/* XXX assume data file also means rt file */
 	}
 
-	args->usebuflock = do_prefetch;
 	args->setblksize = 0;
-	args->isdirect = LIBXFS_DIRECT;
 	if (no_modify)
-		args->isreadonly = (LIBXFS_ISREADONLY | LIBXFS_ISINACTIVE);
+		args->flags = LIBXFS_ISREADONLY | LIBXFS_ISINACTIVE;
 	else if (dangerously)
-		args->isreadonly = (LIBXFS_ISINACTIVE | LIBXFS_DANGEROUSLY);
+		args->flags = LIBXFS_ISINACTIVE | LIBXFS_DANGEROUSLY;
 	else
-		args->isreadonly = LIBXFS_EXCLUSIVELY;
+		args->flags = LIBXFS_EXCLUSIVELY;
+	args->flags |= LIBXFS_DIRECT;
+	if (do_prefetch)
+		args->flags |= LIBXFS_USEBUFLOCK;
 
 	if (!libxfs_init(args)) {
 		/* would -d be an option? */
 		if (!no_modify && !dangerously) {
-			args->isreadonly = (LIBXFS_ISINACTIVE |
-					    LIBXFS_DANGEROUSLY);
+			args->flags &= ~LIBXFS_EXCLUSIVELY;
+			args->flags |= LIBXFS_ISINACTIVE | LIBXFS_DANGEROUSLY;
 			if (libxfs_init(args))
 				fprintf(stderr,
 _("Unmount or use the dangerous (-d) option to repair a read-only mounted filesystem\n"));

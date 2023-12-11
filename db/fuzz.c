@@ -77,7 +77,7 @@ fuzz_f(
 	struct xfs_buf_ops local_ops;
 	const struct xfs_buf_ops *stashed_ops = NULL;
 
-	if (x.isreadonly & LIBXFS_ISREADONLY) {
+	if (x.flags & LIBXFS_ISREADONLY) {
 		dbprintf(_("%s started in read only mode, fuzzing disabled\n"),
 			progname);
 		return 0;

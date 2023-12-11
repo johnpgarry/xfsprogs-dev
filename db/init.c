@@ -67,13 +67,13 @@ init(
 			force = 1;
 			break;
 		case 'i':
-			x.isreadonly = (LIBXFS_ISREADONLY|LIBXFS_ISINACTIVE);
+			x.flags = LIBXFS_ISREADONLY | LIBXFS_ISINACTIVE;
 			break;
 		case 'p':
 			progname = optarg;
 			break;
 		case 'r':
-			x.isreadonly = LIBXFS_ISREADONLY;
+			x.flags = LIBXFS_ISREADONLY;
 			break;
 		case 'l':
 			x.logname = optarg;
@@ -92,7 +92,7 @@ init(
 		usage();
 
 	x.dname = argv[optind];
-	x.isdirect = LIBXFS_DIRECT;
+	x.flags |= LIBXFS_DIRECT;
 
 	x.bcache_flags = CACHE_MISCOMPARE_PURGE;
 	if (!libxfs_init(&x)) {

@@ -296,7 +296,6 @@ libxfs_init(struct libxfs_init *a)
 	char		*dname;
 	char		*logname;
 	char		*rtname;
-	int		flags;
 
 	dname = a->dname;
 	logname = a->logname;
@@ -306,33 +305,31 @@ libxfs_init(struct libxfs_init *a)
 	a->dsize = a->lbsize = a->rtbsize = 0;
 	a->dbsize = a->logBBsize = a->rtsize = 0;
 
-	flags = (a->isreadonly | a->isdirect);
-
 	rcu_init();
 	rcu_register_thread();
 	radix_tree_init();
 
 	if (dname) {
-		if (!a->disfile && !check_open(dname, flags))
+		if (!a->disfile && !check_open(dname, a->flags))
 			goto done;
-		a->ddev = libxfs_device_open(dname, a->dcreat, flags,
+		a->ddev = libxfs_device_open(dname, a->dcreat, a->flags,
 				a->setblksize);
 		a->dfd = libxfs_device_to_fd(a->ddev);
 		platform_findsizes(dname, a->dfd, &a->dsize, &a->dbsize);
 	}
 	if (logname) {
-		if (!a->lisfile && !check_open(logname, flags))
+		if (!a->lisfile && !check_open(logname, a->flags))
 			goto done;
-		a->logdev = libxfs_device_open(logname, a->lcreat, flags,
+		a->logdev = libxfs_device_open(logname, a->lcreat, a->flags,
 				a->setblksize);
 		a->logfd = libxfs_device_to_fd(a->logdev);
 		platform_findsizes(logname, a->logfd, &a->logBBsize,
 				&a->lbsize);
 	}
 	if (rtname) {
-		if (a->risfile && !check_open(rtname, flags))
+		if (a->risfile && !check_open(rtname, a->flags))
 			goto done;
-		a->rtdev = libxfs_device_open(rtname, a->rcreat, flags,
+		a->rtdev = libxfs_device_open(rtname, a->rcreat, a->flags,
 				a->setblksize);
 		a->rtfd = libxfs_device_to_fd(a->rtdev);
 		platform_findsizes(dname, a->rtfd, &a->rtsize, &a->rtbsize);
@@ -357,7 +354,7 @@ libxfs_init(struct libxfs_init *a)
 		libxfs_bhash_size = LIBXFS_BHASHSIZE(sbp);
 	libxfs_bcache = cache_init(a->bcache_flags, libxfs_bhash_size,
 				   &libxfs_bcache_operations);
-	use_xfs_buf_lock = a->usebuflock;
+	use_xfs_buf_lock = a->flags & LIBXFS_USEBUFLOCK;
 	xfs_dir_startup();
 	init_caches();
 	return 1;

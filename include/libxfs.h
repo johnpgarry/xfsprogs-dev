@@ -97,8 +97,7 @@ struct libxfs_init {
 	char            *dname;         /* pathname of data "subvolume" */
 	char            *logname;       /* pathname of log "subvolume" */
 	char            *rtname;        /* pathname of realtime "subvolume" */
-	int             isreadonly;     /* filesystem is only read in applic */
-	int             isdirect;       /* we can attempt to use direct I/O */
+	unsigned	flags;		/* LIBXFS_* flags below */
 	int             disfile;        /* data "subvolume" is a regular file */
 	int             dcreat;         /* try to create data subvolume */
 	int             lisfile;        /* log "subvolume" is a regular file */
@@ -106,7 +105,6 @@ struct libxfs_init {
 	int             risfile;        /* realtime "subvolume" is a reg file */
 	int             rcreat;         /* try to create realtime subvolume */
 	int		setblksize;	/* attempt to set device blksize */
-	int		usebuflock;	/* lock xfs_buf's - for MT usage */
 				/* output results */
 	dev_t           ddev;           /* device for data subvolume */
 	dev_t           logdev;         /* device for log subvolume */
@@ -125,11 +123,23 @@ struct libxfs_init {
 	int		bcache_flags;	/* cache init flags */
 };
 
-#define LIBXFS_ISREADONLY	0x0002	/* disallow all mounted filesystems */
-#define LIBXFS_ISINACTIVE	0x0004	/* allow mounted only if mounted ro */
-#define LIBXFS_DANGEROUSLY	0x0008	/* repairing a device mounted ro    */
-#define LIBXFS_EXCLUSIVELY	0x0010	/* disallow other accesses (O_EXCL) */
-#define LIBXFS_DIRECT		0x0020	/* can use direct I/O, not buffered */
+/* disallow all mounted filesystems: */
+#define LIBXFS_ISREADONLY	(1U << 0)
+
+/* allow mounted only if mounted ro: */
+#define LIBXFS_ISINACTIVE	(1U << 1)
+
+/* repairing a device mounted ro: */
+#define LIBXFS_DANGEROUSLY	(1U << 2)
+
+/* disallow other accesses (O_EXCL): */
+#define LIBXFS_EXCLUSIVELY	(1U << 3)
+
+/* can use direct I/O, not buffered: */
+#define LIBXFS_DIRECT		(1U << 4)
+
+/* lock xfs_buf's - for MT usage */
+#define LIBXFS_USEBUFLOCK	(1U << 5)
 
 extern char	*progname;
 extern xfs_lsn_t libxfs_max_lsn;

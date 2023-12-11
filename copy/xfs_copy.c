@@ -715,9 +715,7 @@ main(int argc, char **argv)
 	/* prepare the libxfs_init structure */
 
 	memset(&xargs, 0, sizeof(xargs));
-	xargs.isdirect = LIBXFS_DIRECT;
-	xargs.isreadonly = LIBXFS_ISREADONLY;
-
+	xargs.flags = LIBXFS_ISREADONLY | LIBXFS_DIRECT;
 	xargs.dname = source_name;
 	xargs.disfile = source_is_file;
 

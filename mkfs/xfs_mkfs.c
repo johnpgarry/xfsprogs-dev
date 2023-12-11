@@ -1984,7 +1984,7 @@ validate_sectorsize(
 	 * host filesystem.
 	 */
 	if (cli->xi->disfile || cli->xi->lisfile || cli->xi->risfile)
-		cli->xi->isdirect = 0;
+		cli->xi->flags &= ~LIBXFS_DIRECT;
 
 	memset(ft, 0, sizeof(*ft));
 	get_topology(cli->xi, ft, force_overwrite);
@@ -4057,8 +4057,7 @@ main(
 	int			worst_freelist = 0;
 
 	struct libxfs_init	xi = {
-		.isdirect = LIBXFS_DIRECT,
-		.isreadonly = LIBXFS_EXCLUSIVELY,
+		.flags = LIBXFS_EXCLUSIVELY | LIBXFS_DIRECT,
 	};
 	struct xfs_mount	mbuf = {};
 	struct xfs_mount	*mp = &mbuf;

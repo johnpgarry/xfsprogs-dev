@@ -374,7 +374,7 @@ uuid_f(
 
 	if (argc == 2) {	/* WRITE UUID */
 
-		if ((x.isreadonly & LIBXFS_ISREADONLY) || !expert_mode) {
+		if ((x.flags & LIBXFS_ISREADONLY) || !expert_mode) {
 			dbprintf(_("%s: not in expert mode, writing disabled\n"),
 				progname);
 			return 0;
@@ -542,7 +542,7 @@ label_f(
 
 	if (argc == 2) {	/* WRITE LABEL */
 
-		if ((x.isreadonly & LIBXFS_ISREADONLY) || !expert_mode) {
+		if ((x.flags & LIBXFS_ISREADONLY) || !expert_mode) {
 			dbprintf(_("%s: not in expert mode, writing disabled\n"),
 				progname);
 			return 0;
@@ -727,7 +727,7 @@ version_f(
 
 	if (argc == 2) {	/* WRITE VERSION */
 
-		if ((x.isreadonly & LIBXFS_ISREADONLY) || !expert_mode) {
+		if ((x.flags & LIBXFS_ISREADONLY) || !expert_mode) {
 			dbprintf(_("%s: not in expert mode, writing disabled\n"),
 				progname);
 			return 0;

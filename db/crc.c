@@ -98,7 +98,7 @@ crc_f(
 	}
 
 	if ((invalidate || recalculate) &&
-	    ((x.isreadonly & LIBXFS_ISREADONLY) || !expert_mode)) {
+	    ((x.flags & LIBXFS_ISREADONLY) || !expert_mode)) {
 		dbprintf(_("%s not in expert mode, writing disabled\n"),
 			progname);
 		return 0;

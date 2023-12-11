@@ -208,7 +208,7 @@ main(int argc, char **argv)
 	if (x.dname == NULL)
 		usage();
 
-	x.isreadonly = LIBXFS_ISINACTIVE;
+	x.flags = LIBXFS_ISINACTIVE;
 	printf(_("xfs_logprint:\n"));
 	if (!libxfs_init(&x))
 		exit(1);

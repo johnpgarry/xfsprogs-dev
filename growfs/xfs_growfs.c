@@ -186,7 +186,7 @@ main(int argc, char **argv)
 	xi.dname = datadev;
 	xi.logname = logdev;
 	xi.rtname = rtdev;
-	xi.isreadonly = LIBXFS_ISREADONLY;
+	xi.flags = LIBXFS_ISREADONLY;
 
 	if (!libxfs_init(&xi))
 		usage();
