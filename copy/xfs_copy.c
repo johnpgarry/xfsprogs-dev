@@ -755,7 +755,7 @@ main(int argc, char **argv)
 	}
 	libxfs_buf_relse(sbp);
 
-	mp = libxfs_mount(&mbuf, sb, xargs.ddev, xargs.logdev, xargs.rtdev, 0);
+	mp = libxfs_mount(&mbuf, sb, &xargs, 0);
 	if (mp == NULL) {
 		do_log(_("%s: %s filesystem failed to initialize\n"
 			"%s: Aborting.\n"), progname, source_name, progname);

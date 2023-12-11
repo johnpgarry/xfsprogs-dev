@@ -744,9 +744,7 @@ struct xfs_mount *
 libxfs_mount(
 	struct xfs_mount	*mp,
 	struct xfs_sb		*sb,
-	dev_t			dev,
-	dev_t			logdev,
-	dev_t			rtdev,
+	struct libxfs_init	*xi,
 	unsigned int		flags)
 {
 	struct xfs_buf		*bp;
@@ -759,7 +757,7 @@ libxfs_mount(
 		xfs_set_debugger(mp);
 	if (flags & LIBXFS_MOUNT_REPORT_CORRUPTION)
 		xfs_set_reporting_corruption(mp);
-	libxfs_buftarg_init(mp, dev, logdev, rtdev);
+	libxfs_buftarg_init(mp, xi->ddev, xi->logdev, xi->rtdev);
 
 	mp->m_finobt_nores = true;
 	xfs_set_inode32(mp);
@@ -825,7 +823,7 @@ libxfs_mount(
 	/* Initialize the precomputed transaction reservations values */
 	xfs_trans_init(mp);
 
-	if (dev == 0)	/* maxtrres, we have no device so leave now */
+	if (xi->ddev == 0)	/* maxtrres, we have no device so leave now */
 		return mp;
 
 	/* device size checks must pass unless we're a debugger. */

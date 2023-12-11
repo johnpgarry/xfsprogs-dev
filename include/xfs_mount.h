@@ -10,6 +10,7 @@
 struct xfs_inode;
 struct xfs_buftarg;
 struct xfs_da_geometry;
+struct libxfs_init;
 
 typedef void (*buf_writeback_fn)(struct xfs_buf *bp);
 
@@ -272,7 +273,7 @@ __XFS_UNSUPP_OPSTATE(shutdown)
 
 void libxfs_compute_all_maxlevels(struct xfs_mount *mp);
 struct xfs_mount *libxfs_mount(struct xfs_mount *mp, struct xfs_sb *sb,
-		dev_t dev, dev_t logdev, dev_t rtdev, unsigned int flags);
+		struct libxfs_init *xi, unsigned int flags);
 int libxfs_flush_mount(struct xfs_mount *mp);
 int		libxfs_umount(struct xfs_mount *mp);
 extern void	libxfs_rtmount_destroy (xfs_mount_t *);

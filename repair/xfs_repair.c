@@ -1034,7 +1034,7 @@ main(int argc, char **argv)
 	 * initialized in phase 2.
 	 */
 	memset(&xfs_m, 0, sizeof(xfs_mount_t));
-	mp = libxfs_mount(&xfs_m, &psb, x.ddev, x.logdev, x.rtdev, 0);
+	mp = libxfs_mount(&xfs_m, &psb, &x, 0);
 
 	if (!mp)  {
 		fprintf(stderr,

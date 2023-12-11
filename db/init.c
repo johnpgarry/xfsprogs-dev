@@ -130,8 +130,7 @@ init(
 	}
 
 	agcount = sbp->sb_agcount;
-	mp = libxfs_mount(&xmount, sbp, x.ddev, x.logdev, x.rtdev,
-			  LIBXFS_MOUNT_DEBUGGER);
+	mp = libxfs_mount(&xmount, sbp, &x, LIBXFS_MOUNT_DEBUGGER);
 	if (!mp) {
 		fprintf(stderr,
 			_("%s: device %s unusable (not an XFS filesystem?)\n"),

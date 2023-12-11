@@ -3483,11 +3483,12 @@ calculate_log_size(
 	int			min_logblocks;	/* absolute minimum */
 	int			max_logblocks;	/* absolute max for this AG */
 	struct xfs_mount	mount;
+	struct libxfs_init	dummy_init = { };
 
 	/* we need a temporary mount to calculate the minimum log size. */
 	memset(&mount, 0, sizeof(mount));
 	mount.m_sb = *sbp;
-	libxfs_mount(&mount, &mp->m_sb, 0, 0, 0, 0);
+	libxfs_mount(&mount, &mp->m_sb, &dummy_init, 0);
 	min_logblocks = libxfs_log_calc_minimum_size(&mount);
 	libxfs_umount(&mount);
 
@@ -4320,7 +4321,7 @@ main(
 	 * mount.
 	 */
 	prepare_devices(&cfg, &xi, mp, sbp, force_overwrite);
-	mp = libxfs_mount(mp, sbp, xi.ddev, xi.logdev, xi.rtdev, 0);
+	mp = libxfs_mount(mp, sbp, &xi, 0);
 	if (mp == NULL) {
 		fprintf(stderr, _("%s: filesystem failed to initialize\n"),
 			progname);
