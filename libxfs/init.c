@@ -93,7 +93,7 @@ libxfs_device_to_fd(dev_t device)
  *     open a device and return its device number
  */
 static dev_t
-libxfs_device_open(char *path, int creat, int xflags, int setblksize)
+libxfs_device_open(char *path, int creat, int xflags, int setblksize, int *fdp)
 {
 	dev_t		dev;
 	int		fd, d, flags;
@@ -151,6 +151,7 @@ retry:
 		if (!dev_map[d].dev) {
 			dev_map[d].dev = dev;
 			dev_map[d].fd = fd;
+			*fdp = fd;
 
 			return dev;
 		}
@@ -307,16 +308,14 @@ libxfs_init(struct libxfs_init *a)
 		if (!a->disfile && !check_open(dname, a->flags))
 			goto done;
 		a->ddev = libxfs_device_open(dname, a->dcreat, a->flags,
-				a->setblksize);
-		a->dfd = libxfs_device_to_fd(a->ddev);
+				a->setblksize, &a->dfd);
 		platform_findsizes(dname, a->dfd, &a->dsize, &a->dbsize);
 	}
 	if (logname) {
 		if (!a->lisfile && !check_open(logname, a->flags))
 			goto done;
 		a->logdev = libxfs_device_open(logname, a->lcreat, a->flags,
-				a->setblksize);
-		a->logfd = libxfs_device_to_fd(a->logdev);
+				a->setblksize, &a->logfd);
 		platform_findsizes(logname, a->logfd, &a->logBBsize,
 				&a->lbsize);
 	}
@@ -324,8 +323,7 @@ libxfs_init(struct libxfs_init *a)
 		if (a->risfile && !check_open(rtname, a->flags))
 			goto done;
 		a->rtdev = libxfs_device_open(rtname, a->rcreat, a->flags,
-				a->setblksize);
-		a->rtfd = libxfs_device_to_fd(a->rtdev);
+				a->setblksize, &a->rtfd);
 		platform_findsizes(dname, a->rtfd, &a->rtsize, &a->rtbsize);
 	}
 
