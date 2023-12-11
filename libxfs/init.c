@@ -329,21 +329,6 @@ libxfs_init(struct libxfs_init *a)
 		platform_findsizes(dname, a->rtfd, &a->rtsize, &a->rtbsize);
 	}
 
-	if (a->dsize < 0) {
-		fprintf(stderr, _("%s: can't get size for data subvolume\n"),
-			progname);
-		goto done;
-	}
-	if (a->logBBsize < 0) {
-		fprintf(stderr, _("%s: can't get size for log subvolume\n"),
-			progname);
-		goto done;
-	}
-	if (a->rtsize < 0) {
-		fprintf(stderr, _("%s: can't get size for realtime subvolume\n"),
-			progname);
-		goto done;
-	}
 	if (!libxfs_bhash_size)
 		libxfs_bhash_size = LIBXFS_BHASHSIZE(sbp);
 	libxfs_bcache = cache_init(a->bcache_flags, libxfs_bhash_size,
