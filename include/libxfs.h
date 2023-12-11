@@ -124,7 +124,6 @@ typedef struct libxfs_xinit {
 	int             dfd;            /* data subvolume file descriptor */
 	int             logfd;          /* log subvolume file descriptor */
 	int             rtfd;           /* realtime subvolume file descriptor */
-	int		icache_flags;	/* cache init flags */
 	int		bcache_flags;	/* cache init flags */
 } libxfs_init_t;
 
