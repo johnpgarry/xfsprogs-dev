@@ -4313,7 +4313,7 @@ main(
 	/*
 	 * we need the libxfs buffer cache from here on in.
 	 */
-	libxfs_buftarg_init(mp, xi.ddev, xi.logdev, xi.rtdev);
+	libxfs_buftarg_init(mp, &xi);
 
 	/*
 	 * Before we mount the filesystem we need to make sure the devices have

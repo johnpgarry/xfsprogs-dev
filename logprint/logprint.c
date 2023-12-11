@@ -213,7 +213,7 @@ main(int argc, char **argv)
 	if (!libxfs_init(&x))
 		exit(1);
 
-	libxfs_buftarg_init(&mount, x.ddev, x.logdev, x.rtdev);
+	libxfs_buftarg_init(&mount, &x);
 	logstat(&mount, &log);
 
 	logfd = (x.logfd < 0) ? x.dfd : x.logfd;

@@ -233,7 +233,7 @@ sb_logcheck(void)
 		}
 	}
 
-	libxfs_buftarg_init(mp, x.ddev, x.logdev, x.rtdev);
+	libxfs_buftarg_init(mp, &x);
 
 	dirty = xlog_is_dirty(mp, mp->m_log);
 	if (dirty == -1) {

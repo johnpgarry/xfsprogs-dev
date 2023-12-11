@@ -607,9 +607,7 @@ static char *wf_opts[] = {
 void
 libxfs_buftarg_init(
 	struct xfs_mount	*mp,
-	dev_t			dev,
-	dev_t			logdev,
-	dev_t			rtdev)
+	struct libxfs_init	*xi)
 {
 	char			*p = getenv("LIBXFS_DEBUG_WRITE_CRASH");
 	unsigned long		dfail = 0, lfail = 0, rfail = 0;
@@ -653,29 +651,30 @@ libxfs_buftarg_init(
 
 	if (mp->m_ddev_targp) {
 		/* should already have all buftargs initialised */
-		if (mp->m_ddev_targp->bt_bdev != dev ||
+		if (mp->m_ddev_targp->bt_bdev != xi->ddev ||
 		    mp->m_ddev_targp->bt_mount != mp) {
 			fprintf(stderr,
 				_("%s: bad buftarg reinit, ddev\n"),
 				progname);
 			exit(1);
 		}
-		if (!logdev || logdev == dev) {
+		if (!xi->logdev || xi->logdev == xi->ddev) {
 			if (mp->m_logdev_targp != mp->m_ddev_targp) {
 				fprintf(stderr,
 				_("%s: bad buftarg reinit, ldev mismatch\n"),
 					progname);
 				exit(1);
 			}
-		} else if (mp->m_logdev_targp->bt_bdev != logdev ||
+		} else if (mp->m_logdev_targp->bt_bdev != xi->logdev ||
 			   mp->m_logdev_targp->bt_mount != mp) {
 			fprintf(stderr,
 				_("%s: bad buftarg reinit, logdev\n"),
 				progname);
 			exit(1);
 		}
-		if (rtdev && (mp->m_rtdev_targp->bt_bdev != rtdev ||
-			      mp->m_rtdev_targp->bt_mount != mp)) {
+		if (xi->rtdev &&
+		    (mp->m_rtdev_targp->bt_bdev != xi->rtdev ||
+		     mp->m_rtdev_targp->bt_mount != mp)) {
 			fprintf(stderr,
 				_("%s: bad buftarg reinit, rtdev\n"),
 				progname);
@@ -684,12 +683,13 @@ libxfs_buftarg_init(
 		return;
 	}
 
-	mp->m_ddev_targp = libxfs_buftarg_alloc(mp, dev, dfail);
-	if (!logdev || logdev == dev)
+	mp->m_ddev_targp = libxfs_buftarg_alloc(mp, xi->ddev, dfail);
+	if (!xi->logdev || xi->logdev == xi->ddev)
 		mp->m_logdev_targp = mp->m_ddev_targp;
 	else
-		mp->m_logdev_targp = libxfs_buftarg_alloc(mp, logdev, lfail);
-	mp->m_rtdev_targp = libxfs_buftarg_alloc(mp, rtdev, rfail);
+		mp->m_logdev_targp = libxfs_buftarg_alloc(mp, xi->logdev,
+				lfail);
+	mp->m_rtdev_targp = libxfs_buftarg_alloc(mp, xi->rtdev, rfail);
 }
 
 /* Compute maximum possible height for per-AG btree types for this fs. */
@@ -757,7 +757,7 @@ libxfs_mount(
 		xfs_set_debugger(mp);
 	if (flags & LIBXFS_MOUNT_REPORT_CORRUPTION)
 		xfs_set_reporting_corruption(mp);
-	libxfs_buftarg_init(mp, xi->ddev, xi->logdev, xi->rtdev);
+	libxfs_buftarg_init(mp, xi);
 
 	mp->m_finobt_nores = true;
 	xfs_set_inode32(mp);

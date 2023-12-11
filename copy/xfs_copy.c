@@ -730,7 +730,7 @@ main(int argc, char **argv)
 	memset(&mbuf, 0, sizeof(xfs_mount_t));
 
 	/* We don't yet know the sector size, so read maximal size */
-	libxfs_buftarg_init(&mbuf, xargs.ddev, xargs.logdev, xargs.rtdev);
+	libxfs_buftarg_init(&mbuf, &xargs);
 	error = -libxfs_buf_read_uncached(mbuf.m_ddev_targp, XFS_SB_DADDR,
 			1 << (XFS_MAX_SECTORSIZE_LOG - BBSHIFT), 0, &sbp, NULL);
 	if (error) {
