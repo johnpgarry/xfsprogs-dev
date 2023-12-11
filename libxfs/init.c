@@ -125,15 +125,12 @@ retry:
 	}
 
 	if (!readonly && setblksize && (statb.st_mode & S_IFMT) == S_IFBLK) {
-		if (dio) {
-			/* try to use the given explicit blocksize */
-			(void)platform_set_blocksize(fd, path, statb.st_rdev,
-					setblksize, 0);
-		} else {
-			/* given an explicit blocksize to use */
-			if (platform_set_blocksize(fd, path, statb.st_rdev, setblksize, 1))
-			    exit(1);
-		}
+		/*
+		 * Try to use the given explicit blocksize.  Failure to set the
+		 * block size is only fatal for direct I/O.
+		 */
+		platform_set_blocksize(fd, path, statb.st_rdev, setblksize,
+				dio);
 	}
 
 	/*
