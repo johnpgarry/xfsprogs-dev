@@ -724,13 +724,11 @@ static void
 check_fs_vs_host_sectsize(
 	struct xfs_sb	*sb)
 {
-	int	fd, ret;
+	int	ret;
 	long	old_flags;
 	struct xfs_fsop_geom	geom = { 0 };
 
-	fd = libxfs_device_to_fd(x.ddev);
-
-	ret = -xfrog_geometry(fd, &geom);
+	ret = -xfrog_geometry(x.dfd, &geom);
 	if (ret) {
 		do_log(_("Cannot get host filesystem geometry.\n"
 	"Repair may fail if there is a sector size mismatch between\n"
@@ -739,8 +737,8 @@ check_fs_vs_host_sectsize(
 	}
 
 	if (sb->sb_sectsize < geom.sectsize) {
-		old_flags = fcntl(fd, F_GETFL, 0);
-		if (fcntl(fd, F_SETFL, old_flags & ~O_DIRECT) < 0) {
+		old_flags = fcntl(x.dfd, F_GETFL, 0);
+		if (fcntl(x.dfd, F_SETFL, old_flags & ~O_DIRECT) < 0) {
 			do_warn(_(
 	"Sector size on host filesystem larger than image sector size.\n"
 	"Cannot turn off direct IO, so exiting.\n"));
@@ -986,10 +984,9 @@ main(int argc, char **argv)
 
 	/* -f forces this, but let's be nice and autodetect it, as well. */
 	if (!isa_file) {
-		int		fd = libxfs_device_to_fd(x.ddev);
 		struct stat	statbuf;
 
-		if (fstat(fd, &statbuf) < 0)
+		if (fstat(x.dfd, &statbuf) < 0)
 			do_warn(_("%s: couldn't stat \"%s\"\n"),
 				progname, fs_name);
 		else if (S_ISREG(statbuf.st_mode))
