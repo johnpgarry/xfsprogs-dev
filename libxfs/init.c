@@ -307,17 +307,13 @@ libxfs_init(libxfs_init_t *a)
 {
 	char		*blockfile;
 	char		*dname;
-	char		dpath[25];
 	int		fd;
 	char		*logname;
-	char		logpath[25];
 	char		*rawfile;
 	char		*rtname;
-	char		rtpath[25];
 	int		rval = 0;
 	int		flags;
 
-	dpath[0] = logpath[0] = rtpath[0] = '\0';
 	dname = a->dname;
 	logname = a->logname;
 	rtname = a->rtname;
@@ -418,12 +414,6 @@ libxfs_init(libxfs_init_t *a)
 	init_caches();
 	rval = 1;
 done:
-	if (dpath[0])
-		unlink(dpath);
-	if (logpath[0])
-		unlink(logpath);
-	if (rtpath[0])
-		unlink(rtpath);
 	if (fd >= 0)
 		close(fd);
 	if (!rval) {
