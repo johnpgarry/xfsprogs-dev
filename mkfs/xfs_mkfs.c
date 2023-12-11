@@ -1325,19 +1325,15 @@ done:
 }
 
 static void
-discard_blocks(dev_t dev, uint64_t nsectors, int quiet)
+discard_blocks(int fd, uint64_t nsectors, int quiet)
 {
-	int		fd;
 	uint64_t	offset = 0;
 	/* Discard the device 2G at a time */
 	const uint64_t	step = 2ULL << 30;
 	const uint64_t	count = BBTOB(nsectors);
 
-	fd = libxfs_device_to_fd(dev);
-	if (fd <= 0)
-		return;
-
-	/* The block discarding happens in smaller batches so it can be
+	/*
+	 * The block discarding happens in smaller batches so it can be
 	 * interrupted prematurely
 	 */
 	while (offset < count) {
@@ -2875,11 +2871,11 @@ discard_devices(
 	 */
 
 	if (!xi->disfile)
-		discard_blocks(xi->ddev, xi->dsize, quiet);
+		discard_blocks(xi->dfd, xi->dsize, quiet);
 	if (xi->rtdev && !xi->risfile)
-		discard_blocks(xi->rtdev, xi->rtsize, quiet);
+		discard_blocks(xi->rtfd, xi->rtsize, quiet);
 	if (xi->logdev && xi->logdev != xi->ddev && !xi->lisfile)
-		discard_blocks(xi->logdev, xi->logBBsize, quiet);
+		discard_blocks(xi->logfd, xi->logBBsize, quiet);
 }
 
 static void
