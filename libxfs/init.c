@@ -125,10 +125,7 @@ retry:
 	}
 
 	if (!readonly && setblksize && (statb.st_mode & S_IFMT) == S_IFBLK) {
-		if (setblksize == 1) {
-			/* use the default blocksize */
-			(void)platform_set_blocksize(fd, path, statb.st_rdev, XFS_MIN_SECTORSIZE, 0);
-		} else if (dio) {
+		if (dio) {
 			/* try to use the given explicit blocksize */
 			(void)platform_set_blocksize(fd, path, statb.st_rdev,
 					setblksize, 0);
