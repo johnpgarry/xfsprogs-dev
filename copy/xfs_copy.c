@@ -784,7 +784,7 @@ main(int argc, char **argv)
 	 */
 	memset(&xlog, 0, sizeof(struct xlog));
 	mp->m_log = &xlog;
-	c = xlog_is_dirty(mp, mp->m_log, &xargs);
+	c = xlog_is_dirty(mp, mp->m_log);
 	if (!duplicate) {
 		if (c == 1) {
 			do_log(_(

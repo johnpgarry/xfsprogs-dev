@@ -15,22 +15,18 @@ libxfs_init_t x;
 void
 xlog_init(
 	struct xfs_mount	*mp,
-	struct xlog		*log,
-	libxfs_init_t		*x)
+	struct xlog		*log)
 {
+	unsigned int		log_sect_size = BBSIZE;
+
 	memset(log, 0, sizeof(*log));
 
-	/* We (re-)init members of libxfs_init_t here?  really? */
-	x->logBBsize = XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
-	x->logBBstart = XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart);
-	x->lbsize = BBSIZE;
-	if (xfs_has_sector(mp))
-		x->lbsize <<= (mp->m_sb.sb_logsectlog - BBSHIFT);
-
 	log->l_dev = mp->m_logdev_targp;
-	log->l_logBBsize = x->logBBsize;
-	log->l_logBBstart = x->logBBstart;
-	log->l_sectBBsize = BTOBB(x->lbsize);
+	log->l_logBBsize = XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
+	log->l_logBBstart = XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart);
+	if (xfs_has_sector(mp))
+		log_sect_size <<= (mp->m_sb.sb_logsectlog - BBSHIFT);
+	log->l_sectBBsize  = BTOBB(log_sect_size);
 	log->l_mp = mp;
 	if (xfs_has_sector(mp)) {
 		log->l_sectbb_log = mp->m_sb.sb_logsectlog - BBSHIFT;
@@ -50,13 +46,12 @@ xlog_init(
 int
 xlog_is_dirty(
 	struct xfs_mount	*mp,
-	struct xlog		*log,
-	libxfs_init_t		*x)
+	struct xlog		*log)
 {
 	int			error;
 	xfs_daddr_t		head_blk, tail_blk;
 
-	xlog_init(mp, log, x);
+	xlog_init(mp, log);
 
 	error = xlog_find_tail(log, &head_blk, &tail_blk);
 	if (error) {

@@ -304,7 +304,7 @@ libxfs_init(libxfs_init_t *a)
 	a->dfd = a->logfd = a->rtfd = -1;
 	a->ddev = a->logdev = a->rtdev = 0;
 	a->dsize = a->lbsize = a->rtbsize = 0;
-	a->dbsize = a->logBBsize = a->logBBstart = a->rtsize = 0;
+	a->dbsize = a->logBBsize = a->rtsize = 0;
 
 	flags = (a->isreadonly | a->isdirect);
 

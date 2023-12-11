@@ -30,7 +30,7 @@ zero_log(
 	xfs_daddr_t		tail_blk;
 	struct xlog		*log = mp->m_log;
 
-	xlog_init(mp, mp->m_log, &x);
+	xlog_init(mp, mp->m_log);
 
 	/*
 	 * Find the log head and tail and alert the user to the situation if the

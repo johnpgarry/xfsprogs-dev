@@ -115,7 +115,6 @@ typedef struct libxfs_xinit {
 	long long       logBBsize;      /* size of log subvolume (BBs) */
 					/* (blocks allocated for use as
 					 * log is stored in mount structure) */
-	long long       logBBstart;     /* start block of log subvolume (BBs) */
 	long long       rtsize;         /* size of realtime subvolume (BBs) */
 	int		dbsize;		/* data subvolume device blksize */
 	int		lbsize;		/* log subvolume device blksize */
