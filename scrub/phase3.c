@@ -166,16 +166,29 @@ scrub_inode(
 	if (error)
 		goto out;
 
-	if (S_ISLNK(bstat->bs_mode)) {
+	/*
+	 * Check file data contents, e.g. symlink and directory entries.
+	 *
+	 * Note: bs_mode==0 occurs when inumbers says an inode is allocated,
+	 * bulkstat skips the inode, and bulkstat_single errors out when
+	 * loading the inode.  This could be due to racing with ifree, but it
+	 * could be a corrupt inode.  Either way, schedule all the data fork
+	 * content scrubbers.  Better to have them return -ENOENT than miss
+	 * some coverage.
+	 */
+	if (S_ISLNK(bstat->bs_mode) || !bstat->bs_mode) {
 		/* Check symlink contents. */
 		error = scrub_file(ctx, fd, bstat, XFS_SCRUB_TYPE_SYMLINK,
 				&alist);
-	} else if (S_ISDIR(bstat->bs_mode)) {
+		if (error)
+			goto out;
+	}
+	if (S_ISDIR(bstat->bs_mode) || !bstat->bs_mode) {
 		/* Check the directory entries. */
 		error = scrub_file(ctx, fd, bstat, XFS_SCRUB_TYPE_DIR, &alist);
+		if (error)
+			goto out;
 	}
-	if (error)
-		goto out;
 
 	/* Check all the extended attributes. */
 	error = scrub_file(ctx, fd, bstat, XFS_SCRUB_TYPE_XATTR, &alist);
