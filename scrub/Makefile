@@ -26,7 +26,7 @@ INSTALL_SCRUB += install-crond
 CRONTABS = xfs_scrub_all.cron
 OPTIONAL_TARGETS += $(CRONTABS)
 # Don't enable the crontab by default for now
-CROND_DIR = $(PKG_LIB_SCRIPT_DIR)/$(PKG_NAME)
+CROND_DIR = $(PKG_DATA_DIR)
 endif
 
 endif	# scrub_prereqs
