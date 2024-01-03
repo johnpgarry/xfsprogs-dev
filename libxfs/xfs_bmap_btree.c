@@ -536,6 +536,29 @@ static const struct xfs_btree_ops xfs_bmbt_ops = {
 	.keys_contiguous	= xfs_bmbt_keys_contiguous,
 };
 
+static const struct xfs_btree_ops xfs_crc_bmbt_ops = {
+	.rec_len		= sizeof(struct xfs_bmbt_rec),
+	.key_len		= sizeof(struct xfs_bmbt_key),
+
+	.dup_cursor		= xfs_bmbt_dup_cursor,
+	.update_cursor		= xfs_bmbt_update_cursor,
+	.alloc_block		= xfs_bmbt_alloc_block,
+	.free_block		= xfs_bmbt_free_block,
+	.get_maxrecs		= xfs_bmbt_get_maxrecs,
+	.get_minrecs		= xfs_bmbt_get_minrecs,
+	.get_dmaxrecs		= xfs_bmbt_get_dmaxrecs,
+	.init_key_from_rec	= xfs_bmbt_init_key_from_rec,
+	.init_high_key_from_rec	= xfs_bmbt_init_high_key_from_rec,
+	.init_rec_from_cur	= xfs_bmbt_init_rec_from_cur,
+	.init_ptr_from_cur	= xfs_bmbt_init_ptr_from_cur,
+	.key_diff		= xfs_bmbt_key_diff,
+	.diff_two_keys		= xfs_bmbt_diff_two_keys,
+	.buf_ops		= &xfs_bmbt_buf_ops,
+	.keys_inorder		= xfs_bmbt_keys_inorder,
+	.recs_inorder		= xfs_bmbt_recs_inorder,
+	.keys_contiguous	= xfs_bmbt_keys_contiguous,
+};
+
 static struct xfs_btree_cur *
 xfs_bmbt_init_common(
 	struct xfs_mount	*mp,
@@ -544,10 +567,14 @@ xfs_bmbt_init_common(
 	int			whichfork)
 {
 	struct xfs_btree_cur	*cur;
+	const struct xfs_btree_ops *ops = &xfs_crc_bmbt_ops;
 
 	ASSERT(whichfork != XFS_COW_FORK);
 
-	cur = xfs_btree_alloc_cursor(mp, tp, XFS_BTNUM_BMAP, &xfs_bmbt_ops,
+	if (!xfs_has_crc(mp))
+		ops = &xfs_bmbt_ops;
+
+	cur = xfs_btree_alloc_cursor(mp, tp, XFS_BTNUM_BMAP, ops,
 			mp->m_bm_maxlevels[whichfork], xfs_bmbt_cur_cache);
 	cur->bc_statoff = XFS_STATS_CALC_INDEX(xs_bmbt_2);
 

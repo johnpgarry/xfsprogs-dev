@@ -419,6 +419,28 @@ static const struct xfs_btree_ops xfs_inobt_ops = {
 	.keys_contiguous	= xfs_inobt_keys_contiguous,
 };
 
+static const struct xfs_btree_ops xfs_crc_inobt_ops = {
+	.rec_len		= sizeof(struct xfs_inobt_rec),
+	.key_len		= sizeof(struct xfs_inobt_key),
+
+	.dup_cursor		= xfs_inobt_dup_cursor,
+	.set_root		= xfs_inobt_set_root,
+	.alloc_block		= xfs_inobt_alloc_block,
+	.free_block		= xfs_inobt_free_block,
+	.get_minrecs		= xfs_inobt_get_minrecs,
+	.get_maxrecs		= xfs_inobt_get_maxrecs,
+	.init_key_from_rec	= xfs_inobt_init_key_from_rec,
+	.init_high_key_from_rec	= xfs_inobt_init_high_key_from_rec,
+	.init_rec_from_cur	= xfs_inobt_init_rec_from_cur,
+	.init_ptr_from_cur	= xfs_inobt_init_ptr_from_cur,
+	.key_diff		= xfs_inobt_key_diff,
+	.buf_ops		= &xfs_inobt_buf_ops,
+	.diff_two_keys		= xfs_inobt_diff_two_keys,
+	.keys_inorder		= xfs_inobt_keys_inorder,
+	.recs_inorder		= xfs_inobt_recs_inorder,
+	.keys_contiguous	= xfs_inobt_keys_contiguous,
+};
+
 static const struct xfs_btree_ops xfs_finobt_ops = {
 	.rec_len		= sizeof(xfs_inobt_rec_t),
 	.key_len		= sizeof(xfs_inobt_key_t),
@@ -454,7 +476,12 @@ xfs_inobt_init_common(
 	struct xfs_btree_cur	*cur;
 
 	if (btnum == XFS_BTNUM_INO) {
-		cur = xfs_btree_alloc_cursor(mp, tp, btnum, &xfs_inobt_ops,
+		const struct xfs_btree_ops	*ops = &xfs_crc_inobt_ops;
+
+		if (!xfs_has_crc(mp))
+			ops = &xfs_inobt_ops;
+
+		cur = xfs_btree_alloc_cursor(mp, tp, btnum, ops,
 				M_IGEO(mp)->inobt_maxlevels,
 				xfs_inobt_cur_cache);
 		cur->bc_statoff = XFS_STATS_CALC_INDEX(xs_ibt_2);

@@ -475,8 +475,54 @@ static const struct xfs_btree_ops xfs_bnobt_ops = {
 	.keys_contiguous	= xfs_allocbt_keys_contiguous,
 };
 
+static const struct xfs_btree_ops xfs_crc_bnobt_ops = {
+	.rec_len		= sizeof(struct xfs_alloc_rec),
+	.key_len		= sizeof(xfs_alloc_key_t),
+
+	.dup_cursor		= xfs_allocbt_dup_cursor,
+	.set_root		= xfs_allocbt_set_root,
+	.alloc_block		= xfs_allocbt_alloc_block,
+	.free_block		= xfs_allocbt_free_block,
+	.update_lastrec		= xfs_allocbt_update_lastrec,
+	.get_minrecs		= xfs_allocbt_get_minrecs,
+	.get_maxrecs		= xfs_allocbt_get_maxrecs,
+	.init_key_from_rec	= xfs_allocbt_init_key_from_rec,
+	.init_high_key_from_rec	= xfs_bnobt_init_high_key_from_rec,
+	.init_rec_from_cur	= xfs_allocbt_init_rec_from_cur,
+	.init_ptr_from_cur	= xfs_allocbt_init_ptr_from_cur,
+	.key_diff		= xfs_bnobt_key_diff,
+	.buf_ops		= &xfs_bnobt_buf_ops,
+	.diff_two_keys		= xfs_bnobt_diff_two_keys,
+	.keys_inorder		= xfs_bnobt_keys_inorder,
+	.recs_inorder		= xfs_bnobt_recs_inorder,
+	.keys_contiguous	= xfs_allocbt_keys_contiguous,
+};
+
 static const struct xfs_btree_ops xfs_cntbt_ops = {
 	.rec_len		= sizeof(xfs_alloc_rec_t),
+	.key_len		= sizeof(xfs_alloc_key_t),
+
+	.dup_cursor		= xfs_allocbt_dup_cursor,
+	.set_root		= xfs_allocbt_set_root,
+	.alloc_block		= xfs_allocbt_alloc_block,
+	.free_block		= xfs_allocbt_free_block,
+	.update_lastrec		= xfs_allocbt_update_lastrec,
+	.get_minrecs		= xfs_allocbt_get_minrecs,
+	.get_maxrecs		= xfs_allocbt_get_maxrecs,
+	.init_key_from_rec	= xfs_allocbt_init_key_from_rec,
+	.init_high_key_from_rec	= xfs_cntbt_init_high_key_from_rec,
+	.init_rec_from_cur	= xfs_allocbt_init_rec_from_cur,
+	.init_ptr_from_cur	= xfs_allocbt_init_ptr_from_cur,
+	.key_diff		= xfs_cntbt_key_diff,
+	.buf_ops		= &xfs_cntbt_buf_ops,
+	.diff_two_keys		= xfs_cntbt_diff_two_keys,
+	.keys_inorder		= xfs_cntbt_keys_inorder,
+	.recs_inorder		= xfs_cntbt_recs_inorder,
+	.keys_contiguous	= NULL, /* not needed right now */
+};
+
+static const struct xfs_btree_ops xfs_crc_cntbt_ops = {
+	.rec_len		= sizeof(struct xfs_alloc_rec),
 	.key_len		= sizeof(xfs_alloc_key_t),
 
 	.dup_cursor		= xfs_allocbt_dup_cursor,
@@ -511,12 +557,22 @@ xfs_allocbt_init_common(
 	ASSERT(btnum == XFS_BTNUM_BNO || btnum == XFS_BTNUM_CNT);
 
 	if (btnum == XFS_BTNUM_CNT) {
-		cur = xfs_btree_alloc_cursor(mp, tp, btnum, &xfs_cntbt_ops,
+		const struct xfs_btree_ops	*ops = &xfs_crc_cntbt_ops;
+
+		if (!xfs_has_crc(mp))
+			ops = &xfs_cntbt_ops;
+
+		cur = xfs_btree_alloc_cursor(mp, tp, btnum, ops,
 				mp->m_alloc_maxlevels, xfs_allocbt_cur_cache);
 		cur->bc_statoff = XFS_STATS_CALC_INDEX(xs_abtc_2);
 		cur->bc_flags = XFS_BTREE_LASTREC_UPDATE;
 	} else {
-		cur = xfs_btree_alloc_cursor(mp, tp, btnum, &xfs_bnobt_ops,
+		const struct xfs_btree_ops	*ops = &xfs_crc_bnobt_ops;
+
+		if (!xfs_has_crc(mp))
+			ops = &xfs_bnobt_ops;
+
+		cur = xfs_btree_alloc_cursor(mp, tp, btnum, ops,
 				mp->m_alloc_maxlevels, xfs_allocbt_cur_cache);
 		cur->bc_statoff = XFS_STATS_CALC_INDEX(xs_abtb_2);
 	}
