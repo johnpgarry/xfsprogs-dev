@@ -453,7 +453,7 @@ xfs_btree_del_cursor(
 	 */
 	ASSERT(cur->bc_btnum != XFS_BTNUM_BMAP || cur->bc_ino.allocated == 0 ||
 	       xfs_is_shutdown(cur->bc_mp) || error != 0);
-	if (unlikely(cur->bc_flags & XFS_BTREE_STAGING))
+	if (unlikely(xfs_btree_is_staging(cur)))
 		kmem_free(cur->bc_ops);
 	if (!xfs_btree_has_long_ptrs(cur) && cur->bc_ag.pag)
 		xfs_perag_put(cur->bc_ag.pag);
@@ -725,7 +725,7 @@ xfs_btree_ifork_ptr(
 {
 	ASSERT(xfs_btree_has_iroot(cur));
 
-	if (cur->bc_flags & XFS_BTREE_STAGING)
+	if (xfs_btree_is_staging(cur))
 		return cur->bc_ino.ifake->if_fork;
 	return xfs_ifork_ptr(cur->bc_ino.ip, cur->bc_ino.whichfork);
 }
@@ -1838,7 +1838,7 @@ xfs_btree_lookup_get_block(
 
 	/* Check the inode owner since the verifiers don't. */
 	if (xfs_btree_has_crc(cur) &&
-	    !(cur->bc_flags & XFS_BTREE_BMBT_INVALID_OWNER) &&
+	    !xfs_btree_is_bmbt_invalid_owner(cur) &&
 	    xfs_btree_has_long_ptrs(cur) &&
 	    be64_to_cpu((*blkp)->bb_u.l.bb_owner) !=
 			cur->bc_ino.ip->i_ino)

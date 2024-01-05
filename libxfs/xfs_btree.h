@@ -335,6 +335,17 @@ __XFS_BTREE_HAS(overlapping, OVERLAPPING)
 /* For extent swap, ignore owner check in verifier (only for bmbt btrees) */
 #define	XFS_BTREE_BMBT_INVALID_OWNER	(1U << 2)
 
+/* btree state flags */
+#define __XFS_BTREE_IS(name, NAME) \
+static inline bool xfs_btree_is_ ## name (const struct xfs_btree_cur *cur) \
+{ \
+	return cur->bc_flags & XFS_BTREE_ ## NAME; \
+}
+
+__XFS_BTREE_IS(staging, STAGING)
+__XFS_BTREE_IS(bmbt_wasdel, BMBT_WASDEL)
+__XFS_BTREE_IS(bmbt_invalid_owner, BMBT_INVALID_OWNER)
+
 #define	XFS_BTREE_NOERROR	0
 #define	XFS_BTREE_ERROR		1
 

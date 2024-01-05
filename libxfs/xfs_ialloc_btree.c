@@ -546,7 +546,7 @@ xfs_inobt_commit_staged_btree(
 	struct xbtree_afakeroot	*afake = cur->bc_ag.afake;
 	int			fields;
 
-	ASSERT(cur->bc_flags & XFS_BTREE_STAGING);
+	ASSERT(xfs_btree_is_staging(cur));
 
 	if (cur->bc_btnum == XFS_BTNUM_INO) {
 		fields = XFS_AGI_ROOT | XFS_AGI_LEVEL;

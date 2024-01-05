@@ -1444,7 +1444,7 @@ xfs_bmap_add_extent_delay_real(
 
 	ASSERT(whichfork != XFS_ATTR_FORK);
 	ASSERT(!isnullstartblock(new->br_startblock));
-	ASSERT(!bma->cur || (bma->cur->bc_flags & XFS_BTREE_BMBT_WASDEL));
+	ASSERT(!bma->cur || xfs_btree_is_bmbt_wasdel(bma->cur));
 
 	XFS_STATS_INC(mp, xs_add_exlist);
 
@@ -2703,7 +2703,7 @@ xfs_bmap_add_extent_hole_real(
 	struct xfs_bmbt_irec	old;
 
 	ASSERT(!isnullstartblock(new->br_startblock));
-	ASSERT(!cur || !(cur->bc_flags & XFS_BTREE_BMBT_WASDEL));
+	ASSERT(!cur || !xfs_btree_is_bmbt_wasdel(cur));
 
 	XFS_STATS_INC(mp, xs_add_exlist);
 

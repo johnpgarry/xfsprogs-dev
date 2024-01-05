@@ -89,7 +89,7 @@ xfs_btree_fakeroot_init_ptr_from_cur(
 {
 	struct xbtree_afakeroot	*afake;
 
-	ASSERT(cur->bc_flags & XFS_BTREE_STAGING);
+	ASSERT(xfs_btree_is_staging(cur));
 
 	afake = cur->bc_ag.afake;
 	ptr->s = cpu_to_be32(afake->af_root);
@@ -118,7 +118,7 @@ xfs_btree_afakeroot_set_root(
 {
 	struct xbtree_afakeroot	*afake = cur->bc_ag.afake;
 
-	ASSERT(cur->bc_flags & XFS_BTREE_STAGING);
+	ASSERT(xfs_btree_is_staging(cur));
 	afake->af_root = be32_to_cpu(ptr->s);
 	afake->af_levels += inc;
 }
@@ -135,7 +135,7 @@ xfs_btree_stage_afakeroot(
 {
 	struct xfs_btree_ops		*nops;
 
-	ASSERT(!(cur->bc_flags & XFS_BTREE_STAGING));
+	ASSERT(!xfs_btree_is_staging(cur));
 	ASSERT(!xfs_btree_has_iroot(cur));
 	ASSERT(cur->bc_tp == NULL);
 
@@ -166,7 +166,7 @@ xfs_btree_commit_afakeroot(
 	struct xfs_buf			*agbp,
 	const struct xfs_btree_ops	*ops)
 {
-	ASSERT(cur->bc_flags & XFS_BTREE_STAGING);
+	ASSERT(xfs_btree_is_staging(cur));
 	ASSERT(cur->bc_tp == NULL);
 
 	trace_xfs_btree_commit_afakeroot(cur);
@@ -216,7 +216,7 @@ xfs_btree_stage_ifakeroot(
 {
 	struct xfs_btree_ops		*nops;
 
-	ASSERT(!(cur->bc_flags & XFS_BTREE_STAGING));
+	ASSERT(!xfs_btree_is_staging(cur));
 	ASSERT(xfs_btree_has_iroot(cur));
 	ASSERT(cur->bc_tp == NULL);
 
@@ -249,7 +249,7 @@ xfs_btree_commit_ifakeroot(
 	int				whichfork,
 	const struct xfs_btree_ops	*ops)
 {
-	ASSERT(cur->bc_flags & XFS_BTREE_STAGING);
+	ASSERT(xfs_btree_is_staging(cur));
 	ASSERT(cur->bc_tp == NULL);
 
 	trace_xfs_btree_commit_ifakeroot(cur);
@@ -681,7 +681,7 @@ xfs_btree_bload_compute_geometry(
 	uint64_t		nr_blocks = 0;
 	uint64_t		nr_this_level;
 
-	ASSERT(cur->bc_flags & XFS_BTREE_STAGING);
+	ASSERT(xfs_btree_is_staging(cur));
 
 	/*
 	 * Make sure that the slack values make sense for traditional leaf and
@@ -791,7 +791,7 @@ xfs_btree_bload(
 	unsigned int			level = 0;
 	int				ret;
 
-	ASSERT(cur->bc_flags & XFS_BTREE_STAGING);
+	ASSERT(xfs_btree_is_staging(cur));
 
 	INIT_LIST_HEAD(&buffers_list);
 	cur->bc_nlevels = bbl->btree_height;

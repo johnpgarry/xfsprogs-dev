@@ -554,7 +554,7 @@ xfs_rmapbt_commit_staged_btree(
 	struct xfs_agf		*agf = agbp->b_addr;
 	struct xbtree_afakeroot	*afake = cur->bc_ag.afake;
 
-	ASSERT(cur->bc_flags & XFS_BTREE_STAGING);
+	ASSERT(xfs_btree_is_staging(cur));
 
 	agf->agf_roots[cur->bc_btnum] = cpu_to_be32(afake->af_root);
 	agf->agf_levels[cur->bc_btnum] = cpu_to_be32(afake->af_levels);

@@ -204,7 +204,7 @@ xfs_bmbt_alloc_block(
 	xfs_rmap_ino_bmbt_owner(&args.oinfo, cur->bc_ino.ip->i_ino,
 			cur->bc_ino.whichfork);
 	args.minlen = args.maxlen = args.prod = 1;
-	args.wasdel = cur->bc_flags & XFS_BTREE_BMBT_WASDEL;
+	args.wasdel = xfs_btree_is_bmbt_wasdel(cur);
 	if (!args.wasdel && args.tp->t_blk_res == 0)
 		return -ENOSPC;
 
@@ -659,7 +659,7 @@ xfs_bmbt_commit_staged_btree(
 	static const short	extflag[2] = {XFS_ILOG_DEXT, XFS_ILOG_AEXT};
 	int			flags = XFS_ILOG_CORE;
 
-	ASSERT(cur->bc_flags & XFS_BTREE_STAGING);
+	ASSERT(xfs_btree_is_staging(cur));
 	ASSERT(whichfork != XFS_COW_FORK);
 
 	/*
