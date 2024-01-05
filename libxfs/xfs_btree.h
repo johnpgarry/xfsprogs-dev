@@ -250,12 +250,6 @@ struct xfs_btree_cur_ino {
 	int				allocated;
 	short				forksize;
 	char				whichfork;
-	char				flags;
-/* We are converting a delalloc reservation */
-#define	XFS_BTCUR_BMBT_WASDEL		(1 << 0)
-
-/* For extent swap, ignore owner check in verifier */
-#define	XFS_BTCUR_BMBT_INVALID_OWNER	(1 << 1)
 };
 
 struct xfs_btree_level {
@@ -315,17 +309,17 @@ xfs_btree_cur_sizeof(unsigned int nlevels)
 }
 
 /* btree geometry flags */
-#define __XFS_BTCUR_HAS(name, NAME) \
+#define __XFS_BTREE_HAS(name, NAME) \
 static inline bool xfs_btree_has_ ## name (const struct xfs_btree_cur *cur) \
 { \
 	return cur->bc_ops->geom_flags & XFS_BTGEO_ ## NAME; \
 }
 
-__XFS_BTCUR_HAS(long_ptrs, LONG_PTRS)
-__XFS_BTCUR_HAS(iroot, ROOT_IN_INODE)
-__XFS_BTCUR_HAS(lastrec_update, LASTREC_UPDATE)
-__XFS_BTCUR_HAS(crc, CRC_BLOCKS)
-__XFS_BTCUR_HAS(overlapping, OVERLAPPING)
+__XFS_BTREE_HAS(long_ptrs, LONG_PTRS)
+__XFS_BTREE_HAS(iroot, ROOT_IN_INODE)
+__XFS_BTREE_HAS(lastrec_update, LASTREC_UPDATE)
+__XFS_BTREE_HAS(crc, CRC_BLOCKS)
+__XFS_BTREE_HAS(overlapping, OVERLAPPING)
 
 /* cursor flags */
 /*
@@ -334,6 +328,12 @@ __XFS_BTCUR_HAS(overlapping, OVERLAPPING)
  * is dynamically allocated and must be freed when the cursor is deleted.
  */
 #define XFS_BTREE_STAGING		(1U << 0)
+
+/* We are converting a delalloc reservation (only for bmbt btrees) */
+#define	XFS_BTREE_BMBT_WASDEL		(1U << 1)
+
+/* For extent swap, ignore owner check in verifier (only for bmbt btrees) */
+#define	XFS_BTREE_BMBT_INVALID_OWNER	(1U << 2)
 
 #define	XFS_BTREE_NOERROR	0
 #define	XFS_BTREE_ERROR		1
