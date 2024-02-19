@@ -78,6 +78,7 @@ enum {
 	D_EXTSZINHERIT,
 	D_COWEXTSIZE,
 	D_DAXINHERIT,
+	D_ATOMICWRITES,
 	D_MAX_OPTS,
 };
 
@@ -321,6 +322,7 @@ static struct opt_params dopts = {
 		[D_EXTSZINHERIT] = "extszinherit",
 		[D_COWEXTSIZE] = "cowextsize",
 		[D_DAXINHERIT] = "daxinherit",
+		[D_ATOMICWRITES] = "atomic-writes",
 		[D_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
@@ -447,6 +449,12 @@ static struct opt_params dopts = {
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = D_DAXINHERIT,
+		  .conflicts = { { NULL, LAST_CONFLICT } },
+		  .minval = 0,
+		  .maxval = 1,
+		  .defaultval = 1,
+		},
+		{ .index = D_ATOMICWRITES,
 		  .conflicts = { { NULL, LAST_CONFLICT } },
 		  .minval = 0,
 		  .maxval = 1,
@@ -1648,6 +1656,15 @@ data_opts_parser(
 		else
 			cli->fsx.fsx_xflags &= ~FS_XFLAG_DAX;
 		break;
+	case D_ATOMICWRITES:
+		if (getnum(value, opts, subopt) == 1) {
+			printf("%s D_ATOMICWRITES true\n", __func__);
+			cli->sb_feat.atomicwrites = true;
+		} else {
+			printf("%s D_ATOMICWRITES false\n", __func__);
+			cli->sb_feat.atomicwrites = false;
+		}
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -2675,6 +2692,34 @@ _("cannot set forcealign without an extent size hint.\n"));
 _("cannot set forcealign and realtime flags.\n"));
 		usage();
 	}
+}
+static inline
+bool is_power_of_2(unsigned long n)
+{
+	return (n != 0 && ((n & (n - 1)) == 0));
+}
+
+/* Validate the incoming forcealign flag. */
+static void
+validate_atomicwrites(
+	struct mkfs_params	*cfg,
+	struct xfs_mount	*mp,
+	struct cli_params	*cli
+	)
+{
+	printf("%s cli->sb_feat.atomicwrites=%d cfg->rtextblocks=%ld FS_XFLAG_RTINHERIT=%d\n",
+		__func__, cli->sb_feat.atomicwrites, cfg->rtextblocks,
+		!!(cli->fsx.fsx_xflags & FS_XFLAG_RTINHERIT));
+	if (!(cli->fsx.fsx_xflags & FS_XFLAG_RTINHERIT))
+		return;
+
+	if (cfg->rtextblocks == 1 || !is_power_of_2(cfg->rtextblocks)) {
+		fprintf(stderr,
+_("For atomic writes support support, rtextblocks should be a power-of-2 and greater than the block size\n"));
+		usage();
+		return;
+	}
+
 }
 
 /* Complain if this filesystem is not a supported configuration. */
@@ -4306,7 +4351,7 @@ main(
 			.bigtime = true,
 			.nrext64 = false,
 			.forcealign = true,
-			.atomicwrites = true,
+			.atomicwrites = false,
 			/*
 			 * When we decide to enable a new feature by default,
 			 * please remember to update the mkfs conf files.
@@ -4481,6 +4526,7 @@ main(
 	validate_extsize_hint(mp, &cli);
 	validate_cowextsize_hint(mp, &cli);
 	validate_forcealign(mp, &cli);
+	validate_atomicwrites(&cfg, mp, &cli);
 
 	validate_supported(mp, &cli);
 
