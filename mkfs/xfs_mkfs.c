@@ -82,6 +82,7 @@ enum {
 	D_DAXINHERIT,
 	D_CONCURRENCY,
 	D_FORCEALIGN,
+	D_ATOMICWRITES,
 	D_MAX_OPTS,
 };
 
@@ -334,6 +335,7 @@ static struct opt_params dopts = {
 		[D_DAXINHERIT] = "daxinherit",
 		[D_CONCURRENCY] = "concurrency",
 		[D_FORCEALIGN] = "forcealign",
+		[D_ATOMICWRITES] = "atomic-writes",
 		[D_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
@@ -484,6 +486,12 @@ static struct opt_params dopts = {
 		  .minval = XFS_MIN_RTEXTSIZE,
 		  .maxval = XFS_MAX_RTEXTSIZE,
 		  .defaultval = SUBOPT_NEEDS_VAL,
+		},
+		{ .index = D_ATOMICWRITES,
+		  .conflicts = { { NULL, LAST_CONFLICT } },
+		  .minval = 0,
+		  .maxval = 1,
+		  .defaultval = 1,
 		},
 	},
 };
@@ -1774,6 +1782,15 @@ data_opts_parser(
 	case D_FORCEALIGN:
 		cli->forcealign = getstr(value, opts, subopt);
 		break;
+	case D_ATOMICWRITES:
+		if (getnum(value, opts, subopt) == 1) {
+			printf("%s D_ATOMICWRITES true\n", __func__);
+			cli->sb_feat.atomicwrites = true;
+		} else {
+			printf("%s D_ATOMICWRITES false\n", __func__);
+			cli->sb_feat.atomicwrites = false;
+		}
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -2902,6 +2919,29 @@ validate_forcealign_hints(
  _("cannot set extent size hint when forcealign is enabled.\n"));
 		usage();
 	}
+}
+
+/* Validate the incoming forcealign flag. */
+static void
+validate_atomicwrites(
+	struct mkfs_params	*cfg,
+	struct xfs_mount	*mp,
+	struct cli_params	*cli
+	)
+{
+	printf("%s cli->sb_feat.atomicwrites=%d cfg->rtextblocks=%ld FS_XFLAG_RTINHERIT=%d\n",
+		__func__, cli->sb_feat.atomicwrites, cfg->rtextblocks, 
+		!!(cli->fsx.fsx_xflags & FS_XFLAG_RTINHERIT));
+	if (!(cli->fsx.fsx_xflags & FS_XFLAG_RTINHERIT))
+		return;
+
+	if (cfg->rtextblocks == 1 || !is_power_of_2(cfg->rtextblocks)) {
+		fprintf(stderr,
+_("For atomic writes support support, rtextblocks should be a power-of-2 and greater than the block size\n"));
+		usage();
+		return;
+	}
+
 }
 
 /* Complain if this filesystem is not a supported configuration. */
@@ -4912,7 +4952,7 @@ main(
 			.bigtime = true,
 			.nrext64 = true,
 			.nrext64 = false,
-			.atomicwrites = true,
+			.atomicwrites = false,
 			/*
 			 * When we decide to enable a new feature by default,
 			 * please remember to update the mkfs conf files.
@@ -5087,6 +5127,7 @@ main(
 	validate_extsize_hint(mp, &cli);
 	validate_cowextsize_hint(mp, &cli);
 	validate_forcealign_hints(mp, &cli);
+	validate_atomicwrites(&cfg, mp, &cli);
 
 	validate_supported(mp, &cli);
 
