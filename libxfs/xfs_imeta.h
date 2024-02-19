@@ -67,7 +67,7 @@ xfs_imeta_lastpath(
 {
 	if (upd->path && upd->path->im_path && upd->path->im_depth > 0)
 		return upd->path->im_path[upd->path->im_depth - 1];
-	return "?";
+	return (const unsigned char *)"?";
 }
 
 /* Lookup keys for static metadata inodes. */
