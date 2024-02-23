@@ -13,7 +13,94 @@
 #include "libfrog/crc32cselftest.h"
 #include "libfrog/dahashselftest.h"
 #include "proto.h"
+
+#define STATX_ATTR_WRITE_ATOMIC		0x00400000 /* File supports atomic write operations */
+#define STATX_WRITE_ATOMIC	0x00008000U
+
+static inline
+bool is_power_of_2(unsigned long n)
+{
+	return (n != 0 && ((n & (n - 1)) == 0));
+}
+
 #include <ini.h>
+
+struct statx2 {
+	/* 0x00 */
+	__u32	stx_mask;	/* What results were written [uncond] */
+	__u32	stx_blksize;	/* Preferred general I/O size [uncond] */
+	__u64	stx_attributes;	/* Flags conveying information about the file [uncond] */
+	/* 0x10 */
+	__u32	stx_nlink;	/* Number of hard links */
+	__u32	stx_uid;	/* User ID of owner */
+	__u32	stx_gid;	/* Group ID of owner */
+	__u16	stx_mode;	/* File mode */
+	__u16	__spare0[1];
+	/* 0x20 */
+	__u64	stx_ino;	/* Inode number */
+	__u64	stx_size;	/* File size */
+	__u64	stx_blocks;	/* Number of 512-byte blocks allocated */
+	__u64	stx_attributes_mask; /* Mask to show what's supported in stx_attributes */
+	/* 0x40 */
+	struct statx_timestamp	stx_atime;	/* Last access time */
+	struct statx_timestamp	stx_btime;	/* File creation time */
+	struct statx_timestamp	stx_ctime;	/* Last attribute change time */
+	struct statx_timestamp	stx_mtime;	/* Last data modification time */
+	/* 0x80 */
+	__u32	stx_rdev_major;	/* Device ID of special file [if bdev/cdev] */
+	__u32	stx_rdev_minor;
+	__u32	stx_dev_major;	/* ID of device containing file [uncond] */
+	__u32	stx_dev_minor;
+	/* 0x90 */
+	__u64	stx_mnt_id;
+	__u32	stx_dio_mem_align;	/* Memory buffer alignment for direct I/O */
+	__u32	stx_dio_offset_align;	/* File offset alignment for direct I/O */
+	/* 0xa0 */
+	__u32	stx_atomic_write_unit_min;
+	__u32	stx_atomic_write_unit_max;
+	__u32   stx_atomic_write_segments_max;
+	__u32   __spare1;
+	/* 0xb0 */
+	__u64	__spare3[10];	/* Spare space for future expansion */
+	/* 0x100 */
+};
+
+static ssize_t
+_statx(
+	int		dfd,
+	const char	*filename,
+	unsigned int	flags,
+	unsigned int	mask,
+	struct statx	*buffer)
+{
+#ifdef __NR_statx
+	return syscall(__NR_statx, dfd, filename, flags, mask, buffer);
+#else
+	errno = ENOSYS;
+	return -1;
+#endif
+}
+
+int file_atomic_write_unit_max(const char *path, unsigned int *awu_max)
+{
+	struct statx2	stx2 = {};
+	unsigned int	mask = STATX_ALL | STATX_WRITE_ATOMIC;
+	stx2.stx_attributes |= STATX_ATTR_WRITE_ATOMIC;
+	printf("%s2 mask=0x%x\n", __func__, mask);
+
+	int err = _statx(AT_FDCWD, path, 0, mask, (struct statx *)&stx2);
+
+	if (err)
+		return err;
+	printf("%s2 stx_mask.STATX_WRITE_ATOMIC=%d stx_attributes_mask.STATX_ATTR_WRITE_ATOMIC=%d stx_attributes.STATX_ATTR_WRITE_ATOMIC=%d\n", __func__, 
+		!!(stx2.stx_mask & STATX_WRITE_ATOMIC),
+		!!(stx2.stx_attributes_mask & STATX_ATTR_WRITE_ATOMIC),
+		!!(stx2.stx_attributes & STATX_ATTR_WRITE_ATOMIC));
+	*awu_max = stx2.stx_atomic_write_unit_max;
+
+	return 0;
+}
+
 
 #define TERABYTES(count, blog)	((uint64_t)(count) << (40 - (blog)))
 #define GIGABYTES(count, blog)	((uint64_t)(count) << (30 - (blog)))
@@ -1144,6 +1231,8 @@ check_device_type(
 		usage();
 	}
 
+
+	printf("%s name=%s optname=%s\n", __func__, name, optname);
 	if (stat(name, &statbuf)) {
 		if (errno == ENOENT && *isfile) {
 			if (create)
@@ -1705,7 +1794,7 @@ inode_opts_parser(
 		break;
 	case I_FORCEALIGN:
 		long long	val = getnum(value, opts, subopt);
-
+		printf("%s val=%lld I_FORCEALIGN\n", __func__, val);
 		if (val == 1) {
 			cli->sb_feat.forcealign = true;
 			cli->fsx.fsx_xflags |= FS_XFLAG_FORCEALIGN;
@@ -2411,9 +2500,9 @@ _("cowextsize not supported without reflink support\n"));
 	}
 
 	if ((cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN) &&
-	    (cli->fsx.fsx_cowextsize > 0 || cli->fsx.fsx_extsize == 0)) {
+	    (cli->fsx.fsx_cowextsize > 0 || cli->fsx.fsx_extsize == 0 || !is_power_of_2(cli->fsx.fsx_extsize))) {
 		fprintf(stderr,
-_("forcealign requires a nonzero extent size hint and no cow extent size hint\n"));
+_("forcealign requires a non-zero power-of-2 extent size hint and no cow extent size hint\n"));
 		usage();
 	}
 
@@ -2672,6 +2761,12 @@ validate_forcealign(
 	struct xfs_mount	*mp,
 	struct cli_params	*cli)
 {
+	printf("%s fsx_extsize=%d fsx_xflags=0x%x (FORCEALIGN=%d, ATOMICWRITES=%d, EXTSIZE=%d)\n", __func__,
+		cli->fsx.fsx_extsize, cli->fsx.fsx_xflags,
+		!!(cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN),
+		!!(cli->fsx.fsx_xflags & FS_XFLAG_ATOMICWRITES),
+		!!(cli->fsx.fsx_xflags & FS_XFLAG_EXTSIZE));
+
 	if (!(cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN))
 		return;
 
@@ -2693,31 +2788,83 @@ _("cannot set forcealign and realtime flags.\n"));
 		usage();
 	}
 }
-static inline
-bool is_power_of_2(unsigned long n)
-{
-	return (n != 0 && ((n & (n - 1)) == 0));
-}
+
+#if 0
+
+if (dev->isfile && (no_size || !dev->name)) {
+		fprintf(stderr,
+	_("if -%s file then -%s name and -%s size are required\n"),
+			optname, optname, optname);
+		usage();
+	}
+
+	if (!dev->name) {
+		fprintf(stderr, _("No device name specified\n"));
+		usage();
+	}
+
+	printf("%s dev->name=%s\n", __func__, dev->name);
+
+	if (stat(dev->name, &statbuf)) {
+#endif
 
 /* Validate the incoming forcealign flag. */
 static void
 validate_atomicwrites(
 	struct mkfs_params	*cfg,
 	struct xfs_mount	*mp,
-	struct cli_params	*cli
+	struct cli_params	*cli,
+	char			*dfile
 	)
 {
-	printf("%s cli->sb_feat.atomicwrites=%d cfg->rtextblocks=%ld FS_XFLAG_RTINHERIT=%d\n",
-		__func__, cli->sb_feat.atomicwrites, cfg->rtextblocks,
-		!!(cli->fsx.fsx_xflags & FS_XFLAG_RTINHERIT));
-	if (!(cli->fsx.fsx_xflags & FS_XFLAG_RTINHERIT))
+	unsigned int awu_max = -1;
+
+	printf("%s cli->sb_feat.atomicwrites=%d, forcealign=%d cfg->rtextblocks=%ld (bytes=%ld) fsx_extsize=%d FS_XFLAG_RTINHERIT=%d, FORCEALIGN=%d, ATOMICWRITES=%d, EXTSIZE=%d dfile=%s\n",
+		__func__, cli->sb_feat.atomicwrites, cli->sb_feat.forcealign, cfg->rtextblocks, 
+		cfg->rtextblocks << cfg->blocklog,
+		cli->fsx.fsx_extsize,
+		!!(cli->fsx.fsx_xflags & FS_XFLAG_RTINHERIT),
+		!!(cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN),
+		!!(cli->fsx.fsx_xflags & FS_XFLAG_ATOMICWRITES),
+		!!(cli->fsx.fsx_xflags & FS_XFLAG_EXTSIZE),
+		dfile
+		);
+	printf("%s2 dfile=%s\n", __func__, dfile);
+
+	printf("%s3 FS_XFLAG_FORCEALIGN=%d\n", __func__, !!(cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN));
+	if (!(cli->fsx.fsx_xflags & FS_XFLAG_ATOMICWRITES))
 		return;
 
-	if (cfg->rtextblocks == 1 || !is_power_of_2(cfg->rtextblocks)) {
+	if (file_atomic_write_unit_max(dfile, &awu_max)) {
+		printf("%s3 errno=%d\n", __func__, errno);
+		if (errno == ENOENT && 0 /* fixme for copy and pasted code from different baseline */) {
+			
+			return;
+		}
+
 		fprintf(stderr,
-_("For atomic writes support support, rtextblocks should be a power-of-2 and greater than the block size\n"));
+	_("Error accessing specified device %s: %s\n"),
+				dfile, strerror(errno));
 		usage();
 		return;
+	}
+
+	printf("%s4 awu_max=%d\n", __func__, awu_max);
+
+	if (awu_max <= 0) {
+		fprintf(stderr,
+_("device %s does not support atomic writes\n"), dfile);
+		usage();
+		return;
+	}
+
+	if (cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN) {
+		if (awu_max < cfg->rtextblocks << cfg->blocklog) {
+			fprintf(stderr,
+		_("device %s cannot support rtextblocks=%ld (awu_max=%d)\n"), dfile, cfg->rtextblocks << cfg->blocklog,awu_max);
+				usage();
+				return;
+		}
 	}
 
 }
@@ -4350,7 +4497,7 @@ main(
 			.nortalign = false,
 			.bigtime = true,
 			.nrext64 = false,
-			.forcealign = true,
+			.forcealign = false,
 			.atomicwrites = false,
 			/*
 			 * When we decide to enable a new feature by default,
@@ -4526,7 +4673,7 @@ main(
 	validate_extsize_hint(mp, &cli);
 	validate_cowextsize_hint(mp, &cli);
 	validate_forcealign(mp, &cli);
-	validate_atomicwrites(&cfg, mp, &cli);
+	validate_atomicwrites(&cfg, mp, &cli, dfile);
 
 	validate_supported(mp, &cli);
 
