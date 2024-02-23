@@ -883,6 +883,7 @@ struct sb_feat_args {
 	bool	nortalign;
 	bool	nrext64;
 	bool	forcealign;		/* XFS_SB_FEAT_RO_COMPAT_FORCEALIGN */
+	bool	atomicwrites;
 };
 
 struct cli_params {
@@ -3498,6 +3499,8 @@ sb_set_features(
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_INOBTCNT;
 	if (fp->forcealign)
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_FORCEALIGN;
+	if (fp->atomicwrites)
+		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_ATOMICWRITES;
 	if (fp->bigtime)
 		sbp->sb_features_incompat |= XFS_SB_FEAT_INCOMPAT_BIGTIME;
 
@@ -4303,6 +4306,7 @@ main(
 			.bigtime = true,
 			.nrext64 = false,
 			.forcealign = true,
+			.atomicwrites = true,
 			/*
 			 * When we decide to enable a new feature by default,
 			 * please remember to update the mkfs conf files.
