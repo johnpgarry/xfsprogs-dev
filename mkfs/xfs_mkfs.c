@@ -1500,6 +1500,7 @@ getnum(
 	}
 
 	/* Validity check the result. */
+	printf("%s str=%s c=%lld minval=%lld maxval=%lld\n", __func__, str, c, sp->minval, sp->maxval);
 	if (c < sp->minval)
 		illegal_option(str, opts, index, _("Value is too small."));
 	else if (c > sp->maxval)
