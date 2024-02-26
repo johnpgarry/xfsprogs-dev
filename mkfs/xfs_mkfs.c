@@ -1689,8 +1689,10 @@ getnum(
 	}
 
 	/* Validity check the result. */
-	if (c < sp->minval)
+	if (c < sp->minval) {
+		printf("%s c=%lld sp->minval=%lld\n", __func__, c, sp->minval);
 		illegal_option(str, opts, index, _("Value is too small."));
+	}
 	else if (c > sp->maxval)
 		illegal_option(str, opts, index, _("Value is too large."));
 	if (sp->is_power_2 && !ispow2(c))
@@ -1715,8 +1717,10 @@ getstr(
 	check_opt(opts, index, true);
 
 	/* empty strings for string options are not valid */
-	if (!str || *str == '\0')
+	if (!str || *str == '\0') {
+		printf("%s str=%s\n", __func__, str);
 		reqval(opts->name, opts->subopts, index);
+	}
 
 	ret = strdup(str);
 	if (!ret) {
@@ -2411,6 +2415,7 @@ set_forcealign(
 {
 	uint64_t		align_bytes;
 
+	printf("%s cli->forcealign=%s\n", __func__, cli->forcealign);
 	if (!cli->forcealign)
 		return;
 
@@ -2429,6 +2434,38 @@ set_forcealign(
 	cli->sb_feat.forcealign = true;
 	cli->fsx.fsx_xflags |= FS_XFLAG_FORCEALIGN;
 	cfg->rtextblocks = (xfs_extlen_t)(align_bytes >> cfg->blocklog);
+}
+
+static void
+set_atomicwrites(
+	struct mkfs_params	*cfg,
+	struct cli_params	*cli)
+{
+	uint64_t		align_bytes;
+
+	printf("%s cli->sb_feat.atomicwrites=%d cli->sb_feat.forcealign=%d\n", __func__, cli->sb_feat.atomicwrites, cli->sb_feat.forcealign);
+	if (!cli->sb_feat.atomicwrites)
+		return;
+	cli->sb_feat.forcealign = true;
+
+
+	#if 0
+	if (!strcmp("hugepage", cli->forcealign))
+		align_bytes = hugepage_size();
+	else
+		align_bytes = getnum(cli->forcealign, &dopts, D_FORCEALIGN);
+
+	if (align_bytes == 0)
+		illegal_option(cli->forcealign, &dopts, D_FORCEALIGN,
+				_("Value cannot be zero."));
+	if (align_bytes % blocksize)
+		illegal_option(cli->forcealign, &dopts, D_FORCEALIGN,
+				_("Value must be a multiple of block size."));
+
+	cli->sb_feat.forcealign = true;
+	cli->fsx.fsx_xflags |= FS_XFLAG_FORCEALIGN;
+	cfg->rtextblocks = (xfs_extlen_t)(align_bytes >> cfg->blocklog);
+	#endif
 }
 
 /*
@@ -3077,6 +3114,9 @@ _("device %s does not support atomic writes\n"), dev->name);
 				return;
 		}
 	}
+
+	printf("%s5 setting forcealign\n", __func__);
+	cli->sb_feat.forcealign = true;
 
 }
 
@@ -4136,6 +4176,8 @@ sb_set_features(
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_REFLINK;
 	if (fp->inobtcnt)
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_INOBTCNT;
+	printf("%s fp->forcealign=%d fp->atomicwrites=%d\n", __func__,
+		fp->forcealign, fp->atomicwrites);
 	if (fp->forcealign)
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_FORCEALIGN;
 	if (fp->atomicwrites)
@@ -5198,6 +5240,7 @@ main(
 
 	set_extsize(&cli, cli.extsize, &dopts, D_EXTSIZE);
 	set_forcealign(&cfg, &cli);
+	set_atomicwrites(&cfg, &cli);
 
 	validate_log_sectorsize(&cfg, &cli, &dft);
 	validate_sb_features(&cfg, &cli);

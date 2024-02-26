@@ -165,9 +165,11 @@ xfs_sb_version_to_features(
 		features |= XFS_FEAT_REFLINK;
 	if (sbp->sb_features_ro_compat & XFS_SB_FEAT_RO_COMPAT_INOBTCNT)
 		features |= XFS_FEAT_INOBTCNT;
+	printf("%s XFS_SB_FEAT_RO_COMPAT_FORCEALIGN=%d\n", __func__, !!(sbp->sb_features_ro_compat & XFS_SB_FEAT_RO_COMPAT_FORCEALIGN));
 	if (sbp->sb_features_ro_compat & XFS_SB_FEAT_RO_COMPAT_FORCEALIGN)
 		features |= XFS_FEAT_FORCEALIGN;
 
+	printf("%s XFS_SB_FEAT_RO_COMPAT_ATOMICWRITES=%d\n", __func__, !!(sbp->sb_features_ro_compat & XFS_SB_FEAT_RO_COMPAT_ATOMICWRITES));
 	if (sbp->sb_features_ro_compat & XFS_SB_FEAT_RO_COMPAT_ATOMICWRITES)
 		features |= XFS_FEAT_ATOMICWRITES;
 	if (sbp->sb_features_incompat & XFS_SB_FEAT_INCOMPAT_FTYPE)
