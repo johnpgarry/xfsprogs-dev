@@ -2761,14 +2761,21 @@ validate_forcealign(
 	struct xfs_mount	*mp,
 	struct cli_params	*cli)
 {
-	printf("%s fsx_extsize=%d fsx_xflags=0x%x (FORCEALIGN=%d, ATOMICWRITES=%d, EXTSIZE=%d)\n", __func__,
+	printf("%s fsx_extsize=%d fsx_xflags=0x%x (FORCEALIGN=%d, ATOMICWRITES=%d, EXTSIZE=%d, REALTIME=%d)\n", __func__,
 		cli->fsx.fsx_extsize, cli->fsx.fsx_xflags,
 		!!(cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN),
 		!!(cli->fsx.fsx_xflags & FS_XFLAG_ATOMICWRITES),
-		!!(cli->fsx.fsx_xflags & FS_XFLAG_EXTSIZE));
+		!!(cli->fsx.fsx_xflags & FS_XFLAG_EXTSIZE),
+		!!(cli->fsx.fsx_xflags & FS_XFLAG_REALTIME));
 
 	if (!(cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN))
 		return;
+
+	if (cli->fsx.fsx_xflags & (FS_XFLAG_REALTIME | FS_XFLAG_RTINHERIT)) {
+		fprintf(stderr,
+_("cannot set forcealign and realtime flags.\n"));
+		usage();
+	}
 
 	if (cli->fsx.fsx_cowextsize != 0) {
 		fprintf(stderr,
@@ -2779,12 +2786,6 @@ _("cannot set CoW extent size hint when forcealign is set.\n"));
 	if (cli->fsx.fsx_extsize == 0) {
 		fprintf(stderr,
 _("cannot set forcealign without an extent size hint.\n"));
-		usage();
-	}
-
-	if (cli->fsx.fsx_xflags & (FS_XFLAG_REALTIME | FS_XFLAG_RTINHERIT)) {
-		fprintf(stderr,
-_("cannot set forcealign and realtime flags.\n"));
 		usage();
 	}
 }
@@ -2831,9 +2832,17 @@ validate_atomicwrites(
 		);
 	printf("%s2 dfile=%s\n", __func__, dfile);
 
-	printf("%s3 FS_XFLAG_FORCEALIGN=%d\n", __func__, !!(cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN));
-	if (!(cli->fsx.fsx_xflags & FS_XFLAG_ATOMICWRITES))
+	printf("%s3 FS_XFLAG_ATOMICWRITES=%d FS_XFLAG_FORCEALIGN=%d\n", __func__,
+		!!(cli->fsx.fsx_xflags & FS_XFLAG_ATOMICWRITES),
+		!!(cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN));
+	if (!cli->sb_feat.atomicwrites)
 		return;
+
+	if (!(cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN)) {
+		fprintf(stderr,
+_("cannot set atomicwrites without forcealign.\n"));
+		usage();
+	}
 
 	if (file_atomic_write_unit_max(dfile, &awu_max)) {
 		printf("%s3 errno=%d\n", __func__, errno);
@@ -2858,13 +2867,11 @@ _("device %s does not support atomic writes\n"), dfile);
 		return;
 	}
 
-	if (cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN) {
-		if (awu_max < cfg->rtextblocks << cfg->blocklog) {
-			fprintf(stderr,
-		_("device %s cannot support rtextblocks=%ld (awu_max=%d)\n"), dfile, cfg->rtextblocks << cfg->blocklog,awu_max);
-				usage();
-				return;
-		}
+	if (awu_max < cfg->rtextblocks << cfg->blocklog) {
+		fprintf(stderr,
+	_("device %s cannot support rtextblocks=%ld (awu_max=%d)\n"), dfile, cfg->rtextblocks << cfg->blocklog,awu_max);
+			usage();
+			return;
 	}
 
 }
