@@ -78,6 +78,7 @@ enum {
 	D_EXTSZINHERIT,
 	D_COWEXTSIZE,
 	D_DAXINHERIT,
+	D_ATOMICWRITES,
 	D_MAX_OPTS,
 };
 
@@ -321,6 +322,7 @@ static struct opt_params dopts = {
 		[D_EXTSZINHERIT] = "extszinherit",
 		[D_COWEXTSIZE] = "cowextsize",
 		[D_DAXINHERIT] = "daxinherit",
+		[D_ATOMICWRITES] = "atomic-writes",
 		[D_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
@@ -447,6 +449,12 @@ static struct opt_params dopts = {
 		  .defaultval = SUBOPT_NEEDS_VAL,
 		},
 		{ .index = D_DAXINHERIT,
+		  .conflicts = { { NULL, LAST_CONFLICT } },
+		  .minval = 0,
+		  .maxval = 1,
+		  .defaultval = 1,
+		},
+		{ .index = D_ATOMICWRITES,
 		  .conflicts = { { NULL, LAST_CONFLICT } },
 		  .minval = 0,
 		  .maxval = 1,
@@ -883,6 +891,7 @@ struct sb_feat_args {
 	bool	nortalign;
 	bool	nrext64;
 	bool	forcealign;		/* XFS_SB_FEAT_RO_COMPAT_FORCEALIGN */
+	bool	atomicwrites;		/* XFS_SB_FEAT_RO_COMPAT_ATOMICWRITES */
 };
 
 struct cli_params {
@@ -1645,6 +1654,13 @@ data_opts_parser(
 			cli->fsx.fsx_xflags |= FS_XFLAG_DAX;
 		else
 			cli->fsx.fsx_xflags &= ~FS_XFLAG_DAX;
+		break;
+	case D_ATOMICWRITES:
+		if (getnum(value, opts, subopt) == 1) {
+			cli->sb_feat.atomicwrites = true;
+		} else {
+			cli->sb_feat.atomicwrites = false;
+		}
 		break;
 	default:
 		return -EINVAL;
@@ -2656,6 +2672,12 @@ validate_forcealign(
 	if (!(cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN))
 		return;
 
+	if (cli->fsx.fsx_xflags & (FS_XFLAG_REALTIME | FS_XFLAG_RTINHERIT)) {
+		fprintf(stderr,
+_("cannot set forcealign and realtime flags.\n"));
+		usage();
+	}
+
 	if (cli->fsx.fsx_cowextsize != 0) {
 		fprintf(stderr,
 _("cannot set CoW extent size hint when forcealign is set.\n"));
@@ -2667,12 +2689,30 @@ _("cannot set CoW extent size hint when forcealign is set.\n"));
 _("cannot set forcealign without an extent size hint.\n"));
 		usage();
 	}
+}
 
-	if (cli->fsx.fsx_xflags & (FS_XFLAG_REALTIME | FS_XFLAG_RTINHERIT)) {
+/* Validate the incoming forcealign flag. */
+static void
+validate_atomicwrites(
+	struct mkfs_params	*cfg,
+	struct xfs_mount	*mp,
+	struct cli_params	*cli,
+	char			*dfile
+	)
+{
+	if (!cli->sb_feat.atomicwrites)
+		return;
+
+	if (!(cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN)) {
 		fprintf(stderr,
-_("cannot set forcealign and realtime flags.\n"));
+_("cannot set atomicwrites without forcealign.\n"));
 		usage();
 	}
+
+	/*
+	 * TODO: Add a check to see if the dfile can support atomic writes of
+	 * extsize.
+	 */
 }
 
 /* Complain if this filesystem is not a supported configuration. */
@@ -3497,6 +3537,8 @@ sb_set_features(
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_INOBTCNT;
 	if (fp->forcealign)
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_FORCEALIGN;
+	if (fp->atomicwrites)
+		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_ATOMICWRITES;
 	if (fp->bigtime)
 		sbp->sb_features_incompat |= XFS_SB_FEAT_INCOMPAT_BIGTIME;
 
@@ -4475,6 +4517,7 @@ main(
 	validate_extsize_hint(mp, &cli);
 	validate_cowextsize_hint(mp, &cli);
 	validate_forcealign(mp, &cli);
+	validate_atomicwrites(&cfg, mp, &cli, dfile);
 
 	validate_supported(mp, &cli);
 
