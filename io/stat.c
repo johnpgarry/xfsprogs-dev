@@ -434,6 +434,9 @@ statx_f(
 			printf(_("stat.btime = %s"),
 				ctime((time_t *)&stx.stx_btime.tv_sec));
 	}
+	printf(_("stat.stx_atomic_write_unit_min = %lld\n"), (long long)stx.stx_atomic_write_unit_min);
+	printf(_("stat.stx_atomic_write_unit_max = %lld\n"), (long long)stx.stx_atomic_write_unit_max);
+	printf(_("stat.stx_atomic_write_segments_max = %lld\n"), (long long)stx.stx_atomic_write_segments_max);
 
 	if (file->flags & IO_FOREIGN)
 		return 0;
