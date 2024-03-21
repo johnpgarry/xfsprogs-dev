@@ -2923,6 +2923,16 @@ _("%s: Stripe unit(%d) or stripe width(%d) is not a multiple of the block size(%
 	cfg->dsunit = DTOBT(dsunit, cfg->blocklog);
 	cfg->dswidth = DTOBT(dswidth, cfg->blocklog);
 
+	if (cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN) {
+		if ((cfg->dsunit % cli->fsx.fsx_extsize) ||
+		    (cfg->dswidth % cli->fsx.fsx_extsize)) {
+			fprintf(stderr,
+		_("Stripe unit(%d) or stripe width(%d) is not a multiple of the extsize (%d) for forcealign\n"),
+				cfg->dsunit, cfg->dswidth, cli->fsx.fsx_extsize);
+			usage();
+		}
+	}
+
 check_lsunit:
 	/* log sunit options */
 	if (cli_opt_set(&lopts, L_SUNIT))
