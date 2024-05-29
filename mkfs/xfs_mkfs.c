@@ -2412,7 +2412,12 @@ _("cowextsize not supported without reflink support\n"));
 		fprintf(stderr,
 _("forcealign requires a non-zero power-of-2 extent size hint and no cow extent size hint\n"));
 		usage();
+	} else {
+		printf("%s FS_XFLAG_FORCEALIGN is ok\n", __func__);
 	}
+
+	
+	
 
 	/*
 	 * Copy features across to config structure now.
@@ -2700,6 +2705,7 @@ validate_atomicwrites(
 	char			*dfile
 	)
 {
+	printf("%s cli->sb_feat.atomicwrites=%d\n", __func__, cli->sb_feat.atomicwrites);
 	if (!cli->sb_feat.atomicwrites)
 		return;
 
@@ -2797,6 +2803,7 @@ calc_stripe_factors(
 	int		dsw = 0;
 	int		lsu = 0;
 	bool		use_dev = false;
+	printf("%s enter\n", __func__);
 
 	if (cli_opt_set(&dopts, D_SUNIT))
 		dsunit = cli->dsunit;
@@ -2919,9 +2926,27 @@ _("%s: Stripe unit(%d) or stripe width(%d) is not a multiple of the block size(%
 		cfg->sb_feat.nodalign = true;
 	}
 
+
+
+	//	 &&
+	 //   (cli->fsx.fsx_cowextsize > 0 || cli->fsx.fsx_extsize == 0 || !is_power_of_2(cli->fsx.fsx_extsize))) {
+	//	fprintf(stderr,
+
+
 	/* convert from 512 byte blocks to fs blocksize */
 	cfg->dsunit = DTOBT(dsunit, cfg->blocklog);
 	cfg->dswidth = DTOBT(dswidth, cfg->blocklog);
+
+#if 0
+	if ((cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN) &&
+	    (cli->fsx.fsx_cowextsize > 0 || cli->fsx.fsx_extsize == 0 || !is_power_of_2(cli->fsx.fsx_extsize))) {
+		fprintf(stderr,
+
+#endif
+	if (cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN) {
+		printf("%s FS_XFLAG_FORCEALIGN fsx_extsize=%d cfg->dsunit=%d, dswidth=%d\n", __func__,
+			cli->fsx.fsx_extsize, cfg->dsunit, cfg->dswidth);
+	}
 
 	if (cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN) {
 		if ((cfg->dsunit % cli->fsx.fsx_extsize) ||

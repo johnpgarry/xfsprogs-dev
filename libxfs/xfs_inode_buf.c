@@ -324,12 +324,14 @@ xfs_inode_to_disk(
 	to->di_forkoff = ip->i_forkoff;
 	to->di_aformat = xfs_ifork_format(&ip->i_af);
 	to->di_flags = cpu_to_be16(ip->i_diflags);
-
 	if (xfs_has_v3inodes(ip->i_mount)) {
 		to->di_version = 3;
 		to->di_changecount = cpu_to_be64(inode_peek_iversion(inode));
 		to->di_crtime = xfs_inode_to_disk_ts(ip, ip->i_crtime);
 		to->di_flags2 = cpu_to_be64(ip->i_diflags2);
+		if (ip->i_diflags2 & XFS_DIFLAG2_FORCEALIGN)
+			printf("%s di_flags2=0x%lx (XFS_DIFLAG2_FORCEALIGN=%d) ip->i_ino=%ld \n", __func__, ip->i_diflags2, !!(ip->i_diflags2 & XFS_DIFLAG2_FORCEALIGN), ip->i_ino);
+
 		to->di_cowextsize = cpu_to_be32(ip->i_cowextsize);
 		to->di_ino = cpu_to_be64(ip->i_ino);
 		to->di_lsn = cpu_to_be64(lsn);

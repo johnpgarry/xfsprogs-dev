@@ -290,9 +290,13 @@ libxfs_init_new_inode(
 	if (xfs_has_v3inodes(ip->i_mount)) {
 		VFS_I(ip)->i_version = 1;
 		ip->i_diflags2 = ip->i_mount->m_ino_geo.new_diflags2;
+		printf("%s di_flags2=0x%lx (XFS_DIFLAG2_FORCEALIGN=%d) ip->i_ino=%ld calling xfs_inode_to_disk()\n",
+			__func__, ip->i_diflags2, !!(ip->i_diflags2 & XFS_DIFLAG2_FORCEALIGN), ip->i_ino);
 		if (!pip)
 			ip->i_diflags2 = xfs_flags2diflags2(ip,
 							fsx->fsx_xflags);
+		printf("%s2 di_flags2=0x%lx (XFS_DIFLAG2_FORCEALIGN=%d) ip->i_ino=%ld calling xfs_inode_to_disk()\n",
+			__func__, ip->i_diflags2, !!(ip->i_diflags2 & XFS_DIFLAG2_FORCEALIGN), ip->i_ino);
 		ip->i_crtime = VFS_I(ip)->i_mtime; /* struct copy */
 		ip->i_cowextsize = pip ? 0 : fsx->fsx_cowextsize;
 	}
@@ -388,6 +392,10 @@ libxfs_iflush_int(
 	 * because if the inode is dirty at all the core must
 	 * be.
 	 */
+	if (ip->i_diflags2 & XFS_DIFLAG2_FORCEALIGN)
+		printf("%s di_flags2=0x%lx (XFS_DIFLAG2_FORCEALIGN=%d) ip->i_ino=%ld calling xfs_inode_to_disk()\n",
+			__func__, ip->i_diflags2, !!(ip->i_diflags2 & XFS_DIFLAG2_FORCEALIGN), ip->i_ino);
+
 	xfs_inode_to_disk(ip, dip, iip->ili_item.li_lsn);
 
 	xfs_iflush_fork(ip, dip, iip, XFS_DATA_FORK);

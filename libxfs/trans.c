@@ -846,6 +846,10 @@ inode_item_done(
 	 * of whether the flush succeed or not. If we fail the flush, make sure
 	 * we still release the buffer reference we currently hold.
 	 */
+	if (iip->ili_inode->i_diflags2 & XFS_DIFLAG2_FORCEALIGN)
+		printf("%s di_flags2=0x%lx (XFS_DIFLAG2_FORCEALIGN=%d) ip->i_ino=%ld calling xfs_inode_to_disk()\n",
+			__func__, iip->ili_inode->i_diflags2, !!(iip->ili_inode->i_diflags2 & XFS_DIFLAG2_FORCEALIGN), iip->ili_inode->i_ino);
+
 	error = libxfs_iflush_int(iip->ili_inode, bp);
 	bp->b_transp = NULL;	/* remove xact ptr */
 
