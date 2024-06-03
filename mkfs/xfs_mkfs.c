@@ -2408,9 +2408,9 @@ _("cowextsize not supported without reflink support\n"));
 	}
 
 	if ((cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN) &&
-	    (cli->fsx.fsx_cowextsize > 0 || cli->fsx.fsx_extsize == 0 || !is_power_of_2(cli->fsx.fsx_extsize))) {
+	    (cli->fsx.fsx_cowextsize > 0 || cli->fsx.fsx_extsize == 0)) {
 		fprintf(stderr,
-_("forcealign requires a non-zero power-of-2 extent size hint and no cow extent size hint\n"));
+_("forcealign requires a non-zero extent size hint and no cow extent size hint\n"));
 		usage();
 	} else {
 		printf("%s FS_XFLAG_FORCEALIGN is ok\n", __func__);
