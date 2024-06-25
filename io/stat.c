@@ -17,6 +17,8 @@
 
 #include <fcntl.h>
 
+#define IO_STATX_MASK	(STATX_ALL | STATX_WRITE_ATOMIC)
+
 static cmdinfo_t stat_cmd;
 static cmdinfo_t statfs_cmd;
 static cmdinfo_t statx_cmd;
@@ -347,6 +349,9 @@ dump_raw_statx(struct statx *stx)
 	printf("stat.rdev_minor = %u\n", stx->stx_rdev_minor);
 	printf("stat.dev_major = %u\n", stx->stx_dev_major);
 	printf("stat.dev_minor = %u\n", stx->stx_dev_minor);
+	printf("stat.stx_atomic_write_unit_min = %lld\n", (long long)stx->stx_atomic_write_unit_min);
+	printf("stat.stx_atomic_write_unit_max = %lld\n", (long long)stx->stx_atomic_write_unit_max);
+	printf("stat.stx_atomic_write_segments_max = %lld\n", (long long)stx->stx_atomic_write_segments_max);
 	return 0;
 }
 
@@ -365,7 +370,7 @@ statx_f(
 	char		*p;
 	struct statx	stx;
 	int		atflag = 0;
-	unsigned int	mask = STATX_ALL;
+	unsigned int	mask = IO_STATX_MASK;
 
 	while ((c = getopt(argc, argv, "m:rvFD")) != EOF) {
 		switch (c) {
@@ -373,7 +378,7 @@ statx_f(
 			if (strcmp(optarg, "basic") == 0)
 				mask = STATX_BASIC_STATS;
 			else if (strcmp(optarg, "all") == 0)
-				mask = STATX_ALL;
+				mask = IO_STATX_MASK;
 			else {
 				mask = strtoul(optarg, &p, 0);
 				if (!p || p == optarg) {
