@@ -699,6 +699,13 @@ The
 .B cowextsize
 option must not be specified.
 This feature is only available for filesystems formatted with -m crc=1.
+.TP
+.BI atomicwrites[= value]
+This is used to enable atomic writes. The
+.B value
+is either 0 or 1, with 1 signifying that atomic writes are enabled. This feature
+is only available for filesystems formated with
+.B \-i forcealign=1.
 .RE
 .PP
 .PD 0

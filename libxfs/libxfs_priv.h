@@ -43,6 +43,7 @@
 #include "platform_defs.h"
 #include "xfs.h"
 
+#include "libxfs.h"
 #include "list.h"
 #include "hlist.h"
 #include "cache.h"
@@ -291,12 +292,6 @@ find_next_zero_bit(const unsigned long *addr, unsigned long size,
 	return _find_next_bit(addr, size, offset, ~0UL);
 }
 #define find_first_zero_bit(addr, size) find_next_zero_bit((addr), (size), 0)
-
-static inline __attribute__((const))
-int is_power_of_2(unsigned long n)
-{
-	return (n != 0 && ((n & (n - 1)) == 0));
-}
 
 /*
  * xfs_iroundup: round up argument to next power of two

@@ -92,6 +92,7 @@ enum {
 	I_SPINODES,
 	I_NREXT64,
 	I_FORCEALIGN,
+	I_ATOMICWRITES,
 	I_MAX_OPTS,
 };
 
@@ -482,6 +483,7 @@ static struct opt_params iopts = {
 		[I_SPINODES] = "sparse",
 		[I_NREXT64] = "nrext64",
 		[I_FORCEALIGN] = "forcealign",
+		[I_ATOMICWRITES] = "atomicwrites",
 		[I_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
@@ -538,6 +540,12 @@ static struct opt_params iopts = {
 		  .defaultval = 1,
 		},
 		{ .index = I_FORCEALIGN,
+		  .conflicts = { { NULL, LAST_CONFLICT } },
+		  .minval = 0,
+		  .maxval = 1,
+		  .defaultval = 1,
+		},
+		{ .index = I_ATOMICWRITES,
 		  .conflicts = { { NULL, LAST_CONFLICT } },
 		  .minval = 0,
 		  .maxval = 1,
@@ -909,6 +917,7 @@ struct sb_feat_args {
 	bool	nortalign;
 	bool	nrext64;
 	bool	forcealign;		/* XFS_SB_FEAT_RO_COMPAT_FORCEALIGN */
+	bool	atomicwrites;		/* XFS_SB_FEAT_RO_COMPAT_ATOMICWRITES */
 };
 
 struct cli_params {
@@ -1046,7 +1055,7 @@ usage( void )
 /* force overwrite */	[-f]\n\
 /* inode size */	[-i perblock=n|size=num,maxpct=n,attr=0|1|2,\n\
 			    projid32bit=0|1,sparse=0|1,nrext64=0|1,\n\
-			    forcealign=0|1]\n\
+			    forcealign=0|1,atomicwrites=0|1]\n\
 /* no discard */	[-K]\n\
 /* log subvol */	[-l agnum=n,internal,size=num,logdev=xxx,version=n\n\
 			    sunit=value|su=num,sectsize=num,lazy-count=0|1,\n\
@@ -1758,6 +1767,15 @@ inode_opts_parser(
 			cli->fsx.fsx_xflags &= ~FS_XFLAG_FORCEALIGN;
 		}
 		break;
+	case I_ATOMICWRITES:
+		if (getnum(value, opts, subopt) == 1) {
+			cli->sb_feat.atomicwrites = true;
+			cli->fsx.fsx_xflags |= FS_XFLAG_ATOMICWRITES;
+		} else {
+			cli->sb_feat.atomicwrites = false;
+			cli->fsx.fsx_xflags &= ~FS_XFLAG_ATOMICWRITES;
+		}
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -2435,6 +2453,13 @@ _("forced file data alignment not supported without CRC support\n"));
 			usage();
 		}
 		cli->sb_feat.forcealign = false;
+
+		if (cli->sb_feat.atomicwrites) {
+			fprintf(stderr,
+_("atomic writes not supported without CRC support\n"));
+			usage();
+		}
+		cli->sb_feat.atomicwrites = false;
 	}
 
 	if (!cli->sb_feat.finobt) {
@@ -2473,6 +2498,13 @@ _("cowextsize not supported without reflink support\n"));
 	    (cli->fsx.fsx_cowextsize > 0 || cli->fsx.fsx_extsize == 0)) {
 		fprintf(stderr,
 _("forcealign requires a non-zero extent size hint and no cow extent size hint\n"));
+		usage();
+	}
+
+	if ((cli->fsx.fsx_xflags & FS_XFLAG_ATOMICWRITES) &&
+	    (!cli->sb_feat.forcealign || !is_power_of_2(cli->fsx.fsx_extsize))) {
+		fprintf(stderr,
+_("atomic writes requires forcealign support and a power-of-2 extent size hint\n"));
 		usage();
 	}
 
@@ -2749,6 +2781,23 @@ _("cannot set forcealign without an extent size hint.\n"));
 	if (cli->fsx.fsx_xflags & (FS_XFLAG_REALTIME | FS_XFLAG_RTINHERIT)) {
 		fprintf(stderr,
 _("cannot set forcealign and realtime flags.\n"));
+		usage();
+	}
+}
+
+/* Validate the incoming atomic writes flag. */
+static void
+validate_atomicwrites(
+	struct mkfs_params	*cfg,
+	struct xfs_mount	*mp,
+	struct cli_params	*cli)
+{
+	if (!cli->sb_feat.atomicwrites)
+		return;
+
+	if (!(cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN)) {
+		fprintf(stderr,
+_("cannot set atomicwrites without forcealign.\n"));
 		usage();
 	}
 }
@@ -3647,6 +3696,8 @@ sb_set_features(
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_INOBTCNT;
 	if (fp->forcealign)
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_FORCEALIGN;
+	if (fp->atomicwrites)
+		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_ATOMICWRITES;
 	if (fp->bigtime)
 		sbp->sb_features_incompat |= XFS_SB_FEAT_INCOMPAT_BIGTIME;
 
@@ -4680,6 +4731,7 @@ main(
 	validate_extsize_hint(mp, &cli);
 	validate_cowextsize_hint(mp, &cli);
 	validate_forcealign(mp, &cli);
+	validate_atomicwrites(&cfg, mp, &cli);
 
 	validate_supported(mp, &cli);
 
