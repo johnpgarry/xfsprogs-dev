@@ -258,6 +258,11 @@ struct fsxattr {
 #define FS_XFLAG_ATOMICWRITES	0x00040000	/* atomic writes enabled */
 #endif
 
+/* Atomic Write */
+#ifndef RWF_ATOMIC
+#define RWF_ATOMIC	((__kernel_rwf_t)0x00000040)
+#endif
+
 /*
  * Reminder: anything added to this file will be compiled into downstream
  * userspace projects!
