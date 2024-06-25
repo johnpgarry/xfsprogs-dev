@@ -5,6 +5,7 @@
 
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <sys/types.h>
 
 #ifndef AT_EMPTY_PATH
 #define AT_EMPTY_PATH	0x1000
@@ -37,10 +38,10 @@
 #ifndef STATX_TYPE
 /* Pick up kernel definitions if glibc didn't already provide them */
 #include <linux/stat.h>
-#endif
+#endif /* STATX_TYPE */
 
-#ifndef STATX_TYPE
-/* Local definitions if glibc & kernel headers didn't already provide them */
+#ifdef OVERRIDE_SYSTEM_STATX
+/* Local definitions if they don't exist or are too old */
 
 /*
  * Timestamp structure for the timestamps in struct statx.
@@ -56,11 +57,12 @@
  *
  * __reserved is held in case we need a yet finer resolution.
  */
-struct statx_timestamp {
+struct statx_timestamp_internal {
 	__s64	tv_sec;
 	__s32	tv_nsec;
 	__s32	__reserved;
 };
+#define statx_timestamp statx_timestamp_internal
 
 /*
  * Structures for the extended file attribute retrieval system call
@@ -99,7 +101,7 @@ struct statx_timestamp {
  * will have values installed for compatibility purposes so that stat() and
  * co. can be emulated in userspace.
  */
-struct statx {
+struct statx_internal {
 	/* 0x00 */
 	__u32	stx_mask;	/* What results were written [uncond] */
 	__u32	stx_blksize;	/* Preferred general I/O size [uncond] */
@@ -126,9 +128,20 @@ struct statx {
 	__u32	stx_dev_major;	/* ID of device containing file [uncond] */
 	__u32	stx_dev_minor;
 	/* 0x90 */
-	__u64	__spare2[14];	/* Spare space for future expansion */
+	__u64	stx_mnt_id;
+	__u32	stx_dio_mem_align;	/* Memory buffer alignment for direct I/O */
+	__u32	stx_dio_offset_align;	/* File offset alignment for direct I/O */
+	/* 0xa0 */
+	__u64	stx_subvol;	/* Subvolume identifier */
+	__u32	stx_atomic_write_unit_min; /* Min atomic write unit in bytes */
+	__u32	stx_atomic_write_unit_max; /* Max atomic write unit in bytes */
+	__u32   stx_atomic_write_segments_max; /* Max atomic write segment count */
+	__u32   __spare2[1];
+	/* 0xb0 */
+	__u64	__spare3[9];	/* Spare space for future expansion */
 	/* 0x100 */
 };
+#define statx statx_internal
 
 /*
  * Flags to be stx_mask
@@ -138,6 +151,7 @@ struct statx {
  * These bits should be set in the mask argument of statx() to request
  * particular items when calling statx().
  */
+#ifndef STATX_TYPE
 #define STATX_TYPE		0x00000001U	/* Want/got stx_mode & S_IFMT */
 #define STATX_MODE		0x00000002U	/* Want/got stx_mode & ~S_IFMT */
 #define STATX_NLINK		0x00000004U	/* Want/got stx_nlink */
@@ -153,7 +167,11 @@ struct statx {
 #define STATX_BTIME		0x00000800U	/* Want/got stx_btime */
 #define STATX_ALL		0x00000fffU	/* All currently supported flags */
 #define STATX__RESERVED		0x80000000U	/* Reserved for future struct statx expansion */
+#endif /* STATX_TYPE */
 
+#ifndef STATX_WRITE_ATOMIC
+#define STATX_WRITE_ATOMIC	0x00010000U	/* Want/got atomic_write_* fields */
+#endif /* STATX_WRITE_ATOMIC */
 /*
  * Attributes to be found in stx_attributes
  *
@@ -165,6 +183,7 @@ struct statx {
  * semantically.  Where possible, the numerical value is picked to correspond
  * also.
  */
+#ifndef STATX_ATTR_COMPRESSED
 #define STATX_ATTR_COMPRESSED		0x00000004 /* [I] File is compressed by the fs */
 #define STATX_ATTR_IMMUTABLE		0x00000010 /* [I] File is marked immutable */
 #define STATX_ATTR_APPEND		0x00000020 /* [I] File is append-only */
@@ -172,6 +191,7 @@ struct statx {
 #define STATX_ATTR_ENCRYPTED		0x00000800 /* [I] File requires key to decrypt in fs */
 
 #define STATX_ATTR_AUTOMOUNT		0x00001000 /* Dir: Automount trigger */
+#endif /* STATX_ATTR_COMPRESSED */
 
-#endif /* STATX_TYPE */
+#endif /* OVERRIDE_SYSTEM_STATX */
 #endif /* XFS_IO_STATX_H */
