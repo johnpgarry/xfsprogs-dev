@@ -254,6 +254,10 @@ struct fsxattr {
 #define FS_XFLAG_FORCEALIGN	0x00020000
 #endif
 
+#ifndef FS_XFLAG_ATOMICWRITES
+#define FS_XFLAG_ATOMICWRITES	0x00040000	/* atomic writes enabled */
+#endif
+
 /*
  * Reminder: anything added to this file will be compiled into downstream
  * userspace projects!

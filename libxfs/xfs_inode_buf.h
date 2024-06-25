@@ -36,6 +36,8 @@ xfs_failaddr_t xfs_inode_validate_cowextsize(struct xfs_mount *mp,
 xfs_failaddr_t xfs_inode_validate_forcealign(struct xfs_mount *mp,
 		uint16_t mode, uint16_t flags, uint32_t extsize,
 		uint32_t cowextsize);
+xfs_failaddr_t xfs_inode_validate_atomicwrites(struct xfs_mount *mp,
+		bool forcealign);
 
 static inline uint64_t xfs_inode_encode_bigtime(struct timespec64 tv)
 {

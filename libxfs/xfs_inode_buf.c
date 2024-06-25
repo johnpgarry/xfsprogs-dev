@@ -615,6 +615,13 @@ xfs_dinode_verify(
 			return fa;
 	}
 
+	if (flags2 & XFS_DIFLAG2_ATOMICWRITES) {
+		fa = xfs_inode_validate_atomicwrites(mp,
+			flags2 & XFS_DIFLAG2_FORCEALIGN);
+		if (fa)
+			return fa;
+	}
+
 	return NULL;
 }
 
@@ -810,6 +817,25 @@ xfs_inode_validate_forcealign(
 
 	/* Requires no cow extent size hint */
 	if (cowextsize != 0)
+		return __this_address;
+
+	return NULL;
+}
+
+xfs_failaddr_t
+xfs_inode_validate_atomicwrites(
+	struct xfs_mount	*mp,
+	bool			forcealign)
+{
+	/* superblock rocompat feature flag */
+	if (!xfs_has_atomicwrites(mp))
+		return __this_address;
+
+	/*
+	* forcealign is required, so rely on sanity checks in
+	* xfs_inode_validate_forcealign()
+	*/
+	if (!forcealign)
 		return __this_address;
 
 	return NULL;
