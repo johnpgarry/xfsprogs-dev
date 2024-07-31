@@ -2494,11 +2494,19 @@ _("cowextsize not supported without reflink support\n"));
 		usage();
 	}
 
-	if ((cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN) &&
-	    (cli->fsx.fsx_cowextsize > 0 || cli->fsx.fsx_extsize == 0)) {
-		fprintf(stderr,
-_("forcealign requires a non-zero extent size hint and no cow extent size hint\n"));
-		usage();
+	if (cli->fsx.fsx_xflags & FS_XFLAG_FORCEALIGN) {
+		if ((cli->fsx.fsx_cowextsize > 0 || cli->fsx.fsx_extsize == 0)) {
+			fprintf(stderr,
+	_("forcealign requires a non-zero extent size hint and no cow extent size hint\n"));
+			usage();
+		}
+
+		if (cli->sb_feat.reflink && cli_opt_set(&mopts, M_REFLINK)) {
+			fprintf(stderr,
+_("reflink not supported with realtime devices\n"));
+			usage();
+		}
+		cli->sb_feat.reflink = false;
 	}
 
 	if ((cli->fsx.fsx_xflags & FS_XFLAG_ATOMICWRITES) &&
@@ -2775,12 +2783,6 @@ _("cannot set CoW extent size hint when forcealign is set.\n"));
 	if (cli->fsx.fsx_extsize == 0) {
 		fprintf(stderr,
 _("cannot set forcealign without an extent size hint.\n"));
-		usage();
-	}
-
-	if (cli->fsx.fsx_xflags & (FS_XFLAG_REALTIME | FS_XFLAG_RTINHERIT)) {
-		fprintf(stderr,
-_("cannot set forcealign and realtime flags.\n"));
 		usage();
 	}
 }
