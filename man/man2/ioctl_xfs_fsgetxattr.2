@@ -40,7 +40,7 @@ below for more information.
 .PP
 .I fsx_extsize
 is the preferred extent allocation size for data blocks mapped to this file,
-in units of filesystem blocks.
+in units of bytes.
 If this value is zero, the filesystem will choose a default option, which
 is currently zero.
 If
@@ -62,9 +62,9 @@ is the project ID of this file.
 .PP
 .I fsx_cowextsize
 is the preferred extent allocation size for copy on write operations
-targeting this file, in units of filesystem blocks.
+targeting this file, in units of bytes.
 If this field is zero, the filesystem will choose a default option,
-which is currently 128 filesystem blocks.
+which is currently 32 filesystem blocks.
 If
 .B XFS_IOC_FSSETXATTR
 is called with
