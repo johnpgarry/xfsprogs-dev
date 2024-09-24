@@ -200,6 +200,12 @@ below).
 If set on a directory, new files and subdirectories created in the directory
 will have both the flag and the CoW extent size value set.
 .TP
+.B FS_XFLAG_ATOMICWRITES
+Atomic Writes bit - enables writes to this file to be issued with torn-write
+protection.
+If set on a directory, new files and subdirectories created in the directory
+will have the flag set.
+.TP
 .B XFS_XFLAG_HASATTR
 The file has extended attributes associated with it.
 
