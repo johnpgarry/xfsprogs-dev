@@ -683,6 +683,11 @@ Online repair uses this functionality to rebuild extended attributes,
 directories, symbolic links, and realtime metadata files.
 This feature is disabled by default.
 This feature is only available for filesystems formatted with -m crc=1.
+.TP
+.BI atomicwrites[= value]
+This is used to enable atomic writes. The
+.B value
+is either 0 or 1, with 1 signifying that atomic writes are enabled.
 .RE
 .PP
 .PD 0

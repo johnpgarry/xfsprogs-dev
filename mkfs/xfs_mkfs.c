@@ -92,6 +92,7 @@ enum {
 	I_SPINODES,
 	I_NREXT64,
 	I_EXCHANGE,
+	I_ATOMICWRITES,
 	I_MAX_OPTS,
 };
 
@@ -474,6 +475,7 @@ static struct opt_params iopts = {
 		[I_SPINODES] = "sparse",
 		[I_NREXT64] = "nrext64",
 		[I_EXCHANGE] = "exchange",
+		[I_ATOMICWRITES] = "atomicwrites",
 		[I_MAX_OPTS] = NULL,
 	},
 	.subopt_params = {
@@ -530,6 +532,12 @@ static struct opt_params iopts = {
 		  .defaultval = 1,
 		},
 		{ .index = I_EXCHANGE,
+		  .conflicts = { { NULL, LAST_CONFLICT } },
+		  .minval = 0,
+		  .maxval = 1,
+		  .defaultval = 1,
+		},
+		{ .index = I_ATOMICWRITES,
 		  .conflicts = { { NULL, LAST_CONFLICT } },
 		  .minval = 0,
 		  .maxval = 1,
@@ -917,6 +925,7 @@ struct sb_feat_args {
 	bool	nortalign;
 	bool	nrext64;
 	bool	exchrange;		/* XFS_SB_FEAT_INCOMPAT_EXCHRANGE */
+	bool	atomicwrites;		/* XFS_SB_FEAT_RO_COMPAT_ATOMICWRITES */
 };
 
 struct cli_params {
@@ -1055,7 +1064,7 @@ usage( void )
 /* force overwrite */	[-f]\n\
 /* inode size */	[-i perblock=n|size=num,maxpct=n,attr=0|1|2,\n\
 			    projid32bit=0|1,sparse=0|1,nrext64=0|1,\n\
-			    exchange=0|1]\n\
+			    exchange=0|1],atomicwrites=0|1]\n\
 /* no discard */	[-K]\n\
 /* log subvol */	[-l agnum=n,internal,size=num,logdev=xxx,version=n\n\
 			    sunit=value|su=num,sectsize=num,lazy-count=0|1,\n\
@@ -1755,6 +1764,15 @@ inode_opts_parser(
 		break;
 	case I_EXCHANGE:
 		cli->sb_feat.exchrange = getnum(value, opts, subopt);
+		break;
+	case I_ATOMICWRITES:
+		if (getnum(value, opts, subopt) == 1) {
+			cli->sb_feat.atomicwrites = true;
+			cli->fsx.fsx_xflags |= FS_XFLAG_ATOMICWRITES;
+		} else {
+			cli->sb_feat.atomicwrites = false;
+			cli->fsx.fsx_xflags &= ~FS_XFLAG_ATOMICWRITES;
+		}
 		break;
 	default:
 		return -EINVAL;
@@ -2465,6 +2483,13 @@ _("autofsck not supported without CRC support\n"));
 			usage();
 		}
 		cli->autofsck = FSPROP_AUTOFSCK_UNSET;
+
+		if (cli->sb_feat.atomicwrites) {
+			fprintf(stderr,
+_("atomic writes not supported without CRC support\n"));
+			usage();
+		}
+		cli->sb_feat.atomicwrites = false;
 	}
 
 	if (!cli->sb_feat.finobt) {
@@ -2757,6 +2782,17 @@ _("illegal CoW extent size hint %lld, must be less than %u.\n"),
 				min(XFS_MAX_BMBT_EXTLEN, mp->m_sb.sb_agblocks / 2));
 		usage();
 	}
+}
+
+/* Validate the incoming atomic writes flag. */
+static void
+validate_atomicwrites(
+	struct mkfs_params	*cfg,
+	struct xfs_mount	*mp,
+	struct cli_params	*cli)
+{
+	if (!cli->sb_feat.atomicwrites)
+		return;
 }
 
 /* Complain if this filesystem is not a supported configuration. */
@@ -3587,6 +3623,8 @@ sb_set_features(
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_REFLINK;
 	if (fp->inobtcnt)
 		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_INOBTCNT;
+	if (fp->atomicwrites)
+		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_ATOMICWRITES;
 	if (fp->bigtime)
 		sbp->sb_features_incompat |= XFS_SB_FEAT_INCOMPAT_BIGTIME;
 
@@ -4686,6 +4724,7 @@ main(
 	/* Validate the extent size hints now that @mp is fully set up. */
 	validate_extsize_hint(mp, &cli);
 	validate_cowextsize_hint(mp, &cli);
+	validate_atomicwrites(&cfg, mp, &cli);
 
 	validate_supported(mp, &cli);
 
