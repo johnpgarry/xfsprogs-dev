@@ -654,6 +654,12 @@ xfs_dinode_verify(
 	    !xfs_has_bigtime(mp))
 		return __this_address;
 
+	if (flags2 & XFS_DIFLAG2_ATOMICWRITES) {
+		fa = xfs_inode_validate_atomicwrites(mp);
+		if (fa)
+			return fa;
+	}
+
 	return NULL;
 }
 
@@ -821,3 +827,15 @@ xfs_inode_validate_cowextsize(
 
 	return NULL;
 }
+
+xfs_failaddr_t
+xfs_inode_validate_atomicwrites(
+	struct xfs_mount	*mp)
+{
+	/* superblock rocompat feature flag */
+	if (!xfs_has_atomicwrites(mp))
+		return __this_address;
+
+	return NULL;
+}
+
