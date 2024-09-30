@@ -1731,6 +1731,8 @@ inode_opts_parser(
 	const char		*value,
 	struct cli_params	*cli)
 {
+	long long	val;
+
 	switch (subopt) {
 	case I_ALIGN:
 		cli->sb_feat.inode_align = getnum(value, opts, subopt);
@@ -1757,7 +1759,7 @@ inode_opts_parser(
 		cli->sb_feat.nrext64 = getnum(value, opts, subopt);
 		break;
 	case I_FORCEALIGN:
-		long long	val = getnum(value, opts, subopt);
+		val = getnum(value, opts, subopt);
 
 		if (val == 1) {
 			cli->sb_feat.forcealign = true;
