@@ -706,10 +706,8 @@ version_string(
 		strcat(s, ",NEEDSREPAIR");
 	if (xfs_has_large_extent_counts(mp))
 		strcat(s, ",NREXT64");
-	if (xfs_has_exchange_range(mp))
-		strcat(s, ",EXCHANGE");
-	if (xfs_has_parent(mp))
-		strcat(s, ",PARENT");
+	if (xfs_has_forcealign(mp))
+		strcat(s, ",FORCEALIGN");
 	return s;
 }
 
