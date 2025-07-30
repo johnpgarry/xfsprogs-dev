@@ -3101,6 +3101,12 @@ _("metadir not supported without exchange-range support\n"));
 		cli->sb_feat.exchrange = true;
 	}
 
+	if (cli_opt_set(&iopts, I_MAX_ATOMIC_WRITE) && !cli->sb_feat.reflink) {
+		fprintf(stderr,
+_("max_atomic_write option not supported without reflink support\n"));
+		usage();
+	}
+
 	/*
 	 * Copy features across to config structure now.
 	 */
